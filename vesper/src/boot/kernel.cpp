@@ -1,5 +1,7 @@
 #define UNUSED(x) ((void)x)
 
+extern "C" void kmain( void* mbd, unsigned int magic );
+
 void kmain( void* mbd, unsigned int magic )
 {
     UNUSED(mbd);

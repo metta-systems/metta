@@ -12,8 +12,8 @@ kernel.bin: kernel.o loader.o
 loader.o: loader.s
 	nasm -f elf -o loader.o loader.s
 
-kernel.o: kernel.c
-	gcc -o kernel.o -c kernel.c -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore
+kernel.o: kernel.cpp
+	g++ -o kernel.o -c kernel.cpp -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore
 
 clean:
 	rm floppy.img kernel.bin *.o
