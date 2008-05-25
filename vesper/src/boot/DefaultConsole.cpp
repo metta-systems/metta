@@ -49,6 +49,22 @@ void DefaultConsole::clear()
 	attr = 0x07;
 }
 
+void DefaultConsole::set_color(Color col)
+{
+	attr = (attr & 0xF0) | (col & 0x0F);
+}
+
+void DefaultConsole::set_background(Color col)
+{
+	attr = (attr & 0x0F) | ((col & 0x0F) << 8);
+}
+
+void DefaultConsole::set_attr(Color fore, Color back)
+{
+	set_color(fore);
+	set_background(back);
+}
+
 void DefaultConsole::locate(int row, int col)
 {
 	*cursor = (row * LINE_PITCH) + (col * 2);

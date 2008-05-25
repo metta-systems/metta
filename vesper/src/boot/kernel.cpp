@@ -14,5 +14,6 @@ void kmain( void* mbd, unsigned int magic )
 	kconsole.locate(11, 22);
 	kconsole.print_int(-21954321);
 	kconsole.scroll_up();
+	kconsole.set_color(YELLOW);
 	kconsole.debug_showmem(mbd, 135);
 }
