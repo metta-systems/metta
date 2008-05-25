@@ -12,7 +12,7 @@ floppy.img: floppy.s kernel.bin grub/stage1 grub/stage2
 	nasm -f bin -o floppy.img floppy.s
 
 kernel.bin: kernel.o loader.o DefaultConsole.o
-	ld -T linker.ld -o kernel.bin loader.o kernel.o DefaultConsole.o
+	ld -T linker.ld -o kernel.bin loader.o kernel.o DefaultConsole.o g++support.o
 
 loader.o: loader.s
 	nasm -f elf -o loader.o loader.s
@@ -22,6 +22,9 @@ kernel.o: kernel.cpp
 
 DefaultConsole.o: DefaultConsole.cpp
 	g++ -o DefaultConsole.o -c DefaultConsole.cpp $(CXXFLAGS)
+
+g++support.o: g++support.cpp
+	g++ -o g++support.o -c g++support.cpp $(CXXFLAGS)
 
 clean:
 	rm floppy.img kernel.bin *.o

@@ -1,10 +1,12 @@
 #ifndef __INCLUDED_DEFAULTCONSOLE_H
 #define __INCLUDED_DEFAULTCONSOLE_H
 
+#define kconsole DefaultConsole::self()
+
 class DefaultConsole
 {
 public:
-	DefaultConsole();
+	static DefaultConsole &self();
 
 	void clear();
 	void locate(int row, int col);
@@ -22,6 +24,7 @@ public:
 	void wait_ack();
 
 private:
+	DefaultConsole();
 	unsigned char *videoram;
 	unsigned int *cursor;
 	unsigned char attr;

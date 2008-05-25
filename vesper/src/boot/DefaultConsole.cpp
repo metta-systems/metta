@@ -6,6 +6,34 @@
 #define LINE_PITCH 160       // line width in bytes
 #define LINE_COUNT 25
 
+//----------------------------------------------------------------------------
+// Write a byte out to the specified port.
+void outb(unsigned short port, unsigned char value)
+{
+	asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
+}
+
+unsigned char inb(unsigned short port)
+{
+	unsigned char ret;
+	asm volatile("inb %1, %0" : "=a" (ret) : "dN" (port));
+	return ret;
+}
+
+unsigned short inw(unsigned short port)
+{
+	unsigned short ret;
+	asm volatile ("inw %1, %0" : "=a" (ret) : "dN" (port));
+	return ret;
+}
+//----------------------------------------------------------------------------
+
+DefaultConsole& DefaultConsole::self()
+{
+	static DefaultConsole console;
+	return console;
+}
+
 DefaultConsole::DefaultConsole()
 {
    videoram = (unsigned char *) 0xb8000;
@@ -17,18 +45,27 @@ void DefaultConsole::clear()
 {
 	for(unsigned int i = 0; i < LINE_PITCH*LINE_COUNT; i++)
 		videoram[i] = 0;
-	*cursor = 0;
+	locate(0,0);
 	attr = 0x07;
 }
 
 void DefaultConsole::locate(int row, int col)
 {
 	*cursor = (row * LINE_PITCH) + (col * 2);
+	// Set VGA hardware cursor
+	outb(0x3D4, 14); // Tell the VGA board we are setting the high cursor byte.
+	outb(0x3D5, (*cursor) >> 8); // Send the high cursor byte.
+	outb(0x3D4, 15); // Tell the VGA board we are setting the low cursor byte.
+	outb(0x3D5, *cursor);      // Send the low cursor byte.
 }
 
 void DefaultConsole::scroll_up()
 {
-	print("<TODO>");
+	for (int i = 0; i < LINE_PITCH*(LINE_COUNT-1); i++)
+		videoram[i] = videoram[i+LINE_PITCH];
+
+	for (int i = LINE_PITCH*(LINE_COUNT-1); i < LINE_PITCH*LINE_COUNT; i++)
+		videoram[i] = 0;
 }
 
 void DefaultConsole::newline()
@@ -107,14 +144,6 @@ void DefaultConsole::print(const char *str) //FIXME: use PStrings?
 		print_char(*str++);
 }
 
-void DefaultConsole::debug_showregs() // FIXME: gcc will trash most of the registers anyway
-{
-}
-
-void DefaultConsole::debug_showstack()
-{
-}
-
 // Dump at most 256 bytes of memory.
 void DefaultConsole::debug_showmem(void *addr, unsigned int size)
 {
@@ -159,3 +188,12 @@ void DefaultConsole::debug_showmem(void *addr, unsigned int size)
 void DefaultConsole::wait_ack()
 {
 }
+
+void DefaultConsole::debug_showregs() // FIXME: gcc will trash most of the registers anyway
+{
+}
+
+void DefaultConsole::debug_showstack()
+{
+}
+
