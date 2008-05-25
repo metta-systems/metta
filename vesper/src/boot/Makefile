@@ -5,6 +5,9 @@ CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-lea
 bootable: floppy.img sizecalc.sh
 	@./sizecalc.sh
 
+#floppy.img: boot.asm kernel.bin
+#	nasm -f bin -o floppy.img -DKERNEL_IMAGE=\"kernel.bin\" boot.asm
+
 floppy.img: floppy.s kernel.bin grub/stage1 grub/stage2
 	nasm -f bin -o floppy.img floppy.s
 
