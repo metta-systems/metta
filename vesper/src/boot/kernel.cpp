@@ -1,15 +1,11 @@
 #include "DefaultConsole.h"
 
-#define UNUSED(x) ((void)x)
-
 extern "C" void kmain( void* mbd, unsigned int magic );
 
 DefaultConsole console;
 
 void kmain( void* mbd, unsigned int magic )
 {
-	UNUSED(mbd);
-
 	console.locate(7, 20);
 	console.print("Hello,\n");
 	console.newline();
@@ -19,5 +15,5 @@ void kmain( void* mbd, unsigned int magic )
 	console.print_hex(magic);
 	console.locate(11, 22);
 	console.print_int(-21954321);
-	console.debug_showmem((void*)0x7c00, 135);
+	console.debug_showmem(mbd, 135);
 }
