@@ -1,4 +1,8 @@
 CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -fno-rtti -fno-exceptions
+#BUILDDIR = build
+
+SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s
+OBJS = $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(SRCS)))
 
 .PHONY: bootable
 
@@ -11,20 +15,14 @@ bootable: floppy.img sizecalc.sh
 floppy.img: floppy.s kernel.bin grub/stage1 grub/stage2
 	nasm -f bin -o floppy.img floppy.s
 
-kernel.bin: kernel.o loader.o DefaultConsole.o
-	ld -T linker.ld -o kernel.bin loader.o kernel.o DefaultConsole.o g++support.o
+kernel.bin: $(OBJS) linker.ld
+	ld -T linker.ld -o $@ $(OBJS)
 
-loader.o: loader.s
-	nasm -f elf -o loader.o loader.s
+%.o: %.s
+	nasm -f elf -o $@ $<
 
-kernel.o: kernel.cpp
-	g++ -o kernel.o -c kernel.cpp $(CXXFLAGS)
-
-DefaultConsole.o: DefaultConsole.cpp
-	g++ -o DefaultConsole.o -c DefaultConsole.cpp $(CXXFLAGS)
-
-g++support.o: g++support.cpp
-	g++ -o g++support.o -c g++support.cpp $(CXXFLAGS)
+%.o: %.cpp
+	g++ $(CXXFLAGS) -o $@ -c $<
 
 clean:
-	rm floppy.img kernel.bin *.o
+	rm floppy.img kernel.bin $(OBJS)

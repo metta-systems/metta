@@ -1,9 +1,14 @@
+#include "gdt.h"
 #include "DefaultConsole.h"
 
-extern "C" void kmain( void* mbd, unsigned int magic );
+extern "C" void kmain(void *mbd, unsigned int magic);
 
-void kmain( void* mbd, unsigned int magic )
+void kmain(void *mbd, unsigned int magic)
 {
+	kconsole.locate(5, 0);
+	kconsole.set_color(LIGHTRED);
+	kconsole.print("Reloading GDT...");
+	GlobalDescriptorTable::init();
 	kconsole.locate(7, 20);
 	kconsole.print("Hello,\n");
 	kconsole.newline();
