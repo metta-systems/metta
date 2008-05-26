@@ -4,5 +4,6 @@
 #include <stdint.h> // Use C99-mandated types.
 
 typedef uint32_t size_t;
+typedef uint32_t addr_t;
 
 #endif

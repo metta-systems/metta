@@ -24,3 +24,10 @@ namespace __cxxabiv1
 	{
 	}
 }
+
+// #include "kalloc.h"
+
+// C++ support for new/delete
+// void *operator new()
+// {
+// }

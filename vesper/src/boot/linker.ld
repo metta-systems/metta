@@ -1,30 +1,36 @@
 ENTRY (_loader)
 
 SECTIONS{
-    . = 0x00100000;
+	.text 0x00100000 :
+	{
+		code = .; _code = .; __code = .;
+		*(.text)
+	}
 
-    .text :{
-        *(.text)
-    }
+	.rodata ALIGN (0x1000) :
+	{
+		*(.rodata)
+	}
 
-    .rodata ALIGN (0x1000) : {
-        *(.rodata)
-    }
+	.data ALIGN (0x1000) :
+	{
+		start_ctors = .;
+		*(.ctor*)
+		end_ctors = .;
+		start_dtors = .;
+		*(.dtor*)
+		end_dtors = .;
+		data = .; _data = .; __data = .;
+		*(.data)
+	}
 
-    .data ALIGN (0x1000) : {
-	start_ctors = .;
-	*(.ctor*)
-	end_ctors = .;
-	start_dtors = .;
-	*(.dtor*)
-	end_dtors = .;
-	*(.data)
-    }
-
-    .bss : {
+    .bss ALIGN (0x1000) :
+    {
         _sbss = .;
         *(COMMON)
         *(.bss)
         _ebss = .;
     }
+
+    end = .; _end = .; __end = .;
 }
