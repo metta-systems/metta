@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "idt.h"
 #include "DefaultConsole.h"
 
 extern "C" void kmain(void *mbd, unsigned int magic);
@@ -7,9 +8,14 @@ void kmain(void *mbd, unsigned int magic)
 {
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
-	kconsole.print("Reloading GDT...");
+	kconsole.print("Reloading GDT...\n");
 	GlobalDescriptorTable::init();
+
+	kconsole.print("Loading IDT...\n");
+	InterruptDescriptorTable::init();
+
 	kconsole.locate(7, 20);
+	kconsole.set_color(LIGHTGRAY);
 	kconsole.print("Hello,\n");
 	kconsole.newline();
 	kconsole.print_byte(0xAB);
@@ -21,4 +27,7 @@ void kmain(void *mbd, unsigned int magic)
 	kconsole.scroll_up();
 	kconsole.set_color(YELLOW);
 	kconsole.debug_showmem(mbd, 135);
+
+	asm volatile ("int $0x3");
+	asm volatile ("int $0x4");
 }

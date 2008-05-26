@@ -13,29 +13,29 @@ class GdtEntry
 			tss  = 0x9
 		};
 
-		void set_seg(uint32 base, uint32 limit, int dpl, segtype_e type);
-		void set_sys(uint32 base, uint32 limit, int dpl, segtype_e type);
+		void set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl);
+		void set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl);
 
 	private:
 		union {
-			uint32 raw[2];
+			uint32_t raw[2];
 			struct {
-				uint32 limit_low  : 16;
-				uint32 base_low   : 24 __attribute__((packed));
-				uint32 type       :  4;
-				uint32 s          :  1;
-				uint32 dpl        :  2;
-				uint32 present    :  1;
-				uint32 limit_high :  4;
-				uint32 avl        :  2;
-				uint32 datasize   :  1;
-				uint32 granularity:  1;
-				uint32 base_high  :  8;
+				uint32_t limit_low  : 16;
+				uint32_t base_low   : 24 __attribute__((packed));
+				uint32_t type       :  4;
+				uint32_t s          :  1;
+				uint32_t dpl        :  2;
+				uint32_t present    :  1;
+				uint32_t limit_high :  4;
+				uint32_t avl        :  2;
+				uint32_t datasize   :  1;
+				uint32_t granularity:  1;
+				uint32_t base_high  :  8;
 			} d __attribute__((packed));
 		} x;
 };
 
-INLINE void GdtEntry::set_seg(uint32 base, uint32 limit, int dpl, segtype_e type)
+INLINE void GdtEntry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
 	if (limit > (1 << 20))
 	{
@@ -64,7 +64,7 @@ INLINE void GdtEntry::set_seg(uint32 base, uint32 limit, int dpl, segtype_e type
 	x.d.avl = 0;
 }
 
-INLINE void GdtEntry::set_sys(uint32 base, uint32 limit, int dpl, segtype_e type)
+INLINE void GdtEntry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
     x.d.limit_low  =  limit        &   0xFFFF;
     x.d.limit_high = (limit >> 16) &     0xFF;
@@ -90,8 +90,8 @@ class GlobalDescriptorTable
 
 	private:
 		GlobalDescriptorTable();
-		uint16 limit;
-		uint32 base;
+		uint16_t limit;
+		uint32_t base;
 } __attribute__((packed));
 
 #endif /* !__INCLUDED_GDT_H */

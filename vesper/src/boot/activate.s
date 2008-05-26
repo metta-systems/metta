@@ -1,4 +1,5 @@
-global activate_gdt   ; Allows the C code to call gdt_flush().
+global activate_gdt
+global activate_idt
 
 activate_gdt:
     mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
@@ -11,4 +12,9 @@ activate_gdt:
     mov fs, ax
     mov gs, ax
     mov ss, ax
+    ret
+
+activate_idt:
+    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
+    lidt [eax]        ; Load the IDT pointer.
     ret

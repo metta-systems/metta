@@ -20,6 +20,7 @@ MultiBootHeader:
 STACKSIZE equ 0x4000                  ; that's 16k.
 
 _loader:
+   cli
    mov esp, stack+STACKSIZE           ; set up the stack
    push eax                           ; pass Multiboot magic number
    push ebx                           ; pass Multiboot info structure
@@ -46,7 +47,7 @@ static_dtors_loop:
    cmp ebx, end_dtors
    jb .body
 
-   hlt                                ; halt machine should kernel return
+   jmp $                              ; halt machine should kernel return
 
 section .bss
 align 32

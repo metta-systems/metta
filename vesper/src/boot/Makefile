@@ -1,7 +1,7 @@
 CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -fno-rtti -fno-exceptions
 #BUILDDIR = build
 
-SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s
+SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp
 OBJS = $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(SRCS)))
 
 .PHONY: bootable
