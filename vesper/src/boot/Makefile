@@ -25,7 +25,9 @@ $(BUILDDIR)/%.o: %.s
 	nasm -f elf -o $@ $<
 
 $(BUILDDIR)/%.o: %.cpp
-	g++ $(CXXFLAGS) -o $@ -c $<
+	g++ -MD $(CXXFLAGS) -o $@ -c $<
 
 clean:
 	rm floppy.img kernel.bin $(OBJS)
+
+-include $(BUILDDIR)/*.d
