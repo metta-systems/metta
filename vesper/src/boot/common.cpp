@@ -1,9 +1,9 @@
-#include "Types.h"
+#include "common.h"
 
 void *memset (void *__s, int __c, size_t __n)
 {
-	char *c = (char *)__s;
-	for(size_t i = 0; i < __n; i++)
-		c[i] = __c;
+	uint8_t *c = (uint8_t *)__s;
+	for(; __n > 0; __n--)
+		*c++ = __c;
 	return __s;
 }

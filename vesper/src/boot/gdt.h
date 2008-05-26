@@ -1,7 +1,7 @@
 #ifndef __INCLUDED_GDT_H
 #define __INCLUDED_GDT_H
 
-#include "Types.h"
+#include "common.h"
 
 class GdtEntry
 {
