@@ -1,5 +1,6 @@
 #include "gdt.h"
 #include "idt.h"
+#include "timer.h"
 #include "DefaultConsole.h"
 
 extern "C" void kmain(void *mbd, unsigned int magic);
@@ -30,4 +31,8 @@ void kmain(void *mbd, unsigned int magic)
 
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
+
+	Timer::init();
+	kconsole.wait_ack();
+	asm volatile ("sti");
 }

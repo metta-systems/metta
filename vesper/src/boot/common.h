@@ -7,21 +7,21 @@
 extern "C" void *memset (void *__s, int __c, size_t __n);
 
 // Write a byte out to the specified port.
-INLINE void outb(unsigned short port, unsigned char value)
+INLINE void outb(uint16_t port, uint8_t value)
 {
 	asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
 }
 
-INLINE unsigned char inb(unsigned short port)
+INLINE uint8_t inb(uint16_t port)
 {
-	unsigned char ret;
+	uint8_t ret;
 	asm volatile("inb %1, %0" : "=a" (ret) : "dN" (port));
 	return ret;
 }
 
-INLINE unsigned short inw(unsigned short port)
+INLINE uint16_t inw(uint16_t port)
 {
-	unsigned short ret;
+	uint16_t ret;
 	asm volatile ("inw %1, %0" : "=a" (ret) : "dN" (port));
 	return ret;
 }

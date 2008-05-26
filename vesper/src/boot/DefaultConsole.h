@@ -42,10 +42,10 @@ public:
 	void print(const char *str); //FIXME: use PStrings?
 
 	void debug_showmem(void *addr, unsigned int size);
+	void wait_ack();
 	// unfinished:
 	void debug_showregs();
 	void debug_showstack();
-	void wait_ack();
 
 private:
 	DefaultConsole();

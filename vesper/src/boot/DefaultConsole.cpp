@@ -182,6 +182,26 @@ void DefaultConsole::debug_showmem(void *addr, unsigned int size)
 
 void DefaultConsole::wait_ack()
 {
+	uint8_t keycode;
+	uint8_t irqmask = inb(0x21);
+	outb(0x21, irqmask | 0x02); // mask irq1 - keyboard
+
+	do {
+		while((inb(0x64) & 0x01) == 0)
+			/* wait keypress */;
+
+		keycode = inb(0x60);
+	} while(keycode != 0x1C); // "make code" == enter
+
+	do {
+		while((inb(0x64) & 0x01) == 0)
+			/* wait keypress */;
+
+		keycode = inb(0x60);
+	} while(keycode != 0x9C); // "break code" == enter
+
+	if (!(irqmask & 0x02)) // if irq1 was unmasked previously,
+		outb(0x21, inb(0x21) & 0xFD); // unmask it now without changing other flags
 }
 
 void DefaultConsole::debug_showregs() // FIXME: gcc will trash most of the registers anyway
