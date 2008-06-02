@@ -1,3 +1,4 @@
+#include "kalloc.h"
 #include "gdt.h"
 #include "idt.h"
 #include "timer.h"
@@ -37,8 +38,26 @@ void kmain(void *mbd, unsigned int magic)
 // 	kconsole.wait_ack();
 // 	asm volatile ("sti");
 
-	Paging::self();
+	uint32_t a = kmalloc(8);
 	kconsole.print("Enabling paging...\n");
+	Paging::self();
+	uint32_t b = kmalloc(8);
+	uint32_t c = kmalloc(8);
+	kconsole.print("a: ");
+	kconsole.print_hex(a);
+	kconsole.print(", b: ");
+	kconsole.print_hex(b);
+	kconsole.print("\nc: ");
+	kconsole.print_hex(c);
+
+	kfree(c);
+	kfree(b);
+	uint32_t d = kmalloc(12);
+	kconsole.print(", d: ");
+	kconsole.print_hex(d);
+
+	ASSERT(b == d);
+
 	uint32_t *ptr = (uint32_t*)0xA0000000;
     uint32_t do_page_fault = *ptr;
     UNUSED(do_page_fault);

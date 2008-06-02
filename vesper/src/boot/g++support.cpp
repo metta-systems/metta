@@ -25,9 +25,28 @@ namespace __cxxabiv1
 	}
 }
 
-// #include "kalloc.h"
+#include "kalloc.h"
 
-// C++ support for new/delete
-// void *operator new()
-// {
-// }
+//overload the operator "new"
+void *operator new (uint32_t size)
+{
+    return (void *)kmalloc(size);
+}
+
+//overload the operator "new[]"
+void *operator new[] (uint32_t size)
+{
+    return (void *)kmalloc(size);
+}
+
+//overload the operator "delete"
+void operator delete (void *p)
+{
+    kfree((uint32_t)p);
+}
+
+//overload the operator "delete[]"
+void operator delete[] (void *p)
+{
+    kfree((uint32_t)p);
+}

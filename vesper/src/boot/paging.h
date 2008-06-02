@@ -194,4 +194,10 @@ class Paging
 		Paging();
 };
 
+// externs for kalloc.cpp
+extern PageDirectory *kernel_directory;
+extern void alloc_frame(PageTableEntry *page, int is_kernel, int is_writeable);
+extern void free_frame(PageTableEntry *page);
+
+
 #endif
