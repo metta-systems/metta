@@ -148,6 +148,17 @@ class PageTable
 
 class PageDirectory
 {
+	public:
+		PageDirectory()
+		{
+			memset(this, 0, sizeof(PageDirectory));
+		}
+
+		/**
+			Makes a copy of a page directory.
+		**/
+		PageDirectory *clone();
+
 	public: //private:
 		/**
 			Array of pointers to pagetables.

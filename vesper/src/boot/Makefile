@@ -1,22 +1,23 @@
 CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -fno-rtti -fno-exceptions -DCONFIG_CPU_IA32_P4
 BUILDDIR = build
 
-SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp timer.cpp kalloc.cpp paging.cpp
+SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp timer.cpp kalloc.cpp paging.cpp process.s
 OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(SRCS))))
 
 .PHONY: bootable builddir
 
-bootable: floppy.img sizecalc.sh
-	@./sizecalc.sh
+bootable: floppy.img
+	@echo All done, start 'bochs' to boot.
 
 builddir:
 	mkdir -p $(BUILDDIR)
 
+#Old multiboot loader.
 #floppy.img: boot.asm kernel.bin
 #	nasm -f bin -o floppy.img -DKERNEL_IMAGE=\"kernel.bin\" boot.asm
 
-floppy.img: floppy.s kernel.bin grub/stage1 grub/stage2
-	nasm -f bin -o floppy.img floppy.s
+floppy.img: kernel.bin update_image.sh
+	@./update_image.sh
 
 kernel.bin: builddir $(OBJS) linker.ld
 	ld -T linker.ld -o $@ $(OBJS)
@@ -28,6 +29,6 @@ $(BUILDDIR)/%.o: %.cpp
 	g++ -MD $(CXXFLAGS) -o $@ -c $<
 
 clean:
-	rm floppy.img kernel.bin $(OBJS)
+	rm kernel.bin $(OBJS)
 
 -include $(BUILDDIR)/*.d

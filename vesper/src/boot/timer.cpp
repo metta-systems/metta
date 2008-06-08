@@ -13,9 +13,10 @@ static uint32_t tick = 0;
 static void callback(registers_t)
  {
     tick++;
-    kconsole.print("Tick: ");
+    switch_task();
+/*    kconsole.print("Tick: ");
     kconsole.print_int(tick);
-    kconsole.newline();
+    kconsole.newline();*/
  }
 
 

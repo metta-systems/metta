@@ -115,6 +115,79 @@ void free_frame(PageTableEntry *page)
 }
 
 /**
+   PageDirectory
+**/
+extern "C" void copy_page_physical(uint32_t from, uint32_t to);
+
+static PageTable *clone_table(PageTable *src, uint32_t *physAddr)
+{
+	// Make a new page table, which is page aligned.
+	PageTable *table = (PageTable*)kmalloc_ap(sizeof(PageTable), physAddr);
+	// Ensure that the new table is blank.
+	memset(table, 0, sizeof(PageTable));
+
+	// For every entry in the table...
+	int i;
+	for (i = 0; i < 1024; i++)
+	{
+		// If the source entry has a frame associated with it...
+		if (src->pages[i].pg.base)
+		{
+			// Get a new frame.
+			alloc_frame(&table->pages[i], 0, 0);
+			// Clone the flags from source to destination.
+			if (src->pages[i].pg.present)  table->pages[i].pg.present = 1;
+			if (src->pages[i].pg.rw)       table->pages[i].pg.rw = 1;
+			if (src->pages[i].pg.privilege)table->pages[i].pg.privilege = 1;
+			if (src->pages[i].pg.accessed) table->pages[i].pg.accessed = 1;
+			if (src->pages[i].pg.dirty)    table->pages[i].pg.dirty = 1;
+			// Physically copy the data across. This function is in process.s.
+			copy_page_physical(src->pages[i].pg.base*0x1000, table->pages[i].pg.base*0x1000);
+		}
+	}
+	return table;
+}
+
+PageDirectory *PageDirectory::clone()
+{
+	uint32_t phys;
+
+	// Make a new page directory and obtain its physical address.
+	PageDirectory *dir = (PageDirectory*)kmalloc_ap(sizeof(PageDirectory), &phys);
+	// Ensure that it is blank.
+	memset(dir, 0, sizeof(PageDirectory));
+
+	// Get the offset of tablesPhysical from the start of the PageDirectory structure.
+	uint32_t offset = (uint32_t)dir->tablesPhysical - (uint32_t)dir;
+
+	// Then the physical address of dir->tablesPhysical is:
+	dir->physicalAddr = phys + offset;
+
+	// Go through each page table. If the page table is in the kernel directory, do not make a new copy.
+	int i;
+	for (i = 0; i < 1024; i++)
+	{
+		if (!tables[i])
+			continue;
+
+		if (kernel_directory->tables[i] == tables[i])
+		{
+			// It's in the kernel, so just use the same pointer.
+			dir->tables[i] = tables[i];
+			dir->tablesPhysical[i] = tablesPhysical[i];
+		}
+		else
+		{
+			// Copy the table.
+			uint32_t phys;
+			dir->tables[i] = clone_table(tables[i], &phys);
+			dir->tablesPhysical[i] = phys | 0x07; ///WTF (What The Flags)?
+		}
+	}
+	return dir;
+}
+
+/**
    Handler for page faults.
 **/
 void page_fault(registers_t regs);
@@ -136,9 +209,8 @@ Paging::Paging()
 	memset(frames, 0, INDEX_FROM_BIT(nframes));
 
 	// Let's make a page directory.
-	kernel_directory = (PageDirectory*)kmalloc_a(sizeof(PageDirectory));
-	memset(kernel_directory, 0, sizeof(PageDirectory));
-	current_directory = kernel_directory;
+	kernel_directory = new PageDirectory;
+	kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
 
 	// Map some pages in the kernel heap area.
 	// Here we call get_page but not alloc_frame. This causes PageTableEntries
@@ -178,6 +250,9 @@ Paging::Paging()
 
 	// Initialise the kernel heap.
 	kheap = new DefaultHeap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
+
+	current_directory = kernel_directory->clone();
+	switch_page_directory(current_directory);
 }
 
 void Paging::switch_page_directory(PageDirectory *dir)
