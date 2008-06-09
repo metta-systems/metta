@@ -181,16 +181,44 @@ PageDirectory *PageDirectory::clone()
 			// Copy the table.
 			uint32_t phys;
 			dir->tables[i] = clone_table(tables[i], &phys);
-			dir->tablesPhysical[i] = phys | 0x07; ///WTF (What The Flags)?
+			dir->tablesPhysical[i] = phys | 0x07; //Present, Read-write, user-mode
 		}
 	}
 	return dir;
+}
+
+PageTableEntry *PageDirectory::get_page(uint32_t address, int make)
+{
+	// Turn the address into an index.
+	address /= 0x1000;
+	// Find the page table containing this address.
+	uint32_t table_idx = address / 1024;
+
+	if (tables[table_idx]) // If this table is already assigned
+	{
+		return &tables[table_idx]->pages[address%1024];
+	}
+	else if(make)
+	{
+		uint32_t tmp;
+		tables[table_idx] = (PageTable*)kmalloc_ap(sizeof(PageTable), &tmp);
+        memset(tables[table_idx], 0, sizeof(PageTable));
+		tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US.
+		return &tables[table_idx]->pages[address%1024];
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 /**
    Handler for page faults.
 **/
 void page_fault(registers_t regs);
+
+// The size of physical memory.
+uint32_t mem_end_page = 0x1000000; // Assume it is 16Mb
 
 Paging& Paging::self()
 {
@@ -200,16 +228,16 @@ Paging& Paging::self()
 
 Paging::Paging()
 {
-	// The size of physical memory. For the moment we
-	// assume it is 16MB big.
-	uint32_t mem_end_page = 0x1000000;//TODO grab this from multiboot structure
+	kconsole.print("Initializing paging, total Mb physical memory: ");
+	kconsole.print_int(mem_end_page/(1024*1024));
+	kconsole.newline();
 
 	nframes = mem_end_page / 0x1000;
 	frames = (uint32_t*)kmalloc(INDEX_FROM_BIT(nframes));
 	memset(frames, 0, INDEX_FROM_BIT(nframes));
 
 	// Let's make a page directory.
-	kernel_directory = new PageDirectory;
+	kernel_directory = new PageDirectory; // Has to be page-aligned!
 	kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
 
 	// Map some pages in the kernel heap area.
@@ -219,7 +247,7 @@ Paging::Paging()
 	// placement_address between identity mapping and enabling the heap!
 	uint32_t i = 0;
 	for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
-		get_page(i, 1, kernel_directory);
+		kernel_directory->get_page(i, 1);
 
 	// We need to identity map (phys addr = virt addr) from
 	// 0x0 to the end of used memory, so we can access this
@@ -228,66 +256,44 @@ Paging::Paging()
 	// inside the loop body we actually change placement_address
 	// by calling kmalloc(). A while loop causes this to be
 	// computed on-the-fly rather than once at the start.
+	//
 	// Allocate a lil' bit extra so the kernel heap can be
 	// initialised properly.
 	i = 0;
-	while (i < placement_address+0x1000)
+	while (i < placement_address+0x2000)
 	{
 		// Kernel code is readable but not writeable from userspace.
-		alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+		alloc_frame( kernel_directory->get_page(i, 1), 0, 0);
 		i += 0x1000;
 	}
 
 	// Now allocate those pages we mapped earlier.
 	for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
-		alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+		alloc_frame( kernel_directory->get_page(i, 1), 0, 0);
 
 	// Before we enable paging, we must register our page fault handler.
 	register_interrupt_handler(14, page_fault);
 
 	// Now, enable paging!
+	kconsole.print("Enabling paging: kernel_directory\n");
 	switch_page_directory(kernel_directory);
 
 	// Initialise the kernel heap.
+	kconsole.print("Initializing kernel heap.\n");
 	kheap = new DefaultHeap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
 
-	current_directory = kernel_directory->clone();
-	switch_page_directory(current_directory);
+	kconsole.print("Enabling paging: cloned directory\n");
+	switch_page_directory(kernel_directory->clone());
 }
 
 void Paging::switch_page_directory(PageDirectory *dir)
 {
 	current_directory = dir;
-	asm volatile("mov %0, %%cr3":: "r"(&dir->tablesPhysical));
+	asm volatile("mov %0, %%cr3":: "r"(dir->physicalAddr));
 	uint32_t cr0;
 	asm volatile("mov %%cr0, %0": "=r"(cr0));
 	cr0 |= 0x80000000; // Enable paging!
 	asm volatile("mov %0, %%cr0":: "r"(cr0));
-}
-
-PageTableEntry *Paging::get_page(uint32_t address, int make, PageDirectory *dir)
-{
-	// Turn the address into an index.
-	address /= 0x1000;
-	// Find the page table containing this address.
-	uint32_t table_idx = address / 1024;
-
-	if (dir->tables[table_idx]) // If this table is already assigned
-	{
-		return &dir->tables[table_idx]->pages[address%1024];
-	}
-	else if(make)
-	{
-		uint32_t tmp;
-		dir->tables[table_idx] = (PageTable*)kmalloc_ap(sizeof(PageTable), &tmp);
-        memset(dir->tables[table_idx], 0, 0x1000);
-		dir->tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US.
-		return &dir->tables[table_idx]->pages[address%1024];
-	}
-	else
-	{
-		return 0;
-	}
 }
 
 void page_fault(registers_t regs)

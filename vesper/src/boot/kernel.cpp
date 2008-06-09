@@ -3,11 +3,13 @@
 #include "idt.h"
 #include "timer.h"
 #include "paging.h"
+#include "multiboot.h"
 #include "DefaultConsole.h"
 
-extern "C" void kmain(void *mbd, unsigned int magic);
+extern "C" void kmain(multiboot_header *mbd, unsigned int magic);
+extern uint32_t mem_end_page; //in paging.cpp
 
-void kmain(void *mbd, unsigned int magic)
+void kmain(multiboot_header *mbd, unsigned int magic)
 {
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
@@ -31,6 +33,18 @@ void kmain(void *mbd, unsigned int magic)
 	kconsole.set_color(YELLOW);
 	kconsole.debug_showmem(mbd, 135);
 
+	kconsole.set_color(WHITE);
+	if (mbd->flags & MULTIBOOT_FLAG_MEM)
+	{
+		kconsole.print("Mem lower: ");
+		kconsole.print_int(mbd->mem_lower);
+		kconsole.newline();
+		kconsole.print("Mem upper: ");
+		kconsole.print_int(mbd->mem_upper);
+		kconsole.newline();
+		mem_end_page = (mbd->mem_lower + mbd->mem_upper + 1024) * 1024;
+	}
+
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
 
@@ -39,7 +53,6 @@ void kmain(void *mbd, unsigned int magic)
 // 	asm volatile ("sti");
 
 	uint32_t a = kmalloc(8);
-	kconsole.print("Enabling paging...\n");
 	Paging::self();
 	uint32_t b = kmalloc(8);
 	uint32_t c = kmalloc(8);
@@ -59,6 +72,6 @@ void kmain(void *mbd, unsigned int magic)
 	ASSERT(b == d);
 
 	uint32_t *ptr = (uint32_t*)0xA0000000;
-    uint32_t do_page_fault = *ptr;
-    UNUSED(do_page_fault);
+	uint32_t do_page_fault = *ptr;
+	UNUSED(do_page_fault);
 }

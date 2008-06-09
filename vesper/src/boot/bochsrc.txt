@@ -1,2 +1,3 @@
 boot: floppy
 floppya: 1_44="floppy.img", status=inserted
+cpu: reset_on_triple_fault=0

@@ -1,5 +1,6 @@
 #include "kalloc.h"
 #include "paging.h"
+#include "DefaultConsole.h"
 
 #define HEAP_INDEX_SIZE   0x20000
 #define HEAP_MAGIC        0x123890AB
@@ -24,14 +25,25 @@ static uint32_t kmalloc_internal(uint32_t sz, int align, uint32_t *phys)
 {
 	if (kheap)
 	{
+		kconsole.print("kmalloc_internal: Allocating from kheap: ");
+		kconsole.print_int(sz);
+		kconsole.print(" bytes.\n");
 		void *ptr = kheap->alloc(sz, align);
+
 		if (phys)
-			*phys = (uint32_t)ptr;
+		{
+			PageTableEntry *page = kernel_directory->get_page((uint32_t)ptr, 0);
+			*phys = page->pg.base*0x1000 + ((uint32_t)ptr&0xFFF);
+		}
+
 		return (uint32_t)ptr;
 	}
 
 	// If no kernel heap exists, we just assign memory at placement_address
 	// and increment it by sz.
+	kconsole.print("kmalloc_internal: Allocating from placement_address: ");
+	kconsole.print_int(sz);
+	kconsole.print(" bytes.\n");
 	if (align == 1 && (placement_address & 0xFFFFF000) )
 	{
 		// Align the placement address;
@@ -127,7 +139,7 @@ void DefaultHeap::expand(uint32_t new_size)
 	while (i < new_size)
 	{
 	///!!!
-		alloc_frame( paging.get_page(start_address+i, 1, kernel_directory),
+		alloc_frame( kernel_directory->get_page(start_address+i, 1),
 					(supervisor)?1:0, (readonly)?0:1);
 		i += 0x1000 /* page size */;
 	}
@@ -154,7 +166,7 @@ uint32_t DefaultHeap::contract(uint32_t new_size)
 	uint32_t i = old_size - 0x1000;
 	while (new_size < i)
 	{
-		free_frame(paging.get_page(start_address+i, 0, kernel_directory));
+		free_frame(kernel_directory->get_page(start_address+i, 0));
 		i -= 0x1000;
 	}
 	end_address = start_address + new_size;
@@ -164,6 +176,8 @@ uint32_t DefaultHeap::contract(uint32_t new_size)
 DefaultHeap::DefaultHeap(uint32_t start, uint32_t end, uint32_t max, bool supervisor, bool readonly)
 	: index((void *)(start), HEAP_INDEX_SIZE)
 {
+	kconsole.print("Initializing kernel heap.\n");
+
 	// All our assumptions are made on startAddress and endAddress being page-aligned.
 	ASSERT(start%0x1000 == 0);
 	ASSERT(end%0x1000 == 0);

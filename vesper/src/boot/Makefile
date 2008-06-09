@@ -9,24 +9,22 @@ OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(S
 bootable: floppy.img
 	@echo All done, start 'bochs' to boot.
 
-builddir:
-	mkdir -p $(BUILDDIR)
-
-#Old multiboot loader.
-#floppy.img: boot.asm kernel.bin
-#	nasm -f bin -o floppy.img -DKERNEL_IMAGE=\"kernel.bin\" boot.asm
-
 floppy.img: kernel.bin update_image.sh
 	@./update_image.sh
 
-kernel.bin: builddir $(OBJS) linker.ld
-	ld -T linker.ld -o $@ $(OBJS)
+kernel.bin: $(OBJS) linker.ld
+	@echo [Lnk] $@
+	@ld -T linker.ld -o $@ $(OBJS)
 
 $(BUILDDIR)/%.o: %.s
-	nasm -f elf -o $@ $<
+	@mkdir -p $(BUILDDIR)
+	@echo [Asm]  $<
+	@nasm -f elf -o $@ $<
 
 $(BUILDDIR)/%.o: %.cpp
-	g++ -MD $(CXXFLAGS) -o $@ -c $<
+	@mkdir -p $(BUILDDIR)
+	@echo [C++]  $<
+	@g++ -MD $(CXXFLAGS) -o $@ -c $<
 
 clean:
 	rm kernel.bin $(OBJS)

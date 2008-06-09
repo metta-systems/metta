@@ -159,6 +159,13 @@ class PageDirectory
 		**/
 		PageDirectory *clone();
 
+		/**
+			Retrieves a pointer to the page required.
+			If make == 1, if the page-table in which this page should
+			reside isn't created, create it!
+		**/
+		PageTableEntry *get_page(uint32_t address, int make);
+
 	public: //private:
 		/**
 			Array of pointers to pagetables.
@@ -189,13 +196,6 @@ class Paging
 			CR3 register.
 		**/
 		void switch_page_directory(PageDirectory *dir);
-
-		/**
-			Retrieves a pointer to the page required.
-			If make == 1, if the page-table in which this page should
-			reside isn't created, create it!
-		**/
-		PageTableEntry *get_page(uint32_t address, int make, PageDirectory *dir);
 
 	private:
 		/**

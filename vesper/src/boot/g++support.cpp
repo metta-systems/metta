@@ -1,3 +1,5 @@
+#include "DefaultConsole.h"
+
 /* Dummy implementation for now */
 namespace __cxxabiv1
 {
@@ -27,26 +29,46 @@ namespace __cxxabiv1
 
 #include "kalloc.h"
 
+// FIXME: Streamline memory allocation strategy (e.g. extra parameters to new())
+//void *operator new (uint32_t size, bool align, void **phys)
+
 //overload the operator "new"
+// "new" is for 'big' objects that are page-aligned.
 void *operator new (uint32_t size)
 {
-    return (void *)kmalloc(size);
+	kconsole.print("operator new(): ");
+	kconsole.print_int(size);
+	uint32_t addr = kmalloc_a(size);
+	kconsole.print(" @ ");
+	kconsole.print_hex(addr);
+	kconsole.newline();
+    return (void *)addr;
 }
 
 //overload the operator "new[]"
+// "new[]" is for 'small' objects that are not page-aligned and usually in pools.
 void *operator new[] (uint32_t size)
 {
+	kconsole.print("operator new[] (): ");
+	kconsole.print_int(size);
+	kconsole.newline();
     return (void *)kmalloc(size);
 }
 
 //overload the operator "delete"
 void operator delete (void *p)
 {
+	kconsole.print("operator delete(): ");
+	kconsole.print_hex((uint32_t)p);
+	kconsole.newline();
     kfree((uint32_t)p);
 }
 
 //overload the operator "delete[]"
 void operator delete[] (void *p)
 {
+	kconsole.print("operator delete[] (): ");
+	kconsole.print_hex((uint32_t)p);
+	kconsole.newline();
     kfree((uint32_t)p);
 }
