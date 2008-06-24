@@ -1,11 +1,13 @@
 global _loader          ; making entry point visible to linker
 extern kmain            ; kmain is defined elsewhere
 extern start_ctors, end_ctors, start_dtors, end_dtors ; c++ init/fini function lists
+extern __code, __edata, __end
 
 ; setting up the Multiboot header - see GRUB docs for details
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
-FLAGS       equ  MODULEALIGN | MEMINFO  ; this is the Multiboot 'flag' field
+MBOOTVALID  equ  1<<16                  ; kernel layout fields are valid
+FLAGS       equ  MODULEALIGN | MEMINFO | MBOOTVALID
 MAGIC       equ    0x1BADB002           ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
 
@@ -15,6 +17,11 @@ MultiBootHeader:
    dd MAGIC
    dd FLAGS
    dd CHECKSUM
+   dd MultiBootHeader
+   dd __code
+   dd __edata
+   dd __end
+   dd _loader
 
 ; reserve initial kernel stack space
 STACKSIZE equ 0x4000                  ; that's 16k.
@@ -27,7 +34,7 @@ _loader:
 
 static_ctors_loop:
    mov ebx, start_ctors
-   jmp .test
+   jmp short .test
 .body:
    call [ebx]
    add ebx,4
@@ -39,7 +46,7 @@ static_ctors_loop:
 
 static_dtors_loop:
    mov ebx, start_dtors
-   jmp .test
+   jmp short .test
 .body:
    call [ebx]
    add ebx,4

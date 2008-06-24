@@ -1,6 +1,8 @@
+OUTPUT_FORMAT(binary)
 ENTRY (_loader)
 
-SECTIONS{
+SECTIONS
+{
 	.text 0x00100000 :
 	{
 		code = .; _code = .; __code = .;
@@ -23,14 +25,15 @@ SECTIONS{
 		data = .; _data = .; __data = .;
 		*(.data)
 	}
+	edata = .; _edata = .; __edata = .;
 
-    .bss ALIGN (0x1000) :
-    {
-        _sbss = .;
-        *(COMMON)
-        *(.bss)
-        _ebss = .;
-    }
+	.bss ALIGN (0x1000) :
+	{
+		_sbss = .;
+		*(COMMON)
+		*(.bss)
+		_ebss = .;
+	}
 
-    end = .; _end = .; __end = .;
+	end = .; _end = .; __end = .;
 }
