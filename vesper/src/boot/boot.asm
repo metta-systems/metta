@@ -177,7 +177,7 @@ bios_extensions_test:
 error_exit:
    mov  ah,  0x0E                                          ; teletype service
    xor  bx,  bx                                            ; select page 0, color 0
-   mov  cx,  4                                             ; print that much chars
+   mov  cx,  4                                             ; print that many chars
 .displaying:
    lodsb                                                   ; load char
    int  0x10                                               ; ask for bios video service
@@ -387,8 +387,6 @@ move_image:
    rep movsb                                               ; move image
 
    ; -- zero bss
-   ; Note: since orb doesn't have bss upon boot time, we're safe to remove bss
-   ; zeroing and save a few bytes at cost of loosing multiboot compliance.
 
    mov  ecx, ebx                                           ; zero BSS
    xchg eax, ebx                                           ; save image location to EBX
