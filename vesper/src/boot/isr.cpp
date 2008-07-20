@@ -27,7 +27,7 @@ void isr_handler(registers_t regs)
 	}
 }
 
-// This gets called from our ASM interrupt handler stub.
+// This gets called from our ASM hardware interrupt handler stub.
 void irq_handler(registers_t regs)
 {
 	// Send an EOI (end of interrupt) signal to the PICs.
