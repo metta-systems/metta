@@ -7,7 +7,7 @@ OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(p
 
 .PHONY: bootable builddir
 
-bootable: floppy.img
+bootable: builddir floppy.img
 	@echo All done, start 'bochs' to boot.
 
 floppy.img: kernel.bin update_image.sh
@@ -20,16 +20,16 @@ kernel.bin: $(OBJS) linker.ld
 builddir:
 	@mkdir -p $(BUILDDIR)
 
-$(BUILDDIR)/%.o: %.s builddir
+$(BUILDDIR)/%.o: %.s
 	@echo [Asm]  $<
 	@nasm -f elf -o $@ $<
 
 # Use g++ to compile C code.
-$(BUILDDIR)/%.o: %.c builddir
+$(BUILDDIR)/%.o: %.c
 	@echo [C++]  $<
 	@g++ -MD $(CXXFLAGS) -o $@ -c $<
 
-$(BUILDDIR)/%.o: %.cpp builddir
+$(BUILDDIR)/%.o: %.cpp
 	@echo [C++]  $<
 	@g++ -MD $(CXXFLAGS) -o $@ -c $<
 

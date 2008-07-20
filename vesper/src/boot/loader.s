@@ -11,6 +11,9 @@ FLAGS       equ  MODULEALIGN | MEMINFO | MBOOTVALID
 MAGIC       equ    0x1BADB002           ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
 
+; reserve initial kernel stack space
+STACKSIZE equ 0x4000                  ; that's 16k.
+
 section .text
 align 4
 MultiBootHeader:
@@ -22,9 +25,6 @@ MultiBootHeader:
    dd __edata
    dd __end
    dd _loader
-
-; reserve initial kernel stack space
-STACKSIZE equ 0x4000                  ; that's 16k.
 
 _loader:
    cli

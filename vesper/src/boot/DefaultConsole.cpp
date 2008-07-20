@@ -212,11 +212,18 @@ void DefaultConsole::debug_showstack()
 {
 }
 
-void DefaultConsole::debug_log(const char *str)
+void DefaultConsole::debug_log(const char *str, ...)
 {
+	#define BUFSIZE 512
+	char buffer[BUFSIZE];
+	va_list ap;
+	va_start(ap, str);
+	vsnprintf(buffer, BUFSIZE, str, ap);
+	va_end(ap);
+
 	unsigned char old_attr = attr;
 	set_attr(WHITE, BLACK);
-	print(str);
+	print(buffer);
 	print_char(EOL);
 	attr = old_attr;
 }

@@ -36,12 +36,8 @@ namespace __cxxabiv1
 // "new" is for 'big' objects that are page-aligned.
 void *operator new (uint32_t size)
 {
-	kconsole.print("operator new(): ");
-	kconsole.print_int(size);
 	uint32_t addr = kmalloc_a(size);
-	kconsole.print(" @ ");
-	kconsole.print_hex(addr);
-	kconsole.newline();
+	kconsole.debug_log("operator new: %d @ %p", size, addr);
     return (void *)addr;
 }
 
@@ -49,26 +45,21 @@ void *operator new (uint32_t size)
 // "new[]" is for 'small' objects that are not page-aligned and usually in pools.
 void *operator new[] (uint32_t size)
 {
-	kconsole.print("operator new[] (): ");
-	kconsole.print_int(size);
-	kconsole.newline();
-    return (void *)kmalloc(size);
+	uint32_t addr = kmalloc(size);
+	kconsole.debug_log("operator new[]: %d @ %p", size, addr);
+    return (void *)addr;
 }
 
 //overload the operator "delete"
 void operator delete (void *p)
 {
-	kconsole.print("operator delete(): ");
-	kconsole.print_hex((uint32_t)p);
-	kconsole.newline();
+	kconsole.debug_log("operator delete: %p", p);
     kfree((uint32_t)p);
 }
 
 //overload the operator "delete[]"
 void operator delete[] (void *p)
 {
-	kconsole.print("operator delete[] (): ");
-	kconsole.print_hex((uint32_t)p);
-	kconsole.newline();
+	kconsole.debug_log("operator delete[]: %p", p);
     kfree((uint32_t)p);
 }

@@ -47,7 +47,7 @@ public:
 	void debug_showregs();
 	void debug_showstack();
 
-	void debug_log(const char *str);
+	void debug_log(const char *str, ...);
 
 private:
 	DefaultConsole();
