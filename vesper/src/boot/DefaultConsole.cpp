@@ -212,3 +212,11 @@ void DefaultConsole::debug_showstack()
 {
 }
 
+void DefaultConsole::debug_log(const char *str)
+{
+	unsigned char old_attr = attr;
+	set_attr(WHITE, BLACK);
+	print(str);
+	print_char(EOL);
+	attr = old_attr;
+}
