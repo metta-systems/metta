@@ -1,0 +1,19 @@
+Bootloader (Multiboot)
+[kernel image]
+[initramdisk image]
+
+--> boot kernel kickstart thread:
+  -- init cpu(s) (protection, address translation, exception handlers)
+  -- init memory layout
+  -- unpack initramdisk to designated location
+
+kickstart thread jumps to initramdisk entry point
+
+  -- initramdisk (kserver) is the first nester, that provides base Common Protocols components and boots up
+     other components such as
+     * memory manager
+     * scheduler
+     * security server
+     * object (security) manager
+
+when it returns, system is shutdown/halt/reset.
