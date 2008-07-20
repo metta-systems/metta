@@ -1,8 +1,9 @@
-CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-rtti -fno-exceptions -DCONFIG_CPU_IA32_P4
+CFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions -DCONFIG_CPU_IA32_P4
+CXXFLAGS = $(CFLAGS) -fno-rtti
 BUILDDIR = build
 
-SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp timer.cpp kalloc.cpp paging.cpp process.s task.cpp
-OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(SRCS))))
+SRCS = g++support.cpp ctype.c string.c vsprintf.c common.cpp loader.s kernel.cpp kalloc.cpp DefaultConsole.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s timer.cpp paging.cpp process.s task.cpp
+OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(patsubst %.s, %.o, $(SRCS)))))
 
 .PHONY: bootable builddir
 
@@ -16,13 +17,19 @@ kernel.bin: $(OBJS) linker.ld
 	@echo [Lnk] $@
 	@ld -T linker.ld -o $@ $(OBJS)
 
-$(BUILDDIR)/%.o: %.s
+builddir:
 	@mkdir -p $(BUILDDIR)
+
+$(BUILDDIR)/%.o: %.s builddir
 	@echo [Asm]  $<
 	@nasm -f elf -o $@ $<
 
-$(BUILDDIR)/%.o: %.cpp
-	@mkdir -p $(BUILDDIR)
+# Use g++ to compile C code.
+$(BUILDDIR)/%.o: %.c builddir
+	@echo [C++]  $<
+	@g++ -MD $(CXXFLAGS) -o $@ -c $<
+
+$(BUILDDIR)/%.o: %.cpp builddir
 	@echo [C++]  $<
 	@g++ -MD $(CXXFLAGS) -o $@ -c $<
 

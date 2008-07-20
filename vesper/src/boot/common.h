@@ -1,17 +1,23 @@
 #ifndef __INCLUDED_COMMON_H
 #define __INCLUDED_COMMON_H
 
+// [ ] Use djb's safe string operations?
+
 #include "Types.h"
 
 #define UNUSED(x) ((void)(x))
 #define INLINE inline
 #define PANIC(msg) panic(msg, __FILE__, __LINE__);
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
+#define BUG_ON(b) ASSERT(!(b))
+#define EXPORT_SYMBOL(sym) extern typeof(sym) sym
+#define noinline __attribute__((noinline))
 
 extern "C" void panic(const char *message, const char *file, uint32_t line);
 extern "C" void panic_assert(const char *desc, const char *file, uint32_t line);
 
-extern "C" void *memset (void *__s, int __c, size_t __n);
+// extern "C" void *memset (void *__s, int __c, size_t __n);
+// extern "C" void memcpy(void *dest, const uint8_t *src, uint32_t len);
 
 // Write a byte out to the specified port.
 INLINE void outb(uint16_t port, uint8_t value)

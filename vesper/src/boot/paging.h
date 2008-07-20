@@ -2,6 +2,7 @@
 #define __INCLUDED_PAGING_H
 
 #include "common.h"
+#include "string.h"
 #include "isr.h"
 #include "ia32.h"
 

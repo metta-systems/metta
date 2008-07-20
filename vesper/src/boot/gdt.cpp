@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "string.h"
 
 extern "C" void activate_gdt(uint32_t base);
 

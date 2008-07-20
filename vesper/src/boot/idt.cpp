@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "string.h"
 
 extern "C" void activate_idt(uint32_t base);
 
