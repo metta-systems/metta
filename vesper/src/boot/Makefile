@@ -1,7 +1,7 @@
-CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-leading-underscore -fno-rtti -fno-exceptions -DCONFIG_CPU_IA32_P4
+CXXFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-rtti -fno-exceptions -DCONFIG_CPU_IA32_P4
 BUILDDIR = build
 
-SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp timer.cpp kalloc.cpp paging.cpp process.s
+SRCS = loader.s kernel.cpp DefaultConsole.cpp g++support.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s common.cpp timer.cpp kalloc.cpp paging.cpp process.s task.cpp
 OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.s, %.o, $(SRCS))))
 
 .PHONY: bootable builddir

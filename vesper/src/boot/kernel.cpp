@@ -3,6 +3,7 @@
 #include "idt.h"
 #include "timer.h"
 #include "paging.h"
+#include "task.h"
 #include "multiboot.h"
 #include "DefaultConsole.h"
 
@@ -48,10 +49,6 @@ void kmain(multiboot_header *mbd, unsigned int magic)
 	asm volatile ("int $0x3");
 	asm volatile ("int $0x4");
 
-// 	Timer::init();
-// 	kconsole.wait_ack();
-// 	asm volatile ("sti");
-
 	uint32_t a = kmalloc(8);
 	Paging::self();
 	uint32_t b = kmalloc(8);
@@ -68,10 +65,22 @@ void kmain(multiboot_header *mbd, unsigned int magic)
 	uint32_t d = kmalloc(12);
 	kconsole.print(", d: ");
 	kconsole.print_hex(d);
+	kconsole.newline();
 
 	ASSERT(b == d);
 
-	uint32_t *ptr = (uint32_t*)0xA0000000;
-	uint32_t do_page_fault = *ptr;
-	UNUSED(do_page_fault);
+	Timer::init();
+	Task::init();
+
+	int ret = Task::self()->fork();
+
+	kconsole.print("fork() returned ");
+	kconsole.print_int(ret);
+	kconsole.print(" and getpid() returned ");
+	kconsole.print_int(Task::self()->getpid());
+	kconsole.newline();
+
+	while(1) {	}
 }
+
+// vi: ts=4

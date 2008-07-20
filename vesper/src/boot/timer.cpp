@@ -1,5 +1,6 @@
 #include "common.h"
 #include "isr.h"
+#include "task.h"
 #include "timer.h"
 #include "DefaultConsole.h"
 
@@ -11,13 +12,10 @@ void Timer::init()
 static uint32_t tick = 0;
 
 static void callback(registers_t)
- {
-    tick++;
-///    switch_task();
-/*    kconsole.print("Tick: ");
-    kconsole.print_int(tick);
-    kconsole.newline();*/
- }
+{
+	tick++;
+	Task::yield();
+}
 
 
 Timer::Timer()
@@ -43,5 +41,5 @@ Timer::Timer()
 	outb(0x40, l);
 	outb(0x40, h);
 
-	kconsole.print("Constructed timer.\n");
+	kconsole.debug_log("Constructed timer.");
 }
