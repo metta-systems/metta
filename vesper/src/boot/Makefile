@@ -2,7 +2,7 @@ CFLAGS = -Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-built
 CXXFLAGS = $(CFLAGS) -fno-rtti
 BUILDDIR = build
 
-SRCS = g++support.cpp ctype.c string.c vsprintf.c common.cpp loader.s kernel.cpp kalloc.cpp DefaultConsole.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s timer.cpp paging.cpp process.s task.cpp
+SRCS = loader.s g++support.cpp ctype.c string.c vsprintf.c common.cpp kernel.cpp kalloc.cpp DefaultConsole.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s timer.cpp paging.cpp process.s task.cpp
 OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(patsubst %.s, %.o, $(SRCS)))))
 
 .PHONY: bootable builddir
