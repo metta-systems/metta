@@ -150,6 +150,7 @@ static PageTable *clone_table(PageTable *src, uint32_t *physAddr)
 
 PageDirectory *PageDirectory::clone()
 {
+	kconsole.debug_log(__PRETTY_FUNCTION__);
 	uint32_t phys;
 
 	// Make a new page directory and obtain its physical address.
@@ -172,6 +173,7 @@ PageDirectory *PageDirectory::clone()
 
 		if (kernel_directory->tables[i] == tables[i])
 		{
+			kconsole.debug_log(".. reusing kernel directory page table");
 			// It's in the kernel, so just use the same pointer.
 			dir->tables[i] = tables[i];
 			dir->tablesPhysical[i] = tablesPhysical[i];
@@ -179,6 +181,7 @@ PageDirectory *PageDirectory::clone()
 		else
 		{
 			// Copy the table.
+			kconsole.debug_log(".. cloning page table");
 			uint32_t phys;
 			dir->tables[i] = clone_table(tables[i], &phys);
 			dir->tablesPhysical[i] = phys | 0x07; //Present, Read-write, user-mode
