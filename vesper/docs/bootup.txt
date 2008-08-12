@@ -1,19 +1,34 @@
-Bootloader (Multiboot)
-[kernel image]
-[initramdisk image]
+On-disk layout:
+ Bootloader (Multiboot)
+ [kernel image]
+ [initramdisk image]
 
---> boot kernel kickstart thread:
-  -- init cpu(s) (protection, address translation, exception handlers)
-  -- init memory layout
-  -- unpack initramdisk to designated location
+Bootloader:
+ - call c++ ctors
+ - call kernel
+ - [on return from kernel] call c++ dtors
+ - halt
 
-kickstart thread jumps to initramdisk entry point
+kernel:
+ - init memory layout
+ - init cpu(s) (protection, address translation, exception handlers)
+   - prepare gdt and idt tables
+ - find out init image location
+ - unpack initramdisk to designated location
+ - parse image header, find components
+ - call components constructors
+ - call main component entry point
 
-  -- initramdisk (kserver) is the first nester, that provides base Common Protocols components and boots up
-     other components such as
-     * memory manager
-     * scheduler
-     * security server
-     * object (security) manager
+component constructors:
+ - run in kernel mode, have the ability to set up their system tables etcetc
+ - usual components in init image include:
+   - interrupt dispatcher
+   - root memory manager
+   - portal manager
 
-when it returns, system is shutdown/halt/reset.
+main component entry point:
+ - kserver is the first nester, that provides base Common Protocols components and boots up
+   other (sub-)components such as:
+   - scheduler
+   - security server
+   - object (security) manager
