@@ -1,15 +1,16 @@
-global _loader          ; making entry point visible to linker
-extern kmain            ; kmain is defined elsewhere
+; kate: replace-tabs off; indent-width 3;
+global _loader                        ; making entry point visible to linker
+extern kernel_entry                   ; kernel_entry is defined elsewhere
 extern start_ctors, end_ctors, start_dtors, end_dtors ; c++ init/fini function lists
 extern __code, __edata, __end
 
 ; setting up the Multiboot header - see GRUB docs for details
-MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
-MEMINFO     equ  1<<1                   ; provide memory map
-MBOOTVALID  equ  1<<16                  ; kernel layout fields are valid
+MODULEALIGN equ  1<<0                 ; align loaded modules on page boundaries
+MEMINFO     equ  1<<1                 ; provide memory map
+MBOOTVALID  equ  1<<16                ; kernel layout fields are valid
 FLAGS       equ  MODULEALIGN | MEMINFO | MBOOTVALID
-MAGIC       equ    0x1BADB002           ; 'magic number' lets bootloader find the header
-CHECKSUM    equ -(MAGIC + FLAGS)        ; checksum required
+MAGIC       equ  0x1BADB002           ; 'magic number' lets bootloader find the header
+CHECKSUM    equ -(MAGIC + FLAGS)      ; checksum required
 
 ; reserve initial kernel stack space
 STACKSIZE equ 0x4000                  ; that's 16k.
@@ -42,7 +43,7 @@ static_ctors_loop:
    cmp ebx, end_ctors
    jb .body
 
-   call  kmain                       ; call kernel proper
+   call  kernel_entry                 ; call kernel proper
 
 static_dtors_loop:
    mov ebx, start_dtors

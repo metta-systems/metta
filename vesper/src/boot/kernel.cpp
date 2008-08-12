@@ -7,10 +7,10 @@
 #include "multiboot.h"
 #include "DefaultConsole.h"
 
-extern "C" void kmain(multiboot_header *mbd, unsigned int magic);
+extern "C" void kernel_entry(multiboot_header *mbd, unsigned int magic);
 extern uint32_t mem_end_page; //in paging.cpp
 
-void kmain(multiboot_header *mbd, unsigned int magic)
+void kernel_entry(multiboot_header *mbd, unsigned int magic)
 {
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
