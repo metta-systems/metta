@@ -3,7 +3,8 @@ CXXFLAGS = $(CFLAGS) -fno-rtti
 BUILDDIR = build
 
 SRCS = loader.s g++support.cpp ctype.c string.c vsprintf.c common.cpp kernel.cpp kalloc.cpp DefaultConsole.cpp gdt.cpp activate.s isr.cpp idt.cpp interrupt.s timer.cpp paging.cpp process.s task.cpp
-OBJS = $(addprefix $(BUILDDIR)/, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(patsubst %.s, %.o, $(SRCS)))))
+LINK = $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(patsubst %.s, %.o, $(SRCS))))
+OBJS = $(addprefix $(BUILDDIR)/, $(LINK))
 
 .PHONY: bootable builddir
 
@@ -15,7 +16,7 @@ floppy.img: kernel.bin update_image.sh
 
 kernel.bin: $(OBJS) linker.ld
 	@echo [Lnk] $@
-	@ld -T linker.ld -o $@ $(OBJS)
+	@ld -T linker.ld -o $@ $(LINK)
 
 builddir:
 	@mkdir -p $(BUILDDIR)
