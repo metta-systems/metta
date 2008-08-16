@@ -16,9 +16,7 @@ void register_interrupt_handler(uint8_t n, isr_t handler)
 void isr_handler(registers_t regs)
 {
 	kconsole.set_color(GREEN);
-	kconsole.print("Received interrupt: ");
-	kconsole.print_int(regs.int_no);
-	kconsole.newline();
+	kconsole.print("Received interrupt: %d\n", regs.int_no);
 
 	if (interrupt_handlers[regs.int_no] != 0)
 	{
