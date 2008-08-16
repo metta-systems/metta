@@ -10,9 +10,7 @@ def set_options(opt):
 	pass
 
 def configure(conf):
-	conf.check_tool('cc')
-	conf.check_tool('g++')
-	conf.check_tool('nasm')
+	conf.check_tool('gcc g++ nasm')
 	flags = '-Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
 	conf.env['CCFLAGS'] += [flags]
 	conf.env['CXXFLAGS'] += [flags + ' -fno-rtti']
