@@ -69,8 +69,8 @@ void kernel_entry(multiboot_header *mbd, unsigned int magic)
 
 	ASSERT(b == d);
 
-	Timer::init();
 	Task::init();
+	Timer::init();
 
 	int ret = Task::self()->fork();
 
@@ -80,7 +80,8 @@ void kernel_entry(multiboot_header *mbd, unsigned int magic)
 	kconsole.print_int(Task::self()->getpid());
 	kconsole.newline();
 
-	while(1) {	}
+	while(1) { }
 }
 
+/* kate: indent-width 4; replace-tabs off; */
 // vi: ts=4
