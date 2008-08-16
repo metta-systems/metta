@@ -17,9 +17,11 @@ def configure(conf):
 	conf.env['CXXFLAGS'] += [flags + ' -fno-rtti']
 	conf.env['CXXDEFINES'] += ['CONFIG_CPU_IA32_P4'] #FIXME: archdep
 	conf.env['LINKFLAGS'] += ['-T linker.ld']
+	conf.env['NASM_FLAGS'] += ['-f elf']
 	conf.write_config_header('config.h')
 
 def build(bld):
 	obj = bld.create_obj('cpp', 'program')
 	obj.find_sources_in_dirs('.')
+	obj.source.remove('./boot.asm')
 	obj.target = 'vesper'
