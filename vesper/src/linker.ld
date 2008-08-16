@@ -7,7 +7,7 @@ SECTIONS
 	.text 0x100000 :
 	{
 		code = .; _code = .; __code = .;
-		default/loader.o(.text)
+		default/boot/loader.o(.text)
 		*(.text)
 		FILL(0x90)
 	}

@@ -11,9 +11,10 @@ def set_options(opt):
 
 def configure(conf):
 	conf.check_tool('gcc g++ nasm')
-	flags = '-Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
-	conf.env['CCFLAGS'] += [flags]
-	conf.env['CXXFLAGS'] += [flags + ' -fno-rtti']
+	cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule'
+	flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
+	conf.env['CCFLAGS'] += [cflags + ' ' + flags]
+	conf.env['CXXFLAGS'] += [cflags + ' -fno-rtti ' + flags]
 	conf.env['CXXDEFINES'] += ['CONFIG_CPU_IA32_P4'] #FIXME: archdep
 	conf.env['LINKFLAGS'] += ['-T ../linker.ld ' + flags]
 	conf.env['NASM_FLAGS'] += ['-f elf']
@@ -21,6 +22,6 @@ def configure(conf):
 
 def build(bld):
 	obj = bld.create_obj('cpp', 'program')
-	obj.find_sources_in_dirs('.')
-	obj.source.remove('./boot.asm')
+	obj.find_sources_in_dirs('. boot lib memory pd schedule')
+	obj.source.remove('boot/boot.asm')
 	obj.target = 'vesper'
