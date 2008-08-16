@@ -29,7 +29,7 @@ MultiBootHeader:
 
 _loader:
    cli
-   mov esp, stack+STACKSIZE           ; set up the stack
+   mov esp, stack+STACKSIZE           ; set up the stack (in the initial GDT coordinates)
    push eax                           ; pass Multiboot magic number
    push ebx                           ; pass Multiboot info structure
 
@@ -45,16 +45,7 @@ static_ctors_loop:
 
    call  kernel_entry                 ; call kernel proper
 
-static_dtors_loop:
-   mov ebx, start_dtors
-   jmp short .test
-.body:
-   call [ebx]
-   add ebx,4
-.test:
-   cmp ebx, end_dtors
-   jb .body
-
+   cli
    jmp $                              ; halt machine should kernel return
 
 section .bss
