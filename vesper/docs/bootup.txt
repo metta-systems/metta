@@ -32,3 +32,6 @@ main component entry point:
    - scheduler
    - security server
    - object (security) manager
+
+
+TODO: draw assumed memory layout when booting up.
