@@ -133,10 +133,19 @@ void DefaultConsole::print_char(char ch)
 	}
 }
 
-void DefaultConsole::print(const char *str) //FIXME: use PStrings?
+void DefaultConsole::print(const char *str, ...)
 {
-	while (*str)
-		print_char(*str++);
+	#define BUFSIZE 512
+	char buffer[BUFSIZE];
+	va_list ap;
+	va_start(ap, str);
+	vsnprintf(buffer, BUFSIZE, str, ap);
+	va_end(ap);
+	#undef BUFSIZE
+
+	int i = 0;
+	while (buffer[i])
+		print_char(buffer[i++]);
 }
 
 // Dump at most 256 bytes of memory.
@@ -220,6 +229,7 @@ void DefaultConsole::debug_log(const char *str, ...)
 	va_start(ap, str);
 	vsnprintf(buffer, BUFSIZE, str, ap);
 	va_end(ap);
+	#undef BUFSIZE
 
 	unsigned char old_attr = attr;
 	set_attr(WHITE, BLACK);

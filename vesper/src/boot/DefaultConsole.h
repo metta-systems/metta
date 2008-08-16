@@ -39,7 +39,7 @@ public:
 	void print_char(char ch);
 	void print_byte(unsigned char n);
 	void print_hex(unsigned int n);
-	void print(const char *str); //FIXME: use PStrings?
+	void print(const char *str, ...);
 
 	void debug_showmem(void *addr, unsigned int size);
 	void wait_ack();
