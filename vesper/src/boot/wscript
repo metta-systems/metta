@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import Params
+Params.g_autoconfig=1
+
+srcdir = '.'
+blddir = 'build'
+
+def set_options(opt):
+    pass
+
+def configure(conf):
+    conf.check_tool('nasm')
+    conf.check_tool('g++')
+    flags = '-Wall -Wextra -Werror -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
+    conf.env['CCFLAGS'] += [flags]
+    conf.env['CXXFLAGS'] += [flags + ' -fno-rtti']
+    conf.env['CXXDEFINES'] += ['CONFIG_CPU_IA32_P4'] #FIXME: archdep
+    conf.env['LINKFLAGS'] += ['-T linker.ld']
+    conf.write_config_header('config.h')
+
+def build(bld):
+    obj = bld.create_obj('cpp', 'program')
+    obj.find_sources_in_dirs('.')
+    obj.target = 'vesper'
