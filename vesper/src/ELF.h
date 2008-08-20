@@ -27,7 +27,7 @@ typedef unsigned char   Elf32_Byte;  /* 1 byte /1 align/unsigned */
 /*
  * ELF structures: ELF file Header
  */
-typedef struct Elf32Header
+struct Elf32Header
 {
 	Elf32_Word e_magic;
 	Elf32_Byte e_class;
@@ -89,7 +89,7 @@ typedef struct Elf32Header
 /*
  * ELF structures: Section header
  */
-typedef struct Elf32SectionHeader
+struct Elf32SectionHeader
 {
 	Elf32_Word sh_name;          /**< Section name, index in string table */
 	Elf32_Word sh_type;          /**< Type of section */
@@ -101,7 +101,7 @@ typedef struct Elf32SectionHeader
 	Elf32_Word sh_info;          /**< Additional section information */
 	Elf32_Word sh_addralign;     /**< Section alignment */
 	Elf32_Word sh_entsize;       /**< Entry size if section holds table */
-};
+} PACKED;
 
 /* predefined section table indices */
 #define SHN_UNDEF     0x0000
@@ -145,7 +145,7 @@ typedef struct Elf32SectionHeader
 /*
  * ELF structures: Symbol Table
  */
-typedef struct Elf32Symbol
+struct Elf32Symbol
 {
 	Elf32_Word st_name;          /**< Symbol name, index into string table */
 	Elf32_Addr st_value;         /**< Symbol value */
@@ -153,7 +153,7 @@ typedef struct Elf32Symbol
 	Elf32_Byte st_info;          /**< Symbol type and binding */
 	Elf32_Byte st_other;
 	Elf32_Half st_shndx;         /**< Section index this symbol belongs to */
-};
+} PACKED;
 
 /* Symbol Table index: first/undefined entry */
 #define STN_UNDEF 0x0000
@@ -183,7 +183,7 @@ typedef struct Elf32Symbol
 /*
  * ELF structures: Dynamic linking info
  */
-typedef struct Elf32Dyn
+struct Elf32Dyn
 {
 	Elf32_Sword d_tag;
 	union
@@ -225,13 +225,13 @@ typedef struct Elf32Dyn
 /*
  * ELF structures: Relocation Entries
  */
-typedef struct Elf32_Rel
+struct Elf32_Rel
 {
 	Elf32_Addr r_offset;
 	Elf32_Word r_info;
 };
 
-typedef struct Elf32_Rela
+struct Elf32_Rela
 {
 	Elf32_Addr  r_offset;
 	Elf32_Word  r_info;
@@ -260,7 +260,7 @@ typedef struct Elf32_Rela
 /*
  * ELF structures: Program Header
  */
-typedef struct Elf32ProgramHeader
+struct Elf32ProgramHeader
 {
 	Elf32_Word p_type;           /**< Program section type */
 	Elf32_Off  p_offset;         /**< File offset */
@@ -298,7 +298,7 @@ elf_hash(const unsigned char *name)
 	while (*name)
 	{
 		h = (h << 4) + *name++;
-		if (g = h & 0xf0000000)
+		if ((g = h & 0xf0000000))
 			h ^= g >> 24;
 		h &= ~g;
 	}

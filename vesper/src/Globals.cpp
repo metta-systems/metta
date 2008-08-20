@@ -4,6 +4,7 @@
 
 /* Global objects FIXME: use singletons instead? */
 Kernel kernel;
+ElfParser kernelElfParser;
 
 /* This entry point is called from loader */
 void kernel_entry(multiboot_header *mbd, unsigned int magic)

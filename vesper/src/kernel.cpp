@@ -1,4 +1,5 @@
 #include "Kernel.h"
+#include "Globals.h"
 #include "Registers.h"
 #include "DefaultConsole.h"
 #include "kalloc.h"
