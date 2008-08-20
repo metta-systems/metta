@@ -35,4 +35,7 @@ SECTIONS
 	}
 
 	end = .; _end = .; __end = .;
+
+	/* Strip unnecessary stuff */
+	/DISCARD/ : { *(.comment .note .eh_frame .dtors) }
 }

@@ -1,16 +1,15 @@
+#include "Kernel.h"
+#include "DefaultConsole.h"
 #include "kalloc.h"
 #include "gdt.h"
 #include "idt.h"
 #include "timer.h"
 #include "paging.h"
 #include "task.h"
-#include "multiboot.h"
-#include "DefaultConsole.h"
 
-extern "C" void kernel_entry(multiboot_header *mbd, unsigned int magic);
 extern uint32_t mem_end_page; //in paging.cpp
 
-void kernel_entry(multiboot_header *mbd, unsigned int magic)
+void Kernel::run(multiboot_header *mbd)
 {
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
@@ -27,7 +26,6 @@ void kernel_entry(multiboot_header *mbd, unsigned int magic)
 	kconsole.print_byte(0xAB);
 	kconsole.print_char('_');
 	kconsole.print("World!\n\n");
-	kconsole.print_hex(magic);
 	kconsole.locate(11, 22);
 	kconsole.print_int(-21954321);
 	kconsole.scroll_up();

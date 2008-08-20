@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+#define MULTIBOOT_MAGIC   0x2BADB002
+
 #define MULTIBOOT_FLAG_MEM     0x001
 #define MULTIBOOT_FLAG_DEVICE  0x002
 #define MULTIBOOT_FLAG_CMDLINE 0x004
