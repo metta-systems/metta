@@ -1,4 +1,5 @@
 #include "Kernel.h"
+#include "Registers.h"
 #include "DefaultConsole.h"
 #include "kalloc.h"
 #include "gdt.h"
@@ -19,66 +20,94 @@ void Kernel::run(multiboot_header *mbd)
 	kconsole.print("Loading IDT...\n");
 	InterruptDescriptorTable::init();
 
-	kconsole.locate(7, 20);
-	kconsole.set_color(LIGHTGRAY);
-	kconsole.print("Hello,\n");
-	kconsole.newline();
-	kconsole.print_byte(0xAB);
-	kconsole.print_char('_');
-	kconsole.print("World!\n\n");
-	kconsole.locate(11, 22);
-	kconsole.print_int(-21954321);
-	kconsole.scroll_up();
-	kconsole.set_color(YELLOW);
-	kconsole.debug_showmem(mbd, 135);
-
 	kconsole.set_color(WHITE);
 	if (mbd->flags & MULTIBOOT_FLAG_MEM)
 	{
-		kconsole.print("Mem lower: ");
-		kconsole.print_int(mbd->mem_lower);
-		kconsole.newline();
-		kconsole.print("Mem upper: ");
-		kconsole.print_int(mbd->mem_upper);
-		kconsole.newline();
+		kconsole.print("Mem lower: %d\n", mbd->mem_lower);
+		kconsole.print("Mem upper: %d\n", mbd->mem_upper);
 		mem_end_page = (mbd->mem_lower + mbd->mem_upper + 1024) * 1024;
 	}
 
-	asm volatile ("int $0x3");
-	asm volatile ("int $0x4");
-
+	// malloc check
 	uint32_t a = kmalloc(8);
 	Paging::self();
 	uint32_t b = kmalloc(8);
 	uint32_t c = kmalloc(8);
-	kconsole.print("a: ");
-	kconsole.print_hex(a);
-	kconsole.print(", b: ");
-	kconsole.print_hex(b);
-	kconsole.print("\nc: ");
-	kconsole.print_hex(c);
-
 	kfree(c);
 	kfree(b);
 	uint32_t d = kmalloc(12);
-	kconsole.print(", d: ");
-	kconsole.print_hex(d);
-	kconsole.newline();
-
 	ASSERT(b == d);
+	kfree(a);
+	kfree(d);
 
 	Task::init();
 	Timer::init();
 
-	int ret = Task::self()->fork();
-
-	kconsole.print("fork() returned ");
-	kconsole.print_int(ret);
-	kconsole.print(" and getpid() returned ");
-	kconsole.print_int(Task::self()->getpid());
-	kconsole.newline();
+	// Load initrd and pass control to init component
 
 	while(1) { }
+}
+
+Address Kernel::backtrace(Address basePointer, Address& returnAddress)
+{
+	// We take a stack base pointer (in basePointer), return what it's pointing at
+	// and put the Address just above it in the stack in returnAddress.
+	Address nextBase = *((Address*)basePointer);
+	returnAddress    = *((Address*)(basePointer+sizeof(Address)));
+	return nextBase;
+}
+
+Address Kernel::backtrace(int n)
+{
+	Address basePointer = readBasePointer();
+	Address ebp = basePointer;
+	Address eip = 1;
+	int i = 0;
+	while (ebp && eip /*&& eip < 0x87000000*/)
+	{
+		ebp = backtrace(ebp, eip);
+		if (i == n)
+		{
+			return eip;
+		}
+		i++;
+	}
+	return 0;
+}
+
+void Kernel::printBacktrace(Address basePointer, int n)
+{
+	Address eip = 1; // Don't initialise to 0, will kill the loop immediately.
+	if (basePointer == NULL)
+	{
+		basePointer = readBasePointer();
+	}
+	Address ebp = basePointer;
+	kconsole.set_color(GREEN);
+	kconsole.print("*** Backtrace ***\nTracing %d stack frames:\n", n);
+	int i = 0;
+	while (ebp && eip &&
+		( (n && i<n) || !n) &&
+		eip < 0x87000000)
+	{
+		ebp = backtrace(ebp, eip);
+		unsigned int offset;
+		char *symbol = kernelElfParser.findSymbol(eip, &offset);
+		offset = eip - offset;
+		kconsole.print("| %08x <%s+%d>\n", eip, symbol, offset);
+		i++;
+	}
+}
+
+void Kernel::printStacktrace(unsigned int n)
+{
+	Address esp = readStackPointer();
+	Address espBase = esp;
+	for (unsigned int i = 0; i < n; i++)
+	{
+		kconsole.print("<ESP+%4d> %08x", esp - espBase, *(Address*)esp);
+		esp += sizeof(Address);
+	}
 }
 
 /* kate: indent-width 4; replace-tabs off; */
