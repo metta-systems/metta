@@ -4,18 +4,15 @@
 
 /* Global objects FIXME: use singletons instead? */
 Kernel kernel;
+Multiboot multiboot;
 ElfParser kernelElfParser;
 
 /* This entry point is called from loader */
-void kernel_entry(multiboot_header *mbd, unsigned int magic)
+void kernel_entry(MultibootHeader *multibootHeader)
 {
 	kconsole.clear();
-	if(magic != MULTIBOOT_MAGIC)
-	{
-		kconsole.print("Multiboot-capable loader required.");
-		//halt();
-	}
-	kernel.run(mbd);
+	multiboot = Multiboot(multibootHeader);
+	kernel.run(); /* does not return */
 }
 
 // FIXME: Streamline memory allocation strategy (e.g. extra parameters to new())

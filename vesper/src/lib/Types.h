@@ -10,4 +10,6 @@ typedef uint32_t addr_t;
 typedef int32_t  ptrdiff_t;
 typedef uint32_t Address;
 
+#define PACKED __attribute__((__packed__))
+
 #endif

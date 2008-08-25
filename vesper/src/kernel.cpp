@@ -8,11 +8,14 @@
 #include "timer.h"
 #include "paging.h"
 #include "task.h"
+#include "Globals.h"
 
 extern uint32_t mem_end_page; //in paging.cpp
 
-void Kernel::run(multiboot_header *mbd)
+void Kernel::run()
 {
+	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
+
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
 	kconsole.print("Reloading GDT...\n");
@@ -22,11 +25,11 @@ void Kernel::run(multiboot_header *mbd)
 	InterruptDescriptorTable::init();
 
 	kconsole.set_color(WHITE);
-	if (mbd->flags & MULTIBOOT_FLAG_MEM)
+	if (multiboot.hasMemInfo())
 	{
-		kconsole.print("Mem lower: %d\n", mbd->mem_lower);
-		kconsole.print("Mem upper: %d\n", mbd->mem_upper);
-		mem_end_page = (mbd->mem_lower + mbd->mem_upper + 1024) * 1024;
+		kconsole.print("Mem lower: %d\n", multiboot.lowerMem());
+		kconsole.print("Mem upper: %d\n", multiboot.upperMem());
+		mem_end_page = (multiboot.lowerMem() + multiboot.upperMem() + 1024) * 1024;
 	}
 
 	// malloc check

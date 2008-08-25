@@ -3,7 +3,6 @@
 #define __INCLUDED_KERNEL_H
 
 #include "Types.h"
-#include "multiboot.h"
 
 class Kernel
 {
@@ -11,7 +10,7 @@ class Kernel
 		/**
 		 * Boot the kernel
 		 */
-		void run(multiboot_header* mh);
+		void run();
 
 		/**
 		 * Given a stack base pointer, follow it, return the next stack base
@@ -24,6 +23,17 @@ class Kernel
 		 * return address found there.
 		 */
 		static Address backtrace(int n);
+
+		inline static bool strEquals(const char *in1, const char *in2)
+		{
+			char *left = (char *)in1;
+			char *right = (char *)in2;
+			while(*left && *right && *left == *right)
+				left++, right++;
+			if (*left != *right)
+				return false;
+			return true;
+		}
 
 		/**
 		 * Print a full backtrace from the current location. (Or, if specified,

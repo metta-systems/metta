@@ -10,19 +10,18 @@
 #ifndef __INCLUDED_ELF_H
 #define __INCLUDED_ELF_H
 
+#include "Types.h"
 
 /*
  * ELF data types
  */
-typedef unsigned int    Elf32_Addr;  /* 4 bytes/4 align/unsigned */
-typedef unsigned short  Elf32_Half;  /* 2 bytes/2 align/unsigned */
-typedef unsigned int    Elf32_Off;   /* 4 bytes/4 align/unsigned */
-typedef signed   int    Elf32_Sword; /* 4 bytes/4 align/signed   */
-typedef unsigned int    Elf32_Word;  /* 4 bytes/4 align/unsigned */
-typedef unsigned char   Elf32_Byte;  /* 1 byte /1 align/unsigned */
+typedef uint32_t  Elf32_Addr;  /* 4 bytes/4 align/unsigned */
+typedef uint16_t  Elf32_Half;  /* 2 bytes/2 align/unsigned */
+typedef uint32_t  Elf32_Off;   /* 4 bytes/4 align/unsigned */
+typedef  int32_t  Elf32_Sword; /* 4 bytes/4 align/signed   */
+typedef uint32_t  Elf32_Word;  /* 4 bytes/4 align/unsigned */
+typedef  uint8_t  Elf32_Byte;  /* 1 byte /1 align/unsigned */
 
-
-#define PACKED __attribute__((__packed__))
 
 /*
  * ELF structures: ELF file Header
@@ -305,5 +304,4 @@ elf_hash(const unsigned char *name)
 	return h;
 }
 
-#undef PACKED
 #endif
