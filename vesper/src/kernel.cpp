@@ -12,9 +12,26 @@
 
 extern uint32_t mem_end_page; //in paging.cpp
 
+void backtraceTest2()
+{
+	kernel.printStacktrace(5);
+	kernel.printBacktrace(0,0);
+}
+
+void backtraceTest()
+{
+	backtraceTest2();
+}
+
 void Kernel::run()
 {
+	if (!multiboot.isElf())
+		PANIC("ELF information is missing in kernel!");
+
 	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
+
+	backtraceTest();
+	while(1) {}
 
 	kconsole.locate(5, 0);
 	kconsole.set_color(LIGHTRED);
@@ -98,7 +115,7 @@ void Kernel::printBacktrace(Address basePointer, int n)
 		unsigned int offset;
 		char *symbol = kernelElfParser.findSymbol(eip, &offset);
 		offset = eip - offset;
-		kconsole.print("| %08x <%s+%d>\n", eip, symbol, offset);
+		kconsole.print("| %08x <%s+0x%x>\n", eip, symbol ? symbol : "UNRESOLVED", offset);
 		i++;
 	}
 }
@@ -107,9 +124,11 @@ void Kernel::printStacktrace(unsigned int n)
 {
 	Address esp = readStackPointer();
 	Address espBase = esp;
+	kconsole.set_color(GREEN);
+	kconsole.print("<ESP=%08x>\n", esp);
 	for (unsigned int i = 0; i < n; i++)
 	{
-		kconsole.print("<ESP+%4d> %08x", esp - espBase, *(Address*)esp);
+		kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(Address*)esp);
 		esp += sizeof(Address);
 	}
 }

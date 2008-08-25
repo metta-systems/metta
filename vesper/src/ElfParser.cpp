@@ -1,4 +1,6 @@
+#include "Kernel.h"
 #include "ElfParser.h"
+#include "DefaultConsole.h"
 
 ElfParser::ElfParser()
 {
@@ -25,14 +27,16 @@ void ElfParser::loadKernel(Elf32SectionHeader *symtab, Elf32SectionHeader *strta
 
 char *ElfParser::findSymbol(Address addr, Address *symbolStart)
 {
-	Elf32Symbol *symbol = (Elf32Symbol *)symbolTable->sh_addr;
-
-	for(unsigned int i = 0; i < symbolTable->sh_size / sizeof(Elf32Symbol); i++)
+	Address max = 0;
+	Elf32Symbol *fallbackSymbol = 0;
+	for (unsigned int i = 0; i < symbolTable->sh_size / symbolTable->sh_entsize; i++)
 	{
-		if ( (addr >= symbol->st_value) &&
+		Elf32Symbol *symbol = (Elf32Symbol *)(symbolTable->sh_addr + i * symbolTable->sh_entsize);
+
+		if ((addr >= symbol->st_value) &&
 			(addr <  symbol->st_value + symbol->st_size) )
 		{
-			char *c = (char *)(symbol->st_name)+stringTable->sh_addr;
+			char *c = (char *)(symbol->st_name) + stringTable->sh_addr;
 
 			if (symbolStart)
 			{
@@ -40,7 +44,28 @@ char *ElfParser::findSymbol(Address addr, Address *symbolStart)
 			}
 			return c;
 		}
-		symbol ++;
+
+		if (symbol->st_value > max && symbol->st_value <= addr)
+		{
+			max = symbol->st_value;
+			fallbackSymbol = symbol;
+		}
 	}
+
+	// Search for symbol with size failed, now take a wild guess.
+	// Use a biggest symbol value less than addr (if found).
+	if (fallbackSymbol)
+	{
+		char *c = (char *)(fallbackSymbol->st_name) + stringTable->sh_addr;
+
+		if (symbolStart)
+		{
+			*symbolStart = fallbackSymbol->st_value;
+		}
+		return c;
+	}
+
+	if (symbolStart)
+		*symbolStart = 0;
 	return NULL;
 }

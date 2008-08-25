@@ -8,8 +8,7 @@ extern __code, __edata, __end
 ; setting up the Multiboot header - see GRUB docs for details
 MODULEALIGN equ  1<<0                  ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                  ; provide memory map
-MBOOTVALID  equ  1<<16                 ; kernel layout fields are valid
-FLAGS       equ  MODULEALIGN | MEMINFO | MBOOTVALID
+FLAGS       equ  MODULEALIGN | MEMINFO
 MAGIC       equ  0x1BADB002            ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)       ; checksum required
 
@@ -17,15 +16,10 @@ bits 32                                ; 32 bit PM
 
 section .text
 align 4
-MultiBootHeader:
-	dd MAGIC
-	dd FLAGS
+MultiBootHeader:                       ; We only include so many fields in the
+	dd MAGIC                           ; mboot header because bootloader will
+	dd FLAGS                           ; load us as an ELF image.
 	dd CHECKSUM
-	dd MultiBootHeader                 ; Location of this descriptor
-	dd __code                          ; Start of kernel code
-	dd __edata                         ; End of kernel "data" section.
-	dd __end                           ; End of kernel.
-	dd _loader                         ; Entry point.
 
 _loader:
 	cli
