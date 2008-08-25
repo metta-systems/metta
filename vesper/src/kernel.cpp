@@ -12,28 +12,16 @@
 
 extern uint32_t mem_end_page; //in paging.cpp
 
-void backtraceTest2()
-{
-	kernel.printStacktrace(5);
-	kernel.printBacktrace(0,0);
-}
-
-void backtraceTest()
-{
-	backtraceTest2();
-}
-
 void Kernel::run()
 {
 	if (!multiboot.isElf())
 		PANIC("ELF information is missing in kernel!");
 
 	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
+	// [ ] TODO move placement address
+	// [ ] TODO create own stack after we enabled paging
 
-	backtraceTest();
-	while(1) {}
-
-	kconsole.locate(5, 0);
+	kconsole.locate(0, 0);
 	kconsole.set_color(LIGHTRED);
 	kconsole.print("Reloading GDT...\n");
 	GlobalDescriptorTable::init();
@@ -105,7 +93,7 @@ void Kernel::printBacktrace(Address basePointer, int n)
 	}
 	Address ebp = basePointer;
 	kconsole.set_color(GREEN);
-	kconsole.print("*** Backtrace ***\nTracing %d stack frames:\n", n);
+	kconsole.print("*** Backtrace *** Tracing %d stack frames:\n", n);
 	int i = 0;
 	while (ebp && eip &&
 		( (n && i<n) || !n) &&

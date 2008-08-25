@@ -36,10 +36,10 @@ class Kernel
 		}
 
 		/**
-		 * Print a full backtrace from the current location. (Or, if specified,
+		 * Print a full backtrace from the current location. (Or, if @p n is specified,
 		 * up to n stack frames.
 		 */
-		void printBacktrace(Address basePointer = 0, int n = 15);
+		void printBacktrace(Address basePointer = 0, int n = 0);
 
 		/**
 		 * Prints first n words from the stack
