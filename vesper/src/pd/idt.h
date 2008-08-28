@@ -17,7 +17,6 @@ public:
 private:
 	union {
 		uint32_t raw[2];
-
 		struct {
 			uint32_t offset_low	: 16;
 			uint32_t sel		: 16;
@@ -28,7 +27,7 @@ private:
 			uint32_t dpl		:  2;
 			uint32_t present		:  1;
 			uint32_t offset_high	: 16;
-		} d;
+		} d PACKED;
 	} x;
 };
 
@@ -65,56 +64,58 @@ class InterruptDescriptorTable
 		InterruptDescriptorTable();
 		uint16_t limit;
 		uint32_t base;
-} __attribute__((packed));
+} PACKED;
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
-extern "C" void isr0 ();
-extern "C" void isr1 ();
-extern "C" void isr2 ();
-extern "C" void isr3 ();
-extern "C" void isr4 ();
-extern "C" void isr5 ();
-extern "C" void isr6 ();
-extern "C" void isr7 ();
-extern "C" void isr8 ();
-extern "C" void isr9 ();
-extern "C" void isr10();
-extern "C" void isr11();
-extern "C" void isr12();
-extern "C" void isr13();
-extern "C" void isr14();
-extern "C" void isr15();
-extern "C" void isr16();
-extern "C" void isr17();
-extern "C" void isr18();
-extern "C" void isr19();
-extern "C" void isr20();
-extern "C" void isr21();
-extern "C" void isr22();
-extern "C" void isr23();
-extern "C" void isr24();
-extern "C" void isr25();
-extern "C" void isr26();
-extern "C" void isr27();
-extern "C" void isr28();
-extern "C" void isr29();
-extern "C" void isr30();
-extern "C" void isr31();
-extern "C" void irq0 ();
-extern "C" void irq1 ();
-extern "C" void irq2 ();
-extern "C" void irq3 ();
-extern "C" void irq4 ();
-extern "C" void irq5 ();
-extern "C" void irq6 ();
-extern "C" void irq7 ();
-extern "C" void irq8 ();
-extern "C" void irq9 ();
-extern "C" void irq10();
-extern "C" void irq11();
-extern "C" void irq12();
-extern "C" void irq13();
-extern "C" void irq14();
-extern "C" void irq15();
+extern "C" {
+extern void isr0 ();
+extern void isr1 ();
+extern void isr2 ();
+extern void isr3 ();
+extern void isr4 ();
+extern void isr5 ();
+extern void isr6 ();
+extern void isr7 ();
+extern void isr8 ();
+extern void isr9 ();
+extern void isr10();
+extern void isr11();
+extern void isr12();
+extern void isr13();
+extern void isr14();
+extern void isr15();
+extern void isr16();
+extern void isr17();
+extern void isr18();
+extern void isr19();
+extern void isr20();
+extern void isr21();
+extern void isr22();
+extern void isr23();
+extern void isr24();
+extern void isr25();
+extern void isr26();
+extern void isr27();
+extern void isr28();
+extern void isr29();
+extern void isr30();
+extern void isr31();
+extern void irq0 ();
+extern void irq1 ();
+extern void irq2 ();
+extern void irq3 ();
+extern void irq4 ();
+extern void irq5 ();
+extern void irq6 ();
+extern void irq7 ();
+extern void irq8 ();
+extern void irq9 ();
+extern void irq10();
+extern void irq11();
+extern void irq12();
+extern void irq13();
+extern void irq14();
+extern void irq15();
+}
 
 #endif /* !__INCLUDED_IDT_H */

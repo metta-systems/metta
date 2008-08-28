@@ -1,11 +1,10 @@
 #include "idt.h"
-#include "string.h"
 
-extern "C" void activate_idt(uint32_t base);
+extern "C" void activate_idt(Address base); // in activate.s
 
 IdtEntry idt_entries[256];
 
-/* Singleton? */
+/* Singleton instead? */
 void InterruptDescriptorTable::init()
 {
 	static InterruptDescriptorTable idt;
@@ -14,9 +13,7 @@ void InterruptDescriptorTable::init()
 InterruptDescriptorTable::InterruptDescriptorTable()
 {
 	limit = sizeof(idt_entries)-1;
-	base = (uint32_t)&idt_entries;
-
-	memset(&idt_entries, 0, sizeof(idt_entries));
+	base = (Address)&idt_entries;
 
 	// Change dpl to 3 when we get to user-mode-enabled part.
 	// This will allow kernel isrs to work in user-mode.
@@ -55,6 +52,7 @@ InterruptDescriptorTable::InterruptDescriptorTable()
 
 	// Setup PIC.
 	// Remap the irq table.
+	// TODO: document reprogramming better.
 	outb(0x20, 0x11);
 	outb(0xA0, 0x11);
 	outb(0x21, 0x20);
@@ -83,5 +81,5 @@ InterruptDescriptorTable::InterruptDescriptorTable()
 	idt_entries[46].set(0x08, irq0, IdtEntry::interrupt, 0);
 	idt_entries[47].set(0x08, irq15, IdtEntry::interrupt, 0);
 
-	activate_idt((uint32_t)this);
+	activate_idt((Address)this);
 }

@@ -13,6 +13,7 @@ class GdtEntry
 			tss  = 0x9
 		};
 
+		void set_null();
 		void set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl);
 		void set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl);
 
@@ -21,7 +22,7 @@ class GdtEntry
 			uint32_t raw[2];
 			struct {
 				uint32_t limit_low  : 16;
-				uint32_t base_low   : 24 __attribute__((packed));
+				uint32_t base_low   : 24 PACKED;
 				uint32_t type       :  4;
 				uint32_t s          :  1;
 				uint32_t dpl        :  2;
@@ -31,9 +32,14 @@ class GdtEntry
 				uint32_t datasize   :  1;
 				uint32_t granularity:  1;
 				uint32_t base_high  :  8;
-			} d __attribute__((packed));
+			} d PACKED;
 		} x;
 };
+
+INLINE void GdtEntry::set_null()
+{
+	x.raw[0] = x.raw[1] = 0;
+}
 
 INLINE void GdtEntry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
@@ -92,6 +98,6 @@ class GlobalDescriptorTable
 		GlobalDescriptorTable();
 		uint16_t limit;
 		uint32_t base;
-} __attribute__((packed));
+} PACKED;
 
 #endif /* !__INCLUDED_GDT_H */

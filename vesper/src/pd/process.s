@@ -1,9 +1,3 @@
-global read_eip
-read_eip:
-    pop eax                     ; Get the return address
-    jmp eax                     ; Return. Can't use RET because return
-                                ; address popped off the stack.
-
 global copy_page_physical
 copy_page_physical:
     push ebx              ; According to __cdecl, we must preserve the contents of EBX.
