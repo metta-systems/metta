@@ -21,11 +21,6 @@ uint32_t nframes;
 extern DefaultHeap *kheap;
 extern uint32_t placement_address;
 
-// Macros used in the bitset algorithms.
-#define INDEX_FROM_BIT(a) ((a)/(8*4))
-#define INDEX_TO_BIT(a) ((a)*8*4)
-#define OFFSET_FROM_BIT(a) ((a)%(8*4))
-
 // Static function to set a bit in the frames bitset
 static void set_frame(uint32_t frame_addr)
 {
@@ -119,6 +114,7 @@ void free_frame(PageTableEntry *page)
 **/
 extern "C" void copy_page_physical(uint32_t from, uint32_t to);
 
+//inline in MemoryManager-arch.h
 static PageTable *clone_table(PageTable *src, uint32_t *physAddr)
 {
 	// Make a new page table, which is page aligned.

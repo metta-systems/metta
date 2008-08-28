@@ -12,42 +12,22 @@
 
 extern uint32_t mem_end_page; //in paging.cpp
 
+// [ ] TODO create own stack after we enabled paging
 void Kernel::run()
 {
 	if (!multiboot.isElf())
 		PANIC("ELF information is missing in kernel!");
 
+	// Make sure we aren't overwriting anything by writing at placementAddress.
+	relocatePlacementAddress();
+
 	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
-	// [ ] TODO move placement address
-	// [ ] TODO create own stack after we enabled paging
 
-	kconsole.locate(0, 0);
-	kconsole.set_color(LIGHTRED);
-	kconsole.print("Reloading GDT...\n");
 	GlobalDescriptorTable::init();
-
-	kconsole.print("Loading IDT...\n");
 	InterruptDescriptorTable::init();
 
-	kconsole.set_color(WHITE);
-	if (multiboot.hasMemInfo())
-	{
-		kconsole.print("Mem lower: %d\n", multiboot.lowerMem());
-		kconsole.print("Mem upper: %d\n", multiboot.upperMem());
-		mem_end_page = (multiboot.lowerMem() + multiboot.upperMem() + 1024) * 1024;
-	}
+	memoryManager.initialise(multiboot.upperMem() * 1024);
 
-	// malloc check
-	uint32_t a = kmalloc(8);
-	Paging::self();
-	uint32_t b = kmalloc(8);
-	uint32_t c = kmalloc(8);
-	kfree(c);
-	kfree(b);
-	uint32_t d = kmalloc(12);
-	ASSERT(b == d);
-	kfree(a);
-	kfree(d);
 
 	Task::init();
 	Timer::init();

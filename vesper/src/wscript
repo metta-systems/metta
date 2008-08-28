@@ -12,6 +12,7 @@ def set_options(opt):
 def configure(conf):
 	conf.check_tool('gcc g++ nasm')
 	cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule -I../boot'
+	cflags += ' -I../arch/x86' #FIXME: archdep
 	flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
 	conf.env['CCFLAGS'] += [cflags + ' ' + flags]
 	conf.env['CXXFLAGS'] += [cflags + ' -fno-rtti ' + flags]
