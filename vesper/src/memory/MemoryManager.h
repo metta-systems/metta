@@ -4,7 +4,6 @@
 #include "Types.h"
 #include <Heap.h>
 #include "BitArray.h"
-#include "MemoryManager-arch.h"
 
 #define HEAP_START              0xC0000000
 #define HEAP_INITIAL_SIZE       0x100000
@@ -20,6 +19,9 @@
 #define STACK_ADDRESS(x)     ((Address)x <= STACK_START && (Address)x > STACK_END)
 #define HEAP_ADDRESS(x)      ((Address)x >= HEAP_START  && (Address)x < USER_HEAP_START)
 #define USER_HEAP_ADDRESS(x) ((Address)x >= USER_HEAP_START && (Address)x <= USER_HEAP_END)
+
+class Page;
+class PageDirectory;
 
 /**
  * Handles all memory related events. Heap startup, allocation, deallocation,
@@ -173,5 +175,7 @@ private:
 	**/
 	PageDirectory *kernelDirectory;
 };
+
+#include "MemoryManager-arch.h"
 
 #endif

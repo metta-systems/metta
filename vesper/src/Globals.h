@@ -1,12 +1,19 @@
 #pragma once
-#include "Kernel.h"
-#include "Multiboot.h"
-#include "ElfParser.h"
-#include "MemoryManager.h"
 
-extern Kernel kernel;
-extern Multiboot multiboot;
-extern ElfParser kernelElfParser;
-extern MemoryManager memoryManager;
+#include "Types.h"
+#include "string.h"
 
-extern "C" void kernel_entry(MultibootHeader *mh);
+extern class Kernel kernel;
+extern class Multiboot multiboot;
+extern class ElfParser kernelElfParser;
+extern class MemoryManager memoryManager;
+
+extern "C" void kernel_entry(class MultibootHeader *mh);
+
+void *operator new(size_t size);
+void *operator new(size_t size, uint32_t place);
+void *operator new(size_t size, bool pageAlign, uint32_t *physAddr=NULL);
+void *operator new[](size_t size);
+void *operator new[](size_t size, bool pageAlign, uint32_t *physAddr=NULL);
+void  operator delete(void *p);
+void  operator delete[](void *p);

@@ -1,5 +1,7 @@
 #include "Heap.h"
 #include "Globals.h"
+#include "MemoryManager.h"
+#include "Registers.h" // criticalSection() (TODO: move decls to Globals.h)
 
 #define HEAP_MAGIC        0x123890AB
 #define HEAP_MIN_SIZE     0x70000
@@ -16,7 +18,7 @@ Heap::Heap(uint32_t start, uint32_t end, uint32_t max, bool supervisor)
 	ASSERT(endAddress   % PAGE_SIZE == 0);
 
 	// Initialise the index.
-	index = (OrderedArray<HeapHeader, HEAP_INDEX_SIZE>*)startAddress;
+	index = (OrderedArray<Header, HEAP_INDEX_SIZE>*)startAddress;
 
 	// Shift the start address to resemble where we can start putting data.
 	startAddress += sizeof(*index);
@@ -64,7 +66,7 @@ int32_t Heap::findSmallestHole(uint32_t size, bool pageAlign)
 			holeSize -= offset;
 
 			// can we fit now?
-			if (holeSize >= size)
+			if (holeSize >= (int32_t)size)
 			{
 				break;
 			}
@@ -111,7 +113,7 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 
 		// Find the endmost header. (Not endmost in size, endmost in location)
 		uint32_t iterator2 = 0;
-		uint32_t idx = -1;
+		int32_t idx = -1;
 		uint32_t value = 0x0;
 
 		while (iterator2 < index->count())
@@ -207,14 +209,14 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 	//       kerr << hex << blockHeader->backtrace[i] << ", ";
 		}
 	}
-	else*/
+	else
 	{
 		blockHeader->pid   = 0;
 		for(int i = 0; i < Header::NBACKTRACE; i++)
 		{
 			blockHeader->backtrace[i] = 0;
 		}
-	}
+	}*/
 
 	// And the footer...
 	Footer *blockFooter  = (Footer *)(origHolePos + sizeof(Header) + size);
@@ -413,7 +415,7 @@ void Heap::expand(uint32_t newSize)
 	uint32_t i = oldSize;
 	while(i < newSize)
 	{
-		memoryManager.allocFrame(memoryManager.kernelDirectory->getPage(startAddress+i), isKernel);
+		memoryManager.allocFrame(memoryManager.getKernelDirectory()->getPage(startAddress+i), isKernel);
 		i += PAGE_SIZE;
 	}
 
@@ -451,7 +453,7 @@ uint32_t Heap::contract(uint32_t newSize)
 	uint32_t i = newSize;
 	while(i < oldSize)
 	{
-		memoryManager.freeFrame(memoryManager.kernelDirectory->getPage(startAddress+i));
+		memoryManager.freeFrame(memoryManager.getKernelDirectory()->getPage(startAddress+i));
 		i += PAGE_SIZE;
 	}
 

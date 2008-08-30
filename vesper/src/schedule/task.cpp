@@ -1,5 +1,6 @@
 #include "task.h"
-#include "paging.h"
+#include "Registers.h"
+#include "MemoryManager.h"
 #include "DefaultConsole.h"
 
 // The currently running task.
@@ -8,28 +9,24 @@ volatile Task *current_task = 0;
 // The start of the task linked list.
 volatile Task *ready_queue;
 
-// Some externs are needed to access members in paging.cpp
-extern PageDirectory *current_directory;
-extern "C" uint32_t read_eip();
-
 // The next available process ID.
 static uint32_t next_pid = 1;
 
 void Task::init()
 {
-    // Rather important stuff happening, no interrupts please!
-    asm volatile("cli");
+	// Rather important stuff happening, no interrupts please!
+	criticalSection();
 
-    // Initialise the first task (kernel task)
-    current_task = ready_queue = new Task;
-    current_task->id = next_pid++;
-    current_task->esp = current_task->ebp = 0;
-    current_task->eip = 0;
-    current_task->page_directory = current_directory;
-    current_task->next = 0;
+	// Initialise the first task (kernel task)
+	current_task = ready_queue = new Task;
+	current_task->id = next_pid++;
+	current_task->esp = current_task->ebp = 0;
+	current_task->eip = 0;
+	current_task->page_directory = memoryManager.getCurrentDirectory();
+	current_task->next = 0;
 
-    // Reenable interrupts.
-    asm volatile("sti");
+	// Reenable interrupts.
+	endCriticalSection();
 }
 
 void Task::yield()
@@ -52,7 +49,7 @@ void Task::yield()
     // In the second case we need to return immediately. To detect it we put a dummy
     // value in EAX further down at the end of this function. As C returns values in EAX,
     // it will look like the return value is this dummy value! (0x12345).
-    eip = read_eip();
+    eip = readInstructionPointer();
 
     // Have we just switched tasks?
     if (eip == 0x12345)
@@ -77,7 +74,7 @@ void Task::yield()
 // 	kconsole.newline();
 
     // Make sure the memory manager knows we've changed page directory.
-    current_directory = current_task->page_directory;
+    memoryManager.setCurrentDirectory(current_task->page_directory);
     // Here we:
     // * Stop interrupts so we don't get interrupted.
     // * Temporarily put the new EIP location in ECX.
@@ -97,7 +94,7 @@ void Task::yield()
       mov $0x12345, %%eax; \
       sti;                 \
       jmp *%%ecx           "
-                 : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_directory->physicalAddr));
+	  : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_task->page_directory->getPhysical()));
 }
 
 Task *Task::self()
@@ -114,7 +111,7 @@ int Task::fork()
     Task *parent_task = (Task *)current_task;
 
     // Clone the address space.
-    PageDirectory *directory = current_directory->clone();
+    PageDirectory *directory = memoryManager.getCurrentDirectory()->clone();
 
     // Create a new process.
     Task *new_task = new Task;
@@ -136,7 +133,7 @@ int Task::fork()
     tmp_task->next = new_task;
 
     // This will be the entry point for the new process.
-    uint32_t eip = read_eip();
+    uint32_t eip = readInstructionPointer();
 
     // We could be the parent or the child here - check.
     if (current_task == parent_task)

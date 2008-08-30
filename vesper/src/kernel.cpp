@@ -1,16 +1,14 @@
 #include "Kernel.h"
 #include "Globals.h"
 #include "Registers.h"
+#include "Multiboot.h"
+#include "ElfParser.h"
+#include "MemoryManager.h"
 #include "DefaultConsole.h"
-#include "kalloc.h"
 #include "gdt.h"
 #include "idt.h"
 #include "timer.h"
-#include "paging.h"
 #include "task.h"
-#include "Globals.h"
-
-extern uint32_t mem_end_page; //in paging.cpp
 
 // [ ] TODO create own stack after we enabled paging
 void Kernel::run()
@@ -26,7 +24,7 @@ void Kernel::run()
 	GlobalDescriptorTable::init();
 	InterruptDescriptorTable::init();
 
-	memoryManager.initialise(multiboot.upperMem() * 1024);
+	memoryManager.init(multiboot.upperMem() * 1024);
 
 
 	Task::init();
@@ -36,6 +34,25 @@ void Kernel::run()
 
 	while(1) { }
 }
+
+void Kernel::relocatePlacementAddress()
+{
+	Address newPlacementAddress = memoryManager.getPlacementAddress();
+	if (multiboot.isElf() && multiboot.symtabEnd() > newPlacementAddress)
+	{
+		newPlacementAddress = multiboot.symtabEnd();
+	}
+	if (multiboot.isElf() && multiboot.strtabEnd() > newPlacementAddress)
+	{
+		newPlacementAddress = multiboot.strtabEnd();
+	}
+	if (multiboot.modStart() > newPlacementAddress)
+	{
+		newPlacementAddress = multiboot.modEnd();
+	}
+	memoryManager.setPlacementAddress(newPlacementAddress);
+}
+
 
 Address Kernel::backtrace(Address basePointer, Address& returnAddress)
 {

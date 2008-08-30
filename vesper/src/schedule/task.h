@@ -2,8 +2,9 @@
 #ifndef __INCLUDED_TASK_H
 #define __INCLUDED_TASK_H
 
-#include "common.h"
-#include "paging.h"
+#include "Types.h"
+
+class PageDirectory;
 
 // This structure defines a 'task' - a process.
 class Task

@@ -3,6 +3,7 @@
 #define __INCLUDED_ORDERED_ARRAY_H
 
 #include "Types.h"
+#include "common.h"
 #include "DefaultConsole.h"
 
 /**

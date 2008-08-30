@@ -3,10 +3,7 @@
 #define __INCLUDED_ARCH_X86_MEMORYMANAGER_H
 // # ifdef LANG_X86
 
-// # include <Globals.h>
-// # include <MemoryManagement.h>
-// # include <MonitorDriver.h>
-// # include <Asm.h>
+#include "Globals.h"
 
 #define PAGE_SIZE 0x1000
 #define PAGE_MASK 0xFFFFF000
@@ -33,7 +30,7 @@ public:
 	bool isDirty()    {return pg.dirty == 1;}
 
 	// Retrieval
-	Address frame()   {return pg.frame << 12;}
+	Address frame()   {return pg.base << 12;}
 
 	// Modification
 	void setPresent(bool b)  { pg.present   = b ? 1 : 0; }
@@ -41,7 +38,7 @@ public:
 	void setUser(bool b)     { pg.privilege = b ? 1 : 0; }
 	void setAccessed(bool b) { pg.accessed  = b ? 1 : 0; }
 	void setDirty(bool b)    { pg.dirty     = b ? 1 : 0; }
-	void setFrame(Address f) { pg.frame     = (f >> 12) /*& PAGE_MASK*/; }
+	void setFrame(Address f) { pg.base      = (f >> 12); }
 
 private:
 	union {
@@ -84,6 +81,8 @@ private:
 		uint32_t raw;
 	};
 };
+
+extern "C" void copyPagePhysical(uint32_t from, uint32_t to);
 
 /**
   A page table holds 1024 pages
@@ -216,7 +215,7 @@ public:
 
 	void dump()
 	{
-		bool b = false;
+/*		bool b = false;
 		kconsole.print("Dumping page directory:\n");
 		for (int i = 0; i < 0xFFFFF; i++)
 		{
@@ -243,7 +242,7 @@ public:
 				kerr.writeHex(i<<12);
 				kerr.write("\n");
 			}
-		}
+		}*/
 	}
 
 private:

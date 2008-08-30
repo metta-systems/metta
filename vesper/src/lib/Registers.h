@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Types.h"
+
 extern "C"  Address readInstructionPointer();
 extern "C"  Address readStackPointer();
 extern "C"  Address readBasePointer();

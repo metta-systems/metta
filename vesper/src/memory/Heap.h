@@ -77,15 +77,15 @@ private:
 	 */
 	struct Header
 	{
-		const uint32_t NBACKTRACE = 12;
+// 		const uint32_t NBACKTRACE = 12;
 
 		uint32_t magic; // Magic number, used for error checking and identification.
 		bool    isHole; // true if this is a hole. false if this is a block.
 		uint32_t size;  // size of the block, including the end footer.
-		uint32_t pid;   // owner PID (unused FIXME: remove)
-		uint32_t backtrace[NBACKTRACE];
+// 		uint32_t pid;   // owner PID (unused FIXME: remove)
+// 		uint32_t backtrace[NBACKTRACE];
 
-		inline int operator < (const HeapHeader &b)
+		inline int operator < (const Header &b)
 		{
 			return size < b.size;
 		}
