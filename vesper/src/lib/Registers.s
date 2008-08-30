@@ -5,6 +5,12 @@
 global readInstructionPointer
 global readStackPointer
 global readBasePointer
+global readPageDirectory
+global writePageDirectory
+global flushPageDirectory:
+global enablePaging
+global enableInterrupts
+global disableInterrupts
 
 readInstructionPointer:
 	pop eax     ; Get the return address
@@ -17,4 +23,32 @@ readStackPointer:
 
 readBasePointer:
 	mov eax, ebp
+	ret
+
+writePageDirectory:
+	mov eax, [esp+4]
+	mov cr3, eax
+	ret
+
+readPageDirectory:
+	mov eax, cr3
+	ret
+
+flushPageDirectory:
+	mov eax, cr3
+	mov cr3, eax
+	ret
+
+enablePaging:
+	mov eax, cr0
+	or  eax, 0x80000000
+	mov cr0, eax
+	ret
+
+disableInterrupts:
+	cli
+	ret
+
+enableInterrupts:
+	sti
 	ret

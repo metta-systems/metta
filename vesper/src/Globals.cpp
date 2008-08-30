@@ -1,11 +1,11 @@
 #include "Globals.h"
 #include "DefaultConsole.h"
-#include "kalloc.h"
 
 /* Global objects FIXME: use singletons instead? */
 Kernel kernel;
 Multiboot multiboot;
 ElfParser kernelElfParser;
+MemoryManager memoryManager;
 
 /* This entry point is called from loader */
 void kernel_entry(MultibootHeader *multibootHeader)

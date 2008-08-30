@@ -1,100 +1,91 @@
+#pragma once
 #ifndef __INCLUDED_ORDERED_ARRAY_H
 #define __INCLUDED_ORDERED_ARRAY_H
 
-#include "common.h"
+#include "Types.h"
+#include "DefaultConsole.h"
 
 /**
-   This array is insertion sorted - it always remains in a sorted state (between calls).
-   type_t must implement operator <()
-**/
-template<class type_t>
+ * Array of maximum size @c N of pointers to @c Type.
+ * This array is insertion sorted - it always remains in a sorted state (between calls).
+ * @c Type must implement operator <()
+ * Array must be in-place allocatable for Heap to work correctly.
+ */
+template<class Type, uint32_t N>
 class OrderedArray
 {
-	public:
-		/**
-			Create an ordered array.
-		**/
-		OrderedArray(uint32_t max_size);
-		OrderedArray(void *addr, uint32_t max_size); // placement ctor
-		~OrderedArray();
-
-		void insert(type_t *item);
-		type_t *lookup(uint32_t i);
-		void remove(uint32_t i);
-
-	public://private:
-		type_t **array;
-		uint32_t size;
-		uint32_t max_size;
-		bool placed; // @c true if array was constucted using placement ctor
-};
-
-template<class type_t>
-OrderedArray<type_t>::OrderedArray(uint32_t max_size)
-{
-	this->max_size = max_size;
-	array = kmalloc(max_size * sizeof(type_t *));
-	memset(array, 0, max_size * sizeof(type_t *));
-	size = 0;
-	placed = false;
-}
-
-template<class type_t>
-OrderedArray<type_t>::OrderedArray(void *addr, uint32_t max_size)
-{
-	this->max_size = max_size;
-	array = (type_t **)addr;
-	memset(array, 0, max_size * sizeof(type_t *));
-	size = 0;
-	placed = true;
-}
-
-template<class type_t>
-OrderedArray<type_t>::~OrderedArray()
-{
-	if (!placed)
-		kfree((uint32_t)array);
-}
-
-template<class type_t>
-void OrderedArray<type_t>::insert(type_t *item)
-{
-	uint32_t iterator = 0;
-	while (iterator < size && *array[iterator] < *item)
-		iterator++;
-	if (iterator == size) // just add at the end of the array
-		array[size++] = item;
-	else
+public:
+	/**
+	 * Create an ordered array.
+	 */
+	inline OrderedArray()
 	{
-		type_t *tmp = array[iterator];
-		array[iterator] = item;
-		while (iterator < size)
-		{
-			iterator++;
-			type_t *tmp2 = array[iterator];
-			array[iterator] = tmp;
-			tmp = tmp2;
-		}
-		size++;
+		memset(array, 0, N * sizeof(Type*));
+		size = 0;
 	}
-}
 
-template<class type_t>
-type_t *OrderedArray<type_t>::lookup(uint32_t i)
-{
-    ASSERT(i < size);
-    return array[i];
-}
+	~OrderedArray() {}
 
-template<class type_t>
-void OrderedArray<type_t>::remove(uint32_t i)
-{
-    size--;
-    while (i < size)
-    {
-        array[i] = array[i+1];
-        i++;
-    }
-}
+	void insert(Type* item)
+	{
+		ASSERT(size+1 < N);
+		uint32_t iterator = 0;
+		while (iterator < size && *array[iterator] < *item)
+			iterator++;
+
+		if (iterator == size) // just add at the end of the array
+			array[size++] = item;
+		else
+		{
+			Type* tmp = array[iterator];
+			array[iterator] = item;
+			while (iterator < size)
+			{
+				iterator++;
+				Type* tmp2 = array[iterator];
+				array[iterator] = tmp;
+				tmp = tmp2;
+			}
+			size++;
+		}
+	}
+
+	inline Type* lookup(uint32_t i)
+	{
+		ASSERT(i < size);
+		return array[i];
+	}
+
+	void remove(uint32_t i)
+	{
+		size--;
+		while (i < size)
+		{
+			array[i] = array[i+1];
+			i++;
+		}
+	}
+
+	inline uint32_t count()
+	{
+		return size;
+	}
+
+	/**
+	 * Debug helper function.
+	 */
+	void dump()
+	{
+		kconsole.print("Dumping OrderedArray %p (%d items)\n", this, size);
+		for(int i = 0; i < size; i++)
+		{
+			kconsole.print("    %p\n", array[i]);
+		}
+	}
+
+private:
+	Type *array[N];
+	uint32_t size;
+};
 
 #endif // __INCLUDED_ORDERED_ARRAY_H

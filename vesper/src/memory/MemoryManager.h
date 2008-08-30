@@ -136,7 +136,7 @@ private:
 	BitArray *frames;
 
 	/**
-	 * Tells us how many frames there are. FIXME bad wording.
+	 * Total number of physical memory frames.
 	 */
 	uint32_t nFrames;
 
