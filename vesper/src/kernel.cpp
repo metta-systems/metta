@@ -24,6 +24,8 @@ void Kernel::run()
 	GlobalDescriptorTable::init();
 	InterruptDescriptorTable::init();
 
+	// TODO: add page fault handler init before enabling paging.
+
 	memoryManager.init(multiboot.upperMem() * 1024);
 
 

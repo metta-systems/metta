@@ -4,6 +4,13 @@
 extern Address end; // defined by linker.ld
 // extern Address initialEsp;
 
+/**
+ * @internal
+ * Paging works by splitting the virtual address space into blocks
+ * called \c pages, which are usually 4KB in size. Pages can then
+ * be mapped on to \c frames - equally sized blocks of physical memory.
+ */
+
 MemoryManager::MemoryManager()
 {
 	placementAddress = (Address)&end ; // TODO: change to multiboot->mod_end
