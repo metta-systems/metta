@@ -23,9 +23,11 @@ public:
 	 * Create a new Heap, with start address start, initial size end-start,
 	 * and expanding up to a maximum address of max.
 	 */
-	Heap(Address start, Address end, Address max, bool isKernel);
+	inline Heap(Address start, Address end, Address max, bool isKernel) { init(start, end, max, isKernel); }
 
 	~Heap();
+
+	void init(Address start, Address end, Address max, bool isKernel);
 
 	/**
 	 * Allocates a contiguous region of memory 'size' in size. If pageAlign,

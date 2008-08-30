@@ -6,12 +6,13 @@
 #define HEAP_MAGIC        0x123890AB
 #define HEAP_MIN_SIZE     0x70000
 
-Heap::Heap(uint32_t start, uint32_t end, uint32_t max, bool supervisor)
-	: startAddress(start)
-	, endAddress(end)
-	, maxAddress(max)
-	, isKernel(supervisor)
+void Heap::init(Address start, Address end, Address max, bool supervisor)
 {
+	startAddress = start;
+	endAddress = end;
+	maxAddress = max;
+	isKernel = supervisor;
+
 	kconsole.print("Initializing heap (%08x..%08x, kernel: %d).\n", start, end, isKernel);
 
 	ASSERT(startAddress % PAGE_SIZE == 0);

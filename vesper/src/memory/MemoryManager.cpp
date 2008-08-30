@@ -72,8 +72,8 @@ void MemoryManager::init(Address memEnd)
 	enablePaging();
 
 	// Initialise the heaps.
-	heap = Heap(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
-	userHeap = Heap(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
+	heap.init(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
+	userHeap.init(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
 
 	heapInitialised = true;
 }
