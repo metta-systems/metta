@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_TASK_H
-#define __INCLUDED_TASK_H
 
 #include "Types.h"
 
@@ -30,5 +28,3 @@ class Task
 		Task *next;                    // The next task in a linked list.
 };
 
-
-#endif

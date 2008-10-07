@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_TIMER_H
-#define __INCLUDED_TIMER_H
+#pragma once
 
 class Timer
 {
@@ -10,4 +9,3 @@ class Timer
 		Timer();
 };
 
-#endif

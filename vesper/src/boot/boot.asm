@@ -7,7 +7,7 @@
 ; Uses i/o code from Unununium Operating Engine's boot record, version 1.0.3
 ; Copyright (C) 2001, Dave Poirier
 ;
-; Distributed under the MIT License.
+; Distributed under the X11 License.
 ;
 ;----------------------------------------------------------------------------------------
 ;

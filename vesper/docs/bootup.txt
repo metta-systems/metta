@@ -34,4 +34,44 @@ main component entry point:
    - object (security) manager
 
 
-TODO: draw assumed memory layout when booting up.
+
+Physical RAM +-------------------------+ Virtual addresses
+         top |                         |
+             |                         |
+             |                         |
+    0x20F000 |Libos end address        |
+             |                         |
+             |                         |
+             |...                      |
+             |                         |
+             |Component3               |
+             |                         |
+             |                         |
+             |...                      |
+             |                         |
+             |Component2               |
+             |                         |
+             |                         |
+             |...                      |
+             |                         |
+             |Component1               |
+             |[Component index]        |
+    0x10F000 |Libos load address       |<-- initial placementAddress
+    0x10DDEC |Kernel end address       |
+             |[Interrupt handlers]     |
+             |[Pagefault handler]      |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+(1M)0x100000 |Kernel load address      |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+             |                         |
+         0x0 +-------------------------+
+

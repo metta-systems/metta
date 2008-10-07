@@ -1,7 +1,7 @@
 #include "common.h"
 #include "isr.h"
-#include "task.h"
-#include "timer.h"
+#include "Task.h"
+#include "Timer.h"
 #include "DefaultConsole.h"
 
 void Timer::init()
