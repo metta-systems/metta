@@ -5,6 +5,8 @@
 global readInstructionPointer
 global readStackPointer
 global readBasePointer
+global writeStackPointer
+global writeBasePointer
 global readPageDirectory
 global writePageDirectory
 global flushPageDirectory:
@@ -23,6 +25,16 @@ readStackPointer:
 
 readBasePointer:
 	mov eax, ebp
+	ret
+
+writeStackPointer:
+	pop ebx
+	pop eax
+	mov esp, eax
+	jmp ebx
+
+writeBasePointer:
+	mov ebp, [esp+4]
 	ret
 
 writePageDirectory:

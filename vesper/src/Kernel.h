@@ -8,7 +8,7 @@ public:
 	/**
 	 * Boot the kernel
 	 */
-	void run();
+	void run() /*NORETURN*/;
 
 	/**
 	 * Given a stack base pointer, follow it, return the next stack base
@@ -31,6 +31,54 @@ public:
 		if (*left != *right)
 			return false;
 		return true;
+	}
+
+	/**
+	 * memcpy - Copy one area of memory to another
+	 * @dest: Where to copy to
+	 * @src: Where to copy from
+	 * @count: The size of the area.
+	 *
+	 * You should not use this function to access IO space, use memcpy_toio()
+	 * or memcpy_fromio() instead.
+	 */
+	inline static void* copyMemory(void* dest, const void* src, size_t count)
+	{
+		char *tmp = (char *)dest;
+		const char *s = (const char *)src;
+
+		while (count--)
+			*tmp++ = *s++;
+		return dest;
+	}
+
+	/**
+	 * memmove - Copy one area of memory to another
+	 * @dest: Where to copy to
+	 * @src: Where to copy from
+	 * @count: The size of the area.
+	 *
+	 * Unlike memcpy(), memmove() copes with overlapping areas.
+	 */
+	inline static void* moveMemory(void* dest, const void* src, size_t count)
+	{
+		char *tmp;
+		const char *s;
+
+		if (dest <= src) {
+			tmp = (char *)dest;
+			s = (const char *)src;
+			while (count--)
+				*tmp++ = *s++;
+		} else {
+			tmp = (char *)dest;
+			tmp += count;
+			s = (const char *)src;
+			s += count;
+			while (count--)
+				*--tmp = *--s;
+		}
+		return dest;
 	}
 
 	/**

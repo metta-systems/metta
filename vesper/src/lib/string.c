@@ -20,10 +20,9 @@
  */
 
 #include "common.h"
-// #include <linux/types.h>
 #include "string.h"
 #include "ctype.h"
-// #include <linux/module.h>
+#include "Kernel.h" // for copyMemory()
 
 #ifndef __HAVE_ARCH_STRNICMP
 /**
@@ -154,7 +153,7 @@ size_t strlcpy(char *dest, const char *src, size_t size)
 
 	if (size) {
 		size_t len = (ret >= size) ? size - 1 : ret;
-		memcpy(dest, src, len);
+		Kernel::copyMemory(dest, src, len);
 		dest[len] = '\0';
 	}
 	return ret;
@@ -231,7 +230,7 @@ size_t strlcat(char *dest, const char *src, size_t count)
 	count -= dsize;
 	if (len >= count)
 		len = count-1;
-	memcpy(dest, src, len);
+	Kernel::copyMemory(dest, src, len);
 	dest[len] = 0;
 	return res;
 }
@@ -512,60 +511,6 @@ void *memset(void *s, int c, size_t count)
 	return s;
 }
 EXPORT_SYMBOL(memset);
-#endif
-
-#ifndef __HAVE_ARCH_MEMCPY
-/**
- * memcpy - Copy one area of memory to another
- * @dest: Where to copy to
- * @src: Where to copy from
- * @count: The size of the area.
- *
- * You should not use this function to access IO space, use memcpy_toio()
- * or memcpy_fromio() instead.
- */
-void *memcpy(void *dest, const void *src, size_t count)
-{
-	char *tmp = (char *)dest;
-	const char *s = (const char *)src;
-
-	while (count--)
-		*tmp++ = *s++;
-	return dest;
-}
-EXPORT_SYMBOL(memcpy);
-#endif
-
-#ifndef __HAVE_ARCH_MEMMOVE
-/**
- * memmove - Copy one area of memory to another
- * @dest: Where to copy to
- * @src: Where to copy from
- * @count: The size of the area.
- *
- * Unlike memcpy(), memmove() copes with overlapping areas.
- */
-void *memmove(void *dest, const void *src, size_t count)
-{
-	char *tmp;
-	const char *s;
-
-	if (dest <= src) {
-		tmp = (char *)dest;
-		s = (const char *)src;
-		while (count--)
-			*tmp++ = *s++;
-	} else {
-		tmp = (char *)dest;
-		tmp += count;
-		s = (const char *)src;
-		s += count;
-		while (count--)
-			*--tmp = *--s;
-	}
-	return dest;
-}
-EXPORT_SYMBOL(memmove);
 #endif
 
 #ifndef __HAVE_ARCH_MEMCMP

@@ -1,8 +1,8 @@
 #include "MemoryManager.h"
 #include "Registers.h"
+#include "Kernel.h"
 
 extern Address end; // defined by linker.ld
-// extern Address initialEsp;
 
 /**
  * @internal
@@ -187,39 +187,38 @@ void MemoryManager::remapStack()
 	for (i = STACK_START; i > (STACK_START-STACK_INITIAL_SIZE); i -= PAGE_SIZE)
 	{
 		// General-purpose stack is in user-mode.
-		allocFrame(currentDirectory->getPage(i, /*make:*/true), /*kenrel:*/false);
+		allocFrame(currentDirectory->getPage(i, /*make:*/true), /*kernel:*/false);
 	}
 
 	// Flush the TLB
 	flushPageDirectory();
 
-/*	Address oldStackPointer = readStackPointer();
+	Address oldStackPointer = readStackPointer();
 	Address oldBasePointer  = readBasePointer();
-	Address offset          = STACK_START - initialEsp;
-	Address newStackPointer = oldStackPointer + offset;
-	Address newBasePointer  = oldBasePointer  + offset;
+	size_t stackSize = oldBasePointer + 4 - oldStackPointer;
 
-	// Copy the stack.
-	Kernel::memcpy(newStackPointer, oldStackPointer, initialEsp - oldStackPointer);
+	// Copy stack words from EBP+4 to ESP, which includes
+	// this function's local variables plus information to return to Kernel::run().
+	// (remapStack is called from Kernel::run() which itself never returns).
+	// Return address is at EBP+4 according to C calling convention.
 
-  // Backtrace through the original stack, copying new values into
-  // the new stack.
-  Address origBasePtrAddr = oldBasePointer;
-  Address origBasePtrVal;
+	// Base  Offset   Contents
+	// EBP   4n+8     argument word n     High addresses
+	//                .,...
+	//          8     argument word 0
+	//          4     return address
+	// EBP      0     caller’s %ebp
+	// EBP     –4     x words local space: automatic variables,
+	// EBP    -4x     temporaries, etc.
+	// ESP     12
+	// ESP      8     caller’s %edi
+	// ESP      4     caller’s %esi
+	// ESP      0     caller’s %ebx        Low addresses
 
-  for(u32int i = STACK_START; i > STACK_START-STACK_INITIAL_SIZE; i -= 4)
-  {
-    Address tmp = * (Address*)i;
-    if (( oldStackPointer < tmp) && (tmp < initialEsp))
-    {
-      tmp = tmp + offset;
-      Address *tmp2 = (Address*)i;
-      *tmp2 = tmp;
-    }
-  }
+	Kernel::copyMemory((void*)(STACK_START - stackSize), (const void*)oldStackPointer, stackSize);
 
-  writeStackPointer(newStackPointer);
-  writeBasePointer(newBasePointer);*/
+	writeStackPointer(STACK_START - stackSize);
+	writeBasePointer(STACK_START - 4);
 }
 
 void MemoryManager::alignPlacementAddress()

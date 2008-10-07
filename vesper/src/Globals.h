@@ -8,7 +8,7 @@ extern class Multiboot multiboot;
 extern class ElfParser kernelElfParser;
 extern class MemoryManager memoryManager;
 
-extern "C" void kernel_entry(class MultibootHeader *mh);
+extern "C" void kernel_entry(class MultibootHeader *mh) /*NORETURN*/;
 
 void *operator new(size_t size);
 void *operator new(size_t size, uint32_t place);

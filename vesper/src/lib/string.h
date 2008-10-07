@@ -1,19 +1,7 @@
 #pragma once
 
-/* We don't want strings.h stuff being user by user stuff by accident */
-
-// #ifndef __KERNEL__
-// #include <string.h>
-// #else
-
-// #include <linux/compiler.h>	/* for inline */
-// #include <linux/types.h>	/* for size_t */
-// #include <linux/stddef.h>	/* for NULL */
-
-// extern char *strndup_user(const char __user *, long);
-
 /*
- * Include machine specific inline routines
+ * TODO Include machine specific inline routines
  */
 // #include <asm/string.h>
 
@@ -85,12 +73,6 @@ extern size_t strcspn(const char *,const char *);
 #ifndef __HAVE_ARCH_MEMSET
 extern void * memset(void *,int,size_t);
 #endif
-#ifndef __HAVE_ARCH_MEMCPY
-extern void * memcpy(void *,const void *,size_t);
-#endif
-#ifndef __HAVE_ARCH_MEMMOVE
-extern void * memmove(void *,const void *,size_t);
-#endif
 #ifndef __HAVE_ARCH_MEMSCAN
 extern void * memscan(void *,int,size_t);
 #endif
@@ -100,12 +82,3 @@ extern int memcmp(const void *,const void *,size_t);
 #ifndef __HAVE_ARCH_MEMCHR
 extern void * memchr(const void *,int,size_t);
 #endif
-
-// extern char *kstrdup(const char *s, gfp_t gfp);
-// extern char *kstrndup(const char *s, size_t len, gfp_t gfp);
-// extern void *kmemdup(const void *src, size_t len, gfp_t gfp);
-
-// extern char **argv_split(gfp_t gfp, const char *str, int *argcp);
-// extern void argv_free(char **argv);
-
-// #endif
