@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_LOCKABLE_H
-#define __INCLUDED_LOCKABLE_H
 
 #include "Atomic.h"
 
@@ -60,4 +58,3 @@ private:
 	uint32_t lock;
 };
 
-#endif

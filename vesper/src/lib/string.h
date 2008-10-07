@@ -1,5 +1,4 @@
-#ifndef _LINUX_STRING_H_
-#define _LINUX_STRING_H_
+#pragma once
 
 /* We don't want strings.h stuff being user by user stuff by accident */
 
@@ -110,4 +109,3 @@ extern void * memchr(const void *,int,size_t);
 // extern void argv_free(char **argv);
 
 // #endif
-#endif /* _LINUX_STRING_H_ */

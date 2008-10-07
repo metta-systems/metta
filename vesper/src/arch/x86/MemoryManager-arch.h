@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_ARCH_X86_MEMORYMANAGER_H
-#define __INCLUDED_ARCH_X86_MEMORYMANAGER_H
 // # ifdef LANG_X86
 
 #include "Globals.h"
@@ -264,4 +262,3 @@ private:
 };
 
 // # endif // LANG_X86
-#endif  // __INCLUDED_ARCH_X86_MEMORYMANAGER_H

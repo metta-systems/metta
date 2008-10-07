@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_DEFAULTCONSOLE_H
-#define __INCLUDED_DEFAULTCONSOLE_H
+#pragma once
 
 #define kconsole DefaultConsole::self()
 
@@ -56,4 +55,3 @@ private:
 	unsigned char attr;
 };
 
-#endif

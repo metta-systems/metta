@@ -1,5 +1,4 @@
-#ifndef _ASM_X86_DIV64_H
-#define _ASM_X86_DIV64_H
+#pragma once
 
 // #ifdef CONFIG_X86_32
 
@@ -56,4 +55,3 @@ extern uint64_t div64_64(uint64_t dividend, uint64_t divisor);
 // # include <asm-generic/div64.h>
 // #endif /* CONFIG_X86_32 */
 
-#endif /* _ASM_X86_DIV64_H */

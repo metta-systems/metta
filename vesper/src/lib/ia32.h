@@ -30,8 +30,7 @@
  * $Id: ia32.h,v 1.10 2006/11/16 20:01:58 skoglund Exp $
  *
  ********************************************************************/
-#ifndef __ARCH__IA32__IA32_H__
-#define __ARCH__IA32__IA32_H__
+#pragma once
 
 #include "x86.h"
 
@@ -175,6 +174,3 @@
 # error unknown architecture - specify cache line size
 #endif
 
-
-
-#endif /* !__ARCH__IA32__IA32_H__ */

@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_COMMON_H
-#define __INCLUDED_COMMON_H
+#pragma once
 
 // [ ] Use djb's safe string operations?
 
@@ -69,4 +68,3 @@ extern "C" int sscanf(const char *, const char *, ...)
 extern "C" int vsscanf(const char *, const char *, va_list)
         __attribute__ ((format (scanf, 2, 0)));
 
-#endif

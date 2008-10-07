@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_GDT_H
-#define __INCLUDED_GDT_H
+#pragma once
 
 #include "common.h"
 
@@ -100,4 +99,3 @@ class GlobalDescriptorTable
 		uint32_t base;
 } PACKED;
 
-#endif /* !__INCLUDED_GDT_H */

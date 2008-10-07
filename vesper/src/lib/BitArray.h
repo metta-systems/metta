@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_BITARRAY_H
-#define __INCLUDED_BITARRAY_H
+#pragma once
 
 #include "Types.h"
 
@@ -130,4 +129,3 @@ private:
 	uint32_t N;
 };
 
-#endif

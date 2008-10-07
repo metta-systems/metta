@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_HEAP_H
-#define __INCLUDED_HEAP_H
 
 #include "OrderedArray.h"
 #include "Lockable.h"
@@ -121,4 +119,3 @@ private:
 	bool isKernel;
 };
 
-#endif

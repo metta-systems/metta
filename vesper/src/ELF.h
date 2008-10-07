@@ -7,8 +7,6 @@
  */
 
 #pragma once
-#ifndef __INCLUDED_ELF_H
-#define __INCLUDED_ELF_H
 
 #include "Types.h"
 
@@ -304,4 +302,3 @@ elf_hash(const unsigned char *name)
 	return h;
 }
 
-#endif

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_ELFPARSER_H
-#define __INCLUDED_ELFPARSER_H
 
 #include "ELF.h"
 #include "Types.h"
@@ -100,4 +98,3 @@ class ElfParser
 		char               *filename;
 };
 
-#endif

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_KERNEL_H
-#define __INCLUDED_KERNEL_H
 
 #include "Types.h"
 
@@ -50,4 +48,3 @@ private:
 	void relocatePlacementAddress();
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_ISR_H
-#define __INCLUDED_ISR_H
+#pragma once
 
 #include "Types.h"
 
@@ -32,4 +31,3 @@ typedef struct registers
 typedef void (*isr_t)(registers_t);
 void register_interrupt_handler(uint8_t n, isr_t handler);
 
-#endif

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_ORDERED_ARRAY_H
-#define __INCLUDED_ORDERED_ARRAY_H
 
 #include "Types.h"
 #include "common.h"
@@ -89,4 +87,3 @@ private:
 	uint32_t size;
 };
 
-#endif // __INCLUDED_ORDERED_ARRAY_H

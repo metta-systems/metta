@@ -1,5 +1,4 @@
-#ifndef __INCLUDED_IDT_H
-#define __INCLUDED_IDT_H
+#pragma once
 
 #include "common.h"
 
@@ -118,4 +117,3 @@ extern void irq14();
 extern void irq15();
 }
 
-#endif /* !__INCLUDED_IDT_H */

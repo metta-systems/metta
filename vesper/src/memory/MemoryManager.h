@@ -1,8 +1,7 @@
-#ifndef __INCLUDED_MEMORYMANAGER_H
-#define __INCLUDED_MEMORYMANAGER_H
+#pragma once
 
 #include "Types.h"
-#include <Heap.h>
+#include "Heap.h"
 #include "BitArray.h"
 
 #define HEAP_START              0xC0000000
@@ -178,4 +177,3 @@ private:
 
 #include "MemoryManager-arch.h"
 
-#endif

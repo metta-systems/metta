@@ -1,6 +1,4 @@
 #pragma once
-#ifndef __INCLUDED_MULTIBOOT_H
-#define __INCLUDED_MULTIBOOT_H
 
 #include "Types.h"
 #include "ELF.h"
@@ -158,4 +156,3 @@ class Multiboot
 		Elf32SectionHeader *symtab;
 };
 
-#endif
