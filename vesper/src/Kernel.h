@@ -11,6 +11,11 @@ public:
 	void run() /*NORETURN*/;
 
 	/**
+	 * Dump @c size bytes from a memory region starting at virtual address @c start.
+	 */
+	static void dumpMemory(Address start, size_t size);
+
+	/**
 	 * Given a stack base pointer, follow it, return the next stack base
 	 * pointer and also return the instruction pointer it returned to.
 	 */

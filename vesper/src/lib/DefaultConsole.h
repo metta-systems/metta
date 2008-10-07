@@ -24,6 +24,8 @@ enum Color {
 class DefaultConsole
 {
 public:
+	static const char EOL;
+
 	static DefaultConsole &self();
 
 	void set_color(Color col);
@@ -40,11 +42,7 @@ public:
 	void print_hex(unsigned int n);
 	void print(const char *str, ...);
 
-	void debug_showmem(void *addr, unsigned int size);
 	void wait_ack();
-	// unfinished:
-	void debug_showregs();
-	void debug_showstack();
 
 	void debug_log(const char *str, ...);
 

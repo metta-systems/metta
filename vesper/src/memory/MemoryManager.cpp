@@ -215,10 +215,18 @@ void MemoryManager::remapStack()
 	// ESP      4     caller’s %esi
 	// ESP      0     caller’s %ebx        Low addresses
 
+	kconsole.print("Remapping stack from %p to %p (%d bytes) ...", oldStackPointer, STACK_START - stackSize, stackSize);
+
 	Kernel::copyMemory((void*)(STACK_START - stackSize), (const void*)oldStackPointer, stackSize);
+
+	kconsole.newline();
+	Kernel::dumpMemory(oldStackPointer, stackSize);
+	kconsole.newline();
+	Kernel::dumpMemory(STACK_START - stackSize, stackSize);
 
 	writeStackPointer(STACK_START - stackSize);
 	writeBasePointer(STACK_START - 4);
+	kconsole.print(" done\n");
 }
 
 void MemoryManager::alignPlacementAddress()

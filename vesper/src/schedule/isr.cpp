@@ -15,8 +15,8 @@ void register_interrupt_handler(uint8_t n, isr_t handler)
 // This gets called from our ASM interrupt handler stub.
 void isr_handler(registers_t regs)
 {
-	kconsole.set_color(GREEN);
-	kconsole.print("Received interrupt: %d\n", regs.int_no);
+// 	kconsole.set_color(GREEN);
+// 	kconsole.print("Received interrupt: %d\n", regs.int_no);
 
 	isr_t handler = interrupt_handlers[regs.int_no];
 	if (handler)

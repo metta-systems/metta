@@ -27,7 +27,8 @@ void Kernel::run()
 	// TODO: add page fault handler init before enabling paging.
 
 	memoryManager.init(multiboot.upperMem() * 1024);
-
+	memoryManager.remapStack();
+	kconsole.print("Returned from remapStack()\n");
 
 	Task::init();
 	Timer::init();
@@ -55,6 +56,49 @@ void Kernel::relocatePlacementAddress()
 	memoryManager.setPlacementAddress(newPlacementAddress);
 }
 
+void Kernel::dumpMemory(Address start, size_t size)
+{
+	char *ptr = (char *)start;
+	int run;
+
+	// Silly limitation, probably.
+	if (size > 256)
+		size = 256;
+
+	kconsole.newline();
+
+	while (size > 0)
+	{
+		kconsole.print_hex((unsigned int)ptr);
+		kconsole.print("  ");
+		run = size < 16 ? size : 16;
+		for(int i = 0; i < run; i++)
+		{
+			kconsole.print_byte(*(ptr+i));
+			kconsole.print_char(' ');
+			if (i == 7)
+				kconsole.print_char(' ');
+		}
+		if (run < 16)// pad
+		{
+			if(run < 8)
+				kconsole.print_char(' ');
+			for(int i = 0; i < 16-run; i++)
+				kconsole.print("   ");
+		}
+		kconsole.print_char(' ');
+		for(int i = 0; i < run; i++)
+		{
+			char c = *(ptr+i);
+			if (c == kconsole.EOL)
+				c = ' ';
+			kconsole.print_char(c);
+		}
+		kconsole.newline();
+		ptr += run;
+		size -= run;
+	}
+}
 
 Address Kernel::backtrace(Address basePointer, Address& returnAddress)
 {

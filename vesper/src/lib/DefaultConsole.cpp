@@ -1,7 +1,7 @@
 #include "DefaultConsole.h"
 #include "common.h"
 
-#define EOL 10
+const char DefaultConsole::EOL = 10;
 
 // Screen dimensions (for default 80x25 console)
 #define LINE_PITCH 160       // line width in bytes
@@ -148,47 +148,6 @@ void DefaultConsole::print(const char *str, ...)
 		print_char(buffer[i++]);
 }
 
-// Dump at most 256 bytes of memory.
-void DefaultConsole::debug_showmem(void *addr, unsigned int size)
-{
-	char *ptr = (char *)addr;
-	int run;
-	newline();
-	if (size > 256)
-		size = 256;
-	while (size > 0)
-	{
-		print_hex((unsigned int)ptr);
-		print("  ");
-		run = size < 16 ? size : 16;
-		for(int i = 0; i < run; i++)
-		{
-			print_byte(*(ptr+i));
-			print_char(' ');
-			if (i == 7)
-				print_char(' ');
-		}
-		if (run < 16)// pad
-		{
-			if(run < 8)
-				print_char(' ');
-			for(int i = 0; i < 16-run; i++)
-				print("   ");
-		}
-		print_char(' ');
-		for(int i = 0; i < run; i++)
-		{
-			char c = *(ptr+i);
-			if (c == EOL)
-				c = ' ';
-			print_char(c);
-		}
-		newline();
-		ptr += run;
-		size -= run;
-	}
-}
-
 void DefaultConsole::wait_ack()
 {
 	uint8_t keycode;
@@ -211,14 +170,6 @@ void DefaultConsole::wait_ack()
 
 	if (!(irqmask & 0x02)) // if irq1 was unmasked previously,
 		outb(0x21, inb(0x21) & 0xFD); // unmask it now without changing other flags
-}
-
-void DefaultConsole::debug_showregs() // FIXME: gcc will trash most of the registers anyway
-{
-}
-
-void DefaultConsole::debug_showstack()
-{
 }
 
 void DefaultConsole::debug_log(const char *str, ...)
