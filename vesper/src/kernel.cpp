@@ -7,8 +7,8 @@
 #include "DefaultConsole.h"
 #include "gdt.h"
 #include "idt.h"
-#include "timer.h"
-#include "task.h"
+#include "Timer.h"
+#include "Task.h"
 
 // [ ] TODO create own stack after we enabled paging
 void Kernel::run()
