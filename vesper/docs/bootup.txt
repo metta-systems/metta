@@ -3,6 +3,21 @@ On-disk layout:
  [kernel image]
  [initramdisk image]
 
+Kernel image consists of:
+ * trampoline code
+ * glue code
+ * nucleus code
+
+Trampoline code is usually use-once and can be thrown away after kernel is up
+and running. Trampoline code is what is being loaded by the bootloader as a
+"kernel."
+
+The glue and nucleus code are then loaded as modules specified in bootloader
+or trampoline configuration.
+
+Trampoline code then jumps to the nucleus and can later be disposed of.
+
+
 Bootloader:
  - call c++ ctors
  - call kernel
