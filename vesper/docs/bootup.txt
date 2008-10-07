@@ -54,6 +54,23 @@ Physical RAM +-------------------------+ Virtual addresses
          top |                         |
              |                         |
              |                         |
+             |                         |
+             |                         |
+             |                         |
+             | User heap end           | 0xDFFFFFFF
+             |                         |
+             | User heap start         | 0xD0000000
+             | Kernel heap end         | 0xCFFFFFFF
+             |                         |
+             | Kernel heap start       | 0xC0000000
+             |                         |
+             | Stack start             | 0xB0000000
+             |                         |
+             | Stack end               | 0xA0000000
+             |                         |
+             |                         |
+             |                         |
+             |                         |
     0x20F000 |Libos end address        |
              |                         |
              |                         |
