@@ -1,13 +1,12 @@
 /* Ensure everything goes in the right order. */
+/* This is x86 linker script. */
 ENTRY (_loader)
-SEARCH_DIR (./build/default)
 
 SECTIONS
 {
 	.text 0x100000 :
 	{
 		code = .; _code = .; __code = .;
-		default/boot/loader.o(.text)
 		*(.text)
 		FILL(0x90)
 	}

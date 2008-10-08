@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import Params
-Params.g_autoconfig=1
+Params.g_autoconfig = 1
 
 srcdir = '.'
 blddir = 'build'
@@ -10,20 +10,28 @@ def set_options(opt):
 	pass
 
 def configure(conf):
-	conf.check_tool('gcc g++ nasm')
+	conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
 	cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule -I../boot'
+	flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
+
+	env = conf.env.copy() # Clone environment
+	env.set_variant('x86-release') # configure archdep & builddep variant
+	conf.set_env_name('x86-release', env)
+	conf.setenv('x86-release') # Activate the environment
+
 	cflags += ' -I../arch/x86' #FIXME: archdep
 	cflags += ' -O3' #FIXME: builddep
-	flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore -fno-exceptions'
-	conf.env['CCFLAGS'] += [cflags + ' ' + flags]
-	conf.env['CXXFLAGS'] += [cflags + ' -fno-rtti ' + flags]
-	conf.env['CXXDEFINES'] += ['CONFIG_CPU_IA32_P4'] #FIXME: archdep
-	conf.env['LINKFLAGS'] += ['-T ../linker.ld ' + flags]
-	conf.env['NASM_FLAGS'] += ['-f elf']
+
+	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
+	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti ' + flags)
+	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
+	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + flags)
+	conf.env.append_unique('NASM_FLAGS', '-f elf')
 	conf.write_config_header('config.h')
 
 def build(bld):
 	obj = bld.create_obj('cpp', 'program')
 	obj.find_sources_in_dirs('. boot lib memory pd schedule')
 	obj.source.remove('boot/boot.asm')
+	obj.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
 	obj.target = 'vesper'
