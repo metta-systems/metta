@@ -1,5 +1,6 @@
 ; kate: replace-tabs off; indent-width 4; tab-width: 4;
 global _loader                         ; making entry point visible to linker
+global initialEsp
 
 extern kernel_entry                    ; kernel_entry is defined elsewhere
 extern start_ctors, end_ctors          ; c++ init function lists
@@ -14,6 +15,9 @@ CHECKSUM    equ -(MAGIC + FLAGS)       ; checksum required
 
 bits 32                                ; 32 bit PM
 
+section .data
+initialEsp: dd 0
+
 section .text
 align 4
 MultiBootHeader:                       ; We only include so many fields in the
@@ -23,6 +27,7 @@ MultiBootHeader:                       ; We only include so many fields in the
 
 _loader:
 	cli
+	mov [initialEsp], esp              ; record original ESP for remapping the stack later
 	push ebx                           ; pass Multiboot info structure
 
 static_ctors_loop:
