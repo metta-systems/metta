@@ -197,43 +197,20 @@ void MemoryManager::remapStack()
 
 	Address oldStackPointer = readStackPointer();
 	Address oldBasePointer  = readBasePointer();
-	size_t stackSize = initialEsp/*oldBasePointer + 4*/ - oldStackPointer;
+	size_t stackSize = initialEsp - oldStackPointer;
 
 	int offset = STACK_START - initialEsp;
 
 	Address newStackPointer = oldStackPointer + offset;
 	Address newBasePointer = oldBasePointer + offset;
 
-	// Copy stack words from EBP+4 to ESP, which includes
-	// this function's local variables plus information to return to Kernel::run().
-	// (remapStack is called from Kernel::run() which itself never returns).
-	// Return address is at EBP+4 according to C calling convention.
-
-	// Base  Offset   Contents
-	// EBP   4n+8     argument word n     High addresses
-	//                .,...
-	//          8     argument word 0
-	//          4     return address
-	// EBP      0     caller’s %ebp
-	// EBP     –4     x words local space: automatic variables,
-	// EBP    -4x     temporaries, etc.
-	// ESP     12
-	// ESP      8     caller’s %edi
-	// ESP      4     caller’s %esi
-	// ESP      0     caller’s %ebx        Low addresses
-
-	kconsole.print("Remapping stack from %p-%p to %p-%p (%d bytes) ...", initialEsp, oldStackPointer, STACK_START, newStackPointer, stackSize);
+	kconsole.print("Remapping stack from %p-%p to %p-%p (%d bytes)..", initialEsp, oldStackPointer, STACK_START, newStackPointer, stackSize);
 
 	Kernel::copyMemory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
 
-	kconsole.newline();
-	Kernel::dumpMemory(oldStackPointer, stackSize);
-	kconsole.newline();
-	Kernel::dumpMemory(newStackPointer, stackSize);
-
 	writeStackPointer(newStackPointer);
 	writeBasePointer(newBasePointer);
-	kconsole.print(" done\n");
+	kconsole.print("done\n");
 }
 
 void MemoryManager::alignPlacementAddress()
