@@ -1,5 +1,5 @@
-extern isr_handler    ; in isr.cpp
-extern irq_handler
+extern isrHandler    ; in InterruptServiceRoutine.cpp
+extern irqHandler
 
 %macro ISR_NOERRCODE 1
 global isr%1
@@ -83,8 +83,10 @@ IRQ  15,    47
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 isr_common_stub:
+	cli
 	pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
+	mov eax, 0x0
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 
@@ -94,7 +96,7 @@ isr_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call isr_handler
+	call isrHandler
 
 	pop eax        ; reload the original data segment descriptor
 	mov ds, ax
@@ -111,8 +113,10 @@ isr_common_stub:
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 irq_common_stub:
+	cli
 	pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
+	mov eax, 0x0
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 
@@ -122,13 +126,13 @@ irq_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call irq_handler
+	call irqHandler
 
-	pop ebx        ; reload the original data segment descriptor
-	mov ds, bx
-	mov es, bx
-	mov fs, bx
-	mov gs, bx
+	pop eax        ; reload the original data segment descriptor
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
 
 	popa                     ; Pops edi,esi,ebp...
 	add esp, 8     ; Cleans up the pushed error code and pushed ISR number

@@ -5,12 +5,14 @@
 #include "Multiboot.h"
 #include "ElfParser.h"
 #include "MemoryManager.h"
+#include "idt.h"
 
 /* Global objects FIXME: use singletons instead? */
 Kernel kernel;
 Multiboot multiboot;
 ElfParser kernelElfParser;
 MemoryManager memoryManager;
+InterruptDescriptorTable interruptsTable;
 
 /* This entry point is called from loader */
 void kernel_entry(MultibootHeader *multibootHeader)

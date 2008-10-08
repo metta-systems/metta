@@ -1,29 +1,37 @@
 #include "common.h"
-#include "isr.h"
 #include "Task.h"
 #include "Timer.h"
 #include "DefaultConsole.h"
+#include "InterruptServiceRoutine.h"
+#include "idt.h"
+#include "Globals.h"
 
 void Timer::init()
 {
 	static Timer timer;
 }
 
-static uint32_t tick = 0;
-
-static void callback(registers_t)
+class TimerCallback : public InterruptServiceRoutine
 {
-	tick++;
-	Task::yield();
-}
+	uint32_t tick;
 
+public:
+	TimerCallback() : tick(0) {}
+	virtual ~TimerCallback() {}
+
+	virtual void run(Registers *)
+	{
+		tick++;
+		Task::yield();
+	}
+} timerCallback;
 
 Timer::Timer()
 {
 	uint32_t frequency = 50;
 
 	// Firstly, register our timer callback.
-	register_interrupt_handler(IRQ0, callback);
+	interruptsTable.setIrqHandler(0, &timerCallback);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

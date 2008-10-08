@@ -9,8 +9,10 @@
 #include "idt.h"
 #include "Timer.h"
 #include "Task.h"
+#include "PageFaultHandler.h"
 
-// [ ] TODO create own stack after we enabled paging
+PageFaultHandler pageFaultHandler;
+
 void Kernel::run()
 {
 	if (!multiboot.isElf())
@@ -22,16 +24,16 @@ void Kernel::run()
 	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
 
 	GlobalDescriptorTable::init();
-	InterruptDescriptorTable::init();
 
-	// TODO: add page fault handler init before enabling paging.
+	interruptsTable.setIsrHandler(14, &pageFaultHandler);
+	interruptsTable.init();
 
 	memoryManager.init(multiboot.upperMem() * 1024);
 	memoryManager.remapStack();
-	kconsole.print("Returned from remapStack()\n");
+	kconsole.debug_log("Remapped stack and ready to rock.");
 
 	Task::init();
-	Timer::init();
+	Timer::init();//crashes after timer init
 
 	// Load initrd and pass control to init component
 

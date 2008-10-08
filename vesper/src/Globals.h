@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Types.h"
+#include "Macros.h"
 #include "string.h"
 
 extern class Kernel kernel;
 extern class Multiboot multiboot;
 extern class ElfParser kernelElfParser;
 extern class MemoryManager memoryManager;
+extern class InterruptDescriptorTable interruptsTable;
 
 extern "C" void kernel_entry(class MultibootHeader *mh) NORETURN;
 

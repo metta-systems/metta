@@ -1,3 +1,6 @@
+//
+// Interrupt descriptor tables wrapper class.
+//
 #pragma once
 
 #include "common.h"
@@ -17,13 +20,13 @@ private:
 	union {
 		uint32_t raw[2];
 		struct {
-			uint32_t offset_low	: 16;
-			uint32_t sel		: 16;
-			uint32_t res0		:  8;
-			uint32_t type		:  3;
+			uint32_t offset_low		: 16;
+			uint32_t sel			: 16;
+			uint32_t res0			:  8;
+			uint32_t type			:  3;
 			uint32_t datasize		:  1;
-			uint32_t res1		:  1;
-			uint32_t dpl		:  2;
+			uint32_t res1			:  1;
+			uint32_t dpl			:  2;
 			uint32_t present		:  1;
 			uint32_t offset_high	: 16;
 		} d PACKED;
@@ -31,13 +34,13 @@ private:
 };
 
 
-/* IdtEntry::set
- * sets an descriptor entry
- * - address is the offset of the handler in X86_KCS
- * - type selects Interrupt Gate or Trap Gate respectively
- * - dpl sets the numerical maximum CPL of allowed calling code
+/**
+ * Set a descriptor entry.
+ * @c segsel is code segment selector to run the handler in.
+ * @c address is the offset of the handler in X86_KCS.
+ * @c type selects Interrupt Gate or Trap Gate respectively.
+ * @c dpl sets the numerical maximum CPL of allowed calling code.
  */
-
 INLINE void IdtEntry::set(uint16_t segsel, void (*address)(), type_e type, int dpl)
 {
     x.d.offset_low  = ((uint32_t) address      ) & 0xFFFF;
@@ -54,19 +57,47 @@ INLINE void IdtEntry::set(uint16_t segsel, void (*address)(), type_e type, int d
     x.d.res0 = x.d.res1 = 0;
 };
 
+class InterruptServiceRoutine;
+
 class InterruptDescriptorTable
 {
 	public:
-		static void init();
+		INLINE InterruptDescriptorTable()
+		{
+			for (int i = 0; i < 256; i++)
+				interruptRoutines[i] = 0;
+		}
+
+		void init();
+
+		// Generic interrupt service routines.
+		INLINE void setIsrHandler(int isrNum, InterruptServiceRoutine *isr)
+		{
+			interruptRoutines[isrNum] = isr;
+		}
+
+		// Hardware interrupt requests routines. (FIXME: archdep)
+		INLINE void setIrqHandler(int irq, InterruptServiceRoutine *isr)
+		{
+			interruptRoutines[irq+32] = isr;
+		}
+
+		INLINE InterruptServiceRoutine* getIsr(int isrNum)
+		{
+			return interruptRoutines[isrNum];
+		}
 
 	private:
-		InterruptDescriptorTable();
+		// Two fields are part of the IDT
 		uint16_t limit;
 		uint32_t base;
+
+		InterruptServiceRoutine *interruptRoutines[256];
 } PACKED;
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
-extern "C" {
+extern "C"
+{
 extern void isr0 ();
 extern void isr1 ();
 extern void isr2 ();
@@ -99,6 +130,7 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
+
 extern void irq0 ();
 extern void irq1 ();
 extern void irq2 ();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Macros.h"
 
 class Kernel
 {
