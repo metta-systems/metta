@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Types.h"
+#include "Macros.h"
 
 /*
  * ELF data types
