@@ -178,7 +178,7 @@ void MemoryManager::freeFrame(Address frame)
 	frames->clear(frame / PAGE_SIZE);
 }
 
-extern "C" Address initialEsp;
+extern "C" Address initialEsp; // in loader.s
 
 void MemoryManager::remapStack()
 {

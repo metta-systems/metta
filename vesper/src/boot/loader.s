@@ -15,8 +15,8 @@ CHECKSUM    equ -(MAGIC + FLAGS)       ; checksum required
 
 bits 32                                ; 32 bit PM
 
-section .data
-initialEsp: dd 0
+section .bss
+initialEsp: resd 1                     ; reserve one dword
 
 section .text
 align 4
