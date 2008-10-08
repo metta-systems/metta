@@ -8,7 +8,7 @@ public:
 	/**
 	 * Boot the kernel
 	 */
-	void run() /*NORETURN*/;
+	void run() NORETURN;
 
 	/**
 	 * Dump @c size bytes from a memory region starting at virtual address @c start.

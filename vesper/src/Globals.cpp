@@ -13,7 +13,7 @@ ElfParser kernelElfParser;
 MemoryManager memoryManager;
 
 /* This entry point is called from loader */
-void kernel_entry(MultibootHeader *multibootHeader) /*NORETURN*/
+void kernel_entry(MultibootHeader *multibootHeader)
 {
 	kconsole.clear();
 	multiboot = Multiboot(multibootHeader);
