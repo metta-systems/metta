@@ -3,15 +3,8 @@
 // [ ] Use djb's safe string operations?
 
 #include "Types.h"
+#include "Macros.h"
 #include <stdarg.h> // for va_list macros
-
-#define UNUSED(x) ((void)(x))
-#define INLINE inline
-#define PANIC(msg) panic(msg, __FILE__, __LINE__);
-#define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
-#define BUG_ON(b) ASSERT(!(b))
-#define EXPORT_SYMBOL(sym) extern typeof(sym) sym
-#define noinline __attribute__((noinline))
 
 extern "C" void panic(const char *message, const char *file, uint32_t line);
 extern "C" void panic_assert(const char *desc, const char *file, uint32_t line);
@@ -38,6 +31,7 @@ INLINE uint16_t inw(uint16_t port)
 
 // ==================================================================
 // from vsprintf.c
+// FIXME: do we need to export this uglyness at all?
 
 extern "C" unsigned long simple_strtoul(const char *,char **,unsigned int);
 extern "C" long simple_strtol(const char *,char **,unsigned int);
