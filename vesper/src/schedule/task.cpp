@@ -25,6 +25,8 @@ void Task::init()
 	current_task->page_directory = memoryManager.getCurrentDirectory();
 	current_task->next = 0;
 
+	kconsole.debug_log("Constructed kernel task.");
+
 	// Reenable interrupts.
 	endCriticalSection();
 }
