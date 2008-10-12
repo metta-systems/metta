@@ -1,4 +1,4 @@
-#include "idt.h"
+#include "InterruptDescriptorTable.h"
 
 #define CS_SEL 0x08
 

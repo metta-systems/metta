@@ -5,7 +5,7 @@
 #include "Multiboot.h"
 #include "ElfParser.h"
 #include "MemoryManager.h"
-#include "idt.h"
+#include "InterruptDescriptorTable.h"
 
 /* Global objects FIXME: use singletons instead? */
 Kernel kernel;

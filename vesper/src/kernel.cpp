@@ -6,7 +6,7 @@
 #include "MemoryManager.h"
 #include "DefaultConsole.h"
 #include "gdt.h"
-#include "idt.h"
+#include "InterruptDescriptorTable.h"
 #include "Timer.h"
 #include "Task.h"
 #include "PageFaultHandler.h"
@@ -33,7 +33,7 @@ void Kernel::run()
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
 	Task::init();
-	Timer::init();//crashes after timer init
+	Timer::init();//crashes at start of timer init (stack problem?)
 
 	// Load initrd and pass control to init component
 

@@ -3,7 +3,7 @@
 #include "Timer.h"
 #include "DefaultConsole.h"
 #include "InterruptServiceRoutine.h"
-#include "idt.h"
+#include "InterruptDescriptorTable.h"
 #include "Globals.h"
 
 void Timer::init()
@@ -49,5 +49,5 @@ Timer::Timer()
 	outb(0x40, l);
 	outb(0x40, h);
 
-	kconsole.debug_log("Constructed timer.");
+// 	kconsole.debug_log("Constructed timer.");
 }

@@ -1,6 +1,6 @@
 #include "DefaultConsole.h"
 #include "InterruptServiceRoutine.h"
-#include "idt.h"
+#include "InterruptDescriptorTable.h"
 #include "Globals.h"
 #include "common.h"
 

@@ -68,7 +68,7 @@ class InterruptDescriptorTable
 				interruptRoutines[i] = 0;
 		}
 
-		void init();
+		void init(); // called from Kernel::run()
 
 		// Generic interrupt service routines.
 		INLINE void setIsrHandler(int isrNum, InterruptServiceRoutine *isr)
