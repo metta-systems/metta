@@ -1,3 +1,9 @@
+;
+; Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+;
+; Distributed under the Boost Software License, Version 1.0.
+; (See accompanying file LICENSE_1_0.txt or copy at http:;www.boost.org/LICENSE_1_0.txt)
+;
 ; kate: replace-tabs off; indent-width 4; tab-width: 4;
 global _loader                         ; making entry point visible to linker
 global initialEsp
