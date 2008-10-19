@@ -77,9 +77,7 @@ void Task::yield()
     esp = current_task->esp;
     ebp = current_task->ebp;
 
-// 	kconsole.print("yield() to ");
-// 	kconsole.print_int(current_task->id);
-// 	kconsole.newline();
+	kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
     memoryManager.setCurrentDirectory(current_task->page_directory);
@@ -113,7 +111,7 @@ Task *Task::self()
 int Task::fork()
 {
     // We are modifying kernel structures, and so cannot be interrupted.
-    asm volatile("cli");
+	disableInterrupts();
 
     // Take a pointer to this process' task struct for later reference.
     Task *parent_task = (Task *)current_task;
@@ -130,9 +128,7 @@ int Task::fork()
     new_task->page_directory = directory;
     new_task->next = 0;
 
-	kconsole.print("fork() to ");
-	kconsole.print_int(new_task->id);
-	kconsole.newline();
+	kconsole.print("fork() to %d\n", new_task->id);
 
     // Add it to the end of the ready queue.
     Task *tmp_task = (Task *)ready_queue;
@@ -153,10 +149,8 @@ int Task::fork()
         new_task->ebp = ebp;
         new_task->eip = eip;
 
-		kconsole.print("Saving new task's EIP ");
-		kconsole.print_hex(eip);
-		kconsole.newline();
-        asm volatile("sti");
+		kconsole.print("Saving new task's EIP %08x\n", eip);
+		enableInterrupts();
 
         return new_task->id;
     }
