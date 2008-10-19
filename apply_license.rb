@@ -11,8 +11,7 @@ exts = {'.cpp'=>license, '.c'=>license, '.h'=>license,'.s'=>license.dup.gsub("//
 
 Find.find('./') do |f|
 	if File.file?(f) && exts.include?(File.extname(f))
-		ext = File.extname(f)
-		lic = exts[ext]
+		lic = exts[File.extname(f)]
 		content = IO.readlines(f).join
 		if content.index(lic).nil?
 			content = lic + content
