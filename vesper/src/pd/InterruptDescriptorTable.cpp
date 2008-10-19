@@ -17,40 +17,39 @@ void InterruptDescriptorTable::init()
 	limit = sizeof(idt_entries)-1;
 	base = (Address)&idt_entries;
 
-	// Change dpl to 3 when we get to user-mode-enabled part.
-	// This will allow kernel isrs to work in user-mode.
-	idt_entries[0].set(CS_SEL, isr0, IdtEntry::interrupt, 0);
-	idt_entries[1].set(CS_SEL, isr1, IdtEntry::interrupt, 0);
-	idt_entries[2].set(CS_SEL, isr2, IdtEntry::interrupt, 0);
-	idt_entries[3].set(CS_SEL, isr3, IdtEntry::interrupt, 0);
-	idt_entries[4].set(CS_SEL, isr4, IdtEntry::interrupt, 0);
-	idt_entries[5].set(CS_SEL, isr5, IdtEntry::interrupt, 0);
-	idt_entries[6].set(CS_SEL, isr6, IdtEntry::interrupt, 0);
-	idt_entries[7].set(CS_SEL, isr7, IdtEntry::interrupt, 0);
-	idt_entries[8].set(CS_SEL, isr8, IdtEntry::interrupt, 0);
-	idt_entries[9].set(CS_SEL, isr9, IdtEntry::interrupt, 0);
-	idt_entries[10].set(CS_SEL, isr10, IdtEntry::interrupt, 0);
-	idt_entries[11].set(CS_SEL, isr11, IdtEntry::interrupt, 0);
-	idt_entries[12].set(CS_SEL, isr12, IdtEntry::interrupt, 0);
-	idt_entries[13].set(CS_SEL, isr13, IdtEntry::interrupt, 0);
-	idt_entries[14].set(CS_SEL, isr14, IdtEntry::interrupt, 0);
-	idt_entries[15].set(CS_SEL, isr15, IdtEntry::interrupt, 0);
-	idt_entries[16].set(CS_SEL, isr16, IdtEntry::interrupt, 0);
-	idt_entries[17].set(CS_SEL, isr17, IdtEntry::interrupt, 0);
-	idt_entries[18].set(CS_SEL, isr18, IdtEntry::interrupt, 0);
-	idt_entries[19].set(CS_SEL, isr19, IdtEntry::interrupt, 0);
-	idt_entries[20].set(CS_SEL, isr20, IdtEntry::interrupt, 0);
-	idt_entries[21].set(CS_SEL, isr21, IdtEntry::interrupt, 0);
-	idt_entries[22].set(CS_SEL, isr22, IdtEntry::interrupt, 0);
-	idt_entries[23].set(CS_SEL, isr23, IdtEntry::interrupt, 0);
-	idt_entries[24].set(CS_SEL, isr24, IdtEntry::interrupt, 0);
-	idt_entries[25].set(CS_SEL, isr25, IdtEntry::interrupt, 0);
-	idt_entries[26].set(CS_SEL, isr26, IdtEntry::interrupt, 0);
-	idt_entries[27].set(CS_SEL, isr27, IdtEntry::interrupt, 0);
-	idt_entries[28].set(CS_SEL, isr28, IdtEntry::interrupt, 0);
-	idt_entries[29].set(CS_SEL, isr29, IdtEntry::interrupt, 0);
-	idt_entries[30].set(CS_SEL, isr30, IdtEntry::interrupt, 0);
-	idt_entries[31].set(CS_SEL, isr31, IdtEntry::interrupt, 0);
+	// DPL is 3 to allow kernel isrs to work in user-mode.
+	idt_entries[0].set(CS_SEL, isr0, IdtEntry::interrupt, 3);
+	idt_entries[1].set(CS_SEL, isr1, IdtEntry::interrupt, 3);
+	idt_entries[2].set(CS_SEL, isr2, IdtEntry::interrupt, 3);
+	idt_entries[3].set(CS_SEL, isr3, IdtEntry::interrupt, 3);
+	idt_entries[4].set(CS_SEL, isr4, IdtEntry::interrupt, 3);
+	idt_entries[5].set(CS_SEL, isr5, IdtEntry::interrupt, 3);
+	idt_entries[6].set(CS_SEL, isr6, IdtEntry::interrupt, 3);
+	idt_entries[7].set(CS_SEL, isr7, IdtEntry::interrupt, 3);
+	idt_entries[8].set(CS_SEL, isr8, IdtEntry::interrupt, 3);
+	idt_entries[9].set(CS_SEL, isr9, IdtEntry::interrupt, 3);
+	idt_entries[10].set(CS_SEL, isr10, IdtEntry::interrupt, 3);
+	idt_entries[11].set(CS_SEL, isr11, IdtEntry::interrupt, 3);
+	idt_entries[12].set(CS_SEL, isr12, IdtEntry::interrupt, 3);
+	idt_entries[13].set(CS_SEL, isr13, IdtEntry::interrupt, 3);
+	idt_entries[14].set(CS_SEL, isr14, IdtEntry::interrupt, 3);
+	idt_entries[15].set(CS_SEL, isr15, IdtEntry::interrupt, 3);
+	idt_entries[16].set(CS_SEL, isr16, IdtEntry::interrupt, 3);
+	idt_entries[17].set(CS_SEL, isr17, IdtEntry::interrupt, 3);
+	idt_entries[18].set(CS_SEL, isr18, IdtEntry::interrupt, 3);
+	idt_entries[19].set(CS_SEL, isr19, IdtEntry::interrupt, 3);
+	idt_entries[20].set(CS_SEL, isr20, IdtEntry::interrupt, 3);
+	idt_entries[21].set(CS_SEL, isr21, IdtEntry::interrupt, 3);
+	idt_entries[22].set(CS_SEL, isr22, IdtEntry::interrupt, 3);
+	idt_entries[23].set(CS_SEL, isr23, IdtEntry::interrupt, 3);
+	idt_entries[24].set(CS_SEL, isr24, IdtEntry::interrupt, 3);
+	idt_entries[25].set(CS_SEL, isr25, IdtEntry::interrupt, 3);
+	idt_entries[26].set(CS_SEL, isr26, IdtEntry::interrupt, 3);
+	idt_entries[27].set(CS_SEL, isr27, IdtEntry::interrupt, 3);
+	idt_entries[28].set(CS_SEL, isr28, IdtEntry::interrupt, 3);
+	idt_entries[29].set(CS_SEL, isr29, IdtEntry::interrupt, 3);
+	idt_entries[30].set(CS_SEL, isr30, IdtEntry::interrupt, 3);
+	idt_entries[31].set(CS_SEL, isr31, IdtEntry::interrupt, 3);
 
 	// Setup PIC.
 	// Remap the irq table.
