@@ -15,7 +15,7 @@ global writeStackPointer
 global writeBasePointer
 global readPageDirectory
 global writePageDirectory
-global flushPageDirectory:
+global flushPageDirectory
 global enablePaging
 global enableInterrupts
 global disableInterrupts
