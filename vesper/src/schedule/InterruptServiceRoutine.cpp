@@ -22,8 +22,7 @@ extern "C"
 // TODO: implement handling from usermode.
 void isrHandler(Registers regs)
 {
-// 	kconsole.set_color(GREEN);
-// 	kconsole.print("Received interrupt: %d\n", regs.int_no);
+	kconsole << GREEN << "Received interrupt: " << regs.int_no << endl;
 
 	InterruptServiceRoutine *isr = interruptsTable.getIsr(regs.int_no);
 	if (isr)
@@ -40,6 +39,8 @@ void isrHandler(Registers regs)
 // This gets called from our asm hardware interrupt handler stub.
 void irqHandler(Registers regs)
 {
+// 	kconsole << GREEN << "Received irq: " << regs.int_no << endl;
+
 	InterruptServiceRoutine *isr = interruptsTable.getIsr(regs.int_no);
 	if (isr)
 	{

@@ -6,7 +6,10 @@
 //
 #pragma once
 
+#include "Macros.h"
+
 #define kconsole DefaultConsole::self()
+#define endl DefaultConsole::EOL
 
 enum Color {
 	BLACK = 0,
@@ -54,8 +57,44 @@ public:
 
 private:
 	DefaultConsole();
-	unsigned char *videoram;
-	unsigned int *cursor;
-	unsigned char attr;
+	unsigned char* videoram;
+	unsigned int*  cursor;
+	unsigned char  attr;
 };
 
+// Define stream io on console.
+INLINE DefaultConsole& operator << (DefaultConsole& con, Color data)
+{
+	con.set_color(data);
+	return con;
+}
+
+INLINE DefaultConsole& operator << (DefaultConsole& con, const char* data)
+{
+	con.print(data);
+	return con;
+}
+
+INLINE DefaultConsole& operator << (DefaultConsole& con, int data)
+{
+	con.print_int(data);
+	return con;
+}
+
+INLINE DefaultConsole& operator << (DefaultConsole& con, unsigned int data)
+{
+	con.print_hex(data);
+	return con;
+}
+
+INLINE DefaultConsole& operator << (DefaultConsole& con, char data)
+{
+	con.print_char(data);
+	return con;
+}
+
+INLINE DefaultConsole& operator << (DefaultConsole& con, unsigned char data)
+{
+	con.print_byte(data);
+	return con;
+}
