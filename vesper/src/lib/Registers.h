@@ -8,15 +8,15 @@
 
 #include "Types.h"
 
-extern "C"  Address readInstructionPointer();
-extern "C"  Address readStackPointer();
-extern "C"  Address readBasePointer();
+extern "C"  address_t readInstructionPointer();
+extern "C"  address_t readStackPointer();
+extern "C"  address_t readBasePointer();
 
-extern "C"  void writeStackPointer(Address ptr);
-extern "C"  void writeBasePointer(Address ptr);
+extern "C"  void writeStackPointer(address_t ptr);
+extern "C"  void writeBasePointer(address_t ptr);
 
-extern "C"  Address readPageDirectory();
-extern "C"  void writePageDirectory(Address pageDirPhysical);
+extern "C"  address_t readPageDirectory();
+extern "C"  void writePageDirectory(address_t pageDirPhysical);
 extern "C"  void flushPageDirectory(void);
 
 extern "C"  void enablePaging(void);

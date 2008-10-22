@@ -39,7 +39,7 @@ void isrHandler(Registers regs)
 // This gets called from our asm hardware interrupt handler stub.
 void irqHandler(Registers regs)
 {
-// 	kconsole << GREEN << "Received irq: " << regs.int_no << endl;
+	kconsole << GREEN << "Received irq: " << regs.int_no-32 << endl;
 
 	InterruptServiceRoutine *isr = interruptsTable.getIsr(regs.int_no);
 	if (isr)

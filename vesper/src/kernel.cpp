@@ -19,52 +19,54 @@
 
 PageFaultHandler pageFaultHandler;
 
-void Kernel::run()
+void kernel::run()
 {
-	if (!multiboot.isElf())
+	if (!multiboot.is_elf())
 		PANIC("ELF information is missing in kernel!");
 
 	// Make sure we aren't overwriting anything by writing at placementAddress.
-	relocatePlacementAddress();
+	relocate_placement_address();
 
-	kernelElfParser.loadKernel(multiboot.symtabStart(), multiboot.strtabStart());
+	kernelElfParser.loadKernel(multiboot.symtab_start(), multiboot.strtab_start());
 
 	GlobalDescriptorTable::init();
 
 	interruptsTable.setIsrHandler(14, &pageFaultHandler);
 	interruptsTable.init();
 
-	memoryManager.init(multiboot.upperMem() * 1024);
+	memoryManager.init(multiboot.upper_mem() * 1024);
 	memoryManager.remapStack();
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
 	Task::init();
 	Timer::init();//crashes at start of timer init (stack problem?)
+// tasking causes stack fuckups after timer inits and causes a yield?
+// weird: seems to work now. check gcc optimizations.
 
 	// Load initrd and pass control to init component
 
 	while(1) { }
 }
 
-void Kernel::relocatePlacementAddress()
+void kernel::relocate_placement_address()
 {
-	Address newPlacementAddress = memoryManager.getPlacementAddress();
-	if (multiboot.isElf() && multiboot.symtabEnd() > newPlacementAddress)
+	address_t newPlacementAddress = memoryManager.getPlacementAddress();
+	if (multiboot.is_elf() && multiboot.symtab_end() > newPlacementAddress)
 	{
-		newPlacementAddress = multiboot.symtabEnd();
+		newPlacementAddress = multiboot.symtab_end();
 	}
-	if (multiboot.isElf() && multiboot.strtabEnd() > newPlacementAddress)
+	if (multiboot.is_elf() && multiboot.strtab_end() > newPlacementAddress)
 	{
-		newPlacementAddress = multiboot.strtabEnd();
+		newPlacementAddress = multiboot.strtab_end();
 	}
-	if (multiboot.modStart() > newPlacementAddress)
+	if (multiboot.mod_start() > newPlacementAddress)
 	{
-		newPlacementAddress = multiboot.modEnd();
+		newPlacementAddress = multiboot.mod_end();
 	}
 	memoryManager.setPlacementAddress(newPlacementAddress);
 }
 
-void Kernel::dumpMemory(Address start, size_t size)
+void kernel::dump_memory(address_t start, size_t size)
 {
 	char *ptr = (char *)start;
 	int run;
@@ -98,7 +100,7 @@ void Kernel::dumpMemory(Address start, size_t size)
 		for(int i = 0; i < run; i++)
 		{
 			char c = *(ptr+i);
-			if (c == kconsole.EOL)
+			if (c == kconsole.eol)
 				c = ' ';
 			kconsole.print_char(c);
 		}
@@ -108,20 +110,20 @@ void Kernel::dumpMemory(Address start, size_t size)
 	}
 }
 
-Address Kernel::backtrace(Address basePointer, Address& returnAddress)
+address_t kernel::backtrace(address_t basePointer, address_t& returnAddress)
 {
 	// We take a stack base pointer (in basePointer), return what it's pointing at
 	// and put the Address just above it in the stack in returnAddress.
-	Address nextBase = *((Address*)basePointer);
-	returnAddress    = *((Address*)(basePointer+sizeof(Address)));
+	address_t nextBase = *((address_t*)basePointer);
+	returnAddress    = *((address_t*)(basePointer+sizeof(address_t)));
 	return nextBase;
 }
 
-Address Kernel::backtrace(int n)
+address_t kernel::backtrace(int n)
 {
-	Address basePointer = readBasePointer();
-	Address ebp = basePointer;
-	Address eip = 1;
+	address_t basePointer = readBasePointer();
+	address_t ebp = basePointer;
+	address_t eip = 1;
 	int i = 0;
 	while (ebp && eip /*&& eip < 0x87000000*/)
 	{
@@ -135,14 +137,14 @@ Address Kernel::backtrace(int n)
 	return 0;
 }
 
-void Kernel::printBacktrace(Address basePointer, int n)
+void kernel::print_backtrace(address_t basePointer, int n)
 {
-	Address eip = 1; // Don't initialise to 0, will kill the loop immediately.
+	address_t eip = 1; // Don't initialise to 0, will kill the loop immediately.
 	if (basePointer == NULL)
 	{
 		basePointer = readBasePointer();
 	}
-	Address ebp = basePointer;
+	address_t ebp = basePointer;
 	kconsole.set_color(GREEN);
 	kconsole.print("*** Backtrace *** Tracing %d stack frames:\n", n);
 	int i = 0;
@@ -159,16 +161,16 @@ void Kernel::printBacktrace(Address basePointer, int n)
 	}
 }
 
-void Kernel::printStacktrace(unsigned int n)
+void kernel::print_stacktrace(unsigned int n)
 {
-	Address esp = readStackPointer();
-	Address espBase = esp;
+	address_t esp = readStackPointer();
+	address_t espBase = esp;
 	kconsole.set_color(GREEN);
 	kconsole.print("<ESP=%08x>\n", esp);
 	for (unsigned int i = 0; i < n; i++)
 	{
-		kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(Address*)esp);
-		esp += sizeof(Address);
+		kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(address_t*)esp);
+		esp += sizeof(address_t);
 	}
 }
 

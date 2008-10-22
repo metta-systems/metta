@@ -6,7 +6,7 @@
 //
 #include "gdt.h"
 
-extern "C" void activate_gdt(Address base); // in activate.s
+extern "C" void activate_gdt(address_t base); // in activate.s
 
 GdtEntry gdt_entries[5];
 
@@ -19,7 +19,7 @@ void GlobalDescriptorTable::init()
 GlobalDescriptorTable::GlobalDescriptorTable()
 {
 	limit = sizeof(gdt_entries)-1;
-	base = (Address)&gdt_entries;
+	base = (address_t)&gdt_entries;
 
 	gdt_entries[0].set_null();                                // null
 	gdt_entries[1].set_seg(0, 0xFFFFFFFF, GdtEntry::code, 0); // ring0 CS
@@ -27,5 +27,5 @@ GlobalDescriptorTable::GlobalDescriptorTable()
 	gdt_entries[3].set_seg(0, 0xFFFFFFFF, GdtEntry::code, 3); // ring3 CS
 	gdt_entries[4].set_seg(0, 0xFFFFFFFF, GdtEntry::data, 3); // ring3 DS
 
-	activate_gdt((Address)this);
+	activate_gdt((address_t)this);
 }

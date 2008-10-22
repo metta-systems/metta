@@ -76,9 +76,6 @@ extern size_t strspn(const char *,const char *);
 extern size_t strcspn(const char *,const char *);
 #endif
 
-#ifndef __HAVE_ARCH_MEMSET
-extern void * memset(void *,int,size_t);
-#endif
 #ifndef __HAVE_ARCH_MEMSCAN
 extern void * memscan(void *,int,size_t);
 #endif

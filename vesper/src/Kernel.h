@@ -9,7 +9,7 @@
 #include "Types.h"
 #include "Macros.h"
 
-class Kernel
+class kernel
 {
 public:
 	/**
@@ -20,21 +20,22 @@ public:
 	/**
 	 * Dump @c size bytes from a memory region starting at virtual address @c start.
 	 */
-	static void dumpMemory(Address start, size_t size);
+	static void dump_memory(address_t start, size_t size);
 
 	/**
 	 * Given a stack base pointer, follow it, return the next stack base
 	 * pointer and also return the instruction pointer it returned to.
 	 */
-	static Address backtrace(Address basePointer, Address& returnAddress);
+	static address_t backtrace(address_t base_pointer, address_t& return_address);
 
 	/**
 	 * Given the current stack, follow 'n' backtraces and return the
 	 * return address found there.
 	 */
-	static Address backtrace(int n);
+	static address_t backtrace(int n);
 
-	inline static bool strEquals(const char *in1, const char *in2)
+	// TODO: move to string class
+	inline static bool str_equals(const char *in1, const char *in2)
 	{
 		char *left = (char *)in1;
 		char *right = (char *)in2;
@@ -46,6 +47,22 @@ public:
 	}
 
 	/**
+	 * memset - Fill a region of memory with the given value
+	 * @s: Pointer to the start of the area.
+	 * @c: The byte to fill the area with
+	 * @count: The size of the area.
+	 *
+	 * Do not use memset() to access IO space, use memset_io() instead.
+	 */
+	INLINE static void* set_memory(void* dest, int value, size_t count)
+	{
+		char *xs = (char *)dest;
+		while (count--)
+			*xs++ = value;
+		return dest;
+	}
+
+	/**
 	 * memcpy - Copy one area of memory to another
 	 * @dest: Where to copy to
 	 * @src: Where to copy from
@@ -54,7 +71,7 @@ public:
 	 * You should not use this function to access IO space, use memcpy_toio()
 	 * or memcpy_fromio() instead.
 	 */
-	inline static void* copyMemory(void* dest, const void* src, size_t count)
+	INLINE static void* copy_memory(void* dest, const void* src, size_t count)
 	{
 		char *tmp = (char *)dest;
 		const char *s = (const char *)src;
@@ -72,7 +89,7 @@ public:
 	 *
 	 * Unlike memcpy(), memmove() copes with overlapping areas.
 	 */
-	inline static void* moveMemory(void* dest, const void* src, size_t count)
+	INLINE static void* move_memory(void* dest, const void* src, size_t count)
 	{
 		char *tmp;
 		const char *s;
@@ -97,14 +114,14 @@ public:
 	 * Print a full backtrace from the current location. (Or, if @p n is specified,
 	 * up to n stack frames.
 	 */
-	void printBacktrace(Address basePointer = 0, int n = 0);
+	void print_backtrace(address_t base_pointer = 0, int n = 0);
 
 	/**
 	 * Prints first n words from the stack
 	 */
-	void printStacktrace(unsigned int n = 64);
+	void print_stacktrace(unsigned int n = 64);
 
 private:
-	void relocatePlacementAddress();
+	void relocate_placement_address();
 };
 

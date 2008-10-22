@@ -18,20 +18,20 @@
  * The footer has a pointer to the header, with the header also containing
  * size information.
  */
-class Heap : public Lockable
+class Heap : public lockable_t
 {
 public:
-	inline Heap() {}
+	inline Heap() : lockable_t() {}
 
 	/**
 	 * Create a new Heap, with start address start, initial size end-start,
 	 * and expanding up to a maximum address of max.
 	 */
-	inline Heap(Address start, Address end, Address max, bool isKernel) { init(start, end, max, isKernel); }
+	inline Heap(address_t start, address_t end, address_t max, bool isKernel) { init(start, end, max, isKernel); }
 
 	~Heap();
 
-	void init(Address start, Address end, Address max, bool isKernel);
+	void init(address_t start, address_t end, address_t max, bool isKernel);
 
 	/**
 	 * Allocates a contiguous region of memory 'size' in size. If pageAlign,

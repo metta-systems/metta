@@ -8,8 +8,8 @@
 
 #include "Macros.h"
 
-#define kconsole DefaultConsole::self()
-#define endl DefaultConsole::EOL
+#define kconsole default_console::self()
+#define endl default_console::eol
 
 enum Color {
 	BLACK = 0,
@@ -30,12 +30,12 @@ enum Color {
 	WHITE
 };
 
-class DefaultConsole
+class default_console
 {
 public:
-	static const char EOL;
+	static const char eol;
 
-	static DefaultConsole &self();
+	static default_console& self();
 
 	void set_color(Color col);
 	void set_background(Color col);
@@ -56,44 +56,44 @@ public:
 	void debug_log(const char *str, ...);
 
 private:
-	DefaultConsole();
+	default_console();
 	unsigned char* videoram;
 	unsigned int*  cursor;
 	unsigned char  attr;
 };
 
 // Define stream io on console.
-INLINE DefaultConsole& operator << (DefaultConsole& con, Color data)
+INLINE default_console& operator << (default_console& con, Color data)
 {
 	con.set_color(data);
 	return con;
 }
 
-INLINE DefaultConsole& operator << (DefaultConsole& con, const char* data)
+INLINE default_console& operator << (default_console& con, const char* data)
 {
 	con.print(data);
 	return con;
 }
 
-INLINE DefaultConsole& operator << (DefaultConsole& con, int data)
+INLINE default_console& operator << (default_console& con, int data)
 {
 	con.print_int(data);
 	return con;
 }
 
-INLINE DefaultConsole& operator << (DefaultConsole& con, unsigned int data)
+INLINE default_console& operator << (default_console& con, unsigned int data)
 {
 	con.print_hex(data);
 	return con;
 }
 
-INLINE DefaultConsole& operator << (DefaultConsole& con, char data)
+INLINE default_console& operator << (default_console& con, char data)
 {
 	con.print_char(data);
 	return con;
 }
 
-INLINE DefaultConsole& operator << (DefaultConsole& con, unsigned char data)
+INLINE default_console& operator << (default_console& con, unsigned char data)
 {
 	con.print_byte(data);
 	return con;

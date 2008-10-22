@@ -8,7 +8,7 @@
 #include "Registers.h"
 #include "Kernel.h"
 
-extern Address end; // defined by linker.ld
+extern address_t end; // defined by linker.ld
 
 /**
  * @internal
@@ -19,7 +19,7 @@ extern Address end; // defined by linker.ld
 
 MemoryManager::MemoryManager()
 {
-	placementAddress = (Address)&end ; // TODO: change to multiboot->mod_end
+	placementAddress = (address_t)&end ; // TODO: change to multiboot->mod_end
 	heapInitialised = false;
 	currentDirectory = kernelDirectory = NULL;
 }
@@ -28,7 +28,7 @@ MemoryManager::~MemoryManager()
 {
 }
 
-void MemoryManager::init(Address memEnd)
+void MemoryManager::init(address_t memEnd)
 {
 	// Make enough frames to reach 0x00000000 .. memEnd.
 	uint32_t memEndPage = memEnd - (memEnd % PAGE_SIZE); // make sure memEnd is on a page boundary.
@@ -81,7 +81,7 @@ void MemoryManager::init(Address memEnd)
 	}
 
 	// write the page directory.
-	writePageDirectory((Address)kernelDirectory->getPhysical());
+	writePageDirectory((address_t)kernelDirectory->getPhysical());
 	enablePaging();
 
 	// Initialise the heaps.
@@ -91,14 +91,14 @@ void MemoryManager::init(Address memEnd)
 	heapInitialised = true;
 }
 
-void *MemoryManager::malloc(uint32_t size, bool pageAlign, Address *physicalAddress)
+void *MemoryManager::malloc(uint32_t size, bool pageAlign, address_t *physicalAddress)
 {
 	ASSERT(heapInitialised);
 	void *addr = heap.allocate(size, pageAlign);
 	if (physicalAddress)
 	{
-		Page *page = kernelDirectory->getPage((Address)addr, false);
-		*physicalAddress = page->frame() + (Address)addr % PAGE_SIZE;
+		Page *page = kernelDirectory->getPage((address_t)addr, false);
+		*physicalAddress = page->frame() + (address_t)addr % PAGE_SIZE;
 	}
 	return addr;
 }
@@ -151,7 +151,7 @@ void MemoryManager::allocFrame(Page *p, bool isKernel, bool isWriteable)
 //
 // allocFrame -- maps a page to a frame.
 //
-Address MemoryManager::allocFrame()
+address_t MemoryManager::allocFrame()
 {
 	// TODO: make this more efficient than O(n).
 	uint32_t frameIdx = frames->firstClear();
@@ -179,12 +179,12 @@ void MemoryManager::freeFrame(Page *p)
 	}
 }
 
-void MemoryManager::freeFrame(Address frame)
+void MemoryManager::freeFrame(address_t frame)
 {
 	frames->clear(frame / PAGE_SIZE);
 }
 
-extern "C" Address initialEsp; // in loader.s
+extern "C" address_t initialEsp; // in loader.s
 
 void MemoryManager::remapStack()
 {
@@ -201,18 +201,18 @@ void MemoryManager::remapStack()
 	// Flush the TLB
 	flushPageDirectory();
 
-	Address oldStackPointer = readStackPointer();
-	Address oldBasePointer  = readBasePointer();
+	address_t oldStackPointer = readStackPointer();
+	address_t oldBasePointer  = readBasePointer();
 	size_t stackSize = initialEsp - oldStackPointer;
 
 	int offset = STACK_START - initialEsp;
 
-	Address newStackPointer = oldStackPointer + offset;
-	Address newBasePointer = oldBasePointer + offset;
+	address_t newStackPointer = oldStackPointer + offset;
+	address_t newBasePointer = oldBasePointer + offset;
 
 	kconsole.print("Remapping stack from %p-%p to %p-%p (%d bytes)..", initialEsp, oldStackPointer, STACK_START, newStackPointer, stackSize);
 
-	Kernel::copyMemory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
+	kernel::copy_memory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
 
 	writeStackPointer(newStackPointer);
 	writeBasePointer(newBasePointer);
@@ -227,7 +227,7 @@ void MemoryManager::alignPlacementAddress()
 	}
 }
 
-void MemoryManager::allocateRange(Address startAddress, Address size)
+void MemoryManager::allocateRange(address_t startAddress, address_t size)
 {
 	UNUSED(startAddress);
 	UNUSED(size);

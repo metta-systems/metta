@@ -6,8 +6,8 @@
 //
 #pragma once
 
-class Atomic
+class atomic_t
 {
 public:
-	static Address exchange(Address *lock, Address newVal);
+	static address_t exchange(address_t *lock, address_t new_val);
 };

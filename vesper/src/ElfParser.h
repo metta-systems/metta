@@ -40,7 +40,7 @@ class ElfParser
   /**
   Returns the address of the last byte to be loaded in.
   **/
-  Address getLastAddress();
+  address_t getLastAddress();
 
   /**
   Loads the symbol table for the kernel from the specified location.
@@ -51,38 +51,38 @@ class ElfParser
   Returns the symbol name for an address. Also returns the start address
   of that symbol in startAddr if startAddr != NULL.
   **/
-  char *findSymbol(Address addr, Address *symbolStart=NULL);
+  char* findSymbol(address_t addr, address_t *symbolStart = NULL);
 
   /**
   Returns the address of a symbol with name str.
   NOTE: This is much slower than it should be. This should be implemented
   using the hashtable sections in ELF.
   **/
-  Address findSymbol(char *str);
+  address_t findSymbol(char* str);
 
   /**
   Returns the address of the symbol with offset o in the
   relocation symbol table.
   **/
-  Address findDynamicSymbolLocation(Address o);
+  address_t findDynamicSymbolLocation(address_t o);
 
   /**
   Returns a NULL terminated string specifying the name of
   the symbol at offset o in the relocation symbol table.
   **/
-  char *findDynamicSymbolName(Address o);
+  char *findDynamicSymbolName(address_t o);
 
   /**
   Gets the address of the global offset table.
   **/
-  Address getGlobalOffsetTable();
+  address_t getGlobalOffsetTable();
 
   /**
   Returns the entry point of the executable.
   **/
-  Address getEntryPoint()
+  address_t getEntryPoint()
   {
-	  return (Address)header->e_entry;
+	  return (address_t)header->e_entry;
   }
 
   /**

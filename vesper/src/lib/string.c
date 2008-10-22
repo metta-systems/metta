@@ -159,7 +159,7 @@ size_t strlcpy(char *dest, const char *src, size_t size)
 
 	if (size) {
 		size_t len = (ret >= size) ? size - 1 : ret;
-		Kernel::copyMemory(dest, src, len);
+		kernel::copy_memory(dest, src, len);
 		dest[len] = '\0';
 	}
 	return ret;
@@ -236,7 +236,7 @@ size_t strlcat(char *dest, const char *src, size_t count)
 	count -= dsize;
 	if (len >= count)
 		len = count-1;
-	Kernel::copyMemory(dest, src, len);
+	kernel::copy_memory(dest, src, len);
 	dest[len] = 0;
 	return res;
 }
@@ -497,26 +497,6 @@ char *strsep(char **s, const char *ct)
 	return sbegin;
 }
 EXPORT_SYMBOL(strsep);
-#endif
-
-#ifndef __HAVE_ARCH_MEMSET
-/**
- * memset - Fill a region of memory with the given value
- * @s: Pointer to the start of the area.
- * @c: The byte to fill the area with
- * @count: The size of the area.
- *
- * Do not use memset() to access IO space, use memset_io() instead.
- */
-void *memset(void *s, int c, size_t count)
-{
-	char *xs = (char *)s;
-
-	while (count--)
-		*xs++ = c;
-	return s;
-}
-EXPORT_SYMBOL(memset);
 #endif
 
 #ifndef __HAVE_ARCH_MEMCMP

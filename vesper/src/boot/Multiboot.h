@@ -26,7 +26,7 @@
 /**
  * Boot information passed in by multiboot loader.
  */
-struct MultibootHeader
+struct multiboot_header_t
 {
 	uint32_t flags;
 
@@ -69,96 +69,94 @@ struct MultibootHeader
 /**
  * Defines an interface to the multiboot header
  */
-class Multiboot
+class multiboot_t
 {
-	public:
-		Multiboot() : header(NULL) {}
-		Multiboot(MultibootHeader *h);
+public:
+	multiboot_t() : header(NULL) {}
+	multiboot_t(multiboot_header_t *h);
 
-		~Multiboot();
+	INLINE uint32_t lower_mem()   { return header->mem_lower; }
+	INLINE uint32_t upper_mem()   { return header->mem_upper; }
+	INLINE uint32_t flags()       { return header->flags; }
 
-		inline uint32_t lowerMem()   { return header->mem_lower; }
-		inline uint32_t upperMem()   { return header->mem_upper; }
-		inline uint32_t flags()      { return header->flags; }
+	INLINE address_t mod_start()
+	{
+		if (header->mods_count)
+		{
+			return *((uint32_t*)(header->mods_addr));
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	INLINE address_t mod_end()
+	{
+		if (header->mods_count)
+		{
+			return *(uint32_t*)((header->mods_addr)+4);
+		}
+		else
+		{
+			return 0;
+		}
+	}
 
-		inline uint32_t modStart()
+	INLINE uint32_t elf_num_headers()      { return header->num; }
+	INLINE uint32_t elf_header_size()      { return header->size; }
+	INLINE uint32_t elf_header_addr()      { return header->addr; }
+	INLINE uint32_t elf_strtab_index()     { return header->shndx; }
+	INLINE address_t strtab_end()
+	{
+		if (strtab)
 		{
-			if (header->mods_count)
-			{
-				return *((uint32_t*)(header->mods_addr));
-			}
-			else
-			{
-				return 0;
-			}
+			return (address_t)strtab->sh_addr + strtab->sh_size;
 		}
-		inline uint32_t modEnd()
+		else
 		{
-			if (header->mods_count)
-			{
-				return *(uint32_t*)((header->mods_addr)+4);
-			}
-			else
-			{
-				return 0;
-			}
+			return 0;
 		}
+	}
+	INLINE address_t symtab_end()
+	{
+		if (symtab)
+		{
+			return (address_t)symtab->sh_addr + symtab->sh_size;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	INLINE Elf32SectionHeader *symtab_start()
+	{
+		if (symtab)
+		{
+			return (Elf32SectionHeader *)symtab;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	INLINE Elf32SectionHeader *strtab_start()
+	{
+		if (strtab)
+		{
+			return (Elf32SectionHeader *)strtab;
+		}
+		else
+		{
+			return 0;
+		}
+	}
 
-		inline uint32_t elfNumHeaders()      { return header->num; }
-		inline uint32_t elfHeaderSize()      { return header->size; }
-		inline uint32_t elfHeaderAddr()      { return header->addr; }
-		inline uint32_t elfStrtabIndex()     { return header->shndx; }
-		inline Address strtabEnd()
-		{
-			if (strtab)
-			{
-				return (Address)strtab->sh_addr + strtab->sh_size;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-		inline Address symtabEnd()
-		{
-			if (symtab)
-			{
-				return (Address)symtab->sh_addr + symtab->sh_size;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-		inline Elf32SectionHeader *symtabStart()
-		{
-			if (symtab)
-			{
-				return (Elf32SectionHeader *)symtab;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-		inline Elf32SectionHeader *strtabStart()
-		{
-			if (strtab)
-			{
-				return (Elf32SectionHeader *)strtab;
-			}
-			else
-			{
-				return 0;
-			}
-		}
+	INLINE bool is_elf() { return header->flags & MULTIBOOT_FLAG_ELF; }
+	INLINE bool has_mem_info() { return header->flags & MULTIBOOT_FLAG_MEM; }
 
-		bool isElf() { return header->flags & MULTIBOOT_FLAG_ELF; }
-		bool hasMemInfo() { return header->flags & MULTIBOOT_FLAG_MEM; }
-
-	private:
-		MultibootHeader *header;
-		Elf32SectionHeader *strtab;
-		Elf32SectionHeader *symtab;
+private:
+	multiboot_header_t *header;
+	Elf32SectionHeader *strtab;
+	Elf32SectionHeader *symtab;
 };
 

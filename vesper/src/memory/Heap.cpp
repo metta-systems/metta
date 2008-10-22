@@ -12,7 +12,7 @@
 #define HEAP_MAGIC        0x123890AB
 #define HEAP_MIN_SIZE     0x70000
 
-void Heap::init(Address start, Address end, Address max, bool supervisor)
+void Heap::init(address_t start, address_t end, address_t max, bool supervisor)
 {
 	startAddress = start;
 	endAddress = end;
@@ -240,12 +240,12 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 		holeHeader->size   = origHoleSize - newSize;
 
 		Footer *holeFooter = (Footer *)((uint32_t)holeHeader + origHoleSize - newSize - sizeof(Footer));
-		if ((Address)holeFooter < HEAP_START || (Address)holeFooter > USER_HEAP_END)
+		if ((address_t)holeFooter < HEAP_START || (address_t)holeFooter > USER_HEAP_END)
 		{
 			kconsole.set_color(LIGHTRED);
 			kconsole.print("Footer: %p\norigHoleSize: %d\nnewSize: %d\nheader: %p\n", holeFooter, origHoleSize, newSize, holeHeader);
 		}
-		if ((Address)holeFooter < endAddress)
+		if ((address_t)holeFooter < endAddress)
 		{
 			holeFooter->magic  = HEAP_MAGIC;
 			holeFooter->header = holeHeader;

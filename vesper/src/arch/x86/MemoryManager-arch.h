@@ -34,7 +34,7 @@ public:
 	bool isDirty()    {return pg.dirty == 1;}
 
 	// Retrieval
-	Address frame()   {return pg.base << 12;}
+	address_t frame()   {return pg.base << 12;}
 
 	// Modification
 	void setPresent(bool b)  { pg.present   = b ? 1 : 0; }
@@ -42,7 +42,7 @@ public:
 	void setUser(bool b)     { pg.privilege = b ? 1 : 0; }
 	void setAccessed(bool b) { pg.accessed  = b ? 1 : 0; }
 	void setDirty(bool b)    { pg.dirty     = b ? 1 : 0; }
-	void setFrame(Address f) { pg.base      = (f >> 12); }
+	void setFrame(address_t f) { pg.base      = (f >> 12); }
 
 private:
 	union {
@@ -107,7 +107,7 @@ public:
 		return &pages[n];
 	}
 
-	PageTable *clone(Address *phys)
+	PageTable *clone(address_t *phys)
 	{
 		PageTable *table = new(true, phys) PageTable();
 		for(int i = 0; i < 1024; i++)
@@ -143,7 +143,7 @@ public:
 			tables[i] = 0;
 			tablesPhysical[i] = 0;
 		}
-		physicalAddr = (Address)tablesPhysical;
+		physicalAddr = (address_t)tablesPhysical;
 	}
 
 	PageTable *getTable(uint32_t index)
@@ -152,12 +152,12 @@ public:
 		return tables[index];
 	}
 
-	Address getPhysical()
+	address_t getPhysical()
 	{
 		return physicalAddr;
 	}
 
-	Page *getPage(Address addr, bool make = true)
+	Page *getPage(address_t addr, bool make = true)
 	{
 		addr /= PAGE_SIZE;
 		uint32_t tableIdx = addr / 1024;
@@ -167,7 +167,7 @@ public:
 		}
 		else if(make)
 		{
-			Address tmp;
+			address_t tmp;
 			tables[tableIdx] = new(true/*page aligned*/, &tmp/*give phys. addr */) PageTable();
 			tablesPhysical[tableIdx] = tmp | 0x7; // PRESENT, RW, US
 			return tables[tableIdx]->getPage(addr % 1024);
@@ -184,12 +184,12 @@ public:
 	**/
 	PageDirectory *clone()
 	{
-		Address phys;
+		address_t phys;
 		PageDirectory *dir = new(true, &phys) PageDirectory();
 
 		// Get the offset of tablesPhysical from the start of
 		// the PageDirectory object.
-		uint32_t offset = (Address)dir->tablesPhysical - (Address)dir;
+		uint32_t offset = (address_t)dir->tablesPhysical - (address_t)dir;
 
 		// Then the physical address of dir->tablesPhysical is
 		dir->physicalAddr = phys + offset;
@@ -208,7 +208,7 @@ public:
 			else
 			{
 				// copy the table.
-				Address phys;
+				address_t phys;
 				dir->tables[i] = tables[i]->clone(&phys);
 				dir->tablesPhysical[i] = phys | 0x07;
 			}
@@ -259,12 +259,12 @@ private:
 		Array of pointers to the pagetables above, but gives their *physical*
 		location, for loading into the CR3 register.
 	**/
-	Address tablesPhysical[1024];
+	address_t tablesPhysical[1024];
 
 	/**
 		The physical address of tablesPhysical.
 	**/
-	Address physicalAddr;
+	address_t physicalAddr;
 };
 
 // # endif // LANG_X86

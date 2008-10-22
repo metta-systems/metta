@@ -31,9 +31,9 @@ void ElfParser::loadKernel(Elf32SectionHeader *symtab, Elf32SectionHeader *strta
 	stringTable = strtab;
 }
 
-char *ElfParser::findSymbol(Address addr, Address *symbolStart)
+char* ElfParser::findSymbol(address_t addr, address_t *symbolStart)
 {
-	Address max = 0;
+	address_t max = 0;
 	Elf32Symbol *fallbackSymbol = 0;
 	for (unsigned int i = 0; i < symbolTable->sh_size / symbolTable->sh_entsize; i++)
 	{

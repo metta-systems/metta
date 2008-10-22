@@ -11,48 +11,45 @@
 /**
  * A class that implements a spinlock / binary semaphore.
  */
-class Lockable
+class lockable_t
 {
 public:
-	Lockable()
+	lockable_t()
 	{
 		lock = 0;
 	}
 
-	~Lockable() {}
+	~lockable_t() {}
 
 	// Spin until we get the lock.
-	void getLock()
+	void get_lock()
 	{
-		uint32_t newVal = 1;
+		uint32_t new_val = 1;
 		// If we exchange the lock value with 1 and get 1 out, it was locked.
-		while (Atomic::exchange(&lock, newVal) == 1)
+		while (atomic_t::exchange(&lock, new_val) == 1)
 		{
 			// Do nothing.
 		}
 		// We got the lock, return.
 	}
 
-	bool tryLock()
+	bool try_lock()
 	{
 		// Spin once.
-		uint32_t newVal = 1;
-		if (Atomic::exchange(&lock, newVal) == 0)
+		uint32_t new_val = 1;
+		if (atomic_t::exchange(&lock, new_val) == 0)
 		{
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
-	bool testLock()
+	bool test_lock()
 	{
 		return lock;
 	}
 
-	void releaseLock()
+	void release_lock()
 	{
 		lock = 0;
 	}

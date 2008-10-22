@@ -10,13 +10,13 @@
 #include "Macros.h"
 #include "string.h"
 
-extern class Kernel kernel;
-extern class Multiboot multiboot;
+extern class kernel kernel;
+extern class multiboot_t multiboot;
 extern class ElfParser kernelElfParser;
 extern class MemoryManager memoryManager;
 extern class InterruptDescriptorTable interruptsTable;
 
-extern "C" void kernel_entry(class MultibootHeader *mh) NORETURN;
+extern "C" void kernel_entry(class multiboot_header_t *mh) NORETURN;
 
 void *operator new(size_t size);
 void *operator new(size_t size, uint32_t place);

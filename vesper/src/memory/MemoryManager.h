@@ -21,9 +21,9 @@
 #define STACK_END               0xA0000000
 #define KERNEL_START            0x100000
 
-#define STACK_ADDRESS(x)     ((Address)x <= STACK_START && (Address)x > STACK_END)
-#define HEAP_ADDRESS(x)      ((Address)x >= HEAP_START  && (Address)x < USER_HEAP_START)
-#define USER_HEAP_ADDRESS(x) ((Address)x >= USER_HEAP_START && (Address)x <= USER_HEAP_END)
+#define STACK_ADDRESS(x)     ((address_t)x <= STACK_START && (address_t)x > STACK_END)
+#define HEAP_ADDRESS(x)      ((address_t)x >= HEAP_START  && (address_t)x < USER_HEAP_START)
+#define USER_HEAP_ADDRESS(x) ((address_t)x >= USER_HEAP_START && (address_t)x <= USER_HEAP_END)
 
 class Page;
 class PageDirectory;
@@ -51,13 +51,13 @@ public:
 		Normal constructor - passes the address of end of memory. Initialises paging and sets up
 		a standard kernel page directory. Enables paging, then maps some pages for the heap.
 	**/
-	void init(Address memEnd);
+	void init(address_t memEnd);
 
 	/**
 		Allocate "size" bytes, returning the physical address of the segment allocated in
 		physicalLocation if physicalLocation != NULL.
 	**/
-	void* malloc(uint32_t size, bool pageAlign = false, Address* physicalLocation = NULL);
+	void* malloc(uint32_t size, bool pageAlign = false, address_t* physicalLocation = NULL);
 
 	/**
 		Deallocate the memory allocated to p.
@@ -78,8 +78,8 @@ public:
 		Accessor functions for heapInitialised and placementAddress.
 	**/
 	bool isHeapInitialised() { return heapInitialised; }
-	Address getPlacementAddress() { return placementAddress; }
-	void setPlacementAddress(Address a) { placementAddress = a; }
+	address_t getPlacementAddress() { return placementAddress; }
+	void setPlacementAddress(address_t a) { placementAddress = a; }
 
 	/**
 		Forces the placementAddress variable to be PAGE_SIZE aligned.
@@ -107,7 +107,7 @@ public:
 	/**
 		Finds a free frame and returns it.
 	**/
-	Address allocFrame();
+	address_t allocFrame();
 
 	/**
 		Removes the frame under p's control and returns it to the pool.
@@ -117,13 +117,13 @@ public:
 	/**
 		Adds the previously allocated frame 'frame' and returns it to the pool.
 	**/
-	void freeFrame(Address frame);
+	void freeFrame(address_t frame);
 
 	/**
 		Causes the given range of virtual memory to get allocated physical
 		memory.
 	**/
-	void allocateRange(Address startAddress, uint32_t size);
+	void allocateRange(address_t startAddress, uint32_t size);
 
 	/**
 		Returns the size of the kernel heap. For analysis purposes.
@@ -166,7 +166,7 @@ private:
 		Before the heap is initialised, this holds the next available location
 		for 'placement new' to be called on.
 	**/
-	Address placementAddress;
+	address_t placementAddress;
 
 	/**
 		The currently active page directory

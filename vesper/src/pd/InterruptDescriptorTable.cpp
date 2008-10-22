@@ -8,14 +8,14 @@
 
 #define CS_SEL 0x08
 
-extern "C" void activate_idt(Address base); // in activate.s
+extern "C" void activate_idt(address_t base); // in activate.s
 
 IdtEntry idt_entries[256];
 
 void InterruptDescriptorTable::init()
 {
 	limit = sizeof(idt_entries)-1;
-	base = (Address)&idt_entries;
+	base = (address_t)&idt_entries;
 
 	// DPL is 3 to allow kernel isrs to work in user-mode.
 	idt_entries[0].set(CS_SEL, isr0, IdtEntry::interrupt, 3);
@@ -84,5 +84,5 @@ void InterruptDescriptorTable::init()
 	idt_entries[46].set(CS_SEL, irq14, IdtEntry::interrupt, 3);
 	idt_entries[47].set(CS_SEL, irq15, IdtEntry::interrupt, 3);
 
-	activate_idt((Address)this);
+	activate_idt((address_t)this);
 }

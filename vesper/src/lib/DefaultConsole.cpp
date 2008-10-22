@@ -5,76 +5,73 @@
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "DefaultConsole.h"
+#include "Kernel.h"
 #include "common.h"
 
-const char DefaultConsole::EOL = 10;
+const char default_console::eol = 10;
 
 // Screen dimensions (for default 80x25 console)
 #define LINE_PITCH 160       // line width in bytes
 #define LINE_COUNT 25
 
-DefaultConsole& DefaultConsole::self()
+default_console& default_console::self()
 {
-	static DefaultConsole console;
+	static default_console console;
 	return console;
 }
 
-DefaultConsole::DefaultConsole()
+default_console::default_console()
 {
    videoram = (unsigned char *) 0xb8000;
    cursor = (unsigned int *) 0xb903c;
    clear();
 }
 
-void DefaultConsole::clear()
+void default_console::clear()
 {
-	for(unsigned int i = 0; i < LINE_PITCH*LINE_COUNT; i++)
-		videoram[i] = 0;
+	kernel::set_memory(videoram, 0, LINE_PITCH*LINE_COUNT);
 	locate(0,0);
 	attr = 0x07;
 }
 
-void DefaultConsole::set_color(Color col)
+void default_console::set_color(Color col)
 {
 	attr = (attr & 0xF0) | (col & 0x0F);
 }
 
-void DefaultConsole::set_background(Color col)
+void default_console::set_background(Color col)
 {
 	attr = (attr & 0x0F) | ((col & 0x0F) << 8);
 }
 
-void DefaultConsole::set_attr(Color fore, Color back)
+void default_console::set_attr(Color fore, Color back)
 {
 	set_color(fore);
 	set_background(back);
 }
 
-void DefaultConsole::locate(int row, int col)
+void default_console::locate(int row, int col)
 {
 	*cursor = (row * LINE_PITCH) + (col * 2);
 	// Set VGA hardware cursor
-	outb(0x3D4, 14); // Tell the VGA board we are setting the high cursor byte.
-	outb(0x3D5, (*cursor) >> 8); // Send the high cursor byte.
-	outb(0x3D4, 15); // Tell the VGA board we are setting the low cursor byte.
-	outb(0x3D5, *cursor);      // Send the low cursor byte.
+	outb(0x3d4, 14); // Tell the VGA board we are setting the high cursor byte.
+	outb(0x3d5, (*cursor) >> 8); // Send the high cursor byte.
+	outb(0x3d4, 15); // Tell the VGA board we are setting the low cursor byte.
+	outb(0x3d5, (*cursor) & 0xff);      // Send the low cursor byte.
 }
 
-void DefaultConsole::scroll_up()
+void default_console::scroll_up()
 {
-	for (int i = 0; i < LINE_PITCH*(LINE_COUNT-1); i++)
-		videoram[i] = videoram[i+LINE_PITCH];
-
-	for (int i = LINE_PITCH*(LINE_COUNT-1); i < LINE_PITCH*LINE_COUNT; i++)
-		videoram[i] = 0;
+	kernel::copy_memory(videoram, videoram+LINE_PITCH, LINE_PITCH*(LINE_COUNT-1));
+	kernel::set_memory(videoram+LINE_PITCH*(LINE_COUNT-1), 0, LINE_PITCH);
 }
 
-void DefaultConsole::newline()
+void default_console::newline()
 {
-	print_char(EOL);
+	print_char(eol);
 }
 
-void DefaultConsole::print_int(int n)
+void default_console::print_int(int n)
 {
 	if (n == 0)
 	{
@@ -102,24 +99,25 @@ void DefaultConsole::print_int(int n)
 	}
 }
 
-void DefaultConsole::print_byte(unsigned char n)
+void default_console::print_byte(unsigned char n)
 {
-	const char hexdigits[17] = "0123456789ABCDEF"; // 16+1 for terminating null
+	const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
 	char c = hexdigits[(n >> 4) & 0xF];
 	print_char(c);
 	c = hexdigits[n & 0xF];
 	print_char(c);
 }
 
-void DefaultConsole::print_hex(unsigned int n)
+void default_console::print_hex(unsigned int n)
 {
+	print("0x");
 	for(int i = 4; i > 0; i--)
 		print_byte((n >> (i-1)*8) & 0xFF);
 }
 
-void DefaultConsole::print_char(char ch)
+void default_console::print_char(char ch)
 {
-	if (ch == EOL)
+	if (ch == eol)
 	{
 		// move cursor to new line and align on line start
 		// FIXME: will be optimized out by gcc?
@@ -139,7 +137,7 @@ void DefaultConsole::print_char(char ch)
 	}
 }
 
-void DefaultConsole::print(const char *str, ...)
+void default_console::print(const char *str, ...)
 {
 	#define BUFSIZE 512
 	char buffer[BUFSIZE];
@@ -154,7 +152,7 @@ void DefaultConsole::print(const char *str, ...)
 		print_char(buffer[i++]);
 }
 
-void DefaultConsole::wait_ack()
+void default_console::wait_ack()
 {
 	uint8_t keycode;
 	uint8_t irqmask = inb(0x21);
@@ -165,20 +163,20 @@ void DefaultConsole::wait_ack()
 			/* wait keypress */;
 
 		keycode = inb(0x60);
-	} while(keycode != 0x1C); // "make code" == enter
+	} while(keycode != 0x1c); // "make code" == enter
 
 	do {
 		while((inb(0x64) & 0x01) == 0)
 			/* wait keypress */;
 
 		keycode = inb(0x60);
-	} while(keycode != 0x9C); // "break code" == enter
+	} while(keycode != 0x9c); // "break code" == enter
 
 	if (!(irqmask & 0x02)) // if irq1 was unmasked previously,
-		outb(0x21, inb(0x21) & 0xFD); // unmask it now without changing other flags
+		outb(0x21, inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
-void DefaultConsole::debug_log(const char *str, ...)
+void default_console::debug_log(const char *str, ...)
 {
 	#define BUFSIZE 512
 	char buffer[BUFSIZE];
@@ -191,6 +189,6 @@ void DefaultConsole::debug_log(const char *str, ...)
 	unsigned char old_attr = attr;
 	set_attr(WHITE, BLACK);
 	print(buffer);
-	print_char(EOL);
+	print_char(eol);
 	attr = old_attr;
 }

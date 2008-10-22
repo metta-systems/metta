@@ -14,17 +14,17 @@
 #include "InterruptDescriptorTable.h"
 
 /* Global objects FIXME: use singletons instead? */
-Kernel kernel;
-Multiboot multiboot;
+class kernel kernel;
+multiboot_t multiboot;
 ElfParser kernelElfParser;
 MemoryManager memoryManager;
 InterruptDescriptorTable interruptsTable;
 
 /* This entry point is called from loader */
-void kernel_entry(MultibootHeader *multibootHeader)
+void kernel_entry(multiboot_header_t *multiboot_header)
 {
 	kconsole.clear();
-	multiboot = Multiboot(multibootHeader);
+	multiboot = multiboot_t(multiboot_header);
 	kernel.run(); /* does not return */
 }
 
@@ -112,7 +112,7 @@ void panic(const char *message, const char *file, uint32_t line)
 
 	kconsole.set_attr(RED, YELLOW);
 	kconsole.print("PANIC (%s) at %s:%d\n", message, file, line);
-	kernel.printBacktrace();
+	kernel.print_backtrace();
 
 	// Halt by going into an infinite loop.
 	while(1) {}
@@ -125,7 +125,7 @@ void panic_assert(const char *desc, const char *file, uint32_t line)
 
 	kconsole.set_attr(WHITE, RED);
 	kconsole.print("ASSERTION-FAILED(%s) at %s:%d\n", desc, file, line);
-	kernel.printBacktrace();
+	kernel.print_backtrace();
 
 	// Halt by going into an infinite loop.
 	while(1) {}

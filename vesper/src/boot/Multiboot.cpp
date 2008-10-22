@@ -8,7 +8,7 @@
 #include "Kernel.h"
 #include "ELF.h"
 
-Multiboot::Multiboot(MultibootHeader *h)
+multiboot_t::multiboot_t(multiboot_header_t *h)
 {
 	header = h;
 
@@ -16,7 +16,7 @@ Multiboot::Multiboot(MultibootHeader *h)
 	strtab = NULL;
 
 	// try and find the symtab/strtab
-	if (isElf())
+	if (is_elf())
 	{
 		Elf32SectionHeader *shstrtab = (Elf32SectionHeader *)(header->addr + header->shndx * header->size);
 		// loop through the section headers, try to find the symbol table.
@@ -31,7 +31,7 @@ Multiboot::Multiboot(MultibootHeader *h)
 			else if (sh->sh_type == SHT_STRTAB)
 			{
 				char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-				if (Kernel::strEquals(c, ".strtab"))
+				if (kernel::str_equals(c, ".strtab"))
 				{
 					strtab = sh;
 				}
@@ -40,6 +40,3 @@ Multiboot::Multiboot(MultibootHeader *h)
 	}
 }
 
-Multiboot::~Multiboot()
-{
-}
