@@ -61,3 +61,5 @@ extern uint64_t div64_64(uint64_t dividend, uint64_t divisor);
 // # include <asm-generic/div64.h>
 // #endif /* CONFIG_X86_32 */
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -192,3 +192,5 @@ void default_console::debug_log(const char *str, ...)
 	print_char(eol);
 	attr = old_attr;
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -105,3 +105,5 @@ class GlobalDescriptorTable
 		uint32_t base;
 } PACKED;
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

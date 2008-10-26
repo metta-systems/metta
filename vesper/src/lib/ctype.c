@@ -40,3 +40,5 @@ _L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,       /* 224-239 */
 _L,_L,_L,_L,_L,_L,_L,_P,_L,_L,_L,_L,_L,_L,_L,_L};      /* 240-255 */
 
 EXPORT_SYMBOL(_ctype);
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

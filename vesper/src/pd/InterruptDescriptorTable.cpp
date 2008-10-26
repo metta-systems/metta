@@ -86,3 +86,5 @@ void InterruptDescriptorTable::init()
 
 	activate_idt((address_t)this);
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

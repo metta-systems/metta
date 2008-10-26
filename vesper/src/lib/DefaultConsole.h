@@ -98,3 +98,5 @@ INLINE default_console& operator << (default_console& con, unsigned char data)
 	con.print_byte(data);
 	return con;
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -85,3 +85,5 @@ extern int memcmp(const void *,const void *,size_t);
 #ifndef __HAVE_ARCH_MEMCHR
 extern void * memchr(const void *,int,size_t);
 #endif
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -37,3 +37,5 @@ void *__dso_handle;
 extern "C" void __cxa_atexit(void (*)(void *), void *, void *)
 {
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

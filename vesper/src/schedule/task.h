@@ -34,3 +34,5 @@ class Task
 		Task *next;                    // The next task in a linked list.
 };
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

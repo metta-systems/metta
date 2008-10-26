@@ -26,3 +26,5 @@ extern "C"  void disableInterrupts(void);
 // defined in schedule/CriticalSection.cpp
 extern "C" void criticalSection();
 extern "C" void endCriticalSection();
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

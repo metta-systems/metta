@@ -75,3 +75,5 @@ char* ElfParser::findSymbol(address_t addr, address_t *symbolStart)
 		*symbolStart = 0;
 	return NULL;
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -11,3 +11,5 @@ class atomic_t
 public:
 	static address_t exchange(address_t *lock, address_t new_val);
 };
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -25,3 +25,5 @@ void *operator new[](size_t size);
 void *operator new[](size_t size, bool pageAlign, uint32_t *physAddr=NULL);
 void  operator delete(void *p);
 void  operator delete[](void *p);
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

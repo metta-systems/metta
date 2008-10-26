@@ -57,3 +57,5 @@ void irqHandler(Registers regs)
 	// Send reset signal to master. (As well as slave, if necessary).
 	outb(0x20, 0x20);
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

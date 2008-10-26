@@ -1115,3 +1115,5 @@ int sscanf(const char * buf, const char * fmt, ...)
 }
 
 EXPORT_SYMBOL(sscanf);
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -163,16 +163,17 @@ void kernel::print_backtrace(address_t basePointer, int n)
 
 void kernel::print_stacktrace(unsigned int n)
 {
-	address_t esp = readStackPointer();
-	address_t espBase = esp;
-	kconsole.set_color(GREEN);
-	kconsole.print("<ESP=%08x>\n", esp);
-	for (unsigned int i = 0; i < n; i++)
-	{
-		kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(address_t*)esp);
-		esp += sizeof(address_t);
-	}
+    address_t esp = readStackPointer();
+    address_t espBase = esp;
+    kconsole.set_color(GREEN);
+    kconsole.print("<ESP=%08x>\n", esp);
+    for (unsigned int i = 0; i < n; i++)
+    {
+        kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(address_t*)esp);
+        esp += sizeof(address_t);
+    }
 }
 
-/* kate: indent-width 4; replace-tabs off; */
-// vi: ts=4
+/* kate: indent-width 4; replace-tabs on; */
+/* vi:set ts=4:set expandtab=on: */// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

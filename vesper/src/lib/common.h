@@ -68,3 +68,5 @@ extern "C" int sscanf(const char *, const char *, ...)
 extern "C" int vsscanf(const char *, const char *, va_list)
         __attribute__ ((format (scanf, 2, 0)));
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

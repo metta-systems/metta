@@ -144,3 +144,5 @@ irq_common_stub:
 	add esp, 8     ; Cleans up the pushed error code and pushed ISR number
 	sti
 	iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+; kate: indent-width 4; replace-tabs on;
+; vi:set ts=4:set expandtab=on:

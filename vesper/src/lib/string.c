@@ -592,3 +592,5 @@ void *memchr(const void *s, int c, size_t n)
 }
 EXPORT_SYMBOL(memchr);
 #endif
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

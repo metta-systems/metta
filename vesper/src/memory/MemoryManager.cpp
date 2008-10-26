@@ -261,3 +261,5 @@ void MemoryManager::checkIntegrity()
 		userHeap.checkIntegrity();
 	}
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

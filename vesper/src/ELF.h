@@ -309,3 +309,5 @@ elf_hash(const unsigned char *name)
 	return h;
 }
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

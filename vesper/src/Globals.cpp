@@ -130,3 +130,5 @@ void panic_assert(const char *desc, const char *file, uint32_t line)
 	// Halt by going into an infinite loop.
 	while(1) {}
 }
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

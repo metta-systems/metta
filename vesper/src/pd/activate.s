@@ -24,3 +24,5 @@ activate_idt:
     mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
     lidt [eax]        ; Load the IDT pointer.
     ret
+; kate: indent-width 4; replace-tabs on;
+; vi:set ts=4:set expandtab=on:

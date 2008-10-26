@@ -37,3 +37,5 @@ copyPagePhysical:
 	popf                  ; Pop EFLAGS back.
 	pop ebx               ; Get the original value of EBX back.
 	ret
+; kate: indent-width 4; replace-tabs on;
+; vi:set ts=4:set expandtab=on:

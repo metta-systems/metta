@@ -56,3 +56,5 @@ static inline unsigned char __toupper(unsigned char c)
 #define tolower(c) __tolower(c)
 #define toupper(c) __toupper(c)
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

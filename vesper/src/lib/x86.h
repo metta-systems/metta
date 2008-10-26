@@ -190,3 +190,5 @@
 # define X86_SVM_HSAVE_PA_MSR      0xC0010117
 #endif
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
