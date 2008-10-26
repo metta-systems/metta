@@ -34,18 +34,6 @@ public:
 	 */
 	static address_t backtrace(int n);
 
-	// TODO: move to string class
-	inline static bool str_equals(const char *in1, const char *in2)
-	{
-		char *left = (char *)in1;
-		char *right = (char *)in2;
-		while(*left && *right && *left == *right)
-			left++, right++;
-		if (*left != *right)
-			return false;
-		return true;
-	}
-
 	/**
 	 * memset - Fill a region of memory with the given value
 	 * @s: Pointer to the start of the area.

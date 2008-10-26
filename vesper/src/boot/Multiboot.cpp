@@ -6,6 +6,7 @@
 //
 #include "Multiboot.h"
 #include "Kernel.h"
+#include "String.h"
 #include "ELF.h"
 
 multiboot_t::multiboot_t(multiboot_header_t *h)
@@ -31,7 +32,7 @@ multiboot_t::multiboot_t(multiboot_header_t *h)
 			else if (sh->sh_type == SHT_STRTAB)
 			{
 				char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-				if (kernel::str_equals(c, ".strtab"))
+				if (string::equals(c, ".strtab"))
 				{
 					strtab = sh;
 				}
