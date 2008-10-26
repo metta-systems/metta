@@ -2,11 +2,11 @@
 ; Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See accompanying file LICENSE_1_0.txt or copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
 ;
-global copyPagePhysical
+global copy_page_physical
 
-copyPagePhysical:
+copy_page_physical:
 	push ebx              ; According to __cdecl, we must preserve the contents of EBX.
 	pushf                 ; push EFLAGS, so we can pop it and reenable interrupts
 	                      ; later, if they were enabled anyway.
@@ -37,5 +37,6 @@ copyPagePhysical:
 	popf                  ; Pop EFLAGS back.
 	pop ebx               ; Get the original value of EBX back.
 	ret
+
 ; kate: indent-width 4; replace-tabs on;
 ; vi:set ts=4:set expandtab=on:

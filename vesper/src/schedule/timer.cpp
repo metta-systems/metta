@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "common.h"
 #include "Task.h"
@@ -17,13 +17,13 @@ void Timer::init()
 	static Timer timer;
 }
 
-class TimerCallback : public InterruptServiceRoutine
+class timer_callback : public interrupt_service_routine
 {
 	uint32_t tick;
 
 public:
-	TimerCallback() : tick(0) {}
-	virtual ~TimerCallback() {}
+    timer_callback() : tick(0) {}
+    virtual ~timer_callback() {}
 
 	virtual void run(Registers *)
 	{
@@ -57,5 +57,6 @@ Timer::Timer()
 
 // 	kconsole.debug_log("Constructed timer.");
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

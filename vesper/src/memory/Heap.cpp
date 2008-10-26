@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Heap.h"
 #include "Globals.h"
@@ -98,7 +98,7 @@ int32_t Heap::findSmallestHole(uint32_t size, bool pageAlign)
 
 void *Heap::allocate(uint32_t size, bool pageAlign)
 {
-	criticalSection();
+	critical_section();
 #ifdef HEAP_DEBUG
 	checkIntegrity();
 #endif
@@ -160,7 +160,7 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 		checkIntegrity();
 #endif
 		// TODO: optimize tail-recursion
-		endCriticalSection();
+		end_critical_section();
 		return allocate(size, pageAlign);
 	}
 
@@ -258,14 +258,14 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 #ifdef HEAP_DEBUG
 	checkIntegrity();
 #endif
-	endCriticalSection();
+	end_critical_section();
 
 	return (void *)((uint32_t)blockHeader + sizeof(Header));
 }
 
 void Heap::free(void *p)
 {
-	criticalSection();
+	critical_section();
 #ifdef HEAP_DEBUG
 	checkIntegrity();
 #endif
@@ -393,7 +393,7 @@ void Heap::free(void *p)
 #ifdef HEAP_DEBUG
 	checkIntegrity();
 #endif
-	endCriticalSection();
+	end_critical_section();
 }
 
 void Heap::expand(uint32_t newSize)

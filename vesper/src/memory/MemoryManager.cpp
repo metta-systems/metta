@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "MemoryManager.h"
 #include "Registers.h"
@@ -81,8 +81,8 @@ void MemoryManager::init(address_t memEnd)
 	}
 
 	// write the page directory.
-	writePageDirectory((address_t)kernelDirectory->getPhysical());
-	enablePaging();
+	write_page_directory((address_t)kernelDirectory->getPhysical());
+	enable_paging();
 
 	// Initialise the heaps.
 	heap.init(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
@@ -199,10 +199,10 @@ void MemoryManager::remapStack()
 	}
 
 	// Flush the TLB
-	flushPageDirectory();
+	flush_page_directory();
 
-	address_t oldStackPointer = readStackPointer();
-	address_t oldBasePointer  = readBasePointer();
+	address_t oldStackPointer = read_stack_pointer();
+	address_t oldBasePointer  = read_base_pointer();
 	size_t stackSize = initialEsp - oldStackPointer;
 
 	int offset = STACK_START - initialEsp;
@@ -214,8 +214,8 @@ void MemoryManager::remapStack()
 
 	kernel::copy_memory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
 
-	writeStackPointer(newStackPointer);
-	writeBasePointer(newBasePointer);
+	write_stack_pointer(newStackPointer);
+	write_base_pointer(newBasePointer);
 	kconsole.print("done\n");
 }
 

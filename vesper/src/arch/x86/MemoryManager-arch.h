@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
 // # ifdef LANG_X86
@@ -86,7 +86,7 @@ private:
 	};
 };
 
-extern "C" void copyPagePhysical(uint32_t from, uint32_t to);
+extern "C" void copy_page_physical(uint32_t from, uint32_t to);
 
 /**
   A page table holds 1024 pages
@@ -120,7 +120,7 @@ public:
 				table->pages[i].setUser(pages[i].isUser());
 				table->pages[i].setAccessed(pages[i].isAccessed());
 				table->pages[i].setDirty(pages[i].isDirty());
-				copyPagePhysical(pages[i].frame(), table->pages[i].frame());
+				copy_page_physical(pages[i].frame(), table->pages[i].frame());
 			}
 		}
 		return table;
@@ -268,5 +268,6 @@ private:
 };
 
 // # endif // LANG_X86
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

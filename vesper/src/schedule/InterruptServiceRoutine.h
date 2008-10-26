@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
 
@@ -20,13 +20,14 @@ typedef struct registers
 	uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 } Registers;
 
-class InterruptServiceRoutine
+class interrupt_service_routine
 {
 public:
-	InterruptServiceRoutine() {}
-	virtual ~InterruptServiceRoutine() {}
+    interrupt_service_routine() {}
+    virtual ~interrupt_service_routine() {}
 
 	virtual void run(Registers *) {}
 };
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

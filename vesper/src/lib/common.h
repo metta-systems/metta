@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
 
@@ -59,9 +59,6 @@ extern "C" int scnprintf(char * buf, size_t size, const char * fmt, ...)
         __attribute__ ((format (printf, 3, 4)));
 extern "C" int vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
         __attribute__ ((format (printf, 3, 0)));
-// extern "C" char *kasprintf(gfp_t gfp, const char *fmt, ...)
-//         __attribute__ ((format (printf, 2, 3)));
-// extern "C" char *kvasprintf(gfp_t gfp, const char *fmt, va_list args);
 
 extern "C" int sscanf(const char *, const char *, ...)
         __attribute__ ((format (scanf, 2, 3)));

@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
 
@@ -85,5 +85,6 @@ extern int memcmp(const void *,const void *,size_t);
 #ifndef __HAVE_ARCH_MEMCHR
 extern void * memchr(const void *,int,size_t);
 #endif
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

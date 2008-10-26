@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "DefaultConsole.h"
 #include "InterruptServiceRoutine.h"
@@ -12,19 +12,20 @@
 
 extern "C"
 {
-	void isrHandler(Registers regs);
-	void irqHandler(Registers regs);
+	void isr_handler(Registers regs);
+	void irq_handler(Registers regs);
 }
 
 // Handles a software interrupt/CPU exception.
 // This is architecture specific!
 // This gets called from our asm interrupt handler stub.
 // TODO: implement handling from usermode.
-void isrHandler(Registers regs)
+//
+void isr_handler(Registers regs)
 {
 	kconsole << GREEN << "Received interrupt: " << regs.int_no << endl;
 
-	InterruptServiceRoutine *isr = interruptsTable.getIsr(regs.int_no);
+    interrupt_service_routine* isr = interruptsTable.getIsr(regs.int_no);
 	if (isr)
 	{
 		isr->run(&regs);
@@ -37,11 +38,12 @@ void isrHandler(Registers regs)
 // Handles a hardware interrupt request.
 // This is architecture specific!
 // This gets called from our asm hardware interrupt handler stub.
-void irqHandler(Registers regs)
+//
+void irq_handler(Registers regs)
 {
 	kconsole << GREEN << "Received irq: " << regs.int_no-32 << endl;
 
-	InterruptServiceRoutine *isr = interruptsTable.getIsr(regs.int_no);
+    interrupt_service_routine* isr = interruptsTable.getIsr(regs.int_no);
 	if (isr)
 	{
 		isr->run(&regs);
@@ -57,5 +59,6 @@ void irqHandler(Registers regs)
 	// Send reset signal to master. (As well as slave, if necessary).
 	outb(0x20, 0x20);
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

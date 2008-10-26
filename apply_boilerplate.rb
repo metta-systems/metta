@@ -5,6 +5,7 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http:#www.boost.org/LICENSE_1_0.txt)
 #
+#
 # Apply license and modeline changes to text source files.
 #
 require 'find'
@@ -18,6 +19,9 @@ exts = {
     '.s'=>[license.gsub("//",";"), modelines.gsub("//",";")],
     '.rb'=>[license.gsub("//","#"), modelines.gsub("//","#")]
 }
+
+ok_count = 0
+modified_count = 0
 
 Find.find('./') do |f|
     if File.file?(f) && exts.include?(File.extname(f))
@@ -43,11 +47,15 @@ Find.find('./') do |f|
                 puts "Couldn't rename file #{f+".new"} to #{f}:", $!
             end
             puts "#{f} updated"
+            modified_count += 1
         else
             puts "#{f} is ok"
+            ok_count += 1
         end
     end
 end
+
+puts "#{modified_count} files changed, #{ok_count} files ok."
 
 # kate: indent-width 4; replace-tabs on;
 # vi:set ts=4:set expandtab=on:

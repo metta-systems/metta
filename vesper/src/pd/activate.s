@@ -2,7 +2,7 @@
 ; Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See accompanying file LICENSE_1_0.txt or copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
 ;
 global activate_gdt
 global activate_idt
@@ -24,5 +24,6 @@ activate_idt:
     mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
     lidt [eax]        ; Load the IDT pointer.
     ret
+
 ; kate: indent-width 4; replace-tabs on;
 ; vi:set ts=4:set expandtab=on:

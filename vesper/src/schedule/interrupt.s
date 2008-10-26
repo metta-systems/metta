@@ -2,10 +2,10 @@
 ; Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See accompanying file LICENSE_1_0.txt or copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
 ;
-extern isrHandler    ; in InterruptServiceRoutine.cpp
-extern irqHandler
+extern isr_handler    ; in InterruptServiceRoutine.cpp
+extern irq_handler
 
 %macro ISR_NOERRCODE 1
 global isr%1
@@ -102,7 +102,7 @@ isr_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call isrHandler
+	call isr_handler
 
 	pop eax        ; reload the original data segment descriptor
 	mov ds, ax
@@ -132,7 +132,7 @@ irq_common_stub:
 	mov fs, ax
 	mov gs, ax
 
-	call irqHandler
+	call irq_handler
 
 	pop eax        ; reload the original data segment descriptor
 	mov ds, ax
@@ -144,5 +144,6 @@ irq_common_stub:
 	add esp, 8     ; Cleans up the pushed error code and pushed ISR number
 	sti
 	iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+
 ; kate: indent-width 4; replace-tabs on;
 ; vi:set ts=4:set expandtab=on:

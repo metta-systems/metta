@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Task.h"
 #include "Registers.h"
@@ -10,10 +10,10 @@
 #include "DefaultConsole.h"
 
 // The currently running task.
-volatile Task *current_task = 0;
+static volatile Task *current_task = 0;
 
 // The start of the task linked list.
-volatile Task *ready_queue;
+static volatile Task *ready_queue;
 
 // The next available process ID.
 static uint32_t next_pid = 1;
@@ -21,7 +21,7 @@ static uint32_t next_pid = 1;
 void Task::init()
 {
 	// Rather important stuff happening, no interrupts please!
-	criticalSection();
+	critical_section();
 
 	// Initialise the first task (kernel task)
 	current_task = ready_queue = new Task;
@@ -34,7 +34,7 @@ void Task::init()
 	kconsole.debug_log("Constructed kernel task.");
 
 	// Reenable interrupts.
-	endCriticalSection();
+	end_critical_section();
 }
 
 void Task::yield()
@@ -57,7 +57,7 @@ void Task::yield()
     // In the second case we need to return immediately. To detect it we put a dummy
     // value in EAX further down at the end of this function. As C returns values in EAX,
     // it will look like the return value is this dummy value! (0x12345).
-    eip = readInstructionPointer();
+    eip = read_instruction_pointer();
 
     // Have we just switched tasks?
     if (eip == 0x12345)
@@ -111,7 +111,7 @@ Task *Task::self()
 int Task::fork()
 {
     // We are modifying kernel structures, and so cannot be interrupted.
-	disableInterrupts();
+	disable_interrupts();
 
     // Take a pointer to this process' task struct for later reference.
     Task *parent_task = (Task *)current_task;
@@ -137,7 +137,7 @@ int Task::fork()
     tmp_task->next = new_task;
 
     // This will be the entry point for the new process.
-    uint32_t eip = readInstructionPointer();
+    uint32_t eip = read_instruction_pointer();
 
     // We could be the parent or the child here - check.
     if (current_task == parent_task)
@@ -150,7 +150,7 @@ int Task::fork()
         new_task->eip = eip;
 
 		kconsole.print("Saving new task's EIP %08x\n", eip);
-		enableInterrupts();
+		enable_interrupts();
 
         return new_task->id;
     }
@@ -165,5 +165,6 @@ int Task::getpid()
 {
     return id;
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

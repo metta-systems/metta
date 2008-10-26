@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Globals.h"
 #include "Registers.h"
@@ -16,7 +16,7 @@
 /* Global objects FIXME: use singletons instead? */
 class kernel kernel;
 multiboot_t multiboot;
-ElfParser kernelElfParser;
+elf_parser kernelElfParser;
 MemoryManager memoryManager;
 InterruptDescriptorTable interruptsTable;
 
@@ -108,7 +108,7 @@ void  operator delete[](void *p)
 // We encountered a massive problem and have to stop.
 void panic(const char *message, const char *file, uint32_t line)
 {
-	disableInterrupts();
+	disable_interrupts();
 
 	kconsole.set_attr(RED, YELLOW);
 	kconsole.print("PANIC (%s) at %s:%d\n", message, file, line);
@@ -121,7 +121,7 @@ void panic(const char *message, const char *file, uint32_t line)
 // An assertion failed, and we have to panic.
 void panic_assert(const char *desc, const char *file, uint32_t line)
 {
-	disableInterrupts();
+	disable_interrupts();
 
 	kconsole.set_attr(WHITE, RED);
 	kconsole.print("ASSERTION-FAILED(%s) at %s:%d\n", desc, file, line);

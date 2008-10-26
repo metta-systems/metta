@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Registers.h"
 
@@ -10,24 +10,25 @@
 // when the index reaches zero, we enable interrupts. when it becomes nonzero,
 // we disable interrupts. That way, if two nested start/stop calls take place,
 // the inner will not disrupt the outer. TODO: for SMP make this a semaphore!
-volatile uint32_t interruptsEnabledStack = 0;
+static volatile uint32_t interrupts_enabled_stack = 0;
 
-void criticalSection()
+void critical_section()
 {
-	if (interruptsEnabledStack == 0)
+	if (interrupts_enabled_stack == 0)
 	{
-		disableInterrupts();
+		disable_interrupts();
 	}
-	interruptsEnabledStack++;
+	interrupts_enabled_stack++;
 }
 
-void endCriticalSection() // TODO: check for unbalanced crit/endCrit calls.
+void end_critical_section() // TODO: check for unbalanced crit/endCrit calls.
 {
-	interruptsEnabledStack--;
-	if (interruptsEnabledStack == 0)
+	interrupts_enabled_stack--;
+	if (interrupts_enabled_stack == 0)
 	{
-		enableInterrupts();
+        enable_interrupts();
 	}
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

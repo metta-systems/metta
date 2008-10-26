@@ -2,11 +2,12 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /*
  *  ELF file format structures definitions
- *  According to Portable Formats Specification, version 1.1 (FIXME: update to 1.2)
+ *  According to Portable Formats Specification, version 1.1
+ *  (FIXME: update to 1.2)
  *
  *  Typed in by Stanislav Karchebny <berkus+os@madfire.net>, 2001
  *  This file is in Public Domain.

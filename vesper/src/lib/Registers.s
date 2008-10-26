@@ -2,73 +2,75 @@
 ; Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See accompanying file LICENSE_1_0.txt or copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
 ;
 ;
-; Register.s -- provides functions to read/write registers on the X86 architecture.
+; Register.s -- provides functions to read/write registers on the X86
+; architecture.
 ;
 
-global readInstructionPointer
-global readStackPointer
-global readBasePointer
-global writeStackPointer
-global writeBasePointer
-global readPageDirectory
-global writePageDirectory
-global flushPageDirectory
-global enablePaging
-global enableInterrupts
-global disableInterrupts
+global read_instruction_pointer
+global read_stack_pointer
+global read_base_pointer
+global write_stack_pointer
+global write_base_pointer
+global read_page_directory
+global write_page_directory
+global flush_page_directory
+global enable_paging
+global enable_interrupts
+global disable_interrupts
 
-readInstructionPointer:
+read_instruction_pointer:
 	pop eax     ; Get the return address
 	jmp eax     ; return - can't use RET because return address popped off stack.
 
-readStackPointer:
+read_stack_pointer:
 	mov eax, esp
 	add eax, 4          ; Stack was pushed with return address, so take into account.
 	ret
 
-readBasePointer:
+read_base_pointer:
 	mov eax, ebp
 	ret
 
-writeStackPointer:
+write_stack_pointer:
 	pop ebx
 	pop eax
 	mov esp, eax
 	jmp ebx
 
-writeBasePointer:
+write_base_pointer:
 	mov ebp, [esp+4]
 	ret
 
-writePageDirectory:
+write_page_directory:
 	mov eax, [esp+4]
 	mov cr3, eax
 	ret
 
-readPageDirectory:
+read_page_directory:
 	mov eax, cr3
 	ret
 
-flushPageDirectory:
+flush_page_directory:
 	mov eax, cr3
 	mov cr3, eax
 	ret
 
-enablePaging:
+enable_paging:
 	mov eax, cr0
 	or  eax, 0x80000000
 	mov cr0, eax
 	ret
 
-disableInterrupts:
+disable_interrupts:
 	cli
 	ret
 
-enableInterrupts:
+enable_interrupts:
 	sti
 	ret
+
 ; kate: indent-width 4; replace-tabs on;
 ; vi:set ts=4:set expandtab=on:

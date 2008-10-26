@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 //
 // Interrupt descriptor tables wrapper class.
@@ -63,42 +63,42 @@ INLINE void IdtEntry::set(uint16_t segsel, void (*address)(), type_e type, int d
     x.d.res0 = x.d.res1 = 0;
 };
 
-class InterruptServiceRoutine;
+class interrupt_service_routine;
 
 class InterruptDescriptorTable
 {
-	public:
-		INLINE InterruptDescriptorTable()
-		{
-			for (int i = 0; i < 256; i++)
-				interruptRoutines[i] = 0;
-		}
+public:
+    INLINE InterruptDescriptorTable()
+    {
+        for (int i = 0; i < 256; i++)
+            interruptRoutines[i] = 0;
+    }
 
-		void init(); // called from Kernel::run()
+    void init(); // called from Kernel::run()
 
-		// Generic interrupt service routines.
-		INLINE void setIsrHandler(int isrNum, InterruptServiceRoutine *isr)
-		{
-			interruptRoutines[isrNum] = isr;
-		}
+    // Generic interrupt service routines.
+    INLINE void setIsrHandler(int isrNum, interrupt_service_routine* isr)
+    {
+        interruptRoutines[isrNum] = isr;
+    }
 
-		// Hardware interrupt requests routines. (FIXME: archdep)
-		INLINE void setIrqHandler(int irq, InterruptServiceRoutine *isr)
-		{
-			interruptRoutines[irq+32] = isr;
-		}
+    // Hardware interrupt requests routines. (FIXME: archdep)
+    INLINE void setIrqHandler(int irq, interrupt_service_routine* isr)
+    {
+        interruptRoutines[irq+32] = isr;
+    }
 
-		INLINE InterruptServiceRoutine* getIsr(int isrNum)
-		{
-			return interruptRoutines[isrNum];
-		}
+    INLINE interrupt_service_routine* getIsr(int isrNum)
+    {
+        return interruptRoutines[isrNum];
+    }
 
-	private:
-		// Two fields are part of the IDT
-		uint16_t limit;
-		uint32_t base;
+private:
+    // Two fields are part of the IDT
+    uint16_t limit;
+    uint32_t base;
 
-		InterruptServiceRoutine *interruptRoutines[256];
+    interrupt_service_routine* interruptRoutines[256];
 } PACKED;
 
 // These extern directives let us access the addresses of our ASM ISR handlers.

@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "DefaultConsole.h"
 #include "Globals.h"
@@ -11,7 +11,7 @@
 #include "PageFaultHandler.h"
 
 // Interrupts are disabled upon entry to run()
-void PageFaultHandler::run(Registers *r)
+void page_fault_handler::run(Registers *r)
 {
 	PANIC("Page fault");
 	// A page fault has occurred.
@@ -41,5 +41,6 @@ void PageFaultHandler::run(Registers *r)
 // 	kernel.printBacktrace();
 	PANIC("Page fault");
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

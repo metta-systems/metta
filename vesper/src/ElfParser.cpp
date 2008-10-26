@@ -2,13 +2,13 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Kernel.h"
 #include "ElfParser.h"
 #include "DefaultConsole.h"
 
-ElfParser::ElfParser()
+elf_parser::elf_parser()
 {
 	header             = NULL;
 	sectionHeaders     = NULL;
@@ -18,20 +18,21 @@ ElfParser::ElfParser()
 	filename           = NULL;
 }
 
-ElfParser::~ElfParser()
+elf_parser::~elf_parser()
 {
 	delete header;
 	delete sectionHeaders;
 	delete [] filename;
 }
 
-void ElfParser::loadKernel(Elf32SectionHeader *symtab, Elf32SectionHeader *strtab)
+void elf_parser::loadKernel(Elf32SectionHeader* symtab,
+                            Elf32SectionHeader* strtab)
 {
 	symbolTable = symtab;
 	stringTable = strtab;
 }
 
-char* ElfParser::findSymbol(address_t addr, address_t *symbolStart)
+char* elf_parser::findSymbol(address_t addr, address_t *symbolStart)
 {
 	address_t max = 0;
 	Elf32Symbol *fallbackSymbol = 0;
@@ -75,5 +76,6 @@ char* ElfParser::findSymbol(address_t addr, address_t *symbolStart)
 		*symbolStart = 0;
 	return NULL;
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

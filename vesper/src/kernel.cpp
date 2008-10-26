@@ -2,7 +2,7 @@
 // Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "Kernel.h"
 #include "Globals.h"
@@ -17,7 +17,7 @@
 #include "Task.h"
 #include "PageFaultHandler.h"
 
-PageFaultHandler pageFaultHandler;
+page_fault_handler pageFaultHandler;
 
 void kernel::run()
 {
@@ -121,7 +121,7 @@ address_t kernel::backtrace(address_t basePointer, address_t& returnAddress)
 
 address_t kernel::backtrace(int n)
 {
-	address_t basePointer = readBasePointer();
+	address_t basePointer = read_base_pointer();
 	address_t ebp = basePointer;
 	address_t eip = 1;
 	int i = 0;
@@ -142,7 +142,7 @@ void kernel::print_backtrace(address_t basePointer, int n)
 	address_t eip = 1; // Don't initialise to 0, will kill the loop immediately.
 	if (basePointer == NULL)
 	{
-		basePointer = readBasePointer();
+		basePointer = read_base_pointer();
 	}
 	address_t ebp = basePointer;
 	kconsole.set_color(GREEN);
@@ -163,7 +163,7 @@ void kernel::print_backtrace(address_t basePointer, int n)
 
 void kernel::print_stacktrace(unsigned int n)
 {
-    address_t esp = readStackPointer();
+    address_t esp = read_stack_pointer();
     address_t espBase = esp;
     kconsole.set_color(GREEN);
     kconsole.print("<ESP=%08x>\n", esp);
@@ -174,6 +174,5 @@ void kernel::print_stacktrace(unsigned int n)
     }
 }
 
-/* kate: indent-width 4; replace-tabs on; */
-/* vi:set ts=4:set expandtab=on: */// kate: indent-width 4; replace-tabs on;
+// kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:
