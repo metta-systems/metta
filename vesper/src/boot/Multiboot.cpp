@@ -9,7 +9,7 @@
 #include "String.h"
 #include "ELF.h"
 
-multiboot_t::multiboot_t(multiboot_header_t *h)
+multiboot::multiboot(multiboot_header *h)
 {
 	header = h;
 
@@ -17,28 +17,30 @@ multiboot_t::multiboot_t(multiboot_header_t *h)
 	strtab = NULL;
 
 	// try and find the symtab/strtab
-	if (is_elf())
-	{
-		Elf32SectionHeader *shstrtab = (Elf32SectionHeader *)(header->addr + header->shndx * header->size);
-		// loop through the section headers, try to find the symbol table.
-		for(uint32_t i = 0; i < header->num; i++)
-		{
-			Elf32SectionHeader *sh = (Elf32SectionHeader *)(header->addr + i * header->size);
+	if (!is_elf())
+        return;
 
-			if (sh->sh_type == SHT_SYMTAB)
-			{
-				symtab = sh;
-			}
-			else if (sh->sh_type == SHT_STRTAB)
-			{
-				char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-				if (string::equals(c, ".strtab"))
-				{
-					strtab = sh;
-				}
-			}
-		}
-	}
+    elf32_section_header* shstrtab = (elf32_section_header*)(header->addr +
+                                      header->shndx * header->size);
+    // loop through the section headers, try to find the symbol table.
+    for(uint32_t i = 0; i < header->num; i++)
+    {
+        elf32_section_header* sh = (elf32_section_header*)(header->addr + i *
+                                    header->size);
+
+        if (sh->sh_type == SHT_SYMTAB)
+        {
+            symtab = sh;
+        }
+        else if (sh->sh_type == SHT_STRTAB)
+        {
+            char *c = (char *)shstrtab->sh_addr + sh->sh_name;
+            if (string::equals(c, ".strtab"))
+            {
+                strtab = sh;
+            }
+        }
+    }
 }
 
 // kate: indent-width 4; replace-tabs on;

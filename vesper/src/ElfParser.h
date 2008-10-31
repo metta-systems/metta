@@ -35,52 +35,53 @@ public:
     /**
      * Writes all section information to the virtual memory image.
      */
-    void writeAllSections();
+    void write_all_sections();
 
     /**
      * Returns the address of the last byte to be loaded in.
      */
-    address_t getLastAddress();
+    address_t get_last_address();
 
     /**
      * Loads the symbol table for the kernel from the specified location.
      */
-    void loadKernel(Elf32SectionHeader *symtab, Elf32SectionHeader *strtab);
+    void load_kernel(elf32_section_header* symtab,
+                     elf32_section_header* strtab);
 
     /**
      * Returns the symbol name for an address. Also returns the start address
      * of that symbol in startAddr if startAddr != NULL.
      */
-    char* findSymbol(address_t addr, address_t *symbolStart = NULL);
+    char* find_symbol(address_t addr, address_t *symbol_start = NULL);
 
     /**
      * Returns the address of a symbol with name str.
      * NOTE: This is much slower than it should be. This should be implemented
      * using the hashtable sections in ELF.
      */
-    address_t findSymbol(char* str);
+    address_t find_symbol(char* str);
 
     /**
      * Returns the address of the symbol with offset o in the
      * relocation symbol table.
      */
-    address_t findDynamicSymbolLocation(address_t o);
+    address_t find_dynamic_symbol_location(address_t o);
 
     /**
      * Returns a NULL terminated string specifying the name of
      * the symbol at offset o in the relocation symbol table.
      */
-    char *findDynamicSymbolName(address_t o);
+    char *find_dynamic_symbol_name(address_t o);
 
     /**
      * Gets the address of the global offset table.
      */
-    address_t getGlobalOffsetTable();
+    address_t get_global_offset_table();
 
     /**
      * Returns the entry point of the executable.
      */
-    address_t getEntryPoint()
+    address_t get_entry_point()
     {
         return (address_t)header->e_entry;
     }
@@ -88,19 +89,19 @@ public:
     /**
      * Returns true if the parser loaded correctly.
      */
-    bool isValid()
+    bool is_valid()
     {
-        return (filename!=0);
+        return (filename != 0);
     }
 
 private:
-    Elf32Header        *header;
-    Elf32SectionHeader *symbolTable;
-    Elf32SectionHeader *stringTable;
-    Elf32SectionHeader *gotTable; // Global offset table.
-    Elf32SectionHeader *relTable;
-    Elf32SectionHeader *sectionHeaders;
-    const char         *filename;
+    elf32_header*         header;
+    elf32_section_header* symbol_table;
+    elf32_section_header* string_table;
+    elf32_section_header* got_table; // Global offset table.
+    elf32_section_header* rel_table;
+    elf32_section_header* section_headers;
+    const char*           filename;
 };
 
 // kate: indent-width 4; replace-tabs on;

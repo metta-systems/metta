@@ -10,44 +10,46 @@
 
 elf_parser::elf_parser()
 {
-	header             = NULL;
-	sectionHeaders     = NULL;
-	symbolTable        = NULL;
-	stringTable        = NULL;
-	gotTable           = NULL;
-	filename           = NULL;
+	header              = NULL;
+	section_headers     = NULL;
+	symbol_table        = NULL;
+	string_table        = NULL;
+	got_table           = NULL;
+	filename            = NULL;
 }
 
 elf_parser::~elf_parser()
 {
 	delete header;
-	delete sectionHeaders;
+	delete section_headers;
 	delete [] filename;
 }
 
-void elf_parser::loadKernel(Elf32SectionHeader* symtab,
-                            Elf32SectionHeader* strtab)
+void elf_parser::load_kernel(elf32_section_header* symtab,
+                             elf32_section_header* strtab)
 {
-	symbolTable = symtab;
-	stringTable = strtab;
+	symbol_table = symtab;
+	string_table = strtab;
 }
 
-char* elf_parser::findSymbol(address_t addr, address_t *symbolStart)
+char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
 {
 	address_t max = 0;
-	Elf32Symbol *fallbackSymbol = 0;
-	for (unsigned int i = 0; i < symbolTable->sh_size / symbolTable->sh_entsize; i++)
+	elf32_symbol *fallback_symbol = 0;
+	for (unsigned int i = 0; i < symbol_table->sh_size /
+         symbol_table->sh_entsize; i++)
 	{
-		Elf32Symbol *symbol = (Elf32Symbol *)(symbolTable->sh_addr + i * symbolTable->sh_entsize);
+		elf32_symbol *symbol = (elf32_symbol *)(symbol_table->sh_addr
+                                + i * symbol_table->sh_entsize);
 
 		if ((addr >= symbol->st_value) &&
 			(addr <  symbol->st_value + symbol->st_size) )
 		{
-			char *c = (char *)(symbol->st_name) + stringTable->sh_addr;
+			char *c = (char *)(symbol->st_name) + string_table->sh_addr;
 
-			if (symbolStart)
+			if (symbol_start)
 			{
-				*symbolStart = symbol->st_value;
+				*symbol_start = symbol->st_value;
 			}
 			return c;
 		}
@@ -55,25 +57,25 @@ char* elf_parser::findSymbol(address_t addr, address_t *symbolStart)
 		if (symbol->st_value > max && symbol->st_value <= addr)
 		{
 			max = symbol->st_value;
-			fallbackSymbol = symbol;
+			fallback_symbol = symbol;
 		}
 	}
 
 	// Search for symbol with size failed, now take a wild guess.
 	// Use a biggest symbol value less than addr (if found).
-	if (fallbackSymbol)
+	if (fallback_symbol)
 	{
-		char *c = (char *)(fallbackSymbol->st_name) + stringTable->sh_addr;
+		char *c = (char *)(fallback_symbol->st_name) + string_table->sh_addr;
 
-		if (symbolStart)
+		if (symbol_start)
 		{
-			*symbolStart = fallbackSymbol->st_value;
+			*symbol_start = fallback_symbol->st_value;
 		}
 		return c;
 	}
 
-	if (symbolStart)
-		*symbolStart = 0;
+	if (symbol_start)
+		*symbol_start = 0;
 	return NULL;
 }
 

@@ -27,7 +27,8 @@ void kernel::run()
 	// Make sure we aren't overwriting anything by writing at placementAddress.
 	relocate_placement_address();
 
-	kernelElfParser.loadKernel(multiboot.symtab_start(), multiboot.strtab_start());
+	kernelElfParser.load_kernel(multiboot.symtab_start(),
+                                multiboot.strtab_start());
 
 	GlobalDescriptorTable::init();
 
@@ -154,7 +155,7 @@ void kernel::print_backtrace(address_t basePointer, int n)
 	{
 		ebp = backtrace(ebp, eip);
 		unsigned int offset;
-		char *symbol = kernelElfParser.findSymbol(eip, &offset);
+		char *symbol = kernelElfParser.find_symbol(eip, &offset);
 		offset = eip - offset;
 		kconsole.print("| %08x <%s+0x%x>\n", eip, symbol ? symbol : "UNRESOLVED", offset);
 		i++;

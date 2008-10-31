@@ -26,7 +26,7 @@
 /**
  * Boot information passed in by multiboot loader.
  */
-struct multiboot_header_t
+struct multiboot_header
 {
 	uint32_t flags;
 
@@ -69,11 +69,11 @@ struct multiboot_header_t
 /**
  * Defines an interface to the multiboot header
  */
-class multiboot_t
+class multiboot
 {
 public:
-	multiboot_t() : header(NULL) {}
-	multiboot_t(multiboot_header_t *h);
+	multiboot() : header(NULL) {}
+	multiboot(multiboot_header *h);
 
 	INLINE uint32_t lower_mem()   { return header->mem_lower; }
 	INLINE uint32_t upper_mem()   { return header->mem_upper; }
@@ -128,22 +128,22 @@ public:
 			return 0;
 		}
 	}
-	INLINE Elf32SectionHeader *symtab_start()
+	INLINE elf32_section_header* symtab_start()
 	{
 		if (symtab)
 		{
-			return (Elf32SectionHeader *)symtab;
+			return (elf32_section_header*)symtab;
 		}
 		else
 		{
 			return 0;
 		}
 	}
-	INLINE Elf32SectionHeader *strtab_start()
+    INLINE elf32_section_header* strtab_start()
 	{
 		if (strtab)
 		{
-			return (Elf32SectionHeader *)strtab;
+            return (elf32_section_header*)strtab;
 		}
 		else
 		{
@@ -155,9 +155,9 @@ public:
 	INLINE bool has_mem_info() { return header->flags & MULTIBOOT_FLAG_MEM; }
 
 private:
-	multiboot_header_t *header;
-	Elf32SectionHeader *strtab;
-	Elf32SectionHeader *symtab;
+	multiboot_header*     header;
+    elf32_section_header* strtab;
+    elf32_section_header* symtab;
 };
 
 // kate: indent-width 4; replace-tabs on;

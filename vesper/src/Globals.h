@@ -11,12 +11,12 @@
 #include "string.h"
 
 extern class kernel kernel;
-extern class multiboot_t multiboot;
+extern class multiboot multiboot;
 extern class elf_parser kernelElfParser;
 extern class MemoryManager memoryManager;
 extern class InterruptDescriptorTable interruptsTable;
 
-extern "C" void kernel_entry(class multiboot_header_t *mh) NORETURN;
+extern "C" void kernel_entry(class multiboot_header *mh) NORETURN;
 
 void *operator new(size_t size);
 void *operator new(size_t size, uint32_t place);

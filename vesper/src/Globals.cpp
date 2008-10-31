@@ -15,16 +15,16 @@
 
 /* Global objects FIXME: use singletons instead? */
 class kernel kernel;
-multiboot_t multiboot;
+class multiboot multiboot;
 elf_parser kernelElfParser;
 MemoryManager memoryManager;
 InterruptDescriptorTable interruptsTable;
 
 /* This entry point is called from loader */
-void kernel_entry(multiboot_header_t *multiboot_header)
+void kernel_entry(multiboot_header *multiboot_header)
 {
 	kconsole.clear();
-	multiboot = multiboot_t(multiboot_header);
+	multiboot = multiboot::multiboot(multiboot_header);
 	kernel.run(); /* does not return */
 }
 
