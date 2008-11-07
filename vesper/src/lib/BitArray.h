@@ -7,19 +7,20 @@
 #pragma once
 
 #include "Types.h"
+#include "Macros.h"
 
 /**
-  An unordered array that holds its contents internally as bits. Therefore,
-  each element can only be of boolean type.
-
-  Unit tested: 24 Jul 07
-**/
-
+ * An unordered array that holds its contents internally as bits. Therefore,
+ * each element can only be of boolean type.
+ */
 class BitArray
 {
 public:
-	inline static uint32_t INDEX_TO_BIT(int a)    { return a * (8*4); }
-	inline static uint32_t INDEX_FROM_BIT(int a)  { return a / (8*4); }
+    // Array dword position to bit index.
+    inline static uint32_t INDEX_TO_BIT(int a)    { return a * (8*4); }
+    // Bit to dword position in array.
+    inline static uint32_t INDEX_FROM_BIT(int a)  { return a / (8*4); }
+    // Bit to offset within dword.
 	inline static uint32_t OFFSET_FROM_BIT(int a) { return a % (8*4); }
 
 	/**
@@ -27,14 +28,20 @@ public:
 	 */
 	BitArray(uint32_t nbits) : N(nbits)
 	{
+        ASSERT(N >= 32);
 		table = new uint32_t [INDEX_FROM_BIT(N)];
-		clearAll();
+		clear_all();
 	}
+
+    ~BitArray()
+    {
+        delete [] table;
+    }
 
 	/**
 	 * Clears the value of all bits in the bitmap.
 	 */
-	void clearAll()
+	void clear_all()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
 		{
@@ -79,7 +86,7 @@ public:
 	 * Finds the first bit that is clear. Uses optimisations so faster than
 	 * just looping and calling test().
 	 */
-	uint32_t firstClear()
+	uint32_t first_clear()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
 		{
@@ -103,7 +110,7 @@ public:
 	 * Finds the first bit that is set. Uses optimisations so faster than
 	 * just looping and calling test().
 	 */
-	uint32_t firstSet()
+	uint32_t first_set()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
 		{
