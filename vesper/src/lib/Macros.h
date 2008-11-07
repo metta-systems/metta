@@ -21,8 +21,12 @@
 #define CONST_FN __attribute__((const))
 
 #define PANIC(msg) panic(msg, __FILE__, __LINE__);
+
+#ifdef UNIT_TESTS
+#define ASSERT(b) assert(b)
+#else
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
-#define BUG_ON(b) ASSERT(!(b)) //TODO: remove
+#endif
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:
