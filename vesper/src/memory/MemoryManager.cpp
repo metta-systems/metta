@@ -133,7 +133,7 @@ void MemoryManager::allocFrame(Page *p, bool isKernel, bool isWriteable)
 	else
 	{
 		// TODO: make this more efficient than O(n).
-		uint32_t frameIdx = frames->firstClear();
+		uint32_t frameIdx = frames->first_clear();
 		if (frameIdx == (uint32_t)-1)
 		{
 			PANIC("No free frames.");
@@ -154,7 +154,7 @@ void MemoryManager::allocFrame(Page *p, bool isKernel, bool isWriteable)
 address_t MemoryManager::allocFrame()
 {
 	// TODO: make this more efficient than O(n).
-	uint32_t frameIdx = frames->firstClear();
+	uint32_t frameIdx = frames->first_clear();
 	if (frameIdx == (uint32_t)-1)
 	{
 		PANIC("No free frames.");
