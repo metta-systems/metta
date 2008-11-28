@@ -6,3 +6,14 @@ Atomic types have _t appended, complex types that denote structured objects do
 not.
 typedef int sint32_t;
 class kernel;
+
+namespace metta {
+	namespace kernel {
+	}
+	namespace userspace {
+		namespace graphics {
+		}
+		namespace gui {
+		}
+	}
+}
