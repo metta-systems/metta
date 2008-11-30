@@ -6,6 +6,9 @@
 //
 #pragma once
 
+namespace metta {
+namespace kernel {
+
 class Timer
 {
 	public:
@@ -14,6 +17,9 @@ class Timer
 	private:
 		Timer();
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

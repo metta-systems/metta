@@ -9,6 +9,9 @@
 
 #include "Globals.h"
 
+namespace metta {
+namespace kernel {
+
 #define PAGE_SIZE 0x1000
 #define PAGE_MASK 0xFFFFF000
 
@@ -114,7 +117,7 @@ public:
 		{
 			if (pages[i].frame())
 			{
-				memoryManager.allocFrame(&table->pages[i]);
+				memory_manager.allocFrame(&table->pages[i]);
 				table->pages[i].setPresent(pages[i].isPresent());
 				table->pages[i].setWritable(pages[i].isWritable());
 				table->pages[i].setUser(pages[i].isUser());
@@ -199,7 +202,7 @@ public:
 		for (int i = 0; i < 1024; i++)
 		{
 			if (!tables[i]) continue;
-			if (memoryManager.getKernelDirectory()->getTable(i) == tables[i])
+			if (memory_manager.getKernelDirectory()->getTable(i) == tables[i])
 			{
 				// It's in the kernel, so just use the same pointer.
 				dir->tables[i] = tables[i];
@@ -266,6 +269,9 @@ private:
 	**/
 	address_t physicalAddr;
 };
+
+}
+}
 
 // # endif // LANG_X86
 

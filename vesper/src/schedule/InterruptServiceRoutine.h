@@ -8,6 +8,9 @@
 
 #include "Types.h"
 
+namespace metta {
+namespace kernel {
+
 /**
  * These are the set of registers that appear when an interrupt is recieved
  * in kernel mode. The useresp and ss values are missing.
@@ -28,6 +31,9 @@ public:
 
 	virtual void run(Registers *) {}
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

@@ -10,12 +10,15 @@
 #include "common.h"
 #include "DefaultConsole.h"
 
+namespace metta {
+namespace kernel {
+
 /**
- * Array of maximum size @c N of pointers to @c Type.
- * This array is insertion sorted - it always remains in a sorted state (between calls).
- * @c Type must implement operator <()
- * Array must be in-place allocatable for Heap to work correctly.
- */
+* Array of maximum size @c N of pointers to @c Type.
+* This array is insertion sorted - it always remains in a sorted state (between calls).
+* @c Type must implement operator <()
+* Array must be in-place allocatable for Heap to work correctly.
+**/
 template<class Type, uint32_t N>
 class OrderedArray
 {
@@ -92,6 +95,9 @@ private:
 	Type *array[N];
 	uint32_t size;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

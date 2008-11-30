@@ -12,9 +12,11 @@
 
 extern "C"
 {
-	void isr_handler(Registers regs);
-	void irq_handler(Registers regs);
+	void isr_handler(metta::kernel::Registers regs);
+    void irq_handler(metta::kernel::Registers regs);
 }
+
+using namespace metta::kernel;
 
 // Handles a software interrupt/CPU exception.
 // This is architecture specific!

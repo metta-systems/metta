@@ -11,15 +11,15 @@
 /**
  * A class that implements a spinlock / binary semaphore.
  */
-class lockable_t
+class lockable
 {
 public:
-	lockable_t()
+	lockable()
 	{
 		lock = 0;
 	}
 
-	~lockable_t() {}
+	~lockable() {}
 
 	// Spin until we get the lock.
 	void get_lock()

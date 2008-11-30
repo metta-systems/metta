@@ -9,10 +9,13 @@
 #include "MemoryManager.h"
 #include "Registers.h" // criticalSection() (TODO: move decls to Globals.h)
 
+namespace metta {
+namespace kernel {
+
 #define HEAP_MAGIC        0x123890AB
 #define HEAP_MIN_SIZE     0x70000
 
-void Heap::init(address_t start, address_t end, address_t max, bool supervisor)
+void heap::init(address_t start, address_t end, address_t max, bool supervisor)
 {
 	startAddress = start;
 	endAddress = end;
@@ -48,12 +51,12 @@ void Heap::init(address_t start, address_t end, address_t max, bool supervisor)
 	index->insert(holeHeader);
 }
 
-Heap::~Heap()
+heap::~heap()
 {
 }
 
 // Find the smallest hole that will fit.
-int32_t Heap::findSmallestHole(uint32_t size, bool pageAlign)
+int32_t heap::findSmallestHole(uint32_t size, bool pageAlign)
 {
 	uint32_t iterator = 0;
 	while (iterator < index->count())
@@ -96,7 +99,7 @@ int32_t Heap::findSmallestHole(uint32_t size, bool pageAlign)
 	}
 }
 
-void *Heap::allocate(uint32_t size, bool pageAlign)
+void *heap::allocate(uint32_t size, bool pageAlign)
 {
 	critical_section();
 #ifdef HEAP_DEBUG
@@ -263,7 +266,7 @@ void *Heap::allocate(uint32_t size, bool pageAlign)
 	return (void *)((uint32_t)blockHeader + sizeof(Header));
 }
 
-void Heap::free(void *p)
+void heap::free(void *p)
 {
 	critical_section();
 #ifdef HEAP_DEBUG
@@ -396,7 +399,7 @@ void Heap::free(void *p)
 	end_critical_section();
 }
 
-void Heap::expand(uint32_t newSize)
+void heap::expand(uint32_t newSize)
 {
 #ifdef HEAP_DEBUG
 	checkIntegrity();
@@ -422,7 +425,7 @@ void Heap::expand(uint32_t newSize)
 	uint32_t i = oldSize;
 	while(i < newSize)
 	{
-		memoryManager.allocFrame(memoryManager.getKernelDirectory()->getPage(startAddress+i), isKernel);
+		memory_manager.allocFrame(memory_manager.getKernelDirectory()->getPage(startAddress+i), isKernel);
 		i += PAGE_SIZE;
 	}
 
@@ -432,7 +435,7 @@ void Heap::expand(uint32_t newSize)
 #endif
 }
 
-uint32_t Heap::contract(uint32_t newSize)
+uint32_t heap::contract(uint32_t newSize)
 {
 #ifdef HEAP_DEBUG
 	checkIntegrity();
@@ -460,7 +463,7 @@ uint32_t Heap::contract(uint32_t newSize)
 	uint32_t i = newSize;
 	while(i < oldSize)
 	{
-		memoryManager.freeFrame(memoryManager.getKernelDirectory()->getPage(startAddress+i));
+		memory_manager.freeFrame(memory_manager.getKernelDirectory()->getPage(startAddress+i));
 		i += PAGE_SIZE;
 	}
 
@@ -471,7 +474,7 @@ uint32_t Heap::contract(uint32_t newSize)
 	return newSize;
 }
 
-void Heap::checkIntegrity()
+void heap::checkIntegrity()
 {
 #ifdef HEAP_DEBUG
 	// We should, by starting at startAddress, be able to walk through all blocks/
@@ -523,5 +526,9 @@ void Heap::checkIntegrity()
 	}
 #endif
 }
+
+}
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

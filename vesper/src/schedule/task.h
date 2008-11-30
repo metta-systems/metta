@@ -8,6 +8,9 @@
 
 #include "Types.h"
 
+namespace metta {
+namespace kernel {
+
 class PageDirectory;
 
 // This structure defines a 'task' - a process.
@@ -33,6 +36,9 @@ class Task
 		PageDirectory *page_directory; // Page directory.
 		Task *next;                    // The next task in a linked list.
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

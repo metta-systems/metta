@@ -11,7 +11,11 @@
 
 #include "common.h"
 
-class IdtEntry
+namespace metta {
+namespace kernel {
+
+
+class idt_entry
 {
 public:
 	enum type_e
@@ -47,7 +51,7 @@ private:
  * @c type selects Interrupt Gate or Trap Gate respectively.
  * @c dpl sets the numerical maximum CPL of allowed calling code.
  */
-INLINE void IdtEntry::set(uint16_t segsel, void (*address)(), type_e type, int dpl)
+INLINE void idt_entry::set(uint16_t segsel, void (*address)(), type_e type, int dpl)
 {
     x.d.offset_low  = ((uint32_t) address      ) & 0xFFFF;
     x.d.offset_high = ((uint32_t) address >> 16) & 0xFFFF;
@@ -65,32 +69,32 @@ INLINE void IdtEntry::set(uint16_t segsel, void (*address)(), type_e type, int d
 
 class interrupt_service_routine;
 
-class InterruptDescriptorTable
+class interrupt_descriptor_table
 {
 public:
-    INLINE InterruptDescriptorTable()
+    INLINE interrupt_descriptor_table()
     {
         for (int i = 0; i < 256; i++)
-            interruptRoutines[i] = 0;
+            interrupt_routines[i] = 0;
     }
 
     void init(); // called from Kernel::run()
 
     // Generic interrupt service routines.
-    INLINE void setIsrHandler(int isrNum, interrupt_service_routine* isr)
+    INLINE void set_isr_handler(int isrNum, interrupt_service_routine* isr)
     {
-        interruptRoutines[isrNum] = isr;
+        interrupt_routines[isrNum] = isr;
     }
 
     // Hardware interrupt requests routines. (FIXME: archdep)
-    INLINE void setIrqHandler(int irq, interrupt_service_routine* isr)
+    INLINE void set_irq_handler(int irq, interrupt_service_routine* isr)
     {
-        interruptRoutines[irq+32] = isr;
+        interrupt_routines[irq+32] = isr;
     }
 
     INLINE interrupt_service_routine* getIsr(int isrNum)
     {
-        return interruptRoutines[isrNum];
+        return interrupt_routines[isrNum];
     }
 
 private:
@@ -98,8 +102,11 @@ private:
     uint16_t limit;
     uint32_t base;
 
-    interrupt_service_routine* interruptRoutines[256];
+    interrupt_service_routine* interrupt_routines[256];
 } PACKED;
+
+}
+}
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern "C"

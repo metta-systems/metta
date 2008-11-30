@@ -8,6 +8,9 @@
 
 #include "Macros.h"
 
+namespace metta {
+namespace kernel {
+
 #define kconsole default_console::self()
 #define endl default_console::eol
 
@@ -98,5 +101,9 @@ INLINE default_console& operator << (default_console& con, unsigned char data)
 	con.print_byte(data);
 	return con;
 }
+
+}
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

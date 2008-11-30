@@ -17,6 +17,9 @@
 #include "Task.h"
 #include "PageFaultHandler.h"
 
+namespace metta {
+namespace kernel {
+
 page_fault_handler pageFaultHandler;
 
 void kernel::run()
@@ -32,11 +35,11 @@ void kernel::run()
 
 	GlobalDescriptorTable::init();
 
-	interruptsTable.setIsrHandler(14, &pageFaultHandler);
+	interruptsTable.set_isr_handler(14, &pageFaultHandler);
 	interruptsTable.init();
 
-	memoryManager.init(multiboot.upper_mem() * 1024);
-	memoryManager.remapStack();
+	memory_manager.init(multiboot.upper_mem() * 1024);
+	memory_manager.remapStack();
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
 	Task::init();
@@ -51,7 +54,7 @@ void kernel::run()
 
 void kernel::relocate_placement_address()
 {
-	address_t newPlacementAddress = memoryManager.getPlacementAddress();
+	address_t newPlacementAddress = memory_manager.getPlacementAddress();
 	if (multiboot.is_elf() && multiboot.symtab_end() > newPlacementAddress)
 	{
 		newPlacementAddress = multiboot.symtab_end();
@@ -64,7 +67,7 @@ void kernel::relocate_placement_address()
 	{
 		newPlacementAddress = multiboot.mod_end();
 	}
-	memoryManager.setPlacementAddress(newPlacementAddress);
+	memory_manager.setPlacementAddress(newPlacementAddress);
 }
 
 void kernel::dump_memory(address_t start, size_t size)
@@ -173,6 +176,9 @@ void kernel::print_stacktrace(unsigned int n)
         kconsole.print("<ESP+%4d> %08x\n", esp - espBase, *(address_t*)esp);
         esp += sizeof(address_t);
     }
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

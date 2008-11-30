@@ -10,6 +10,9 @@
 #include "common.h"
 #include "PageFaultHandler.h"
 
+namespace metta {
+namespace kernel {
+
 // Interrupts are disabled upon entry to run()
 void page_fault_handler::run(Registers *r)
 {
@@ -40,6 +43,9 @@ void page_fault_handler::run(Registers *r)
 	kconsole.print(")\n");
 // 	kernel.printBacktrace();
 	PANIC("Page fault");
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

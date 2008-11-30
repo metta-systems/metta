@@ -8,6 +8,9 @@
 
 #include "InterruptServiceRoutine.h"
 
+namespace metta {
+namespace kernel {
+
 class page_fault_handler : public interrupt_service_routine
 {
 public:
@@ -16,6 +19,9 @@ public:
 
 	virtual void run(registers *r);
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

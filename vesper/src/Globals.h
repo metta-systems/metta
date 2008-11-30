@@ -9,14 +9,21 @@
 #include "Types.h"
 #include "Macros.h"
 #include "string.h"
+#include "Multiboot.h"
+
+namespace metta {
+namespace kernel {
 
 extern class kernel kernel;
 extern class multiboot multiboot;
 extern class elf_parser kernelElfParser;
-extern class MemoryManager memoryManager;
-extern class InterruptDescriptorTable interruptsTable;
+extern class MemoryManager memory_manager;
+extern class interrupt_descriptor_table interruptsTable;
 
-extern "C" void kernel_entry(class multiboot_header *mh) NORETURN;
+}
+}
+
+extern "C" void kernel_entry(metta::kernel::multiboot_header *mh) NORETURN;
 
 void *operator new(size_t size);
 void *operator new(size_t size, uint32_t place);

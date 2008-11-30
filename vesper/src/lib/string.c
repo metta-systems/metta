@@ -30,6 +30,8 @@
 #include "ctype.h"
 #include "Kernel.h" // for copyMemory()
 
+using metta::kernel::kernel;
+
 #ifndef __HAVE_ARCH_STRNICMP
 /**
  * strnicmp - Case insensitive, length-limited string comparison

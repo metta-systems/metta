@@ -13,12 +13,20 @@
 #include "MemoryManager.h"
 #include "InterruptDescriptorTable.h"
 
+namespace metta {
+namespace kernel {
+
 /* Global objects FIXME: use singletons instead? */
 class kernel kernel;
 class multiboot multiboot;
 elf_parser kernelElfParser;
-MemoryManager memoryManager;
-InterruptDescriptorTable interruptsTable;
+MemoryManager memory_manager;
+interrupt_descriptor_table interruptsTable;
+
+}
+}
+
+using namespace metta::kernel;
 
 /* This entry point is called from loader */
 void kernel_entry(multiboot_header *multiboot_header)
@@ -32,14 +40,14 @@ void kernel_entry(multiboot_header *multiboot_header)
 
 void* operator new(size_t size)
 {
-	if (memoryManager.isHeapInitialised())
+	if (memory_manager.isHeapInitialised())
 	{
-		return memoryManager.malloc(size);
+		return memory_manager.malloc(size);
 	}
 	else
 	{
-		uint32_t tmp = memoryManager.getPlacementAddress();
-		memoryManager.setPlacementAddress(tmp+size);
+		uint32_t tmp = memory_manager.getPlacementAddress();
+		memory_manager.setPlacementAddress(tmp+size);
 		return (void *)tmp;
 	}
 }
@@ -52,24 +60,24 @@ void *operator new(size_t size, uint32_t place)
 
 void *operator new(size_t size, bool pageAlign, uint32_t *addr)
 {
-	if (memoryManager.isHeapInitialised())
+	if (memory_manager.isHeapInitialised())
 	{
-		return memoryManager.malloc(size, pageAlign, addr);
+		return memory_manager.malloc(size, pageAlign, addr);
 	}
 	else
 	{
 		if (pageAlign)
-			memoryManager.alignPlacementAddress();
-		uint32_t tmp = memoryManager.getPlacementAddress();
+			memory_manager.alignPlacementAddress();
+		uint32_t tmp = memory_manager.getPlacementAddress();
 		if (addr)
 			*addr = tmp;
-		memoryManager.setPlacementAddress(tmp+size);
+		memory_manager.setPlacementAddress(tmp+size);
 		return (void *)tmp;
 	}
 }
 
 /**
-Carbon-copy of operator new(uint32_t).
+* Carbon-copy of operator new(uint32_t).
 **/
 void *operator new[](size_t size)
 {
@@ -77,32 +85,32 @@ void *operator new[](size_t size)
 }
 
 /**
-Carbon-copy of operator new(uint32_t,uint32_t*,bool).
+* Carbon-copy of operator new(uint32_t,uint32_t*,bool).
 **/
 void *operator new[](size_t size, bool pageAlign, uint32_t *addr)
 {
-	if (memoryManager.isHeapInitialised())
+	if (memory_manager.isHeapInitialised())
 	{
-		return memoryManager.malloc(size, pageAlign, addr);
+		return memory_manager.malloc(size, pageAlign, addr);
 	}
 	else
 	{
-		if (pageAlign) {memoryManager.alignPlacementAddress();}
-		uint32_t tmp = memoryManager.getPlacementAddress();
+		if (pageAlign) {memory_manager.alignPlacementAddress();}
+		uint32_t tmp = memory_manager.getPlacementAddress();
 		if (addr) {*addr = tmp;}
-		memoryManager.setPlacementAddress(tmp+size);
+		memory_manager.setPlacementAddress(tmp+size);
 		return (void *)tmp;
 	}
 }
 
 void  operator delete(void *p)
 {
-	memoryManager.free(p);
+	memory_manager.free(p);
 }
 
 void  operator delete[](void *p)
 {
-	memoryManager.free(p);
+	memory_manager.free(p);
 }
 
 // We encountered a massive problem and have to stop.
@@ -130,5 +138,6 @@ void panic_assert(const char *desc, const char *file, uint32_t line)
 	// Halt by going into an infinite loop.
 	while(1) {}
 }
+
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

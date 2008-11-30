@@ -8,6 +8,9 @@
 #include "ElfParser.h"
 #include "DefaultConsole.h"
 
+namespace metta {
+namespace kernel {
+
 elf_parser::elf_parser()
 {
 	header              = NULL;
@@ -77,6 +80,9 @@ char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
 	if (symbol_start)
 		*symbol_start = 0;
 	return NULL;
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

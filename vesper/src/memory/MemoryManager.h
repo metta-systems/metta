@@ -10,6 +10,9 @@
 #include "Heap.h"
 #include "BitArray.h"
 
+namespace metta {
+namespace kernel {
+
 #define HEAP_START              0xC0000000
 #define HEAP_INITIAL_SIZE       0x100000
 #define HEAP_END                0xCFFFFFFF
@@ -77,9 +80,9 @@ public:
 	/**
 		Accessor functions for heapInitialised and placementAddress.
 	**/
-	bool isHeapInitialised() { return heapInitialised; }
-	address_t getPlacementAddress() { return placementAddress; }
-	void setPlacementAddress(address_t a) { placementAddress = a; }
+	bool isHeapInitialised() { return heap_initialised; }
+	address_t getPlacementAddress() { return placement_address; }
+	void setPlacementAddress(address_t a) { placement_address = a; }
 
 	/**
 		Forces the placementAddress variable to be PAGE_SIZE aligned.
@@ -95,9 +98,9 @@ public:
 	/**
 		Accessor functions for kernelDirectory, currentDirectory
 	**/
-	PageDirectory* getKernelDirectory()  { return kernelDirectory; }
-	PageDirectory* getCurrentDirectory() { return currentDirectory; }
-	void setCurrentDirectory(PageDirectory* p) { currentDirectory = p; }
+	PageDirectory* getKernelDirectory()  { return kernel_directory; }
+	PageDirectory* getCurrentDirectory() { return current_directory; }
+	void setCurrentDirectory(PageDirectory* p) { current_directory = p; }
 
 	/**
 		Finds a free frame (swaps out if necessary) and allocates it to p.
@@ -145,41 +148,44 @@ private:
 	/**
 	 * Total number of physical memory frames.
 	 */
-	uint32_t nFrames;
+	uint32_t n_frames;
 
 	/**
 		Has the kernel heap been initialised yet?
 	**/
-	bool heapInitialised;
+	bool heap_initialised;
 
 	/**
 		The kernel heap
 	**/
-	Heap heap;
+	heap heap_;
 
 	/**
 		The user-mode shared heap
 	**/
-	Heap userHeap;
+	heap user_heap;
 
 	/**
 		Before the heap is initialised, this holds the next available location
 		for 'placement new' to be called on.
 	**/
-	address_t placementAddress;
+	address_t placement_address;
 
 	/**
 		The currently active page directory
 	**/
-	PageDirectory *currentDirectory;
+	PageDirectory *current_directory;
 
 	/**
 		Pointer to the "master" page directory. This holds page table pointers for kernel
 		space. All other page directories must match the entries in here to maintain easy
 		consistency of kernel-space over memory spaces.
 	**/
-	PageDirectory *kernelDirectory;
+	PageDirectory *kernel_directory;
 };
+
+}
+}
 
 #include "MemoryManager-arch.h"
 

@@ -9,6 +9,9 @@
 #include "OrderedArray.h"
 #include "Lockable.h"
 
+namespace metta {
+namespace kernel {
+
 #define HEAP_INDEX_SIZE   0x20000
 
 /**
@@ -18,18 +21,18 @@
  * The footer has a pointer to the header, with the header also containing
  * size information.
  */
-class Heap : public lockable_t
+class heap : public lockable
 {
 public:
-	inline Heap() : lockable_t() {}
+	inline heap() : lockable() {}
 
 	/**
 	 * Create a new Heap, with start address start, initial size end-start,
 	 * and expanding up to a maximum address of max.
 	 */
-	inline Heap(address_t start, address_t end, address_t max, bool isKernel) { init(start, end, max, isKernel); }
+	inline heap(address_t start, address_t end, address_t max, bool isKernel) { init(start, end, max, isKernel); }
 
-	~Heap();
+	~heap();
 
 	void init(address_t start, address_t end, address_t max, bool isKernel);
 
@@ -124,6 +127,9 @@ private:
 	 */
 	bool isKernel;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

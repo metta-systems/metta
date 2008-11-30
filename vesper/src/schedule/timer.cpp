@@ -12,6 +12,9 @@
 #include "InterruptDescriptorTable.h"
 #include "Globals.h"
 
+namespace metta {
+namespace kernel {
+
 void Timer::init()
 {
 	static Timer timer;
@@ -37,7 +40,7 @@ Timer::Timer()
 	uint32_t frequency = 50;
 
 	// Firstly, register our timer callback.
-	interruptsTable.setIrqHandler(0, &timerCallback);
+	interruptsTable.set_irq_handler(0, &timerCallback);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is
@@ -56,6 +59,9 @@ Timer::Timer()
 	outb(0x40, h);
 
 // 	kconsole.debug_log("Constructed timer.");
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

@@ -9,6 +9,9 @@
 #include "String.h"
 #include "ELF.h"
 
+namespace metta {
+namespace kernel {
+
 multiboot::multiboot(multiboot_header *h)
 {
 	header = h;
@@ -41,6 +44,9 @@ multiboot::multiboot(multiboot_header *h)
             }
         }
     }
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

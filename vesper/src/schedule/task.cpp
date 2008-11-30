@@ -9,6 +9,9 @@
 #include "MemoryManager.h"
 #include "DefaultConsole.h"
 
+namespace metta {
+namespace kernel {
+
 // The currently running task.
 static volatile Task *current_task = 0;
 
@@ -28,7 +31,7 @@ void Task::init()
 	current_task->id = next_pid++;
 	current_task->esp = current_task->ebp = 0;
 	current_task->eip = 0;
-	current_task->page_directory = memoryManager.getCurrentDirectory();
+	current_task->page_directory = memory_manager.getCurrentDirectory();
 	current_task->next = 0;
 
 	kconsole.debug_log("Constructed kernel task.");
@@ -80,7 +83,7 @@ void Task::yield()
 	kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
-    memoryManager.setCurrentDirectory(current_task->page_directory);
+    memory_manager.setCurrentDirectory(current_task->page_directory);
     // Here we:
     // * Stop interrupts so we don't get interrupted.
     // * Temporarily put the new EIP location in ECX.
@@ -117,7 +120,7 @@ int Task::fork()
     Task *parent_task = (Task *)current_task;
 
     // Clone the address space.
-    PageDirectory *directory = memoryManager.getCurrentDirectory()->clone();
+    PageDirectory *directory = memory_manager.getCurrentDirectory()->clone();
 
     // Create a new process.
     Task *new_task = new Task;
@@ -164,6 +167,9 @@ int Task::fork()
 int Task::getpid()
 {
     return id;
+}
+
+}
 }
 
 // kate: indent-width 4; replace-tabs on;

@@ -9,6 +9,9 @@
 #include "ELF.h"
 #include "Types.h"
 
+namespace metta {
+namespace kernel {
+
 /**
  * Parses an ELF file, generating symbolic information and loading code/data
  * segments.
@@ -103,6 +106,9 @@ private:
     elf32_section_header* section_headers;
     const char*           filename;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

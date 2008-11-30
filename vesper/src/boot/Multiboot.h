@@ -9,6 +9,9 @@
 #include "Types.h"
 #include "ELF.h"
 
+namespace metta {
+namespace kernel {
+
 // #define MULTIBOOT_MAGIC   0x2BADB002
 
 #define MULTIBOOT_FLAG_MEM     0x0001
@@ -159,6 +162,9 @@ private:
     elf32_section_header* strtab;
     elf32_section_header* symtab;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:
