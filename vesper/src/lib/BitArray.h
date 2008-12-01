@@ -9,11 +9,14 @@
 #include "Types.h"
 #include "Macros.h"
 
+namespace metta {
+namespace common {
+
 /**
- * An unordered array that holds its contents internally as bits. Therefore,
- * each element can only be of boolean type.
- */
-class BitArray
+* An unordered array that holds its contents internally as bits. Therefore,
+* each element can only be of boolean type.
+**/
+class bit_array
 {
 public:
     // Array dword position to bit index.
@@ -24,23 +27,23 @@ public:
 	inline static uint32_t OFFSET_FROM_BIT(int a) { return a % (8*4); }
 
 	/**
-     * Constructor
-	 */
-	BitArray(uint32_t nbits) : N(nbits)
+    * Construct an array of nbits capacity.
+	**/
+	bit_array(uint32_t nbits) : N(nbits)
 	{
         ASSERT(N >= 32);
 		table = new uint32_t [INDEX_FROM_BIT(N)];
 		clear_all();
 	}
 
-    ~BitArray()
+    ~bit_array()
     {
         delete [] table;
     }
 
 	/**
-	 * Clears the value of all bits in the bitmap.
-	 */
+	* Clears the value of all bits in the bitmap.
+	**/
 	void clear_all()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
@@ -50,8 +53,8 @@ public:
 	}
 
 	/**
-	 * Sets the bit at index i
-	 */
+    * Sets the bit at index i
+	**/
 	void set(uint32_t i)
 	{
 		ASSERT(i < N);
@@ -61,8 +64,8 @@ public:
 	}
 
 	/**
-	 * Clears the bit at index i
-	 */
+    * Clears the bit at index i
+	**/
 	void clear(uint32_t i)
 	{
 		ASSERT(i < N);
@@ -72,8 +75,8 @@ public:
 	}
 
 	/**
-	 * Tests if the bit at index i is set.
-	 */
+    * Tests if the bit at index i is set.
+	**/
 	bool test(uint32_t i)
 	{
 		ASSERT(i < N);
@@ -83,9 +86,9 @@ public:
 	}
 
 	/**
-	 * Finds the first bit that is clear. Uses optimisations so faster than
-	 * just looping and calling test().
-	 */
+    * Finds the first bit that is clear. Uses optimisations so faster than
+	* just looping and calling test().
+	**/
 	uint32_t first_clear()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
@@ -107,9 +110,9 @@ public:
 	}
 
 	/**
-	 * Finds the first bit that is set. Uses optimisations so faster than
-	 * just looping and calling test().
-	 */
+    * Finds the first bit that is set. Uses optimisations so faster than
+	* just looping and calling test().
+	**/
 	uint32_t first_set()
 	{
 		for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
@@ -132,15 +135,18 @@ public:
 
 private:
 	/**
-	 * The bitmap itself.
-	 */
+    * The bitmap itself.
+	**/
 	uint32_t *table;
 
 	/**
-	 * The number of bit entries
-	 */
+    * The number of bit entries
+	**/
 	uint32_t N;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

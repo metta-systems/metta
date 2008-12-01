@@ -1,21 +1,25 @@
 #!/usr/bin/env python
 
+VERSION = '0.0.1'
+APPNAME = 'vesper'
+
 import Configure
 Configure.autoconfig = 1
 
 srcdir = '.'
 blddir = 'build'
+source_dirs  = '. lib memory pd schedule boot'
+include_dirs = '. lib memory pd schedule boot arch/x86' #FIXME: archdep
+cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule -I../boot'
+cflags += ' -I../arch/x86' #FIXME: archdep
+cflags += ' -O3' #FIXME: builddep
+flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
 	pass
 
 def configure(conf):
 	conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
-	cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule -I../boot'
-	flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore'
-
-	cflags += ' -I../arch/x86' #FIXME: archdep
-	cflags += ' -O3' #FIXME: builddep
 
 	env = conf.env.copy() # Clone environment
 	env.set_variant('x86-tests-release') # configure archdep & builddep variant
@@ -47,12 +51,14 @@ def configure(conf):
 
 def build(bld):
 	obj = bld.new_task_gen('cxx', 'program')
-	obj.find_sources_in_dirs('. boot lib memory pd schedule')
+	obj.find_sources_in_dirs(source_dirs)
 	obj.source.remove('boot/boot.asm')
+	obj.includes = include_dirs
 	obj.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
 	obj.target = 'vesper'
 
 	tests = bld.new_task_gen('cxx', 'program')
 	tests.find_sources_in_dirs('tests')
+	tests.includes = include_dirs
 	tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
 	tests.target = 'run-tests'

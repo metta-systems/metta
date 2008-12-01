@@ -9,13 +9,13 @@
 namespace metta {
 namespace kernel {
 
-class Timer
+class timer
 {
 	public:
 		static void init();
 
 	private:
-		Timer();
+		timer();
 };
 
 }

@@ -15,9 +15,9 @@
 namespace metta {
 namespace kernel {
 
-void Timer::init()
+void timer::init()
 {
-	static Timer timer;
+	static timer timer_instance;
 }
 
 class timer_callback : public interrupt_service_routine
@@ -31,16 +31,16 @@ public:
 	virtual void run(Registers *)
 	{
 		tick++;
-		Task::yield();
+		task::yield();
 	}
-} timerCallback;
+} timer_callback_;
 
-Timer::Timer()
+timer::timer()
 {
 	uint32_t frequency = 50;
 
 	// Firstly, register our timer callback.
-	interruptsTable.set_irq_handler(0, &timerCallback);
+	interrupts_table.set_irq_handler(0, &timer_callback_);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

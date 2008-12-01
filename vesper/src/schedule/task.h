@@ -11,13 +11,13 @@
 namespace metta {
 namespace kernel {
 
-class PageDirectory;
+class page_directory;
 
 // This structure defines a 'task' - a process.
-class Task
+class task
 {
 	public:
-		static Task *self();
+		static task *self();
 
 		static void init();// Initialises the tasking system.
 		static void yield();// Called by the timer hook, this changes the running process.
@@ -33,8 +33,8 @@ class Task
 		int id;                        // Process ID.
 		uint32_t esp, ebp;             // Stack and base pointers.
 		uint32_t eip;                  // Instruction pointer.
-		PageDirectory *page_directory; // Page directory.
-		Task *next;                    // The next task in a linked list.
+		page_directory* page_dir;      // Page directory.
+		task *next;                    // The next task in a linked list.
 };
 
 }

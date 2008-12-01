@@ -20,7 +20,7 @@
 namespace metta {
 namespace kernel {
 
-page_fault_handler pageFaultHandler;
+page_fault_handler page_fault_handler_;
 
 void kernel::run()
 {
@@ -30,20 +30,20 @@ void kernel::run()
 	// Make sure we aren't overwriting anything by writing at placementAddress.
 	relocate_placement_address();
 
-	kernelElfParser.load_kernel(multiboot.symtab_start(),
-                                multiboot.strtab_start());
+	kernel_elf_parser.load_kernel(multiboot.symtab_start(),
+                                  multiboot.strtab_start());
 
 	GlobalDescriptorTable::init();
 
-	interruptsTable.set_isr_handler(14, &pageFaultHandler);
-	interruptsTable.init();
+	interrupts_table.set_isr_handler(14, &page_fault_handler_);
+	interrupts_table.init();
 
 	memory_manager.init(multiboot.upper_mem() * 1024);
-	memory_manager.remapStack();
+	memory_manager.remap_stack();
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
-	Task::init();
-	Timer::init();//crashes at start of timer init (stack problem?)
+	task::init();
+	timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
 
@@ -54,7 +54,7 @@ void kernel::run()
 
 void kernel::relocate_placement_address()
 {
-	address_t newPlacementAddress = memory_manager.getPlacementAddress();
+	address_t newPlacementAddress = memory_manager.get_placement_address();
 	if (multiboot.is_elf() && multiboot.symtab_end() > newPlacementAddress)
 	{
 		newPlacementAddress = multiboot.symtab_end();
@@ -67,7 +67,7 @@ void kernel::relocate_placement_address()
 	{
 		newPlacementAddress = multiboot.mod_end();
 	}
-	memory_manager.setPlacementAddress(newPlacementAddress);
+	memory_manager.set_placement_address(newPlacementAddress);
 }
 
 void kernel::dump_memory(address_t start, size_t size)
@@ -158,7 +158,7 @@ void kernel::print_backtrace(address_t basePointer, int n)
 	{
 		ebp = backtrace(ebp, eip);
 		unsigned int offset;
-		char *symbol = kernelElfParser.find_symbol(eip, &offset);
+		char *symbol = kernel_elf_parser.find_symbol(eip, &offset);
 		offset = eip - offset;
 		kconsole.print("| %08x <%s+0x%x>\n", eip, symbol ? symbol : "UNRESOLVED", offset);
 		i++;

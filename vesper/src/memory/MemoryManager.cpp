@@ -20,32 +20,32 @@ namespace kernel {
 * be mapped on to \c frames - equally sized blocks of physical memory.
 **/
 
-MemoryManager::MemoryManager()
+memory_manager::memory_manager()
 {
 	placement_address = (address_t)&end ; // TODO: change to multiboot->mod_end
 	heap_initialised = false;
 	current_directory = kernel_directory = NULL;
 }
 
-MemoryManager::~MemoryManager()
+memory_manager::~memory_manager()
 {
 }
 
-void MemoryManager::init(address_t mem_end)
+void memory_manager::init(address_t mem_end)
 {
 	// Make enough frames to reach 0x00000000 .. memEnd.
     // make sure memEnd is on a page boundary.
 	uint32_t memEndPage = mem_end - (mem_end % PAGE_SIZE);
 	n_frames = memEndPage / PAGE_SIZE;
 
-	frames = new BitArray(n_frames);
+	frames = new bit_array(n_frames);
 
 	// Make a page directory.
-	kernel_directory = new(true/*page align*/) PageDirectory();
+	kernel_directory = new(true/*page align*/) page_directory();
 	current_directory = kernel_directory;
 
 	// Map some pages in the kernel heap area.
-	// Here we call getPage but not allocFrame. This causes PageTables
+	// Here we call getPage but not alloc_frame. This causes PageTables
 	// to be created where nessecary. We can't allocate frames yet because
 	// they need to be identity mapped first below.
 	for (uint32_t i = HEAP_START; i < HEAP_END; i += PAGE_SIZE)
@@ -54,7 +54,7 @@ void MemoryManager::init(address_t mem_end)
 	}
 
 	// Map some pages in the user heap area.
-	// Here we call getPage but not allocFrame. This causes PageTables
+	// Here we call getPage but not alloc_frame. This causes PageTables
 	// to be created where nessecary. We can't allocate frames yet because
 	// they need to be identity mapped first below.
 	for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
@@ -67,7 +67,7 @@ void MemoryManager::init(address_t mem_end)
 	while (i < placement_address)
 	{
 		// Kernel code is readable but not writable from userspace.
-		allocFrame(kernel_directory->getPage(i, true) , /*kernel:*/false, /*writable:*/false);
+		alloc_frame(kernel_directory->getPage(i, true) , /*kernel:*/false, /*writable:*/false);
 		i += PAGE_SIZE;
 	}
 
@@ -76,12 +76,12 @@ void MemoryManager::init(address_t mem_end)
 	for (i = HEAP_START; i < HEAP_START+HEAP_INITIAL_SIZE; i += PAGE_SIZE)
 	{
 		// Heap is readable but not writable from userspace.
-		allocFrame(kernel_directory->getPage(i, true), false, false);
+		alloc_frame(kernel_directory->getPage(i, true), false, false);
 	}
 
 	for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
 	{
-		allocFrame(kernel_directory->getPage(i, true), false, true);
+		alloc_frame(kernel_directory->getPage(i, true), false, true);
 	}
 
 	// write the page directory.
@@ -95,40 +95,40 @@ void MemoryManager::init(address_t mem_end)
 	heap_initialised = true;
 }
 
-void *MemoryManager::malloc(uint32_t size, bool pageAlign, address_t *physicalAddress)
+void *memory_manager::malloc(uint32_t size, bool pageAlign, address_t *physicalAddress)
 {
 	ASSERT(heap_initialised);
 	void *addr = heap_.allocate(size, pageAlign);
 	if (physicalAddress)
 	{
-		Page *page = kernel_directory->getPage((address_t)addr, false);
-		*physicalAddress = page->frame() + (address_t)addr % PAGE_SIZE;
+		page *pg = kernel_directory->getPage((address_t)addr, false);
+		*physicalAddress = pg->frame() + (address_t)addr % PAGE_SIZE;
 	}
 	return addr;
 }
 
-void MemoryManager::free(void *p)
+void memory_manager::free(void *p)
 {
 	ASSERT(heap_initialised);
 	heap_.free(p);
 }
 
-void *MemoryManager::umalloc(uint32_t size)
+void *memory_manager::umalloc(uint32_t size)
 {
 	ASSERT(heap_initialised);
 	return user_heap.allocate(size, false);
 }
 
-void MemoryManager::ufree(void *p)
+void memory_manager::ufree(void *p)
 {
 	ASSERT(heap_initialised);
 	user_heap.free(p);
 }
 
 //
-// allocFrame -- maps a page to a frame.
+// alloc_frame -- maps a page to a frame.
 //
-void MemoryManager::allocFrame(Page *p, bool isKernel, bool isWriteable)
+void memory_manager::alloc_frame(page *p, bool isKernel, bool isWriteable)
 {
 	if (p->frame())
 	{
@@ -153,9 +153,9 @@ void MemoryManager::allocFrame(Page *p, bool isKernel, bool isWriteable)
 }
 
 //
-// allocFrame -- maps a page to a frame.
+// alloc_frame -- maps a page to a frame.
 //
-address_t MemoryManager::allocFrame()
+address_t memory_manager::alloc_frame()
 {
 	// TODO: make this more efficient than O(n).
 	uint32_t frameIdx = frames->first_clear();
@@ -169,7 +169,7 @@ address_t MemoryManager::allocFrame()
 	return frameIdx * PAGE_SIZE;
 }
 
-void MemoryManager::freeFrame(Page *p)
+void memory_manager::free_frame(page *p)
 {
 	uint32_t frame;
 	if (!(frame = p->frame()))
@@ -183,14 +183,14 @@ void MemoryManager::freeFrame(Page *p)
 	}
 }
 
-void MemoryManager::freeFrame(address_t frame)
+void memory_manager::free_frame(address_t frame)
 {
 	frames->clear(frame / PAGE_SIZE);
 }
 
 extern "C" address_t initialEsp; // in loader.s
 
-void MemoryManager::remapStack()
+void memory_manager::remap_stack()
 {
 	ASSERT(current_directory);
 
@@ -199,7 +199,7 @@ void MemoryManager::remapStack()
 	for (i = STACK_START; i > (STACK_START-STACK_INITIAL_SIZE); i -= PAGE_SIZE)
 	{
 		// General-purpose stack is in user-mode.
-		allocFrame(current_directory->getPage(i, /*make:*/true), /*kernel:*/false);
+		alloc_frame(current_directory->getPage(i, /*make:*/true), /*kernel:*/false);
 	}
 
 	// Flush the TLB
@@ -223,7 +223,7 @@ void MemoryManager::remapStack()
 	kconsole.print("done\n");
 }
 
-void MemoryManager::alignPlacementAddress()
+void memory_manager::align_placement_address()
 {
 	if (placement_address % PAGE_SIZE) // if it needs aligning at all!
 	{
@@ -231,7 +231,7 @@ void MemoryManager::alignPlacementAddress()
 	}
 }
 
-void MemoryManager::allocateRange(address_t startAddress, address_t size)
+void memory_manager::allocate_range(address_t startAddress, address_t size)
 {
 	UNUSED(startAddress);
 	UNUSED(size);
@@ -242,22 +242,22 @@ void MemoryManager::allocateRange(address_t startAddress, address_t size)
 
 	for (Address i = startAddress; i <= endAddress; i += PAGE_SIZE)
 	{
-		allocFrame( currentDirectory->getPage(i, true), false );
+		alloc_frame( currentDirectory->getPage(i, true), false );
 	}
 	flushPageDirectory();*/
 }
 
-uint32_t MemoryManager::getKernelHeapSize()
+uint32_t memory_manager::get_kernel_heap_size()
 {
 	return heap_.getSize();
 }
 
-uint32_t MemoryManager::getUserHeapSize()
+uint32_t memory_manager::get_user_heap_size()
 {
 	return user_heap.getSize();
 }
 
-void MemoryManager::checkIntegrity()
+void memory_manager::check_integrity()
 {
 	if(heap_initialised)
 	{

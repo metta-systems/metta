@@ -28,160 +28,162 @@ namespace kernel {
 #define HEAP_ADDRESS(x)      ((address_t)x >= HEAP_START  && (address_t)x < USER_HEAP_START)
 #define USER_HEAP_ADDRESS(x) ((address_t)x >= USER_HEAP_START && (address_t)x <= USER_HEAP_END)
 
-class Page;
-class PageDirectory;
+class page;
+class page_directory;
+using metta::common::bit_array;
 
 /**
- * Handles all memory related events. Heap startup, allocation, deallocation,
- * virtual memory etc.
- */
-class MemoryManager
+* Handles all memory related events. Heap startup, allocation, deallocation,
+* virtual memory etc.
+**/
+class memory_manager
 {
 public:
-	/**
-	 * Heap can call our private allocFrame() functions.
-	 */
-	friend class Heap;
+    /**
+    * Heap can call our private alloc_frame() functions.
+    **/
+    friend class heap;
 
-	/**
-	 * Default constructor, called on bootup.
-	 */
-	MemoryManager();
+    /**
+    * Default constructor, called on bootup.
+    **/
+    memory_manager();
+    ~memory_manager();
 
-	~MemoryManager();
+    /**
+    * Normal constructor - passes the address of end of memory.
+    * Initialises paging and sets up a standard kernel page directory.
+    * Enables paging, then maps some pages for the heap.
+    **/
+    void init(address_t mem_end);
 
-	/**
-		Normal constructor - passes the address of end of memory. Initialises paging and sets up
-		a standard kernel page directory. Enables paging, then maps some pages for the heap.
-	**/
-	void init(address_t memEnd);
+    /**
+    * Allocate "size" bytes, returning the physical address of the
+    * segment allocated in physical_location if physical_location != NULL.
+    **/
+    void* malloc(uint32_t size, bool page_align = false,
+                 address_t* physical_location = NULL);
 
-	/**
-		Allocate "size" bytes, returning the physical address of the segment allocated in
-		physicalLocation if physicalLocation != NULL.
-	**/
-	void* malloc(uint32_t size, bool pageAlign = false, address_t* physicalLocation = NULL);
+    /**
+    * Deallocate the memory allocated to p.
+    **/
+    void free(void* p);
 
-	/**
-		Deallocate the memory allocated to p.
-	**/
-	void free(void* p);
+    /**
+    * Allocate "size" bytes from the *user space heap*.
+    **/
+    void* umalloc(uint32_t size);
 
-	/**
-		Allocate "size" bytes from the *user space heap*.
-	**/
-	void* umalloc(uint32_t size);
+    /**
+    * Deallocate any memory allocated to p via umalloc.
+    **/
+    void ufree(void* p);
 
-	/**
-		Deallocate any memory allocated to p via umalloc.
-	**/
-	void ufree(void* p);
+    /**
+    * Accessor functions for heapInitialised and placementAddress.
+    **/
+    bool is_heap_initialised() { return heap_initialised; }
+    address_t get_placement_address() { return placement_address; }
+    void set_placement_address(address_t a) { placement_address = a; }
 
-	/**
-		Accessor functions for heapInitialised and placementAddress.
-	**/
-	bool isHeapInitialised() { return heap_initialised; }
-	address_t getPlacementAddress() { return placement_address; }
-	void setPlacementAddress(address_t a) { placement_address = a; }
+    /**
+    * Forces the placementAddress variable to be PAGE_SIZE aligned.
+    **/
+    void align_placement_address();
 
-	/**
-		Forces the placementAddress variable to be PAGE_SIZE aligned.
-	**/
-	void alignPlacementAddress();
+    /**
+    * Changes the original stack given by the bootloader to one at
+    * a virtual memory location defined at compile time.
+    **/
+    void remap_stack();
 
-	/**
-		Changes the original stack given by the bootloader to one at
-		a virtual memory location defined at compile time.
-	**/
-	void remapStack();
+    /**
+    * Accessor functions for kernel_directory, current_directory
+    **/
+    inline page_directory* get_kernel_directory()  { return kernel_directory; }
+    inline page_directory* get_current_directory() { return current_directory; }
+    void set_current_directory(page_directory* p) { current_directory = p; }
 
-	/**
-		Accessor functions for kernelDirectory, currentDirectory
-	**/
-	PageDirectory* getKernelDirectory()  { return kernel_directory; }
-	PageDirectory* getCurrentDirectory() { return current_directory; }
-	void setCurrentDirectory(PageDirectory* p) { current_directory = p; }
+    /**
+    * Finds a free frame (swaps out if necessary) and allocates it to p.
+    **/
+    void alloc_frame(page* p, bool is_kernel = true, bool is_writeable = true);
 
-	/**
-		Finds a free frame (swaps out if necessary) and allocates it to p.
-	**/
-	void allocFrame(Page* p, bool isKernel = true, bool isWriteable = true);
+    /**
+    * Finds a free frame and returns it.
+    **/
+    address_t alloc_frame();
 
-	/**
-		Finds a free frame and returns it.
-	**/
-	address_t allocFrame();
+    /**
+    * Removes the frame under p's control and returns it to the pool.
+    **/
+    void free_frame(page* p);
 
-	/**
-		Removes the frame under p's control and returns it to the pool.
-	**/
-	void freeFrame(Page* p);
+    /**
+    * Adds the previously allocated frame 'frame' and returns it to the pool.
+    **/
+    void free_frame(address_t frame);
 
-	/**
-		Adds the previously allocated frame 'frame' and returns it to the pool.
-	**/
-	void freeFrame(address_t frame);
+    /**
+    * Causes the given range of virtual memory to get allocated physical
+    * memory.
+    **/
+    void allocate_range(address_t start_address, uint32_t size);
 
-	/**
-		Causes the given range of virtual memory to get allocated physical
-		memory.
-	**/
-	void allocateRange(address_t startAddress, uint32_t size);
+    /**
+    * Returns the size of the kernel heap. For analysis purposes.
+    **/
+    uint32_t get_kernel_heap_size();
+    uint32_t get_user_heap_size();
 
-	/**
-		Returns the size of the kernel heap. For analysis purposes.
-	**/
-	uint32_t getKernelHeapSize();
-	uint32_t getUserHeapSize();
-
-	/**
-		Checks the kernel and user heap for integrity.
-	**/
-	void checkIntegrity();
+    /**
+    * Checks the kernel and user heap for integrity.
+    **/
+    void check_integrity();
 
 private:
-	/**
-	 * Array of frames to describe physical memory state.
-	 */
-	BitArray *frames;
+    /**
+    * Array of frames to describe physical memory state.
+    **/
+    bit_array *frames;
 
-	/**
-	 * Total number of physical memory frames.
-	 */
-	uint32_t n_frames;
+    /**
+    * Total number of physical memory frames.
+    **/
+    uint32_t n_frames;
 
-	/**
-		Has the kernel heap been initialised yet?
-	**/
-	bool heap_initialised;
+    /**
+    * Has the kernel heap been initialised yet?
+    **/
+    bool heap_initialised;
 
-	/**
-		The kernel heap
-	**/
-	heap heap_;
+    /**
+    * The kernel heap
+    **/
+    heap heap_;
 
-	/**
-		The user-mode shared heap
-	**/
-	heap user_heap;
+    /**
+    * The user-mode shared heap
+    **/
+    heap user_heap;
 
-	/**
-		Before the heap is initialised, this holds the next available location
-		for 'placement new' to be called on.
-	**/
-	address_t placement_address;
+    /**
+    * Before the heap is initialised, this holds the next available location
+    * for 'placement new' to be called on.
+    **/
+    address_t placement_address;
 
-	/**
-		The currently active page directory
-	**/
-	PageDirectory *current_directory;
+    /**
+    * The currently active page directory
+    **/
+    page_directory *current_directory;
 
-	/**
-		Pointer to the "master" page directory. This holds page table pointers for kernel
-		space. All other page directories must match the entries in here to maintain easy
-		consistency of kernel-space over memory spaces.
-	**/
-	PageDirectory *kernel_directory;
+    /**
+    * Pointer to the "master" page directory. This holds page table pointers for kernel
+    * space. All other page directories must match the entries in here to maintain easy
+    * consistency of kernel-space over memory spaces.
+    **/
+    page_directory *kernel_directory;
 };
 
 }

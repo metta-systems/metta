@@ -425,20 +425,22 @@ void heap::expand(uint32_t newSize)
 	uint32_t i = oldSize;
 	while(i < newSize)
 	{
-		memory_manager.allocFrame(memory_manager.getKernelDirectory()->getPage(startAddress+i), isKernel);
+		memory_manager.alloc_frame(
+            memory_manager.get_kernel_directory()->getPage(startAddress+i),
+            isKernel);
 		i += PAGE_SIZE;
 	}
 
 	endAddress = startAddress + newSize;
 #ifdef HEAP_DEBUG
-	checkIntegrity();
+	check_integrity();
 #endif
 }
 
 uint32_t heap::contract(uint32_t newSize)
 {
 #ifdef HEAP_DEBUG
-	checkIntegrity();
+	check_integrity();
 #endif
 	// Sanity check.
 	ASSERT(newSize < endAddress - startAddress);
@@ -463,7 +465,8 @@ uint32_t heap::contract(uint32_t newSize)
 	uint32_t i = newSize;
 	while(i < oldSize)
 	{
-		memory_manager.freeFrame(memory_manager.getKernelDirectory()->getPage(startAddress+i));
+		memory_manager.free_frame(
+            memory_manager.get_kernel_directory()->getPage(startAddress+i));
 		i += PAGE_SIZE;
 	}
 

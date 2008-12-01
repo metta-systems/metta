@@ -13,25 +13,25 @@ namespace metta {
 namespace kernel {
 
 // The currently running task.
-static volatile Task *current_task = 0;
+static volatile task *current_task = 0;
 
 // The start of the task linked list.
-static volatile Task *ready_queue;
+static volatile task *ready_queue;
 
 // The next available process ID.
 static uint32_t next_pid = 1;
 
-void Task::init()
+void task::init()
 {
 	// Rather important stuff happening, no interrupts please!
 	critical_section();
 
 	// Initialise the first task (kernel task)
-	current_task = ready_queue = new Task;
+	current_task = ready_queue = new task;
 	current_task->id = next_pid++;
 	current_task->esp = current_task->ebp = 0;
 	current_task->eip = 0;
-	current_task->page_directory = memory_manager.getCurrentDirectory();
+	current_task->page_dir = memory_manager.get_current_directory();
 	current_task->next = 0;
 
 	kconsole.debug_log("Constructed kernel task.");
@@ -40,7 +40,7 @@ void Task::init()
 	end_critical_section();
 }
 
-void Task::yield()
+void task::yield()
 {
     // If we haven't initialised tasking yet, just return.
     if (!current_task)
@@ -83,7 +83,7 @@ void Task::yield()
 	kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
-    memory_manager.setCurrentDirectory(current_task->page_directory);
+    memory_manager.set_current_directory(current_task->page_dir);
     // Here we:
     // * Stop interrupts so we don't get interrupted.
     // * Temporarily put the new EIP location in ECX.
@@ -103,38 +103,38 @@ void Task::yield()
       mov $0x12345, %%eax; \
       sti;                 \
       jmp *%%ecx           "
-	  : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_task->page_directory->getPhysical()));
+	  : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_task->page_dir->getPhysical()));
 }
 
-Task *Task::self()
+task *task::self()
 {
-	return (Task *)current_task;
+	return (task *)current_task;
 }
 
-int Task::fork()
+int task::fork()
 {
     // We are modifying kernel structures, and so cannot be interrupted.
 	disable_interrupts();
 
     // Take a pointer to this process' task struct for later reference.
-    Task *parent_task = (Task *)current_task;
+    task *parent_task = (task *)current_task;
 
     // Clone the address space.
-    PageDirectory *directory = memory_manager.getCurrentDirectory()->clone();
+    page_directory *directory = memory_manager.get_current_directory()->clone();
 
     // Create a new process.
-    Task *new_task = new Task;
+    task *new_task = new task;
 
     new_task->id = next_pid++;
     new_task->esp = new_task->ebp = 0;
     new_task->eip = 0;
-    new_task->page_directory = directory;
+    new_task->page_dir = directory;
     new_task->next = 0;
 
 	kconsole.print("fork() to %d\n", new_task->id);
 
     // Add it to the end of the ready queue.
-    Task *tmp_task = (Task *)ready_queue;
+    task *tmp_task = (task *)ready_queue;
     while (tmp_task->next)
         tmp_task = tmp_task->next;
     tmp_task->next = new_task;
@@ -164,7 +164,7 @@ int Task::fork()
     }
 }
 
-int Task::getpid()
+int task::getpid()
 {
     return id;
 }

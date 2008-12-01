@@ -19,9 +19,9 @@ namespace kernel {
 /* Global objects FIXME: use singletons instead? */
 class kernel kernel;
 class multiboot multiboot;
-elf_parser kernelElfParser;
-MemoryManager memory_manager;
-interrupt_descriptor_table interruptsTable;
+elf_parser kernel_elf_parser;
+class memory_manager memory_manager;
+interrupt_descriptor_table interrupts_table;
 
 }
 }
@@ -40,14 +40,14 @@ void kernel_entry(multiboot_header *multiboot_header)
 
 void* operator new(size_t size)
 {
-	if (memory_manager.isHeapInitialised())
+	if (memory_manager.is_heap_initialised())
 	{
 		return memory_manager.malloc(size);
 	}
 	else
 	{
-		uint32_t tmp = memory_manager.getPlacementAddress();
-		memory_manager.setPlacementAddress(tmp+size);
+		uint32_t tmp = memory_manager.get_placement_address();
+		memory_manager.set_placement_address(tmp+size);
 		return (void *)tmp;
 	}
 }
@@ -60,18 +60,18 @@ void *operator new(size_t size, uint32_t place)
 
 void *operator new(size_t size, bool pageAlign, uint32_t *addr)
 {
-	if (memory_manager.isHeapInitialised())
+    if (memory_manager.is_heap_initialised())
 	{
 		return memory_manager.malloc(size, pageAlign, addr);
 	}
 	else
 	{
 		if (pageAlign)
-			memory_manager.alignPlacementAddress();
-		uint32_t tmp = memory_manager.getPlacementAddress();
+			memory_manager.align_placement_address();
+		uint32_t tmp = memory_manager.get_placement_address();
 		if (addr)
 			*addr = tmp;
-		memory_manager.setPlacementAddress(tmp+size);
+		memory_manager.set_placement_address(tmp+size);
 		return (void *)tmp;
 	}
 }
@@ -89,16 +89,16 @@ void *operator new[](size_t size)
 **/
 void *operator new[](size_t size, bool pageAlign, uint32_t *addr)
 {
-	if (memory_manager.isHeapInitialised())
+    if (memory_manager.is_heap_initialised())
 	{
 		return memory_manager.malloc(size, pageAlign, addr);
 	}
 	else
 	{
-		if (pageAlign) {memory_manager.alignPlacementAddress();}
-		uint32_t tmp = memory_manager.getPlacementAddress();
+		if (pageAlign) {memory_manager.align_placement_address();}
+		uint32_t tmp = memory_manager.get_placement_address();
 		if (addr) {*addr = tmp;}
-		memory_manager.setPlacementAddress(tmp+size);
+		memory_manager.set_placement_address(tmp+size);
 		return (void *)tmp;
 	}
 }
