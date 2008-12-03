@@ -8,6 +8,10 @@
 
 #include "Types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * TODO Include machine specific inline routines
  */
@@ -92,6 +96,10 @@ extern void * memchr(const void *,int,size_t);
 extern void* memset(void* dest, int value, size_t count);
 extern void* memcpy(void* dest, const void* src, size_t count);
 extern void* memmove(void* dest, const void* src, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:
