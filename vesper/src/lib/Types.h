@@ -8,9 +8,11 @@
 
 #include <stdint.h> // Use C99-mandated types.
 
-#ifndef NULL
-#define NULL 0
+#ifdef NULL
+#undef NULL
 #endif
+
+#define NULL 0
 
 typedef uint32_t size_t;
 typedef uint32_t addr_t;
