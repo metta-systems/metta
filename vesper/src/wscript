@@ -60,18 +60,25 @@ def build(bld):
 
 	bstrlib = bld.new_task_gen('cxx', 'staticlib')
 	bstrlib.find_sources_in_dirs('lib/bstrlib')
+	# Remove testfiles from library
+	bstrlib.source.remove('lib/bstrlib/cpptest.cpp')
+	bstrlib.source.remove('lib/bstrlib/test.cpp')
+	bstrlib.source.remove('lib/bstrlib/bstest.c')
+	bstrlib.source.remove('lib/bstrlib/testaux.c')
 	bstrlib.includes = 'lib/bstrlib lib/klibc'
 	bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
-	bstrlib.uselib_local = 'klibc'
+	bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
 	bstrlib.target = 'bstrlib'
 
-	obj = bld.new_task_gen('cxx', 'program')
-	obj.find_sources_in_dirs(source_dirs)
-	obj.source.remove('boot/boot.asm')
-	obj.includes = include_dirs
-	obj.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
-	obj.target = 'vesper'
-	obj.uselib_local = 'klibc bstrlib'
+	#bld.add_subdir('lib/bstrlib/test')
+
+	vesper = bld.new_task_gen('cxx', 'program')
+	vesper.find_sources_in_dirs(source_dirs)
+	vesper.source.remove('boot/boot.asm')
+	vesper.includes = include_dirs
+	vesper.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
+	vesper.uselib_local = 'klibc bstrlib'
+	vesper.target = 'vesper'
 
 	tests = bld.new_task_gen('cxx', 'program')
 	tests.find_sources_in_dirs('tests')
