@@ -144,7 +144,7 @@ address_t kernel::backtrace(int n)
 void kernel::print_backtrace(address_t basePointer, int n)
 {
 	address_t eip = 1; // Don't initialise to 0, will kill the loop immediately.
-	if (basePointer == NULL)
+	if (basePointer == 0)
 	{
 		basePointer = read_base_pointer();
 	}
