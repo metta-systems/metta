@@ -35,6 +35,7 @@ def configure(conf):
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fexceptions ' + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4', 'UNIT_TESTS'])
 	conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
+	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS'])
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
 	conf.env.append_unique('LDFLAGS', '-lboost_unit_test_framework')
 
@@ -44,18 +45,33 @@ def configure(conf):
 	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
+	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS'])
 	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + flags)
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
 
 	conf.write_config_header('config.h')
 
 def build(bld):
+	klibc = bld.new_task_gen('cxx', 'staticlib')
+	klibc.find_sources_in_dirs('lib/klibc')
+	klibc.includes = 'lib/klibc'
+	klibc.env = bld.env_of_name('x86-release').copy() # TODO
+	klibc.target = 'klibc'
+
+	bstrlib = bld.new_task_gen('cxx', 'staticlib')
+	bstrlib.find_sources_in_dirs('lib/bstrlib')
+	bstrlib.includes = 'lib/bstrlib lib/klibc'
+	bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
+	bstrlib.uselib_local = 'klibc'
+	bstrlib.target = 'bstrlib'
+
 	obj = bld.new_task_gen('cxx', 'program')
 	obj.find_sources_in_dirs(source_dirs)
 	obj.source.remove('boot/boot.asm')
 	obj.includes = include_dirs
 	obj.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
 	obj.target = 'vesper'
+	obj.uselib_local = 'klibc bstrlib'
 
 	tests = bld.new_task_gen('cxx', 'program')
 	tests.find_sources_in_dirs('tests')

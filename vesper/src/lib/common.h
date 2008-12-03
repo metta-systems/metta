@@ -6,7 +6,7 @@
 //
 #pragma once
 
-// [ ] Use djb's safe string operations?
+// [x] Use bstrlib for safe string operations.
 
 #include "Types.h"
 #include "Macros.h"
