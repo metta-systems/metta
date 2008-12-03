@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "Macros.h"
+#include "macros.h"
 
 namespace metta {
 namespace kernel {

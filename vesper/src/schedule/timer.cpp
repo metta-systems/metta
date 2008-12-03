@@ -5,12 +5,12 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "common.h"
-#include "Task.h"
-#include "Timer.h"
-#include "DefaultConsole.h"
-#include "InterruptServiceRoutine.h"
-#include "InterruptDescriptorTable.h"
-#include "Globals.h"
+#include "task.h"
+#include "timer.h"
+#include "default_console.h"
+#include "interrupt_service_routine.h"
+#include "interrupt_descriptor_table.h"
+#include "globals.h"
 
 namespace metta {
 namespace kernel {

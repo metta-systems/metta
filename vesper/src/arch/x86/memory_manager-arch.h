@@ -7,7 +7,7 @@
 #pragma once
 // # ifdef LANG_X86
 
-#include "Globals.h"
+#include "globals.h"
 
 namespace metta {
 namespace kernel {

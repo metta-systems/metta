@@ -15,7 +15,7 @@
 #include <boost/test/included/unit_test.hpp>
 // #include <boost/test/unit_test.hpp>
 
-#include "BitArray.h"
+#include "bit_array.h"
 using metta::common::bit_array;
 
 BOOST_AUTO_TEST_CASE(test_bit_array)

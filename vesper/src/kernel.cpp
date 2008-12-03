@@ -4,18 +4,18 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "Kernel.h"
-#include "Globals.h"
-#include "Registers.h"
-#include "Multiboot.h"
-#include "ElfParser.h"
-#include "MemoryManager.h"
-#include "DefaultConsole.h"
+#include "kernel.h"
+#include "globals.h"
+#include "registers.h"
+#include "multiboot.h"
+#include "elf_parser.h"
+#include "memory_manager.h"
+#include "default_console.h"
 #include "gdt.h"
-#include "InterruptDescriptorTable.h"
-#include "Timer.h"
-#include "Task.h"
-#include "PageFaultHandler.h"
+#include "interrupt_descriptor_table.h"
+#include "timer.h"
+#include "task.h"
+#include "page_fault_handler.h"
 
 namespace metta {
 namespace kernel {

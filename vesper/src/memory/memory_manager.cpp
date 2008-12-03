@@ -4,9 +4,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "MemoryManager.h"
-#include "Registers.h"
-#include "Kernel.h"
+#include "memory_manager.h"
+#include "registers.h"
+#include "kernel.h"
 
 extern address_t end; // defined by linker.ld
 

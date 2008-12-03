@@ -6,8 +6,8 @@
 //
 #pragma once
 
-#include "ELF.h"
-#include "Types.h"
+#include "elf.h"
+#include "types.h"
 
 namespace metta {
 namespace kernel {

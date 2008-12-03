@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "Atomic.h"
+#include "atomic.h"
 
 /**
  * A class that implements a spinlock / binary semaphore.

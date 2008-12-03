@@ -6,8 +6,8 @@
 //
 #pragma once
 
-#include "Types.h"
-#include "Macros.h"
+#include "types.h"
+#include "macros.h"
 
 namespace metta {
 namespace common {

@@ -28,7 +28,7 @@
 #include "common.h"
 #include "string.h"
 #include "ctype.h"
-#include "Kernel.h" // for copyMemory()
+#include "kernel.h" // for copyMemory()
 
 using metta::kernel::kernel;
 

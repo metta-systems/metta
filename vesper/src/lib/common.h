@@ -8,8 +8,8 @@
 
 // [x] Use bstrlib for safe string operations.
 
-#include "Types.h"
-#include "Macros.h"
+#include "types.h"
+#include "macros.h"
 #include <stdarg.h> // for va_list macros
 
 extern "C" void panic(const char *message, const char *file, uint32_t line);

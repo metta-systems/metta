@@ -11,8 +11,8 @@
 //
 #pragma once
 
-#include "Types.h"
-#include "Macros.h"
+#include "types.h"
+#include "macros.h"
 
 /*
  * ELF data types

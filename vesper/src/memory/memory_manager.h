@@ -6,9 +6,9 @@
 //
 #pragma once
 
-#include "Types.h"
-#include "Heap.h"
-#include "BitArray.h"
+#include "types.h"
+#include "heap.h"
+#include "bit_array.h"
 
 namespace metta {
 namespace kernel {

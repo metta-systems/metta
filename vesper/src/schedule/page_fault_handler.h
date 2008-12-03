@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "InterruptServiceRoutine.h"
+#include "interrupt_service_routine.h"
 
 namespace metta {
 namespace kernel {

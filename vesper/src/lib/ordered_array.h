@@ -6,9 +6,9 @@
 //
 #pragma once
 
-#include "Types.h"
+#include "types.h"
 #include "common.h"
-#include "DefaultConsole.h"
+#include "default_console.h"
 
 namespace metta {
 namespace kernel {

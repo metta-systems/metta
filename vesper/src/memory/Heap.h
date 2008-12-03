@@ -6,8 +6,8 @@
 //
 #pragma once
 
-#include "OrderedArray.h"
-#include "Lockable.h"
+#include "ordered_array.h"
+#include "lockable.h"
 
 namespace metta {
 namespace kernel {

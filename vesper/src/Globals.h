@@ -6,10 +6,10 @@
 //
 #pragma once
 
-#include "Types.h"
-#include "Macros.h"
+#include "types.h"
+#include "macros.h"
 #include "string.h"
-#include "Multiboot.h"
+#include "multiboot.h"
 
 namespace metta {
 namespace kernel {

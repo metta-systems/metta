@@ -4,10 +4,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "Task.h"
-#include "Registers.h"
-#include "MemoryManager.h"
-#include "DefaultConsole.h"
+#include "task.h"
+#include "registers.h"
+#include "memory_manager.h"
+#include "default_console.h"
 
 namespace metta {
 namespace kernel {
