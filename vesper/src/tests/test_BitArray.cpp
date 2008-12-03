@@ -1,3 +1,9 @@
+//
+// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 /**
  * \brief Test bit_array.
  */
@@ -32,3 +38,6 @@ BOOST_AUTO_TEST_CASE(test_bit_array)
 	BOOST_CHECK_EQUAL(array.test(0), false);
 	BOOST_CHECK_EQUAL(array.test(0), false);
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
