@@ -8,6 +8,7 @@
 
 #include "Types.h"
 #include "Macros.h"
+#include "string.h"
 
 namespace metta {
 namespace kernel {
@@ -47,10 +48,7 @@ public:
 	 */
 	INLINE static void* set_memory(void* dest, int value, size_t count)
 	{
-		char *xs = (char *)dest;
-		while (count--)
-			*xs++ = value;
-		return dest;
+        return memset(dest, value, count);
 	}
 
 	/**
@@ -64,12 +62,7 @@ public:
 	 */
 	INLINE static void* copy_memory(void* dest, const void* src, size_t count)
 	{
-		char *tmp = (char *)dest;
-		const char *s = (const char *)src;
-
-		while (count--)
-			*tmp++ = *s++;
-		return dest;
+        return memcpy(dest, src, count);
 	}
 
 	/**
@@ -82,23 +75,7 @@ public:
 	 */
 	INLINE static void* move_memory(void* dest, const void* src, size_t count)
 	{
-		char *tmp;
-		const char *s;
-
-		if (dest <= src) {
-			tmp = (char *)dest;
-			s = (const char *)src;
-			while (count--)
-				*tmp++ = *s++;
-		} else {
-			tmp = (char *)dest;
-			tmp += count;
-			s = (const char *)src;
-			s += count;
-			while (count--)
-				*--tmp = *--s;
-		}
-		return dest;
+        return memmove(dest, src, count);
 	}
 
 	/**
