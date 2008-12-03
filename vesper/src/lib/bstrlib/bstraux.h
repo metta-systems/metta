@@ -1,7 +1,7 @@
 /*
  * This source file is part of the bstring string library.  This code was
- * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source 
- * license and the GPL. Refer to the accompanying documentation for details 
+ * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source
+ * license and the GPL. Refer to the accompanying documentation for details
  * on usage and license.
  */
 
@@ -9,7 +9,7 @@
  * bstraux.h
  *
  * This file is not a necessary part of the core bstring library itself, but
- * is just an auxilliary module which includes miscellaneous or trivial 
+ * is just an auxilliary module which includes miscellaneous or trivial
  * functions.
  */
 
@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 /* Safety mechanisms */
-#define bstrDeclare(b)               bstring (b) = NULL; 
+#define bstrDeclare(b)               bstring (b) = NULL;
 #define bstrFree(b)                  {if ((b) != NULL && (b)->slen >= 0 && (b)->mlen >= (b)->slen) { bdestroy (b); (b) = NULL; }}
 
 /* Backward compatibilty with previous versions of Bstrlib */
@@ -102,7 +102,7 @@ bstring bstr__tmp = (b);	                                            \
 	    (t).mlen = -1;                                                            \
 	}                                                                             \
 }
-extern bstring bSecureInput (int maxlen, int termchar, 
+extern bstring bSecureInput (int maxlen, int termchar,
                              bNgetc vgetchar, void * vgcCtx);
 
 #ifdef __cplusplus
@@ -110,3 +110,6 @@ extern bstring bSecureInput (int maxlen, int termchar,
 #endif
 
 #endif
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

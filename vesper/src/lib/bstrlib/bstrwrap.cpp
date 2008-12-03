@@ -1,7 +1,7 @@
 /*
  * This source file is part of the bstring string library.  This code was
- * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source 
- * license and the GPL. Refer to the accompanying documentation for details 
+ * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source
+ * license and the GPL. Refer to the accompanying documentation for details
  * on usage and license.
  */
 
@@ -74,7 +74,7 @@ CBString::CBString () {
 	}
 }
 
-CBString::CBString (const void * blk, int len) { 
+CBString::CBString (const void * blk, int len) {
 	data = NULL;
 	if (len >= 0) {
 		mlen = len + 1;
@@ -531,14 +531,14 @@ unsigned int d = 0;
 #define exvsnprintf(r,b,n,f,a) {r = _vsnprintf (b,n,f,a);}
 #else
 #ifdef BSTRLIB_NOVSNP
-/* This is just a hack.  If you are using a system without a vsnprintf, it is 
+/* This is just a hack.  If you are using a system without a vsnprintf, it is
    not recommended that bformat be used at all. */
 #define exvsnprintf(r,b,n,f,a) {vsprintf (b,f,a); r = -1;}
 #define START_VSNBUFF (256)
 #else
 
 #if defined (__GNUC__) && !defined (__PPC__)
-/* Something is making gcc complain about this prototype not being here, so 
+/* Something is making gcc complain about this prototype not being here, so
    I've just gone ahead and put it in. */
 extern "C" {
 extern int vsnprintf (char *buf, size_t count, const char *format, va_list arg);
@@ -555,7 +555,7 @@ extern int vsnprintf (char *buf, size_t count, const char *format, va_list arg);
 
 /*
  * Yeah I'd like to just call a vformat function or something, but because of
- * the ANSI specified brokeness of the va_* macros, it is actually not 
+ * the ANSI specified brokeness of the va_* macros, it is actually not
  * possible to do this correctly.
  */
 
@@ -672,20 +672,20 @@ int CBString::find (const CBString& b, int pos) const {
 /*
     int CBString::find (const char * b, int pos) const;
 
-    Uses and unrolling and sliding paired indexes character matching.  Since 
-    the unrolling is the primary real world impact the true purpose of this 
-    algorithm choice is maximize the effectiveness of the unrolling.  The 
-    idea is to scan until at least one match of the current indexed character 
-    from each string, and then shift indexes of both down by and repeat until 
-    the last character form b matches.  When the last character from b 
-    matches if the were no mismatches in previous strlen(b) characters then 
+    Uses and unrolling and sliding paired indexes character matching.  Since
+    the unrolling is the primary real world impact the true purpose of this
+    algorithm choice is maximize the effectiveness of the unrolling.  The
+    idea is to scan until at least one match of the current indexed character
+    from each string, and then shift indexes of both down by and repeat until
+    the last character form b matches.  When the last character from b
+    matches if the were no mismatches in previous strlen(b) characters then
     we know we have a full match, otherwise shift both indexes back strlen(b)
     characters and continue.
 
     In general, if there is any character in b that is not at all in this
     CBString, then this algorithm is O(slen).  The algorithm does not easily
     degenerate into O(slen * strlen(b)) performance except in very uncommon
-    situations.  Thus from a real world perspective, the overhead of 
+    situations.  Thus from a real world perspective, the overhead of
     precomputing suffix shifts in the Boyer-Moore algorithm is avoided, while
     delivering an unrolled matching inner loop most of the time.
  */
@@ -1494,12 +1494,12 @@ CBStringList * r = (CBStringList *) parm;
 }
 
 void CBStringList::split (const CBStream& b, const CBString& s) {
-	if (0 > bssplitscb (b.m_s, (bstring) &s, streamSplitCb, 
+	if (0 > bssplitscb (b.m_s, (bstring) &s, streamSplitCb,
 	                    (void *) this)) {
 		bstringThrow ("Split bstream failure");
 	}
 }
- 
+
 void CBStringList::split (const CBStream& b, unsigned char splitChar) {
 CBString sc (splitChar);
 	if (0 > bssplitscb (b.m_s, (bstring) &sc,
@@ -1509,7 +1509,7 @@ CBString sc (splitChar);
 }
 
 void CBStringList::splitstr (const CBStream& b, const CBString& s) {
-	if (0 > bssplitstrcb (b.m_s, (bstring) &s, streamSplitCb, 
+	if (0 > bssplitstrcb (b.m_s, (bstring) &s, streamSplitCb,
 	                    (void *) this)) {
 		bstringThrow ("Split bstream failure");
 	}
@@ -1715,3 +1715,6 @@ int CBStream::eof () const {
 }
 
 } // namespace Bstrlib
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

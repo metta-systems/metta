@@ -1,7 +1,7 @@
 /*
  * This source file is part of the bstring string library.  This code was
- * written by Paul Hsieh in 2002-2004, and is covered by the BSD open source 
- * license. Refer to the accompanying documentation for details on usage and 
+ * written by Paul Hsieh in 2002-2004, and is covered by the BSD open source
+ * license. Refer to the accompanying documentation for details on usage and
  * license.
  */
 
@@ -33,11 +33,14 @@ extern char * (strdup) (const char *s);
 
 #undef strcpy
 #undef strcat
-#define strcpy(a,b) bsafe_strcpy(a,b) 
-#define strcat(a,b) bsafe_strcat(a,b) 
+#define strcpy(a,b) bsafe_strcpy(a,b)
+#define strcat(a,b) bsafe_strcat(a,b)
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

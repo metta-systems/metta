@@ -1,11 +1,11 @@
 //
 // This source file is part of the bstring string library.  This code was
-// written by Paul Hsieh in 2002-2006, and is covered by the BSD open source 
-// license. Refer to the accompanying documentation for details on usage and 
+// written by Paul Hsieh in 2002-2006, and is covered by the BSD open source
+// license. Refer to the accompanying documentation for details on usage and
 // license.
 //
 
-// 
+//
 // test.cpp
 //
 // This file is the C++ unit test for Bstrlib
@@ -16,7 +16,7 @@
 #include "bstrlib.h"
 #include "bstrwrap.h"
 
-// Exceptions must be turned on in the compiler to successfully run 
+// Exceptions must be turned on in the compiler to successfully run
 // this test.  The compiler must also support STL.
 
 #define dumpOutQty (32)
@@ -1601,3 +1601,6 @@ int ret = 0;
 
 	return 0;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

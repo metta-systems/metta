@@ -1,7 +1,7 @@
 /*
  * This source file is part of the bstring string library.  This code was
- * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source 
- * license and the GPL. Refer to the accompanying documentation for details 
+ * written by Paul Hsieh in 2002-2008, and is covered by the BSD open source
+ * license and the GPL. Refer to the accompanying documentation for details
  * on usage and license.
  */
 
@@ -34,14 +34,14 @@
 #define BSTRLIB_CAN_USE_STL
 #endif
 
-// By default it assumed that std::iostream works well with your compiler.  
+// By default it assumed that std::iostream works well with your compiler.
 // If this is not the case, then #define BSTRLIB_CAN_USE_IOSTREAM
 #if !defined (BSTRLIB_CANNOT_USE_IOSTREAM) && !defined (BSTRLIB_CAN_USE_IOSTREAM)
 #define BSTRLIB_CAN_USE_IOSTREAM
 #endif
 
 // By default it is assumed that your compiler can deal with and has enabled
-// exception handlling.  If this is not the case then you will need to 
+// exception handlling.  If this is not the case then you will need to
 // #define BSTRLIB_DOESNT_THROW_EXCEPTIONS
 #if !defined (BSTRLIB_THROWS_EXCEPTIONS) && !defined (BSTRLIB_DOESNT_THROW_EXCEPTIONS)
 #define BSTRLIB_THROWS_EXCEPTIONS
@@ -193,7 +193,7 @@ struct CBString : public tagbstring {
 
 	// Destructor
 #if !defined(BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR)
-	virtual 
+	virtual
 #endif
 	~CBString ();
 
@@ -435,3 +435,6 @@ using namespace Bstrlib;
 
 #endif
 #endif
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

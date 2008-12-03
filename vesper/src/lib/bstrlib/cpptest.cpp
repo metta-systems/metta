@@ -508,7 +508,7 @@ void test8 (void) {
 
 	getline (/* std:: */ cin, b);
 	getline (/* std:: */ cin, c);
-	
+
 	/* std:: */ cout << b << /* std:: */ endl << c;
 #endif
 
@@ -523,7 +523,7 @@ void test8 (void) {
 void test9 (void) {
 	int i, c;
 	clock_t t0, t1;
-	
+
 #if defined (BSTRLIB_CAN_USE_STL)
 	t0 = clock();
 	for (c=i=0; i < 1000000; i++) {
@@ -716,3 +716,6 @@ int main () {
 
 	return 0;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
