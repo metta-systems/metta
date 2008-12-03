@@ -10,6 +10,8 @@
 #
 require 'find'
 
+exclude_dirs = ['./vesper/src/lib/bstrlib', './vesper/src/build']
+
 license = IO.readlines('license_header').join
 modelines = IO.readlines('modelines.txt').join
 exts = {
@@ -24,7 +26,7 @@ ok_count = 0
 modified_count = 0
 
 Find.find('./') do |f|
-    if File.file?(f) && exts.include?(File.extname(f))
+    if File.file?(f) && exts.include?(File.extname(f)) && !exclude_dirs.include?(File.dirname(f))
         lic = exts[File.extname(f)][0]
         mod = exts[File.extname(f)][1]
         modified = false
