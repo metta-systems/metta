@@ -38,7 +38,7 @@ multiboot::multiboot(multiboot_header *h)
         else if (sh->sh_type == SHT_STRTAB)
         {
             char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-            if (string::equals(c, ".strtab"))
+            if (!strcmp(c, ".strtab"))
             {
                 strtab = sh;
             }

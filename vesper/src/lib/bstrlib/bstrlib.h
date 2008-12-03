@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #include <stdarg.h>
-#include "string.h"
+#include <string.h>
 #include <limits.h>
 #include <ctype.h>
 
