@@ -48,7 +48,7 @@ Find.find('./') do |f|
             rescue SystemCallError
                 puts "Couldn't rename file #{f+".new"} to #{f}:", $!
             end
-            puts "#{f} updated"
+            puts "#{f} is UPDATED"
             modified_count += 1
         else
             puts "#{f} is ok"
