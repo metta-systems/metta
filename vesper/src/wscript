@@ -35,7 +35,7 @@ def configure(conf):
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fexceptions ' + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4', 'UNIT_TESTS'])
 	conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
-	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS'])
+	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
 	conf.env.append_unique('LDFLAGS', '-lboost_unit_test_framework')
 
@@ -45,7 +45,7 @@ def configure(conf):
 	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
-	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS'])
+	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
 	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + flags)
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
 
@@ -54,7 +54,7 @@ def configure(conf):
 def build(bld):
 	klibc = bld.new_task_gen('cxx', 'staticlib')
 	klibc.find_sources_in_dirs('lib/klibc')
-	klibc.includes = 'lib/klibc'
+	klibc.includes = 'lib/bstrlib lib/klibc'
 	klibc.env = bld.env_of_name('x86-release').copy() # TODO
 	klibc.target = 'klibc'
 
