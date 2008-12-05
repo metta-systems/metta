@@ -11,7 +11,7 @@
 #include "elf_parser.h"
 #include "memory_manager.h"
 #include "default_console.h"
-#include "gdt.h"
+#include "global_descriptor_table.h"
 #include "interrupt_descriptor_table.h"
 #include "timer.h"
 #include "task.h"
@@ -33,7 +33,7 @@ void kernel::run()
 	kernel_elf_parser.load_kernel(multiboot.symtab_start(),
                                   multiboot.strtab_start());
 
-	GlobalDescriptorTable::init();
+	global_descriptor_table::init();
 
 	interrupts_table.set_isr_handler(14, &page_fault_handler_);
 	interrupts_table.init();
@@ -54,20 +54,20 @@ void kernel::run()
 
 void kernel::relocate_placement_address()
 {
-	address_t newPlacementAddress = memory_manager.get_placement_address();
-	if (multiboot.is_elf() && multiboot.symtab_end() > newPlacementAddress)
+	address_t new_placement_address = memory_manager.get_placement_address();
+	if (multiboot.is_elf() && multiboot.symtab_end() > new_placement_address)
 	{
-		newPlacementAddress = multiboot.symtab_end();
+		new_placement_address = multiboot.symtab_end();
 	}
-	if (multiboot.is_elf() && multiboot.strtab_end() > newPlacementAddress)
+	if (multiboot.is_elf() && multiboot.strtab_end() > new_placement_address)
 	{
-		newPlacementAddress = multiboot.strtab_end();
+		new_placement_address = multiboot.strtab_end();
 	}
-	if (multiboot.mod_start() > newPlacementAddress)
+	if (multiboot.mod_start() > new_placement_address)
 	{
-		newPlacementAddress = multiboot.mod_end();
+		new_placement_address = multiboot.mod_end();
 	}
-	memory_manager.set_placement_address(newPlacementAddress);
+	memory_manager.set_placement_address(new_placement_address);
 }
 
 void kernel::dump_memory(address_t start, size_t size)
@@ -114,24 +114,23 @@ void kernel::dump_memory(address_t start, size_t size)
 	}
 }
 
-address_t kernel::backtrace(address_t basePointer, address_t& returnAddress)
+address_t kernel::backtrace(address_t base_pointer, address_t& return_address)
 {
 	// We take a stack base pointer (in basePointer), return what it's pointing at
 	// and put the Address just above it in the stack in returnAddress.
-	address_t nextBase = *((address_t*)basePointer);
-	returnAddress    = *((address_t*)(basePointer+sizeof(address_t)));
-	return nextBase;
+	address_t next_base = *((address_t*)base_pointer);
+	return_address    = *((address_t*)(base_pointer+sizeof(address_t)));
+	return next_base;
 }
 
 address_t kernel::backtrace(int n)
 {
-	address_t basePointer = read_base_pointer();
-	address_t ebp = basePointer;
+    address_t base_pointer = read_base_pointer();
 	address_t eip = 1;
 	int i = 0;
-	while (ebp && eip /*&& eip < 0x87000000*/)
+    while (base_pointer && eip /*&& eip < 0x87000000*/)
 	{
-		ebp = backtrace(ebp, eip);
+        base_pointer = backtrace(base_pointer, eip);
 		if (i == n)
 		{
 			return eip;
@@ -141,22 +140,21 @@ address_t kernel::backtrace(int n)
 	return 0;
 }
 
-void kernel::print_backtrace(address_t basePointer, int n)
+void kernel::print_backtrace(address_t base_pointer, int n)
 {
 	address_t eip = 1; // Don't initialise to 0, will kill the loop immediately.
-	if (basePointer == 0)
+	if (base_pointer == 0)
 	{
-		basePointer = read_base_pointer();
+		base_pointer = read_base_pointer();
 	}
-	address_t ebp = basePointer;
 	kconsole.set_color(GREEN);
 	kconsole.print("*** Backtrace *** Tracing %d stack frames:\n", n);
 	int i = 0;
-	while (ebp && eip &&
+    while (base_pointer && eip &&
 		( (n && i<n) || !n) &&
 		eip < 0x87000000)
 	{
-		ebp = backtrace(ebp, eip);
+        base_pointer = backtrace(base_pointer, eip);
 		unsigned int offset;
 		char *symbol = kernel_elf_parser.find_symbol(eip, &offset);
 		offset = eip - offset;

@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-class GdtEntry
+class gdt_entry
 {
 	public:
 		enum segtype_e
@@ -41,12 +41,12 @@ class GdtEntry
 		} x;
 };
 
-INLINE void GdtEntry::set_null()
+INLINE void gdt_entry::set_null()
 {
 	x.raw[0] = x.raw[1] = 0;
 }
 
-INLINE void GdtEntry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
+INLINE void gdt_entry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
 	if (limit > (1 << 20))
 	{
@@ -75,7 +75,7 @@ INLINE void GdtEntry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int
 	x.d.avl = 0;
 }
 
-INLINE void GdtEntry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
+INLINE void gdt_entry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
     x.d.limit_low  =  limit        &   0xFFFF;
     x.d.limit_high = (limit >> 16) &     0xFF;
@@ -94,13 +94,13 @@ INLINE void GdtEntry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int
     x.d.avl = 0;
 }
 
-class GlobalDescriptorTable
+class global_descriptor_table
 {
 	public:
 		static void init();
 
 	private:
-		GlobalDescriptorTable();
+        global_descriptor_table();
 		uint16_t limit;
 		uint32_t base;
 } PACKED;
