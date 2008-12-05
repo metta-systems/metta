@@ -9,6 +9,15 @@
 #include "types.h"
 
 #ifdef __cplusplus
+#include "bstrwrap.h"
+namespace metta {
+namespace kernel {
+typedef Bstrlib::CBString string;
+}
+}
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
