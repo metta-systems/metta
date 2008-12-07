@@ -47,27 +47,23 @@ void kernel::run()
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
 
-	// Load initrd and pass control to init component
+    // Load initrd and pass control to init component.
 
-	while(1) { }
+    while(1) { }
 }
+
+#define MAX(a,b) ((a>b)?(a):(b)
 
 void kernel::relocate_placement_address()
 {
-	address_t new_placement_address = memory_manager.get_placement_address();
-	if (multiboot.is_elf() && multiboot.symtab_end() > new_placement_address)
-	{
-		new_placement_address = multiboot.symtab_end();
-	}
-	if (multiboot.is_elf() && multiboot.strtab_end() > new_placement_address)
-	{
-		new_placement_address = multiboot.strtab_end();
-	}
-	if (multiboot.mod_start() > new_placement_address)
-	{
-		new_placement_address = multiboot.mod_end();
-	}
-	memory_manager.set_placement_address(new_placement_address);
+    address_t new_placement_address = memory_manager.get_placement_address();
+    if (multiboot.is_elf())
+    {
+        new_placement_address = MAX(multiboot.symtab_end(), new_placement_address);
+        new_placement_address = MAX(multiboot.strtab_end(), new_placement_address);
+    }
+    new_placement_address = MAX(multiboot.mod_end(), new_placement_address);
+    memory_manager.set_placement_address(new_placement_address);
 }
 
 void kernel::dump_memory(address_t start, size_t size)
