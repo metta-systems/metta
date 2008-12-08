@@ -15,19 +15,12 @@
  * not, write to the FSF, 59 Temple Place #330, Boston, MA 02111-1307, USA.
  */
 /*
+ * Modified for Metta by Berkus, 2008.12.08.
  * Basic COM (Component Object Model) definitions.
- * These definitions are binary-level compatible with Microsoft's,
- * but not name-level compatible;
- * i.e., we do not use Microsoft's icky naming conventions.
- * Also, note that Microsoft's basic COM header file is called <objbase.h>,
- * whereas ours is called <oskit/com.h>.
- * If this ever becomes a problem,
- * we can easily define one to be a glue front-end to the other.
- * However, this should generally not be an issue,
- * because COM concentrates on binary-level compatibility, not source-level.
+ * These definitions are not really binary-level compatible with Microsoft's,
+ * since we don't use the GUIDs but use java-style interface specifications.
  */
-/* XXX Check that these definitions are consistent with Microsoft's,
-   particularly with respect to signedness of integer values. */
+
 #ifndef _OSKIT_COM_H_
 #define _OSKIT_COM_H_
 
@@ -37,46 +30,25 @@
 
 OSKIT_BEGIN_DECLS
 
-#if 0
-/*
- * File time stamp structure; corresponds to FILETIME in Win32.
- * XXX document exactly the meaning of the fields.
- */
-struct oskit_filetime {
-	oskit_u32_t	low;
-	oskit_u32_t	high;
-};
-typedef struct oskit_filetime oskit_filetime_t;
-#endif
 
+/* COM interface identifiers */
+typedef string oskit_iid_t;
 
-/* COM/DCE globally unique identifiers (GUIDs, or UUIDs in DCE-speak) */
-struct oskit_guid {
-	oskit_u32_t	data1;
-	oskit_u16_t	data2;
-	oskit_u16_t	data3;
-	oskit_u8_t	data4[8];
-};
-typedef struct oskit_guid oskit_guid_t;
-
-/* This macro produces a structure initializer for oskit_guid_t. */
-#define OSKIT_GUID(l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \
-	{ l, w1, w2, { b1, b2, b3, b4, b5, b6, b7, b8 } }
-
-
-/* COM interface identifiers (a particular application of GUIDs) */
-typedef oskit_guid_t oskit_iid_t;
-
+/* COM interface return status code */
+typedef int32_t status_t;
 
 /* COM standard result code macros */
-/* The type to use is oskit_error_t defined in <oskit/error.h>. */
+/* The type to use is status_t. */
 
-#define OSKIT_SUCCEEDED(err)		((oskit_error_t)(err) >= 0)
-#define OSKIT_FAILED(err)		((oskit_error_t)(err) < 0)
+/* Standard success codes */
+#define OSKIT_S_OK      0
 
-#define OSKIT_ERROR_CODE(err)		((err) & 0xffff)
-#define OSKIT_ERROR_FACILITY(err)	(((err) >> 16) & 0x1fff)
-#define OSKIT_ERROR_SEVERITY(err)	(((err) >> 31) & 1)
+#define OSKIT_SUCCEEDED(err)        ((status_t)(err) >= OSKIT_S_OK)
+#define OSKIT_FAILED(err)           ((status_t)(err) < OSKIT_S_OK)
+
+#define OSKIT_ERROR_CODE(err)       ((err) & 0xffff)
+#define OSKIT_ERROR_FACILITY(err)   (((err) >> 16) & 0x1fff) //bug
+#define OSKIT_ERROR_SEVERITY(err)   (((err) >> 31) & 1)
 
 #define OSKIT_MAKE_ERROR(severity, facility, code)	\
 	(((oskit_error_t)(severity) << 31) |		\
@@ -93,12 +65,6 @@ typedef oskit_guid_t oskit_iid_t;
 /* Facility code we've stolen for global OSKIT error codes */
 #define OSKIT_FACILITY_OSKIT	0x0f10
 
-/* Standard success codes */
-#define OSKIT_S_OK		0
-#define OSKIT_S_TRUE		0
-#define OSKIT_S_FALSE		1
-
-
 /*
  * COM interfaces use the Pascal-like "stdcall" calling conventions,
  * in order to ensure binary compability across all compilers.
@@ -110,60 +76,61 @@ typedef oskit_guid_t oskit_iid_t;
  * other x86 compilers such as Watcom require it after the return type,
  * so for compatibility we should put it there.
  */
-#define OSKIT_COMCALL				OSKIT_STDCALL
-#define OSKIT_COMDECL		oskit_error_t	OSKIT_COMCALL
-#define OSKIT_COMDECL_U		oskit_u32_t	OSKIT_COMCALL
-#define OSKIT_COMDECL_V		void		OSKIT_COMCALL
+#define OSKIT_COMCALL                       OSKIT_STDCALL
+#define OSKIT_COMDECL       status_t        OSKIT_COMCALL
+#define OSKIT_COMDECL_U     uint32_t        OSKIT_COMCALL
+#define OSKIT_COMDECL_V     void            OSKIT_COMCALL
 
 /*
- * Definition of the oskit_iunknown interface (IUnknown in Microsofteze).
+ * Definition of the com_iunknown interface (IUnknown in Microsofteze).
  */
-struct oskit_iunknown
+struct com_iunknown
 {
-	struct oskit_iunknown_ops *ops;
-};
-typedef struct oskit_iunknown oskit_iunknown_t;
+    struct com_iunknown_ops *ops;
 
-struct oskit_iunknown_ops
+    OSKIT_COMDECL       query(const oskit_iid_t iid, void **out_ihandle);
+    OSKIT_COMDECL_U     ref();
+    OSKIT_COMDECL_U     unref();
+};
+typedef struct com_iunknown com_iunknown_t;//FIXME: remove?
+
+struct com_iunknown_ops
 {
-	/*
-	 * Query this object to find if it supports a particular interface,
-	 * and if so, obtain a reference to that interface.
-	 */
-	OSKIT_COMDECL	(*query)(oskit_iunknown_t *obj, const oskit_iid_t *iid,
-				 void **out_ihandle);
+    /**
+    * Query this object to find if it supports a particular interface,
+    * and if so, obtain a reference to that interface.
+    **/
+    OSKIT_COMDECL   (*query)(com_iunknown *obj, const oskit_iid_t iid,
+                              void **out_ihandle);
 
-	/*
-	 * Increment the reference count for this interface.
-	 */
-	OSKIT_COMDECL_U	(*addref)(oskit_iunknown_t *obj);
+    /**
+    * Increment the reference count for this interface.
+    **/
+    OSKIT_COMDECL_U	(*ref)(com_iunknown *obj);
 
-	/*
-	 * Decrement the reference count for this interface,
-	 * potentially freeing the interface/object if it drops to zero.
-	 */
-	OSKIT_COMDECL_U	(*release)(oskit_iunknown_t *obj);
+    /**
+    * Decrement the reference count for this interface,
+    * potentially freeing the interface/object if it drops to zero.
+    **/
+	OSKIT_COMDECL_U	(*unref)(com_iunknown *obj);
 };
 
-/*
- * use this macro to insert declarations for the three methods
- * common to all interfaces
- */
-#define OSKIT_COMDECL_IUNKNOWN(type)					\
-	OSKIT_COMDECL	(*query)(type *, const oskit_iid_t *, void **);	\
-	OSKIT_COMDECL_U	(*addref)(type *);				\
-	OSKIT_COMDECL_U	(*release)(type *);
+inline OSKIT_COMDECL   com_iunknown::query(const oskit_iid_t iid, void **out_ihandle)
+{
+    return ops->query(this, iid, out_handle);
+}
 
-extern const struct oskit_guid oskit_iunknown_iid;
-#define OSKIT_IUNKNOWN_IID OSKIT_GUID(0x00000000, 0x0000, 0x0000, \
-		0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46)
+inline OSKIT_COMDECL_U com_iunknown::ref()
+{
+    return ops->ref(this);
+}
 
-#define oskit_iunknown_query(obj, iid, out_ihandle) \
-	((obj)->ops->query((oskit_iunknown_t *)(obj), (iid), (out_ihandle)))
-#define oskit_iunknown_addref(obj) \
-	((obj)->ops->addref((oskit_iunknown_t *)(obj)))
-#define oskit_iunknown_release(obj) \
-	((obj)->ops->release((oskit_iunknown_t *)(obj)))
+inline OSKIT_COMDECL_U com_iunknown::unref()
+{
+    return ops->unref(this);
+}
+
+///// TODO: clean these up (reg/unreg/lookup goes to itrader interface of parent com object)
 
 /*
  * Generic COM interface/object registration and lookup.
