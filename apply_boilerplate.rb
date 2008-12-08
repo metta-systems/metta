@@ -11,6 +11,13 @@
 require 'find'
 
 exclude_dirs = ['./vesper/src/lib/bstrlib', './vesper/src/build']
+no_license_dirs = ['./vesper/src/lib/oskit']
+
+class Array
+    def do_not_has?(path)
+        count {|x| path.start_with?(x)} === 0
+    end
+end
 
 license = IO.readlines('license_header').join
 modelines = IO.readlines('modelines.txt').join
@@ -26,12 +33,12 @@ ok_count = 0
 modified_count = 0
 
 Find.find('./') do |f|
-    if File.file?(f) && exts.include?(File.extname(f)) && !exclude_dirs.include?(File.dirname(f))
+    if File.file?(f) && exts.include?(File.extname(f)) && exclude_dirs.do_not_has?(File.dirname(f))
         lic = exts[File.extname(f)][0]
         mod = exts[File.extname(f)][1]
         modified = false
         content = IO.readlines(f).join
-        if content.index(lic).nil?
+        if content.index(lic).nil? && no_license_dirs.do_not_has?(File.dirname(f))
             content = lic + content
             modified = true
         end
