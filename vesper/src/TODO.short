@@ -1,0 +1,11 @@
+[ ] Load components from init modules
+[ ] Call components constructors
+
+[ ] Design portal manager interface
+[ ] Implement simple portal manager
+
+[ ] Port string operations to bstrlib/string.
+
+== wscript ==
+[ ] environment selection from cmdline
+[ ] run update_image.sh automagically after build
