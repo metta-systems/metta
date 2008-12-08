@@ -1,0 +1,2 @@
+Since oskit releases were abandoned some time ago and some of its parts are not compilable with modern c++ compilers,
+this directory contains heavily patched and dependencies-deprived bits and pieces of original oskit headers and libs.
