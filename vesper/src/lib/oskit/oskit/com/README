@@ -1,0 +1,8 @@
+
+Directories: oskit/oskit/com
+Target: Part of liboskit_com.a
+Documentation: 
+Original Code Source: Flux Research Group, University of Utah
+Description:  
+	Header files for the OSKit COM library.
+
