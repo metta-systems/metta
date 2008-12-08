@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1997-1998 University of Utah and the Flux Group.
  * All rights reserved.
- * 
+ *
  * This file is part of the Flux OSKit.  The OSKit is free software, also known
  * as "open source;" you can redistribute it and/or modify it under the terms
  * of the GNU General Public License (GPL), version 2, as published by the Free
  * Software Foundation (FSF).  To explore alternate licensing terms, contact
  * the University of Utah at csl-dist@cs.utah.edu or +1-801-585-3271.
- * 
+ *
  * The OSKit is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GPL for more details.  You should have
@@ -146,13 +146,13 @@ struct oskit_iunknown_ops
 };
 
 /*
- * use this macro to insert declarations for the three methods 
+ * use this macro to insert declarations for the three methods
  * common to all interfaces
  */
 #define OSKIT_COMDECL_IUNKNOWN(type)					\
 	OSKIT_COMDECL	(*query)(type *, const oskit_iid_t *, void **);	\
 	OSKIT_COMDECL_U	(*addref)(type *);				\
-	OSKIT_COMDECL_U	(*release)(type *);				
+	OSKIT_COMDECL_U	(*release)(type *);
 
 extern const struct oskit_guid oskit_iunknown_iid;
 #define OSKIT_IUNKNOWN_IID OSKIT_GUID(0x00000000, 0x0000, 0x0000, \
@@ -186,3 +186,6 @@ oskit_error_t oskit_set_call_context(oskit_iunknown_t *context);
 OSKIT_END_DECLS
 
 #endif /* _OSKIT_COM_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
