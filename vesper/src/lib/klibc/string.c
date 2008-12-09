@@ -28,9 +28,6 @@
 #include "common.h"
 #include "string.h"
 #include "ctype.h"
-#include "kernel.h" // for copyMemory()
-
-using metta::kernel::kernel;
 
 #ifndef __HAVE_ARCH_STRNICMP
 /**
@@ -161,7 +158,7 @@ size_t strlcpy(char *dest, const char *src, size_t size)
 
 	if (size) {
 		size_t len = (ret >= size) ? size - 1 : ret;
-		kernel::copy_memory(dest, src, len);
+		memcpy(dest, src, len);
 		dest[len] = '\0';
 	}
 	return ret;
@@ -237,7 +234,7 @@ size_t strlcat(char *dest, const char *src, size_t count)
 	count -= dsize;
 	if (len >= count)
 		len = count-1;
-	kernel::copy_memory(dest, src, len);
+	memcpy(dest, src, len);
 	dest[len] = 0;
 	return res;
 }
