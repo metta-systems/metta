@@ -29,7 +29,7 @@ interrupt_descriptor_table interrupts_table;
 using namespace metta::kernel;
 
 /* This entry point is called from loader */
-void kernel_entry(multiboot_header *multiboot_header)
+void kernel_entry(multiboot::header *multiboot_header)
 {
 	kconsole.clear();
 	multiboot = multiboot::multiboot(multiboot_header);

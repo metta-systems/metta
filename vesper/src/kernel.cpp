@@ -43,13 +43,15 @@ void kernel::run()
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
 	task::init();
-	timer::init();//crashes at start of timer init (stack problem?)
+//	timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
 
     // Load initrd and pass control to init component.
     // After that the kernel's startup business is over
     // and execution continues in the userspace root server.
+
+
 
     while(1) {
 //         scheduler::yield();
@@ -66,7 +68,7 @@ void kernel::relocate_placement_address()
         new_placement_address = MAX(multiboot.symtab_end(), new_placement_address);
         new_placement_address = MAX(multiboot.strtab_end(), new_placement_address);
     }
-    new_placement_address = MAX(multiboot.mod_end(), new_placement_address);
+    new_placement_address = MAX(multiboot.last_mod_end(), new_placement_address);
     memory_manager.set_placement_address(new_placement_address);
 }
 

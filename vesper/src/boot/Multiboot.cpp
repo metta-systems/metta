@@ -12,9 +12,9 @@
 namespace metta {
 namespace kernel {
 
-multiboot::multiboot(multiboot_header *h)
+multiboot::multiboot(multiboot::header *h)
 {
-	header = h;
+	header_ = h;
 
 	symtab = NULL;
 	strtab = NULL;
@@ -23,13 +23,13 @@ multiboot::multiboot(multiboot_header *h)
 	if (!is_elf())
         return;
 
-    elf32_section_header* shstrtab = (elf32_section_header*)(header->addr +
-                                      header->shndx * header->size);
+    elf32::section_header* shstrtab = (elf32::section_header*)(header_->addr +
+                                        header_->shndx * header_->size);
     // loop through the section headers, try to find the symbol table.
-    for(uint32_t i = 0; i < header->num; i++)
+    for(uint32_t i = 0; i < header_->num; i++)
     {
-        elf32_section_header* sh = (elf32_section_header*)(header->addr + i *
-                                    header->size);
+        elf32::section_header* sh = (elf32::section_header*)(header_->addr + i *
+                                    header_->size);
 
         if (sh->sh_type == SHT_SYMTAB)
         {

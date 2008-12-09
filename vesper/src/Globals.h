@@ -23,7 +23,7 @@ extern class interrupt_descriptor_table interrupts_table;
 }
 }
 
-extern "C" void kernel_entry(metta::kernel::multiboot_header *mh) NORETURN;
+extern "C" void kernel_entry(metta::kernel::multiboot::header *mh) NORETURN;
 
 void *operator new(size_t size);
 void *operator new(size_t size, uint32_t place);

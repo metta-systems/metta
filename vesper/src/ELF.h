@@ -14,56 +14,58 @@
 #include "types.h"
 #include "macros.h"
 
+namespace elf32 {
+
 /*
  * ELF data types
  */
-typedef uint32_t  elf32_addr_t;  /* 4 bytes/4 align/unsigned */
-typedef uint16_t  elf32_half_t;  /* 2 bytes/2 align/unsigned */
-typedef uint32_t  elf32_off_t;   /* 4 bytes/4 align/unsigned */
-typedef  int32_t  elf32_sword_t; /* 4 bytes/4 align/signed   */
-typedef uint32_t  elf32_word_t;  /* 4 bytes/4 align/unsigned */
-typedef  uint8_t  elf32_byte_t;  /* 1 byte /1 align/unsigned */
+typedef uint32_t  addr_t;  /* 4 bytes/4 align/unsigned */
+typedef uint16_t  half_t;  /* 2 bytes/2 align/unsigned */
+typedef uint32_t  off_t;   /* 4 bytes/4 align/unsigned */
+typedef  int32_t  sword_t; /* 4 bytes/4 align/signed   */
+typedef uint32_t  word_t;  /* 4 bytes/4 align/unsigned */
+typedef  uint8_t  byte_t;  /* 1 byte /1 align/unsigned */
 
 
 /*
  * ELF structures: ELF file Header
  */
-struct elf32_header
+struct header
 {
-    elf32_word_t e_magic;
-    elf32_byte_t e_class;
-    elf32_byte_t e_data;
-    elf32_byte_t e_hdrversion;
-    elf32_byte_t e_padding[9];
-    elf32_half_t e_type;           /**< Identifies object file type */
-    elf32_half_t e_machine;        /**< Specifies required architecture */
-    elf32_word_t e_version;        /**< Identifies object file version */
-    elf32_addr_t e_entry;          /**< Entry point virtual address */
-    elf32_off_t  e_phoff;          /**< Program header table file offset */
-    elf32_off_t  e_shoff;          /**< Section header table file offset */
-    elf32_word_t e_flags;          /**< Processor-specific flags */
-    elf32_half_t e_ehsize;         /**< ELF header size in bytes */
-    elf32_half_t e_phentsize;      /**< Program header table entry size */
-    elf32_half_t e_phnum;          /**< Program header table entry count */
-    elf32_half_t e_shentsize;      /**< Section header table entry size */
-    elf32_half_t e_shnum;          /**< Section header table entry count */
-    elf32_half_t e_shstrndx;       /**< Section header string table index */
+    word_t e_magic;
+    byte_t e_class;
+    byte_t e_data;
+    byte_t e_hdrversion;
+    byte_t e_padding[9];
+    half_t e_type;           /**< Identifies object file type */
+    half_t e_machine;        /**< Specifies required architecture */
+    word_t e_version;        /**< Identifies object file version */
+    addr_t e_entry;          /**< Entry point virtual address */
+    off_t  e_phoff;          /**< Program header table file offset */
+    off_t  e_shoff;          /**< Section header table file offset */
+    word_t e_flags;          /**< Processor-specific flags */
+    half_t e_ehsize;         /**< ELF header size in bytes */
+    half_t e_phentsize;      /**< Program header table entry size */
+    half_t e_phnum;          /**< Program header table entry count */
+    half_t e_shentsize;      /**< Section header table entry size */
+    half_t e_shnum;          /**< Section header table entry count */
+    half_t e_shstrndx;       /**< Section header string table index */
 } PACKED;
 
-/* elf32_header.e_magic */
+/* header.e_magic */
 #define ELF_MAGIC  0x464c457f    /* ASCII "ELF",0x7F */
 
-/* elf32_header.e_class */
+/* header.e_class */
 #define ELF_CLASS_NONE 0x00      /**< Invalid class  */
 #define ELF_CLASS_32   0x01      /**< 32 bit objects */
 #define ELF_CLASS_64   0x02      /**< 64 bit objects */
 
-/* elf32_header.e_data */
+/* header.e_data */
 #define ELF_DATA_NONE  0x00      /**< Invalid data encoding   */
 #define ELF_DATA_2LSB  0x01      /**< LSB (Intel) encoding    */
 #define ELF_DATA_2MSB  0x02      /**< MSB (Motorola) encoding */
 
-/* elf32_header.e_type */
+/* header.e_type */
 #define ET_NONE    0x0000        /* No type     */
 #define ET_REL     0x0001        /* Relocatable */
 #define ET_EXEC    0x0002        /* Executable  */
@@ -72,7 +74,7 @@ struct elf32_header
 #define ET_LOPROC  0xff00        /* Processor-specific */
 #define ET_HIPROC  0xffff
 
-/* elf32_header.e_machine */
+/* header.e_machine */
 #define EM_NONE  0x0000          /* No machine     */
 #define EM_M32   0x0001          /* AT&T WE32100   */
 #define EM_SPARC 0x0002          /* SPARC          */
@@ -82,7 +84,7 @@ struct elf32_header
 #define EM_860   0x0007          /* Intel 80860    */
 #define EM_MIPS  0x0008          /* MIPS RS3000    */
 
-/* elf32_header.e_version */
+/* header.e_version */
 #define EV_NONE        0         /* Invalid version */
 #define EV_CURRENT     1         /* Current version */
 
@@ -90,18 +92,18 @@ struct elf32_header
 /*
  * ELF structures: Section header
  */
-struct elf32_section_header
+struct section_header
 {
-    elf32_word_t sh_name;          /**< Section name, index in string table */
-    elf32_word_t sh_type;          /**< Type of section */
-    elf32_word_t sh_flags;         /**< Miscellaneous section attributes */
-    elf32_addr_t sh_addr;          /**< Section virtual addr at execution */
-    elf32_off_t  sh_offset;        /**< Section file offset */
-    elf32_word_t sh_size;          /**< Size of section in bytes */
-    elf32_word_t sh_link;          /**< Index of another section */
-    elf32_word_t sh_info;          /**< Additional section information */
-    elf32_word_t sh_addralign;     /**< Section alignment */
-    elf32_word_t sh_entsize;       /**< Entry size if section holds table */
+    word_t sh_name;          /**< Section name, index in string table */
+    word_t sh_type;          /**< Type of section */
+    word_t sh_flags;         /**< Miscellaneous section attributes */
+    addr_t sh_addr;          /**< Section virtual addr at execution */
+    off_t  sh_offset;        /**< Section file offset */
+    word_t sh_size;          /**< Size of section in bytes */
+    word_t sh_link;          /**< Index of another section */
+    word_t sh_info;          /**< Additional section information */
+    word_t sh_addralign;     /**< Section alignment */
+    word_t sh_entsize;       /**< Entry size if section holds table */
 } PACKED;
 
 /* predefined section table indices */
@@ -113,7 +115,7 @@ struct elf32_section_header
 #define SHN_COMMON    0xfff2
 #define SHN_HIRESERVE 0xffff
 
-/* elf32_section_header.sh_type */
+/* section_header.sh_type */
 #define SHT_NULL      0x00000000
 #define SHT_PROGBITS  0x00000001 /* The data is contained in program file */
 #define SHT_SYMTAB    0x00000002 /* Symbol table */
@@ -136,7 +138,7 @@ struct elf32_section_header
 #define SHT_PREINIT   0x00000010
 
 
-/* elf32_section_header.sh_flags */
+/* section_header.sh_flags */
 #define SHF_WRITE     0x00000001
 #define SHF_ALLOC     0x00000002
 #define SHF_EXECINSTR 0x00000004
@@ -146,32 +148,32 @@ struct elf32_section_header
 /*
  * ELF structures: Symbol Table
  */
-struct elf32_symbol
+struct symbol
 {
-    elf32_word_t st_name;          /**< Symbol name, index into string table */
-    elf32_addr_t st_value;         /**< Symbol value */
-    elf32_word_t st_size;          /**< Size occupied by this symbol */
-    elf32_byte_t st_info;          /**< Symbol type and binding */
-    elf32_byte_t st_other;
-    elf32_half_t st_shndx;         /**< Section index this symbol belongs to */
+    word_t st_name;          /**< Symbol name, index into string table */
+    addr_t st_value;         /**< Symbol value */
+    word_t st_size;          /**< Size occupied by this symbol */
+    byte_t st_info;          /**< Symbol type and binding */
+    byte_t st_other;
+    half_t st_shndx;         /**< Section index this symbol belongs to */
 } PACKED;
 
 /* Symbol Table index: first/undefined entry */
 #define STN_UNDEF 0x0000
 
-/* elf32_symbol.st_info manipulation macros */
+/* symbol.st_info manipulation macros */
 #define ELF32_ST_BIND(i)    ((i) >> 4)
 #define ELF32_ST_TYPE(i)    ((i) & 0xf)
 #define ELF32_ST_INFO(b,t)  ((b) << 4 + ((t) & 0xf))
 
-/* ELF32_ST_BIND(elf32_symbol.st_info) values */
+/* ELF32_ST_BIND(symbol.st_info) values */
 #define STB_LOCAL  0x0
 #define STB_GLOBAL 0x1
 #define STB_WEAK   0x2
 #define STB_LOPROC 0xd
 #define STB_HIPROC 0xf
 
-/* ELF32_ST_TYPE(elf32_symbol.st_info) values */
+/* ELF32_ST_TYPE(symbol.st_info) values */
 #define STT_NOTYPE  0x0
 #define STT_OBJECT  0x1
 #define STT_FUNC    0x2
@@ -184,17 +186,17 @@ struct elf32_symbol
 /*
  * ELF structures: Dynamic linking info
  */
-struct elf32_dyn
+struct dyn
 {
-    elf32_sword_t d_tag;
+    sword_t d_tag;
     union
     {
-        elf32_word_t d_val;
-        elf32_addr_t d_ptr;
+        word_t d_val;
+        addr_t d_ptr;
     } d_un;
 };
 
-/* elf32_dyn.d_tag */
+/* dyn.d_tag */
 #define DT_NULL     0x00000000
 #define DT_NEEDED   0x00000001
 #define DT_PLTRELSZ 0x00000002
@@ -226,25 +228,25 @@ struct elf32_dyn
 /*
  * ELF structures: Relocation Entries
  */
-struct elf32_rel
+struct rel
 {
-    elf32_addr_t r_offset;
-    elf32_word_t r_info;
+    addr_t r_offset;
+    word_t r_info;
 };
 
-struct elf32_rela
+struct rela
 {
-    elf32_addr_t  r_offset;
-    elf32_word_t  r_info;
-    elf32_sword_t r_addend;
+    addr_t  r_offset;
+    word_t  r_info;
+    sword_t r_addend;
 };
 
-/* elf32_rel|a.r_info manipulation macros */
+/* rel|a.r_info manipulation macros */
 #define ELF32_R_SYM(i)     ((i) >> 8)
 #define ELF32_R_TYPE(i)    ((i) & 0xff)
 #define ELF32_R_INFO(s,t)  ((s) << 8 + (t) & 0xff)
 
-/* ELF32_R_TYPE(elf32_rel|a.r_info) values */
+/* ELF32_R_TYPE(rel|a.r_info) values */
 #define R_386_NONE      0x00
 #define R_386_32        0x01
 #define R_386_PC32      0x02
@@ -261,19 +263,19 @@ struct elf32_rela
 /*
  * ELF structures: Program Header
  */
-struct elf32_program_header
+struct program_header
 {
-    elf32_word_t p_type;           /**< Program section type */
-    elf32_off_t  p_offset;         /**< File offset */
-    elf32_addr_t p_vaddr;          /**< Execution virtual address */
-    elf32_addr_t p_paddr;          /**< Execution physical address */
-    elf32_word_t p_filesz;         /**< Size in file */
-    elf32_word_t p_memsz;          /**< Size in memory */
-    elf32_word_t p_flags;          /**< Section flags */
-    elf32_word_t p_align;          /**< Section alignment */
+    word_t p_type;           /**< Program section type */
+    off_t  p_offset;         /**< File offset */
+    addr_t p_vaddr;          /**< Execution virtual address */
+    addr_t p_paddr;          /**< Execution physical address */
+    word_t p_filesz;         /**< Size in file */
+    word_t p_memsz;          /**< Size in memory */
+    word_t p_flags;          /**< Section flags */
+    word_t p_align;          /**< Section alignment */
 };
 
-/* elf32_program_header.p_type */
+/* program_header.p_type */
 #define PT_NULL     0
 #define PT_LOAD     1
 #define PT_DYNAMIC  2
@@ -284,7 +286,7 @@ struct elf32_program_header
 #define PT_LOPROC   0x70000000
 #define PT_HIPROC   0x7fffffff
 
-/* elf32_program_header.p_flags */
+/* program_header.p_flags */
 #define PF_X        0x1
 #define PF_W        0x2
 #define PF_R        0x4
@@ -305,6 +307,8 @@ elf_hash(const unsigned char *name)
     }
     return h;
 }
+
+} // namespace elf32
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

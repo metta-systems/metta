@@ -48,8 +48,8 @@ public:
     /**
      * Loads the symbol table for the kernel from the specified location.
      */
-    void load_kernel(elf32_section_header* symtab,
-                     elf32_section_header* strtab);
+    void load_kernel(elf32::section_header* symtab,
+                     elf32::section_header* strtab);
 
     /**
      * Returns the symbol name for an address. Also returns the start address
@@ -98,12 +98,12 @@ public:
     }
 
 private:
-    elf32_header*         header;
-    elf32_section_header* symbol_table;
-    elf32_section_header* string_table;
-    elf32_section_header* got_table; // Global offset table.
-    elf32_section_header* rel_table;
-    elf32_section_header* section_headers;
+    elf32::header*         header;
+    elf32::section_header* symbol_table;
+    elf32::section_header* string_table;
+    elf32::section_header* got_table; // Global offset table.
+    elf32::section_header* rel_table;
+    elf32::section_header* section_headers;
     const char*           filename;
 };
 

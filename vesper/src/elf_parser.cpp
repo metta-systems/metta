@@ -28,8 +28,8 @@ elf_parser::~elf_parser()
 	delete [] filename;
 }
 
-void elf_parser::load_kernel(elf32_section_header* symtab,
-                             elf32_section_header* strtab)
+void elf_parser::load_kernel(elf32::section_header* symtab,
+                             elf32::section_header* strtab)
 {
 	symbol_table = symtab;
 	string_table = strtab;
@@ -38,11 +38,11 @@ void elf_parser::load_kernel(elf32_section_header* symtab,
 char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
 {
 	address_t max = 0;
-	elf32_symbol *fallback_symbol = 0;
+	elf32::symbol *fallback_symbol = 0;
 	for (unsigned int i = 0; i < symbol_table->sh_size /
          symbol_table->sh_entsize; i++)
 	{
-		elf32_symbol *symbol = (elf32_symbol *)(symbol_table->sh_addr
+		elf32::symbol *symbol = (elf32::symbol *)(symbol_table->sh_addr
                                 + i * symbol_table->sh_entsize);
 
 		if ((addr >= symbol->st_value) &&
