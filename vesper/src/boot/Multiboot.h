@@ -94,7 +94,7 @@ public:
     INLINE uint32_t upper_mem()   { return header_->mem_upper; }
     INLINE uint32_t flags()       { return header_->flags; }
 
-    INLINE modinfo* mod(unsigned int i)
+    INLINE modinfo* mod(uint32_t i)
     {
         ASSERT(sizeof(modinfo)==16);
         if (header_->flags & MULTIBOOT_FLAG_MODS
@@ -103,6 +103,13 @@ public:
         {
             return (modinfo*)(header_->mods_addr + i * sizeof(modinfo));
         }
+        return 0;
+    }
+
+    INLINE uint32_t mod_count() const
+    {
+        if (header_->flags & MULTIBOOT_FLAG_MODS)
+            return header_->mods_count;
         return 0;
     }
 

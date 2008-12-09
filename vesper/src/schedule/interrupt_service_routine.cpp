@@ -43,7 +43,8 @@ void isr_handler(Registers regs)
 //
 void irq_handler(Registers regs)
 {
-	kconsole << GREEN << "Received irq: " << regs.int_no-32 << endl;
+    // hmm somebody enables interrupts??
+// 	kconsole << GREEN << "Received irq: " << regs.int_no-32 << endl;
 
     interrupt_service_routine* isr = interrupts_table.getIsr(regs.int_no);
 	if (isr)

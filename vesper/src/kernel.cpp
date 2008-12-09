@@ -42,7 +42,7 @@ void kernel::run()
 	memory_manager.remap_stack();
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
-	task::init();
+//	task::init();
 //	timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
@@ -51,9 +51,15 @@ void kernel::run()
     // After that the kernel's startup business is over
     // and execution continues in the userspace root server.
 
+    for (unsigned int i = 0; i < multiboot.mod_count(); i++)
+    {
+        multiboot::modinfo *m = multiboot.mod(i);
+        kconsole.print("Module %d @ %p to %p:\n", i+1, m->mod_start, m->mod_end);
+        if (m->str)
+            kconsole.print("       %s\n", m->str);
+    }
 
-
-    while(1) {
+    while (1) {
 //         scheduler::yield();
     }
 }
