@@ -27,7 +27,7 @@
 #define _OSKIT_ERROR_H_
 
 #ifndef ASSEMBLER
-#include <oskit/machine/types.h>
+#include <types-arch.h>
 
 typedef oskit_s32_t oskit_error_t;
 #endif

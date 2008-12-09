@@ -25,7 +25,7 @@
  * This file defines those specific-width types for this machine architecture,
  * and also specifies what width to use for several purpose-specific types.
  */
-#include <oskit/machine/types.h>
+#include <types-arch.h>
 
 
 /*
