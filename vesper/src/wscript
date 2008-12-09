@@ -3,22 +3,25 @@
 VERSION = '0.0.2'
 APPNAME = 'vesper'
 
-import Configure
+import Task, Options, Configure
 Configure.autoconfig = 1
 
 srcdir = '.'
 blddir = 'build'
 source_dirs  = '. lib memory pd schedule boot'
-include_dirs = '. lib memory pd schedule boot arch/x86' #FIXME: archdep
-cflags = '-Wall -Wextra -Werror -I../lib -I../memory -I../pd -I../schedule -I../boot'
-cflags += ' -I../arch/x86' #FIXME: archdep
+include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
+cflags = '-Wall -Wextra -Werror'
 cflags += ' -O3' #FIXME: builddep
 flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
-	pass
+	opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
 
 def configure(conf):
+	# Configure for given platform
+	# Configuration name is composed of platform, cpu, release
+
+
 	conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
 
 	env = conf.env.copy() # Clone environment
@@ -51,10 +54,12 @@ def configure(conf):
 
 	conf.write_config_header('config.h')
 
+updater = Task.simple_task_type('update_image', './update_image.sh', color='BLUE')
+
 def build(bld):
 	klibc = bld.new_task_gen('cxx', 'staticlib')
 	klibc.find_sources_in_dirs('lib/klibc')
-	klibc.includes = 'lib/bstrlib lib/klibc'
+	klibc.includes = 'lib/bstrlib lib/klibc lib'
 	klibc.env = bld.env_of_name('x86-release').copy() # TODO
 	klibc.target = 'klibc'
 
@@ -65,7 +70,7 @@ def build(bld):
 	bstrlib.source.remove('lib/bstrlib/test.cpp')
 	bstrlib.source.remove('lib/bstrlib/bstest.c')
 	bstrlib.source.remove('lib/bstrlib/testaux.c')
-	bstrlib.includes = 'lib/bstrlib lib/klibc'
+	bstrlib.includes = 'lib/bstrlib lib/klibc lib'
 	bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
 	bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
 	bstrlib.target = 'bstrlib'
@@ -79,6 +84,10 @@ def build(bld):
 	vesper.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
 	vesper.uselib_local = 'klibc bstrlib'
 	vesper.target = 'vesper'
+
+	#update = updater(bld.env_of_name('x86-release').copy())
+	#update.inputs = [vesper.target]
+	#update.outputs = [update.env.find_resource('floppy.img')]
 
 	tests = bld.new_task_gen('cxx', 'program')
 	tests.find_sources_in_dirs('tests')
