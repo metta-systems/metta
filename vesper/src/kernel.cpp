@@ -48,11 +48,15 @@ void kernel::run()
 // weird: seems to work now. check gcc optimizations.
 
     // Load initrd and pass control to init component.
+    // After that the kernel's startup business is over
+    // and execution continues in the userspace root server.
 
-    while(1) { }
+    while(1) {
+//         scheduler::yield();
+    }
 }
 
-#define MAX(a,b) ((a>b)?(a):(b)
+#define MAX(a,b) ((a>b)?(a):(b))
 
 void kernel::relocate_placement_address()
 {
