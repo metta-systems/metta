@@ -183,3 +183,6 @@ extern const struct com_guid aggregation_iid;
 	((a)->ops->aggregate((aggregation_t *)(a), (outer), (out_part)))
 
 #endif /* _OSKIT_COM_AGGREGATE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

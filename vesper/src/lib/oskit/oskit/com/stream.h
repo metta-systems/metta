@@ -121,3 +121,6 @@ extern const struct oskit_guid oskit_stream_iid;
 
 
 #endif /* _OSKIT_COM_STREAM_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -44,3 +44,6 @@ oskit_stream_t *oskit_charqueue_create(oskit_size_t size, unsigned int flags);
 
 
 #endif /* _OSKIT_COM_CHARQUEUE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

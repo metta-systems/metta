@@ -38,3 +38,6 @@ extern struct oskit_stream_ops oskit_trivial_stream_ops;
 
 
 #endif /* _OSKIT_COM_TRIVIAL_STREAM_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

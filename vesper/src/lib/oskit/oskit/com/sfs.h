@@ -43,3 +43,6 @@ oskit_sfs_wrap(oskit_dir_t *rroot,
 
 
 #endif /* _OSKIT_COM_SFS_H */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

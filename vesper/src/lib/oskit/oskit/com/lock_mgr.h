@@ -76,3 +76,6 @@ extern const struct oskit_guid oskit_lock_mgr_iid;
 #define oskit_lock_mgr_allocate_condvar(l, out_condvar) \
 	((l)->ops->allocate_condvar((oskit_lock_mgr_t *)(l), (out_condvar)))
 #endif /* _OSKIT_COM_LOCK_MGR_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

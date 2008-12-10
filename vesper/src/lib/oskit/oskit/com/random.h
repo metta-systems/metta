@@ -79,3 +79,6 @@ extern const struct oskit_guid oskit_random_iid;
 oskit_error_t oskit_random_create(oskit_random_t **out_r);
 
 #endif /* _OSKIT_COM_RANDOM_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

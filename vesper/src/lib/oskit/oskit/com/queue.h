@@ -102,3 +102,6 @@ oskit_error_t oskit_bounded_com_queue_create(oskit_size_t length,
 					     oskit_queue_t **out_q);
 
 #endif /* _OSKIT_COM_QUEUE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

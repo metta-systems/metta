@@ -107,3 +107,6 @@ OSKIT_COMDECL
 oskit_create_pipe(oskit_pipe_t **out_pipe0, oskit_pipe_t **out_pipe1);
 
 #endif /* _OSKIT_COM_OPENFILE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

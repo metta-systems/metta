@@ -188,3 +188,6 @@ oskit_mem_t *oskit_appmem_init(void *base, oskit_size_t size);
 void *oskit_mem_morecore(oskit_size_t size, int flags);
 
 #endif /* _OSKIT_COM_MEM_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -63,3 +63,6 @@ oskit_listener_t * oskit_create_listener(
 	oskit_listener_callback_t hdlr, void *arg);
 
 #endif /* _OSKIT_COM_LISTENER_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -155,3 +155,6 @@ oskit_wrap_dirents(struct oskit_dirents *in,
 #endif
 
 #endif /* _OSKIT_COM_WRAPPER_H */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

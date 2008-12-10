@@ -137,3 +137,6 @@ oskit_error_t oskit_lookup(const oskit_guid_t *iid, void ***out_interface_array)
 oskit_error_t oskit_lookup_first(const oskit_guid_t *iid, void **out_interface);
 
 #endif /* _OSKIT_COM_SERVICES_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

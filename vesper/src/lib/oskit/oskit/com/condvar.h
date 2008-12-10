@@ -74,3 +74,6 @@ extern const struct oskit_guid oskit_condvar_iid;
 #define oskit_condvar_broadcast(c) \
 	((c)->ops->broadcast((oskit_condvar_t *)(c)))
 #endif /* _OSKIT_COM_LOCK_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

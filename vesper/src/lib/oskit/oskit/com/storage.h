@@ -87,3 +87,6 @@ extern const struct com_guid com_storage_iid;
 
 
 #endif /* _OSKIT_COM_STORAGE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

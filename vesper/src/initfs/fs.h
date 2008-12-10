@@ -1,3 +1,9 @@
+//
+// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 /**
 * Associative filesystem interface.
 * Defines a namespaced set of file objects with arbitrary metadata attributes.
@@ -34,3 +40,6 @@ struct com_ifsview
 	filter /* manipulate filtering expression */
 	iterator /* enumerate all fsnodes matching current expression (present in view) */
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

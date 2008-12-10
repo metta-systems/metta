@@ -164,3 +164,5 @@ oskit_libcenv_t	*initial_clientos_libcenv;
 
 #endif /* _OSKIT_COM_LIBCENV_H_ */
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -65,3 +65,5 @@ int oskit_listener_mgr_count(struct listener_mgr  *mgr);
 
 #endif /* _OSKIT_COM_LISTENER_MGR_H_ */
 
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

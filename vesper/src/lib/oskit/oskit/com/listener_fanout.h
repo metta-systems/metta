@@ -92,3 +92,6 @@ extern const struct oskit_guid oskit_listener_fanout_iid;
 oskit_listener_fanout_t *oskit_create_listener_fanout();
 
 #endif /* _OSKIT_COM_LISTENER_FANOUT_H */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

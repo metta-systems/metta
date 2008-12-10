@@ -117,3 +117,6 @@ extern const struct oskit_guid oskit_pqueue_iid;
 oskit_error_t oskit_pqueue_create(oskit_pqueue_t **out_pq);
 
 #endif /* _OSKIT_COM_PQUEUE_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:

@@ -67,3 +67,6 @@ extern const struct oskit_guid oskit_lock_iid;
 	((l)->ops->unlock((oskit_lock_t *)(l)))
 
 #endif /* _OSKIT_COM_LOCK_H_ */
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
