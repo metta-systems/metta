@@ -8,6 +8,13 @@
 **/
 
 /**
+* Whole filesystem interface.
+**/
+struct com_ifilesystem
+{
+};
+
+/**
 * Filesystem node interface.
 * Defines file-related operations on a node.
 **/
