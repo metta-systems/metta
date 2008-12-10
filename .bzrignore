@@ -5,3 +5,5 @@ doxygen
 *.kdevelop.filelist
 templates
 vesper.tag
+*.kdevelop.pcs
+*.kdevses
