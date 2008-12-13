@@ -8,22 +8,34 @@
 // Read list file with component_id:component_path pairs and create corresponding initfs image.
 // Run mkinitfs file.lst initfs.img
 //
+#include "types.h"
 #include "initfs.h"
+#include "string.h"
 #include <cstdio>
+
+using metta::kernel::string;
+
+class file_error
+{
+public:
+    file_error(const char* msg) : msg_(msg) {}
+private:
+    const char* msg_;
+};
 
 class file
 {
 public:
-    file(const char* fname, const char* mode) : file_(std::open(fname, mode))
+    file(const char* fname, const char* mode) : file_(std::fopen(fname, mode))
     {
         if (!file_)
-            throw std::runtime_error("file open failure");
+            throw file_error("file open failure");
     }
     ~file() { std::fclose(file_); }
     void write (const void* buf, size_t count)
     {
         if (EOF == std::fwrite(buf, 1, count, file_))
-            throw std::runtime_error("file write failure");
+            throw file_error("file write failure");
     }
     // TODO: add seek()
 
@@ -66,9 +78,13 @@ filebinio& operator << (filebinio& io, initfs_entry& entry)
 
 filebinio& operator << (filebinio& io, initfs_index& index)
 {
-    io.write32le(entry.magic);
-    io.write32le(entry.count);
+    io.write32le(index.magic);
+    io.write32le(index.count);
     return io;
+}
+
+void panic_assert(const char *desc, const char *file, uint32_t line)
+{
 }
 
 int main(int argc, char** argv)
@@ -80,16 +96,19 @@ int main(int argc, char** argv)
 
     file out(file_out, "w+b");
     file in(file_in, "r");
-    filebinio io(in);
-    //TODO: use bstring to store names as multiple \0-terminated strings
+    filebinio io(out);
+    string name_storage; // use bstring to store names as multiple \0-terminated strings
     // concatenated together.
+    initfs_header header;
+    initfs_index  index;
+    initfs_entry  entry[256];
 
     io << header;
     // write file data
     // page align and put names
     // page align and
     io << index;
-    for (i = 0; i < index.count; i++)
+    for (int i = 0; i < index.count; i++)
         io << entry[i];
 }
 

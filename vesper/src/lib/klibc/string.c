@@ -29,70 +29,6 @@
 #include "string.h"
 #include "ctype.h"
 
-#ifndef __HAVE_ARCH_STRNICMP
-/**
- * strnicmp - Case insensitive, length-limited string comparison
- * @s1: One string
- * @s2: The other string
- * @len: the maximum number of characters to compare
- */
-int strnicmp(const char *s1, const char *s2, size_t len)
-{
-	/* Yes, Virginia, it had better be unsigned */
-	unsigned char c1, c2;
-
-	c1 = c2 = 0;
-	if (len) {
-		do {
-			c1 = *s1;
-			c2 = *s2;
-			s1++;
-			s2++;
-			if (!c1)
-				break;
-			if (!c2)
-				break;
-			if (c1 == c2)
-				continue;
-			c1 = tolower(c1);
-			c2 = tolower(c2);
-			if (c1 != c2)
-				break;
-		} while (--len);
-	}
-	return (int)c1 - (int)c2;
-}
-EXPORT_SYMBOL(strnicmp);
-#endif
-
-#ifndef __HAVE_ARCH_STRCASECMP
-int strcasecmp(const char *s1, const char *s2)
-{
-	int c1, c2;
-
-	do {
-		c1 = tolower(*s1++);
-		c2 = tolower(*s2++);
-	} while (c1 == c2 && c1 != 0);
-	return c1 - c2;
-}
-EXPORT_SYMBOL(strcasecmp);
-#endif
-
-#ifndef __HAVE_ARCH_STRNCASECMP
-int strncasecmp(const char *s1, const char *s2, size_t n)
-{
-	int c1, c2;
-
-	do {
-		c1 = tolower(*s1++);
-		c2 = tolower(*s2++);
-	} while ((--n > 0) && c1 == c2 && c1 != 0);
-	return c1 - c2;
-}
-EXPORT_SYMBOL(strncasecmp);
-#endif
-
 #ifndef __HAVE_ARCH_STRCPY
 /**
  * strcpy - Copy a %NUL terminated string
@@ -213,32 +149,6 @@ char *strncat(char *dest, const char *src, size_t count)
 	return tmp;
 }
 EXPORT_SYMBOL(strncat);
-#endif
-
-#ifndef __HAVE_ARCH_STRLCAT
-/**
- * strlcat - Append a length-limited, %NUL-terminated string to another
- * @dest: The string to be appended to
- * @src: The string to append to it
- * @count: The size of the destination buffer.
- */
-size_t strlcat(char *dest, const char *src, size_t count)
-{
-	size_t dsize = strlen(dest);
-	size_t len = strlen(src);
-	size_t res = dsize + len;
-
-	ASSERT(dsize < count);
-
-	dest += dsize;
-	count -= dsize;
-	if (len >= count)
-		len = count-1;
-	memcpy(dest, src, len);
-	dest[len] = 0;
-	return res;
-}
-EXPORT_SYMBOL(strlcat);
 #endif
 
 #ifndef __HAVE_ARCH_STRCMP
