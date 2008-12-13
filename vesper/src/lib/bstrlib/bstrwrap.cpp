@@ -900,15 +900,15 @@ struct tagbstring t;
 }
 
 const CBString CBString::midstr (int left, int len) const {
-struct tagbstring t;
-	if (left < 0) {
-		len += left;
-		left = 0;
-	}
-	if (len > slen - left) len = slen - left;
-	if (len <= 0) return CBString ("");
-	blk2tbstr (t, data + left, len);
-	return CBString (t);
+    struct tagbstring t;
+    if (left < 0) {
+	    len += left;
+	    left = 0;
+    }
+    if (len > slen - left) len = slen - left;
+    if (len <= 0) return CBString ("");
+    blk2tbstr (t, data + left, len);
+    return CBString (t);
 }
 
 void CBString::alloc (int len) {
