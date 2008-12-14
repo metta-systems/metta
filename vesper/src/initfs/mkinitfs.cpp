@@ -171,6 +171,7 @@ int main(int argc, char** argv)
             io.write("\0", 1);
     }
 
+    name_offset = out.pos();
     io << name_storage;
 
     if (out.pos() % ALIGN)
@@ -183,7 +184,10 @@ int main(int argc, char** argv)
     header.index_offset = out.pos();
     io << index;
     for (i = 0; i < index.count; i++)
+    {
+        entry[i].name_offset += name_offset;
         io << entry[i];
+    }
 
     // rewrite file header
     out.seek(0);
