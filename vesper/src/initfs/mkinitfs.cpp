@@ -5,7 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 //
-// Read list file with component_id:component_path pairs and create corresponding initfs image.
+// Read list file with component_file:component_id pairs and create corresponding initfs image.
 // Run mkinitfs file.lst initfs.img
 //
 #include "types.h"
@@ -21,6 +21,7 @@
 using metta::kernel::string;
 using Bstrlib::CBStream;
 
+// Some nicely common file RAII wrappers. TODO: Factor out.
 class file_error
 {
 public:
