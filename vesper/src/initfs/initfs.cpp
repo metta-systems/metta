@@ -6,15 +6,18 @@
 //
 #include "initfs.h"
 
-initfs::initfs(address_t s) : start(s)
+initfs::initfs(address_t s) : start(s), entries(s + ((header*)s)->index_offset)
 {
-    initfs_header *header = (initfs_header*)start;
-    initfs_index *index = (initfs_index*)(start + header->index_offset);
-    strtab = (const char*)(start + header->names_offset);
 }
 
 address_t initfs::get_file(string spec)
 {
+    for (int i = 0; i < start.count; i++)
+    {
+        if (strncmp())
+            return (address_t)start + entries[i].location;
+    }
+    return 0; // not found
 }
 
 // kate: indent-width 4; replace-tabs on;

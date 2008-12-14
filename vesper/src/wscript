@@ -87,7 +87,7 @@ def build(bld):
 
 	#update = updater(bld.env_of_name('x86-release').copy())
 	#update.inputs = [vesper.target]
-	#update.outputs = [update.env.find_resource('floppy.img')]
+	#update.outputs = ['floppy.img']
 
 	tests = bld.new_task_gen('cxx', 'program')
 	tests.find_sources_in_dirs('tests')

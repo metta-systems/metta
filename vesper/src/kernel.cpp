@@ -47,9 +47,12 @@ void kernel::run()
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
 
-    // Load initrd and pass control to init component.
+    // Load init component and its initfs.
+    // Pass control to init component in supervisor (user?) mode.
     // After that the kernel's startup business is over
     // and execution continues in the userspace root server.
+    //
+    // init+initfs comprise the libos loaded by the kernel to do actual things.
 
     for (unsigned int i = 0; i < multiboot.mod_count(); i++)
     {
@@ -57,9 +60,23 @@ void kernel::run()
         kconsole.print("Module %d @ %p to %p:\n", i+1, m->mod_start, m->mod_end);
         if (m->str)
             kconsole.print("       %s\n", m->str);
+        if (!strcmp(m->str, "/initfs"))
+        {
+            kconsole.print("FOUND INITFS\n");
+            // init is a statically linked elf file, load it and jump to entrypoint
+            // init startup takes references to multiboot and initfs interfaces.
+        }
+        if (!strcmp(m->str, "/init"))
+        {
+            kconsole.print("FOUND INIT\n");
+            // init is a statically linked elf file, load it and jump to entrypoint
+            // init startup takes references to multiboot and initfs interfaces.
+        }
     }
 
     while (1) {
+        //thread::self()->set_name("kernel_idle");
+        //asm("hlt");
 //         scheduler::yield();
     }
 }

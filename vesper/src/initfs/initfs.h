@@ -19,11 +19,12 @@ using metta::kernel::string;
 #endif
 
 // Initfs file layout:
-// initfs_header
+// version 1: uses separate index structure, not in production.
+// version 2: current.
+// initfs::header
 // files data
 // aligned: names area
-// aligned: initfs_index
-// initfs_entry * count
+// aligned: initfs::entry * count
 
 class initfs
 {
@@ -34,11 +35,13 @@ public:
     struct header
     {
         uint32_t magic;
+        uint32_t version;
         uint32_t index_offset;
         uint32_t names_offset;
         uint32_t names_size;
+        uint32_t count;
 
-        header() : magic(FOURCC_MAGIC('I','i','f','S')), index_offset(0), names_offset(0), names_size(0) {}
+        header() : magic(FOURCC_MAGIC('I','i','f','S')), version(2), index_offset(0), names_offset(0), names_size(0), count(0) {}
     };
 
     struct entry
@@ -51,17 +54,9 @@ public:
         entry() : magic(FOURCC_MAGIC('F','E','n','t')), name_offset(0), location(0), size(0) {}
     };
 
-    struct index
-    {
-        uint32_t magic;
-        uint32_t count;
-
-        index() : magic(FOURCC_MAGIC('f','I','d','X')), count(0) {}
-    };
-
 private:
-    address_t start;
-    string strtab;
+    header* start;
+    entry*  entries;
 };
 
 // kate: indent-width 4; replace-tabs on;

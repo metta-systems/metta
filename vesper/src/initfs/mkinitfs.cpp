@@ -88,8 +88,11 @@ filebinio& operator << (filebinio& io, string str)
 filebinio& operator << (filebinio& io, initfs::header& header)
 {
     io.write32le(header.magic);
+    io.write32le(header.version);
     io.write32le(header.index_offset);
     io.write32le(header.names_offset);
+    io.write32le(header.names_size);
+    io.write32le(header.count);
     return io;
 }
 
@@ -99,13 +102,6 @@ filebinio& operator << (filebinio& io, initfs::entry& entry)
     io.write32le(entry.name_offset);
     io.write32le(entry.location);
     io.write32le(entry.size);
-    return io;
-}
-
-filebinio& operator << (filebinio& io, initfs::index& index)
-{
-    io.write32le(index.magic);
-    io.write32le(index.count);
     return io;
 }
 
@@ -129,7 +125,6 @@ int main(int argc, char** argv)
     CBStream in_stream(read_func, &in);
 
     initfs::header header;
-    initfs::index  index;
     initfs::entry  entry[MAX_ENTRIES];
     string name_storage; // use bstring to store names as multiple \0-terminated strings concatenated together.
     int name_offset = 0;
@@ -154,14 +149,14 @@ int main(int argc, char** argv)
                 out.write(buf, bytes);
                 bytes = in_data.read(buf, 1, 4096);
             }
-            entry[index.count].name_offset = name_offset;
-            entry[index.count].location = data_offset;
-            entry[index.count].size = in_data.pos();
+            entry[header.count].name_offset = name_offset;
+            entry[header.count].location = data_offset;
+            entry[header.count].size = in_data.pos();
             name_storage += right;
             name_offset += right.length();
-            data_offset += entry[index.count].size;
-            index.count++;
-            assert(index.count < MAX_ENTRIES);
+            data_offset += entry[header.count].size;
+            header.count++;
+            assert(header.count < MAX_ENTRIES);
         }
     }
 
@@ -186,8 +181,7 @@ int main(int argc, char** argv)
     }
 
     header.index_offset = out.pos();
-    io << index;
-    for (i = 0; i < index.count; i++)
+    for (i = 0; i < header.count; i++)
     {
         entry[i].name_offset += name_offset;
         io << entry[i];
