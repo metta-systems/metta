@@ -79,20 +79,21 @@ private:
     file& file_;
 };
 
-filebinio& operator << (filebinio& io, initfs_header& header)
-{
-    io.write32le(header.magic);
-    io.write32le(header.index_offset);
-    return io;
-}
-
 filebinio& operator << (filebinio& io, string str)
 {
     io.write((const char*)str, str.length());
     return io;
 }
 
-filebinio& operator << (filebinio& io, initfs_entry& entry)
+filebinio& operator << (filebinio& io, initfs::header& header)
+{
+    io.write32le(header.magic);
+    io.write32le(header.index_offset);
+    io.write32le(header.names_offset);
+    return io;
+}
+
+filebinio& operator << (filebinio& io, initfs::entry& entry)
 {
     io.write32le(entry.magic);
     io.write32le(entry.name_offset);
@@ -101,7 +102,7 @@ filebinio& operator << (filebinio& io, initfs_entry& entry)
     return io;
 }
 
-filebinio& operator << (filebinio& io, initfs_index& index)
+filebinio& operator << (filebinio& io, initfs::index& index)
 {
     io.write32le(index.magic);
     io.write32le(index.count);
@@ -127,9 +128,9 @@ int main(int argc, char** argv)
     filebinio io(out);
     CBStream in_stream(read_func, &in);
 
-    initfs_header header;
-    initfs_index  index;
-    initfs_entry  entry[MAX_ENTRIES];
+    initfs::header header;
+    initfs::index  index;
+    initfs::entry  entry[MAX_ENTRIES];
     string name_storage; // use bstring to store names as multiple \0-terminated strings concatenated together.
     int name_offset = 0;
     int data_offset = sizeof(header);
@@ -172,7 +173,10 @@ int main(int argc, char** argv)
     }
 
     name_offset = out.pos();
+    header.names_offset = name_offset;
     io << name_storage;
+
+    header.names_size = out.pos() - name_offset;
 
     if (out.pos() % ALIGN)
     {
