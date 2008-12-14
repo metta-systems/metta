@@ -94,3 +94,10 @@ def build(bld):
 	tests.includes = include_dirs
 	tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
 	tests.target = 'run-tests'
+
+	#mkinitfs = bld.new_task_gen('cxx', 'program')
+	#mkinitfs.source = ['initfs/mkinitfs.cpp']
+	#mkinitfs.includes = include_dirs
+	#mkinitfs.env = bld.env_of_name('x86-tests-release').copy()
+	#mkinitfs.uselib_local = 'bstrlib'
+	#mkinitfs.target = 'mkinitfs'
