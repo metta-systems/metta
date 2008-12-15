@@ -42,8 +42,8 @@ void kernel::run()
 	memory_manager.remap_stack();
 	kconsole.debug_log("Remapped stack and ready to rock.");
 
-//	task::init();
-//	timer::init();//crashes at start of timer init (stack problem?)
+	task::init();
+	timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
 
@@ -54,6 +54,8 @@ void kernel::run()
     //
     // init+initfs comprise the libos loaded by the kernel to do actual things.
 
+    multiboot::modinfo *initfsmod = 0;
+    multiboot::modinfo *initmod = 0;
     for (unsigned int i = 0; i < multiboot.mod_count(); i++)
     {
         multiboot::modinfo *m = multiboot.mod(i);
@@ -63,16 +65,23 @@ void kernel::run()
         if (!strcmp(m->str, "/initfs"))
         {
             kconsole.print("FOUND INITFS\n");
-            // init is a statically linked elf file, load it and jump to entrypoint
-            // init startup takes references to multiboot and initfs interfaces.
+            initfsmod = m;
         }
         if (!strcmp(m->str, "/init"))
         {
             kconsole.print("FOUND INIT\n");
+            initmod = m;
             // init is a statically linked elf file, load it and jump to entrypoint
             // init startup takes references to multiboot and initfs interfaces.
         }
     }
+
+    ASSERT(initfsmod && initmod);
+    initfs init_fs(initfsmod->start);
+    initcomp init_comp(initmod->start);
+
+    // FIXME: create com_imultiboot and com_iinitfs interfaces and pass to init_comp
+    init_comp(multiboot, init_fs);
 
     while (1) {
         //thread::self()->set_name("kernel_idle");
