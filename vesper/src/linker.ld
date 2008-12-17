@@ -7,6 +7,7 @@ SECTIONS
 	.text 0x100000 :
 	{
 		code = .; _code = .; __code = .;
+		*loader*.o
 		*(.text)
 		FILL(0x90)
 	}
