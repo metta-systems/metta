@@ -24,16 +24,13 @@
 #ifndef _OSKIT_COM_H_
 #define _OSKIT_COM_H_
 
-#include <types.h>
-#include <string.h>
+#include "types.h"
+#include "string.h"
 #include <oskit/types.h>
 #include <oskit/compiler.h>
 #include <oskit/error.h>
 
 using metta::kernel::string;
-
-OSKIT_BEGIN_DECLS
-
 
 /* COM interface identifiers */
 typedef string oskit_iid_t;
@@ -85,18 +82,36 @@ typedef int32_t status_t;
 #define OSKIT_COMDECL_U     uint32_t        OSKIT_COMCALL
 #define OSKIT_COMDECL_V     void            OSKIT_COMCALL
 
+#define DECLARE_COMINTERFACE(name) struct name##_ops; struct name : public com_interface<name##_ops>
+
+
+template <class ops_type>
+struct com_interface
+{
+    ops_type *ops;
+
+    inline OSKIT_COMDECL   query(const oskit_iid_t iid, void **out_ihandle)
+    {
+        return ops->query(this, iid, out_ihandle);
+    }
+
+    inline OSKIT_COMDECL_U ref()
+    {
+        return ops->ref(this);
+    }
+
+    inline OSKIT_COMDECL_U unref()
+    {
+        return ops->unref(this);
+    }
+};
+
 /*
  * Definition of the com_iunknown interface (IUnknown in Microsofteze).
  */
-struct com_iunknown
+DECLARE_COMINTERFACE(com_iunknown)
 {
-    struct com_iunknown_ops *ops;
-
-    OSKIT_COMDECL       query(const oskit_iid_t iid, void **out_ihandle);
-    OSKIT_COMDECL_U     ref();
-    OSKIT_COMDECL_U     unref();
 };
-typedef struct com_iunknown com_iunknown_t;//FIXME: remove?
 
 struct com_iunknown_ops
 {
@@ -105,44 +120,30 @@ struct com_iunknown_ops
     * and if so, obtain a reference to that interface.
     **/
     OSKIT_COMDECL   (*query)(com_iunknown *obj, const oskit_iid_t iid,
-                              void **out_ihandle);
+                             void **out_ihandle);
 
     /**
     * Increment the reference count for this interface.
     **/
-    OSKIT_COMDECL_U	(*ref)(com_iunknown *obj);
+    OSKIT_COMDECL_U (*ref)(com_iunknown *obj);
 
     /**
     * Decrement the reference count for this interface,
     * potentially freeing the interface/object if it drops to zero.
     **/
-	OSKIT_COMDECL_U	(*unref)(com_iunknown *obj);
+    OSKIT_COMDECL_U (*unref)(com_iunknown *obj);
 };
 
-inline OSKIT_COMDECL   com_iunknown::query(const oskit_iid_t iid, void **out_ihandle)
-{
-    return ops->query(this, iid, out_ihandle);
-}
 
-inline OSKIT_COMDECL_U com_iunknown::ref()
-{
-    return ops->ref(this);
-}
-
-inline OSKIT_COMDECL_U com_iunknown::unref()
-{
-    return ops->unref(this);
-}
-
-///// TODO: clean these up (reg/unreg/lookup goes to itrader interface of parent com object)
+///// TODO clean these up (reg/unreg/lookup goes to itrader interface of parent com object)
 
 /*
  * Generic COM interface/object registration and lookup.
  * This does not itself need to be a COM object since there's only one.
  */
-oskit_error_t oskit_register(const oskit_iid_t iid, void *interface);
-oskit_error_t oskit_unregister(const oskit_iid_t iid, void *interface);
-oskit_error_t oskit_lookup(const oskit_iid_t iid, void ***out_interface_array);
+// oskit_error_t oskit_register(const oskit_iid_t iid, void *interface);
+// oskit_error_t oskit_unregister(const oskit_iid_t iid, void *interface);
+// oskit_error_t oskit_lookup(const oskit_iid_t iid, void ***out_interface_array);
 
 /*
  * Call context query/manipulation functions,
@@ -151,10 +152,8 @@ oskit_error_t oskit_lookup(const oskit_iid_t iid, void ***out_interface_array);
  * these routines simply get and set the current thread's context object.
  * What interfaces the object supports (besides IUnknown) is undefined.
  */
-oskit_error_t oskit_get_call_context(const oskit_iid_t iid, void **out_if);
-oskit_error_t oskit_set_call_context(com_iunknown *context);
-
-OSKIT_END_DECLS
+// oskit_error_t oskit_get_call_context(const oskit_iid_t iid, void **out_if);
+// oskit_error_t oskit_set_call_context(com_iunknown *context);
 
 #endif /* _OSKIT_COM_H_ */
 

@@ -77,11 +77,11 @@ void kernel::run()
     }
 
     ASSERT(initfsmod && initmod);
-    initfs init_fs(initfsmod->start);
-    initcomp init_comp(initmod->start);
+//    initfs init_fs(initfsmod->start);
+//    initcomp init_comp(initmod->start);
 
     // FIXME: create com_imultiboot and com_iinitfs interfaces and pass to init_comp
-    init_comp(multiboot, init_fs);
+//    init_comp(multiboot, init_fs);
 
     while (1) {
         //thread::self()->set_name("kernel_idle");
