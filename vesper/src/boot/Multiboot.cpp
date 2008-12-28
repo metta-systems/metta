@@ -15,13 +15,13 @@ namespace kernel {
 
 multiboot::multiboot(multiboot::header *h)
 {
-	header_ = h;
+    header_ = h;
 
-	symtab = NULL;
-	strtab = NULL;
+    symtab = NULL;
+    strtab = NULL;
 
-	// try and find the symtab/strtab
-	if (!is_elf())
+    // try and find the symtab/strtab
+    if (!is_elf())
         return;
 
     elf32::section_header* shstrtab = (elf32::section_header*)(header_->addr +
