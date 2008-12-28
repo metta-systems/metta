@@ -71,7 +71,6 @@ void memory_manager::init(address_t mem_end)
 		i += PAGE_SIZE;
 	}
 
-// TODO BUG HERE!
 	// Now allocate those pages we mapped earlier.
 	for (i = HEAP_START; i < HEAP_START+HEAP_INITIAL_SIZE; i += PAGE_SIZE)
 	{
