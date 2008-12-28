@@ -87,6 +87,14 @@ public:
         uint32_t reserved;
     } PACKED;
 
+    struct mmapinfo
+    {
+        uint32_t size;
+        uint64_t base_addr;
+        uint64_t length;
+        uint32_t type;
+    } PACKED;
+
     multiboot() : header_(NULL) {}
     multiboot(header *h);
 
@@ -117,7 +125,7 @@ public:
     // Return highest address occupied by loaded modules.
     //
     // This method assumes that modules are sorted in order of their
-    // load address, which might be not the case.
+    // load address, which might not be the case.
     //
     INLINE address_t last_mod_end()
     {
@@ -156,6 +164,9 @@ public:
 
     INLINE bool is_elf() { return header_->flags & MULTIBOOT_FLAG_ELF; }
     INLINE bool has_mem_info() { return header_->flags & MULTIBOOT_FLAG_MEM; }
+
+    inline bool has_mmap_info() { return header_->flags & MULTIBOOT_FLAG_MMAP; }
+    void print_mmap_info();
 
 private:
     header*                header_;

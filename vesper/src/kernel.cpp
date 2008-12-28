@@ -76,6 +76,8 @@ void kernel::run()
         }
     }
 
+    multiboot.print_mmap_info();
+
     ASSERT(initfsmod && initmod);
 //    initfs init_fs(initfsmod->start);
 //    initcomp init_comp(initmod->start);
