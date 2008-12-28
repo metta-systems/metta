@@ -11,7 +11,7 @@ blddir = 'build'
 source_dirs  = '. lib memory pd schedule boot'
 include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'
-cflags += ' -O3' #FIXME: builddep
+cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes fuckups
 flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
