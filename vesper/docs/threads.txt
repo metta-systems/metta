@@ -1,0 +1,15 @@
+Threads start life as kernel entities.
+
+Process calls kernel to spawn a new thread, kernel initializes thread in it's own address space and then makes an upcalls into the
+calling process from this new thread.
+
+Thread syncronization in passive objects can be implemented by either single activation record per-object (allowing no more than 1 thread to enter the passive object at a time) or by holding object-wide locks in places which modify the state of this object (more granular, less latency, more race issues).
+
+
+Thread - a sequential flow of execution.
+
+Thread is split into two coupled entities:
+- Activation Record - execution context, including task, exception handler, stack, registers.
+  - Activation Records stack up in piles when threads do jumps across task boundaries.
+  - Activation Record can be seen from within the task to represent and manipulate the thread.
+- Scheduling Record - priority and resource accounting.
