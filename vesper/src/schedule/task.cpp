@@ -80,7 +80,7 @@ void task::yield()
     esp = current_task->esp;
     ebp = current_task->ebp;
 
-	kconsole.print("yield() to %d\n", current_task->id);
+// 	kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
     memory_manager.set_current_directory(current_task->page_dir);

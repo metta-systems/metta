@@ -4,6 +4,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+/** TODO **
+* As per the architecture docs: task is a protection domain with associated memory and portals.
+* The schedulable property of the thread should be factored out into a Thread Scheduling Record,
+* and this task class disbanded into more fine-grained ones.
+**/
 #pragma once
 
 #include "types.h"
