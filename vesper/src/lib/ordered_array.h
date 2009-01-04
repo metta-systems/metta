@@ -18,6 +18,7 @@ namespace kernel {
 * This array is insertion sorted - it always remains in a sorted state (between calls).
 * @c Type must implement operator <()
 * Array must be in-place allocatable for Heap to work correctly.
+* This implementation is not particularly optimized for large arrays - insertion is O(N).
 **/
 template<class Type, uint32_t N>
 class OrderedArray
@@ -31,8 +32,6 @@ public:
 		memset(array, 0, N * sizeof(Type*));
 		size = 0;
 	}
-
-	~OrderedArray() {}
 
 	void insert(Type* item)
 	{
@@ -92,7 +91,7 @@ public:
 	}
 
 private:
-	Type *array[N];
+	Type*    array[N];
 	uint32_t size;
 };
 
