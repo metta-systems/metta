@@ -6,6 +6,11 @@
 
 [ ] Port string operations to bstrlib/string.
 
+[ ] See to use Flick idl compiler
+  [ ] Build
+  [ ] Test
+  [ ] Make stub generator for Metta
+
 == wscript ==
 [ ] environment selection from cmdline
 [ ] run update_image.sh automagically after build
