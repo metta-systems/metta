@@ -11,3 +11,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE class library tests
 #include <boost/test/unit_test.hpp>
+
+// kate: indent-width 4; replace-tabs on;
+// vi:set ts=4:set expandtab=on:
