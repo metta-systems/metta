@@ -10,13 +10,13 @@
 
 /*============================================================================*/
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/floating_point_comparison.hpp>
-#include <boost/test/included/unit_test.hpp>
-// #include <boost/test/unit_test.hpp>
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
 #include "bit_array.h"
 using metta::common::bit_array;
+
+BOOST_AUTO_TEST_SUITE( test_suite )
 
 BOOST_AUTO_TEST_CASE(test_bit_array)
 {
@@ -38,6 +38,8 @@ BOOST_AUTO_TEST_CASE(test_bit_array)
 	BOOST_CHECK_EQUAL(array.test(0), false);
 	BOOST_CHECK_EQUAL(array.test(0), false);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

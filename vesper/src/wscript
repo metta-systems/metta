@@ -12,7 +12,8 @@ source_dirs  = '. lib memory pd schedule boot'
 include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'
 cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes fuckups
-flags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -fno-leading-underscore'
+osflags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin '
+flags = '-fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
 	opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
@@ -34,22 +35,23 @@ def configure(conf):
 	# Config for running tests
 	conf.setenv('x86-tests-release') # Activate the environment
 
+	conf.env['LIB_TEST']      = 'boost_unit_test_framework'
+
 	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fexceptions ' + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4', 'UNIT_TESTS'])
 	conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
 	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
-	conf.env.append_unique('LDFLAGS', '-lboost_unit_test_framework')
 
 	# Config for building kernel on x86
 	conf.setenv('x86-release') # Activate the environment
 
-	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
-	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + flags)
+	conf.env.append_unique('CCFLAGS', cflags + ' ' + osflags + flags)
+	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + osflags + flags)
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
 	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
-	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + flags)
+	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)
 	conf.env.append_unique('NASM_FLAGS', '-f elf')
 
 	conf.write_config_header('config.h')
@@ -93,6 +95,7 @@ def build(bld):
 	tests.find_sources_in_dirs('tests')
 	tests.includes = include_dirs
 	tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
+	tests.uselib = 'TEST'
 	tests.target = 'run-tests'
 
 	#mkinitfs = bld.new_task_gen('cxx', 'program')
