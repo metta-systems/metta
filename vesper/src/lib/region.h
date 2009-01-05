@@ -20,10 +20,10 @@ namespace kernel {
 class region : public object
 {
 private:
-    link           task_ref; /** task over which region is defined */
-    address_t      start_va; /** start VA of the region */
-    size_t         size;     /** size of the region */
-    protection_t   prot;     /** protection attributes granted */
+    link           task_ref; /**< task over which region is defined */
+    address_t      start_va; /**< start VA of the region */
+    size_t         size;     /**< size of the region */
+    protection_t   prot;     /**< protection attributes granted */
 };
 
 }

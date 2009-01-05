@@ -57,8 +57,8 @@ public:
     }
 
 private:
-    queue<T>* next_; /* next element */
-    queue<T>* prev_; /* previous element */
+    queue<T>* next_; /**< next element */
+    queue<T>* prev_; /**< previous element */
     T         body;
 };
 

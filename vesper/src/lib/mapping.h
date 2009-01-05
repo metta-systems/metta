@@ -23,13 +23,13 @@ namespace kernel {
 class mapping : public object
 {
 private:
-    link          task_ref; /** link form of task reference */
-    addrress_t    region_off; /** offset into the region */
-    address_t     start_va; /** VA at which the region is mapped */
-    size_t        size; /** size of mapping */
-    protection_t  prot; /** protection attributes granted */
+    link          task_ref;    /**< link form of task reference */
+    addrress_t    region_off;  /**< offset into the region */
+    address_t     start_va;    /**< VA at which the region is mapped */
+    size_t        size;        /**< size of mapping */
+    protection_t  prot;        /**< protection attributes granted */
 
-    queue<fragment> fragments; /** fragment map */
+    queue<fragment> fragments; /**< fragment map */
 };
 
 }

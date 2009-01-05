@@ -53,10 +53,7 @@ public:
     }
 
 private:
-    /**
-    * The actual lock variable
-    */
-    uint32_t lock;
+    uint32_t lock; /**< The actual lock variable. */
 };
 
 // kate: indent-width 4; replace-tabs on;
