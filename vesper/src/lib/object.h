@@ -8,6 +8,9 @@
 
 #include "mutex.h"
 
+namespace metta {
+namespace kernel {
+
 /**
 * All kernel entities are objects and have this common fields at their start.
 */
@@ -45,6 +48,9 @@ private:
 
     char*             label;
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

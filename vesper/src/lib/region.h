@@ -9,6 +9,9 @@
 #include "object.h"
 #include "link.h"
 
+namespace metta {
+namespace kernel {
+
 /**
 * A region defines a contiguous range of virtual address space
 * in a task that can be exported to other tasks to map into their
@@ -22,6 +25,9 @@ private:
     size_t         size;     /** size of the region */
     protection_t   prot;     /** protection attributes granted */
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:

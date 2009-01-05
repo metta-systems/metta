@@ -7,6 +7,10 @@
 #pragma once
 
 #include "object.h"
+#include "queue.h"
+
+namespace metta {
+namespace kernel {
 
 /**
 * A mapping makes part or all of a region accessible in a task at a
@@ -24,7 +28,12 @@ private:
     address_t     start_va; /** VA at which the region is mapped */
     size_t        size; /** size of mapping */
     protection_t  prot; /** protection attributes granted */
+
+    queue<fragment> fragments; /** fragment map */
 };
+
+}
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vi:set ts=4:set expandtab=on:
