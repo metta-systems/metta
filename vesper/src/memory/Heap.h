@@ -109,7 +109,7 @@ private:
 	/**
 	 * The index table - lists all available holes.
 	 */
-	OrderedArray<Header, HEAP_INDEX_SIZE>* index;
+	ordered_array<Header, HEAP_INDEX_SIZE>* index;
 	/**
 	 * The start of our allocated space. Includes index table.
 	 */

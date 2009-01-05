@@ -14,28 +14,28 @@ namespace metta {
 namespace kernel {
 
 /**
-* Array of maximum size @c N of pointers to @c Type.
+* Array of maximum size @c n of pointers to @c type.
 * This array is insertion sorted - it always remains in a sorted state (between calls).
-* @c Type must implement operator <()
+* @c type must implement operator <()
 * Array must be in-place allocatable for Heap to work correctly.
 * This implementation is not particularly optimized for large arrays - insertion is O(N).
 **/
-template<class Type, uint32_t N>
-class OrderedArray
+template<class type, uint32_t n>
+class ordered_array
 {
 public:
 	/**
 	 * Create an ordered array.
 	 */
-	inline OrderedArray()
+	inline ordered_array()
 	{
-		memset(array, 0, N * sizeof(Type*));
+		memset(array, 0, n * sizeof(type*));
 		size = 0;
 	}
 
-	void insert(Type* item)
+	void insert(type* item)
 	{
-		ASSERT(size+1 < N);
+		ASSERT(size+1 < n);
 		uint32_t iterator = 0;
 		while (iterator < size && *array[iterator] < *item)
 			iterator++;
@@ -44,12 +44,12 @@ public:
 			array[size++] = item;
 		else
 		{
-			Type* tmp = array[iterator];
+			type* tmp = array[iterator];
 			array[iterator] = item;
 			while (iterator < size)
 			{
 				iterator++;
-				Type* tmp2 = array[iterator];
+				type* tmp2 = array[iterator];
 				array[iterator] = tmp;
 				tmp = tmp2;
 			}
@@ -57,7 +57,7 @@ public:
 		}
 	}
 
-	inline Type* lookup(uint32_t i)
+	inline type* lookup(uint32_t i)
 	{
 		ASSERT(i < size);
 		return array[i];
@@ -83,7 +83,7 @@ public:
 	 */
 	void dump()
 	{
-		kconsole.print("Dumping OrderedArray %p (%d items)\n", this, size);
+		kconsole.print("Dumping ordered_array %p (%d items)\n", this, size);
 		for(int i = 0; i < size; i++)
 		{
 			kconsole.print("    %p\n", array[i]);
@@ -91,7 +91,7 @@ public:
 	}
 
 private:
-	Type*    array[N];
+	type*    array[n];
 	uint32_t size;
 };
 

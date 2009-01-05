@@ -28,7 +28,7 @@ void heap::init(address_t start, address_t end, address_t max, bool supervisor)
 	ASSERT(endAddress   % PAGE_SIZE == 0);
 
 	// Initialise the index.
-	index = (OrderedArray<Header, HEAP_INDEX_SIZE>*)startAddress;
+	index = (ordered_array<Header, HEAP_INDEX_SIZE>*)startAddress;
 
 	// Shift the start address to resemble where we can start putting data.
 	startAddress += sizeof(*index);
