@@ -22,7 +22,7 @@ private:
     size_t              size;        /**< size of range */
     protection_t        prot;        /**< protection attribute */
     queue<T>            mlink;       /**< other frags in mapping */
-    oskit_addr_t        start_pa;    /**< physical address */
+    address_t           start_pa;    /**< physical address */
     mapping*            mapping_;    /**< mapping we are a part of */
     bool                obs_cached;  /**< task has cached objects */
     security_id_t       segment_sid; /**< SID */
