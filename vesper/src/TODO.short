@@ -11,6 +11,8 @@
   [ ] Test
   [ ] Make stub generator for Metta
 
+[ ] TLSF memory allocator for RT tasks // http://rtportal.upv.es/rtmalloc/
+
 == wscript ==
 [ ] environment selection from cmdline
 [ ] run update_image.sh automagically after build
