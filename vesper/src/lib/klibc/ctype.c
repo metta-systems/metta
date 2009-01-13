@@ -10,7 +10,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include "common.h"
+#include "macros.h"
 #include "ctype.h"
 
 unsigned char _ctype[] = {

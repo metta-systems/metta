@@ -8,6 +8,7 @@
 #include "string.h"
 #include "common.h"
 #include "macros.h"
+#include "vsprintf.h"
 
 namespace metta {
 namespace kernel {
@@ -139,6 +140,7 @@ void default_console::print_char(char ch)
         scroll_up();
         *cursor = LINE_PITCH * (LINE_COUNT - 1);
     }
+    BochsMagicTrap();
     BochsConsolePrintChar(ch);
 }
 

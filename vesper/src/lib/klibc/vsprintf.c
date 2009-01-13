@@ -26,10 +26,11 @@
 
 #include <stdarg.h>
 #include <limits.h>
-#include "common.h"
+#include "macros.h"
 #include "string.h"
 #include "ctype.h"
 #include "asm-x86-div64.h"
+#include "vsprintf.h"
 
 // #include <asm/page.h>		/* for PAGE_SIZE */
 

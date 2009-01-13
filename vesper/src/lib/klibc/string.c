@@ -25,7 +25,7 @@
  * -  Kissed strtok() goodbye
  */
 
-#include "common.h"
+#include "macros.h"
 #include "string.h"
 #include "ctype.h"
 

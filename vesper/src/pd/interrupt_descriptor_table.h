@@ -9,7 +9,8 @@
 //
 #pragma once
 
-#include "common.h"
+#include "types.h"
+#include "macros.h"
 
 namespace metta {
 namespace kernel {

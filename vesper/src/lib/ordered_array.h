@@ -7,6 +7,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 #include "common.h"
 #include "default_console.h"
 

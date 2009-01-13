@@ -6,7 +6,8 @@
 //
 #pragma once
 
-#include "common.h"
+#include "types.h"
+#include "macros.h"
 
 class gdt_entry
 {
