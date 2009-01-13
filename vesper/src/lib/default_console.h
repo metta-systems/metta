@@ -60,8 +60,8 @@ public:
 
 private:
 	default_console();
-	unsigned char* videoram;
-	unsigned int*  cursor;
+    volatile unsigned char* videoram;
+    volatile unsigned int*  cursor;
 	unsigned char  attr;
 };
 

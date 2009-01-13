@@ -25,9 +25,9 @@ default_console& default_console::self()
 
 default_console::default_console()
 {
-   videoram = (unsigned char *) 0xb8000;
-   cursor = (unsigned int *) 0xb903c;
-   clear();
+    videoram = (volatile unsigned char *) 0xb8000;
+    cursor = (volatile unsigned int *) 0xb903c;
+    clear();
 }
 
 void default_console::clear()
