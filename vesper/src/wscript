@@ -49,6 +49,7 @@ def configure(conf):
 
 	conf.env.append_unique('CCFLAGS', cflags + ' ' + osflags + flags)
 	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + osflags + flags)
+	conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
 	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
 	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
 	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)

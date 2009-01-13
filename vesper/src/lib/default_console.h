@@ -6,100 +6,100 @@
 //
 #pragma once
 
-#include "macros.h"
-
 namespace metta {
 namespace kernel {
 
+// FIXME these defines poison global identifier space
 #define kconsole default_console::self()
 #define endl default_console::eol
 
 enum Color {
-	BLACK = 0,
-	BLUE,
-	GREEN,
-	CYAN,
-	RED,
-	MAGENTA,
-	BROWN,
-	LIGHTGRAY,
-	DARKGRAY=8,
-	LIGHTBLUE,
-	LIGHTGREEN,
-	LIGHTCYAN,
-	LIGHTRED,
-	LIGHTMAGENTA,
-	YELLOW,
-	WHITE
+    BLACK = 0,
+    BLUE,
+    GREEN,
+    CYAN,
+    RED,
+    MAGENTA,
+    BROWN,
+    LIGHTGRAY,
+    DARKGRAY=8,
+    LIGHTBLUE,
+    LIGHTGREEN,
+    LIGHTCYAN,
+    LIGHTRED,
+    LIGHTMAGENTA,
+    YELLOW,
+    WHITE
 };
 
 class default_console
 {
 public:
-	static const char eol;
+    static const char eol;
 
-	static default_console& self();
+    static default_console& self();
 
-	void set_color(Color col);
-	void set_background(Color col);
-	void set_attr(Color fore, Color back);// GREEN on BLACK
+    void set_color(Color col);
+    void set_background(Color col);
+    void set_attr(Color fore, Color back);// GREEN on BLACK
 
-	void clear();
-	void locate(int row, int col);
-	void scroll_up();
-	void newline();
-	void print_int(int n);
-	void print_char(char ch);
-	void print_byte(unsigned char n);
-	void print_hex(unsigned int n);
-	void print(const char *str, ...);
+    void clear();
+    void locate(int row, int col);
+    void scroll_up();
+    void newline();
+    void print_int(int n);
+    void print_char(char ch);
+    void print_byte(unsigned char n);
+    void print_hex(unsigned int n);
+    void print(const char *str, ...);
 
-	void wait_ack();
+    void wait_ack();
 
-	void debug_log(const char *str, ...);
+    void debug_log(const char *str, ...);
 
 private:
-	default_console();
+    default_console();
+
     volatile unsigned char* videoram;
     volatile unsigned int*  cursor;
-	unsigned char  attr;
+    unsigned char           attr;
 };
 
 // Define stream io on console.
-INLINE default_console& operator << (default_console& con, Color data)
+inline default_console& operator << (default_console& con, Color data)
 {
-	con.set_color(data);
-	return con;
+    con.set_color(data);
+    return con;
 }
 
-INLINE default_console& operator << (default_console& con, const char* data)
+inline default_console& operator << (default_console& con, const char* data)
 {
-	con.print(data);
-	return con;
+    con.print(data);
+    return con;
 }
 
-INLINE default_console& operator << (default_console& con, int data)
+inline default_console& operator << (default_console& con, int data)
 {
-	con.print_int(data);
-	return con;
+    con.print_int(data);
+    return con;
 }
 
-INLINE default_console& operator << (default_console& con, unsigned int data)
+inline default_console& operator << (default_console& con, unsigned int data)
 {
-	con.print_hex(data);
-	return con;
+    con.print_hex(data);
+    return con;
 }
 
-INLINE default_console& operator << (default_console& con, char data)
+inline default_console& operator << (default_console& con, char data)
 {
-	con.print_char(data);
-	return con;
+    con.print_char(data);
+    return con;
 }
 
-INLINE default_console& operator << (default_console& con, unsigned char data)
+inline default_console& operator << (default_console& con, unsigned char data)
 {
-	con.print_byte(data);
-	return con;
+    con.print_byte(data);
+    return con;
 }
 
 }
