@@ -23,7 +23,7 @@ bits 32                                ; 32 bit PM
 section .bss
 initialEsp: resd 1                     ; reserve one dword
 
-section .text
+section .multiboot
 align 4
 MultiBootHeader:                       ; We only include so many fields in the
 	dd MAGIC                           ; mboot header because bootloader will
