@@ -4,10 +4,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/**
-* \brief Defines an interface to the multiboot header.
-* \ingroup Boot
-**/
 #pragma once
 
 #include "types.h"
@@ -33,6 +29,10 @@ enum {
     MULTIBOOT_FLAG_VBE     = 0x0400
 };
 
+/**
+* \brief Defines an interface to the multiboot header.
+* \ingroup Boot
+**/
 class multiboot
 {
 public:
@@ -98,11 +98,11 @@ public:
     multiboot() : header_(NULL) {}
     multiboot(header *h);
 
-    INLINE uint32_t lower_mem()   { return header_->mem_lower; }
-    INLINE uint32_t upper_mem()   { return header_->mem_upper; }
-    INLINE uint32_t flags()       { return header_->flags; }
+    inline uint32_t lower_mem()   { return header_->mem_lower; }
+    inline uint32_t upper_mem()   { return header_->mem_upper; }
+    inline uint32_t flags()       { return header_->flags; }
 
-    INLINE modinfo* mod(uint32_t i)
+    inline modinfo* mod(uint32_t i)
     {
         ASSERT(sizeof(modinfo)==16);
         if (header_->flags & MULTIBOOT_FLAG_MODS
@@ -114,34 +114,34 @@ public:
         return 0;
     }
 
-    INLINE uint32_t mod_count() const
+    inline uint32_t mod_count() const
     {
         if (header_->flags & MULTIBOOT_FLAG_MODS)
             return header_->mods_count;
         return 0;
     }
 
-    //
-    // Return highest address occupied by loaded modules.
-    //
-    // This method assumes that modules are sorted in order of their
-    // load address, which might not be the case.
-    //
-    INLINE address_t last_mod_end()
+    /**
+    * Return highest address occupied by loaded modules.
+    *
+    * This method assumes that modules are sorted in order of their
+    * load address, which might not be the case.
+    **/
+    inline address_t last_mod_end()
     {
         modinfo *m = mod(header_->mods_count-1);
         return m ? m->mod_end : 0;
     }
 
-    INLINE uint32_t elf_num_headers()      { return header_->num; }
-    INLINE uint32_t elf_header_size()      { return header_->size; }
-    INLINE uint32_t elf_header_addr()      { return header_->addr; }
-    INLINE uint32_t elf_strtab_index()     { return header_->shndx; }
-    INLINE elf32::section_header* symtab_start()
+    inline uint32_t elf_num_headers()      { return header_->num; }
+    inline uint32_t elf_header_size()      { return header_->size; }
+    inline uint32_t elf_header_addr()      { return header_->addr; }
+    inline uint32_t elf_strtab_index()     { return header_->shndx; }
+    inline elf32::section_header* symtab_start()
     {
         return symtab;
     }
-    INLINE address_t symtab_end()
+    inline address_t symtab_end()
     {
         if (symtab)
         {
@@ -149,11 +149,11 @@ public:
         }
         return 0;
     }
-    INLINE elf32::section_header* strtab_start()
+    inline elf32::section_header* strtab_start()
     {
         return strtab;
     }
-    INLINE address_t strtab_end()
+    inline address_t strtab_end()
     {
         if (strtab)
         {
@@ -162,8 +162,8 @@ public:
         return 0;
     }
 
-    INLINE bool is_elf() { return header_->flags & MULTIBOOT_FLAG_ELF; }
-    INLINE bool has_mem_info() { return header_->flags & MULTIBOOT_FLAG_MEM; }
+    inline bool is_elf() { return header_->flags & MULTIBOOT_FLAG_ELF; }
+    inline bool has_mem_info() { return header_->flags & MULTIBOOT_FLAG_MEM; }
 
     inline bool has_mmap_info() { return header_->flags & MULTIBOOT_FLAG_MMAP; }
     void print_mmap_info();
