@@ -20,6 +20,7 @@ activate_gdt:
     mov ss, ax
     ret
 
+; TODO: use inline assembly and remove this code
 activate_idt:
     mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
     lidt [eax]        ; Load the IDT pointer.

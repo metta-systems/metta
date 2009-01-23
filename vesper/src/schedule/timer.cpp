@@ -28,7 +28,7 @@ public:
     timer_callback() : tick(0) {}
     virtual ~timer_callback() {}
 
-	virtual void run(Registers *)
+	virtual void run(registers *)
 	{
 		tick++;
 		task::yield();

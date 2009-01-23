@@ -14,7 +14,7 @@ namespace metta {
 namespace kernel {
 
 // Interrupts are disabled upon entry to run()
-void page_fault_handler::run(Registers *r)
+void page_fault_handler::run(registers *r)
 {
 	PANIC("Page fault");
 	// A page fault has occurred.
