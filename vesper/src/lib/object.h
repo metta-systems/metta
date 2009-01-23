@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "mutex.h"
+#include "lockable.h"
 
 namespace metta {
 namespace kernel {
@@ -18,7 +18,7 @@ namespace kernel {
 * Common system part of kernel objects.
 * Provides locking and allocation management.
 **/
-class object
+class object : public lockable
 {
 public:
     inline void ref() { refs.ref(); }
@@ -38,7 +38,7 @@ private:
     * This mutex covers all data in the basic part of the object,
     * and may also protect some or all of the type-specific data.
     **/
-    mutex        lock;
+//     mutex        lock; // provided by lockable
     /** Physical address at which the user part of the object is located.  */
     address_t    user_pa;
     /** Hash value. Set at object creation time, exported to user via get_state.  */
