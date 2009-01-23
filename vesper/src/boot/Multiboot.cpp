@@ -47,7 +47,7 @@ multiboot::multiboot(multiboot::header *h)
     }
 }
 
-void multiboot::print_mmap_info()
+void multiboot::print_mmap_info() const
 {
     if (!has_mmap_info())
         return;
