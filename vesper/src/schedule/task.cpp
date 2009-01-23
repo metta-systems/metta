@@ -80,7 +80,7 @@ void task::yield()
     esp = current_task->esp;
     ebp = current_task->ebp;
 
-// 	kconsole.print("yield() to %d\n", current_task->id);
+//  kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
     memory_manager.set_current_directory(current_task->page_dir);
@@ -103,7 +103,7 @@ void task::yield()
       mov $0x12345, %%eax; \
       sti;                 \
       jmp *%%ecx           "
-	  : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_task->page_dir->getPhysical()));
+        : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_task->page_dir->get_physical()));
 }
 
 task *task::self()

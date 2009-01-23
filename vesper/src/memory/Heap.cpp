@@ -402,79 +402,76 @@ void heap::free(void *p)
 void heap::expand(uint32_t newSize)
 {
 #ifdef HEAP_DEBUG
-	checkIntegrity();
+    checkIntegrity();
 #endif
-	// Sanity check.
-	ASSERT(newSize > endAddress - startAddress);
+    // Sanity check.
+    ASSERT(newSize > endAddress - startAddress);
 
-	kconsole.print("Heap expanding from %d to %d\n", endAddress - startAddress, newSize);
+    kconsole.print("Heap expanding from %d to %d\n", endAddress - startAddress, newSize);
 
-	// Get the nearest following page boundary.
-	if (newSize % PAGE_SIZE)
-	{
-		newSize &= PAGE_MASK;
-		newSize += PAGE_SIZE;
-	}
+    // Get the nearest following page boundary.
+    if (newSize % PAGE_SIZE)
+    {
+        newSize &= PAGE_MASK;
+        newSize += PAGE_SIZE;
+    }
 
-	// Make sure we are not overreaching ourselves.
-	ASSERT(startAddress + newSize <= maxAddress);
+    // Make sure we are not overreaching ourselves.
+    ASSERT(startAddress + newSize <= maxAddress);
 
-	// This should always be on a page boundary.
-	uint32_t oldSize = endAddress - startAddress;
+    // This should always be on a page boundary.
+    uint32_t oldSize = endAddress - startAddress;
 
-	uint32_t i = oldSize;
-	while(i < newSize)
-	{
-		memory_manager.alloc_frame(
-            memory_manager.get_kernel_directory()->getPage(startAddress+i),
-            isKernel);
-		i += PAGE_SIZE;
-	}
+    uint32_t i = oldSize;
+    while(i < newSize)
+    {
+        memory_manager.alloc_frame(memory_manager.get_kernel_directory()->get_page(startAddress+i), isKernel);
+        i += PAGE_SIZE;
+    }
 
-	endAddress = startAddress + newSize;
+    endAddress = startAddress + newSize;
 #ifdef HEAP_DEBUG
-	check_integrity();
+    check_integrity();
 #endif
 }
 
 uint32_t heap::contract(uint32_t newSize)
 {
 #ifdef HEAP_DEBUG
-	check_integrity();
+    check_integrity();
 #endif
-	// Sanity check.
-	ASSERT(newSize < endAddress - startAddress);
+    // Sanity check.
+    ASSERT(newSize < endAddress - startAddress);
 
-	// get the nearest following page boundary.
-	if (newSize % PAGE_SIZE)
-	{
-		newSize += PAGE_SIZE - newSize % PAGE_SIZE;
-	}
+    // get the nearest following page boundary.
+    if (newSize % PAGE_SIZE)
+    {
+        newSize += PAGE_SIZE - newSize % PAGE_SIZE;
+    }
 
-	// Don't contract too far.
-	if (newSize < HEAP_MIN_SIZE)
-		newSize = HEAP_MIN_SIZE;
+    // Don't contract too far.
+    if (newSize < HEAP_MIN_SIZE)
+        newSize = HEAP_MIN_SIZE;
 
-	kconsole.print("Heap contracting from %d to %d\n", endAddress - startAddress, newSize);
+    kconsole.print("Heap contracting from %d to %d\n", endAddress - startAddress, newSize);
 
-	// Make sure we are not overreaching ourselves.
-	ASSERT(newSize > 0);
+    // Make sure we are not overreaching ourselves.
+    ASSERT(newSize > 0);
 
-	uint32_t oldSize = endAddress-startAddress;
+    uint32_t oldSize = endAddress-startAddress;
 
-	uint32_t i = newSize;
-	while(i < oldSize)
-	{
-		memory_manager.free_frame(
-            memory_manager.get_kernel_directory()->getPage(startAddress+i));
-		i += PAGE_SIZE;
-	}
+    uint32_t i = newSize;
+    while(i < oldSize)
+    {
+        memory_manager.free_frame(memory_manager.get_kernel_directory()->get_page(startAddress+i));
+        i += PAGE_SIZE;
+    }
 
-	endAddress = startAddress+newSize;
+    endAddress = startAddress+newSize;
 #ifdef HEAP_DEBUG
-	checkIntegrity();
+    checkIntegrity();
 #endif
-	return newSize;
+    return newSize;
 }
 
 void heap::checkIntegrity()

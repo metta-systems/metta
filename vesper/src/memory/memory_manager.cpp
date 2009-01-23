@@ -50,7 +50,7 @@ void memory_manager::init(address_t mem_end)
 	// they need to be identity mapped first below.
 	for (uint32_t i = HEAP_START; i < HEAP_END; i += PAGE_SIZE)
 	{
-		kernel_directory->getPage(i, /*make:*/true);
+		kernel_directory->get_page(i, /*make:*/true);
 	}
 
 	// Map some pages in the user heap area.
@@ -59,7 +59,7 @@ void memory_manager::init(address_t mem_end)
 	// they need to be identity mapped first below.
 	for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
 	{
-		kernel_directory->getPage(i, /*make:*/true);
+		kernel_directory->get_page(i, /*make:*/true);
 	}
 
 	// Identity map from KERNEL_START to placementAddress.
@@ -67,7 +67,7 @@ void memory_manager::init(address_t mem_end)
 	while (i < placement_address)
 	{
 		// Kernel code is readable but not writable from userspace.
-		alloc_frame(kernel_directory->getPage(i, true) , /*kernel:*/false, /*writable:*/false);
+		alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
 		i += PAGE_SIZE;
 	}
 
@@ -75,16 +75,16 @@ void memory_manager::init(address_t mem_end)
 	for (i = HEAP_START; i < HEAP_START+HEAP_INITIAL_SIZE; i += PAGE_SIZE)
 	{
 		// Heap is readable but not writable from userspace.
-		alloc_frame(kernel_directory->getPage(i, true), false, false);
+		alloc_frame(kernel_directory->get_page(i, true), false, false);
 	}
 
 	for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
 	{
-		alloc_frame(kernel_directory->getPage(i, true), false, true);
+		alloc_frame(kernel_directory->get_page(i, true), false, true);
 	}
 
 	// write the page directory.
-	write_page_directory((address_t)kernel_directory->getPhysical());
+	write_page_directory((address_t)kernel_directory->get_physical());
 	enable_paging();
 
 	// Initialise the heaps.
@@ -100,7 +100,7 @@ void *memory_manager::malloc(uint32_t size, bool pageAlign, address_t *physicalA
 	void *addr = heap_.allocate(size, pageAlign);
 	if (physicalAddress)
 	{
-		page *pg = kernel_directory->getPage((address_t)addr, false);
+		page *pg = kernel_directory->get_page((address_t)addr, false);
 		*physicalAddress = pg->frame() + (address_t)addr % PAGE_SIZE;
 	}
 	return addr;
@@ -198,7 +198,7 @@ void memory_manager::remap_stack()
 	for (i = STACK_START; i > (STACK_START-STACK_INITIAL_SIZE); i -= PAGE_SIZE)
 	{
 		// General-purpose stack is in user-mode.
-		alloc_frame(current_directory->getPage(i, /*make:*/true), /*kernel:*/false);
+		alloc_frame(current_directory->get_page(i, /*make:*/true), /*kernel:*/false);
 	}
 
 	// Flush the TLB

@@ -105,7 +105,7 @@ public:
         }
     }
 
-    page *getPage(uint32_t n)
+    page *get_page(uint32_t n)
     {
         return &pages[n];
     }
@@ -134,7 +134,7 @@ public:
 };
 
 /**
-  Holds 1024 pagetables.
+* Holds 1024 pagetables.
 **/
 class page_directory
 {
@@ -144,36 +144,36 @@ public:
         for (int i = 0; i < 1024; i++)
         {
             tables[i] = 0;
-            tablesPhysical[i] = 0;
+            tables_physical[i] = 0;
         }
-        physicalAddr = (address_t)tablesPhysical;
+        physical_addr = (address_t)tables_physical;
     }
 
-    page_table *getTable(uint32_t index)
+    page_table *get_table(uint32_t index)
     {
         //ASSERT(index >= 0 && index < 1024);
         return tables[index];
     }
 
-    address_t getPhysical()
+    address_t get_physical()
     {
-        return physicalAddr;
+        return physical_addr;
     }
 
-    page *getPage(address_t addr, bool make = true)
+    page *get_page(address_t addr, bool make = true)
     {
         addr /= PAGE_SIZE;
-        uint32_t tableIdx = addr / 1024;
-        if (tables[tableIdx]) // if the table is already assigned
+        uint32_t table_idx = addr / 1024;
+        if (tables[table_idx]) // if the table is already assigned
         {
-            return tables[tableIdx]->getPage(addr % 1024);
+            return tables[table_idx]->get_page(addr % 1024);
         }
         else if(make)
         {
             address_t tmp;
-            tables[tableIdx] = new(true/*page aligned*/, &tmp/*give phys. addr */) page_table();
-            tablesPhysical[tableIdx] = tmp | 0x7; // PRESENT, RW, US
-            return tables[tableIdx]->getPage(addr % 1024);
+            tables[table_idx] = new(true/*page aligned*/, &tmp/*give phys. addr */) page_table();
+            tables_physical[table_idx] = tmp | 0x7; // PRESENT, RW, US
+            return tables[table_idx]->get_page(addr % 1024);
         }
         else
         {
@@ -182,7 +182,7 @@ public:
     }
 
     /**
-    * Create a new page directory, that is an identical copy to 'dir'.
+    * Create a new page directory, that is an identical copy of this.
     * TODO: implement copy-on-write.
     **/
     page_directory *clone()
@@ -190,30 +190,30 @@ public:
         address_t phys;
         page_directory *dir = new(true, &phys) page_directory();
 
-        // Get the offset of tablesPhysical from the start of
-        // the PageDirectory object.
-        uint32_t offset = (address_t)dir->tablesPhysical - (address_t)dir;
+        // Get the offset of tables_physical from the start of
+        // the page_directory object.
+        uint32_t offset = (address_t)dir->tables_physical - (address_t)dir;
 
-        // Then the physical address of dir->tablesPhysical is
-        dir->physicalAddr = phys + offset;
+        // Then the physical address of dir->tables_physical is
+        dir->physical_addr = phys + offset;
 
-        // go through each page table. If the page table is in the
+        // Go through each page table. If the page table is in the
         // kernel directory, do not make a new copy.
         for (int i = 0; i < 1024; i++)
         {
             if (!tables[i]) continue;
-            if (memory_manager.get_kernel_directory()->getTable(i) == tables[i])
+            if (memory_manager.get_kernel_directory()->get_table(i) == tables[i])
             {
                 // It's in the kernel, so just use the same pointer.
                 dir->tables[i] = tables[i];
-                dir->tablesPhysical[i] = tablesPhysical[i];
+                dir->tables_physical[i] = tables_physical[i];
             }
             else
             {
                 // copy the table.
                 address_t phys;
                 dir->tables[i] = tables[i]->clone(&phys);
-                dir->tablesPhysical[i] = phys | 0x07;
+                dir->tables_physical[i] = phys | 0x07;
             }
         }
 
@@ -222,7 +222,7 @@ public:
 
     void dump()
     {
-/*		bool b = false;
+/*      bool b = false;
         kconsole.print("Dumping page directory:\n");
         for (int i = 0; i < 0xFFFFF; i++)
         {
@@ -262,12 +262,12 @@ private:
     * Array of pointers to the pagetables above, but gives their *physical*
     * location, for loading into the CR3 register.
     **/
-    address_t tablesPhysical[1024];
+    address_t tables_physical[1024];
 
     /**
     * The physical address of tablesPhysical.
     **/
-    address_t physicalAddr;
+    address_t physical_addr;
 };
 
 }
