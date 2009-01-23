@@ -10,9 +10,296 @@
 #pragma once
 
 #include "object.h"
+#include "dispatch.h"
 
 namespace metta {
 namespace kernel {
+
+class page_directory;
+
+/**
+* Context-switch state.
+**/
+struct csw_state
+{
+    /**
+    * Page directory to load while running this thread.
+    * Kept up-to-date by the task code in task.cpp.
+    **/
+    page_directory* page_dir;
+
+    /**
+    * Saved kernel register state for this thread.
+    **/
+    jmp_buf         state;
+};
+
+#define THREAD_STACK_SIZE   3500
+
+/**
+* Exception state.
+*
+* This structure describes the state of user registers
+* as saved upon kernel trap/interrupt entry.
+* Note that we don't need segment registers or v86-mode stuff
+* because none of that is supported in the standard Fluke environment;
+* emulating other OS's is done in a separate "emulation" environment.
+**/
+struct exc_state
+{
+    uint32_t    stack[THREAD_STACK_SIZE/4];
+
+    /* PUSHA register state frame */
+    uint32_t    edi;
+    uint32_t    esi;
+    uint32_t    ebp;
+    uint32_t    ebx;
+    uint32_t    edx;
+    uint32_t    ecx;
+    uint32_t    eax;
+
+    /* Fluke exception code and subcode */
+    uint32_t    code;
+    uint32_t    subcode;
+
+    /* Processor state frame */
+    uint32_t    eip;
+    uint32_t    cs;
+    uint32_t    eflags;
+    uint32_t    esp;
+    uint32_t    ss;
+};
+
+typedef uint32_t wait_val_t;
+
+/**
+* Wait state.
+*
+* Per-thread state maintained by the cancellation support code.
+**/
+struct wait_state
+{
+    /** Lock protecting the following fields.  */
+    spin_lock_t     lock;
+
+    /** Current thread waiting state value, defined above. */
+    wait_val_t      val;
+
+    /**
+    * Cancel pending flag.
+    * Set by thread_cancel(); cleared by thread_clear_cancel().
+    **/
+    bool            cancel_pending;
+
+    /**
+    * KR_* code indicating what to do on wakeup.
+    * Set to KR_RESTART when a thread is woken normally.
+    * Set to KR_CANCEL when a thread is woken by cancellation,
+    * and can be set to KR_USER_EXCEPTION by the IPC code
+    * to cause a receiver thread to take an exception.
+    **/
+    int             resume_rc;
+
+    /**
+    * Whenever this thread is waiting on a condition variable,
+    * this variable points to the condition the thread is waiting on.
+    * At all other times, this pointer is null.
+    **/
+    cond*           waiting_on;
+};
+
+/**
+* Task state.
+*
+* Per-thread state maintained by the task layer.
+**/
+struct task_state
+{
+    /**
+    * Pointer to the task this thread is running in, if any.
+    * If non-NULL, implies that we are on that task's threads list.
+    * Can only be modified by the thread itself,
+    * while holding the task's main object lock.
+    **/
+    task*           task;
+
+    /**
+    * Chain on our task's threads list.
+    * Protected by the task's main lock.
+    **/
+    queue_chain_t   task_chain;
+
+    /**
+    * When someone is trying to destroy a task,
+    * it sets the task_dying flags in all threads running in the task,
+    * and cancels all of those threads.
+    * When the threads wake up and notice this flag,
+    * they stop and remove themselves from the task's list.
+    **/
+    bool            task_dying;
+
+    /**
+    * When a thread is stopped,
+    * this holds its task association instead of 'task'.
+    **/
+    link            task_link;
+};
+
+/**
+* IPC state.
+*
+* Per-thread state relating to IPC.
+* FIXME: should be significantly simpler in Pebble/Metta than in Fluke.
+**/
+struct ipc_state
+{
+    /**
+    * Flags defining the direction of the current reliable connection:
+    * contains FLUKE_THREAD_CLIENT_SENDER and FLUKE_THREAD_SERVER_SENDER.
+    * (This pair is defined below as THREAD_IPCFLAGS.)
+    **/
+    unsigned        flags;
+
+    /**
+    * Pointer to the server thread to which this client is attached,
+    * or NULL if no active connection exists.
+    * Invariant: server->client == this.
+    * Invariant: server_link == NULL.
+    **/
+    thread*         server;
+
+    /**
+    * Reference to the client thread to which this server is attached.
+    * Invariant: client->server == this.
+    * Invariant: client_link == NULL.
+    **/
+    thread*         client;
+
+    /**
+    * Client and server links for this thread,
+    * used when only a half-connection is present
+    * or when the thread is stopped.
+    * When the thread is live, these fields are thread-private;
+    * when stopped, the fields are locked by the thread's s_ob lock.
+    **/
+    link_t          client_link;
+    link_t          server_link;
+
+    /**
+    * Idempotent client/server connection pointers.
+    * There are no pickled versions of these,
+    * since breaking an idempotent connection just cancels it.
+    **/
+    thread*         idemp_server;
+    thread*         idemp_client;
+
+    /**
+    * Server-side IPC entrypoint information,
+    * set using fluke_thread_set_server_info().
+    **/
+    address_t       server_pset_uva;
+    unsigned        server_esp;
+    unsigned        server_oneway_eip;
+    unsigned        server_idempotent_eip;
+    unsigned        server_reliable_eip;
+
+    /**
+    * The effective SID of this thread in its role as
+    * a server waiting on a port set.
+    **/
+    security_id_t   effective_server_sid;
+
+    /**
+    * The effective client SID of this thread's client.
+    * The connection is only complete if this SID is identical
+    * to the effective_client_sid field in the client's state.
+    **/
+    security_id_t   client_effective_client_sid;
+
+    /**
+    * The effective SID of this thread in its role as
+    * a client in a reliable IPC connection.
+    *
+    * The effective client SID for an idempotent or
+    * one-way IPC has no relationship to this effective
+    * client SID.
+    **/
+    security_id_t   effective_client_sid;
+
+    /**
+    * The effective server SID of this thread's server.
+    * The connection is only complete if this SID is identical
+    * to the effective_server_sid field in the server's state.
+    **/
+    security_id_t   server_effective_server_sid;
+
+    /**
+    * A flag indicating whether or not this thread
+    * wants to be supplied with the effective SID of
+    * its client when it is awakened from wait_receive.
+    * This flag is set to true when this thread
+    * uses a wait_receive_secure call, and causes
+    * a min_msg register to be used for the
+    * effective client SID rather than for the
+    * corresponding min_msg word.
+    **/
+    bool            server_wants_client_sid;
+
+    /* Include machine-dependent state, if any. */
+    /**
+    * Save area for the minimum message received during IPC.
+    * On architectures with a reasonable number of registers,
+    * the min_msg just gets dropped straight into registers;
+    * however, on the x86, we have to save them off elsewhere
+    * and load them into registers at the very end of the receive
+    * (see IPC_FINISH_RECEIVE(), below).
+    **/
+    unsigned                min_msg[2];
+
+    /**
+    * IPC parameters: only valid in certain wait states.
+    * While in WAIT_IPC_CALL, recv params are valid, for the reply.
+    * While in WAIT_IPC_ORECV, recv params are valid, for ack-send.
+    **/
+// receive and send buffers for an IPC operation.
+//     fluke_ipc_params  params;
+};
+
+/**
+* Sched state.
+*
+* Scheduler-dependent.
+**/
+struct sched_state
+{
+    thread *next; // simple FIFO scheduling
+};
+
+/**
+* Per-thread machine-dependent thread layer state.
+**/
+struct thread_md
+{
+    /**
+    * Exception handler entrypoints.
+    **/
+    unsigned        trap_handler;
+    unsigned        interrupt_handler;
+    unsigned        client_alert_handler;
+    unsigned        server_alert_handler;
+
+    /**
+    * Exception state save area.
+    **/
+    unsigned        saved_eax;
+    unsigned        saved_ecx;
+    unsigned        saved_edx;
+    unsigned        saved_eip;
+    unsigned        saved_eflags;
+
+#define S_THREAD_SYSCALL_ST_SIZE    8
+    unsigned        syscall_st[S_THREAD_SYSCALL_ST_SIZE]; // debug
+};
 
 /**
 * Thread is two-fold object:
@@ -43,8 +330,7 @@ private:
      */
     csw_state    csw_state; // context switch state
     exc_state    exc_state; // exception state
-//     DECLARE_EXC_STATE;   /* see machine/exception.h */
-    disp_state   disp_state; // dispatch state
+    thread_disp_state   disp_state; // dispatch state
     wait_state   wait_state; // wait state
     task_state   task_state; // task state
     ipc_state    ipc_state;  // ipc state
@@ -80,21 +366,16 @@ private:
 #define th_lflags lflags
 #endif
 
-#if FLASK
     security_class_t sclass;
     security_id_t ssid;
     security_class_t tclass;
     security_id_t tsid;
     access_vector_t requested;
-#endif
 
-#ifdef CONFIG_INSTRUMENT
     unsigned                instrument_flags;
     void *                  instrument_buffer;
     unsigned                instrument_buffer_used;
-#endif
 
-#ifdef DEBUG
     /* Kernel return stats */
     struct kr_stats {
         unsigned calls;
@@ -103,11 +384,10 @@ private:
         unsigned cancels;
         unsigned restarts;
         unsigned secfaults;
-    }           kr_stats;
-#endif
+    } kr_stats;
 
     /* Machine-dependent thread layer data. */
-    s_thread_md  md;
+    thread_md  md;
 };
 
 }
