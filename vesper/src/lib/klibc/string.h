@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 #include "bstrwrap.h"
 namespace metta {
-namespace kernel {
+namespace common {
 typedef Bstrlib::CBString string;
 }
 }

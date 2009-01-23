@@ -11,8 +11,10 @@
 #include "common.h"
 #include "default_console.h"
 
+using namespace metta::kernel;
+
 namespace metta {
-namespace kernel {
+namespace common {
 
 /**
 * Array of maximum size @c n of pointers to @c type.

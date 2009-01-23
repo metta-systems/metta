@@ -2,12 +2,19 @@ Use c_case_naming_convention anywhere instead of CamelCaseConvention --
 all symbols are lower case, words are separated by _ symbol (for example
 global_event_queue).
 
-Atomic types have _t appended, complex types that denote structured objects do
-not.
-typedef int sint32_t;
-class kernel;
+Atomic types have _t appended,
+complex types that denote structured objects do not:
+
+ * typedef int sint32_t;
+ * class kernel;
 
 namespace metta {
+	namespace common {
+		bit_array
+		ordered_array
+		string
+		uuid
+	}
 	namespace kernel {
 	}
 	namespace userspace {

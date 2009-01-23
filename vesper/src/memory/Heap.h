@@ -9,6 +9,8 @@
 #include "ordered_array.h"
 #include "lockable.h"
 
+using metta::common::ordered_array;
+
 namespace metta {
 namespace kernel {
 
