@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-VERSION = '3' # actually, a bzr revision number would do
-APPNAME = 'vesper'
-
-import Task, Options, Configure
+import os, Task, Options, Configure
 Configure.autoconfig = 1
+
+# FIXME: Could use bzr python modules, too.
+VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
+APPNAME = 'vesper'
 
 srcdir = '.'
 blddir = 'build'
