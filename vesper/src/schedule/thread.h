@@ -9,6 +9,7 @@
 //
 #pragma once
 
+#include <setjmp.h>
 #include "object.h"
 #include "dispatch.h"
 
@@ -302,13 +303,32 @@ struct thread_md
 };
 
 /**
-* Thread is two-fold object:
-*  - it's a flow of control and corresponding state, allowing to resume that flow.
-*    (related to this are disp_state, csw_state, exc_state)
-*  - it's a schedulable entity with corresponding priorities and track record of activations.
+* Thread - a sequential flow of execution.
+*
+* Thread is split into two coupled entities:
+* - Activation Record - a flow of control and corresponding state, allowing to resume that flow,
+*   execution context, including task, exception handler, stack, registers.
+*   (related to this are disp_state, csw_state, exc_state)
+*  - Activation Records stack up in piles when threads do jumps across task boundaries.
+*  - Activation Record can be seen from within the task to represent and manipulate the thread.
+* - Scheduling Record - a schedulable entity with corresponding priorities and
+*   resource accounting.
 *    (related to this are wait_state, task_state, ipc_state and sched_state)
+*
+* Threads start life as kernel entities.
+*
+* Process calls kernel to spawn a new thread, kernel initializes thread in it's own address space * and then makes an upcall into the calling process from this new thread.
+*
+* Thread syncronization in passive objects can be implemented by either single activation record * per-object (allowing no more than 1 thread to enter the passive object at a time) or by holding * object-wide locks in places which modify the state of this object (more granular, less latency, * more race issues).
+*
+* IPC is different from Fluke because there's only one thread involved in the IPC in general case.
+* Networked IPC (network thread migration) might be slightly different (?).
+*
+* During IPC the portal code marks activation record status with idempotent IPC or
+* current IPC stage.
 **/
-class thread : public object {
+class thread : public object
+{
 public:
 protected:
 private:
@@ -316,31 +336,31 @@ private:
     * Virtual address of the user part of the thread object
     * as mapped into the task the thread runs in.
     **/
-    address_t        thread_va;
+//     address_t        thread_va;
 
     /*
-     * The remainder of this structure is simply an aggregation of
-     * all the per-thread state used in all of the functionality layers
-     * that require any per-thread state.
-     * Code in each functionality layer must only access
-     * that particular layer's thread-specific state area.
-     * This basically takes the place of pthread's thread-specific data;
-     * this approach is much simpler and more efficient
-     * given the fairly limited, static kernel environment.
-     */
+    * The remainder of this structure is simply an aggregation of
+    * all the per-thread state used in all of the functionality layers
+    * that require any per-thread state.
+    * Code in each functionality layer must only access
+    * that particular layer's thread-specific state area.
+    * This basically takes the place of pthread's thread-specific data;
+    * this approach is much simpler and more efficient
+    * given the fairly limited, static kernel environment.
+    */
     csw_state    csw_state; // context switch state
-    exc_state    exc_state; // exception state
-    thread_disp_state   disp_state; // dispatch state
-    wait_state   wait_state; // wait state
-    task_state   task_state; // task state
-    ipc_state    ipc_state;  // ipc state
-    sched_state      sched_state; // scheduler state
+//     exc_state    exc_state; // exception state
+//     thread_disp_state   disp_state; // dispatch state
+//     wait_state   wait_state; // wait state
+//     task_state   task_state; // task state
+//     ipc_state    ipc_state;  // ipc state
+//     sched_state      sched_state; // scheduler state
 
     /*
      * When another thread is trying to stop and manipulate us,
      * it cancels us and then waits on this condition variable.
      */
-    cond     stop_cond;
+//     cond     stop_cond;
 
     /*
      * When another thread is in a thread_wait waiting for us to
@@ -348,7 +368,7 @@ private:
      * When we are destroyed, we must wake all these threads
      * so they can restart and see the invalidity of their links to us.
      */
-    cond     death_cond;
+//     cond     death_cond;
 
     /*
      * Thread flags, as defined in fluke/x86/thread.h.
@@ -360,34 +380,34 @@ private:
      * The THREAD_GFLAGS symbol below defines the flags that are in gflags,
      * and THREAD_LFLAGS defines the flags that are in lflags.
      */
-    unsigned        gflags;
+//     unsigned        gflags;
 #ifndef CONFIG_OPT_THREADS
-    unsigned        lflags;
+//     unsigned        lflags;
 #define th_lflags lflags
 #endif
 
-    security_class_t sclass;
-    security_id_t ssid;
-    security_class_t tclass;
-    security_id_t tsid;
-    access_vector_t requested;
+//     security_class_t sclass;
+//     security_id_t ssid;
+//     security_class_t tclass;
+//     security_id_t tsid;
+//     access_vector_t requested;
 
-    unsigned                instrument_flags;
-    void *                  instrument_buffer;
-    unsigned                instrument_buffer_used;
+//     unsigned                instrument_flags;
+//     void *                  instrument_buffer;
+//     unsigned                instrument_buffer_used;
 
     /* Kernel return stats */
-    struct kr_stats {
-        unsigned calls;
-        unsigned uexceptions;
-        unsigned pagefaults;
-        unsigned cancels;
-        unsigned restarts;
-        unsigned secfaults;
-    } kr_stats;
+//     struct kr_stats {
+//         unsigned calls;
+//         unsigned uexceptions;
+//         unsigned pagefaults;
+//         unsigned cancels;
+//         unsigned restarts;
+//         unsigned secfaults;
+//     } kr_stats;
 
     /* Machine-dependent thread layer data. */
-    thread_md  md;
+//     thread_md  md;
 };
 
 }
