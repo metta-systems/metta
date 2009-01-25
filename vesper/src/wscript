@@ -16,7 +16,7 @@ osflags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin '
 flags = '-fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
-	opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
+    opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
 
 def configure(conf):
     # Configure for given platform
