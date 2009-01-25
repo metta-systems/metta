@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-VERSION = '0.0.2'
+VERSION = '3' # actually, a bzr revision number would do
 APPNAME = 'vesper'
 
 import Task, Options, Configure
@@ -11,7 +11,7 @@ blddir = 'build'
 source_dirs  = '. lib memory pd schedule boot'
 include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'
-cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes fuckups
+cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes screwups
 osflags = '-nostdlib -nostartfiles -nodefaultlibs -fno-builtin '
 flags = '-fno-stack-protector -fno-leading-underscore'
 
@@ -19,89 +19,88 @@ def set_options(opt):
 	opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
 
 def configure(conf):
-	# Configure for given platform
-	# Configuration name is composed of platform, cpu, release
+    # Configure for given platform
+    # Configuration name is composed of platform, cpu, release
 
 
-	conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
+    conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
 
-	env = conf.env.copy() # Clone environment
-	env.set_variant('x86-tests-release') # configure archdep & builddep variant
-	conf.set_env_name('x86-tests-release', env)
-	env = conf.env.copy() # Clone environment
-	env.set_variant('x86-release') # configure archdep & builddep variant
-	conf.set_env_name('x86-release', env)
+    # Set up common environment variables
+    conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
+    conf.env.append_unique('CXXFLAGS', cflags + ' ' + flags)
+    conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
+    conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
+    conf.env.append_unique('NASM_FLAGS', '-f elf')
 
-	# Config for running tests
-	conf.setenv('x86-tests-release') # Activate the environment
+    env = conf.env.copy() # Clone environment
+    env.set_variant('x86-tests-release') # configure archdep & builddep variant
+    conf.set_env_name('x86-tests-release', env)
+    env = conf.env.copy() # Clone environment
+    env.set_variant('x86-release') # configure archdep & builddep variant
+    conf.set_env_name('x86-release', env)
 
-	conf.env['LIB_TEST']      = 'boost_unit_test_framework'
+    # Config for running tests
+    conf.setenv('x86-tests-release') # Activate the environment
+    conf.env['LIB_TEST']      = 'boost_unit_test_framework'
+    conf.env.append_unique('CXXFLAGS', '-fexceptions')
+    conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
 
-	conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
-	conf.env.append_unique('CXXFLAGS', cflags + ' -fexceptions ' + flags)
-	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4', 'UNIT_TESTS'])
-	conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
-	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
-	conf.env.append_unique('NASM_FLAGS', '-f elf')
+    # Config for building kernel on x86
+    conf.setenv('x86-release') # Activate the environment
+    conf.env.append_unique('CCFLAGS', osflags)
+    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions ' + osflags)
+    conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
+    conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)
 
-	# Config for building kernel on x86
-	conf.setenv('x86-release') # Activate the environment
-
-	conf.env.append_unique('CCFLAGS', cflags + ' ' + osflags + flags)
-	conf.env.append_unique('CXXFLAGS', cflags + ' -fno-rtti -fno-exceptions ' + osflags + flags)
-	conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-	conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4']) #FIXME: archdep
-	conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
-	conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)
-	conf.env.append_unique('NASM_FLAGS', '-f elf')
-
-	conf.write_config_header('config.h')
+    # Generate config.h
+    conf.define('CONFIG_INLINING', 1)
+    conf.write_config_header('config.h')
 
 updater = Task.simple_task_type('update_image', './update_image.sh', color='BLUE')
 
 def build(bld):
-	klibc = bld.new_task_gen('cxx', 'staticlib')
-	klibc.find_sources_in_dirs('lib/klibc')
-	klibc.includes = 'lib/bstrlib lib/klibc lib'
-	klibc.env = bld.env_of_name('x86-release').copy() # TODO
-	klibc.target = 'klibc'
+    klibc = bld.new_task_gen('cxx', 'staticlib')
+    klibc.find_sources_in_dirs('lib/klibc')
+    klibc.includes = 'lib/bstrlib lib/klibc lib'
+    klibc.env = bld.env_of_name('x86-release').copy() # TODO
+    klibc.target = 'klibc'
 
-	bstrlib = bld.new_task_gen('cxx', 'staticlib')
-	bstrlib.find_sources_in_dirs('lib/bstrlib')
-	# Remove testfiles from library
-	bstrlib.source.remove('lib/bstrlib/cpptest.cpp')
-	bstrlib.source.remove('lib/bstrlib/test.cpp')
-	bstrlib.source.remove('lib/bstrlib/bstest.c')
-	bstrlib.source.remove('lib/bstrlib/testaux.c')
-	bstrlib.includes = 'lib/bstrlib lib/klibc lib'
-	bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
-	bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
-	bstrlib.target = 'bstrlib'
+    bstrlib = bld.new_task_gen('cxx', 'staticlib')
+    bstrlib.find_sources_in_dirs('lib/bstrlib')
+    # Remove testfiles from library
+    bstrlib.source.remove('lib/bstrlib/cpptest.cpp')
+    bstrlib.source.remove('lib/bstrlib/test.cpp')
+    bstrlib.source.remove('lib/bstrlib/bstest.c')
+    bstrlib.source.remove('lib/bstrlib/testaux.c')
+    bstrlib.includes = 'lib/bstrlib lib/klibc lib'
+    bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
+    bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
+    bstrlib.target = 'bstrlib'
 
-	#bld.add_subdir('lib/bstrlib/test')
+    #bld.add_subdir('lib/bstrlib/test')
 
-	vesper = bld.new_task_gen('cxx', 'program')
-	vesper.find_sources_in_dirs(source_dirs)
-	vesper.source.remove('boot/boot.asm')
-	vesper.includes = include_dirs
-	vesper.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
-	vesper.uselib_local = 'klibc bstrlib'
-	vesper.target = 'vesper'
+    vesper = bld.new_task_gen('cxx', 'program')
+    vesper.find_sources_in_dirs(source_dirs)
+    vesper.source.remove('boot/boot.asm')
+    vesper.includes = include_dirs
+    vesper.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
+    vesper.uselib_local = 'klibc bstrlib'
+    vesper.target = 'vesper'
 
-	#update = updater(bld.env_of_name('x86-release').copy())
-	#update.inputs = [vesper.target]
-	#update.outputs = ['floppy.img']
+    #update = updater(bld.env_of_name('x86-release').copy())
+    #update.inputs = [vesper.target]
+    #update.outputs = ['floppy.img']
 
-	tests = bld.new_task_gen('cxx', 'program')
-	tests.find_sources_in_dirs('tests')
-	tests.includes = include_dirs
-	tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
-	tests.uselib = 'TEST'
-	tests.target = 'run-tests'
+    tests = bld.new_task_gen('cxx', 'program')
+    tests.find_sources_in_dirs('tests')
+    tests.includes = include_dirs
+    tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
+    tests.uselib = 'TEST'
+    tests.target = 'run-tests'
 
-	#mkinitfs = bld.new_task_gen('cxx', 'program')
-	#mkinitfs.source = ['initfs/mkinitfs.cpp']
-	#mkinitfs.includes = include_dirs
-	#mkinitfs.env = bld.env_of_name('x86-tests-release').copy()
-	#mkinitfs.uselib_local = 'bstrlib'
-	#mkinitfs.target = 'mkinitfs'
+    #mkinitfs = bld.new_task_gen('cxx', 'program')
+    #mkinitfs.source = ['initfs/mkinitfs.cpp']
+    #mkinitfs.includes = include_dirs
+    #mkinitfs.env = bld.env_of_name('x86-tests-release').copy()
+    #mkinitfs.uselib_local = 'bstrlib'
+    #mkinitfs.target = 'mkinitfs'
