@@ -93,16 +93,16 @@ public:
     {
         for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
         {
-            if (table[i] != 0xFFFFFFFF) // nothing free, exit early.
+            if (table[i] == 0xFFFFFFFF) // nothing free, exit early.
+                continue;
+
+            // at least one bit is clear here.
+            for (uint32_t j = 0; j < 32; j++)
             {
-                // at least one bit is clear here.
-                for (uint32_t j = 0; j < 32; j++)
+                uint32_t toTest = 0x1 << j;
+                if (!(table[i] & toTest))
                 {
-                    uint32_t toTest = 0x1 << j;
-                    if (!(table[i] & toTest))
-                    {
-                        return INDEX_TO_BIT(i)+j;
-                    }
+                    return INDEX_TO_BIT(i)+j;
                 }
             }
         }
@@ -117,16 +117,16 @@ public:
     {
         for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
         {
-            if (table[i] != 0x00000000) // nothing set, exit early.
+            if (table[i] == 0x00000000) // nothing set, exit early.
+                continue;
+
+            // at least one bit is set here.
+            for (uint32_t j = 0; j < 32; j++)
             {
-                // at least one bit is set here.
-                for (uint32_t j = 0; j < 32; j++)
+                uint32_t toTest = 0x1 << j;
+                if (table[i] & toTest)
                 {
-                    uint32_t toTest = 0x1 << j;
-                    if (table[i] & toTest)
-                    {
-                        return INDEX_TO_BIT(i)+j;
-                    }
+                    return INDEX_TO_BIT(i)+j;
                 }
             }
         }
