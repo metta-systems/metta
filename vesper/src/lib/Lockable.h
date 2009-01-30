@@ -7,6 +7,7 @@
 #pragma once
 
 #include "atomic.h"
+#include "types.h"
 
 /**
 * A class that implements a spinlock / binary semaphore.
@@ -16,15 +17,15 @@ class lockable
 public:
     lockable()
     {
-        lock = 0;
+        lock_ = 0;
     }
 
     // Spin until we get the lock.
-    void get_lock()
+    void lock()
     {
         uint32_t new_val = 1;
         // If we exchange the lock value with 1 and get 1 out, it was locked.
-        while (atomic_ops::exchange(&lock, new_val) == 1)
+        while (atomic_ops::exchange(&lock_, new_val) == 1)
         {
             // Do nothing.
         }
@@ -35,7 +36,7 @@ public:
     {
         // Spin once.
         uint32_t new_val = 1;
-        if (atomic_ops::exchange(&lock, new_val) == 0)
+        if (atomic_ops::exchange(&lock_, new_val) == 0)
         {
             return true;
         }
@@ -44,16 +45,16 @@ public:
 
     bool test_lock()
     {
-        return lock;
+        return lock_;
     }
 
-    void release_lock()
+    void unlock()
     {
-        lock = 0;
+        lock_ = 0;
     }
 
 private:
-    uint32_t lock; /**< The actual lock variable. */
+    uint32_t lock_; /**< The actual lock variable. */
 };
 
 // kate: indent-width 4; replace-tabs on;
