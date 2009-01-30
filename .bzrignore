@@ -1,5 +1,5 @@
 .lock-wscript
-build
+_build_
 doxygen
 *.kdevelop
 *.kdevelop.filelist
