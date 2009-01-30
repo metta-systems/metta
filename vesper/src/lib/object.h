@@ -6,23 +6,45 @@
 //
 #pragma once
 
+#include "types.h"
 #include "lockable.h"
+#include "atomic_count.h"
+#include "object_types.h"
 
 namespace metta {
 namespace kernel {
 
+/// thread *target = object_cast<thread>(th);
+// template <typename T>
+// T *object_cast(object *ptr)
+// {
+//     return ptr->type() == T::type ? (T*)ptr : 0;
+// }
+
 /**
 * All kernel entities are objects and have this common fields at their start.
-*/
-/**
+*
 * Common system part of kernel objects.
 * Provides locking and allocation management.
 **/
 class object : public lockable
 {
 public:
-    inline void ref() { refs.ref(); }
-    inline void unref() { refs.unref(); }
+    /**
+    * Reference this object from the outside, increasing its reference count
+    * and deferring its death.
+    **/
+    inline void ref() { refs++; }
+    /**
+    * Unreference this object, when reference count goes down to zero
+    * object will rest in peace.
+    **/
+    inline void unref() { refs--; }
+
+    inline bool active() { return active_; }
+
+    hash_t hash();
+
 private:
     /** Object type */
     object_type  type;
@@ -30,7 +52,7 @@ private:
     * @c true if this object is currently active;
     * @c false if it has been destroyed and is merely waiting for all references to it to be dropped.
     **/
-    bool         active;
+    bool         active_;
     /** Count of outstanding references to this object.  */
     atomic_count refs;
     /**
