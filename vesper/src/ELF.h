@@ -294,10 +294,10 @@ struct program_header
 
 
 /* Symbol Hash table hashing function */
-inline unsigned long
+inline uint32_t
 elf_hash(const unsigned char *name)
 {
-    unsigned long h = 0, g;
+    uint32_t h = 0, g;
     while (*name)
     {
         h = (h << 4) + *name++;
