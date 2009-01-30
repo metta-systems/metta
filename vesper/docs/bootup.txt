@@ -50,9 +50,9 @@ main component entry point:
 
 
 
-Physical RAM +-------------------------+ Virtual addresses
-         top |                         |
-             |                         |
+ Virtual RAM +-------------------------+ Virtual addresses
+    (4G) top |                         | 0xFFFFFFFF (invalid address)
+             |                         |            (last page reserved)
              |                         |
              |                         |
              |                         |
@@ -102,8 +102,22 @@ Physical RAM +-------------------------+ Virtual addresses
              |                         |
              |                         |
              |                         |
-             |                         |
-             |                         |
-             |                         |
-         0x0 +-------------------------+
+             |                         | 0x00002000 kernel traps entry page
+             |                         | 0x00001000 kernel info/interface page (L4-like)
+             |                         |            (first page reserved)
+         0x0 +-------------------------+ 0x00000000 (invalid address)
+
+
+
+Continuations vs threads
+
+Any continuation to which a user program can generate a valid reference is already suspended and waiting for a message. Throw() and ThrowCC() just hand the suspended continuation a message and run it. ThrowCC() suspends the current continuation and passes it as part of the message.
+
+throw_cc(scheduler,&message_to_scheduler,sizeof(message_to_scheduler),&received_message,sizeof(received_message));
+
+For scheduler being some kind of identifier naming the suspended continuation of a scheduler (could be anything, but a scheduler in this case), message_to_scheduler being (of course) a message to the scheduler, and received_message being a buffer to receive a message in when another continuation throws to this one.
+
+Since ThrowCC() was invoked instead of Throw(), the kernel transforms the running CC into a suspended continuation and prepends the identifier to that continuation to the intended message, creating the message it finally passes to the invoked scheduler continuation. In the case of plain Throw(), the kernel would just pass the message along directly as it switches control of the processor, destroying the CC that called Throw().
+
+[...] A continuation is what remains of an unfinished computation. [...]
 
