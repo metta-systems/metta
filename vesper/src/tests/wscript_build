@@ -1,0 +1,6 @@
+tests = bld.new_task_gen('cxx', 'program')
+tests.find_sources_in_dirs('.')
+tests.includes = '../lib'
+tests.env = bld.env_of_name('x86-tests-release')
+tests.uselib = 'TEST'
+tests.target = 'run-tests'

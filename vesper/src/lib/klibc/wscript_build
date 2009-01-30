@@ -1,0 +1,5 @@
+
+klibc = bld.new_task_gen('cxx', 'staticlib')
+klibc.find_sources_in_dirs('.')
+klibc.includes = '../bstrlib .. .'
+klibc.target = 'klibc'

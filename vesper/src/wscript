@@ -8,7 +8,8 @@ VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
 APPNAME = 'vesper'
 
 srcdir = '.'
-blddir = 'build'
+blddir = '_build_'
+
 source_dirs  = '. lib memory pd schedule boot'
 include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'
@@ -60,48 +61,11 @@ def configure(conf):
 updater = Task.simple_task_type('update_image', './update_image.sh', color='BLUE')
 
 def build(bld):
-    klibc = bld.new_task_gen('cxx', 'staticlib')
-    klibc.find_sources_in_dirs('lib/klibc')
-    klibc.includes = 'lib/bstrlib lib/klibc lib'
-    klibc.env = bld.env_of_name('x86-release').copy() # TODO
-    klibc.target = 'klibc'
-
-    bstrlib = bld.new_task_gen('cxx', 'staticlib')
-    bstrlib.find_sources_in_dirs('lib/bstrlib')
-    # Remove testfiles from library
-    bstrlib.source.remove('lib/bstrlib/cpptest.cpp')
-    bstrlib.source.remove('lib/bstrlib/test.cpp')
-    bstrlib.source.remove('lib/bstrlib/bstest.c')
-    bstrlib.source.remove('lib/bstrlib/testaux.c')
-    bstrlib.includes = 'lib/bstrlib lib/klibc lib'
-    bstrlib.env = bld.env_of_name('x86-release').copy() # TODO
-    bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
-    bstrlib.target = 'bstrlib'
-
-    #bld.add_subdir('lib/bstrlib/test')
+    bld.add_subdirs('lib/klibc lib/bstrlib lib/atomic_ops/src tests')
 
     vesper = bld.new_task_gen('cxx', 'program')
     vesper.find_sources_in_dirs(source_dirs)
     vesper.source.remove('boot/boot.asm')
     vesper.includes = include_dirs
-    vesper.env = bld.env_of_name('x86-release').copy() # TODO: pass in env name from cmdline
     vesper.uselib_local = 'klibc bstrlib'
     vesper.target = 'vesper'
-
-    #update = updater(bld.env_of_name('x86-release').copy())
-    #update.inputs = [vesper.target]
-    #update.outputs = ['floppy.img']
-
-    tests = bld.new_task_gen('cxx', 'program')
-    tests.find_sources_in_dirs('tests')
-    tests.includes = include_dirs
-    tests.env = bld.env_of_name('x86-tests-release').copy() # TODO
-    tests.uselib = 'TEST'
-    tests.target = 'run-tests'
-
-    #mkinitfs = bld.new_task_gen('cxx', 'program')
-    #mkinitfs.source = ['initfs/mkinitfs.cpp']
-    #mkinitfs.includes = include_dirs
-    #mkinitfs.env = bld.env_of_name('x86-tests-release').copy()
-    #mkinitfs.uselib_local = 'bstrlib'
-    #mkinitfs.target = 'mkinitfs'

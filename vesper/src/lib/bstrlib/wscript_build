@@ -1,0 +1,11 @@
+
+bstrlib = bld.new_task_gen('cxx', 'staticlib')
+bstrlib.find_sources_in_dirs('.')
+# Remove testfiles from library
+bstrlib.source.remove('./cpptest.cpp')
+bstrlib.source.remove('./test.cpp')
+bstrlib.source.remove('./bstest.c')
+bstrlib.source.remove('./testaux.c')
+bstrlib.includes = '../klibc .. .'
+bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
+bstrlib.target = 'bstrlib'
