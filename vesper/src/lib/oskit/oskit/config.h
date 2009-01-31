@@ -65,4 +65,4 @@
 #endif /* _OSKIT_CONFIG_H_ */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -45,4 +45,4 @@ typedef oskit_u16_t	oskit_wchar_t;	/* Unicode wide character */
 #endif /* _OSKIT_TYPES_H_ */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

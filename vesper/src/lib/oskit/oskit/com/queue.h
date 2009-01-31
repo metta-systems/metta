@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1997-1998 University of Utah and the Flux Group.
  * All rights reserved.
- * 
+ *
  * This file is part of the Flux OSKit.  The OSKit is free software, also known
  * as "open source;" you can redistribute it and/or modify it under the terms
  * of the GNU General Public License (GPL), version 2, as published by the Free
  * Software Foundation (FSF).  To explore alternate licensing terms, contact
  * the University of Utah at csl-dist@cs.utah.edu or +1-801-585-3271.
- * 
+ *
  * The OSKit is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GPL for more details.  You should have
@@ -40,7 +40,7 @@ struct oskit_queue_ops {
 	/*** Operations specific to the oskit_queue interface ***/
 
 	/* Enqueue a certain item with a certain size. */
-	OSKIT_COMDECL	(*enqueue)(oskit_queue_t *s, 
+	OSKIT_COMDECL	(*enqueue)(oskit_queue_t *s,
 			const void *item, oskit_size_t size);
 
 	/* Dequeue item, return its size - buffer must be big enough. */
@@ -76,17 +76,17 @@ extern const struct oskit_guid oskit_queue_iid;
 /*
  * Functions to create queues
  */
-/* 
- * This queue is preallocated and bounded, and the number and size of 
- * the queue items is fixed. It has the additional twist that it will 
+/*
+ * This queue is preallocated and bounded, and the number and size of
+ * the queue items is fixed. It has the additional twist that it will
  * notify `notify_before_dump' when an attempt is made to enqueue an
- * item in a full queue. After the notification, if droplast is set, 
+ * item in a full queue. After the notification, if droplast is set,
  * the last entry will be dropped and the new entry added. If droplast
  * is not set, enqueue will fail with OSKIT_ENOMEM
  * `notify_before_dump' may be NULL.
  */
 oskit_queue_t *create_bounded_queue_with_fixed_size_items(
-	int qlen, oskit_size_t itemsize, 
+	int qlen, oskit_size_t itemsize,
 	struct oskit_listener *notify_before_dump,
 	int droplast);
 
@@ -104,4 +104,4 @@ oskit_error_t oskit_bounded_com_queue_create(oskit_size_t length,
 #endif /* _OSKIT_COM_QUEUE_H_ */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

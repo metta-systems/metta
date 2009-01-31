@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1997-1998 University of Utah and the Flux Group.
  * All rights reserved.
- * 
+ *
  * This file is part of the Flux OSKit.  The OSKit is free software, also known
  * as "open source;" you can redistribute it and/or modify it under the terms
  * of the GNU General Public License (GPL), version 2, as published by the Free
  * Software Foundation (FSF).  To explore alternate licensing terms, contact
  * the University of Utah at csl-dist@cs.utah.edu or +1-801-585-3271.
- * 
+ *
  * The OSKit is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GPL for more details.  You should have
@@ -15,7 +15,7 @@
  * not, write to the FSF, 59 Temple Place #330, Boston, MA 02111-1307, USA.
  */
 /*
- * OSKit definition of an extension of the basic listener interface 
+ * OSKit definition of an extension of the basic listener interface
  * which can maintain a bunch of other listeners to be notified on
  * a notify()
  */
@@ -44,7 +44,7 @@ struct oskit_listener_fanout_ops {
 	 * This method will be called with `obj' set to the
 	 * object which causes the notification
 	 */
-	OSKIT_COMDECL	(*notify)(oskit_listener_fanout_t *s, 
+	OSKIT_COMDECL	(*notify)(oskit_listener_fanout_t *s,
 			oskit_iunknown_t *obj);
 
 	/*
@@ -54,7 +54,7 @@ struct oskit_listener_fanout_ops {
 				struct oskit_listener *l);
 
 	/*
-	 * remove a listener from list 
+	 * remove a listener from list
 	 */
 	OSKIT_COMDECL	(*remove)(oskit_listener_fanout_t *mgr,
 				struct oskit_listener *l);
@@ -94,4 +94,4 @@ oskit_listener_fanout_t *oskit_create_listener_fanout();
 #endif /* _OSKIT_COM_LISTENER_FANOUT_H */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

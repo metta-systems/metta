@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1994, 1998, 1999 University of Utah and the Flux Group.
  * All rights reserved.
- * 
+ *
  * This file is part of the Flux OSKit.  The OSKit is free software, also known
  * as "open source;" you can redistribute it and/or modify it under the terms
  * of the GNU General Public License (GPL), version 2, as published by the Free
  * Software Foundation (FSF).  To explore alternate licensing terms, contact
  * the University of Utah at csl-dist@cs.utah.edu or +1-801-585-3271.
- * 
+ *
  * The OSKit is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GPL for more details.  You should have
@@ -109,10 +109,10 @@ struct oskit_mem_ops {
 	OSKIT_COMCALL	(*getsize)(oskit_mem_t *m, void *ptr);
 
 	/*
-	 * A lower level interface intended to provide the same 
+	 * A lower level interface intended to provide the same
 	 * flexibility as the LMM alloc_gen interface. It might be
 	 * that the underlying memory allocator is not as spiffy as the
-	 * LMM, and will fall back to doing something dopey. 
+	 * LMM, and will fall back to doing something dopey.
 	 */
 	void *
 	OSKIT_COMCALL	(*alloc_gen)(oskit_mem_t *m, oskit_u32_t size,
@@ -133,7 +133,7 @@ struct oskit_mem_ops {
 	 * about the current state of the memory object.
 	 */
 	OSKIT_COMDECL_V (*dump)(oskit_mem_t *m);
-	
+
 };
 
 #define oskit_mem_query(m, iid, out_ihandle) \
@@ -171,7 +171,7 @@ extern const struct oskit_guid oskit_mem_iid;
  * oskit memory object to be used in Fluke userland applications.
  * It pulls in an empty malloc_lmm, initializes it for simple memory
  * allocation, and the calls oskit_mem_init() (which operates on the
- * malloc_lmm). 
+ * malloc_lmm).
  */
 oskit_mem_t *oskit_mem_init(void);
 oskit_mem_t *oskit_appmem_init(void *base, oskit_size_t size);
@@ -190,4 +190,4 @@ void *oskit_mem_morecore(oskit_size_t size, int flags);
 #endif /* _OSKIT_COM_MEM_H_ */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

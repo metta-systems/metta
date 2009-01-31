@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1997-1999 University of Utah and the Flux Group.
  * All rights reserved.
- * 
+ *
  * This file is part of the Flux OSKit.  The OSKit is free software, also known
  * as "open source;" you can redistribute it and/or modify it under the terms
  * of the GNU General Public License (GPL), version 2, as published by the Free
  * Software Foundation (FSF).  To explore alternate licensing terms, contact
  * the University of Utah at csl-dist@cs.utah.edu or +1-801-585-3271.
- * 
+ *
  * The OSKit is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GPL for more details.  You should have
@@ -43,8 +43,8 @@ struct oskit_dirents;
  * every call.
  */
 oskit_error_t
-oskit_wrap_socket(struct oskit_socket *in, 
-	void (*before)(void *), 
+oskit_wrap_socket(struct oskit_socket *in,
+	void (*before)(void *),
 	void (*after)(void *),
 	void *cookie,
 	struct oskit_socket **out);
@@ -70,13 +70,13 @@ oskit_wrap_asyncio(struct oskit_asyncio *in,
 	void *cookie,
         struct oskit_asyncio **out);
 
-/* 
+/*
  * wrap a combo of oskit_socket, oskit_stream, oskit_asyncio, and
  * oskit_bufio_stream - called "sockio"
  */
 oskit_error_t
-oskit_wrap_sockio(struct oskit_socket *in, 
-	void (*before)(void *), 
+oskit_wrap_sockio(struct oskit_socket *in,
+	void (*before)(void *),
 	void (*after)(void *),
 	void *cookie,
 	struct oskit_socket **out);
@@ -125,22 +125,22 @@ oskit_wrap_openfile_with_file(struct oskit_openfile *in,
 	struct oskit_openfile **out);
 
 oskit_error_t
-oskit_wrap_blkio(struct oskit_blkio *in, 
-	void (*before)(void *), 
+oskit_wrap_blkio(struct oskit_blkio *in,
+	void (*before)(void *),
 	void (*after)(void *),
 	void *cookie,
 	struct oskit_blkio **out);
 
 oskit_error_t
-oskit_wrap_absio(struct oskit_absio *in, 
-	void (*before)(void *), 
+oskit_wrap_absio(struct oskit_absio *in,
+	void (*before)(void *),
 	void (*after)(void *),
 	void *cookie,
 	struct oskit_absio **out);
 
 oskit_error_t
-oskit_wrap_dirents(struct oskit_dirents *in, 
-	void (*before)(void *), 
+oskit_wrap_dirents(struct oskit_dirents *in,
+	void (*before)(void *),
 	void (*after)(void *),
 	void *cookie,
 	struct oskit_dirents **out);
@@ -157,4 +157,4 @@ oskit_wrap_dirents(struct oskit_dirents *in,
 #endif /* _OSKIT_COM_WRAPPER_H */
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
