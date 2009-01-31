@@ -121,3 +121,9 @@ Since ThrowCC() was invoked instead of Throw(), the kernel transforms the runnin
 
 [...] A continuation is what remains of an unfinished computation. [...]
 
+
+== Memory Barriers (from GCC docs) ==
+
+an acquire barrier. This means that references after the builtin cannot move to (or be speculated to) before the builtin, but previous memory stores may not be globally visible yet, and previous memory loads may not yet be satisfied.
+
+a release barrier. This means that all previous memory stores are globally visible, and all previous memory loads have been satisfied, but following memory reads are not prevented from being speculated to before the barrier.
