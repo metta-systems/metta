@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "lockable.h"
+#include "security.h"
 #include "atomic_count.h"
 #include "object_types.h"
 
