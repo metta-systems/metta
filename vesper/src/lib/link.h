@@ -2,6 +2,8 @@
 
 #include "config.h"
 #include "types.h"
+#include "macros.h"
+#include "common.h" // for panic_assert() - NB shouldn't depend on this?
 
 namespace metta {
 namespace kernel {
