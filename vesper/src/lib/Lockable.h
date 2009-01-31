@@ -15,42 +15,39 @@
 class lockable
 {
 public:
-    lockable()
-    {
-        lock_ = 0;
-    }
+    inline lockable() : lock_(0) {}
 
     // Spin until we get the lock.
-    void lock()
+    inline void lock()
     {
         uint32_t new_val = 1;
         // If we exchange the lock value with 1 and get 1 out, it was locked.
-        while (atomic_ops::exchange(&lock_, new_val) == 1)
+        while (atomic_ops::tas(&lock_, new_val) == 1)
         {
-            // Do nothing.
+            // Do nothing. Could notify scheduler here.
         }
         // We got the lock, return.
     }
 
-    bool try_lock()
+    inline bool try_lock()
     {
         // Spin once.
         uint32_t new_val = 1;
-        if (atomic_ops::exchange(&lock_, new_val) == 0)
+        if (atomic_ops::tas(&lock_, new_val) == 0)
         {
             return true;
         }
         return false;
     }
 
-    bool test_lock()
+    inline bool has_lock()
     {
         return lock_;
     }
 
-    void unlock()
+    inline void unlock()
     {
-        lock_ = 0;
+        atomic_ops::release(&lock_);
     }
 
 private:
