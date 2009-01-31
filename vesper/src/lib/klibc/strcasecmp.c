@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,7 +11,7 @@
 int strcasecmp(const char *s1, const char *s2)
 {
 	int c1, c2;
-	
+
 	do {
 		c1 = tolower(*s1++);
 		c2 = tolower(*s2++);
@@ -22,4 +22,4 @@ EXPORT_SYMBOL(strcasecmp);
 #endif
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

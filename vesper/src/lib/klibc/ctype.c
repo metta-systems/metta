@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -40,5 +40,6 @@ _L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,_L,       /* 224-239 */
 _L,_L,_L,_L,_L,_L,_L,_P,_L,_L,_L,_L,_L,_L,_L,_L};      /* 240-255 */
 
 EXPORT_SYMBOL(_ctype);
+
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

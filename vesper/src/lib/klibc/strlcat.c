@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,9 +20,9 @@ size_t strlcat(char *dest, const char *src, size_t count)
 	size_t dsize = strlen(dest);
 	size_t len = strlen(src);
 	size_t res = dsize + len;
-	
+
 	ASSERT(dsize < count);
-	
+
 	dest += dsize;
 	count -= dsize;
 	if (len >= count)
@@ -35,4 +35,4 @@ EXPORT_SYMBOL(strlcat);
 #endif
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
