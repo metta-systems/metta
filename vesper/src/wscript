@@ -61,7 +61,7 @@ def configure(conf):
 updater = Task.simple_task_type('update_image', './update_image.sh', color='BLUE')
 
 def build(bld):
-    bld.add_subdirs('lib/klibc lib/bstrlib lib/atomic_ops/src tests')
+    bld.add_subdirs('lib/klibc lib/bstrlib tests')
 
     vesper = bld.new_task_gen('cxx', 'program')
     vesper.find_sources_in_dirs(source_dirs)
