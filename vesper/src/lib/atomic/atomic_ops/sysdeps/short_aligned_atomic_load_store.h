@@ -46,3 +46,6 @@ AO_short_store(volatile unsigned short *addr, unsigned short new_val)
 #define AO_HAVE_short_store
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

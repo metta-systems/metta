@@ -61,3 +61,6 @@ AO_INLINE AO_t AO_compare_and_swap_full(volatile AO_t *addr,
 #define AO_HAVE_compare_and_swap_full
 
 /* FIXME: Add double-wide compare-and-swap for 32-bit executables.	*/
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

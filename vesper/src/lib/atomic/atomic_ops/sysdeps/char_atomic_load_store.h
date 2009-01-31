@@ -44,3 +44,6 @@ AO_char_store(volatile unsigned char *addr, unsigned char new_val)
 #define AO_HAVE_char_store
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

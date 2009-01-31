@@ -172,3 +172,6 @@ AO_short_compare_and_swap_release(volatile unsigned short *addr,
 # include "../ao_t_is_int.h"
 #endif
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

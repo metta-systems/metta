@@ -100,3 +100,6 @@ AO_int_load_read(volatile unsigned int *addr)
 #endif /* AO_HAVE_int_load */
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

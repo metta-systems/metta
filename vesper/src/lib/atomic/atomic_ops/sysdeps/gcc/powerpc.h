@@ -248,3 +248,6 @@ AO_compare_and_swap_full(volatile AO_t *addr, AO_t old, AO_t new_val) {
 
 /* FIXME: We should also implement fetch_and_add and or primitives	*/
 /* directly.								*/
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -287,3 +287,6 @@
 #define AO_TS_VAL AO_TS_VAL_t
 
 #endif /* ATOMIC_OPS_H */
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

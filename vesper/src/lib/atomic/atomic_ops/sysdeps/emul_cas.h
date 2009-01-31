@@ -74,3 +74,6 @@ void AO_store_full_emulation(volatile AO_t *addr, AO_t val);
 #undef AO_HAVE_store_full
 #define AO_store_full(addr, val) AO_store_full_emulation(addr, val)
 #define AO_HAVE_store_full
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

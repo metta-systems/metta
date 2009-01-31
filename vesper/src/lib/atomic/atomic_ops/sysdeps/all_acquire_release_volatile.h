@@ -29,3 +29,6 @@
 #include "char_acquire_release_volatile.h"
 #include "short_acquire_release_volatile.h"
 #include "int_acquire_release_volatile.h"
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

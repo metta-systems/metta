@@ -287,3 +287,6 @@ AO_compare_and_swap_double_full(volatile AO_double_t *addr,
 /* We can't use hardware loads and stores, since they don't	*/
 /* interact correctly with atomic updates.			*/
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -44,3 +44,6 @@ AO_test_and_set_full(volatile AO_TS_t *addr) {
 /* There are barriers like membar #LoadStore.			*/
 /* CASA (32-bit) and CASXA(64-bit) instructions were		*/
 /* added in V9.							*/
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

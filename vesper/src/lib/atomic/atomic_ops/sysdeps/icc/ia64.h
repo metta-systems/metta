@@ -223,3 +223,6 @@ AO_int_compare_and_swap_release(volatile unsigned int *addr,
 
 #define AO_HAVE_int_compare_and_swap_release
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

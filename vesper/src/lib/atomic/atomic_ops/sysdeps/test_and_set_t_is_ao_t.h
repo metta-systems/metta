@@ -34,3 +34,6 @@ typedef enum {AO_TS_clear = 0, AO_TS_set = 1} AO_TS_val;
 #define AO_TS_t AO_t
 
 #define AO_AO_TS_T 1
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

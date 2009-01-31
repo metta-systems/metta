@@ -62,3 +62,6 @@ AO_store_release(volatile AO_t *p, AO_t val)
 #define AO_HAVE_store_release
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

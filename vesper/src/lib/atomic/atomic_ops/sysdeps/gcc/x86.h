@@ -151,3 +151,6 @@ AO_compare_double_and_swap_double_full(volatile AO_double_t *addr,
 #define AO_HAVE_double_compare_and_swap_full
 
 #include "../ao_t_is_int.h"
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

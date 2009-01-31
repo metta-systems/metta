@@ -66,3 +66,6 @@ AO_compare_and_swap(volatile AO_t *addr,
 #define AO_HAVE_compare_and_swap
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1290,3 +1290,6 @@
 #    define AO_HAVE_compare_and_swap_double_dd_acquire_read
 #  endif
 #endif
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

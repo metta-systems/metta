@@ -28,3 +28,6 @@
 #include "char_atomic_load_store.h"
 #include "short_aligned_atomic_load_store.h"
 #include "int_aligned_atomic_load_store.h"
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

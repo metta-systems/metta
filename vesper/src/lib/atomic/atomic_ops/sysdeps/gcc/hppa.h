@@ -95,3 +95,6 @@ AO_pa_clear(volatile AO_TS_t * addr)
 
 #define AO_HAVE_test_and_set_full
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

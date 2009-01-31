@@ -142,3 +142,6 @@ AO_compare_and_swap_full(volatile AO_t *addr,
 #ifndef _WIN64
 #include "../ao_t_is_int.h"
 #endif
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
