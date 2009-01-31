@@ -7,5 +7,6 @@ bstrlib.source.remove('./test.cpp')
 bstrlib.source.remove('./bstest.c')
 bstrlib.source.remove('./testaux.c')
 bstrlib.includes = '../klibc .. .'
+bstrlib.env = bld.env_of_name(bld.env['ENV'])
 bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
 bstrlib.target = 'bstrlib'

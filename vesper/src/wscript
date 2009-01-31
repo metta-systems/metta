@@ -34,6 +34,10 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
     conf.env.append_unique('NASM_FLAGS', '-f elf')
 
+    # Mhm, any better way to define this?
+    conf.env['ENV'] = 'x86-release'
+    conf.env['TEST_ENV'] = 'x86-tests-release'
+
     env = conf.env.copy() # Clone environment
     env.set_variant('x86-tests-release') # configure archdep & builddep variant
     conf.set_env_name('x86-tests-release', env)
@@ -54,7 +58,7 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)
 
-    # Generate config.h
+    # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
     conf.write_config_header('config.h')
 
@@ -66,6 +70,7 @@ def build(bld):
     vesper = bld.new_task_gen('cxx', 'program')
     vesper.find_sources_in_dirs(source_dirs)
     vesper.source.remove('boot/boot.asm')
+    vesper.env = bld.env_of_name(bld.env['ENV'])
     vesper.includes = include_dirs
     vesper.uselib_local = 'klibc bstrlib'
     vesper.target = 'vesper'
