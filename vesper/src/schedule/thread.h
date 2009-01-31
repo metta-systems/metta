@@ -12,11 +12,15 @@
 #include <setjmp.h>
 #include "object.h"
 #include "dispatch.h"
+#include "link.h"
 
 namespace metta {
 namespace kernel {
 
 class page_directory;
+class thread;
+class task;
+class cond;//expand to condition ?
 
 /**
 * Context-switch state.
@@ -78,11 +82,8 @@ typedef uint32_t wait_val_t;
 *
 * Per-thread state maintained by the cancellation support code.
 **/
-struct wait_state
+struct wait_state : public lockable
 {
-    /** Lock protecting the following fields.  */
-    spin_lock_t     lock;
-
     /** Current thread waiting state value, defined above. */
     wait_val_t      val;
 
@@ -122,13 +123,14 @@ struct task_state
     * Can only be modified by the thread itself,
     * while holding the task's main object lock.
     **/
-    task*           task;
+    task*           task_;
 
     /**
     * Chain on our task's threads list.
     * Protected by the task's main lock.
     **/
-    queue_chain_t   task_chain;
+//     queue_chain_t   task_chain;
+// FIXME: need a sane lock-free/lockable queue object?
 
     /**
     * When someone is trying to destroy a task,
@@ -183,8 +185,8 @@ struct ipc_state
     * When the thread is live, these fields are thread-private;
     * when stopped, the fields are locked by the thread's s_ob lock.
     **/
-    link_t          client_link;
-    link_t          server_link;
+    link            client_link;
+    link            server_link;
 
     /**
     * Idempotent client/server connection pointers.
@@ -348,7 +350,7 @@ private:
     * this approach is much simpler and more efficient
     * given the fairly limited, static kernel environment.
     */
-    csw_state    csw_state; // context switch state
+    csw_state    csw_state_; // context switch state
 //     exc_state    exc_state; // exception state
 //     thread_disp_state   disp_state; // dispatch state
 //     wait_state   wait_state; // wait state

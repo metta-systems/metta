@@ -9,19 +9,22 @@
 //
 #pragma once
 
+#include "lockable.h"
+#include "link.h"
+
 namespace metta {
 namespace kernel {
 // namespace threads?
 
+class thread;
+
 /**
 * Thread dispatch state.
 **/
-class thread_disp_state {
+class thread_disp_state : public lockable {
 public:
 protected:
 private:
-    spin_lock_t     lock;
-
     /** Link on wait or ready queue.  */
     thread     *next;
 
@@ -35,7 +38,7 @@ private:
      * Per-CPU structure for the CPU currently assigned to this thread.
      * This is null when this thread not running.
      */
-    struct fluke_cpu_info   *cpu;
+//     struct fluke_cpu_info   *cpu;
 
     /**
      * Thread we are donating our CPU to; his provider points back to us.
@@ -55,12 +58,12 @@ private:
      * This is used with disp_yield to request that this thread
      * yield its CPU back to its provider.
      */
-    struct preempter    preempter;
+//     struct preempter    preempter;
 
     /**
      * Scheduler port link.
      */
-    struct link     sched_link;
+    link     sched_link;
 
     /**
      * This member is only set while the thread is in
@@ -69,7 +72,7 @@ private:
      * to the scheduler pset wait, so the IPC can be completed
      * without chasing the port and pset links again.
      */
-    fluke_alias_t       alias; /* FIXME: use portal aliases? */
+//     fluke_alias_t       alias; /* FIXME: use portal aliases? */
 
     /* Statistics */
     int     scheds;
