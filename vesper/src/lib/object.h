@@ -15,6 +15,8 @@
 namespace metta {
 namespace kernel {
 
+using object_type::object_type_e;
+
 /// thread *target = object_cast<thread>(th);
 // template <typename T>
 // T *object_cast(object *ptr)
@@ -31,6 +33,8 @@ namespace kernel {
 class object : public lockable
 {
 public:
+    object() : type_(object_type::null) {}
+
     /**
     * Reference this object from the outside, increasing its reference count
     * and deferring its death.
@@ -44,11 +48,12 @@ public:
 
     inline bool active() { return active_; }
 
+    inline object_type_e type() { return type_; }
     hash_t hash();
 
 private:
     /** Object type */
-    object_type  type;
+    object_type_e  type_;
     /**
     * @c true if this object is currently active;
     * @c false if it has been destroyed and is merely waiting for all references to it to be dropped.

@@ -9,10 +9,12 @@
 namespace metta {
 namespace kernel {
 
-enum object_type
+namespace object_type { // works around deficiency in C++ enums
+enum object_type_e
 {
     null = 0
 };
+}
 
 }
 }
