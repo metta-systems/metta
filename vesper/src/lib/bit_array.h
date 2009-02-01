@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,11 +19,11 @@ namespace common {
 class bit_array
 {
 public:
-    // Array dword position to bit index.
+    //! Array dword position to bit index.
     inline static uint32_t INDEX_TO_BIT(int a)    { return a * (8*4); }
-    // Bit to dword position in array.
+    //! Bit to dword position in array.
     inline static uint32_t INDEX_FROM_BIT(int a)  { return a / (8*4); }
-    // Bit to offset within dword.
+    //! Bit to offset within dword.
     inline static uint32_t OFFSET_FROM_BIT(int a) { return a % (8*4); }
 
     /**
@@ -149,4 +149,4 @@ private:
 }
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
