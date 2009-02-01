@@ -27,6 +27,8 @@ void kernel::run()
 	if (!multiboot.is_elf())
 		PANIC("ELF information is missing in kernel!");
 
+    critical_section(); // do not interrupt is in the following few lines, please
+
 	// Make sure we aren't overwriting anything by writing at placementAddress.
 	relocate_placement_address();
 
@@ -46,6 +48,8 @@ void kernel::run()
 	timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
+
+    end_critical_section(); // now you can interrupt us and multitask and everything else
 
     // Load init component and its initfs.
     // Pass control to init component in supervisor (user?) mode.
