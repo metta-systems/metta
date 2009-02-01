@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 srcdir = '.'
-blddir = 'build'
+blddir = '_build_'
 
 def set_options(opt):
 	opt.sub_options("vesper/src")
