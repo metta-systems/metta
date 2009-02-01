@@ -10,8 +10,8 @@
 #
 require 'find'
 
-exclude_dirs = ['./vesper/src/lib/bstrlib', './vesper/src/build']
-no_license_dirs = ['./vesper/src/lib/oskit', './vesper/src/lib/atomic']
+exclude_dirs = ['./_build_', './vesper/src/_build_']
+no_license_dirs = ['./vesper/src/lib/bstrlib', './vesper/src/lib/oskit', './vesper/src/lib/atomic']
 
 class Array
     def do_not_has?(path)
