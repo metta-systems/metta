@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,6 +10,8 @@ namespace metta {
 namespace common {
 
 /**
+* FIXME: looks bad. redo?
+*
 * A simple doubly-linked list.
 * Called queue just because OSKit did it.
 * And since semantically we use it for
@@ -22,6 +24,7 @@ namespace common {
 *
 * NOT thread-safe, so be sure to use a mutex
 * when modifying it from multiple threads.
+* FIXME: probably derive from lockable to make this easier.
 **/
 template <class T>
 class queue
@@ -66,4 +69,4 @@ private:
 }
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

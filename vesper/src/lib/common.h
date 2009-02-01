@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2008, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -42,10 +42,11 @@ static inline uint16_t inw(uint16_t port)
 	return ret;
 }
 
+// chg to uint64_t rdtsc()
 static inline void rdtsc(uint32_t* upper, uint32_t* lower)
 {
     asm volatile("rdtsc" : "=a"(*lower), "=d"(*upper));
 }
 
 // kate: indent-width 4; replace-tabs on;
-// vi:set ts=4:set expandtab=on:
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
