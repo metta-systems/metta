@@ -22,7 +22,7 @@ public:
     * Atomically increment counter by one.
     * Returns the old value.
     **/
-    inline uint32_t operator ++()
+    inline uint32_t operator ++(int)
     {
         return atomic_ops::faa(&count, 1);
     }
@@ -31,7 +31,7 @@ public:
     * Atomically increment counter by one.
     * Returns the new value.
     **/
-    inline uint32_t operator ++(int)
+    inline uint32_t operator ++()
     {
         return atomic_ops::aaf(&count, 1);
     }
@@ -40,7 +40,7 @@ public:
     * Atomically decrement counter by one.
     * Returns the old value.
     **/
-    inline uint32_t operator --()
+    inline uint32_t operator --(int)
     {
         return atomic_ops::fas(&count, 1);
     }
@@ -49,7 +49,7 @@ public:
     * Atomically decrement counter by one.
     * Returns the new value.
     **/
-    inline uint32_t operator --(int)
+    inline uint32_t operator --()
     {
         return atomic_ops::saf(&count, 1);
     }
