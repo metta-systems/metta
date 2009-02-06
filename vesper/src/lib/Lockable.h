@@ -33,7 +33,7 @@ public:
     {
         // Spin once.
         uint32_t new_val = 1;
-        if (atomic_ops::tas(&lock_, new_val) == 0)
+        if (atomic_ops::tas(&lock_, new_val) == 0) // will actually lock!
         {
             return true;
         }
