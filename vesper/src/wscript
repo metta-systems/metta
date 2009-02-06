@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, Task, Options, Configure
+import os, Task, Options, Configure, Utils, misc
 Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
@@ -25,7 +25,7 @@ def configure(conf):
     # Configuration name is composed of platform, cpu, release
 
 
-    conf.check_tool('gcc g++ nasm') # FIXME: gcc detection per-config for x-compile?
+    conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
@@ -56,13 +56,12 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', osflags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions ' + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('LINKFLAGS', '-T ../linker.ld ' + osflags + flags)
+    conf.env.append_unique('LINKFLAGS', '-Wl,-Map,vesper.map -T ../linker.ld ' + osflags + flags)
 
     # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
+    conf.define('HEAP_DEBUG', 1)
     conf.write_config_header('config.h')
-
-updater = Task.simple_task_type('update_image', './update_image.sh', color='BLUE')
 
 def build(bld):
     bld.add_subdirs('lib/klibc lib/bstrlib tests')
@@ -72,5 +71,12 @@ def build(bld):
     vesper.source.remove('boot/boot.asm')
     vesper.env = bld.env_of_name(bld.env['ENV'])
     vesper.includes = include_dirs
-    vesper.uselib_local = 'klibc bstrlib'
+    vesper.uselib_local = 'bstrlib klibc'
     vesper.target = 'vesper'
+
+def shutdown():
+    Utils.exec_command("sh ./update_image.sh")
+    #updater = bld.new_task_gen('command-output', outputs='floppy.img', argv=[vesper.target])
+    #updater.command = 'sh update_image.sh'
+    #updater.command_is_external = True
+    #updater.dependencies = [vesper]

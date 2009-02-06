@@ -1,10 +1,15 @@
+== cleanup ==
+[x] Remove all string operations from the old/linux kernel.
+[x] Replace strings with bstrlib where necessary.
+[ ] Port string operations to bstrlib/string.
+
+== boot ==
 [ ] Load components from init modules
 [ ] Call components constructors
 
+== design ==
 [ ] Design portal manager interface
 [ ] Implement simple portal manager
-
-[ ] Port string operations to bstrlib/string.
 
 [ ] See to use Flick idl compiler
   [ ] Build
@@ -15,4 +20,4 @@
 
 == wscript ==
 [ ] environment selection from cmdline
-[ ] run update_image.sh automagically after build
+[+] run update_image.sh automagically after build
