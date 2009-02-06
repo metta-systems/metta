@@ -15,3 +15,6 @@ using namespace metta::kernel;
 #define bstr__memset  memutils::fill_memory
 #define bstr__memcmp  memutils::memcmp
 #define bstr__memchr  memutils::memchr
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
