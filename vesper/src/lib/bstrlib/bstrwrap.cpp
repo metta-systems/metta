@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
+#include "bstrlib_p.h"
 #include "bstrwrap.h"
 
 #if defined(MEMORY_DEBUG) || defined(BSTRLIB_MEMORY_DEBUG)

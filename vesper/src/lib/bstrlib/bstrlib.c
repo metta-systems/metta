@@ -18,6 +18,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "bstrlib.h"
+#include "bstrlib_p.h"
 
 /* Optionally include a mechanism for debugging memory */
 
@@ -1291,7 +1292,7 @@ struct charField { unsigned char content[CFCLEN]; };
 static int buildCharField (struct charField * cf, const_bstring b) {
 int i;
 	if (b == NULL || b->data == NULL || b->slen <= 0) return BSTR_ERR;
-	memset ((void *) cf->content, 0, sizeof (struct charField));
+	bstr__memset ((void *) cf->content, 0, sizeof (struct charField));
 	for (i=0; i < b->slen; i++) {
 		setInCharField (cf, b->data[i]);
 	}

@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include "bstrlib.h"
+#include "bstrlib_p.h"
 #include "bstraux.h"
 
 /*  bstring bTail (bstring b, int n)
@@ -93,8 +94,8 @@ int bInsertChrs (bstring b, int pos, int len, unsigned char c, unsigned char fil
 	 && 0 > bsetstr (b, pos, NULL, fill)) return -__LINE__;
 
 	if (0 > balloc (b, b->slen + len)) return -__LINE__;
-	if (pos < b->slen) memmove (b->data + pos + len, b->data + pos, b->slen - pos);
-	memset (b->data + pos, c, len);
+	if (pos < b->slen) bstr__memmove (b->data + pos + len, b->data + pos, b->slen - pos);
+	bstr__memset (b->data + pos, c, len);
 	b->slen += len;
 	b->data[b->slen] = (unsigned char) '\0';
 	return BSTR_OK;
@@ -217,7 +218,7 @@ size_t tsz = elsize * nelem;
 
 	if (tsz > (size_t) t->slen) tsz = (size_t) t->slen;
 	if (tsz > 0) {
-		memcpy (buff, t->data, tsz);
+		bstr__memcpy (buff, t->data, tsz);
 		t->slen -= (int) tsz;
 		t->data += tsz;
 		return tsz / elsize;
@@ -289,7 +290,7 @@ bstring b;
 		bdestroy (b);
 		return NULL;
 	}
-	memcpy (b->data, buff + i + 1, x);
+	bstr__memcpy (b->data, buff + i + 1, x);
 	b->data[x] = (unsigned char) '\0';
 	b->slen = x;
 	return b;
@@ -620,7 +621,7 @@ int l, lret;
 	CheckInternalBuffer:;
 	/* If internal buffer has sufficient data, just output it */
 	if (((size_t) luuCtx->io.dst->slen) > tsz) {
-		memcpy (buff, luuCtx->io.dst->data, tsz);
+		bstr__memcpy (buff, luuCtx->io.dst->data, tsz);
 		bdelete (luuCtx->io.dst, 0, (int) tsz);
 		return nelem;
 	}
@@ -660,7 +661,7 @@ int l, lret;
 	/* Output any lingering data that has been translated */
 	if (((size_t) luuCtx->io.dst->slen) > 0) {
 		if (((size_t) luuCtx->io.dst->slen) > tsz) goto CheckInternalBuffer;
-		memcpy (buff, luuCtx->io.dst->data, luuCtx->io.dst->slen);
+		bstr__memcpy (buff, luuCtx->io.dst->data, luuCtx->io.dst->slen);
 		tsz = luuCtx->io.dst->slen / elsize;
 		luuCtx->io.dst->slen = 0;
 		if (tsz > 0) return tsz;
@@ -962,7 +963,7 @@ bstring b, t;
 			    (m = b->mlen + 1)    <= b->mlen) t = NULL;
 			else t = bfromcstralloc (m, "");
 
-			if (t) memcpy (t->data, b->data, i);
+			if (t) bstr__memcpy (t->data, b->data, i);
 			bSecureDestroy (b); /* Cleanse previous buffer */
 			b = t;
 			if (!b) return b;

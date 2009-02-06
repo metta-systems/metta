@@ -90,14 +90,14 @@ void * bwsClose (struct bwriteStream * stream);
 #define bSecureDestroy(b) {	                                            \
 bstring bstr__tmp = (b);	                                            \
 	if (bstr__tmp && bstr__tmp->mlen > 0 && bstr__tmp->data) {          \
-	    (void) memset (bstr__tmp->data, 0, (size_t) bstr__tmp->mlen);   \
+	    (void) bstr__memset (bstr__tmp->data, 0, (size_t) bstr__tmp->mlen);   \
 	    bdestroy (bstr__tmp);                                           \
 	}                                                                   \
 }
 #define bSecureWriteProtect(t) {	                                              \
 	if ((t).mlen >= 0) {                                                          \
 	    if ((t).mlen > (t).slen)) {                                               \
-	        (void) memset ((t).data + (t).slen, 0, (size_t) (t).mlen - (t).slen); \
+	        (void) bstr__memset ((t).data + (t).slen, 0, (size_t) (t).mlen - (t).slen); \
 	    }                                                                         \
 	    (t).mlen = -1;                                                            \
 	}                                                                             \
