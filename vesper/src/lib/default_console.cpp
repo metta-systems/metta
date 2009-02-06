@@ -8,7 +8,10 @@
 #include "string.h"
 #include "common.h"
 #include "macros.h"
-#include "vsprintf.h"
+#include "memutils.h"
+
+using metta::common::memutils;
+using metta::common::string;
 
 namespace metta {
 namespace kernel {
@@ -34,7 +37,7 @@ default_console::default_console()
 
 void default_console::clear()
 {
-    memset((void*)videoram, 0, LINE_PITCH*LINE_COUNT);
+    memutils::fill_memory((void*)videoram, 0, LINE_PITCH*LINE_COUNT);
     locate(0,0);
     attr = 0x07;
 }
@@ -67,8 +70,8 @@ void default_console::locate(int row, int col)
 
 void default_console::scroll_up()
 {
-    memmove((void*)videoram, (void*)(videoram+LINE_PITCH), LINE_PITCH*(LINE_COUNT-1));
-    memset((void*)(videoram+LINE_PITCH*(LINE_COUNT-1)), 0, LINE_PITCH);
+    memutils::move_memory((void*)videoram, (void*)(videoram+LINE_PITCH), LINE_PITCH*(LINE_COUNT-1));
+    memutils::fill_memory((void*)(videoram+LINE_PITCH*(LINE_COUNT-1)), 0, LINE_PITCH);
 }
 
 void default_console::newline()
@@ -115,7 +118,7 @@ void default_console::print_byte(unsigned char n)
 
 void default_console::print_hex(unsigned int n)
 {
-    print("0x");
+    print_str("0x");
     for(int i = 4; i > 0; i--)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
@@ -143,21 +146,6 @@ void default_console::print_char(char ch)
     BochsConsolePrintChar(ch);
 }
 
-void default_console::print(const char *str, ...)
-{
-    #define BUFSIZE 512
-    char buffer[BUFSIZE];
-    va_list ap;
-    va_start(ap, str);
-    vsnprintf(buffer, BUFSIZE, str, ap);
-    va_end(ap);
-    #undef BUFSIZE
-
-    int i = 0;
-    while (buffer[i])
-        print_char(buffer[i++]);
-}
-
 void default_console::wait_ack()
 {
     uint8_t keycode;
@@ -180,21 +168,53 @@ void default_console::wait_ack()
         outb(0x21, inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
+void default_console::print_str(const char *str)
+{
+    char *b = (char *)str;
+    while (*b)
+        print_char(*b++);
+}
+
+void default_console::debug_cp(const char *str)
+{
+    print_str("\n[DBGCHKPT] ");
+    print_str(str);
+    print_str("\nPress ENTER to continue...\n");
+    wait_ack();
+}
+
+void default_console::print(const char *str, ...)
+{
+    string s;
+    int ret;
+
+    bvformata(ret, &s, str, str);
+
+    if (ret == BSTR_OK)
+    {
+        print_str(s);
+    }
+    else
+        print_str("console: invalid format string in call to print\n");
+}
+
 void default_console::debug_log(const char *str, ...)
 {
-    #define BUFSIZE 512
-    char buffer[BUFSIZE];
-    va_list ap;
-    va_start(ap, str);
-    vsnprintf(buffer, BUFSIZE, str, ap);
-    va_end(ap);
-    #undef BUFSIZE
+    string s;
+    int ret;
 
-    unsigned char old_attr = attr;
-    set_attr(WHITE, BLACK);
-    print(buffer);
-    print_char(eol);
-    attr = old_attr;
+    bvformata(ret, &s, str, str);
+
+    if (ret == BSTR_OK)
+    {
+        unsigned char old_attr = attr;
+        set_attr(WHITE, BLACK);
+        print_str(s);
+        print_char(eol);
+        attr = old_attr;
+    }
+    else
+        print_str("console: invalid format string in call to debug_log\n");
 }
 
 }

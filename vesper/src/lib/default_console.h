@@ -51,11 +51,13 @@ public:
     void print_char(char ch);
     void print_byte(unsigned char n);
     void print_hex(unsigned int n);
+    void print_str(const char *str);
     void print(const char *str, ...);
 
     void wait_ack();
 
     void debug_log(const char *str, ...);
+    void debug_cp(const char *str);
 
 private:
     default_console();
@@ -74,7 +76,7 @@ inline default_console& operator << (default_console& con, Color data)
 
 inline default_console& operator << (default_console& con, const char* data)
 {
-    con.print(data);
+    con.print_str(data);
     return con;
 }
 
