@@ -39,46 +39,6 @@ public:
     static address_t backtrace(int n);
 
     /**
-    * memset - Fill a region of memory with the given value
-    * @p dest Pointer to the start of the area.
-    * @p value The byte to fill the area with
-    * @p count The size of the area.
-    *
-    * Do not use memset() to access IO space, use memset_io() instead.
-    **/
-    inline static void* set_memory(void* dest, int value, size_t count)
-    {
-        return memset(dest, value, count);
-    }
-
-    /**
-    * memcpy - Copy one area of memory to another
-    * @p dest Where to copy to
-    * @p src Where to copy from
-    * @p count The size of the area.
-    *
-    * You should not use this function to access IO space, use memcpy_toio()
-    * or memcpy_fromio() instead.
-    **/
-    inline static void* copy_memory(void* dest, const void* src, size_t count)
-    {
-        return memcpy(dest, src, count);
-    }
-
-    /**
-    * memmove - Copy one area of memory to another
-    * @p dest Where to copy to
-    * @p src Where to copy from
-    * @p count The size of the area.
-    *
-    * Unlike memcpy(), memmove() copes with overlapping areas.
-    **/
-    inline static void* move_memory(void* dest, const void* src, size_t count)
-    {
-        return memmove(dest, src, count);
-    }
-
-    /**
     * Print a full backtrace from the current location. (Or, if @p n is specified,
     * up to n stack frames.
     **/
