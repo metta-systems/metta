@@ -10,6 +10,7 @@
 #include "macros.h"
 #include "common.h"
 #include "default_console.h"
+#include "memutils.h"
 
 using namespace metta::kernel;
 
@@ -20,21 +21,21 @@ namespace common {
 * Array of maximum size @c n of pointers to @c type.
 * This array is insertion sorted - it always remains in a sorted state (between calls).
 * @c type must implement operator <()
-* Array must be in-place allocatable for Heap to work correctly.
+* Array must be in-place allocatable for @c heap to work correctly.
 * This implementation is not particularly optimized for large arrays - insertion is O(N).
 **/
-template<class type, uint32_t n>
+template<typename type, size_t n>
 class ordered_array
 {
 public:
-	/**
-	 * Create an ordered array.
-	 */
-	inline ordered_array()
-	{
-		memset(array, 0, n * sizeof(type*));
-		size = 0;
-	}
+    /**
+    * Create an ordered array.
+    **/
+    inline ordered_array()
+    {
+        memutils::fill_memory(array, 0, n * sizeof(type*));
+        size = 0;
+    }
 
 	void insert(type* item)
 	{
@@ -60,42 +61,51 @@ public:
 		}
 	}
 
-	inline type* lookup(uint32_t i)
-	{
-		ASSERT(i < size);
-		return array[i];
-	}
+    inline type* lookup(uint32_t i)
+    {
+        ASSERT(i < size);
+        return array[i];
+    }
 
-	void remove(uint32_t i)
-	{
-		size--;
-		while (i < size)
-		{
-			array[i] = array[i+1];
-			i++;
-		}
-	}
+    template <typename T>
+    inline T lookup(uint32_t i)
+    {
+        ASSERT(i < size);
+        return reinterpret_cast<T>(array[i]);
+    }
 
-	inline uint32_t count()
-	{
-		return size;
-	}
+    void remove(uint32_t i)
+    {
+        size--;
+        while (i < size)
+        {
+            array[i] = array[i+1];
+            i++;
+        }
+    }
 
-	/**
-	 * Debug helper function.
-	 */
-	void dump()
-	{
-		kconsole.print("Dumping ordered_array %p (%d items)\n", this, size);
-		for(int i = 0; i < size; i++)
-		{
-			kconsole.print("    %p\n", array[i]);
-		}
-	}
+    inline size_t count()
+    {
+        return size;
+    }
+
+    /**
+    * Debug helper function.
+    **/
+    void dump()
+    {
+        kconsole.print("Dumping ordered_array %p (%d items)\n", this, size);
+        for(int i = 0; i < size; i+=8)
+        {
+            for (int j = 0; j < 8, i+j < size; j++)
+                kconsole.print(" %p", array[i+j]);
+            kconsole.newline();
+        }
+    }
 
 private:
-	type*    array[n];
-	uint32_t size;
+    type*    array[n];
+    size_t   size;
 };
 
 }
