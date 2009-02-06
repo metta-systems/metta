@@ -44,8 +44,9 @@ public:
     {
         uint32_t flags; // enum above
 
-        uint32_t mem_lower;
-        uint32_t mem_upper;
+        // memory here usually excludes occupid memory in mmapinfo
+        uint32_t mem_lower; // kilobytes of lower memory
+        uint32_t mem_upper; // kilobytes of upper memory
 
         uint32_t boot_device;
 
@@ -60,8 +61,10 @@ public:
         uint32_t addr;
         uint32_t shndx;
 
-        uint32_t mmap_length;
-        uint32_t mmap_addr;
+        struct memmap {
+            uint32_t length;
+            uint32_t addr;
+        } mmap PACKED;
 
         uint32_t drives_length;
         uint32_t drives_addr;
@@ -90,10 +93,10 @@ public:
 
     struct mmapinfo
     {
-        uint32_t size;
-        uint64_t base_addr;
-        uint64_t length;
-        uint32_t type;
+        uint32_t size;      ///< size of the mmapinfo entry
+        uint64_t base_addr; ///< base address of memory region
+        uint64_t length;    ///< size of memory region
+        uint32_t type;      ///< type == 1 for free regions, anything else means occupied
     } PACKED;
 
     multiboot() : header_(NULL) {}
@@ -169,7 +172,7 @@ public:
     inline bool has_mem_info() const { return flags_set(FLAG_MEM); }
 
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
-    void print_mmap_info() const;
+    header::memmap* memory_map() const;
 
 private:
     header*                header_;

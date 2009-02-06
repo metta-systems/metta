@@ -8,7 +8,9 @@
 #include "kernel.h"
 #include "string.h"
 #include "elf.h"
-#include "default_console.h" // for print_mmap_info() method below
+#include "memutils.h"
+
+using metta::common::memutils;
 
 namespace metta {
 namespace kernel {
@@ -39,7 +41,7 @@ multiboot::multiboot(multiboot::header *h)
         else if (sh->sh_type == SHT_STRTAB)
         {
             char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-            if (!strcmp(c, ".strtab"))
+            if (!memutils::strcmp(c, ".strtab"))//FIXME: replace with string() method
             {
                 strtab = sh;
             }
@@ -47,21 +49,12 @@ multiboot::multiboot(multiboot::header *h)
     }
 }
 
-void multiboot::print_mmap_info() const
+multiboot::header::memmap* multiboot::memory_map() const
 {
     if (!has_mmap_info())
-        return;
-    kconsole.print("MMAP is provided @ %p:\n", header_->mmap_addr);
-
+        return 0;
     ASSERT(sizeof(mmapinfo)==24);
-
-    mmapinfo* mmi = (mmapinfo*)(header_->mmap_addr);
-    mmapinfo* end = (mmapinfo*)(header_->mmap_addr + header_->mmap_length);
-    while (mmi < end)
-    {
-        kconsole.print("[entry @ %p, %d bytes]  %llx, %llu bytes (type %u = %s)\n", mmi, mmi->size, mmi->base_addr, mmi->length, mmi->type, mmi->type == 1 ? "Free" : "Occupied");
-        mmi = (mmapinfo*)(((char *)mmi) + mmi->size + 4);
-    }
+    return &header_->mmap;
 }
 
 }
