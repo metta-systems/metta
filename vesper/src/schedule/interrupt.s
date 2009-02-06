@@ -92,7 +92,7 @@ isr_common_stub:
 	cli
 	pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-	mov eax, 0x0
+	xor eax, eax
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 
@@ -122,7 +122,7 @@ irq_common_stub:
 	cli
 	pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
-	mov eax, 0x0
+	xor eax, eax
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 

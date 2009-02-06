@@ -26,7 +26,7 @@ using namespace metta::kernel;
 **/
 void isr_handler(registers regs)
 {
-    kconsole << GREEN << "Received interrupt: " << regs.int_no << endl;
+    kconsole << YELLOW << "Received interrupt: " << regs.int_no << endl;
 
     interrupt_service_routine* isr = interrupts_table.get_isr(regs.int_no);
     if (isr)
@@ -46,7 +46,7 @@ void isr_handler(registers regs)
 void irq_handler(registers regs)
 {
     // hmm somebody enables interrupts?? (they are enabled by default?)
-    kconsole << GREEN << "Received irq: " << regs.int_no-32 << endl;
+//     kconsole << YELLOW << "Received irq: " << regs.int_no-32 << endl;
 
     interrupt_service_routine* isr = interrupts_table.get_isr(regs.int_no);
     if (isr)

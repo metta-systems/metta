@@ -29,7 +29,7 @@ public:
     interrupt_service_routine() {}
     virtual ~interrupt_service_routine() {}
 
-    virtual void run(registers *) {}
+    virtual void run(registers*) {}
 };
 
 }
