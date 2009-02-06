@@ -11,10 +11,12 @@
 #include "security.h"
 #include "atomic_count.h"
 #include "object_types.h"
+#include "string.h"
 
 namespace metta {
 namespace kernel {
 
+using metta::common::string;
 using object_type::object_type_e;
 
 /// thread *target = object_cast<thread>(th);
@@ -39,42 +41,54 @@ public:
     * Reference this object from the outside, increasing its reference count
     * and deferring its death.
     **/
-    inline void ref() { refs++; }
+    inline void ref() { ++refs; }
     /**
     * Unreference this object, when reference count goes down to zero
     * object will rest in peace.
     **/
     inline void unref() { refs--; }
-
+    /**
+    * Return whether object is alive or merely waiting for its reference count
+    * to drop down to zero.
+    * Any actions except decreasing reference count are not allowed in an
+    * inactive object.
+    **/
     inline bool active() { return active_; }
 
     inline object_type_e type() { return type_; }
     hash_t hash();
 
 private:
-    /** Object type */
-    object_type_e  type_;
+    /**
+    * Object type.
+    **/
+    object_type_e     type_;
     /**
     * @c true if this object is currently active;
-    * @c false if it has been destroyed and is merely waiting for all references to it to be dropped.
+    * @c false if it has been destroyed and is merely waiting
+    *          for all references to it to be dropped.
     **/
-    bool         active_;
-    /** Count of outstanding references to this object.  */
-    atomic_count refs;
+    bool              active_;
     /**
-    * Mutex lock protecting this object.
-    * This mutex covers all data in the basic part of the object,
-    * and may also protect some or all of the type-specific data.
+    * Count of outstanding references to this object.
     **/
-//     mutex        lock; // provided by lockable
-    /** Physical address at which the user part of the object is located.  */
-    address_t    user_pa;
-    /** Hash value. Set at object creation time, exported to user via get_state.  */
-    hash_t       user_hash;
-
+    atomic_count      refs;
+    /**
+    * Physical address at which the user part of the object is located.
+    **/
+    address_t         user_pa;
+    /**
+    * Hash value. Set at object creation time, exported to user via get_state.
+    **/
+    hash_t            user_hash;
+    /**
+    * Object security identifier, usually assigned by security server upon creation.
+    **/
     security_id_t     sid;
-
-    char*             label;
+    /**
+    * Label for user identification (used in statistic printouts).
+    **/
+    string            label_;
 };
 
 }
