@@ -19,6 +19,9 @@
 * on how to make this a nice template.
 * (in the end, use Boost's version of concurrent anyway)
 *
+* See http://www.gelato.unsw.edu.au/lxr/source/Documentation/atomic_ops.txt
+* for better names for the methods and memory barrier constraints.
+*
 * TODO: error out if not compiling with GCC
 * FIXME: I know these methods have silly names.
 **/
