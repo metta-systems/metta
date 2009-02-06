@@ -6,9 +6,12 @@
 //
 #include "memory_manager.h"
 #include "registers.h"
+#include "memutils.h"
 #include "kernel.h"
 
 extern address_t end; // defined by linker.ld
+
+using namespace metta::common;
 
 namespace metta {
 namespace kernel {
@@ -20,108 +23,179 @@ namespace kernel {
 * be mapped on to \c frames - equally sized blocks of physical memory.
 **/
 
+memory_manager& memory_manager::self()
+{
+    static memory_manager manager;
+    return manager;
+}
+
 memory_manager::memory_manager()
 {
-	placement_address = (address_t)&end ; // TODO: change to multiboot->mod_end
-	heap_initialised = false;
-	current_directory = kernel_directory = NULL;
+//     kconsole.print_str("memory_manager ctor\n");
+    placement_address = (address_t)&end ; // TODO: change to multiboot->mod_end
+    heap_initialised = false;
+    current_directory = kernel_directory = NULL;
 }
 
-memory_manager::~memory_manager()
-{
-}
+// memory_manager::~memory_manager()
+// {
+// }
 
-void memory_manager::init(address_t mem_end)
+void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
 {
-	// Make enough frames to reach 0x00000000 .. memEnd.
+    // Make enough frames to reach 0x00000000 .. memEnd.
     // make sure memEnd is on a page boundary.
-	uint32_t memEndPage = mem_end - (mem_end % PAGE_SIZE);
-	n_frames = memEndPage / PAGE_SIZE;
+    uint32_t memEndPage = page_align_down<address_t>(mem_end);
 
-	frames = new bit_array(n_frames);
+    // A mmap will give us more precise info about maximum available memory
+    if (mmap)
+    {
+        address_t highest = memEndPage;
 
-	// Make a page directory.
-	kernel_directory = new(true/*page align*/) page_directory();
-	current_directory = kernel_directory;
+        multiboot::mmapinfo* mmi = (multiboot::mmapinfo*)(mmap->addr);
+        multiboot::mmapinfo* end = (multiboot::mmapinfo*)(mmap->addr + mmap->length);
+        while (mmi < end)
+        {
+            address_t end = page_align_up<address_t>(mmi->base_addr + mmi->length);
+            if (end > highest)
+                highest = end;
+            mmi = (multiboot::mmapinfo*)(((char *)mmi) + mmi->size + 4);
+        }
 
-	// Map some pages in the kernel heap area.
-	// Here we call getPage but not alloc_frame. This causes PageTables
-	// to be created where nessecary. We can't allocate frames yet because
-	// they need to be identity mapped first below.
-	for (uint32_t i = HEAP_START; i < HEAP_END; i += PAGE_SIZE)
-	{
-		kernel_directory->get_page(i, /*make:*/true);
-	}
+        memEndPage = highest;
+    }
 
-	// Map some pages in the user heap area.
-	// Here we call getPage but not alloc_frame. This causes PageTables
-	// to be created where nessecary. We can't allocate frames yet because
-	// they need to be identity mapped first below.
-	for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
-	{
-		kernel_directory->get_page(i, /*make:*/true);
-	}
+    n_frames = memEndPage / PAGE_SIZE;
+    frames = new bit_array(n_frames);
+    kconsole.print("Allocating %d frames\n", n_frames);
 
-	// Identity map from KERNEL_START to placementAddress.
-	uint32_t i = 0;
-	while (i < placement_address)
-	{
-		// Kernel code is readable but not writable from userspace.
-		alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
-		i += PAGE_SIZE;
-	}
+    // Make a page directory.
+    kernel_directory = new(true/*page align*/) page_directory();
+    current_directory = kernel_directory;
 
-	// Now allocate those pages we mapped earlier.
-	for (i = HEAP_START; i < HEAP_START+HEAP_INITIAL_SIZE; i += PAGE_SIZE)
-	{
-		// Heap is readable but not writable from userspace.
-		alloc_frame(kernel_directory->get_page(i, true), false, false);
-	}
+    // Map some pages in the kernel heap area.
+    // Here we call getPage but not alloc_frame. This causes PageTables
+    // to be created where nessecary. We can't allocate frames yet because
+    // they need to be identity mapped first below.
+    for (uint32_t i = HEAP_START; i < HEAP_END; i += PAGE_SIZE)
+    {
+        kernel_directory->get_page(i, /*make:*/true);
+    }
 
-	for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
-	{
-		alloc_frame(kernel_directory->get_page(i, true), false, true);
-	}
+    // Map some pages in the user heap area.
+    // Here we call getPage but not alloc_frame. This causes PageTables
+    // to be created where nessecary. We can't allocate frames yet because
+    // they need to be identity mapped first below.
+    for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
+    {
+        kernel_directory->get_page(i, /*make:*/true);
+    }
 
-	// write the page directory.
-	write_page_directory((address_t)kernel_directory->get_physical());
-	enable_paging();
+    // Identity map from KERNEL_START to placementAddress.
+    // reserve 16 pages above placement_address so that we can use placement alloc at start.
+    uint32_t i = 0;
+    while (i < placement_address + 16*PAGE_SIZE)
+    {
+        // Kernel code is readable but not writable from userspace.
+        alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
+        i += PAGE_SIZE;
+    }
 
-	// Initialise the heaps.
-	heap_.init(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
-	user_heap.init(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
+    // Now allocate those pages we mapped earlier.
+    for (i = HEAP_START; i < HEAP_START+HEAP_INITIAL_SIZE; i += PAGE_SIZE)
+    {
+        // Kernel heap is readable but not writable from userspace.
+        alloc_frame(kernel_directory->get_page(i, true), false, false);
+    }
 
-	heap_initialised = true;
+    for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
+    {
+        alloc_frame(kernel_directory->get_page(i, true), false, true);
+    }
+
+    // use mmap if provided to mark unavailable areas
+    if (mmap)
+    {
+        kconsole.print("MMAP is provided @ %p:\n", mmap->addr);
+        multiboot::mmapinfo* mmi = (multiboot::mmapinfo*)(mmap->addr);
+        multiboot::mmapinfo* end = (multiboot::mmapinfo*)(mmap->addr + mmap->length);
+        while (mmi < end)
+        {
+            kconsole.print("[entry @ %p, %d bytes]  %llx, %llu bytes (type %u = %s)\n", mmi, mmi->size, mmi->base_addr, mmi->length, mmi->type, mmi->type == 1 ? "Free" : "Occupied");
+            if (mmi->type != 1) // occupied space
+            {
+                address_t start = page_align_down<address_t>(mmi->base_addr);
+                address_t end = page_align_up<address_t>(mmi->base_addr + mmi->length);
+                // mark frames bitmap as occupied
+                kconsole.print(" > marking as occupied from %08x to %08x\n", start, end);
+                for (i = start; i < end; i += PAGE_SIZE)
+                {
+                    frames->set(i / PAGE_SIZE);
+                }
+            }
+            mmi = (multiboot::mmapinfo*)(((char *)mmi) + mmi->size + 4);
+        }
+    }
+
+    // write the page directory.
+    write_page_directory((address_t)kernel_directory->get_physical());
+    enable_paging();
+
+    // Initialise the heaps.
+    heap_.init(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
+    user_heap.init(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
+
+    heap_initialised = true;
 }
 
 void *memory_manager::malloc(uint32_t size, bool pageAlign, address_t *physicalAddress)
 {
-	ASSERT(heap_initialised);
-	void *addr = heap_.allocate(size, pageAlign);
-	if (physicalAddress)
-	{
-		page *pg = kernel_directory->get_page((address_t)addr, false);
-		*physicalAddress = pg->frame() + (address_t)addr % PAGE_SIZE;
-	}
-	return addr;
+//     kconsole << "kmemmgr::malloc " << (int)size << endl;
+//     kernel.print_backtrace();
+    ASSERT(heap_initialised);
+    heap_.lock();
+    void *addr = heap_.allocate(size, pageAlign);
+    heap_.unlock();
+    if (physicalAddress)
+    {
+        page *pg = kernel_directory->get_page((address_t)addr, false);
+        *physicalAddress = pg->frame() + (address_t)addr % PAGE_SIZE;
+    }
+    return addr;
+}
+
+void *memory_manager::realloc(void *ptr, size_t size)
+{
+    ASSERT(heap_initialised);
+    heap_.lock();
+    void *p = heap_.realloc(ptr, size);
+    heap_.unlock();
+    return p;
 }
 
 void memory_manager::free(void *p)
 {
-	ASSERT(heap_initialised);
-	heap_.free(p);
+    ASSERT(heap_initialised);
+    heap_.lock();
+    heap_.free(p);
+    heap_.unlock();
 }
 
 void *memory_manager::umalloc(uint32_t size)
 {
-	ASSERT(heap_initialised);
-	return user_heap.allocate(size, false);
+    ASSERT(heap_initialised);
+    user_heap.lock();
+    void *p = user_heap.allocate(size, false);
+    user_heap.unlock();
+    return p;
 }
 
 void memory_manager::ufree(void *p)
 {
-	ASSERT(heap_initialised);
-	user_heap.free(p);
+    ASSERT(heap_initialised);
+    user_heap.lock();
+    user_heap.free(p);
+    user_heap.unlock();
 }
 
 //
@@ -213,13 +287,17 @@ void memory_manager::remap_stack()
 	address_t newStackPointer = oldStackPointer + offset;
 	address_t newBasePointer = oldBasePointer + offset;
 
-	kconsole.print("Remapping stack from %p-%p to %p-%p (%d bytes)..", initialEsp, oldStackPointer, STACK_START, newStackPointer, stackSize);
+    kconsole.print("Remapping stack from %p-%p to %p-%p (%d bytes)..", initialEsp, oldStackPointer, STACK_START, newStackPointer, stackSize);
 
-	kernel::copy_memory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
+//     kconsole.debug_cp("remap_stack");
+	memutils::copy_memory((void*)newStackPointer, (const void*)oldStackPointer, stackSize);
+//     kconsole.debug_cp("after remap_stack");
 
 	write_stack_pointer(newStackPointer);
+//     kconsole.debug_cp("new sp");
 	write_base_pointer(newBasePointer);
-	kconsole.print("done\n");
+//     kconsole.debug_cp("new bp");
+	kconsole.print_str("done\n");
 }
 
 void memory_manager::align_placement_address()
@@ -248,21 +326,22 @@ void memory_manager::allocate_range(address_t startAddress, address_t size)
 
 uint32_t memory_manager::get_kernel_heap_size()
 {
-	return heap_.getSize();
+	return heap_.size();
 }
 
 uint32_t memory_manager::get_user_heap_size()
 {
-	return user_heap.getSize();
+	return user_heap.size();
 }
 
 void memory_manager::check_integrity()
 {
-	if(heap_initialised)
-	{
-		heap_.checkIntegrity();
-		user_heap.checkIntegrity();
-	}
+    // TODO: heaps should be locked
+    if(heap_initialised)
+    {
+        heap_.check_integrity();
+        user_heap.check_integrity();
+    }
 }
 
 }

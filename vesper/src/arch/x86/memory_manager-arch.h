@@ -7,10 +7,13 @@
 #pragma once
 // # ifdef LANG_X86
 
-#include "globals.h"
+#include "globals.h" // for new/delete
 
 namespace metta {
 namespace kernel {
+
+// for arch-dependent stuff..
+// namespace md {
 
 #define PAGE_SIZE 0x1000
 #define PAGE_MASK 0xFFFFF000
@@ -117,7 +120,7 @@ public:
         {
             if (pages[i].frame())
             {
-                memory_manager.alloc_frame(&table->pages[i]);
+                kmemmgr.alloc_frame(&table->pages[i]);
                 table->pages[i].setPresent(pages[i].isPresent());
                 table->pages[i].setWritable(pages[i].isWritable());
                 table->pages[i].setUser(pages[i].isUser());
@@ -202,7 +205,7 @@ public:
         for (int i = 0; i < 1024; i++)
         {
             if (!tables[i]) continue;
-            if (memory_manager.get_kernel_directory()->get_table(i) == tables[i])
+            if (kmemmgr.get_kernel_directory()->get_table(i) == tables[i])
             {
                 // It's in the kernel, so just use the same pointer.
                 dir->tables[i] = tables[i];
@@ -269,6 +272,29 @@ private:
     **/
     address_t physical_addr;
 };
+
+template <typename T>
+inline T page_align_up(T a)
+{
+    if (a % PAGE_SIZE)
+    {
+        a &= PAGE_MASK;
+        a += PAGE_SIZE;
+    }
+    return a;
+}
+
+template <typename T>
+inline T page_align_down(T a)
+{
+    return a - a % PAGE_SIZE;
+}
+
+template <typename T>
+inline bool page_aligned_p(T a)
+{
+    return a % PAGE_SIZE == 0;
+}
 
 }
 }

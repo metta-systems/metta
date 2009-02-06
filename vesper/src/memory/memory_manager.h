@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "heap.h"
+#include "multiboot.h"
 #include "bit_array.h"
 
 namespace metta {
@@ -32,6 +33,8 @@ class page;
 class page_directory;
 using metta::common::bit_array;
 
+#define kmemmgr memory_manager::self()
+
 /**
 * Handles all memory related events. Heap startup, allocation, deallocation,
 * virtual memory etc.
@@ -45,17 +48,16 @@ public:
     friend class heap;
 
     /**
-    * Default constructor, called on bootup.
+    * Singleton accessor.
     **/
-    memory_manager();
-    ~memory_manager();
+    static memory_manager& self();
 
     /**
     * Normal constructor - passes the address of end of memory.
     * Initialises paging and sets up a standard kernel page directory.
     * Enables paging, then maps some pages for the heap.
     **/
-    void init(address_t mem_end);
+    void init(address_t mem_end, multiboot::header::memmap *mmap);
 
     /**
     * Allocate "size" bytes, returning the physical address of the
@@ -68,6 +70,17 @@ public:
     * Deallocate the memory allocated to p.
     **/
     void free(void* p);
+
+    /**
+    * Changes the size of the memory block pointed to by ptr to size bytes.
+    * The contents will be unchanged to the minimum of the old and new sizes;
+    * newly allocated memory will be uninitialized. If ptr is NULL, then the call is
+    * equivalent to malloc(size), for all values of size; if size is equal to zero,
+    * and ptr is not NULL, then the call is equivalent to  free(ptr).
+    * Unless ptr is NULL, it must have been returned by an earlier call to malloc()
+    * or realloc(). If the area pointed to was moved, a free(ptr) is done.
+    **/
+    void *realloc(void *ptr, size_t size);
 
     /**
     * Allocate "size" bytes from the *user space heap*.
@@ -140,6 +153,13 @@ public:
     * Checks the kernel and user heap for integrity.
     **/
     void check_integrity();
+
+private:
+    /**
+    * Default constructor.
+    **/
+    memory_manager();
+//     ~memory_manager();
 
 private:
     /**

@@ -31,7 +31,7 @@ void task::init()
 	current_task->id = next_pid++;
 	current_task->esp = current_task->ebp = 0;
 	current_task->eip = 0;
-	current_task->page_dir = memory_manager.get_current_directory();
+	current_task->page_dir = kmemmgr.get_current_directory();
 	current_task->next = 0;
 
 	kconsole.debug_log("Constructed kernel task.");
@@ -83,7 +83,7 @@ void task::yield()
 //  kconsole.print("yield() to %d\n", current_task->id);
 
     // Make sure the memory manager knows we've changed page directory.
-    memory_manager.set_current_directory(current_task->page_dir);
+    kmemmgr.set_current_directory(current_task->page_dir);
     // Here we:
     // * Stop interrupts so we don't get interrupted.
     // * Temporarily put the new EIP location in ECX.
@@ -120,7 +120,7 @@ int task::fork()
     task *parent_task = (task *)current_task;
 
     // Clone the address space.
-    page_directory *directory = memory_manager.get_current_directory()->clone();
+    page_directory *directory = kmemmgr.get_current_directory()->clone();
 
     // Create a new process.
     task *new_task = new task;
