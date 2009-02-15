@@ -101,9 +101,9 @@ private:
     elf32::header*         header;
     elf32::section_header* symbol_table;
     elf32::section_header* string_table;
-    elf32::section_header* got_table; // Global offset table.
-    elf32::section_header* rel_table;
-    elf32::section_header* section_headers;
+    elf32::section_header* got_table; ///< Global offset table.
+    elf32::section_header* rel_table; ///< Relocations table.
+    elf32::section_header* section_headers; ///< Array of all section headers.
     const char*            filename;
 };
 
