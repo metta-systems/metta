@@ -14,7 +14,6 @@ namespace metta {
 namespace kernel {
 
 extern class kernel kernel;
-extern class multiboot multiboot;
 extern class elf_parser kernel_elf_parser;
 extern class interrupt_descriptor_table interrupts_table;
 

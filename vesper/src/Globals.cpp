@@ -19,7 +19,6 @@ namespace kernel {
 
 /* Global objects FIXME: use singletons instead? */
 class kernel kernel;
-class multiboot multiboot;
 elf_parser kernel_elf_parser;
 interrupt_descriptor_table interrupts_table;//good candidate  for singleton...
 
@@ -29,11 +28,11 @@ interrupt_descriptor_table interrupts_table;//good candidate  for singleton...
 using namespace metta::kernel;
 using metta::common::memutils;
 
-/* This entry point is called from loader */
-void kernel_entry(multiboot::header *multiboot_header)
+/* This entry point is called from asm loader */
+void kernel_entry(multiboot::header *h)
 {
 	kconsole.clear();
-	multiboot = multiboot::multiboot(multiboot_header);
+	multiboot::self().set_header(h);
 	kernel.run(); /* does not return */
 }
 

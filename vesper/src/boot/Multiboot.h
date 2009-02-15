@@ -99,8 +99,11 @@ public:
         uint32_t type;      ///< type == 1 for free regions, anything else means occupied
     } PACKED;
 
-    multiboot() : header_(NULL) {}
-    multiboot(header *h);
+    static multiboot& self() { return instance; }
+
+    multiboot() : header_(NULL), strtab(NULL), symtab(NULL) {}
+
+    void set_header(header *h);
 
     inline uint32_t lower_mem()  const { return header_->mem_lower; }
     inline uint32_t upper_mem()  const { return header_->mem_upper; }
@@ -178,6 +181,8 @@ private:
     header*                header_;
     elf32::section_header* strtab;
     elf32::section_header* symtab;
+
+    static multiboot       instance;
 };
 
 }

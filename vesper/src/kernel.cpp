@@ -31,7 +31,7 @@ void kernel::run()
     // NB: all this code could be in the kernel-bootstrapper module that is
     // intermediate and can be removed after it has finished the kernel initialisation.
 
-    if (!multiboot.is_elf())
+    if (!multiboot::self().is_elf())
         PANIC("ELF information is missing in kernel!");
 
     critical_section(); // do not interrupt us in the following lines, please
@@ -39,8 +39,8 @@ void kernel::run()
     // Make sure we aren't overwriting anything by writing at placementAddress.
     relocate_placement_address();
 
-    kernel_elf_parser.load_kernel(multiboot.symtab_start(),
-                                  multiboot.strtab_start());
+    kernel_elf_parser.load_kernel(multiboot::self().symtab_start(),
+                                  multiboot::self().strtab_start());
 
     global_descriptor_table::init();
 
@@ -48,9 +48,9 @@ void kernel::run()
     interrupts_table.init();
 
     // Always pass in a meg of lower memory.
-    kconsole << "Lower mem: " << multiboot.lower_mem() << endl
-             << "Upper mem: " << multiboot.upper_mem() << endl;
-    kmemmgr.init(1024 * 1024 + multiboot.upper_mem() * 1024, multiboot.memory_map());
+    kconsole << "Lower mem: " << multiboot::self().lower_mem() << endl
+             << "Upper mem: " << multiboot::self().upper_mem() << endl;
+    kmemmgr.init(1024 * 1024 + multiboot::self().upper_mem() * 1024, multiboot::self().memory_map());
     kmemmgr.remap_stack();
     kconsole.debug_log("Remapped stack and ready to rock.");
 
@@ -70,9 +70,9 @@ void kernel::run()
 
     multiboot::modinfo *initfsmod = 0;
     multiboot::modinfo *initmod = 0;
-    for (unsigned int i = 0; i < multiboot.mod_count(); i++)
+    for (unsigned int i = 0; i < multiboot::self().mod_count(); i++)
     {
-        multiboot::modinfo *m = multiboot.mod(i);
+        multiboot::modinfo *m = multiboot::self().mod(i);
         kconsole.print("Module %d @ %p to %p:\n", i+1, m->mod_start, m->mod_end);
         if (m->str)
             kconsole.print("       %s\n", m->str);
@@ -109,12 +109,12 @@ void kernel::run()
 void kernel::relocate_placement_address()
 {
     address_t new_placement_address = kmemmgr.get_placement_address();
-    if (multiboot.is_elf())
+    if (multiboot::self().is_elf())
     {
-        new_placement_address = max(multiboot.symtab_end(), new_placement_address);
-        new_placement_address = max(multiboot.strtab_end(), new_placement_address);
+        new_placement_address = max(multiboot::self().symtab_end(), new_placement_address);
+        new_placement_address = max(multiboot::self().strtab_end(), new_placement_address);
     }
-    new_placement_address = max(multiboot.last_mod_end(), new_placement_address);
+    new_placement_address = max(multiboot::self().last_mod_end(), new_placement_address);
     kmemmgr.set_placement_address(new_placement_address);
 }
 
