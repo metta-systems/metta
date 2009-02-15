@@ -135,6 +135,13 @@ struct com_iunknown_ops
 };
 
 
+
+// Parent interface
+// struct Parent_v1 : public Trader_v1, public Environment_v1
+// {
+// }
+
+
 ///// TODO clean these up (reg/unreg/lookup goes to itrader interface of parent com object)
 
 /*
