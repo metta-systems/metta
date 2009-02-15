@@ -12,7 +12,9 @@ namespace kernel {
 namespace object_type { // works around deficiency in C++ enums
 enum object_type_e
 {
-    null = 0
+    null = 0,
+    task = 1,
+    thread = 2,
 };
 }
 
