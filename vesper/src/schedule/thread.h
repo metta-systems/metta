@@ -148,6 +148,11 @@ struct task_state
     link            task_link;
 };
 
+/* == berkus ==
+When thread is making excursion into another protection domain, its remaining
+activation record is marked as "waiting for [idempotent] ipc".
+It also marks the restarting point should IPC fail/require restart.
+*/
 /**
 * IPC state.
 *
@@ -319,9 +324,13 @@ struct thread_md
 *
 * Threads start life as kernel entities.
 *
-* Process calls kernel to spawn a new thread, kernel initializes thread in it's own address space * and then makes an upcall into the calling process from this new thread.
+* Process calls kernel to spawn a new thread, kernel initializes thread in it's own address space
+* and then makes an upcall into the calling process from this new thread.
 *
-* Thread syncronization in passive objects can be implemented by either single activation record * per-object (allowing no more than 1 thread to enter the passive object at a time) or by holding * object-wide locks in places which modify the state of this object (more granular, less latency, * more race issues).
+* Thread syncronization in passive objects can be implemented by either single activation record
+* per-object (allowing no more than 1 thread to enter the passive object at a time) or by holding
+* object-wide locks in places which modify the state of this object (more granular, less latency,
+* more race issues).
 *
 * IPC is different from Fluke because there's only one thread involved in the IPC in general case.
 * Networked IPC (network thread migration) might be slightly different (?).
@@ -332,7 +341,11 @@ struct thread_md
 class thread : public object
 {
 public:
-protected:
+    thread() : object(object_type::thread) {}
+
+    void run(); ///< Mark thread as runnable.
+    void cancel(); ///< Stop the thread asap.
+
 private:
     /**
     * Virtual address of the user part of the thread object
@@ -383,10 +396,10 @@ private:
      * and THREAD_LFLAGS defines the flags that are in lflags.
      */
 //     unsigned        gflags;
-#ifndef CONFIG_OPT_THREADS
+// #ifndef CONFIG_OPT_THREADS
 //     unsigned        lflags;
-#define th_lflags lflags
-#endif
+// #define th_lflags lflags
+// #endif
 
 //     security_class_t sclass;
 //     security_id_t ssid;
