@@ -19,7 +19,7 @@ namespace kernel {
 using metta::common::string;
 using object_type::object_type_e;
 
-/// thread *target = object_cast<thread>(th);
+// thread *target = object_cast<thread>(th);
 // template <typename T>
 // T *object_cast(object *ptr)
 // {
@@ -35,7 +35,7 @@ using object_type::object_type_e;
 class object : public lockable
 {
 public:
-    object() : type_(object_type::null) {}
+    object(object_type_e t = object_type::null) : type_(t) {}
 
     /**
     * Reference this object from the outside, increasing its reference count
