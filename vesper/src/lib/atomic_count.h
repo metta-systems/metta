@@ -17,6 +17,17 @@ public:
     atomic_count() : count(0) {}
     atomic_count(uint32_t init_value) : count(init_value) {}
 
+    atomic_count& operator = (uint32_t value)
+    {
+        count = value;
+        return *this;
+    }
+
+    operator uint32_t ()
+    {
+        return count;
+    }
+
     /**
     * Postfix increment operator.
     * Atomically increment counter by one.
@@ -61,7 +72,7 @@ public:
     }
 
 private:
-    uint32_t count;
+    /*FIXME volatile*/ uint32_t count;
 };
 
 // kate: indent-width 4; replace-tabs on;
