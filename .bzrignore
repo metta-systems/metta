@@ -7,3 +7,4 @@ templates
 vesper.tag
 *.kdevelop.pcs
 *.kdevses
+*.kdev4
