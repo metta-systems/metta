@@ -56,7 +56,7 @@ void kernel::run()
 
 //    smp_boot(); // prepare per-cpu data area, boot remaining processors
 
-    task::init();
+    task::boot();
     timer::init();//crashes at start of timer init (stack problem?)
 // tasking causes stack fuckups after timer inits and causes a yield?
 // weird: seems to work now. check gcc optimizations.
@@ -98,6 +98,10 @@ void kernel::run()
 //    init_comp(multiboot, init_fs);
 
     end_critical_section(); // now you can interrupt us and multitask and everything else
+
+    // init root kernel thread and upcall into init component.
+//     thread *root_thread = new thread;
+//     root_thread->upcall();
 
     while (1) {
         //thread::self()->set_name("kernel_idle");
