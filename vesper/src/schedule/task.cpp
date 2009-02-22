@@ -17,13 +17,13 @@ namespace kernel {
 static uint32_t next_pid = 1;
 static task* kernel_task = NULL;
 
-void task::init()
+void task::boot()
 {
     // Rather important stuff happening, no interrupts please!
     critical_section();
 
     // Initialise the first task (kernel task)
-    kernel_task = /*ready_queue =*/ new task;
+    kernel_task = new task;
     kernel_task->id = next_pid++;
     assert(kernel_task->id == 1);
     kernel_task->page_dir = kmemmgr.get_current_directory();

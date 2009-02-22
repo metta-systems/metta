@@ -23,7 +23,7 @@ class page_directory;
 class task : public object
 {
 public:
-    static void init();// Initialises the kernel task.
+    static void boot();// Initialises the kernel task.
 
     // Forks the current process, spawning a new one with a different
     // memory space. New process has no associated threads.
@@ -37,7 +37,7 @@ private:
     int id;                        ///< Process ID.
     page_directory* page_dir;      ///< Page directory.
     task* next;                    ///< The next task in a linked list.
-    priority_queue<thread> runnable_threads; ///< List of runnable threads in task's PD.
+    //priority_queue<thread> runnable_threads; ///< List of runnable threads in task's PD.
 };
 
 }
