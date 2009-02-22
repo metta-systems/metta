@@ -26,7 +26,8 @@ exts = {
     '.c'=>[license, modelines],
     '.h'=>[license, modelines],
     '.s'=>[license.gsub("//",";"), modelines.gsub("//",";")],
-    '.rb'=>[license.gsub("//","#"), modelines.gsub("//","#")]
+    '.rb'=>[license.gsub("//","#"), modelines.gsub("//","#")],
+    '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
 }
 
 ok_count = 0
