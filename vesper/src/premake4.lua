@@ -48,12 +48,7 @@ include_dirs = {  ".", "lib", "boot", "memory", "pd", "schedule", "boot", "lib/o
 
 -- Move these to config file?
 defines {
-    "CONFIG_CPU_IA32_P4",
---[[    'BSTRLIB_CANNOT_USE_STL',
-    'BSTRLIB_CANNOT_USE_IOSTREAM',
-    'BSTRLIB_DOESNT_THROW_EXCEPTIONS',
-    'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR',
-    'BSTRLIB_DONT_ASSUME_NAMESPACE']]
+    "CONFIG_CPU_IA32_P4"
 }
 
 -- project "bstrlib"
@@ -95,6 +90,3 @@ project "kernel"
 
 -- kate: indent-width 4; replace-tabs on;
 -- vim: set et sw=4 ts=4 sts=4 cino=(4 :
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :
