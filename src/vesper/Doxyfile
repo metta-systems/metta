@@ -153,7 +153,7 @@ FILE_PATTERNS          = *.c \
                          *.dox
 
 RECURSIVE              = YES
-EXCLUDE                = lib/bstrlib
+EXCLUDE                = lib/bstrlib lib/klibc lib/atomic lib/oskit _build_
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
@@ -170,7 +170,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 
 SOURCE_BROWSER         = YES
-INLINE_SOURCES         = YES
+INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = YES
 REFERENCES_RELATION    = YES

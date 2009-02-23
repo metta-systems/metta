@@ -35,7 +35,7 @@ void elf_parser::load_kernel(elf32::section_header* symtab,
 	string_table = strtab;
 }
 
-// TODO: use debugging info if present
+// @todo use debugging info if present
 char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
 {
 	address_t max = 0;

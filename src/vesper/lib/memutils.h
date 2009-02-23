@@ -63,7 +63,7 @@ public:
     **/
     static void*  memchr(const void *s, int c, size_t n);
     /**
-    * Find the length of a string not including the terminating \0
+    * Find the length of a string not including the terminating 0.
     * @p s The string to be sized
     **/
     static size_t strlen(const char *s);
