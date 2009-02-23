@@ -25,7 +25,7 @@ void task::boot()
     // Initialise the first task (kernel task)
     kernel_task = new task;
     kernel_task->id = next_pid++;
-    assert(kernel_task->id == 1);
+    ASSERT(kernel_task->id == 1);
     kernel_task->page_dir = kmemmgr.get_current_directory();
     kernel_task->next = 0;
 

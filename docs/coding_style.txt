@@ -1,8 +1,8 @@
-Use c_case_naming_convention anywhere instead of CamelCaseConvention --
+Use c_case_naming_convention everywhere instead of CamelCaseConvention --
 all symbols are lower case, words are separated by _ symbol (for example
 global_event_queue).
 
-Atomic types have _t appended,
+Simple (atomic) types have _t appended,
 complex types that denote structured objects do not:
 
  * typedef int sint32_t;

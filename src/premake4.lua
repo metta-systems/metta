@@ -16,7 +16,6 @@ solution "vesper"
     flags { "ExtraWarnings", "FatalWarnings", "NoExceptions", "NoRTTI", "OptimizeSize" }
 
     configuration { "linux", "gmake" }
-        buildoptions { "-nostdlib", "-nostartfiles", "-nodefaultlibs", "-fno-builtin" }
         buildoptions { "-fno-stack-protector", "-fno-leading-underscore" }
     configuration { "linux", "gmake", "C++" }
         buildoptions { "-std=gnu++0x" }
@@ -70,23 +69,23 @@ defines {
 
 project "kernel"
     kind "ConsoleApp"
+    targetname "vesper"
     location "_build_"
     language "C++"
-    files { "**.cpp", "**.h" }
-    excludes { "lib/klibc/**", "lib/bstrlib/**" }
---     links { "klibc" }
+    files { "**.cpp", "**.h", "**.s" }
+    excludes { "lib/klibc/**", "lib/bstrlib/**", "tests/**", "initfs/**" }
     includedirs (include_dirs)
     postbuildcommands {}
+    configuration { "linux", "gmake" }
+        linkoptions { "-nostdlib", "-nostartfiles", "-nodefaultlibs", "-fno-builtin" }
+        linkoptions { "-Wl,-Map,vesper.map", " -T ../linker.ld" }
+        asmoptions { "-f elf" }
 
--- solution "lib_tests"
---     location "_build_"
--- 	configurations { "Debug" }
--- 	configuration "Debug"
--- 		defines { "DEBUG" }
---
--- 	project "test_suite"
--- 		language "C++"
--- 		files {}
+project "lib_tests"
+    kind "ConsoleApp"
+    location "_build_/tests"
+    language "C++"
+    files { "tests/*" }
 
 -- kate: indent-width 4; replace-tabs on;
 -- vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -185,36 +185,36 @@ void default_console::debug_cp(const char *str)
 
 void default_console::print(const char *str, ...)
 {
-    string s;
-    int ret;
+//     string s;
+//     int ret;
 
-    bvformata(ret, &s, str, str);
+//     bvformata(ret, &s, str, str);
 
-    if (ret == BSTR_OK)
+//     if (ret == BSTR_OK)
     {
-        print_str(s);
+        print_str(str);
     }
-    else
-        print_str("console: invalid format string in call to print\n");
+//     else
+//         print_str("console: invalid format string in call to print\n");
 }
 
 void default_console::debug_log(const char *str, ...)
 {
-    string s;
-    int ret;
+//     string s;
+//     int ret;
 
-    bvformata(ret, &s, str, str);
+//     bvformata(ret, &s, str, str);
 
-    if (ret == BSTR_OK)
+//     if (ret == BSTR_OK)
     {
         unsigned char old_attr = attr;
         set_attr(WHITE, BLACK);
-        print_str(s);
+        print_str(str);
         print_char(eol);
         attr = old_attr;
     }
-    else
-        print_str("console: invalid format string in call to debug_log\n");
+//     else
+//         print_str("console: invalid format string in call to debug_log\n");
 }
 
 }

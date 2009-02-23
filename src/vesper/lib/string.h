@@ -39,21 +39,25 @@ public:
     string(const char *s);
     /** Copy constructor. */
     string(const string& other);
+    /** Construct string from array of unicode (UTF-16) codepoints */
+    string(const uint16_t *unicode, int32_t size);
     /** Construct a string by repeatedly copying @p c for @p len times. */
 //     string(char c, int len);
     /** Construct a string from specified region of memory. */
 //     string(const void * blk, int len);
+    /** Assigns @p other to this string and returns a reference to this string. */
+    string& operator = (const string& other);
     ~string();
 
-    /** Return current size of the string. Synonymous with count(). */
-    size_t size() const;
-    /** Return current size of the string. Synonymous with size(). */
-    size_t count() const;
-    /** Return current length of the string. */
-    size_t length() const;
+    inline size_t size() const  { return d->length; }
+    inline size_t count() const  { return d->length; }
+    inline size_t length() const  { return d->length; }
     bool is_empty() const;
 
     size_t  capacity() const;
+
+    /** Clears the contents of the string and makes it empty. */
+    void clear();
 
     string left(int len) const;
     string right(int len) const;
@@ -69,14 +73,18 @@ private:
     struct data
     {
         atomic_count ref;
-        uint16_t *data;
         int32_t length;
         int32_t allocated;
+        uint16_t *data;
+        uint16_t array[1];//use 8 (will make a 32 bytes struct with some space for short strings)
     };
 
-    static const data shared_null;
-    static const data shared_empty;
+    static data shared_null;
+    static data shared_empty;
     data* d;
+
+    data* dalloc(size_t size);
+    void dfree(data* d);
 };
 
 /**

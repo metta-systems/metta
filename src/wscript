@@ -4,10 +4,10 @@ srcdir = '.'
 blddir = '_build_'
 
 def set_options(opt):
-	opt.sub_options("vesper/src")
+	opt.sub_options("vesper")
 
 def build(bld):
-	bld.sub_build("vesper/src")
+	bld.sub_build("vesper")
 
 def configure(conf):
-	conf.sub_config("vesper/src")
+	conf.sub_config("vesper")

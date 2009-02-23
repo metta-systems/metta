@@ -1,0 +1,37 @@
+    /*
+     * The Pentium Pro and later support global PDE/PTE entries,
+     * which are not removed from the TLB when we switch tasks.
+     */
+    pmap_global_ext = (base_cpuid.feature_flags & CPUF_PAGE_GLOBAL_EXT)
+        ? INTEL_PTE_GLOBAL : 0;
+
+
+
+*_boot
+smp_*
+startup_thread -> kserver thread
+more threads kicked from kserver?
+
+src
++--vesper
+   +--arch             # Architecture-dependent implementations
+      +--x86
+      +--x86_64
+      +--arm
+   +--boot             # Startup trampoline code - set up GDT/IDT/MTRRs/CPUs/load kernel.
+   +--initfs
+   +--kserver          # Userspace server running in kernel pd. Entrypoint to kernel services for clients.
+   +--lib
+   +--memory           # Memory manager - heap allocator, pager.
+   +--pd               # protection domains support.
+      +--portal_mgr
+   +--runtime          # kernel C++ runtime support: memutils, string, stl, boost.
+   +--schedule         # kernel part of scheduling: dispatcher.
+   +--tests
++--metta
+
+
+
+
+
+
