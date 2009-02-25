@@ -29,7 +29,7 @@ def configure(conf):
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
-    conf.env.append_unique('CXXFLAGS', cflags + ' ' + flags)
+    conf.env.append_unique('CXXFLAGS', cflags + ' -std=gnu++0x ' + flags)
     conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
     conf.env.append_unique('NASM_FLAGS', '-f elf')
 
@@ -53,7 +53,7 @@ def configure(conf):
     # Config for building kernel on x86
     conf.setenv('x86-release') # Activate the environment
     conf.env.append_unique('CCFLAGS', osflags)
-    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions ' + osflags)
+    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x ' + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('LINKFLAGS', '-Wl,-Map,vesper.map -T ../linker.ld ' + osflags + flags)
 

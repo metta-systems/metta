@@ -79,6 +79,7 @@ void default_console::newline()
     print_char(eol);
 }
 
+/** Print decimal integer */
 void default_console::print_int(int n)
 {
     if (n == 0)
@@ -107,6 +108,7 @@ void default_console::print_int(int n)
     }
 }
 
+/** Print hexadecimal byte */
 void default_console::print_byte(unsigned char n)
 {
     const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
@@ -116,6 +118,7 @@ void default_console::print_byte(unsigned char n)
     print_char(c);
 }
 
+/** Print hexadecimal integer */
 void default_console::print_hex(unsigned int n)
 {
     print_str("0x");
@@ -123,6 +126,15 @@ void default_console::print_hex(unsigned int n)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
 
+/** Print 64 bit hex integer */
+void default_console::print_hex8(unsigned long long n)
+{
+    print_str("0x");
+    for(int i = 8; i > 0; i--)
+        print_byte((n >> (i-1)*8) & 0xFF);
+}
+
+/** Print a single character */
 void default_console::print_char(char ch)
 {
     if (ch == eol)
@@ -168,6 +180,7 @@ void default_console::wait_ack()
         outb(0x21, inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
+/** Print string without formatting */
 void default_console::print_str(const char *str)
 {
     char *b = (char *)str;
@@ -183,38 +196,13 @@ void default_console::debug_cp(const char *str)
     wait_ack();
 }
 
-void default_console::print(const char *str, ...)
-{
-//     string s;
-//     int ret;
-
-//     bvformata(ret, &s, str, str);
-
-//     if (ret == BSTR_OK)
-    {
-        print_str(str);
-    }
-//     else
-//         print_str("console: invalid format string in call to print\n");
-}
-
 void default_console::debug_log(const char *str, ...)
 {
-//     string s;
-//     int ret;
-
-//     bvformata(ret, &s, str, str);
-
-//     if (ret == BSTR_OK)
-    {
-        unsigned char old_attr = attr;
-        set_attr(WHITE, BLACK);
-        print_str(str);
-        print_char(eol);
-        attr = old_attr;
-    }
-//     else
-//         print_str("console: invalid format string in call to debug_log\n");
+    unsigned char old_attr = attr;
+    set_attr(WHITE, BLACK);
+    print_str(str);
+    print_char(eol);
+    attr = old_attr;
 }
 
 }

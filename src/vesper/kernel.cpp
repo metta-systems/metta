@@ -135,30 +135,30 @@ void kernel::dump_memory(address_t start, size_t size)
 
     while (size > 0)
     {
-        kconsole.print_hex((unsigned int)ptr);
-        kconsole.print_str("  ");
+        kconsole.print((unsigned int)ptr);
+        kconsole.print("  ");
         run = size < 16 ? size : 16;
         for(int i = 0; i < run; i++)
         {
-            kconsole.print_byte(*(ptr+i));
-            kconsole.print_char(' ');
+            kconsole.print(*(ptr+i));
+            kconsole.print(' ');
             if (i == 7)
-                kconsole.print_char(' ');
+                kconsole.print(' ');
         }
         if (run < 16)// pad
         {
             if(run < 8)
-                kconsole.print_char(' ');
+                kconsole.print(' ');
             for(int i = 0; i < 16-run; i++)
-                kconsole.print_str("   ");
+                kconsole.print("   ");
         }
-        kconsole.print_char(' ');
+        kconsole.print(' ');
         for(int i = 0; i < run; i++)
         {
             char c = *(ptr+i);
             if (c == kconsole.eol)
                 c = ' ';
-            kconsole.print_char(c);
+            kconsole.print(c);
         }
         kconsole.newline();
         ptr += run;

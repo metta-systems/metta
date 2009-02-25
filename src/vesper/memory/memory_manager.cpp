@@ -297,7 +297,7 @@ void memory_manager::remap_stack()
 //     kconsole.debug_cp("new sp");
 	write_base_pointer(newBasePointer);
 //     kconsole.debug_cp("new bp");
-	kconsole.print_str("done\n");
+	kconsole.print("done\n");
 }
 
 void memory_manager::align_placement_address()

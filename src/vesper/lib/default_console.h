@@ -6,6 +6,9 @@
 //
 #pragma once
 
+#include "macros.h" // for PANIC()
+#include "common.h" // for panic()
+
 namespace metta {
 namespace kernel {
 
@@ -47,12 +50,24 @@ public:
     void locate(int row, int col);
     void scroll_up();
     void newline();
+
     void print_int(int n);
     void print_char(char ch);
     void print_byte(unsigned char n);
     void print_hex(unsigned int n);
-    void print_str(const char *str);
-    void print(const char *str, ...);
+    void print_hex8(unsigned long long n);
+    void print_str(const char *s);
+
+    // Wrappers for template version
+    inline void print(int n) { print_int(n); }
+    inline void print(char ch) { print_char(ch); }
+    inline void print(unsigned char n) { print_byte(n); }
+    inline void print(unsigned int n) { print_hex(n); }
+    inline void print(void *p) { print((unsigned int)p); }
+    inline void print(unsigned long long n) { print_hex8(n); }
+    inline void print(const char* str) { print_str(str); }
+    template<typename T, typename... Args>
+    void print(const char* str, T value, Args... args);
 
     void wait_ack();
 
@@ -102,6 +117,22 @@ inline default_console& operator << (default_console& con, unsigned char data)
 {
     con.print_byte(data);
     return con;
+}
+
+template<typename T, typename... Args>
+void default_console::print(const char* str, T value, Args... args)
+{
+    while (*str)
+    {
+        if (*str == '%' && *(++str) != '%')
+        {
+            print(value);
+            print(*str ? ++str : str, args...); // call even when *s == 0 to detect extra arguments
+            return;
+        }
+        print(*str++);
+    }
+    PANIC("extra arguments provided to print");
 }
 
 }
