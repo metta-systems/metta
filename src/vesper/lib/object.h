@@ -41,12 +41,12 @@ public:
     * Reference this object from the outside, increasing its reference count
     * and deferring its death.
     **/
-    inline void ref() { ++refs; }
+    inline void ref() { refs++; }
     /**
     * Unreference this object, when reference count goes down to zero
     * object will rest in peace.
     **/
-    inline void unref() { refs--; }
+    inline bool unref() { return --refs; }
     /**
     * Return whether object is alive or merely waiting for its reference count
     * to drop down to zero.

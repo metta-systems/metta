@@ -31,48 +31,38 @@ public:
     /**
     * Postfix increment operator.
     * Atomically increment counter by one.
-    * Returns the old value.
+    * Returns if counter became non-zero.
     **/
-    inline uint32_t operator ++(int)
+    inline bool operator ++(int)
     {
-        return atomic_ops::faa(&count, 1);
-    }
-    /**
-    * Prefix increment operator.
-    * Atomically increment counter by one.
-    * Returns the new value.
-    **/
-    inline uint32_t operator ++()
-    {
-        return atomic_ops::aaf(&count, 1);
-    }
-    /**
-    * Postfix decrement operator.
-    * Atomically decrement counter by one.
-    * Returns the old value.
-    **/
-    inline uint32_t operator --(int)
-    {
-        return atomic_ops::fas(&count, 1);
+        unsigned char ret;
+        asm volatile("lock\n"
+                     "incl %0\n"
+                     "setne %1"
+                    : "=m" (count), "=qm" (ret)
+                    : "m" (count)
+                    : "memory");
+        return ret != 0;
     }
     /**
     * Prefix decrement operator.
     * Atomically decrement counter by one.
     * Returns the new value.
     **/
-    inline uint32_t operator --()
+    inline bool operator --()
     {
-        return atomic_ops::saf(&count, 1);
-    }
-
-    // TODO implement adding/removing an arbitrary count atomically.
-    inline uint32_t operator += (int incr)
-    {
-        return atomic_ops::faa(&count, incr);
+        unsigned char ret;
+        asm volatile("lock\n"
+                     "decl %0\n"
+                     "setne %1"
+                    : "=m" (count), "=qm" (ret)
+                    : "m" (count)
+                    : "memory");
+        return ret != 0;
     }
 
 private:
-    /*FIXME volatile*/ uint32_t count;
+    volatile uint32_t count;
 };
 
 // kate: indent-width 4; replace-tabs on;
