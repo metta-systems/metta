@@ -10,15 +10,15 @@ APPNAME = 'vesper'
 srcdir = '.'
 blddir = '_build_'
 
-source_dirs  = '. lib memory pd schedule boot'
-include_dirs = '. lib/klibc lib/bstrlib lib memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
+source_dirs  = '. lib runtime memory pd schedule boot'
+include_dirs = '. lib/klibc lib/bstrlib lib runtime memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'
 cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes screwups
 osflags = '-nostdlib -nostartfiles -nodefaultlibs ' # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'
 
 def set_options(opt):
-    opt.add_option("--platform", action="store", default="x86", help="Select platform to build for.")
+    opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for.")
 
 def configure(conf):
     # Configure for given platform
@@ -31,7 +31,6 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
     conf.env.append_unique('CXXFLAGS', cflags + ' ' + flags)
     conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
-    #conf.env.append_unique('CXXDEFINES', ['BSTRLIB_CANNOT_USE_STL', 'BSTRLIB_CANNOT_USE_IOSTREAM', 'BSTRLIB_DOESNT_THROW_EXCEPTIONS', 'BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR', 'BSTRLIB_DONT_ASSUME_NAMESPACE'])
     conf.env.append_unique('NASM_FLAGS', '-f elf')
 
     # Mhm, any better way to define this?
@@ -69,10 +68,9 @@ def build(bld):
     vesper.source.remove('boot/boot.asm')
     vesper.env = bld.env_of_name(bld.env['ENV'])
     vesper.includes = include_dirs
-    #vesper.uselib_local = 'bstrlib klibc'
     vesper.target = 'vesper'
 
-    #bld.add_subdirs('tests') #lib/klibc lib/bstrlib
+    #bld.add_subdirs('tests')
 
 def shutdown():
     Utils.exec_command("sh ./update_image.sh")

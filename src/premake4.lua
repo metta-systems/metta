@@ -42,8 +42,11 @@ if not _OPTIONS["arch"] then
 	_OPTIONS["arch"] = "x86"
 end
 
--- "lib/bstrlib", "lib/klibc",
-include_dirs = {  ".", "lib", "boot", "memory", "pd", "schedule", "boot", "lib/oskit", "arch/" .. _OPTIONS['arch'], "lib/oskit/oskit/" .. _OPTIONS['arch']  }
+include_dirs = {  ".", "lib", "runtime", "boot", "memory", "pd", "schedule", "boot", "lib/oskit", "arch/" .. _OPTIONS['arch'], "lib/oskit/oskit/" .. _OPTIONS['arch']  }
+
+for k, value in pairs(include_dirs) do
+    include_dirs[k] = 'vesper/'..value
+end
 
 -- Move these to config file?
 defines {
@@ -70,22 +73,22 @@ defines {
 project "kernel"
     kind "ConsoleApp"
     targetname "vesper"
-    location "_build_"
+    location "_build_/vesper"
     language "C++"
-    files { "**.cpp", "**.h", "**.s" }
-    excludes { "lib/klibc/**", "lib/bstrlib/**", "tests/**", "initfs/**" }
+    files { "vesper/**.cpp", "vesper/**.h", "vesper/**.s" }
+    excludes { "vesper/lib/klibc/**", "vesper/lib/bstrlib/**", "vesper/tests/**", "vesper/initfs/**" }
     includedirs (include_dirs)
-    postbuildcommands {}
+    postbuildcommands { "sh update_image.sh" }
     configuration { "linux", "gmake" }
         linkoptions { "-nostdlib", "-nostartfiles", "-nodefaultlibs", "-fno-builtin" }
-        linkoptions { "-Wl,-Map,vesper.map", " -T ../linker.ld" }
-        asmoptions { "-f elf" }
+        linkoptions { "-Wl,-Map,vesper.map", " -T linker.ld" }
+--         asmoptions { "-f elf" }
 
 project "lib_tests"
     kind "ConsoleApp"
     location "_build_/tests"
     language "C++"
-    files { "tests/*" }
+    files { "vesper/tests/*" }
 
 -- kate: indent-width 4; replace-tabs on;
 -- vim: set et sw=4 ts=4 sts=4 cino=(4 :
