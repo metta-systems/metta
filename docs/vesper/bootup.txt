@@ -112,7 +112,7 @@ Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
              | Last page always invalid| 0xFFFFFFFF (invalid address)
-             |_________________________|
+             |_________________________| 0xFFFFF000
              | Kernel stack start      | K_STACK_START
              | one-two pages long      |
              | Kernel stack end        |
@@ -120,41 +120,68 @@ Process image
              | Stack guard page        |
              | (unmapped)              |
              |_________________________|
-             | Small spaces area for   | K_IPCS_END
-             | fast IPC between user   |
-             | servers.                |
-             |_________________________| K_IPCS_START
              |                         | K_HEAP_END
              |                         |
              | Kernel heap             |
              |                         |
              |_________________________| K_HEAP_START
-             | gaps n holes...         |
-             |_________________________| placement_address
              | Kernel initial ramdisk  |
-             | and init (kserver)      |
-             | loaded here by grub.    |
-             |                         |
+             | and init (kserver)      | Initial ramdisk contains MD drivers absolutely
+             | loaded here by grub.    | required for kserver startup (APIC, other HW, root FS).
+             |                         | May be replaced later by more advanced components.
              |_________________________|
+             | Kernel startup code     |
+             | loaded page aligned     | We allocate very limited amount of objects before
+             | and then overwritten    | initializing heap. Probably these allocations can
+             | for memory allocation   | be avoided completely and this area reclaimed.
+             | before heap initialized |
+             |_________________________| placement_address
              | Kernel itself           |
              | - low level memory,     |
              | interrupts, portals     |
-             | and nesting support.    |
-             |_________________________|
-             | Kernel startup code     |
-             | loaded page aligned     |
-             | and then freed and      |
-             | unmapped from phys mem  |
-             | and kernel pagedir      | K_SPACE_START
-         3GB |_________________________| U_PROC_END (Usually 3GB) end of process space
-             | Portal space on top?    |
+             | and nesting support.    | K_SPACE_START
+      3.75GB |_________________________| 0xF0000000
+             | Small spaces area for   | K_IPCS_END
+             | fast IPC between user   |
+             | servers.                |
+      3.25GB |_________________________| K_IPCS_START 0xD0000000
              |                         |
-             | Heap somewhere here     |
-             |_________________________|
-             | Libraries mapped here?  |
+             | Process pagetables.     | R/o from userspace, might not be needed if we expose
+             |                         | a different API.
              |                         |
+             |_________________________| U_RO_PAGE_TABLES 0xC8000000
              |                         |
+             | ....................... |
+             | nothing, unmapped       |
+             | ....................... |
+             |_________________________| K_TRAP_PAGES_END
+             | 1 or more pages:        |
+             | Usermode traps for      |
+             | kernel API              |
+             |_________________________| 0xC0001000 kernel traps entry page (K_TRAP_PAGES_START)
+             | Kernel info page        | K_INTF_PAGE
+         3GB |_________________________| 0xC0000000 kernel info/interface page (L4-like)
+             |                         |
+             | Guarded userspace stack | U_PROC_END (Usually 3GB) end of process space
+             |    (4 pages)            | U_STACK_START
+             |_________________________| U_STACK_END
+             | Libraries mapped from   | U_LIBS_START
+             | here downwards.         |
+             |                         |
+             | Portal tables are held  |
+             | between loaded libraries|
+             | and allocated on-demand.|
+             |                         |
+             | ....................... |
+             | ....................... |
+             |                         |
+             |_________________________| Unmapped heap watermark page at heap end for growing
+             | Heap guard page         | process heap a-la brk()/sbrk() with system oom checks.
              |_________________________|
+             |                         | U_HEAP_END
+             | User heap here          |
+             | growing upwards.        |
+             |_________________________| U_HEAP_START (dynamically set by start-up code)
              | Code, data, bss         |
          1MB |_________________________| 1 MB 0x100000 U_CODE_START start of code in process image
              |                         |
@@ -164,16 +191,10 @@ Process image
              | and I/O resources in    |
              | low memory (1-1 phys    |
              | mapping?), VM86 area.   |
-             |_________________________| K_TRAP_PAGES_END
-             | 1 or more pages:        |
-             | Usermode traps for      |
-             | kernel API              |
-             |_________________________| 0x00002000 kernel traps entry page (K_TRAP_PAGES_START)
-             | Kernel info page        |
-             | mapped from kernel space|
-             |_________________________| 0x00001000 kernel info/interface page (L4-like)
-             |                         |  K_INTF_PAGE_START
-             | Unmapped 4K page        |            (first page reserved)
+             |_________________________|
+             | Unmapped 4K page.       |            (first page reserved)
+             | may be mapped for VM86  |
+             | tasks to access BDA     |
          0x0 +_________________________+ 0x00000000 (invalid address)
 
 
