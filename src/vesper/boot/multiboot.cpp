@@ -24,6 +24,9 @@ void multiboot::set_header(multiboot::header *h)
     symtab = NULL;
     strtab = NULL;
 
+    if (!header_)
+        return;
+
     // try and find the symtab/strtab
     if (!is_elf())
         return;
