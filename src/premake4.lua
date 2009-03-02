@@ -7,6 +7,7 @@
 --
 -- Solution for building vesper kernel.
 --
+-- NB: do not use this script, premake lacks some essential toolchain support (nasm)
 -- NB: use premake4-svn (fixes NoExceptions and NoRTTI flags)
 --
 solution "vesper"
