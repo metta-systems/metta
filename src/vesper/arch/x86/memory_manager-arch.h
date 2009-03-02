@@ -108,7 +108,7 @@ public:
         }
     }
 
-    page *get_page(uint32_t n)
+    page* get_page(uint32_t n)
     {
         return &pages[n];
     }
@@ -152,7 +152,7 @@ public:
         physical_addr = (address_t)tables_physical;
     }
 
-    page_table *get_table(uint32_t index)
+    page_table* get_table(uint32_t index)
     {
         //ASSERT(index >= 0 && index < 1024);
         return tables[index];
