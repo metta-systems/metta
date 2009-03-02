@@ -22,7 +22,7 @@ def set_options(opt):
 
 def configure(conf):
     # Configure for given platform
-    # Configuration name is composed of platform, cpu, release
+    # Configuration name is composed of architecture, cpu, release
 
 
     conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
@@ -55,7 +55,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', osflags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x ' + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('LINKFLAGS', '-Wl,-Map,vesper.map -T ../linker.ld ' + osflags + flags)
+    conf.env.append_unique('LINKFLAGS', '--gc-sections -Wl,-Map,vesper.map -T ../linker.ld ' + osflags + flags)
 
     # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
