@@ -14,16 +14,16 @@
 namespace metta {
 namespace kernel {
 
-#define HEAP_START              0xC0000000
+#define HEAP_START              0xE0000000
 #define HEAP_INITIAL_SIZE       0x100000
-#define HEAP_END                0xCFFFFFFF
-#define USER_HEAP_START         0xD0000000
-#define USER_HEAP_INITIAL_SIZE  0x100000
-#define USER_HEAP_END           0xDFFFFFFF
-#define STACK_START             (0xB0000000-0x4)
+#define HEAP_END                0xEFFFFFFF
+// #define USER_HEAP_START         0xD0000000
+// #define USER_HEAP_INITIAL_SIZE  0x100000
+// #define USER_HEAP_END           0xDFFFFFFF
+#define STACK_START             (0xF8000000-0x4)
 #define STACK_INITIAL_SIZE      0x10000
-#define STACK_END               0xA0000000
-#define KERNEL_START            0x100000
+#define STACK_END               0xF0000000
+#define KERNEL_START            0xC0000000
 
 #define STACK_ADDRESS(x)     ((address_t)x <= STACK_START && (address_t)x > STACK_END)
 #define HEAP_ADDRESS(x)      ((address_t)x >= HEAP_START  && (address_t)x < USER_HEAP_START)

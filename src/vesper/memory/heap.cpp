@@ -234,7 +234,7 @@ void *heap::allocate(size_t size, bool page_align)
 
         footer *hole_footer = (footer *)((address_t)hole_header + orig_hole_size - new_size - sizeof(footer));
         // Check we didn't go outside allowed heap area.
-        if ((address_t)hole_footer < HEAP_START || (address_t)hole_footer > USER_HEAP_END)
+        if ((address_t)hole_footer < HEAP_START || (address_t)hole_footer > HEAP_END)
         {
             kconsole.set_color(LIGHTRED);
             kconsole.print("Footer %p outside bounds!\n orig_hole_size: %d\n new_size: %d\n header: %p\n", hole_footer, orig_hole_size, new_size, hole_header);

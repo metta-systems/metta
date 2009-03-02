@@ -31,8 +31,7 @@ memory_manager& memory_manager::self()
 
 memory_manager::memory_manager()
 {
-//     kconsole.print_str("memory_manager ctor\n");
-    placement_address = (address_t)&end ; // TODO: change to multiboot->mod_end
+    placement_address = (address_t)&end;
     heap_initialised = false;
     current_directory = kernel_directory = NULL;
 }
@@ -45,12 +44,12 @@ void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
 {
     // Make enough frames to reach 0x00000000 .. memEnd.
     // make sure memEnd is on a page boundary.
-    uint32_t memEndPage = page_align_down<address_t>(mem_end);
+    uint32_t mem_end_page = page_align_down<address_t>(mem_end);
 
     // A mmap will give us more precise info about maximum available memory
     if (mmap)
     {
-        address_t highest = memEndPage;
+        address_t highest = mem_end_page;
 
         multiboot::mmapinfo* mmi = (multiboot::mmapinfo*)(mmap->addr);
         multiboot::mmapinfo* end = (multiboot::mmapinfo*)(mmap->addr + mmap->length);
@@ -62,10 +61,10 @@ void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
             mmi = (multiboot::mmapinfo*)(((char *)mmi) + mmi->size + 4);
         }
 
-        memEndPage = highest;
+        mem_end_page = highest;
     }
 
-    n_frames = memEndPage / PAGE_SIZE;
+    n_frames = mem_end_page / PAGE_SIZE;
     frames = new bit_array(n_frames);
     kconsole.print("Allocating %d frames\n", n_frames);
 
@@ -86,10 +85,10 @@ void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
     // Here we call getPage but not alloc_frame. This causes PageTables
     // to be created where nessecary. We can't allocate frames yet because
     // they need to be identity mapped first below.
-    for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
-    {
-        kernel_directory->get_page(i, /*make:*/true);
-    }
+//     for (uint32_t i = USER_HEAP_START; i < USER_HEAP_END; i += PAGE_SIZE)
+//     {
+//         kernel_directory->get_page(i, /*make:*/true);
+//     }
 
     // Identity map from KERNEL_START to placementAddress.
     // reserve 16 pages above placement_address so that we can use placement alloc at start.
@@ -108,10 +107,10 @@ void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
         alloc_frame(kernel_directory->get_page(i, true), false, false);
     }
 
-    for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
-    {
-        alloc_frame(kernel_directory->get_page(i, true), false, true);
-    }
+//     for (i = USER_HEAP_START; i < USER_HEAP_START+USER_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
+//     {
+//         alloc_frame(kernel_directory->get_page(i, true), false, true);
+//     }
 
     // use mmap if provided to mark unavailable areas
     if (mmap)
@@ -143,7 +142,7 @@ void memory_manager::init(address_t mem_end, multiboot::header::memmap *mmap)
 
     // Initialise the heaps.
     heap_.init(HEAP_START, HEAP_START+HEAP_INITIAL_SIZE, HEAP_END & PAGE_MASK /* see memory map */, true);
-    user_heap.init(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
+//     user_heap.init(USER_HEAP_START, USER_HEAP_START+USER_HEAP_INITIAL_SIZE, USER_HEAP_END & PAGE_MASK, false);
 
     heap_initialised = true;
 }
