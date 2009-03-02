@@ -1,10 +1,10 @@
 == cleanup ==
-[x] Remove all string operations from the old/linux kernel.
-[x] Replace strings with bstrlib where necessary.
+[+] Remove all string operations from the old/linux kernel.
+[+] Replace strings with bstrlib where necessary.
 [x] Port string operations to bstrlib/string.
 [ ] Implement rest of string class.
-[ ] Implement string formatting a-la boost::format.
-  [ ] Use variadic templates?
+[/] Implement string formatting a-la boost::format.
+  [+] Use variadic templates?
 
 == boot ==
 [ ] Load components from init modules
