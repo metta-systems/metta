@@ -9,18 +9,26 @@ complex types that denote structured objects do not:
  * class kernel;
 
 namespace metta {
-	namespace common {
-		bit_array
-		ordered_array
-		string
-		uuid
-	}
-	namespace kernel {
-	}
-	namespace userspace {
-		namespace graphics {
-		}
-		namespace gui {
-		}
-	}
+    namespace common { // runtime support
+        bit_array
+        ordered_array
+        string
+        uuid
+    }
+    // vesper is largely a machine-dependent implementation
+    namespace glue { // PD crossing glue support
+    }
+    namespace kernel { // kernel proper
+    }
+    namespace {
+    }
+    namespace libos { // higher level abstractions
+    }
+    // metta is machine-independent applications and servers
+    namespace userspace {
+        namespace graphics {
+        }
+        namespace gui {
+        }
+    }
 }
