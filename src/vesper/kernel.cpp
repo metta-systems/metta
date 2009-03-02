@@ -11,7 +11,6 @@
 #include "elf_parser.h"
 #include "memory_manager.h"
 #include "default_console.h"
-#include "global_descriptor_table.h"
 #include "interrupt_descriptor_table.h"
 #include "timer.h"
 #include "task.h"
@@ -36,13 +35,11 @@ void kernel::run()
 
     critical_section(); // do not interrupt us in the following lines, please
 
-    // Make sure we aren't overwriting anything by writing at placementAddress.
+    // Make sure we aren't overwriting anything by writing at placement_address.
     relocate_placement_address();
 
     kernel_elf_parser.load_kernel(multiboot::self().symtab_start(),
                                   multiboot::self().strtab_start());
-
-    global_descriptor_table::init();
 
     interrupts_table.set_isr_handler(14, &page_fault_handler_);
     interrupts_table.init();

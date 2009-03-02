@@ -48,78 +48,15 @@ main component entry point:
    - security server
    - object (security) manager
 
-
-
- Virtual RAM +-------------------------+ Virtual addresses
-    (4G) top |                         | 0xFFFFFFFF (invalid address)
-             |                         |            (last page reserved)
-             |                         |
-             |                         |
-             |                         |
-             |                         |
-             | User heap end           | 0xDFFFFFFF
-             |                         |
-             | User heap start         | 0xD0000000
-             | Kernel heap end         | 0xCFFFFFFF
-             |                         |
-             | Kernel heap start       | 0xC0000000
-             |                         |
-             | Stack start             | 0xB0000000
-             |                         |
-             | Stack end               | 0xA0000000
-             |                         |
-             |                         |
-             |                         |
-             |                         |
-    0x20F000 |Libos end address        |
-             |                         |
-             |                         |
-             |...                      |
-             |                         |
-             |Component3               |
-             |                         |
-             |                         |
-             |...                      |
-             |                         |
-             |Component2               |
-             |                         |
-             |                         |
-             |...                      |
-             |                         |
-             |Component1               |
-             |[Component index]        |
-    0x10F000 |Libos load address       |<-- initial placementAddress
-    0x10DDEC |Kernel end address       |
-             |[Interrupt handlers]     |
-             |[Pagefault handler]      |
-             |                         |
-             |                         |
-             |                         |
-             |                         |
-(1M)0x100000 |Kernel load address      |
-             |                         |
-             |                         |
-             |                         |
-             |                         |
-             |                         |
-             |                         | 0x00002000 kernel traps entry page
-             |                         | 0x00001000 kernel info/interface page (L4-like)
-             |                         |            (first page reserved)
-         0x0 +-------------------------+ 0x00000000 (invalid address)
-
-
 Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
              | Last page always invalid| 0xFFFFFFFF (invalid address)
              |_________________________| 0xFFFFF000
-             | Kernel stack start      | K_STACK_START
-             | one-two pages long      |
-             | Kernel stack end        |
-             |_________________________| K_STACK_END
-             | Stack guard page        |
-             | (unmapped)              |
-             |_________________________|
+             | Kernel stacks area:     | K_STACKS_START
+             | a few 4K stacks.        | Per-CPU stacks go here in interrupt model kernel.
+             | Kernel stack end        | Per-thread stacks are scattered over the heap.
+             |_________________________| K_STACKS_END
              |                         | K_HEAP_END
              |                         |
              | Kernel heap             |
@@ -135,7 +72,7 @@ Process image
              | and then overwritten    | initializing heap. Probably these allocations can
              | for memory allocation   | be avoided completely and this area reclaimed.
              | before heap initialized |
-             |_________________________| placement_address
+             |_________________________| placement_address (could be == K_HEAP_START)
              | Kernel itself           |
              | - low level memory,     |
              | interrupts, portals     |

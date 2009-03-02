@@ -1,41 +1,52 @@
 /* Ensure everything goes in the right order. */
 /* This is x86 linker script. */
-ENTRY (_loader)
+ENTRY (loader)
 
 SECTIONS
 {
-	.text 0x100000 :
-	{
-		code = .; _code = .; __code = .;
-		*(.multiboot)
-		*(.text)
-		FILL(0x90)
-	}
+    KERNEL_BASE = 0xc0000000;
+    PAGE_SIZE = 0x1000;
 
-	.data ALIGN (0x1000) :
-	{
-		start_ctors = .;
-		*(.ctors)  /* or *(SORT(.ctors)) */
-		end_ctors = .;
+    . = 0x100000;
+    .setup : /* Mapped at 0x100000 */
+    {
+        *(.setup)
+    }
 
-		data = .; _data = .; __data = .;
-		*(.data)
-		*(.rodata)
-		FILL(0x00)
-	}
-	edata = .; _edata = .; __edata = .;
+    . += KERNEL_BASE;
 
-	.bss ALIGN (0x1000) :
-	{
-		_sbss = .;
-		*(COMMON)
-		*(.bss)
-		_ebss = .;
-		. = ALIGN(0x1000);
-	}
+    .text ALIGN (PAGE_SIZE) : AT(ADDR(.text) - KERNEL_BASE)
+    {
+        code = .;
+        *(.loader.text)
+        *(.text)
+        FILL(0x90)
+    }
 
-	end = .; _end = .; __end = .;
+    .data ALIGN (PAGE_SIZE) : AT(ADDR(.data) - KERNEL_BASE)
+    {
+        start_ctors = .;
+        *(.ctors)  /* or *(SORT(.ctors)) */
+        end_ctors = .;
 
-	/* Strip unnecessary stuff */
-	/DISCARD/ : { *(.comment .note .eh_frame .dtors) }
+        data = .;
+        *(.data)
+        *(.rodata*)
+        FILL(0x00)
+    }
+    edata = .;
+
+    .bss ALIGN (PAGE_SIZE) :  AT(ADDR(.bss) - KERNEL_BASE)
+    {
+        _sbss = .;
+        *(COMMON*)
+        *(.bss*)
+        _ebss = .;
+        . = ALIGN(PAGE_SIZE);
+    }
+
+    end = .;
+
+    /* Strip unnecessary stuff */
+    /DISCARD/ : { *(.comment .note .eh_frame .dtors) }
 }

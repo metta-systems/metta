@@ -13,6 +13,7 @@
 #include "memory_manager.h"
 #include "memutils.h"
 #include "interrupt_descriptor_table.h"
+#include "global_descriptor_table.h"
 
 namespace metta {
 namespace kernel {
@@ -28,15 +29,60 @@ interrupt_descriptor_table interrupts_table;//good candidate  for singleton...
 using namespace metta::kernel;
 using metta::common::memutils;
 
+// Declare the page directory and a page table, both 4kb-aligned
+unsigned long kernelpagedir[1024] __attribute__ ((aligned (4096)));
+unsigned long lowpagetable[1024] __attribute__ ((aligned (4096)));
+
+void init_paging()
+{
+    // Pointers to the page directory and the page table
+    void *kernelpagedirPtr = 0;
+    void *lowpagetablePtr = 0;
+    int k = 0;
+
+    kernelpagedirPtr = (char *)kernelpagedir + 0x40000000;  // Translate the page directory from
+    // virtual address to physical address
+    lowpagetablePtr = (char *)lowpagetable + 0x40000000;    // Same for the page table
+
+    for (k = 0; k < 1024; k++)
+    {
+        lowpagetable[k] = (k * 4096) | 0x3; // ...map the first 4MB of memory into the page table...
+        kernelpagedir[k] = 0;           // ...and clear the page directory entries
+    }
+
+    // Fills the addresses 0...4MB and 3072MB...3076MB of the page directory
+    // with the same page table
+
+    kernelpagedir[0] = (unsigned long)lowpagetablePtr | 0x3;
+    kernelpagedir[768] = (unsigned long)lowpagetablePtr | 0x3;
+
+    write_page_directory((address_t)kernelpagedirPtr);
+    enable_paging();
+}
+
+typedef void (*ctorfn)();
+extern ctorfn* start_ctors; // defined by linker
+extern ctorfn* end_ctors;
+
 /* This entry point is called from asm loader */
 void kernel_entry(multiboot::header *h)
 {
-	kconsole.clear();
-	multiboot::self().set_header(h);
-	kernel.run(); /* does not return */
+    // set up paging for higher-half kernel
+    init_paging();
+    // install gdt
+    global_descriptor_table::init();
+
+    // run static ctors
+    for (ctorfn* ctor = start_ctors; ctor < end_ctors; ctor++)
+        (*ctor)();
+
+    // start actual kernel
+    kconsole.clear();
+    multiboot::self().set_header(h);
+    kernel.run(); /* does not return */
 }
 
-static inline void *placement_alloc(size_t size)
+static inline void* placement_alloc(size_t size)
 {
     uint32_t tmp = kmemmgr.get_placement_address();
     kmemmgr.set_placement_address(tmp+size);
@@ -155,7 +201,7 @@ void panic(const char *message, const char *file, uint32_t line)
 	disable_interrupts();
 
 	kconsole.set_attr(RED, YELLOW);
-	kconsole.print("PANIC (%s) at %s:%d\n", message, file, line);
+	kconsole.print("PANIC (%s) at %s:%d\n", message, file, (int)line);
 	kernel.print_backtrace();
 
 	// Halt by going into an infinite loop.
@@ -168,7 +214,7 @@ void panic_assert(const char *desc, const char *file, uint32_t line)
 	disable_interrupts();
 
 	kconsole.set_attr(WHITE, RED);
-	kconsole.print("ASSERTION-FAILED(%s) at %s:%d\n", desc, file, line);
+	kconsole.print("ASSERTION-FAILED(%s) at %s:%d\n", desc, file, (int)line);
 	kernel.print_backtrace();
 
 	// Halt by going into an infinite loop.
