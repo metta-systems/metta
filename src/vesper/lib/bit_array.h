@@ -50,6 +50,7 @@ public:
         {
             table[i] = 0;
         }
+        first_free = 0;
     }
 
     /**
@@ -61,6 +62,8 @@ public:
         uint32_t idx = INDEX_FROM_BIT(i);
         uint32_t off = OFFSET_FROM_BIT(i);
         table[idx] |= (0x1 << off);
+        if (first_free == i)
+            first_free++;
     }
 
     /**
@@ -72,6 +75,8 @@ public:
         uint32_t idx = INDEX_FROM_BIT(i);
         uint32_t off = OFFSET_FROM_BIT(i);
         table[idx] &= ~(0x1 << off);
+        if (i < first_free)
+            first_free = i;
     }
 
     /**
@@ -91,7 +96,7 @@ public:
     **/
     uint32_t first_clear()
     {
-        for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
+        for (uint32_t i = INDEX_FROM_BIT(first_free); i < INDEX_FROM_BIT(N); i++)
         {
             if (table[i] == 0xFFFFFFFF) // nothing free, exit early.
                 continue;
@@ -106,6 +111,7 @@ public:
                 }
             }
         }
+        first_free = N;
         return (uint32_t)-1;
     }
 
@@ -115,7 +121,7 @@ public:
     **/
     uint32_t first_set()
     {
-        for (uint32_t i = 0; i < INDEX_FROM_BIT(N); i++)
+        for (uint32_t i = INDEX_FROM_BIT(first_free); i < INDEX_FROM_BIT(N); i++)
         {
             if (table[i] == 0x00000000) // nothing set, exit early.
                 continue;
@@ -130,6 +136,7 @@ public:
                 }
             }
         }
+        first_free = 0;
         return (uint32_t)-1;
     }
 
@@ -143,6 +150,11 @@ private:
     * The number of bit entries
     **/
     uint32_t N;
+
+    /**
+    * Number of first free bit (speed optimization).
+    **/
+    uint32_t first_free;
 };
 
 }
