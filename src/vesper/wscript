@@ -55,7 +55,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', osflags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x ' + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('LINKFLAGS', '--gc-sections -Wl,-Map,vesper.map -T ../linker.ld ' + osflags + flags)
+    conf.env.append_unique('LINKFLAGS', '--gc-sections -Wl,-Map,vesper.map ' + osflags + flags)
 
     # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
@@ -63,12 +63,20 @@ def configure(conf):
     conf.write_config_header('config.h')
 
 def build(bld):
-    vesper = bld.new_task_gen('cxx', 'program')
-    vesper.find_sources_in_dirs(source_dirs)
-    vesper.source.remove('boot/boot.asm')
-    vesper.env = bld.env_of_name(bld.env['ENV'])
-    vesper.includes = include_dirs
-    vesper.target = 'vesper'
+    loader = bld.new_task_gen('cxx', 'program')
+    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
+    loader.env = bld.env_of_name(bld.env['ENV'])
+    loader.env.append_unique('LINKFLAGS', '-T ../boot/loader.ld')
+    loader.includes = include_dirs
+    loader.target = 'bootloader'
+
+    #vesper = bld.new_task_gen('cxx', 'program')
+    #vesper.find_sources_in_dirs(source_dirs)
+    #vesper.source.remove('boot/boot.asm')
+    #vesper.env = bld.env_of_name(bld.env['ENV'])
+    #vesper.env.append_unique('LINKFLAGS', '-T ../linker.ld')
+    #vesper.includes = include_dirs
+    #vesper.target = 'vesper'
 
     #bld.add_subdirs('tests')
 

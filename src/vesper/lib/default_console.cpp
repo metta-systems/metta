@@ -13,9 +13,6 @@
 using metta::common::memutils;
 using metta::common::string;
 
-namespace metta {
-namespace kernel {
-
 const char default_console::eol = 10;
 
 // Screen dimensions (for default 80x25 console)
@@ -203,9 +200,6 @@ void default_console::debug_log(const char *str, ...)
     print_str(str);
     print_char(eol);
     attr = old_attr;
-}
-
-}
 }
 
 // kate: indent-width 4; replace-tabs on;

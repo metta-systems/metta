@@ -15,7 +15,7 @@ using metta::common::memutils;
 namespace metta {
 namespace kernel {
 
-multiboot multiboot::instance;
+// multiboot multiboot::instance;
 
 void multiboot::set_header(multiboot::header *h)
 {

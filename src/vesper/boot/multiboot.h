@@ -99,9 +99,13 @@ public:
         uint32_t type;      ///< type == 1 for free regions, anything else means occupied
     } PACKED;
 
-    static multiboot& self() { return instance; }
+//     static multiboot& self() { return instance; }
 
-    multiboot() : header_(NULL), strtab(NULL), symtab(NULL) {}
+    multiboot(header *h = NULL) : header_(NULL), strtab(NULL), symtab(NULL)
+    {
+        if (h)
+            set_header(h);
+    }
 
     void set_header(header *h);
 

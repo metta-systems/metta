@@ -9,9 +9,6 @@
 #include "macros.h" // for PANIC()
 #include "common.h" // for panic()
 
-namespace metta {
-namespace kernel {
-
 // FIXME these defines poison global identifier space
 #define kconsole default_console::self()
 #define endl default_console::eol
@@ -133,9 +130,6 @@ void default_console::print(const char* str, T value, Args... args)
         print(*str++);
     }
     PANIC("extra arguments provided to print");
-}
-
-}
 }
 
 // kate: indent-width 4; replace-tabs on;
