@@ -7,6 +7,7 @@
   [+] Use variadic templates?
 
 == boot ==
+[ ] Use lzma decoder
 [ ] Load components from init modules
 [ ] Call components constructors
 
