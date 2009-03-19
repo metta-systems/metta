@@ -120,22 +120,22 @@ public:
     /**
     * Finds a free frame (swaps out if necessary) and allocates it to p.
     **/
-    void alloc_frame(page* p, bool is_kernel = true, bool is_writeable = true);
+//     void alloc_frame(page* p, bool is_kernel = true, bool is_writeable = true);
 
     /**
     * Finds a free frame and returns it.
     **/
-    address_t alloc_frame();
+//     address_t alloc_frame();
 
     /**
     * Removes the frame under p's control and returns it to the pool.
     **/
-    void free_frame(page* p);
+//     void free_frame(page* p);
 
     /**
     * Adds the previously allocated frame 'frame' and returns it to the pool.
     **/
-    void free_frame(address_t frame);
+//     void free_frame(address_t frame);
 
     /**
     * Causes the given range of virtual memory to get allocated physical
