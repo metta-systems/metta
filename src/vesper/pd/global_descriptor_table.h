@@ -7,47 +7,47 @@
 #pragma once
 
 #include "types.h"
-#include "macros.h"
+// #include "macros.h"
 
 class gdt_entry
 {
-	public:
-		enum segtype_e
-		{
-			code = 0xb,
-			data = 0x3,
-			tss  = 0x9
-		};
+public:
+    enum segtype_e
+    {
+        code = 0xb,
+        data = 0x3,
+        tss  = 0x9
+    };
 
-		void set_null();
-		void set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl);
-		void set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl);
+    void set_null();
+    void set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl);
+    void set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl);
 
-	private:
-		union {
-			uint32_t raw[2];
-			struct {
-				uint32_t limit_low  : 16;
-				uint32_t base_low   : 24 PACKED;
-				uint32_t type       :  4;
-				uint32_t s          :  1;
-				uint32_t dpl        :  2;
-				uint32_t present    :  1;
-				uint32_t limit_high :  4;
-				uint32_t avl        :  2;
-				uint32_t datasize   :  1;
-				uint32_t granularity:  1;
-				uint32_t base_high  :  8;
-			} d PACKED;
-		} x;
+private:
+    union {
+        uint32_t raw[2];
+        struct {
+            uint32_t limit_low  : 16;
+            uint32_t base_low   : 24 PACKED;
+            uint32_t type       :  4;
+            uint32_t s          :  1;
+            uint32_t dpl        :  2;
+            uint32_t present    :  1;
+            uint32_t limit_high :  4;
+            uint32_t avl        :  2;
+            uint32_t datasize   :  1;
+            uint32_t granularity:  1;
+            uint32_t base_high  :  8;
+        } d PACKED;
+    } x;
 };
 
-INLINE void gdt_entry::set_null()
+inline void gdt_entry::set_null()
 {
 	x.raw[0] = x.raw[1] = 0;
 }
 
-INLINE void gdt_entry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
+inline void gdt_entry::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
 	if (limit > (1 << 20))
 	{
@@ -76,7 +76,7 @@ INLINE void gdt_entry::set_seg(uint32_t base, uint32_t limit, segtype_e type, in
 	x.d.avl = 0;
 }
 
-INLINE void gdt_entry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
+inline void gdt_entry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
     x.d.limit_low  =  limit        &   0xFFFF;
     x.d.limit_high = (limit >> 16) &     0xFF;
@@ -95,16 +95,35 @@ INLINE void gdt_entry::set_sys(uint32_t base, uint32_t limit, segtype_e type, in
     x.d.avl = 0;
 }
 
+extern "C" void activate_gdt(address_t gdtr);
+
+template <int n_entries = 5>
 class global_descriptor_table
 {
-	public:
-		static void init();
+public:
+    inline global_descriptor_table()
+    {
+        setup_standard_entries();
 
-	private:
-        global_descriptor_table();
-		uint16_t limit;
-		uint32_t base;
-} PACKED;
+        limit = sizeof(entries)-1;
+        base = (address_t)&entries;
+
+        activate_gdt((address_t)this); //&limit
+    }
+    inline void setup_standard_entries()
+    {
+        entries[0].set_null();                                 // null
+        entries[1].set_seg(0, 0xFFFFFFFF, gdt_entry::code, 0); // ring0 CS
+        entries[2].set_seg(0, 0xFFFFFFFF, gdt_entry::data, 0); // ring0 DS
+        entries[3].set_seg(0, 0xFFFFFFFF, gdt_entry::code, 3); // ring3 CS
+        entries[4].set_seg(0, 0xFFFFFFFF, gdt_entry::data, 3); // ring3 DS
+    }
+
+private:
+    uint16_t  limit PACKED;
+    uint32_t  base  PACKED;
+    gdt_entry entries[n_entries];
+};
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
