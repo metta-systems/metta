@@ -195,31 +195,6 @@ void  operator delete[](void *p)
         kmemmgr.free(p);
 }
 
-// We encountered a massive problem and have to stop.
-void panic(const char *message, const char *file, uint32_t line)
-{
-	disable_interrupts();
-
-	kconsole.set_attr(RED, YELLOW);
-	kconsole.print("PANIC (%s) at %s:%d\n", message, file, (int)line);
-	kernel.print_backtrace();
-
-	// Halt by going into an infinite loop.
-	while(1) {}
-}
-
-// An assertion failed, and we have to panic.
-void panic_assert(const char *desc, const char *file, uint32_t line)
-{
-	disable_interrupts();
-
-	kconsole.set_attr(WHITE, RED);
-	kconsole.print("ASSERTION-FAILED(%s) at %s:%d\n", desc, file, (int)line);
-	kernel.print_backtrace();
-
-	// Halt by going into an infinite loop.
-	while(1) {}
-}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
