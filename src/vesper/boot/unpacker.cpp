@@ -8,38 +8,51 @@
 // jump to 0x1000.
 #include "memutils.h"
 #include "multiboot.h"
+#include "globals.h"
 #include "global_descriptor_table.h"
 #include "default_console.h"
 
+//included from "memory_manager-arch.h"
+#define PAGE_SIZE 0x1000
+#define PAGE_MASK 0xFFFFF000
+
+template <typename T>
+inline T page_align_up(T a)
+{
+    if (a % PAGE_SIZE)
+    {
+        a &= PAGE_MASK;
+        a += PAGE_SIZE;
+    }
+    return a;
+}
+
+// remove the namespace!
 using namespace metta::kernel;
 
 extern "C" {
     void write_page_directory(address_t page_dir_physical);
     void enable_paging(void);
     void unpack_modules(multiboot::header *mbh);
+
+    address_t placement_address;
+    address_t KERNEL_BASE;
 }
 
-// Declare the page directory and a page table, both 4kb-aligned
-address_t kernelpagedir[1024] __attribute__ ((aligned (4096)));
-address_t lowpagetable[1024] __attribute__ ((aligned (4096)));
+static address_t alloced_start;
+static address_t *kernelpagedir;
+static address_t *lowpagetable;
 
 // Set up paging as follows:
 // We don't need initial mappings for kernel, as it will be placed by loader.
 
-void init_paging()
+/*void init_paging()
 {
-    // Pointers to the page directory and the page table
-    void *kernelpagedirPtr = 0;
-    void *lowpagetablePtr = 0;
     int k = 0;
-
-    kernelpagedirPtr = (char *)kernelpagedir;// + 0x40000000;  // Translate the page directory from
-    // virtual address to physical address
-    lowpagetablePtr = (char *)lowpagetable;// + 0x40000000;    // Same for the page table
 
     for (k = 0; k < 1024; k++)
     {
-        lowpagetable[k] = (k * 4096) | 0x3; // ...map the first 4MB of memory into the page table...
+        lowpagetable[k] = (k * PAGE_SIZE) | 0x3; // ...map the first 4MB of memory into the page table...
         kernelpagedir[k] = 0;           // ...and clear the page directory entries
     }
 
@@ -51,6 +64,13 @@ void init_paging()
 
     write_page_directory((address_t)kernelpagedirPtr);
     enable_paging();
+}*/
+
+address_t alloc_next_page()
+{
+    address_t ret = placement_address;
+    placement_address += PAGE_SIZE;
+    return ret;
 }
 
 // This part starts in protected mode, linear == physical, paging is off.
@@ -70,21 +90,43 @@ void unpack_modules(multiboot::header *mbh)
     // For modules that are compressed, set up decompression area, unpack and set up mappings.
     // (not used atm).
 
+    // Setup small pmm allocator.
+    alloced_start = (address_t)&placement_address;
+    alloced_start = max(alloced_start, kernel->mod_end);
+    alloced_start = max(alloced_start, initcp->mod_end);
+    alloced_start = page_align_up<address_t>(alloced_start);
+    // now we can allocate extra pages from alloced_start using alloc_next_page()
 
-    // set up paging for higher-half kernel
-// identity map the first meg
-// map pages at KERNEL_VIRTUAL_BASE to frames at KERNEL_BASE
-// (e.g. 0xC000_0000 to 0x0010_0000)
-    init_paging();
-    // install gdt
+    kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
+                      << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
+                      << "Initcp module at " << initcp->mod_start << ", end " << initcp->mod_end << endl
+                      << "Alloctn start at " << (unsigned)&alloced_start << endl;
+
+    // Create and configure paging directory.
+    kernelpagedir = (address_t*)alloc_next_page();
+    lowpagetable  = (address_t*)alloc_next_page();
+
+    // We take two pmm pages for occupied memory bitmap and initialize that from the
+    // meminfo in mb and memory we took for components.
+    // This bitmap will be passed into initcp.
+
+    // Map initcp to RAM start.
+    unsigned int k = 0;
+
+    lowpagetable[0] = 0x3;
+    for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE; k++)
+    {
+        lowpagetable[k] = (initcp->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
+    	kconsole << GREEN << "Mapping " << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << endl;
+    }
+
+    kernelpagedir[0] = (address_t)lowpagetable;
+
     global_descriptor_table<> gdt;
 
-    kconsole << RED << "inited!";
+    // enable paging
 
-    // find passed in modules - kernel and initrd
-
-// copy initrd to 0x1000
-// jump there
+    // jump to linear 0x1000
 }
 
 // kate: indent-width 4; replace-tabs on;
