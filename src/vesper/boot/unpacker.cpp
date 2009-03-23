@@ -33,7 +33,7 @@ using namespace metta::kernel;
 extern "C" {
     void write_page_directory(address_t page_dir_physical);
     void enable_paging(void);
-    void unpack_modules(multiboot::header *mbh);
+    void setup_kernel(multiboot::header *mbh);
 
     address_t placement_address;
     address_t KERNEL_BASE;
@@ -74,7 +74,7 @@ address_t alloc_next_page()
 }
 
 // This part starts in protected mode, linear == physical, paging is off.
-void unpack_modules(multiboot::header *mbh)
+void setup_kernel(multiboot::header *mbh)
 {
     multiboot mb(mbh);
 
@@ -100,7 +100,7 @@ void unpack_modules(multiboot::header *mbh)
     kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
                       << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "Initcp module at " << initcp->mod_start << ", end " << initcp->mod_end << endl
-                      << "Alloctn start at " << (unsigned)&alloced_start << endl;
+                      << "Alloctn start at " << (unsigned)alloced_start << endl;
 
     // Create and configure paging directory.
     kernelpagedir = (address_t*)alloc_next_page();
@@ -120,6 +120,9 @@ void unpack_modules(multiboot::header *mbh)
     	kconsole << GREEN << "Mapping " << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << endl;
     }
 
+    // Map kernel to KERNEL_BASE aka 0xC0000000
+    
+    
     kernelpagedir[0] = (address_t)lowpagetable;
 
     global_descriptor_table<> gdt;

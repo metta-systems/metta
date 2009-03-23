@@ -12,7 +12,7 @@ global loader                          ; making entry point visible to linker
 global write_page_directory
 global enable_paging
 global activate_gdt
-extern unpack_modules
+extern setup_kernel
 extern KERNEL_BASE
 extern data_end
 extern bss_end
@@ -49,7 +49,7 @@ loader:
 
     mov ebp, 0                         ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
-    call  unpack_modules               ; call startup loader code
+    call  setup_kernel                 ; call startup loader code
 
     cli
     jmp short $                        ; halt machine should startup code return
