@@ -32,6 +32,7 @@ exts = {
 
 ok_count = 0
 modified_count = 0
+modified_files = []
 
 Find.find('./') do |f|
     if File.file?(f) && exts.include?(File.extname(f)) && exclude_dirs.do_not_has?(File.dirname(f))
@@ -58,6 +59,7 @@ Find.find('./') do |f|
             end
             puts "#{f} is UPDATED"
             modified_count += 1
+            modified_files << f
         else
             puts "#{f} is ok"
             ok_count += 1
@@ -66,6 +68,8 @@ Find.find('./') do |f|
 end
 
 puts "#{modified_count} files changed, #{ok_count} files ok."
+puts "Modified files:"
+modified_files.each { |f| puts f }
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
