@@ -1,18 +1,28 @@
+//
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+//
+// Prepare kernel and init component for starting up.
+//
 // * set up paging
 // * unpack kernel.assembly in-place and copy appropriate kernel to mapped
 // KERNEL_BASE.
 // * unpack initrd to 0x1000
 // * jump to initrd entrypoint
 //
-// Simplified version now: set up paging, copy kernel to 0xC000_0000, copy initrd to 0x1000,
-// jump to 0x1000.
+// Simplified version for now: set up paging, copy kernel to 0xC000_0000,
+// copy initrd to 0x1000, jump to 0x1000.
+//
 #include "memutils.h"
 #include "multiboot.h"
-#include "globals.h"
+#include "minmax.h"
 #include "global_descriptor_table.h"
 #include "default_console.h"
 
-//included from "memory_manager-arch.h"
+// Excerpted from "memory_manager-arch.h"
 #define PAGE_SIZE 0x1000
 #define PAGE_MASK 0xFFFFF000
 
@@ -27,9 +37,6 @@ inline T page_align_up(T a)
     return a;
 }
 
-// remove the namespace!
-using namespace metta::kernel;
-
 extern "C" {
     void write_page_directory(address_t page_dir_physical);
     void enable_paging(void);
@@ -42,32 +49,12 @@ extern "C" {
 static address_t alloced_start;
 static address_t *kernelpagedir;
 static address_t *lowpagetable;
-
-// Set up paging as follows:
-// We don't need initial mappings for kernel, as it will be placed by loader.
-
-/*void init_paging()
-{
-    int k = 0;
-
-    for (k = 0; k < 1024; k++)
-    {
-        lowpagetable[k] = (k * PAGE_SIZE) | 0x3; // ...map the first 4MB of memory into the page table...
-        kernelpagedir[k] = 0;           // ...and clear the page directory entries
-    }
-
-    // Fills the addresses 0...4MB and 3072MB...3076MB of the page directory
-    // with the same page table
-
-    kernelpagedir[0] = (unsigned long)lowpagetablePtr | 0x3;
-    kernelpagedir[768] = (unsigned long)lowpagetablePtr | 0x3;
-
-    write_page_directory((address_t)kernelpagedirPtr);
-    enable_paging();
-}*/
+static address_t *highpagetable;
 
 address_t alloc_next_page()
 {
+    placement_address = page_align_up<address_t>(placement_address);
+
     address_t ret = placement_address;
     placement_address += PAGE_SIZE;
     return ret;
@@ -105,31 +92,48 @@ void setup_kernel(multiboot::header *mbh)
     // Create and configure paging directory.
     kernelpagedir = (address_t*)alloc_next_page();
     lowpagetable  = (address_t*)alloc_next_page();
+    highpagetable = (address_t*)alloc_next_page();
 
     // We take two pmm pages for occupied memory bitmap and initialize that from the
     // meminfo in mb and memory we took for components.
     // This bitmap will be passed into initcp.
 
-    // Map initcp to RAM start.
-    unsigned int k = 0;
+    unsigned int k;
 
-    lowpagetable[0] = 0x3;
+    // Map kernel to KERNEL_BASE aka 0xC0000000
+    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE; k++)
+    {
+        highpagetable[k] = (kernel->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
+        kconsole << GREEN << "Mapping kernel: " << 0xC0000000+k*PAGE_SIZE << " to " << (unsigned)(highpagetable[k]&(~0x3)) << endl;
+    }
+
+    // Map initcp to RAM start.
+    lowpagetable[0] = 0x0; // invalid page 0
     for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE; k++)
     {
         lowpagetable[k] = (initcp->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
-    	kconsole << GREEN << "Mapping " << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << endl;
+        kconsole << GREEN << "Mapping initcp: " << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << endl;
     }
 
-    // Map kernel to KERNEL_BASE aka 0xC0000000
-    
-    
-    kernelpagedir[0] = (address_t)lowpagetable;
+    // Identity map currently executing code.
+    // TODO^^
+
+    kernelpagedir[0] = (address_t)lowpagetable | 0x3;
+    kernelpagedir[768] = (address_t)highpagetable | 0x3;
 
     global_descriptor_table<> gdt;
 
     // enable paging
+    write_page_directory((address_t)kernelpagedir);
+    enable_paging();
 
     // jump to linear 0x1000
+    typedef void (*initfunc)(multiboot::header *mbh);
+    initfunc init = (initfunc)0x1000;
+    init(mbh);
+
+    /* Never reached */
+    PANIC("init() returned!");
 }
 
 // kate: indent-width 4; replace-tabs on;

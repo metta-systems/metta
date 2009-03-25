@@ -5,8 +5,8 @@
 ; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
 ;
 ; x86 GRUB loader.
-; load and unpack kernel and kserver
-; set up paging and map kernel
+; jump to setup_kernel in unpacker.cpp to do all the dirty job.
+; this file only contains several boot-helpers in assembly.
 ;
 global loader                          ; making entry point visible to linker
 global write_page_directory

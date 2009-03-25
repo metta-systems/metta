@@ -12,11 +12,6 @@
 
 using metta::common::memutils;
 
-namespace metta {
-namespace kernel {
-
-// multiboot multiboot::instance;
-
 void multiboot::set_header(multiboot::header *h)
 {
     header_ = h;
@@ -46,7 +41,7 @@ void multiboot::set_header(multiboot::header *h)
         else if (sh->sh_type == SHT_STRTAB)
         {
             char *c = (char *)shstrtab->sh_addr + sh->sh_name;
-            if (!memutils::strcmp(c, ".strtab"))//FIXME: replace with string() method
+            if (!memutils::strcmp(c, ".strtab"))//FIXME: replace with const_string method
             {
                 strtab = sh;
             }
@@ -60,9 +55,6 @@ multiboot::header::memmap* multiboot::memory_map() const
         return 0;
     ASSERT(sizeof(mmapinfo)==24);
     return &header_->mmap;
-}
-
-}
 }
 
 // kate: indent-width 4; replace-tabs on;

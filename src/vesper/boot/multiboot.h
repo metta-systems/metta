@@ -10,9 +10,6 @@
 #include "elf.h"
 #include "common.h" // panic_assert()
 
-namespace metta {
-namespace kernel {
-
 /**
 * \brief Defines an interface to the multiboot header.
 * \ingroup Boot
@@ -188,9 +185,6 @@ private:
 
     static multiboot       instance;
 };
-
-}
-}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
