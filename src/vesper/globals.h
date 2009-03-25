@@ -22,24 +22,11 @@ extern class interrupt_descriptor_table interrupts_table;
 
 extern "C"
 {
-    void kernel_entry(metta::kernel::multiboot::header *mh) NORETURN;
+    void kernel_entry(multiboot::header *mh) NORETURN;
 
     void *malloc(size_t size);
     void free(void *p);
     void *realloc(void *p, size_t size);
-}
-
-// use some tmpl header
-template <typename T>
-T min(T a, T b)
-{
-    return (a < b ? a : b);
-}
-
-template <typename T>
-T max(T a, T b)
-{
-    return (a > b ? a : b);
 }
 
 void *operator new(size_t size);
