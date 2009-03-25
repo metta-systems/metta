@@ -53,10 +53,8 @@ static address_t *highpagetable;
 
 address_t alloc_next_page()
 {
-    placement_address = page_align_up<address_t>(placement_address);
-
-    address_t ret = placement_address;
-    placement_address += PAGE_SIZE;
+    address_t ret = alloced_start;
+    alloced_start += PAGE_SIZE;
     return ret;
 }
 
@@ -97,26 +95,53 @@ void setup_kernel(multiboot::header *mbh)
     // We take two pmm pages for occupied memory bitmap and initialize that from the
     // meminfo in mb and memory we took for components.
     // This bitmap will be passed into initcp.
+//     bitmap = alloc_next_page(), alloc_next_page();
+//     bitmap->set(kernelpagedir);
+//     bitmap->set(lowpagetable);
+//     bitmap->set(highpagetable);
 
     unsigned int k;
 
-    // Map kernel to KERNEL_BASE aka 0xC0000000
-    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE; k++)
-    {
-        highpagetable[k] = (kernel->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
-        kconsole << GREEN << "Mapping kernel: " << 0xC0000000+k*PAGE_SIZE << " to " << (unsigned)(highpagetable[k]&(~0x3)) << endl;
-    }
-
     // Map initcp to RAM start.
     lowpagetable[0] = 0x0; // invalid page 0
+    kconsole << GREEN << "Mapping initcp: ";
     for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE; k++)
     {
         lowpagetable[k] = (initcp->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
-        kconsole << GREEN << "Mapping initcp: " << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << endl;
+        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
+    }
+
+    // Map kernel to KERNEL_BASE aka 0xC0000000
+    kconsole << endl << "Mapping kernel: ";
+    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE; k++)
+    {
+        highpagetable[k] = (kernel->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
+        kconsole << 0xC0000000+k*PAGE_SIZE << " to " << (unsigned)(highpagetable[k]&(~0x3)) << ", ";
     }
 
     // Identity map currently executing code.
-    // TODO^^
+    address_t start = (address_t)&KERNEL_BASE;
+    address_t end   = page_align_up<address_t>((address_t)&placement_address); // one after end
+    kconsole << endl << "Mapping loader: ";
+    for (k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
+    {
+        lowpagetable[k] = (k * PAGE_SIZE) | 0x3;
+        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
+    }
+
+    // Identity map video memory/bios area.
+    start = (address_t)0xa0000;
+    end   = 0x100000; // one after end
+    kconsole << endl << "Mapping VRAM: ";
+    for (k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
+    {
+        lowpagetable[k] = (k * PAGE_SIZE) | 0x3;
+        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
+    }
+
+    kconsole << endl;
+
+    // Identity map allocated pages?
 
     kernelpagedir[0] = (address_t)lowpagetable | 0x3;
     kernelpagedir[768] = (address_t)highpagetable | 0x3;
@@ -129,8 +154,8 @@ void setup_kernel(multiboot::header *mbh)
 
     // jump to linear 0x1000
     typedef void (*initfunc)(multiboot::header *mbh);
-    initfunc init = (initfunc)0x1000;
-    init(mbh);
+//     initfunc init = (initfunc)0x1000;
+//     init(mbh);
 
     /* Never reached */
     PANIC("init() returned!");
