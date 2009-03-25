@@ -68,8 +68,10 @@ Find.find('./') do |f|
 end
 
 puts "#{modified_count} files changed, #{ok_count} files ok."
-puts "Modified files:"
-modified_files.each { |f| puts f }
+unless modified_files.empty?
+    puts "Modified files:"
+    modified_files.each { |f| puts f }
+end
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
