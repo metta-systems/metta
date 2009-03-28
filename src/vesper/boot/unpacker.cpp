@@ -102,10 +102,15 @@ void setup_kernel(multiboot::header *mbh)
 
     unsigned int k;
 
+    // NB!
+    // mod_start and mod_end don't account for BSS size.
+    // account for it when we have ELF parser in sprint 3.
+    // for now just map two extra pages for BSS.
+
     // Map initcp to RAM start.
     lowpagetable[0] = 0x0; // invalid page 0
     kconsole << GREEN << "Mapping initcp: ";
-    for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE; k++)
+    for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE+2; k++)
     {
         lowpagetable[k] = (initcp->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
         kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
@@ -113,7 +118,7 @@ void setup_kernel(multiboot::header *mbh)
 
     // Map kernel to KERNEL_BASE aka 0xC0000000
     kconsole << endl << "Mapping kernel: ";
-    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE; k++)
+    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE+2; k++)
     {
         highpagetable[k] = (kernel->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
         kconsole << 0xC0000000+k*PAGE_SIZE << " to " << (unsigned)(highpagetable[k]&(~0x3)) << ", ";
@@ -154,8 +159,8 @@ void setup_kernel(multiboot::header *mbh)
 
     // jump to linear 0x1000
     typedef void (*initfunc)(multiboot::header *mbh);
-//     initfunc init = (initfunc)0x1000;
-//     init(mbh);
+    initfunc init = (initfunc)0x1000;
+    init(mbh);
 
     /* Never reached */
     PANIC("init() returned!");

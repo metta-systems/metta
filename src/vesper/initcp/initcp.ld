@@ -1,23 +1,23 @@
 /* Ensure everything goes in the right order. */
 /* This is x86 linker script. */
-ENTRY (loader)
-OUTPUT_FORMAT(elf32-i386)
+/* TODO: switch to ELF format initcp (needs elf_parser in bootloader first) */
+ENTRY (entry)
+OUTPUT_FORMAT(binary)
 
 SECTIONS
 {
-    KERNEL_BASE = 0x100000;
+    TEXT_BASE = 0x1000;
     PAGE_SIZE = 0x1000;
 
-    . = 0x100000;
-    .text ALIGN (PAGE_SIZE) :
+    . = TEXT_BASE;
+    .text ALIGN (PAGE_SIZE) : AT(ADDR(.text) - TEXT_BASE)
     {
-        *(.loader.text)
         *(.text)
         FILL(0x90)
     }
     text_end = .;
 
-    .data ALIGN (PAGE_SIZE) :
+    .data ALIGN (PAGE_SIZE) : AT(ADDR(.data) - TEXT_BASE)
     {
         *(.data)
         *(.rodata*)
@@ -25,7 +25,7 @@ SECTIONS
     }
     data_end = .;
 
-    .bss ALIGN (PAGE_SIZE) :
+    .bss ALIGN (PAGE_SIZE) :  AT(ADDR(.bss) - TEXT_BASE)
     {
         *(COMMON*)
         *(.bss*)
@@ -35,6 +35,7 @@ SECTIONS
     placement_address = ALIGN(PAGE_SIZE);
 
     /* Strip unnecessary stuff */
+    /* TODO: keep static ctors for initcp */
     /DISCARD/ : { *(.comment .note .eh_frame .ctors .dtors) }
 }
 

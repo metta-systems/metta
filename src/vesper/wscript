@@ -55,7 +55,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', osflags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x ' + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('LINKFLAGS', '--gc-sections -Wl,-Map,vesper.map ' + osflags + flags)
+    conf.env.append_unique('LINKFLAGS', '--gc-sections ' + osflags + flags)
 
     # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
@@ -65,18 +65,17 @@ def configure(conf):
 def build(bld):
     loader = bld.new_task_gen('cxx', 'program')
     loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
-    loader.env = bld.env_of_name(bld.env['ENV'])
-    loader.env.append_unique('LINKFLAGS', '-T ../boot/loader.ld')
+    loader.env = bld.env_of_name(bld.env['ENV']).copy()
+    loader.env.append_unique('LINKFLAGS', '-T ../boot/loader.ld -Wl,-Map,bootloader.map')
     loader.includes = include_dirs
     loader.target = 'bootloader'
 
-    #vesper = bld.new_task_gen('cxx', 'program')
-    #vesper.find_sources_in_dirs(source_dirs)
-    #vesper.source.remove('boot/boot.asm')
-    #vesper.env = bld.env_of_name(bld.env['ENV'])
-    #vesper.env.append_unique('LINKFLAGS', '-T ../linker.ld')
-    #vesper.includes = include_dirs
-    #vesper.target = 'vesper'
+    initcp = bld.new_task_gen('cxx', 'program')
+    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
+    initcp.env = bld.env_of_name(bld.env['ENV']).copy()
+    initcp.env.append_unique('LINKFLAGS', '-T ../initcp/initcp.ld -Wl,-Map,initcomp.map')
+    initcp.includes = include_dirs
+    initcp.target = 'initcomp'
 
     #bld.add_subdirs('tests')
 
@@ -86,3 +85,6 @@ def shutdown():
     #updater.command = 'sh update_image.sh'
     #updater.command_is_external = True
     #updater.dependencies = [vesper]
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :
