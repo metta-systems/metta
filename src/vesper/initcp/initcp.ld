@@ -1,8 +1,7 @@
 /* Ensure everything goes in the right order. */
 /* This is x86 linker script. */
-/* TODO: switch to ELF format initcp (needs elf_parser in bootloader first) */
 ENTRY (entry)
-OUTPUT_FORMAT(binary)
+OUTPUT_FORMAT(elf32-i386)
 
 SECTIONS
 {

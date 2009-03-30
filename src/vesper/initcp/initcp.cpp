@@ -11,7 +11,8 @@ extern "C" void entry(multiboot::header *mbh);
 
 void entry(multiboot::header *mbh)
 {
-	kconsole << YELLOW << "initcp reached, mbh " << (unsigned)mbh << endl;
+    (void)mbh;
+	kconsole << YELLOW << "initcp reached";//, mbh " << (unsigned)mbh << endl;
 	while(1) {}
 }
 
