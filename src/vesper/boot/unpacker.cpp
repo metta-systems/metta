@@ -21,6 +21,7 @@
 #include "minmax.h"
 #include "global_descriptor_table.h"
 #include "default_console.h"
+#include "elf_parser.h"
 
 // Excerpted from "memory_manager-arch.h"
 #define PAGE_SIZE 0x1000
@@ -106,6 +107,9 @@ void setup_kernel(multiboot::header *mbh)
     // mod_start and mod_end don't account for BSS size.
     // account for it when we have ELF parser in sprint 3.
     // for now just map two extra pages for BSS.
+
+    elf_parser elf;
+    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
 
     // Map initcp to RAM start.
     lowpagetable[0] = 0x0; // invalid page 0

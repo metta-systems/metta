@@ -64,7 +64,7 @@ def configure(conf):
 
 def build(bld):
     loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
+    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp elf_parser.cpp'
     loader.env = bld.env_of_name(bld.env['ENV']).copy()
     loader.env.append_unique('LINKFLAGS', '-T ../boot/loader.ld -Wl,-Map,bootloader.map')
     loader.includes = include_dirs

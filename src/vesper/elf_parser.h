@@ -9,9 +9,6 @@
 #include "elf.h"
 #include "types.h"
 
-namespace metta {
-namespace kernel {
-
 /**
  * Parses an ELF file, generating symbolic information and loading code/data
  * segments.
@@ -24,32 +21,12 @@ public:
      */
     elf_parser();
 
-    /**
-     * Creates the ELF parser based on a file.
-     */
-    elf_parser(const char *fname);
-    ~elf_parser();
+//     ~elf_parser();
 
     /**
-     * Duplicates (this), performing a deep copy.
+     * Loads the image file from specified memory location.
      */
-    elf_parser *clone();
-
-    /**
-     * Writes all section information to the virtual memory image.
-     */
-    void write_all_sections();
-
-    /**
-     * Returns the address of the last byte to be loaded in.
-     */
-    address_t get_last_address();
-
-    /**
-     * Loads the symbol table for the kernel from the specified location.
-     */
-    void load_kernel(elf32::section_header* symtab,
-                     elf32::section_header* strtab);
+    void load_image(address_t start, size_t size);
 
     /**
      * Returns the symbol name for an address. Also returns the start address
@@ -59,8 +36,6 @@ public:
 
     /**
      * Returns the address of a symbol with name str.
-     * NOTE: This is much slower than it should be. This should be implemented
-     * using the hashtable sections in ELF.
      */
     address_t find_symbol(char* str);
 
@@ -86,8 +61,13 @@ public:
      */
     address_t get_entry_point()
     {
-        return (address_t)header->e_entry;
+        return (address_t)header->entry;
     }
+
+    /**
+     * Returns last location occupied by the elf image in memory.
+     */
+    address_t get_alloc_end();
 
     /**
      * Returns true if the parser loaded correctly.
@@ -106,9 +86,6 @@ private:
     elf32::section_header* section_headers; ///< Array of all section headers.
     const char*            filename;
 };
-
-}
-}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
