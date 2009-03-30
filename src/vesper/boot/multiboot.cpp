@@ -34,13 +34,13 @@ void multiboot::set_header(multiboot::header *h)
         elf32::section_header* sh = (elf32::section_header*)(header_->addr + i *
                                     header_->size);
 
-        if (sh->sh_type == SHT_SYMTAB)
+        if (sh->type == SHT_SYMTAB)
         {
             symtab = sh;
         }
-        else if (sh->sh_type == SHT_STRTAB)
+        else if (sh->type == SHT_STRTAB)
         {
-            char *c = (char *)shstrtab->sh_addr + sh->sh_name;
+            char *c = (char *)shstrtab->addr + sh->name;
             if (!memutils::strcmp(c, ".strtab"))//FIXME: replace with const_string method
             {
                 strtab = sh;

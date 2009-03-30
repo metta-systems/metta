@@ -155,7 +155,7 @@ public:
     {
         if (symtab)
         {
-            return (address_t)symtab->sh_addr + symtab->sh_size;
+            return (address_t)symtab->addr + symtab->size;
         }
         return 0;
     }
@@ -167,7 +167,7 @@ public:
     {
         if (strtab)
         {
-            return (address_t)strtab->sh_addr + strtab->sh_size;
+            return (address_t)strtab->addr + strtab->size;
         }
         return 0;
     }

@@ -32,40 +32,40 @@ typedef  uint8_t  byte_t;  /* 1 byte /1 align/unsigned */
  */
 struct header
 {
-    word_t e_magic;
-    byte_t e_class;
-    byte_t e_data;
-    byte_t e_hdrversion;
-    byte_t e_padding[9];
-    half_t e_type;           /**< Identifies object file type */
-    half_t e_machine;        /**< Specifies required architecture */
-    word_t e_version;        /**< Identifies object file version */
-    addr_t e_entry;          /**< Entry point virtual address */
-    off_t  e_phoff;          /**< Program header table file offset */
-    off_t  e_shoff;          /**< Section header table file offset */
-    word_t e_flags;          /**< Processor-specific flags */
-    half_t e_ehsize;         /**< ELF header size in bytes */
-    half_t e_phentsize;      /**< Program header table entry size */
-    half_t e_phnum;          /**< Program header table entry count */
-    half_t e_shentsize;      /**< Section header table entry size */
-    half_t e_shnum;          /**< Section header table entry count */
-    half_t e_shstrndx;       /**< Section header string table index */
+    word_t  magic;
+    byte_t  elfclass;
+    byte_t  data;
+    byte_t  hdrversion;
+    byte_t  padding[9];
+    half_t  type;           /**< Identifies object file type */
+    half_t  machine;        /**< Specifies required architecture */
+    word_t  version;        /**< Identifies object file version */
+    addr_t  entry;          /**< Entry point virtual address */
+    off_t   phoff;          /**< Program header table file offset */
+    off_t   shoff;          /**< Section header table file offset */
+    word_t  flags;          /**< Processor-specific flags */
+    half_t  ehsize;         /**< ELF header size in bytes */
+    half_t  phentsize;      /**< Program header table entry size */
+    half_t  phnum;          /**< Program header table entry count */
+    half_t  shentsize;      /**< Section header table entry size */
+    half_t  shnum;          /**< Section header table entry count */
+    half_t  shstrndx;       /**< Section header string table index */
 } PACKED;
 
-/* header.e_magic */
+/* header.magic */
 #define ELF_MAGIC  0x464c457f    /* ASCII "ELF",0x7F */
 
-/* header.e_class */
+/* header.class */
 #define ELF_CLASS_NONE 0x00      /**< Invalid class  */
 #define ELF_CLASS_32   0x01      /**< 32 bit objects */
 #define ELF_CLASS_64   0x02      /**< 64 bit objects */
 
-/* header.e_data */
+/* header.data */
 #define ELF_DATA_NONE  0x00      /**< Invalid data encoding   */
 #define ELF_DATA_2LSB  0x01      /**< LSB (Intel) encoding    */
 #define ELF_DATA_2MSB  0x02      /**< MSB (Motorola) encoding */
 
-/* header.e_type */
+/* header.type */
 #define ET_NONE    0x0000        /* No type     */
 #define ET_REL     0x0001        /* Relocatable */
 #define ET_EXEC    0x0002        /* Executable  */
@@ -74,7 +74,7 @@ struct header
 #define ET_LOPROC  0xff00        /* Processor-specific */
 #define ET_HIPROC  0xffff
 
-/* header.e_machine */
+/* header.machine */
 #define EM_NONE  0x0000          /* No machine     */
 #define EM_M32   0x0001          /* AT&T WE32100   */
 #define EM_SPARC 0x0002          /* SPARC          */
@@ -84,7 +84,7 @@ struct header
 #define EM_860   0x0007          /* Intel 80860    */
 #define EM_MIPS  0x0008          /* MIPS RS3000    */
 
-/* header.e_version */
+/* header.version */
 #define EV_NONE        0         /* Invalid version */
 #define EV_CURRENT     1         /* Current version */
 
@@ -94,16 +94,16 @@ struct header
  */
 struct section_header
 {
-    word_t sh_name;          /**< Section name, index in string table */
-    word_t sh_type;          /**< Type of section */
-    word_t sh_flags;         /**< Miscellaneous section attributes */
-    addr_t sh_addr;          /**< Section virtual addr at execution */
-    off_t  sh_offset;        /**< Section file offset */
-    word_t sh_size;          /**< Size of section in bytes */
-    word_t sh_link;          /**< Index of another section */
-    word_t sh_info;          /**< Additional section information */
-    word_t sh_addralign;     /**< Section alignment */
-    word_t sh_entsize;       /**< Entry size if section holds table */
+    word_t  name;          /**< Section name, index in string table */
+    word_t  type;          /**< Type of section */
+    word_t  flags;         /**< Miscellaneous section attributes */
+    addr_t  addr;          /**< Section virtual addr at execution */
+    off_t   offset;        /**< Section file offset */
+    word_t  size;          /**< Size of section in bytes */
+    word_t  link;          /**< Index of another section */
+    word_t  info;          /**< Additional section information */
+    word_t  addralign;     /**< Section alignment */
+    word_t  entsize;       /**< Entry size if section holds table */
 } PACKED;
 
 /* predefined section table indices */
@@ -150,12 +150,12 @@ struct section_header
  */
 struct symbol
 {
-    word_t st_name;          /**< Symbol name, index into string table */
-    addr_t st_value;         /**< Symbol value */
-    word_t st_size;          /**< Size occupied by this symbol */
-    byte_t st_info;          /**< Symbol type and binding */
-    byte_t st_other;
-    half_t st_shndx;         /**< Section index this symbol belongs to */
+    word_t  name;          /**< Symbol name, index into string table */
+    addr_t  value;         /**< Symbol value */
+    word_t  size;          /**< Size occupied by this symbol */
+    byte_t  info;          /**< Symbol type and binding */
+    byte_t  other;
+    half_t  shndx;         /**< Section index this symbol belongs to */
 } PACKED;
 
 /* Symbol Table index: first/undefined entry */
@@ -188,12 +188,12 @@ struct symbol
  */
 struct dyn
 {
-    sword_t d_tag;
+    sword_t tag;
     union
     {
-        word_t d_val;
-        addr_t d_ptr;
-    } d_un;
+        word_t val;
+        addr_t ptr;
+    } u;
 };
 
 /* dyn.d_tag */
@@ -230,15 +230,15 @@ struct dyn
  */
 struct rel
 {
-    addr_t r_offset;
-    word_t r_info;
+    addr_t  offset;
+    word_t  info;
 };
 
 struct rela
 {
-    addr_t  r_offset;
-    word_t  r_info;
-    sword_t r_addend;
+    addr_t   offset;
+    word_t   info;
+    sword_t  addend;
 };
 
 /* rel|a.r_info manipulation macros */
@@ -265,14 +265,14 @@ struct rela
  */
 struct program_header
 {
-    word_t p_type;           /**< Program section type */
-    off_t  p_offset;         /**< File offset */
-    addr_t p_vaddr;          /**< Execution virtual address */
-    addr_t p_paddr;          /**< Execution physical address */
-    word_t p_filesz;         /**< Size in file */
-    word_t p_memsz;          /**< Size in memory */
-    word_t p_flags;          /**< Section flags */
-    word_t p_align;          /**< Section alignment */
+    word_t  type;           /**< Program section type */
+    off_t   offset;         /**< File offset */
+    addr_t  vaddr;          /**< Execution virtual address */
+    addr_t  paddr;          /**< Execution physical address */
+    word_t  filesz;         /**< Size in file */
+    word_t  memsz;          /**< Size in memory */
+    word_t  flags;          /**< Section flags */
+    word_t  align;          /**< Section alignment */
 };
 
 /* program_header.p_type */
