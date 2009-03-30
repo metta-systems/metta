@@ -8,3 +8,5 @@ vesper.tag
 *.kdevelop.pcs
 *.kdevses
 *.kdev4
+.cproject
+.project
