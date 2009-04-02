@@ -37,29 +37,29 @@ public:
         size = 0;
     }
 
-	void insert(type* item)
-	{
-		ASSERT(size+1 < n);
-		uint32_t iterator = 0;
-		while (iterator < size && *array[iterator] < *item)
-			iterator++;
+    void insert(type* item)
+    {
+        ASSERT(size+1 < n);
+        uint32_t iterator = 0;
+        while (iterator < size && *array[iterator] < *item)
+            iterator++;
 
-		if (iterator == size) // just add at the end of the array
-			array[size++] = item;
-		else
-		{
-			type* tmp = array[iterator];
-			array[iterator] = item;
-			while (iterator < size)
-			{
-				iterator++;
-				type* tmp2 = array[iterator];
-				array[iterator] = tmp;
-				tmp = tmp2;
-			}
-			size++;
-		}
-	}
+        if (iterator == size) // just add at the end of the array
+            array[size++] = item;
+        else
+        {
+            type* tmp = array[iterator];
+            array[iterator] = item;
+            while (iterator < size)
+            {
+                iterator++;
+                type* tmp2 = array[iterator];
+                array[iterator] = tmp;
+                tmp = tmp2;
+            }
+            size++;
+        }
+    }
 
     inline type* lookup(uint32_t i)
     {
