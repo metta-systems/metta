@@ -8,21 +8,18 @@
 
 elf_parser::elf_parser()
 {
-	header              = NULL;
-	section_headers     = NULL;
-	symbol_table        = NULL;
-	string_table        = NULL;
-	got_table           = NULL;
-	filename            = NULL;
+    header              = NULL;
+    section_headers     = NULL;
+    symbol_table        = NULL;
+    string_table        = NULL;
+    got_table           = NULL;
+    filename            = NULL;
 }
 
-// elf_parser::~elf_parser()
-// {
-// 	delete header;
-// 	delete section_headers;
-// 	delete [] filename;
-// }
-
+/**
+ * Load ELF program image, allocate pages and frames from memory.
+ * Set up pagedir and copy from @p start to actual image start.
+ */
 void elf_parser::load_image(address_t start, size_t size)
 {
     (void)start;
@@ -32,49 +29,49 @@ void elf_parser::load_image(address_t start, size_t size)
 // @todo use debugging info if present
 char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
 {
-	address_t max = 0;
-	elf32::symbol *fallback_symbol = 0;
-	for (unsigned int i = 0; i < symbol_table->size /
-         symbol_table->entsize; i++)
-	{
-		elf32::symbol *symbol = (elf32::symbol *)(symbol_table->addr
+    address_t max = 0;
+    elf32::symbol *fallback_symbol = 0;
+    for (unsigned int i = 0; i < symbol_table->size /
+            symbol_table->entsize; i++)
+    {
+        elf32::symbol *symbol = (elf32::symbol *)(symbol_table->addr
                                 + i * symbol_table->entsize);
 
-		if ((addr >= symbol->value) &&
-			(addr <  symbol->value + symbol->size) )
-		{
-			char *c = (char *)(symbol->name) + string_table->addr;
+        if ((addr >= symbol->value) &&
+            (addr <  symbol->value + symbol->size) )
+        {
+            char *c = (char *)(symbol->name) + string_table->addr;
 
-			if (symbol_start)
-			{
-				*symbol_start = symbol->value;
-			}
-			return c;
-		}
+            if (symbol_start)
+            {
+                *symbol_start = symbol->value;
+            }
+            return c;
+        }
 
-		if (symbol->value > max && symbol->value <= addr)
-		{
-			max = symbol->value;
-			fallback_symbol = symbol;
-		}
-	}
+        if (symbol->value > max && symbol->value <= addr)
+        {
+            max = symbol->value;
+            fallback_symbol = symbol;
+        }
+    }
 
-	// Search for symbol with size failed, now take a wild guess.
-	// Use a biggest symbol value less than addr (if found).
-	if (fallback_symbol)
-	{
-		char *c = (char *)(fallback_symbol->name) + string_table->addr;
+    // Search for symbol with size failed, now take a wild guess.
+    // Use a biggest symbol value less than addr (if found).
+    if (fallback_symbol)
+    {
+        char *c = (char *)(fallback_symbol->name) + string_table->addr;
 
-		if (symbol_start)
-		{
-			*symbol_start = fallback_symbol->value;
-		}
-		return c;
-	}
+        if (symbol_start)
+        {
+            *symbol_start = fallback_symbol->value;
+        }
+        return c;
+    }
 
-	if (symbol_start)
-		*symbol_start = 0;
-	return NULL;
+    if (symbol_start)
+        *symbol_start = 0;
+    return NULL;
 }
 
 // kate: indent-width 4; replace-tabs on;
