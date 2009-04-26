@@ -11,8 +11,8 @@ APPNAME = 'vesper'
 srcdir = '.'
 blddir = '_build_'
 
-source_dirs  = '. lib runtime memory pd schedule boot'
-include_dirs = '. lib/klibc lib/bstrlib lib runtime memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
+source_dirs  = '. lib runtime memory pd schedule boot'.split()
+include_dirs = '. lib/klibc lib/bstrlib lib runtime memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86'.split() #FIXME: archdep
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
 osflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
@@ -32,7 +32,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cflags + ['-std=gnu++0x'] + flags)
     conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
-    conf.env.append_unique('NASM_FLAGS', '-f elf')
+    conf.env.append_unique('NASM_FLAGS', ['-f elf'])
 
     # Mhm, any better way to define this?
     conf.env['ENV'] = 'x86-release'
@@ -48,7 +48,7 @@ def configure(conf):
     # Config for running tests
     conf.setenv('x86-tests-release') # Activate the environment
     conf.env['LIB_TEST']      = 'boost_unit_test_framework'
-    conf.env.append_unique('CXXFLAGS', '-fexceptions')
+    conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
     conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
 
     # Config for building kernel on x86
@@ -67,14 +67,14 @@ def build(bld):
     loader = bld.new_task_gen('cxx', 'program')
     loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp elf_parser.cpp'
     loader.env = bld.env_of_name(bld.env['ENV']).copy()
-    loader.env.append_unique('LINKFLAGS', '-T ../boot/loader.ld -Wl,-Map,bootloader.map')
+    loader.env.append_unique('LINKFLAGS', ['-T', '../boot/loader.ld', '-Wl,-Map,bootloader.map'])
     loader.includes = include_dirs
     loader.target = 'bootloader'
 
     initcp = bld.new_task_gen('cxx', 'program')
     initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
     initcp.env = bld.env_of_name(bld.env['ENV']).copy()
-    initcp.env.append_unique('LINKFLAGS', '-T ../initcp/initcp.ld -Wl,-Map,initcomp.map')
+    initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
     initcp.includes = include_dirs
     initcp.target = 'initcomp'
 
