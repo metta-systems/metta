@@ -2,7 +2,7 @@
 ; Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 ;
 ; x86 GRUB loader.
 ; jump to setup_kernel in unpacker.cpp to do all the dirty job.
