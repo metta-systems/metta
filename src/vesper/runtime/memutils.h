@@ -8,9 +8,6 @@
 
 #include "types.h"
 
-namespace metta {
-namespace common {
-
 class memutils
 {
 public:
@@ -74,9 +71,6 @@ public:
     **/
     static int strcmp(const char *s1, const char *s2);
 };
-
-}
-}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

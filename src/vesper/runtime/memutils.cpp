@@ -6,9 +6,6 @@
 //
 #include "memutils.h"
 
-namespace metta {
-namespace common {
-
 void* memutils::fill_memory(void* dest, int value, size_t count)
 {
     char *xs = (char *)dest;
@@ -88,9 +85,6 @@ int  memutils::strcmp(const char *s1, const char *s2)
             break;
     }
     return __res;
-}
-
-}
 }
 
 // kate: indent-width 4; replace-tabs on;
