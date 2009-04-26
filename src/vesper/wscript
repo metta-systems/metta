@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os, Task, Options, Configure, Utils, misc
 Configure.autoconfig = 1
@@ -12,10 +13,10 @@ blddir = '_build_'
 
 source_dirs  = '. lib runtime memory pd schedule boot'
 include_dirs = '. lib/klibc lib/bstrlib lib runtime memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86' #FIXME: archdep
-cflags = '-Wall -Wextra -Werror'
-cflags += ' -Os' #FIXME: builddep FIXME: -O3 often causes screwups
-osflags = '-nostdlib -nostartfiles -nodefaultlibs ' # -fno-builtin
-flags = '-fno-stack-protector -fno-leading-underscore'
+cflags = '-Wall -Wextra -Werror'.split()
+cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
+osflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
+flags = '-fno-stack-protector -fno-leading-underscore'.split()
 
 def set_options(opt):
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for.")
@@ -28,8 +29,8 @@ def configure(conf):
     conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
-    conf.env.append_unique('CCFLAGS', cflags + ' ' + flags)
-    conf.env.append_unique('CXXFLAGS', cflags + ' -std=gnu++0x ' + flags)
+    conf.env.append_unique('CCFLAGS', cflags + flags)
+    conf.env.append_unique('CXXFLAGS', cflags + ['-std=gnu++0x'] + flags)
     conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
     conf.env.append_unique('NASM_FLAGS', '-f elf')
 
@@ -53,9 +54,9 @@ def configure(conf):
     # Config for building kernel on x86
     conf.setenv('x86-release') # Activate the environment
     conf.env.append_unique('CCFLAGS', osflags)
-    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x ' + osflags)
+    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split() + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('LINKFLAGS', '--gc-sections ' + osflags + flags)
+    conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + osflags + flags)
 
     # Generate config.h (per-environment!)
     conf.define('CONFIG_INLINING', 1)
