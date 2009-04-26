@@ -10,7 +10,6 @@
 #include "macros.h"
 #include "memutils.h"
 
-using metta::common::memutils;
 using metta::common::string;
 
 const char default_console::eol = 10;
