@@ -19,24 +19,10 @@
 #include "memutils.h"
 #include "multiboot.h"
 #include "minmax.h"
+#include "memory.h"
 #include "global_descriptor_table.h"
 #include "default_console.h"
 #include "elf_parser.h"
-
-// Excerpted from "memory_manager-arch.h"
-#define PAGE_SIZE 0x1000
-#define PAGE_MASK 0xFFFFF000
-
-template <typename T>
-inline T page_align_up(T a)
-{
-    if (a % PAGE_SIZE)
-    {
-        a &= PAGE_MASK;
-        a += PAGE_SIZE;
-    }
-    return a;
-}
 
 extern "C" {
     void write_page_directory(address_t page_dir_physical);
@@ -52,10 +38,32 @@ static address_t *kernelpagedir;
 static address_t *lowpagetable;
 static address_t *highpagetable;
 
-address_t alloc_next_page()
+void mapping_enter(address_t vaddr, address_t paddr)
+{
+    address_t *pagetable = 0;
+    if (vaddr < 256*1024*1024)
+        pagetable = lowpagetable;
+    else if (vaddr > 768*1024*1024)
+        pagetable = highpagetable;
+    else
+        PANIC("invalid vaddr in mapping_enter");
+
+    kconsole << "Entering mapping " << vaddr << " => " << paddr << endl;
+
+    pagetable[vaddr / PAGE_SIZE] = paddr | 0x3;
+}
+
+address_t pmm_alloc_next_page()
 {
     address_t ret = alloced_start;
     alloced_start += PAGE_SIZE;
+    return ret;
+}
+
+address_t pmm_alloc_page(address_t vaddr)
+{
+    address_t ret = pmm_alloc_next_page();
+    mapping_enter(vaddr, ret);
     return ret;
 }
 
@@ -81,7 +89,7 @@ void setup_kernel(multiboot::header *mbh)
     alloced_start = max(alloced_start, kernel->mod_end);
     alloced_start = max(alloced_start, initcp->mod_end);
     alloced_start = page_align_up<address_t>(alloced_start);
-    // now we can allocate extra pages from alloced_start using alloc_next_page()
+    // now we can allocate extra pages from alloced_start using pmm_alloc_next_page()
 
     kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
                       << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
@@ -89,14 +97,16 @@ void setup_kernel(multiboot::header *mbh)
                       << "Alloctn start at " << (unsigned)alloced_start << endl;
 
     // Create and configure paging directory.
-    kernelpagedir = (address_t*)alloc_next_page();
-    lowpagetable  = (address_t*)alloc_next_page();
-    highpagetable = (address_t*)alloc_next_page();
+    kernelpagedir = reinterpret_cast<address_t*>(pmm_alloc_next_page());
+    lowpagetable  = reinterpret_cast<address_t*>(pmm_alloc_next_page());
+    highpagetable = reinterpret_cast<address_t*>(pmm_alloc_next_page());
+
+    lowpagetable[0] = 0x0; // invalid page 0
 
     // We take two pmm pages for occupied memory bitmap and initialize that from the
     // meminfo in mb and memory we took for components.
     // This bitmap will be passed into initcp.
-//     bitmap = alloc_next_page(), alloc_next_page();
+//     bitmap = pmm_alloc_next_page(), pmm_alloc_next_page();
 //     bitmap->set(kernelpagedir);
 //     bitmap->set(lowpagetable);
 //     bitmap->set(highpagetable);
@@ -110,23 +120,8 @@ void setup_kernel(multiboot::header *mbh)
 
     elf_parser elf;
     elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
-
-    // Map initcp to RAM start.
-    lowpagetable[0] = 0x0; // invalid page 0
-    kconsole << GREEN << "Mapping initcp: ";
-    for (k = 1; k <= 1+(initcp->mod_end - initcp->mod_start)/PAGE_SIZE+2; k++)
-    {
-        lowpagetable[k] = (initcp->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
-        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
-    }
-
-    // Map kernel to KERNEL_BASE aka 0xC0000000
-    kconsole << endl << "Mapping kernel: ";
-    for (k = 1; k <= 1+(kernel->mod_end - kernel->mod_start)/PAGE_SIZE+2; k++)
-    {
-        highpagetable[k] = (kernel->mod_start + ((k-1) * PAGE_SIZE)) | 0x3;
-        kconsole << 0xC0000000+k*PAGE_SIZE << " to " << (unsigned)(highpagetable[k]&(~0x3)) << ", ";
-    }
+// TODO: map kernel to highmem
+    elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start);
 
     // Identity map currently executing code.
     address_t start = (address_t)&KERNEL_BASE;

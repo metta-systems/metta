@@ -26,7 +26,7 @@ public:
     /**
      * Loads the image file from specified memory location.
      */
-    void load_image(address_t start, size_t size);
+    bool load_image(address_t start, size_t size);
 
     /**
      * Returns the symbol name for an address. Also returns the start address
@@ -61,7 +61,7 @@ public:
      */
     address_t get_entry_point()
     {
-        return (address_t)header->entry;
+        return (address_t)header_->entry;
     }
 
     /**
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    elf32::header*         header;
+    elf32::header*         header_;
     elf32::section_header* symbol_table;
     elf32::section_header* string_table;
     elf32::section_header* got_table; ///< Global offset table.
