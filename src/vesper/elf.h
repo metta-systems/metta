@@ -16,19 +16,19 @@
 
 namespace elf32 {
 
-/*
+/*!
  * ELF data types
  */
-typedef uint32_t  addr_t;  /* 4 bytes/4 align/unsigned */
-typedef uint16_t  half_t;  /* 2 bytes/2 align/unsigned */
-typedef uint32_t  off_t;   /* 4 bytes/4 align/unsigned */
-typedef  int32_t  sword_t; /* 4 bytes/4 align/signed   */
-typedef uint32_t  word_t;  /* 4 bytes/4 align/unsigned */
-typedef  uint8_t  byte_t;  /* 1 byte /1 align/unsigned */
+typedef uint32_t  addr_t;  /*!< 4 bytes/4 align/unsigned */
+typedef uint16_t  half_t;  /*!< 2 bytes/2 align/unsigned */
+typedef uint32_t  off_t;   /*!< 4 bytes/4 align/unsigned */
+typedef  int32_t  sword_t; /*!< 4 bytes/4 align/signed   */
+typedef uint32_t  word_t;  /*!< 4 bytes/4 align/unsigned */
+typedef  uint8_t  byte_t;  /*!< 1 byte /1 align/unsigned */
 
 
-/*
- * ELF structures: ELF file Header
+/*!
+ * ELF file Header
  */
 struct header
 {
@@ -37,73 +37,73 @@ struct header
     byte_t  data;
     byte_t  hdrversion;
     byte_t  padding[9];
-    half_t  type;           /**< Identifies object file type */
-    half_t  machine;        /**< Specifies required architecture */
-    word_t  version;        /**< Identifies object file version */
-    addr_t  entry;          /**< Entry point virtual address */
-    off_t   phoff;          /**< Program header table file offset */
-    off_t   shoff;          /**< Section header table file offset */
-    word_t  flags;          /**< Processor-specific flags */
-    half_t  ehsize;         /**< ELF header size in bytes */
-    half_t  phentsize;      /**< Program header table entry size */
-    half_t  phnum;          /**< Program header table entry count */
-    half_t  shentsize;      /**< Section header table entry size */
-    half_t  shnum;          /**< Section header table entry count */
-    half_t  shstrndx;       /**< Section header string table index */
+    half_t  type;           /*!< Identifies object file type */
+    half_t  machine;        /*!< Specifies required architecture */
+    word_t  version;        /*!< Identifies object file version */
+    addr_t  entry;          /*!< Entry point virtual address */
+    off_t   phoff;          /*!< Program header table file offset */
+    off_t   shoff;          /*!< Section header table file offset */
+    word_t  flags;          /*!< Processor-specific flags */
+    half_t  ehsize;         /*!< ELF header size in bytes */
+    half_t  phentsize;      /*!< Program header table entry size */
+    half_t  phnum;          /*!< Program header table entry count */
+    half_t  shentsize;      /*!< Section header table entry size */
+    half_t  shnum;          /*!< Section header table entry count */
+    half_t  shstrndx;       /*!< Section header string table index */
 } PACKED;
 
 /* header.magic */
-#define ELF_MAGIC  0x464c457f    /* ASCII "ELF",0x7F */
+#define ELF_MAGIC  0x464c457f    /*!< ASCII "ELF",0x7F */
 
 /* header.class */
-#define ELF_CLASS_NONE 0x00      /**< Invalid class  */
-#define ELF_CLASS_32   0x01      /**< 32 bit objects */
-#define ELF_CLASS_64   0x02      /**< 64 bit objects */
+#define ELF_CLASS_NONE 0x00      /*!< Invalid class  */
+#define ELF_CLASS_32   0x01      /*!< 32 bit objects */
+#define ELF_CLASS_64   0x02      /*!< 64 bit objects */
 
 /* header.data */
-#define ELF_DATA_NONE  0x00      /**< Invalid data encoding   */
-#define ELF_DATA_2LSB  0x01      /**< LSB (Intel) encoding    */
-#define ELF_DATA_2MSB  0x02      /**< MSB (Motorola) encoding */
+#define ELF_DATA_NONE  0x00      /*!< Invalid data encoding   */
+#define ELF_DATA_2LSB  0x01      /*!< LSB (Intel) encoding    */
+#define ELF_DATA_2MSB  0x02      /*!< MSB (Motorola) encoding */
 
 /* header.type */
-#define ET_NONE    0x0000        /* No type     */
-#define ET_REL     0x0001        /* Relocatable */
-#define ET_EXEC    0x0002        /* Executable  */
-#define ET_DYN     0x0003        /* Shared      */
-#define ET_CORE    0x0004        /* Core        */
-#define ET_LOPROC  0xff00        /* Processor-specific */
-#define ET_HIPROC  0xffff
+#define ET_NONE    0x0000        /*!< No type     */
+#define ET_REL     0x0001        /*!< Relocatable */
+#define ET_EXEC    0x0002        /*!< Executable  */
+#define ET_DYN     0x0003        /*!< Shared      */
+#define ET_CORE    0x0004        /*!< Core        */
+#define ET_LOPROC  0xff00        /*!< Processor-specific start */
+#define ET_HIPROC  0xffff        /*!< Processor-specific end */
 
 /* header.machine */
-#define EM_NONE  0x0000          /* No machine     */
-#define EM_M32   0x0001          /* AT&T WE32100   */
-#define EM_SPARC 0x0002          /* SPARC          */
-#define EM_386   0x0003          /* x86            */
-#define EM_68K   0x0004          /* Motorola 68000 */
-#define EM_88K   0x0005          /* Motorola 88000 */
-#define EM_860   0x0007          /* Intel 80860    */
-#define EM_MIPS  0x0008          /* MIPS RS3000    */
+#define EM_NONE  0x0000          /*!< No machine     */
+#define EM_M32   0x0001          /*!< AT&T WE32100   */
+#define EM_SPARC 0x0002          /*!< SPARC          */
+#define EM_386   0x0003          /*!< x86            */
+#define EM_68K   0x0004          /*!< Motorola 68000 */
+#define EM_88K   0x0005          /*!< Motorola 88000 */
+#define EM_860   0x0007          /*!< Intel 80860    */
+#define EM_MIPS  0x0008          /*!< MIPS RS3000    */
 
 /* header.version */
-#define EV_NONE        0         /* Invalid version */
-#define EV_CURRENT     1         /* Current version */
+#define EV_NONE        0         /*!< Invalid version */
+#define EV_CURRENT     1         /*!< Current version */
 
 
-/*
- * ELF structures: Section header
+/*!
+ * Section header entry.
  */
 struct section_header
 {
-    word_t  name;          /**< Section name, index in string table */
-    word_t  type;          /**< Type of section */
-    word_t  flags;         /**< Miscellaneous section attributes */
-    addr_t  addr;          /**< Section virtual addr at execution */
-    off_t   offset;        /**< Section file offset */
-    word_t  size;          /**< Size of section in bytes */
-    word_t  link;          /**< Index of another section */
-    word_t  info;          /**< Additional section information */
-    word_t  addralign;     /**< Section alignment */
-    word_t  entsize;       /**< Entry size if section holds table */
+    word_t  name;          /*!< Section name, index in string table */
+    word_t  type;          /*!< Type of section */
+    word_t  flags;         /*!< Miscellaneous section attributes */
+    addr_t  addr;          /*!< Section virtual addr at execution */
+    off_t   offset;        /*!< Section file offset */
+    word_t  size;          /*!< Size of section in bytes */
+    word_t  link;          /*!< Index of another section */
+    word_t  info;          /*!< Additional section information */
+    word_t  addralign;     /*!< Section alignment */
+    word_t  entsize;       /*!< Entry size if section holds table */
 } PACKED;
 
 /* predefined section table indices */
@@ -117,16 +117,16 @@ struct section_header
 
 /* section_header.sh_type */
 #define SHT_NULL      0x00000000
-#define SHT_PROGBITS  0x00000001 /* The data is contained in program file */
-#define SHT_SYMTAB    0x00000002 /* Symbol table */
-#define SHT_STRTAB    0x00000003 /* String table */
+#define SHT_PROGBITS  0x00000001 /*!< The data is contained in program file */
+#define SHT_SYMTAB    0x00000002 /*!< Symbol table */
+#define SHT_STRTAB    0x00000003 /*!< String table */
 #define SHT_RELA      0x00000004
-#define SHT_HASH      0x00000005 /* Symbol hash table */
-#define SHT_DYNAMIC   0x00000006 /* Dynamic linking information */
+#define SHT_HASH      0x00000005 /*!< Symbol hash table */
+#define SHT_DYNAMIC   0x00000006 /*!< Dynamic linking information */
 #define SHT_NOTE      0x00000007
-#define SHT_NOBITS    0x00000008 /* The data is not contained in program file */
+#define SHT_NOBITS    0x00000008 /*!< The data is not contained in program file */
 #define SHT_REL       0x00000009
-#define SHT_SHLIB     0x0000000a /* Reserved with unspecified semantics */
+#define SHT_SHLIB     0x0000000a /*!< Reserved with unspecified semantics */
 #define SHT_DYNSYM    0x0000000b
 #define SHT_LOPROC    0x70000000
 #define SHT_HIPROC    0x7fffffff
@@ -145,17 +145,17 @@ struct section_header
 #define SHF_MASKPROC  0xf0000000
 
 
-/*
- * ELF structures: Symbol Table
+/*!
+ * Symbol Table entry.
  */
 struct symbol
 {
-    word_t  name;          /**< Symbol name, index into string table */
-    addr_t  value;         /**< Symbol value */
-    word_t  size;          /**< Size occupied by this symbol */
-    byte_t  info;          /**< Symbol type and binding */
+    word_t  name;          /*!< Symbol name, index into string table */
+    addr_t  value;         /*!< Symbol value */
+    word_t  size;          /*!< Size occupied by this symbol */
+    byte_t  info;          /*!< Symbol type and binding */
     byte_t  other;
-    half_t  shndx;         /**< Section index this symbol belongs to */
+    half_t  shndx;         /*!< Section index this symbol belongs to */
 } PACKED;
 
 /* Symbol Table index: first/undefined entry */
@@ -183,8 +183,8 @@ struct symbol
 #define STT_HIPROC  0xf
 
 
-/*
- * ELF structures: Dynamic linking info
+/*!
+ * Dynamic linking info
  */
 struct dyn
 {
@@ -225,8 +225,8 @@ struct dyn
 #define DT_LOPROC   0x70000000
 #define DT_HIPROC   0x7fffffff
 
-/*
- * ELF structures: Relocation Entries
+/*!
+ * Relocation Entries
  */
 struct rel
 {
@@ -260,19 +260,19 @@ struct rela
 #define R_386_GOTPC     0x0a
 
 
-/*
- * ELF structures: Program Header
+/*!
+ * Program Header entry.
  */
 struct program_header
 {
-    word_t  type;           /**< Program section type */
-    off_t   offset;         /**< File offset */
-    addr_t  vaddr;          /**< Execution virtual address */
-    addr_t  paddr;          /**< Execution physical address */
-    word_t  filesz;         /**< Size in file */
-    word_t  memsz;          /**< Size in memory */
-    word_t  flags;          /**< Section flags */
-    word_t  align;          /**< Section alignment */
+    word_t  type;           /*!< Program section type */
+    off_t   offset;         /*!< File offset */
+    addr_t  vaddr;          /*!< Execution virtual address */
+    addr_t  paddr;          /*!< Execution physical address */
+    word_t  filesz;         /*!< Size in file */
+    word_t  memsz;          /*!< Size in memory */
+    word_t  flags;          /*!< Section flags */
+    word_t  align;          /*!< Section alignment */
 };
 
 /* program_header.p_type */
@@ -293,7 +293,7 @@ struct program_header
 #define PF_MASKPROC 0xf0000000
 
 
-/* Symbol Hash table hashing function */
+/*! Symbol Hash table hashing function */
 inline uint32_t
 elf_hash(const unsigned char *name)
 {
