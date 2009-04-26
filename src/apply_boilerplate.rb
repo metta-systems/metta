@@ -3,7 +3,7 @@
 # Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 #
 # Distributed under the Boost Software License, Version 1.0.
-# (See file LICENSE_1_0.txt or a copy at http:#www.boost.org/LICENSE_1_0.txt)
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
 #
 # Apply license and modeline changes to text source files.
@@ -25,8 +25,8 @@ exts = {
     '.cpp'=>[license, modelines],
     '.c'=>[license, modelines],
     '.h'=>[license, modelines],
-    '.s'=>[license.gsub("//",";"), modelines.gsub("//",";")],
-    '.rb'=>[license.gsub("//","#"), modelines.gsub("//","#")],
+    '.s'=>[license.gsub(/^\/\//,";"), modelines.gsub(/^\/\//,";")],
+    '.rb'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")],
     '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
 }
 
@@ -35,12 +35,16 @@ modified_count = 0
 modified_files = []
 
 Find.find('./') do |f|
-    if File.file?(f) && exts.include?(File.extname(f)) && exclude_dirs.do_not_has?(File.dirname(f))
-        lic = exts[File.extname(f)][0]
-        mod = exts[File.extname(f)][1]
+    ext = File.extname(f)
+    dir = File.dirname(f)
+    if File.file?(f)
+       && exts.include?(ext)
+       && exclude_dirs.do_not_has?(dir)
+        lic = exts[ext][0]
+        mod = exts[ext][1]
         modified = false
         content = IO.readlines(f).join
-        if content.index(lic).nil? && no_license_dirs.do_not_has?(File.dirname(f))
+        if content.index(lic).nil? && no_license_dirs.do_not_has?(dir)
             content = lic + content
             modified = true
         end
@@ -75,4 +79,3 @@ end
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
-
