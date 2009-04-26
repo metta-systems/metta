@@ -10,6 +10,7 @@
 [ ] Use lzma decoder
 [ ] Load components from init modules
 [ ] Call components constructors
+[ ] pass device tree to kernel from boostrap component (akin to PowerPC Linux)
 
 == design ==
 [ ] Design portal manager interface
@@ -25,3 +26,4 @@
 == wscript ==
 [ ] environment selection from cmdline
 [+] run update_image.sh automagically after build
+[ ] migrate to llvm/yasm
