@@ -10,8 +10,6 @@
 #include "elf.h"
 #include "memutils.h"
 
-using metta::common::memutils;
-
 void multiboot::set_header(multiboot::header *h)
 {
     header_ = h;
