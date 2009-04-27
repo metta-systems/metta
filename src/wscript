@@ -11,10 +11,13 @@ APPNAME = 'vesper'
 srcdir = '.'
 blddir = '_build_'
 
-source_dirs  = '. lib runtime memory pd schedule boot'.split()
-include_dirs = '. lib/klibc lib/bstrlib lib runtime memory pd schedule boot lib/oskit arch/x86 lib/oskit/oskit/x86'.split() #FIXME: archdep
+source_dirs  = 'boot initcp vesper'.split()
+include_dirs = 'boot initcp vesper vesper/lib vesper/runtime vesper/memory'.split()
+archdep_includes = 'vesper/arch/ vesper/lib/oskit/oskit/'.split()
+
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
+cxxflags = cflags + ['-std=gnu++0x']
 osflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
 
@@ -24,59 +27,63 @@ def set_options(opt):
 def configure(conf):
     # Configure for given platform
     # Configuration name is composed of architecture, cpu, release
-
+    arch = Options.options.arch
 
     conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
-    conf.env.append_unique('CXXFLAGS', cflags + ['-std=gnu++0x'] + flags)
-    conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
+    conf.env.append_unique('CXXFLAGS', cxxflags + flags)
+    #conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
     conf.env.append_unique('NASM_FLAGS', ['-f elf'])
 
     # Mhm, any better way to define this?
-    conf.env['ENV'] = 'x86-release'
-    conf.env['TEST_ENV'] = 'x86-tests-release'
+    conf.env['ENV'] = arch + '-release'
+    conf.env['TEST_ENV'] = arch + '-tests-release'
 
     env = conf.env.copy() # Clone environment
-    env.set_variant('x86-tests-release') # configure archdep & builddep variant
-    conf.set_env_name('x86-tests-release', env)
+    env.set_variant(conf.env['TEST_ENV'])
+    conf.set_env_name(conf.env['TEST_ENV'], env)
     env = conf.env.copy() # Clone environment
-    env.set_variant('x86-release') # configure archdep & builddep variant
-    conf.set_env_name('x86-release', env)
+    env.set_variant(conf.env['ENV'])
+    conf.set_env_name(conf.env['ENV'], env)
 
     # Config for running tests
-    conf.setenv('x86-tests-release') # Activate the environment
+    conf.setenv(conf.env['TEST_ENV']) # Activate the environment
     conf.env['LIB_TEST']      = 'boost_unit_test_framework'
     conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
     conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
 
-    # Config for building kernel on x86
-    conf.setenv('x86-release') # Activate the environment
+    # Config for building kernel
+    conf.setenv(conf.env['ENV']) # Activate the environment
     conf.env.append_unique('CCFLAGS', osflags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split() + osflags)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + osflags + flags)
 
+    # Set arch-specific include paths
+    conf.env.append_unique('INCLUDE_ARCH', map(lambda d: d + arch, archdep_includes))
+
     # Generate config.h (per-environment!)
+    conf.define('ARCH', arch)
     conf.define('CONFIG_INLINING', 1)
     conf.define('HEAP_DEBUG', 1)
     conf.write_config_header('config.h')
 
 def build(bld):
     loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp elf_parser.cpp'
+    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp vesper/lib/default_console.cpp vesper/runtime/g++support.cpp vesper/runtime/memutils.cpp vesper/panic.cpp vesper/elf_parser.cpp'
     loader.env = bld.env_of_name(bld.env['ENV']).copy()
     loader.env.append_unique('LINKFLAGS', ['-T', '../boot/loader.ld', '-Wl,-Map,bootloader.map'])
-    loader.includes = include_dirs
+    loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
     loader.target = 'bootloader'
 
-    initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
-    initcp.env = bld.env_of_name(bld.env['ENV']).copy()
-    initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
-    initcp.includes = include_dirs
-    initcp.target = 'initcomp'
+    #initcp = bld.new_task_gen('cxx', 'program')
+    #initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
+    #initcp.env = bld.env_of_name(bld.env['ENV']).copy()
+    #initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
+    #initcp.includes = include_dirs
+    #initcp.target = 'initcomp'
 
     #bld.add_subdirs('tests')
 
