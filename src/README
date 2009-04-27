@@ -1,0 +1,9 @@
+
+Directories:
+
+boot/ - kernel bootloader and kickstarter.
+
+initcp/ - init component which actually initializes kserver and starts running userspace processes.
+
+vesper/ - the kernel proper.
+
