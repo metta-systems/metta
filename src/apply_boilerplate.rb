@@ -10,7 +10,7 @@
 #
 require 'find'
 
-exclude_dirs = ['./_build_', './vesper/_build_']
+exclude_dirs = ['./_build_']
 no_license_dirs = ['./vesper/lib/bstrlib', './vesper/lib/oskit', './vesper/lib/atomic']
 
 class Array
