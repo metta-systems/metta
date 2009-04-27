@@ -119,31 +119,33 @@ void setup_kernel(multiboot::header *mbh)
     // for now just map two extra pages for BSS.
 
     elf_parser elf;
-    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
 // TODO: map kernel to highmem
     elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start);
+    // load initcp last, because of implicit elf state in header_
+    // we will use it to jump to initcp entry point below.
+    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
+    // identity map start of initcp so we can access header_ from paging mode.
+    mapping_enter(initcp->mod_start, initcp->mod_start);
 
     // Identity map currently executing code.
-    address_t start = (address_t)&KERNEL_BASE;
-    address_t end   = page_align_up<address_t>((address_t)&placement_address); // one after end
+    address_t ph_start = (address_t)&KERNEL_BASE;
+    address_t ph_end   = page_align_up<address_t>((address_t)&placement_address); // one after end
     kconsole << endl << "Mapping loader: ";
-    for (k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
+    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        lowpagetable[k] = (k * PAGE_SIZE) | 0x3;
-        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
+        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
     // Identity map video memory/bios area.
-    start = (address_t)0xa0000;
-    end   = 0x100000; // one after end
+    ph_start = (address_t)0xa0000;
+    ph_end   = 0x100000; // one after end
     kconsole << endl << "Mapping VRAM: ";
-    for (k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
+    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        lowpagetable[k] = (k * PAGE_SIZE) | 0x3;
-        kconsole << k*PAGE_SIZE << " to " << (unsigned)(lowpagetable[k]&(~0x3)) << ", ";
+        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
-    kconsole << endl;
+    kconsole << endl << "Mapped." << endl;
 
     // Identity map allocated pages?
 
@@ -151,14 +153,18 @@ void setup_kernel(multiboot::header *mbh)
     kernelpagedir[768] = (address_t)highpagetable | 0x3;
 
     global_descriptor_table<> gdt;
+    kconsole << "Created gdt." << endl;
 
     // enable paging
     write_page_directory((address_t)kernelpagedir);
+    kconsole << "Set CR3." << endl;
     enable_paging();
+    kconsole << "Enabled paging." << endl;
 
-    // jump to linear 0x1000
+    // jump to initcomp entry point linear address
     typedef void (*initfunc)(multiboot::header *mbh);
-    initfunc init = (initfunc)0x1000;
+    initfunc init = (initfunc)elf.get_entry_point();
+    kconsole << endl << "Jumping to " << elf.get_entry_point();
     init(mbh);
 
     /* Never reached */
