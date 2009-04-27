@@ -2,4 +2,4 @@ boot: a
 floppya: 1_44="floppy.img", status=inserted
 cpu: count=2, reset_on_triple_fault=0, ips=1000000
 mouse: enabled=0
-magic_break: enabled=1
+#magic_break: enabled=1
