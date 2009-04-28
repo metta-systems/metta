@@ -12,7 +12,7 @@ srcdir = '.'
 blddir = '_build_'
 
 source_dirs  = 'boot initcp vesper'.split()
-include_dirs = 'boot initcp vesper vesper/lib vesper/runtime vesper/memory'.split()
+include_dirs = 'boot initcp vesper vesper/lib vesper/runtime vesper/memory vesper/pd'.split()
 archdep_includes = 'vesper/arch/ vesper/lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
@@ -78,12 +78,12 @@ def build(bld):
     loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
     loader.target = 'bootloader'
 
-    #initcp = bld.new_task_gen('cxx', 'program')
-    #initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp panic.cpp'
-    #initcp.env = bld.env_of_name(bld.env['ENV']).copy()
-    #initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
-    #initcp.includes = include_dirs
-    #initcp.target = 'initcomp'
+    initcp = bld.new_task_gen('cxx', 'program')
+    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp vesper/lib/default_console.cpp vesper/runtime/g++support.cpp vesper/runtime/memutils.cpp vesper/panic.cpp'
+    initcp.env = bld.env_of_name(bld.env['ENV']).copy()
+    initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
+    initcp.includes = include_dirs + initcp.env['INCLUDE_ARCH']
+    initcp.target = 'initcomp'
 
     #bld.add_subdirs('tests')
 
