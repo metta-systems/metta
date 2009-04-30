@@ -85,6 +85,13 @@ def build(bld):
     initcp.includes = include_dirs + initcp.env['INCLUDE_ARCH']
     initcp.target = 'initcomp'
 
+    # kernel:
+    # build vesper/kernel.*
+
+    # initfs:
+    # build several components, build mkinitfs, run mkinitfs to bundle built components
+
+
     #bld.add_subdirs('tests')
 
 def shutdown():

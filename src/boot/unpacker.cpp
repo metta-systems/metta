@@ -4,18 +4,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-//
-// Prepare kernel and init component for starting up.
-//
-// * set up paging
-// * unpack kernel.assembly in-place and copy appropriate kernel to mapped
-// KERNEL_BASE.
-// * unpack initrd to 0x1000
-// * jump to initrd entrypoint
-//
-// Simplified version for now: set up paging, copy kernel to 0xC000_0000,
-// copy initrd to 0x1000, jump to 0x1000.
-//
+/*!
+Prepare kernel and init component for starting up.
+
+ * unpack kernel.assembly in-place and copy appropriate kernel to mapped KERNEL_BASE.
+ * unpack initrd to 0x1000
+ * set up paging
+ * jump to initrd entrypoint
+*/
 #include "memutils.h"
 #include "multiboot.h"
 #include "minmax.h"
@@ -33,7 +29,10 @@ extern "C" {
     address_t KERNEL_BASE;
 }
 
+//! Start and end of allocated pages for passing into initcp.
 static address_t alloced_start;
+static address_t alloced_end;
+
 static address_t *kernelpagedir;
 static address_t *lowpagetable;
 static address_t *highpagetable;
@@ -52,6 +51,8 @@ void mapping_enter(address_t vaddr, address_t paddr)
 
     pagetable[vaddr / PAGE_SIZE] = paddr | 0x3;
 }
+
+// TODO: pmm interface + pmm_state transfer
 
 address_t pmm_alloc_next_page()
 {
@@ -83,6 +84,10 @@ void setup_kernel(multiboot::header *mbh)
 
     // For modules that are compressed, set up decompression area, unpack and set up mappings.
     // (not used atm).
+    // FIXME: if we use entirely compressed image, we would waste memory to
+    // first uncompress the elf image and then to copy it to destination address.
+    // TODO: compress individual program sections (filesz will be compressed size and memsz - uncompressed, will need some crc to verify section correctness, so each compressed section will have a header { 4 bytes = magic, 4 bytes = crc }
+    //
 
     // Setup small pmm allocator.
     alloced_start = (address_t)&placement_address;
