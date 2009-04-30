@@ -12,8 +12,8 @@ srcdir = '.'
 blddir = '_build_'
 
 source_dirs  = 'boot initcp vesper'.split()
-include_dirs = 'boot initcp vesper vesper/lib vesper/runtime vesper/memory vesper/pd'.split()
-archdep_includes = 'vesper/arch/ vesper/lib/oskit/oskit/'.split()
+include_dirs = 'boot initcp vesper lib runtime vesper/memory vesper/pd'.split()
+archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
@@ -72,14 +72,14 @@ def configure(conf):
 
 def build(bld):
     loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp vesper/lib/default_console.cpp vesper/runtime/g++support.cpp vesper/runtime/memutils.cpp vesper/panic.cpp vesper/elf_parser.cpp'
+    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp lib/elf_parser.cpp'
     loader.env = bld.env_of_name(bld.env['ENV']).copy()
     loader.env.append_unique('LINKFLAGS', ['-T', '../boot/loader.ld', '-Wl,-Map,bootloader.map'])
     loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
     loader.target = 'bootloader'
 
     initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp vesper/lib/default_console.cpp vesper/runtime/g++support.cpp vesper/runtime/memutils.cpp vesper/panic.cpp'
+    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp'
     initcp.env = bld.env_of_name(bld.env['ENV']).copy()
     initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
     initcp.includes = include_dirs + initcp.env['INCLUDE_ARCH']
