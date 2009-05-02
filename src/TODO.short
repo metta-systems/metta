@@ -14,13 +14,17 @@
 
 == design ==
 [ ] Design portal manager interface
+
+== portal manager ==
 [ ] Implement simple portal manager
 
+== common protocols ==
 [ ] See to use Flick idl compiler
   [ ] Build
   [ ] Test
   [ ] Make stub generator for Metta
 
+== kernel heap ==
 [ ] TLSF memory allocator for RT tasks // http://rtportal.upv.es/rtmalloc/
 
 == wscript ==
