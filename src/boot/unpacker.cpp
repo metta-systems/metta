@@ -8,10 +8,14 @@
 Prepare kernel and init component for starting up.
 
  * unpack kernel.assembly in-place and copy appropriate kernel to mapped KERNEL_BASE.
-   - use device tree from bootloader to figure out what kernel to use
+   - TODO: use device tree from bootloader to figure out what kernel to use
  * unpack initrd to 0x1000
  * set up paging
  * jump to initrd entrypoint
+
+TODO:
+debug_console = (debug_on ? kconsole : bochs_console/null_console)
+pass debug_on via grub cmdline
 */
 #include "memutils.h"
 #include "multiboot.h"
@@ -151,9 +155,11 @@ void setup_kernel(multiboot::header *mbh)
         mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
-    kconsole << endl << "Mapped." << endl;
+    kconsole << endl << "Mapping multiboot info: ";
+    address_t a = page_align_down<address_t>(mbh);
+    mapping_enter(a, a);
 
-    // Identity map allocated pages?
+    kconsole << endl << "Mapped." << endl;
 
     kernelpagedir[0] = (address_t)lowpagetable | 0x3;
     kernelpagedir[768] = (address_t)highpagetable | 0x3;

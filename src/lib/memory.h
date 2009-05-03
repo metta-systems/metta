@@ -17,6 +17,19 @@ inline T page_align_up(T a)
     return a;
 }
 
+template <typename T>
+inline T page_align_down(T a)
+{
+    return a - a % PAGE_SIZE;
+}
+
+template <typename T>
+inline T page_align_down(void* a)
+{
+    const T b = reinterpret_cast<T>(a);
+    return b - b % PAGE_SIZE;
+}
+
 // Bootloader micro PMM allocator.
 extern address_t pmm_alloc_next_page();
 extern address_t pmm_alloc_page(address_t vaddr);
