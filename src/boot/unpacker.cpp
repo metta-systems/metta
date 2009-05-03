@@ -8,6 +8,7 @@
 Prepare kernel and init component for starting up.
 
  * unpack kernel.assembly in-place and copy appropriate kernel to mapped KERNEL_BASE.
+   - use device tree from bootloader to figure out what kernel to use
  * unpack initrd to 0x1000
  * set up paging
  * jump to initrd entrypoint
@@ -31,7 +32,7 @@ extern "C" {
 
 //! Start and end of allocated pages for passing into initcp.
 static address_t alloced_start;
-static address_t alloced_end;
+// static address_t alloced_end;
 
 static address_t *kernelpagedir;
 static address_t *lowpagetable;

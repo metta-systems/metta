@@ -1,0 +1,44 @@
+What is needed from the build system?
+
+- Simplicity
+  * Declarative programming is best - just tell what you want to get and let the buildsystem figure out the rest.
+
+- Sub-directories/sub-projects support
+  * With possibility to infer settings from subproject into a dependency (much like uselib in waf)
+  * Subprojected must be able to poke at parent's environment and use it by default.
+
+- Parallel execution
+  * Tasks must be extremely parallelizable. Everything that is not dependent on a particular result must be possible to run, fully utilizing available cores.
+
+- Custom tasks support
+  * Should be easy to specify dependencies of a custom task and how to run it when they are satisfied.
+
+- Cross-platform building
+  * Should be possible to easily build from same sources a set of different resulting binaries, including cross-tools building for other architectures.
+
+- Config file generation for a specific configuration
+  * Should support cross-platform building
+
+
+
+Metta build sequence
+
+for every supported arch:
+    build kernel support libs
+    build bootloader
+    build initcp
+    build kernel
+    build components
+    build mkinitfs
+    run mkinitfs to build initfs
+    build userspace support libs
+    build userspace apps
+    update arch-specific image using arch-specific update task
+
+
+
+Buildsystem: yggdrasil (ygg)
+ - Qt4 with JSON parser for configs?
+
+DSL: similar to premake
+

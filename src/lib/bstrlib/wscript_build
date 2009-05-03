@@ -1,4 +1,4 @@
-
+# bstrlib is used in tools only (mkinitfs)
 bstrlib = bld.new_task_gen('cxx', 'staticlib')
 bstrlib.find_sources_in_dirs('.')
 # Remove testfiles from library
@@ -6,7 +6,8 @@ bstrlib.source.remove('./cpptest.cpp')
 bstrlib.source.remove('./test.cpp')
 bstrlib.source.remove('./bstest.c')
 bstrlib.source.remove('./testaux.c')
-bstrlib.includes = '../klibc .. .'
-bstrlib.env = bld.env_of_name(bld.env['ENV'])
-bstrlib.env.append_unique('CXXFLAGS', '-Wno-strict-overflow')
+bstrlib.includes = '.'
+bstrlib.env = bld.env_of_name('ENV').copy()
+bstrlib.env.append_unique('CXXFLAGS', ['-Wno-strict-overflow'])
+bstrlib.env.append_unique('CXXDEFINES', 'BSTRLIB_CANNOT_USE_STL BSTRLIB_CANNOT_USE_IOSTREAM BSTRLIB_DOESNT_THROW_EXCEPTIONS BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR BSTRLIB_DONT_ASSUME_NAMESPACE'.split())
 bstrlib.target = 'bstrlib'

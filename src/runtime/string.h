@@ -7,10 +7,8 @@
 #pragma once
 
 #include "types.h"
+#include "memutils.h"
 #include "atomic_count.h"
-
-namespace metta {
-namespace common {
 
 // Allocator class for containers.
 // class allocator
@@ -90,12 +88,25 @@ private:
 /**
 * Non-modifyable string class for wrapping classic "const char *" strings.
 **/
-class const_string : public string
+class const_string
 {
-};
+public:
+    const_string() : str(0), length_(0) {}
 
-}
-}
+    const_string(const char* source) : str(source)
+    {
+        length_ = memutils::strlen(str);
+    }
+
+    inline size_t size()   const  { return length_; }
+    inline size_t count()  const  { return length_; }
+    inline size_t length() const  { return length_; }
+    bool is_empty() const;
+
+private:
+    const char* str;
+    size_t      length_;
+};
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

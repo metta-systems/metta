@@ -35,7 +35,7 @@ SECTIONS
     placement_address = ALIGN(PAGE_SIZE);
 
     /* Strip unnecessary stuff */
-    /DISCARD/ : { *(.comment .note .eh_frame .ctors .dtors) }
+    /DISCARD/ : { *(.comment .note* .eh_frame .ctors .dtors) }
 }
 
 /*

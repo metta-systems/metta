@@ -6,19 +6,19 @@
 //
 #include "initfs.h"
 
-initfs::initfs(address_t s) : start(s), entries(s + ((header*)s)->index_offset)
-{
-}
+// initfs::initfs(address_t s) : start(s), entries(s + ((header*)s)->index_offset)
+// {
+// }
 
-address_t initfs::get_file(string spec)
-{
-    for (int i = 0; i < start.count; i++)
-    {
-        if (strncmp())
-            return (address_t)start + entries[i].location;
-    }
-    return 0; // not found
-}
+// address_t initfs::get_file(string spec)
+// {
+//     for (int i = 0; i < start.count; i++)
+//     {
+//         if (strncmp())
+//             return (address_t)start + entries[i].location;
+//     }
+//     return 0; // not found
+// }
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

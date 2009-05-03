@@ -8,18 +8,20 @@
 // Read list file with component_file:component_id pairs and create corresponding initfs image.
 // Run mkinitfs file.lst initfs.img
 //
+// TODO: use STL/boost for i/o
+//
 #include "types.h"
 #include "initfs.h"
-#include "string.h"
+#include "bstrwrap.h"
 #include <assert.h>
 #include <cstdio>
+
+using Bstrlib::CBString;
+using Bstrlib::CBStream;
 
 #define ALIGN 4
 // If you ever need more than 256 entries in initfs, feel free to adjust this constant.
 #define MAX_ENTRIES 256
-
-using metta::kernel::string;
-using Bstrlib::CBStream;
 
 // Some nicely common file RAII wrappers. TODO: Factor out.
 class file_error
@@ -41,7 +43,7 @@ public:
     ~file() { std::fclose(file_); }
     void write(const void* buf, size_t count)
     {
-        if (EOF == std::fwrite(buf, 1, count, file_))
+        if (EOF == (int)std::fwrite(buf, 1, count, file_))
             throw file_error("file write failure");
     }
     size_t read(void* buf, size_t size, size_t nmemb)
@@ -79,7 +81,7 @@ private:
     file& file_;
 };
 
-filebinio& operator << (filebinio& io, string str)
+filebinio& operator << (filebinio& io, CBString str)
 {
     io.write((const char*)str, str.length());
     return io;
@@ -114,11 +116,14 @@ size_t read_func(void *buff, size_t elsize, size_t nelem, void *parm)
 int main(int argc, char** argv)
 {
     if (argc != 3)
+    {
+        std::printf("usage: mkinitfs components.lst initfs.img\n");
         return 255;
+    }
     const char *file_in = argv[1];
     const char *file_out = argv[2];
 
-    int i, padding;
+    uint32_t i, padding;
     file out(file_out, "w+b");
     file in(file_in, "r");
     filebinio io(out);
@@ -126,19 +131,19 @@ int main(int argc, char** argv)
 
     initfs::header header;
     initfs::entry  entry[MAX_ENTRIES];
-    string name_storage; // use bstring to store names as multiple \0-terminated strings concatenated together.
+    CBString name_storage; // use bstring to store names as multiple \0-terminated strings concatenated together.
     int name_offset = 0;
     int data_offset = sizeof(header);
 
     io << header;
 
     while (1) {
-        string input = in_stream.readLine('\n');
+        CBString input = in_stream.readLine('\n');
         if (input.length() == 0)
             break;
         int pos = input.find(':');
-        string left(input.midstr(0, pos));
-        string right(input.midstr(pos + 1, input.length() - pos - 1));
+        CBString left(input.midstr(0, pos));
+        CBString right(input.midstr(pos + 1, input.length() - pos - 1));
         right[right.length()-1] = '\0';
 
         {

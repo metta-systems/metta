@@ -35,7 +35,7 @@ SECTIONS
 
     /* Strip unnecessary stuff */
     /* TODO: keep static ctors for initcp */
-    /DISCARD/ : { *(.comment .note .eh_frame .ctors .dtors) }
+    /DISCARD/ : { *(.comment .note* .eh_frame .ctors .dtors) }
 }
 
 /*

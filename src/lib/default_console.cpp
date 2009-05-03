@@ -10,8 +10,6 @@
 #include "macros.h"
 #include "memutils.h"
 
-using metta::common::string;
-
 const char default_console::eol = 10;
 
 // Screen dimensions (for default 80x25 console)

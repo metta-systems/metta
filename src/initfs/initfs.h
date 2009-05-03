@@ -6,9 +6,7 @@
 //
 #pragma once
 
-#include "string.h"
-
-using metta::kernel::string;
+// #include "string.h"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FOURCC_MAGIC(w,o,r,d) (((unsigned long)d << 24) | ((unsigned long)r << 16) | \
@@ -30,7 +28,7 @@ class initfs
 {
 public:
     explicit initfs(address_t start);
-    address_t get_file(string spec);
+//     address_t get_file(string spec);
 
     struct header
     {

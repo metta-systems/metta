@@ -9,24 +9,34 @@
 
 extern "C" void entry(multiboot::header *mbh);
 
-void entry(multiboot::header *mbh, pmm::state *allocated)
+/*!
+Boot up the system - kernel and libOS.
+
+initcp tasks:
+- boot other cpus
+- initialize kernel structures
+- enumerate bundled components from initfs
+- verify required components are present (pmm, cpu, interrupts, security manager,
+  portal manager, object loader)
+- instantiate/initialize components taking dependencies into account
+- enter preexisting pmm mappings into pmm component
+- set up security contexts and permissions
+- mount root filesystem
+- enter usermode
+- continue executing as userspace init process
+  (with special privileges if needed - this is defined by the security policy)
+*/
+
+void entry(multiboot::header *mbh/*, pmm::state *allocated*/)
 {
+    // TODO: Establish our own stack first!
+
+    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+
     multiboot mb(mbh);
-    (void)mb;
+    kconsole << GREEN << "mb.lower_mem = " << mb.lower_mem() << endl
+                      << "mb.upper_mem = " << mb.upper_mem() << endl;
 
-    kconsole << YELLOW << "initcp reached";//, mbh " << (unsigned)mbh << endl;
-
-    // initcp tasks:
-    // - enumerate bundled components from initfs
-    // - verify required components are present (pmm, cpu, interrupts, security manager,
-    //   portal manager, object loader)
-    // - instantiate/initialize components taking dependencies into account
-    // - enter preexisting pmm mappings into pmm component
-    // - set up security contexts and permissions
-    // - mount root filesystem
-    // - enter usermode
-    // - continue executing as userspace init process
-    //   (with special privileges if needed - this is defined by the security policy)
 
     while(1) {}
 }
