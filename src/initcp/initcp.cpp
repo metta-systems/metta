@@ -25,6 +25,16 @@ initcp tasks:
 - enter usermode
 - continue executing as userspace init process
   (with special privileges if needed - this is defined by the security policy)
+
+Metta components to instantiate in initcomp:
+- root memory manager,
+- root filesystem mounter,
+- hardware detector,
+- root object manager,
+- root security server,
+- and root trader.
+
+Once trader is started, components can be requested for and connected.
 */
 
 void entry(multiboot::header *mbh/*, pmm::state *allocated*/)
