@@ -20,6 +20,27 @@ call some server function -> indirect call through portal table indexed w/ some 
 code in portal table traps into the nucleus, specifying portal code to execute.
 portal code sets up mappings, parameter marshalling etc. and jumps to server code.
 
+
+
+source:
+jmp [portal_table+n]
+
+
+portal_table:
+0:
+1:
+n: pointer to stub code
+
+stub code:
+trap into kernel or run inlined code
+trap: 
+mov eax, syscall_portal_ipc
+mov ebx, location of portal map for this process
+mov ecx, portal number
+sysenter
+
+portal manager privileged portion generates portal_table and stub code
+
 ------------------
 
 Servers provide interfaces to them as binary descriptors much like Qt's signal/slot description data, generated from the interface IDL.
@@ -28,7 +49,14 @@ Portal manager can derive information necessary to build a portal from these des
 
 Clients request server interfaces by interface name or interface plus method name.
 
-IPC implementation in Vesper is calls to portal manager to establish portal connection and calls through the portal table to corresponding methods in external components.
+ * client has to use trader interface to find appropriate component
+ * then a call to portal manager is made to instantiate interface to selected component
+ * specified version of the interface is used to build portal table entries
+ * portal manager verifies permissions and builds stub code
+   * stub code may return errors for non-permitted calls e.g.
+
+
+IPC implementation in Vesper calls to portal manager to establish portal connection and calls through the portal table to corresponding methods in external components.
 
 Start with: simple server idl, simple portal mgr that can read this idl in compiled form.
 
