@@ -50,7 +50,12 @@ public:
         uint32_t location;
         uint32_t size;
 
-        entry() : magic(FOURCC_MAGIC('F','E','n','t')), name_offset(0), location(0), size(0) {}
+        entry(uint32_t name_offset_ = 0, uint32_t location_ = 0, uint32_t size_ = 0)
+            : magic(FOURCC_MAGIC('F','E','n','t'))
+            , name_offset(name_offset_)
+            , location(location_)
+            , size(size_)
+            {}
     };
 
 private:
