@@ -79,16 +79,15 @@ int main(int argc, char** argv)
 
     try {
 
-    file in(argv[1], ios::in);
-    file out(argv[2], ios::out | ios::binary);
-
-    uint32_t i;
+    file      in(argv[1], ios::in);
+    file      out(argv[2], ios::out | ios::binary);
     filebinio io(out);
 
+    uint32_t                   i;
     std::string                str;
     initfs::header             header;
-    vector<initfs::entry> entry;
-    vector<char>          name_storage;
+    vector<initfs::entry>      entry;
+    vector<char>               name_storage;
     int                        name_offset = 0;
     int                        data_offset = sizeof(header);
 
