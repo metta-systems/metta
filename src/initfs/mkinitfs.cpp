@@ -8,25 +8,24 @@
 // Read list file with component_file:component_id pairs and create corresponding initfs image.
 // Run mkinitfs file.lst initfs.img
 //
-// TODO: use STL/boost for i/o
-//
 #include "types.h"
 #include "initfs.h"
-#include "bstrwrap.h"
 #include "raiifile.h"
+#include <stdexcept>
+#include <algorithm>
+#include <vector>
 #include <assert.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 
-using Bstrlib::CBString;
-using Bstrlib::CBStream;
+using namespace std;
 using namespace raii_wrapper;
 
-#define ALIGN 4
-// If you ever need more than 256 entries in initfs, feel free to adjust this constant.
-#define MAX_ENTRIES 256
+const uint32_t ALIGN = 4;
 
-filebinio& operator << (filebinio& io, CBString str)
+filebinio& operator << (filebinio& io, vector<char> stringtable)
 {
-    io.write((const char*)str, str.length());
+    io.write(stringtable.data(), stringtable.size());
     return io;
 }
 
@@ -50,10 +49,16 @@ filebinio& operator << (filebinio& io, initfs::entry& entry)
     return io;
 }
 
-size_t read_func(void *buff, size_t elsize, size_t nelem, void *parm)
+/*!
+* Append 0-terminated string to string table, return starting string offset in table.
+*/
+uint32_t stringtable_append(vector<char>& table, const std::string& addend)
 {
-    file* f = (file*)parm;
-    return f->read(buff, elsize * nelem);
+    uint32_t last_offset = table.size();
+    table.resize(table.size() + addend.size() + 1);
+    copy(addend.begin(), addend.end(), table.begin() + last_offset);
+    table.back() = 0;
+    return last_offset;
 }
 
 void align_output(file& out)
@@ -70,58 +75,47 @@ void align_output(file& out)
 int main(int argc, char** argv)
 {
     if (argc != 3)
-    {
-        std::printf("usage: mkinitfs components.lst initfs.img\n");
-        return 255;
-    }
-    const char *file_in = argv[1];
-    const char *file_out = argv[2];
+        throw runtime_error("usage: mkinitfs components.lst initfs.img");
 
     try {
 
-    uint32_t i;
-    file out(file_out, std::ios::out | std::ios::binary);
-    file in(file_in, std::ios::in);
-    filebinio io(out);
-    CBStream in_stream(read_func, &in);
+    file in(argv[1], ios::in);
+    file out(argv[2], ios::out | ios::binary);
 
-    initfs::header header;
-    initfs::entry  entry[MAX_ENTRIES];
-    CBString name_storage; // use bstring to store names as multiple \0-terminated strings concatenated together.
-    int name_offset = 0;
-    int data_offset = sizeof(header);
+    uint32_t i;
+    filebinio io(out);
+
+    std::string                str;
+    initfs::header             header;
+    vector<initfs::entry> entry;
+    vector<char>          name_storage;
+    int                        name_offset = 0;
+    int                        data_offset = sizeof(header);
 
     io << header;
 
-    while (1) {
-        CBString input = in_stream.readLine('\n');
-        if (input.length() == 0)
-            break;
-        int pos = input.find(':');
-        if (pos == -1)
-            continue;
-        CBString left(input.midstr(0, pos));
-        CBString right(input.midstr(pos + 1, input.length() - pos - 1));
-        right[right.length()-1] = '\0';
+    while (in.getline(str))
+    {
+        vector<std::string> strs;
+        boost::split(strs, str, boost::is_any_of(":"));
 
-        {
-            file in_data((const char *)left, std::ios::in | std::ios::binary);
-            long in_size = in_data.size();
-            char buf[4096];
-            size_t bytes = in_data.read(buf, 4096);
-            while (bytes > 0) {
-                out.write(buf, bytes);
-                bytes = in_data.read(buf, 4096);
-            }
-            entry[header.count].name_offset = name_offset;
-            entry[header.count].location = data_offset;
-            entry[header.count].size = in_size;
-            name_storage += right;
-            name_offset += right.length();
-            data_offset += in_size;
-            header.count++;
-            assert(header.count < MAX_ENTRIES);
+        if (strs.size() < 2)
+            continue;
+
+        std::string left = strs.front();
+        strs.erase(strs.begin());
+        std::string right = boost::join(strs, ":");
+
+        file in_data(left, ios::in | ios::binary);
+        long in_size = in_data.size();
+        char buf[4096];
+        size_t bytes = in_data.read(buf, 4096);
+        while (bytes > 0) {
+            out.write(buf, bytes);
+            bytes = in_data.read(buf, 4096);
         }
+        entry.push_back(initfs::entry(stringtable_append(name_storage, right), data_offset, in_size));
+        data_offset += in_size;
     }
 
     align_output(out);
@@ -134,6 +128,7 @@ int main(int argc, char** argv)
 
     align_output(out);
 
+    header.count = entry.size();
     header.index_offset = out.write_pos();
     for (i = 0; i < header.count; i++)
     {
@@ -148,9 +143,11 @@ int main(int argc, char** argv)
     } // try
     catch(file_error& e)
     {
-        std::printf("%s\n", e.message());
-        unlink(file_out);
+        printf("%s\n", e.message());
+        unlink(argv[2]); // remove invalid output
     }
+
+    return 0;
 }
 
 // kate: indent-width 4; replace-tabs on;
