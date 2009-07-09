@@ -13,73 +13,16 @@
 #include "types.h"
 #include "initfs.h"
 #include "bstrwrap.h"
+#include "raiifile.h"
 #include <assert.h>
-#include <cstdio>
 
 using Bstrlib::CBString;
 using Bstrlib::CBStream;
+using namespace raii_wrapper;
 
 #define ALIGN 4
 // If you ever need more than 256 entries in initfs, feel free to adjust this constant.
 #define MAX_ENTRIES 256
-
-// Some nicely common file RAII wrappers. TODO: Factor out.
-class file_error
-{
-public:
-    file_error(const char* msg) : msg_(msg) {}
-private:
-    const char* msg_;
-};
-
-class file
-{
-public:
-    file(const char* fname, const char* mode) : file_(std::fopen(fname, mode))
-    {
-        if (!file_)
-            throw file_error("file open failure");
-    }
-    ~file() { std::fclose(file_); }
-    void write(const void* buf, size_t count)
-    {
-        if (EOF == (int)std::fwrite(buf, 1, count, file_))
-            throw file_error("file write failure");
-    }
-    size_t read(void* buf, size_t size, size_t nmemb)
-    {
-        return std::fread(buf, size, nmemb, file_);
-    }
-    long pos()
-    {
-        return std::ftell(file_);
-    }
-    bool seek(long pos)
-    {
-        return std::fseek(file_, pos, SEEK_SET) == 0;
-    }
-
-private:
-    FILE* file_;
-
-    // prevent copying and assignment; not implemented
-    file (const file&);
-    file& operator= (const file&);
-};
-
-class filebinio
-{
-public:
-    filebinio(file& f) : file_(f) {}
-
-    void write(const void* buf, size_t count) { file_.write(buf, count); }
-    void write8(uint8_t datum)     { file_.write(&datum, sizeof(uint8_t));  }
-    void write16le(uint16_t datum) { file_.write(&datum, sizeof(uint16_t)); }
-    void write32le(uint32_t datum) { file_.write(&datum, sizeof(uint32_t)); }
-
-private:
-    file& file_;
-};
 
 filebinio& operator << (filebinio& io, CBString str)
 {
@@ -110,7 +53,18 @@ filebinio& operator << (filebinio& io, initfs::entry& entry)
 size_t read_func(void *buff, size_t elsize, size_t nelem, void *parm)
 {
     file* f = (file*)parm;
-    return f->read(buff, elsize, nelem);
+    return f->read(buff, elsize * nelem);
+}
+
+void align_output(file& out)
+{
+    uint32_t i, padding;
+    if (out.write_pos() % ALIGN)
+    {
+        padding = ALIGN - out.write_pos() % ALIGN;
+        for (i = 0; i < padding; i++)
+            out.write("\0", 1);
+    }
 }
 
 int main(int argc, char** argv)
@@ -123,9 +77,11 @@ int main(int argc, char** argv)
     const char *file_in = argv[1];
     const char *file_out = argv[2];
 
-    uint32_t i, padding;
-    file out(file_out, "w+b");
-    file in(file_in, "r");
+    try {
+
+    uint32_t i;
+    file out(file_out, std::ios::out | std::ios::binary);
+    file in(file_in, std::ios::in);
     filebinio io(out);
     CBStream in_stream(read_func, &in);
 
@@ -142,50 +98,43 @@ int main(int argc, char** argv)
         if (input.length() == 0)
             break;
         int pos = input.find(':');
+        if (pos == -1)
+            continue;
         CBString left(input.midstr(0, pos));
         CBString right(input.midstr(pos + 1, input.length() - pos - 1));
         right[right.length()-1] = '\0';
 
         {
-            file in_data(left, "rb");
+            file in_data((const char *)left, std::ios::in | std::ios::binary);
+            long in_size = in_data.size();
             char buf[4096];
-            size_t bytes = in_data.read(buf, 1, 4096);
+            size_t bytes = in_data.read(buf, 4096);
             while (bytes > 0) {
                 out.write(buf, bytes);
-                bytes = in_data.read(buf, 1, 4096);
+                bytes = in_data.read(buf, 4096);
             }
             entry[header.count].name_offset = name_offset;
             entry[header.count].location = data_offset;
-            entry[header.count].size = in_data.pos();
+            entry[header.count].size = in_size;
             name_storage += right;
             name_offset += right.length();
-            data_offset += entry[header.count].size;
+            data_offset += in_size;
             header.count++;
             assert(header.count < MAX_ENTRIES);
         }
     }
 
-    if (out.pos() % ALIGN)
-    {
-        padding = ALIGN - out.pos() % ALIGN;
-        for (i = 0; i < padding; i++)
-            io.write("\0", 1);
-    }
+    align_output(out);
 
-    name_offset = out.pos();
+    name_offset = out.write_pos();
     header.names_offset = name_offset;
     io << name_storage;
 
-    header.names_size = out.pos() - name_offset;
+    header.names_size = out.write_pos() - name_offset;
 
-    if (out.pos() % ALIGN)
-    {
-        padding = ALIGN - out.pos() % ALIGN;
-        for (i = 0; i < padding; i++)
-            io.write("\0", 1);
-    }
+    align_output(out);
 
-    header.index_offset = out.pos();
+    header.index_offset = out.write_pos();
     for (i = 0; i < header.count; i++)
     {
         entry[i].name_offset += name_offset;
@@ -193,8 +142,15 @@ int main(int argc, char** argv)
     }
 
     // rewrite file header
-    out.seek(0);
+    out.write_seek(0);
     io << header;
+
+    } // try
+    catch(file_error& e)
+    {
+        std::printf("%s\n", e.message());
+        unlink(file_out);
+    }
 }
 
 // kate: indent-width 4; replace-tabs on;

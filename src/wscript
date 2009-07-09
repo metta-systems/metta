@@ -114,7 +114,7 @@ def build(bld):
     mkinitfs.env = bld.env_of_name('ENV').copy()
     mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
     mkinitfs.env.append_unique('CXXDEFINES', 'BSTRLIB_CANNOT_USE_STL BSTRLIB_CANNOT_USE_IOSTREAM BSTRLIB_DOESNT_THROW_EXCEPTIONS BSTRLIB_DONT_USE_VIRTUAL_DESTRUCTOR BSTRLIB_DONT_ASSUME_NAMESPACE'.split())
-    mkinitfs.env.append_unique('LINKFLAGS', '-lsupc++') # hm, why is this needed?
+    mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     mkinitfs.includes = include_dirs + ['lib/bstrlib']
     mkinitfs.target = 'mkinitfs'
     mkinitfs.uselib_local = 'bstrlib'

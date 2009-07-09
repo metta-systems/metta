@@ -8,6 +8,7 @@
 
 // #include "string.h"
 
+// FIXME: __BYTE_ORDER needs <endian.h> on Linux
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define FOURCC_MAGIC(w,o,r,d) (((unsigned long)d << 24) | ((unsigned long)r << 16) | \
 ((unsigned long)o << 8)  |  (unsigned long)w)
