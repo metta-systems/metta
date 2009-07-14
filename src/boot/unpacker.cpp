@@ -84,8 +84,10 @@ void setup_kernel(multiboot::header *mbh)
     // For modules that are not compressed, map them into their corresponding space directly.
     multiboot::modinfo *kernel = mb.mod(0); // kernel
     multiboot::modinfo *initcp = mb.mod(1); // initcomp
+    multiboot::modinfo *initfs = mb.mod(2); // initfs
     ASSERT(kernel);
     ASSERT(initcp);
+    ASSERT(initfs);
 
     // For modules that are compressed, set up decompression area, unpack and set up mappings.
     // (not used atm).
@@ -98,12 +100,14 @@ void setup_kernel(multiboot::header *mbh)
     alloced_start = (address_t)&placement_address;
     alloced_start = max(alloced_start, kernel->mod_end);
     alloced_start = max(alloced_start, initcp->mod_end);
+    alloced_start = max(alloced_start, initfs->mod_end);
     alloced_start = page_align_up<address_t>(alloced_start);
     // now we can allocate extra pages from alloced_start using pmm_alloc_next_page()
 
     kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
                       << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "Initcp module at " << initcp->mod_start << ", end " << initcp->mod_end << endl
+                      << "Initfs module at " << initfs->mod_start << ", end " << initfs->mod_end << endl
                       << "Alloctn start at " << (unsigned)alloced_start << endl;
 
     // Create and configure paging directory.
@@ -123,11 +127,6 @@ void setup_kernel(multiboot::header *mbh)
 
     unsigned int k;
 
-    // NB!
-    // mod_start and mod_end don't account for BSS size.
-    // account for it when we have ELF parser in sprint 3.
-    // for now just map two extra pages for BSS.
-
     elf_parser elf;
 // TODO: map kernel to highmem
     elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start);
@@ -136,6 +135,13 @@ void setup_kernel(multiboot::header *mbh)
     elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
     // identity map start of initcp so we can access header_ from paging mode.
     mapping_enter(initcp->mod_start, initcp->mod_start);
+
+    // Identity map initfs (we will load_image components from it later).
+    kconsole << endl << "Mapping initfs: ";
+    for (k = initfs->mod_start/PAGE_SIZE; k < page_align_up<address_t>(initfs->mod_end)/PAGE_SIZE; k++)
+    {
+        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
+    }
 
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KERNEL_BASE;
