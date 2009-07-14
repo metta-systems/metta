@@ -78,7 +78,7 @@ void setup_kernel(multiboot::header *mbh)
 {
     multiboot mb(mbh);
 
-    ASSERT(mb.mod_count() == 2);
+    ASSERT(mb.mod_count() == 3);
     // Look at the beginning of passed in modules.
 
     // For modules that are not compressed, map them into their corresponding space directly.

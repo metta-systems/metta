@@ -97,10 +97,10 @@ def build(bld):
     loader.target = 'bootloader'
 
     initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp'
+    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp initfs/initfs.cpp'
     initcp.env = bld.env_of_name('KERNEL_ENV').copy()
     initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
-    initcp.includes = include_dirs + initcp.env['INCLUDE_ARCH']
+    initcp.includes = include_dirs + ['initfs'] + initcp.env['INCLUDE_ARCH']
     initcp.target = 'initcomp'
 
     # kernel:

@@ -6,6 +6,7 @@
 //
 #include "multiboot.h"
 #include "default_console.h"
+#include "initfs.h"
 
 extern "C" void entry(multiboot::header *mbh);
 
@@ -47,6 +48,17 @@ void entry(multiboot::header *mbh/*, pmm::state *allocated*/)
     kconsole << GREEN << "mb.lower_mem = " << mb.lower_mem() << endl
                       << "mb.upper_mem = " << mb.upper_mem() << endl;
 
+    multiboot::modinfo *initfsmod = mb.mod(2); // initfs
+    ASSERT(initfsmod);
+
+    initfs fs(initfsmod->mod_start);
+    uint32_t i = 0;
+
+    while (i < fs.count())
+    {
+        kconsole << YELLOW << "initfs file " << "" << " @ " << fs.get_file(i) << endl;
+        i += 1;
+    }
 
     while(1) {}
 }

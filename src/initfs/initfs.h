@@ -6,7 +6,7 @@
 //
 #pragma once
 
-// #include "string.h"
+#include "types.h"
 
 // FIXME: __BYTE_ORDER needs <endian.h> on Linux
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -31,6 +31,14 @@ public:
     explicit initfs(address_t start);
 //     address_t get_file(string spec);
 
+    /*! Silly iterator interface
+     * TODO: replace with normal iterator.
+     */
+    address_t get_file(uint32_t num);
+    uint32_t count();
+
+    bool valid();
+
     struct header
     {
         uint32_t magic;
@@ -40,7 +48,14 @@ public:
         uint32_t names_size;
         uint32_t count;
 
-        header() : magic(FOURCC_MAGIC('I','i','f','S')), version(2), index_offset(0), names_offset(0), names_size(0), count(0) {}
+        header()
+            : magic(FOURCC_MAGIC('I','i','f','S'))
+            , version(2)
+            , index_offset(0)
+            , names_offset(0)
+            , names_size(0)
+            , count(0)
+        {}
     };
 
     struct entry
@@ -55,7 +70,7 @@ public:
             , name_offset(name_offset_)
             , location(location_)
             , size(size_)
-            {}
+        {}
     };
 
 private:
