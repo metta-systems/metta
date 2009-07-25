@@ -9,6 +9,8 @@
 #include "elf.h"
 #include "types.h"
 
+class boot_pmm_allocator;
+
 /**
  * Parses an ELF file, generating symbolic information and loading code/data
  * segments.
@@ -25,8 +27,9 @@ public:
 
     /**
      * Loads the image file from specified memory location.
+     * @p allocator is a silly kludge to let load_image get more memory pages.
      */
-    bool load_image(address_t start, size_t size);
+    bool load_image(address_t start, size_t size, boot_pmm_allocator *allocator);
 
     /**
      * Returns the symbol name for an address. Also returns the start address

@@ -19,58 +19,62 @@ pass debug_on via grub cmdline
 */
 #include "memutils.h"
 #include "multiboot.h"
-#include "minmax.h"
 #include "memory.h"
 #include "global_descriptor_table.h"
+#include "interrupt_descriptor_table.h"
 #include "default_console.h"
 #include "elf_parser.h"
+#include "registers.h"
+
+//{ DEBUG STUFF
+#include "page_fault_handler.h"
+page_fault_handler page_fault_handler_;
+//}
+boot_pmm_allocator init_memmgr;
+interrupt_descriptor_table interrupts_table;
 
 extern "C" {
-    void write_page_directory(address_t page_dir_physical);
-    void enable_paging(void);
     void setup_kernel(multiboot::header *mbh);
 
     address_t placement_address;
     address_t KERNEL_BASE;
 }
 
-//! Start and end of allocated pages for passing into initcp.
-static address_t alloced_start;
-// static address_t alloced_end;
+extern "C" address_t initial_esp; // in loader.s
 
-static address_t *kernelpagedir;
-static address_t *lowpagetable;
-static address_t *highpagetable;
-
-void mapping_enter(address_t vaddr, address_t paddr)
+/*!
+* Remap stack for paging mode.
+*/
+void remap_stack()
 {
-    address_t *pagetable = 0;
-    if (vaddr < 256*1024*1024)
-        pagetable = lowpagetable;
-    else if (vaddr > 768*1024*1024)
-        pagetable = highpagetable;
-    else
-        PANIC("invalid vaddr in mapping_enter");
+    address_t old_stack_pointer = read_stack_pointer();
+    address_t old_base_pointer  = read_base_pointer();
 
-    kconsole << "Entering mapping " << vaddr << " => " << paddr << endl;
+    size_t    stack_size   = initial_esp - old_stack_pointer;
+    size_t    stack_npages = page_align_up<address_t>(stack_size) / PAGE_SIZE;
+    address_t stack_page   = init_memmgr.alloc_next_page();
+    init_memmgr.mapping_enter(stack_page, stack_page);
+    for (size_t i = 1; i < stack_npages; i++)
+    {
+        address_t p = init_memmgr.alloc_next_page();
+        init_memmgr.mapping_enter(p, p);
+    }
 
-    pagetable[vaddr / PAGE_SIZE] = paddr | 0x3;
-}
+    // Flush the TLB
+    flush_page_directory();
 
-// TODO: pmm interface + pmm_state transfer
+    int       offset            = stack_page + stack_npages * PAGE_SIZE - initial_esp;
+    address_t new_stack_pointer = old_stack_pointer + offset;
+    address_t new_base_pointer  = old_base_pointer + offset;
 
-address_t pmm_alloc_next_page()
-{
-    address_t ret = alloced_start;
-    alloced_start += PAGE_SIZE;
-    return ret;
-}
+    kconsole.print("Copying stack from %p-%p to %p-%p (%d bytes)..", old_stack_pointer, initial_esp, new_stack_pointer, new_stack_pointer + stack_size, stack_size);
 
-address_t pmm_alloc_page(address_t vaddr)
-{
-    address_t ret = pmm_alloc_next_page();
-    mapping_enter(vaddr, ret);
-    return ret;
+    memutils::copy_memory((void*)new_stack_pointer, (const void*)old_stack_pointer, stack_size);
+
+    write_stack_pointer(new_stack_pointer);
+    write_base_pointer(new_base_pointer);
+
+    kconsole << "done. Activated new stack." << endl;
 }
 
 // This part starts in protected mode, linear == physical, paging is off.
@@ -97,50 +101,36 @@ void setup_kernel(multiboot::header *mbh)
     //
 
     // Setup small pmm allocator.
-    alloced_start = (address_t)&placement_address;
-    alloced_start = max(alloced_start, kernel->mod_end);
-    alloced_start = max(alloced_start, initcp->mod_end);
-    alloced_start = max(alloced_start, initfs->mod_end);
-    alloced_start = page_align_up<address_t>(alloced_start);
+    init_memmgr.adjust_alloced_start((address_t)&placement_address);
+    init_memmgr.adjust_alloced_start(kernel->mod_end);
+    init_memmgr.adjust_alloced_start(initcp->mod_end);
+    init_memmgr.adjust_alloced_start(initfs->mod_end);
     // now we can allocate extra pages from alloced_start using pmm_alloc_next_page()
 
     kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
                       << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "Initcp module at " << initcp->mod_start << ", end " << initcp->mod_end << endl
                       << "Initfs module at " << initfs->mod_start << ", end " << initfs->mod_end << endl
-                      << "Alloctn start at " << (unsigned)alloced_start << endl;
+                      << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
 
-    // Create and configure paging directory.
-    kernelpagedir = reinterpret_cast<address_t*>(pmm_alloc_next_page());
-    lowpagetable  = reinterpret_cast<address_t*>(pmm_alloc_next_page());
-    highpagetable = reinterpret_cast<address_t*>(pmm_alloc_next_page());
-
-    lowpagetable[0] = 0x0; // invalid page 0
-
-    // We take two pmm pages for occupied memory bitmap and initialize that from the
-    // meminfo in mb and memory we took for components.
-    // This bitmap will be passed into initcp.
-//     bitmap = pmm_alloc_next_page(), pmm_alloc_next_page();
-//     bitmap->set(kernelpagedir);
-//     bitmap->set(lowpagetable);
-//     bitmap->set(highpagetable);
+    init_memmgr.setup_pagetables();
 
     unsigned int k;
 
     elf_parser elf;
 // TODO: map kernel to highmem
-    elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start);
+    elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr);
     // load initcp last, because of implicit elf state in header_
     // we will use it to jump to initcp entry point below.
-    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start);
+    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start, &init_memmgr);
     // identity map start of initcp so we can access header_ from paging mode.
-    mapping_enter(initcp->mod_start, initcp->mod_start);
+    init_memmgr.mapping_enter(initcp->mod_start, initcp->mod_start);
 
     // Identity map initfs (we will load_image components from it later).
     kconsole << endl << "Mapping initfs: ";
     for (k = initfs->mod_start/PAGE_SIZE; k < page_align_up<address_t>(initfs->mod_end)/PAGE_SIZE; k++)
     {
-        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
+        init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
     // Identity map currently executing code.
@@ -149,7 +139,7 @@ void setup_kernel(multiboot::header *mbh)
     kconsole << endl << "Mapping loader: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
+        init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
     // Identity map video memory/bios area.
@@ -158,32 +148,30 @@ void setup_kernel(multiboot::header *mbh)
     kconsole << endl << "Mapping VRAM: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
+        init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
     kconsole << endl << "Mapping multiboot info: ";
     address_t a = page_align_down<address_t>(mbh);
-    mapping_enter(a, a);
+    init_memmgr.mapping_enter(a, a);
 
     kconsole << endl << "Mapped." << endl;
-
-    kernelpagedir[0] = (address_t)lowpagetable | 0x3;
-    kernelpagedir[768] = (address_t)highpagetable | 0x3;
 
     global_descriptor_table<> gdt;
     kconsole << "Created gdt." << endl;
 
-    // enable paging
-    write_page_directory((address_t)kernelpagedir);
-    kconsole << "Set CR3." << endl;
-    enable_paging();
-    kconsole << "Enabled paging." << endl;
+    interrupts_table.set_isr_handler(14, &page_fault_handler_);
+    interrupts_table.init();
+
+    remap_stack();
+
+    init_memmgr.start_paging();
 
     // jump to initcomp entry point linear address
-    typedef void (*initfunc)(multiboot::header *mbh);
+    typedef void (*initfunc)(multiboot::header *, boot_pmm_allocator *);
     initfunc init = (initfunc)elf.get_entry_point();
-    kconsole << endl << "Jumping to " << elf.get_entry_point();
-    init(mbh);
+    kconsole << endl << "Jumping to " << elf.get_entry_point() << endl << endl;
+    init(mbh, &init_memmgr);
 
     /* Never reached */
     PANIC("init() returned!");

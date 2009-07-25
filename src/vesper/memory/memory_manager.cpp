@@ -262,6 +262,7 @@ void memory_manager::free_frame(address_t frame)
 
 extern "C" address_t initialEsp; // in loader.s
 
+// duplicate of unpacker.cpp:remap_stack()
 void memory_manager::remap_stack()
 {
 	ASSERT(current_directory);

@@ -90,14 +90,14 @@ def build(bld):
     bld.add_subdirs('tests')
 
     loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp lib/elf_parser.cpp'
+    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp lib/elf_parser.cpp lib/pmm.cpp lib/registers.s boot/page_fault_handler.cpp boot/interrupt_service_routine.cpp boot/interrupt_descriptor_table.cpp boot/interrupt.s'
     loader.env = bld.env_of_name('KERNEL_ENV').copy()
     loader.env.append_unique('LINKFLAGS', ['-T', '../boot/loader.ld', '-Wl,-Map,bootloader.map'])
     loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
     loader.target = 'bootloader'
 
     initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp initfs/initfs.cpp'
+    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp initfs/initfs.cpp lib/pmm.cpp lib/registers.s'
     initcp.env = bld.env_of_name('KERNEL_ENV').copy()
     initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
     initcp.includes = include_dirs + ['initfs'] + initcp.env['INCLUDE_ARCH']

@@ -11,6 +11,7 @@
 #define NOINLINE __attribute__((noinline))
 #define EXPORT_SYMBOL(sym) extern typeof(sym) sym
 #define PACKED __attribute__((__packed__))
+#define ALIGNED(poweroftwo) __attribute__((aligned (poweroftwo)))
 #define IN_SECTION(sect) __attribute__((section(sect)))
 #define NORETURN __attribute__((noreturn))
 // Uncommon optimization: functions that can be optimized out:

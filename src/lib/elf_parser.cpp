@@ -39,7 +39,7 @@ static void print_phent(int i, program_header *ph)
  * Load ELF program image, allocate pages and frames from memory.
  * Set up pagedir and copy from @p start to actual image start.
  */
-bool elf_parser::load_image(address_t start, size_t size)
+bool elf_parser::load_image(address_t start, size_t size, boot_pmm_allocator *allocator)
 {
     header* h = reinterpret_cast<header*>(start);
 
@@ -76,7 +76,7 @@ bool elf_parser::load_image(address_t start, size_t size)
         address_t copy_from = start + ph->offset;
         for (size_t p = 0; p < npages; p++)
         {
-            address_t paddr = pmm_alloc_page(vaddr);
+            address_t paddr = allocator->alloc_page(vaddr);
             size_t page_offset = 0;
             if (remain_to_copy > 0)
             {

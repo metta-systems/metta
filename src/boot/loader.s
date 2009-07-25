@@ -9,9 +9,9 @@
 ; this file only contains several boot-helpers in assembly.
 ;
 global loader                          ; making entry point visible to linker
-global write_page_directory
-global enable_paging
 global activate_gdt
+global activate_idt
+global initial_esp
 extern setup_kernel
 extern KERNEL_BASE
 extern data_end
@@ -43,8 +43,13 @@ multiboot_header:
     dd bss_end
     dd loader
 
+initial_esp: dd 0                      ; referencing initial_stack from C doesn't work :(
+
+section .text
 loader:
+    cli
     mov esp, initial_stack
+    mov [initial_esp], esp
     push ebx                           ; pass Multiboot info structure
 
     mov ebp, 0                         ; make base pointer NULL here so we know
@@ -53,17 +58,6 @@ loader:
 
     cli
     jmp short $                        ; halt machine should startup code return
-
-write_page_directory:
-    mov eax, [esp+4]
-    mov cr3, eax
-    ret
-
-enable_paging:
-    mov eax, cr0
-    or  eax, 0x80000000
-    mov cr0, eax
-    ret
 
 activate_gdt:
     mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
@@ -76,6 +70,11 @@ activate_gdt:
     mov fs, ax
     mov gs, ax
     mov ss, ax
+    ret
+
+activate_idt:
+    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
+    lidt [eax]        ; Load the IDT pointer.
     ret
 
 ; kate: indent-width 4; replace-tabs on;

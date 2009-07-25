@@ -6,12 +6,14 @@
 //
 #include "multiboot.h"
 #include "default_console.h"
+#include "memory.h"
 #include "initfs.h"
 
-extern "C" void entry(multiboot::header *mbh);
+extern "C" void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr);
 
 /*!
 Boot up the system - kernel and libOS.
+Stack mapping is set up for us in unpacker, but we might need a larger one.
 
 initcp tasks:
 - boot other cpus
@@ -38,10 +40,8 @@ Metta components to instantiate in initcomp:
 Once trader is started, components can be requested for and connected.
 */
 
-void entry(multiboot::header *mbh/*, pmm::state *allocated*/)
+void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr)
 {
-    // TODO: Establish our own stack first!
-
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
     multiboot mb(mbh);
@@ -50,8 +50,11 @@ void entry(multiboot::header *mbh/*, pmm::state *allocated*/)
 
     multiboot::modinfo *initfsmod = mb.mod(2); // initfs
     ASSERT(initfsmod);
+    ASSERT(init_memmgr->mapping_entered((address_t)initfsmod));
 
     initfs fs(initfsmod->mod_start);
+    while(1) {}
+
     uint32_t i = 0;
 
     while (i < fs.count())
