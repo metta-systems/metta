@@ -37,9 +37,7 @@ modified_files = []
 Find.find('./') do |f|
     ext = File.extname(f)
     dir = File.dirname(f)
-    if File.file?(f)
-       && exts.include?(ext)
-       && exclude_dirs.do_not_has?(dir)
+    if File.file?(f) && exts.include?(ext) && exclude_dirs.do_not_has?(dir)
         lic = exts[ext][0]
         mod = exts[ext][1]
         modified = false

@@ -2,7 +2,7 @@
 ; Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
-; (See file LICENSE_1_0.txt or a copy at http:;www.boost.org/LICENSE_1_0.txt)
+; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 ;
 extern isr_handler    ; in interrupt_service_routine.cpp
 extern irq_handler
