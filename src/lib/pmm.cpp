@@ -15,6 +15,11 @@ void boot_pmm_allocator::setup_pagetables()
     lowpagetable  = reinterpret_cast<address_t*>(alloc_next_page());
     highpagetable = reinterpret_cast<address_t*>(alloc_next_page());
 
+    // TODO: map to top of memory
+    mapping_enter((address_t)kernelpagedir, (address_t)kernelpagedir);
+    mapping_enter((address_t)lowpagetable, (address_t)lowpagetable);
+    mapping_enter((address_t)highpagetable, (address_t)highpagetable);
+
     lowpagetable[0] = 0x0; // invalid page 0
 }
 

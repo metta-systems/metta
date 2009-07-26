@@ -77,9 +77,17 @@ void remap_stack()
     kconsole << "done. Activated new stack." << endl;
 }
 
+typedef void (*ctorfn)();
+extern ctorfn start_ctors; // defined by linker
+extern ctorfn end_ctors;
+
 // This part starts in protected mode, linear == physical, paging is off.
 void setup_kernel(multiboot::header *mbh)
 {
+    // run static ctors
+    for (ctorfn* ctor = &start_ctors; ctor < &end_ctors; ctor++)
+        (*ctor)();
+
     multiboot mb(mbh);
 
     ASSERT(mb.mod_count() == 3);
@@ -161,7 +169,7 @@ void setup_kernel(multiboot::header *mbh)
     kconsole << "Created gdt." << endl;
 
     interrupts_table.set_isr_handler(14, &page_fault_handler_);
-    interrupts_table.init();
+    interrupts_table.install();
 
     remap_stack();
 

@@ -18,9 +18,6 @@ static bool test_flag(int flag, int mask)
 // Interrupts are disabled upon entry to run()
 void page_fault_handler::run(registers *r)
 {
-    kconsole.set_attr(LIGHTRED, BLACK);
-    kconsole.print("Page fault!");
-
 // 	PANIC("Page fault");
 	// A page fault has occurred.
 	// The faulting address is stored in the CR2 register.
@@ -36,7 +33,7 @@ void page_fault_handler::run(registers *r)
 
 	// Output an error message.
 	kconsole.set_attr(LIGHTRED, BLACK);
-	kconsole.print("Page fault! at EIP=%08x, faulty address=%08x( ", r->eip, faulting_address);
+	kconsole.print("Page fault! at EIP=%x, faulty address=%x (", r->eip, faulting_address);
 	kconsole.set_attr(WHITE, BLACK);
 	// See intel manual -- p = 0 if page fault is due to a nonpresent page.
 	if (!present) kconsole.print("Page not present");

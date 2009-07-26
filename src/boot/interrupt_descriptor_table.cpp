@@ -65,7 +65,7 @@ extern "C"
 
 #define CS_SEL 0x08
 
-void interrupt_descriptor_table::init()
+void interrupt_descriptor_table::install()
 {
     limit = sizeof(idt_entries)-1;
     base = (address_t)&idt_entries;

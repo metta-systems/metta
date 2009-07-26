@@ -29,8 +29,7 @@ void isr_handler(registers regs)
     interrupt_service_routine* isr = interrupts_table.get_isr(regs.int_no);
     if (isr)
     {
-        kconsole << GREEN << "^ processing ^" << endl;
-        isr->run(&regs);// TODO: doesn't work!
+        isr->run(&regs);
     }
 }
 

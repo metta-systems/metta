@@ -5,7 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // C++ runtime support.
-// Dummy implementation for now.
+// Dummy implementation for booting.
 //
 namespace __cxxabiv1
 {
@@ -37,6 +37,10 @@ void *__dso_handle;
 
 // also in namespace __cxxabiv1?
 extern "C" void __cxa_atexit(void (*)(void *), void *, void *)
+{
+}
+
+extern "C" void __cxa_pure_virtual()
 {
 }
 

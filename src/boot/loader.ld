@@ -19,6 +19,9 @@ SECTIONS
 
     .data ALIGN (PAGE_SIZE) :
     {
+        start_ctors = .;
+        *(.ctor*)
+        end_ctors = .;
         *(.data)
         *(.rodata*)
         FILL(0x00)
@@ -35,7 +38,7 @@ SECTIONS
     placement_address = ALIGN(PAGE_SIZE);
 
     /* Strip unnecessary stuff */
-    /DISCARD/ : { *(.comment .note* .eh_frame .ctors .dtors) }
+    /DISCARD/ : { *(.comment .note* .eh_frame .dtors) }
 }
 
 /*

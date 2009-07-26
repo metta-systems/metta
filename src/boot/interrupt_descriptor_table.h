@@ -76,7 +76,7 @@ public:
             interrupt_routines[i] = 0;
     }
 
-    void init(); // called from kernel::run()
+    void install(); // called from kernel::run()
 
     // Generic interrupt service routines.
     inline void set_isr_handler(int isr_num, interrupt_service_routine* isr)
