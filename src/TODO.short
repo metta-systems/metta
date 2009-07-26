@@ -5,6 +5,7 @@
 [ ] Implement rest of string class.
 [/] Implement string formatting a-la boost::format.
   [+] Use variadic templates?
+[ ] Use ustl?
 
 == boot ==
 [ ] Use lzma decoder

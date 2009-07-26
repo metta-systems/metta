@@ -5,9 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "default_console.h"
-#include "string.h"
 #include "common.h"
-#include "macros.h"
 #include "memutils.h"
 
 const char default_console::eol = 10;

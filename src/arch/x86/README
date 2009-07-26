@@ -1,3 +1,0 @@
-Files in here are <filename>"-arch.{h,cpp}" (e.g. MemoryManager-arch.h) and are included from
-arch independent files without a path, the buildsystem will add a proper arch-dependent
-search path during the build.

@@ -7,7 +7,6 @@
 #include "default_console.h"
 #include "interrupt_service_routine.h"
 #include "interrupt_descriptor_table.h"
-#include "globals.h"
 #include "common.h"
 
 extern "C"

@@ -5,9 +5,6 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "multiboot.h"
-#include "kernel.h"
-#include "string.h"
-#include "elf.h"
 #include "memutils.h"
 
 void multiboot::set_header(multiboot::header *h)

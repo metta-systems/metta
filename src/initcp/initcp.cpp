@@ -50,6 +50,7 @@ void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr)
 
     multiboot::modinfo *initfsmod = mb.mod(2); // initfs
     ASSERT(initfsmod);
+    kconsole << "need " << (address_t)initfsmod << " mapped" << endl;
     ASSERT(init_memmgr->mapping_entered((address_t)initfsmod));
 
     initfs fs(initfsmod->mod_start);
