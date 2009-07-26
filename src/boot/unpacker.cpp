@@ -163,6 +163,10 @@ void setup_kernel(multiboot::header *mbh)
     address_t a = page_align_down<address_t>(mbh);
     init_memmgr.mapping_enter(a, a);
 
+    kconsole << endl << "Mapping modules list: ";
+    a = page_align_down<address_t>(mb.mod(0));
+    init_memmgr.mapping_enter(a, a);
+
     kconsole << endl << "Mapped." << endl;
 
     global_descriptor_table<> gdt;

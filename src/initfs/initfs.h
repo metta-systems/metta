@@ -25,6 +25,11 @@
 // aligned: names area
 // aligned: initfs::entry * count
 
+/*!
+initfs file consists of four areas: the header, data area, names area and the index.
+
+the header contains information about loadable areas - data, names and index.
+*/
 class initfs
 {
 public:
@@ -35,18 +40,19 @@ public:
      * TODO: replace with normal iterator.
      */
     address_t get_file(uint32_t num);
+    const char* get_file_name(uint32_t num);
     uint32_t count();
 
     bool valid();
 
     struct header
     {
-        uint32_t magic;
-        uint32_t version;
-        uint32_t index_offset;
-        uint32_t names_offset;
-        uint32_t names_size;
-        uint32_t count;
+        uint32_t magic;        //!< contains header magic value 'IifS'
+        uint32_t version;      //!< contains initfs format version, currently 2
+        uint32_t index_offset; //!< offset of index entries
+        uint32_t names_offset; //!< offset of names area
+        uint32_t names_size;   //!< size of names area (unaligned)
+        uint32_t count;        //!< count of index entries
 
         header()
             : magic(FOURCC_MAGIC('I','i','f','S'))

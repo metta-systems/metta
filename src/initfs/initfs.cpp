@@ -33,6 +33,14 @@ address_t initfs::get_file(uint32_t num)
     return (address_t)start + entries[num].location;
 }
 
+const char* initfs::get_file_name(uint32_t num)
+{
+    if (num >= count())
+        return 0;
+
+    return (const char*)start + entries[num].name_offset;
+}
+
 uint32_t initfs::count()
 {
     return start->count;

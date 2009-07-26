@@ -54,13 +54,11 @@ void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr)
     ASSERT(init_memmgr->mapping_entered((address_t)initfsmod));
 
     initfs fs(initfsmod->mod_start);
-    while(1) {}
-
     uint32_t i = 0;
 
     while (i < fs.count())
     {
-        kconsole << YELLOW << "initfs file " << "" << " @ " << fs.get_file(i) << endl;
+        kconsole << YELLOW << "initfs file " << fs.get_file_name(i) << " @ " << fs.get_file(i) << endl;
         i += 1;
     }
 
