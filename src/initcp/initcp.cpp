@@ -12,25 +12,36 @@
 extern "C" void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr);
 
 /*!
-Boot up the system - kernel and libOS.
+@brief Boot up the system - kernel and libOS.
+@ingroup Booting
+
 Stack mapping is set up for us in unpacker, but we might need a larger one.
 
-initcp tasks:
-- boot other cpus
-- initialize kernel structures
-- enumerate bundled components from initfs
-- verify required components are present (pmm, cpu, interrupts, security manager,
-  portal manager, object loader)
-- instantiate/initialize components taking dependencies into account
-- enter preexisting pmm mappings into pmm component
-- set up security contexts and permissions
-- mount root filesystem
-- enter usermode
-- continue executing as userspace init process
-  (with special privileges if needed - this is defined by the security policy)
+* initcp
+ - initcp expects cpu to be in paging mode with pagedir in highmem, kernel
+   mapped high and exception handlers set up in low mem - these will be relocated
+   and reinstated by interrupts component when it's loaded,
+ - verify required components are present in initfs (pmm, cpu, interrupts,
+   security manager, portal manager, object loader),
+ - instantiate/initialize components taking dependencies into account,
+ - enter preexisting pmm mappings into pmm component
+ - set up security contexts and permissions
+ - mount root filesystem
+ - boot other cpus if present,
+ - switch to usermode and continue execution in the init process,
+ - initcp is the first nester, that provides base Common Protocols components
+   and boots up other components such as:
+   - scheduler
+   - security server
+   - object (security) manager
+
+* component constructors
+ - run in kernel mode, have the ability to set up their system tables etcetc,
 
 Metta components to instantiate in initcomp:
+- interrupt dispatcher,
 - root memory manager,
+- portal manager,
 - root filesystem mounter,
 - hardware detector,
 - root object manager,
@@ -39,7 +50,6 @@ Metta components to instantiate in initcomp:
 
 Once trader is started, components can be requested for and connected.
 */
-
 void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr)
 {
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
@@ -59,6 +69,7 @@ void entry(multiboot::header *mbh, boot_pmm_allocator *init_memmgr)
     while (i < fs.count())
     {
         kconsole << YELLOW << "initfs file " << fs.get_file_name(i) << " @ " << fs.get_file(i) << endl;
+//         elf_image img(
         i += 1;
     }
 

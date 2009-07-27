@@ -8,6 +8,9 @@
 #include "default_console.h"
 #include "page_fault_handler.h"
 
+/*!
+@internal
+*/
 static bool test_flag(int flag, int mask)
 {
     return (flag & mask) ? true : false;

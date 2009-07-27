@@ -1,35 +1,3 @@
-* system-specific loader
-  - GRUB will pass in kernel.assembly and initrd as loadable modules
-  - loader will set up minimal paging, unpack one kernel from assembly and
-    set up kernel higher-half mappings.
-  - unpack initrd to a predefined location.
-  - call initrd kserver entrypoint, starting a kernel init process.
-
-* kserver
- - init cpu(s) (protection, address translation, exception handlers)
-   - prepare gdt and idt tables
- - call components constructors
- - switch to usermode and continue execution in the init process:
- - kserver is the first nester, that provides base Common Protocols components and boots up
-   other (sub-)components such as:
-   - scheduler
-   - security server
-   - object (security) manager
-
-* component constructors
- - run in kernel mode, have the ability to set up their system tables etcetc
- - usual components in init image include:
-   - interrupt dispatcher
-   - root memory manager
-   - portal manager
-
-Information passed between the modules during bootup:
-  * multiboot info header comes in from the bootloader.
-    - contains memory map and loaded modules info among other things.
-  * multiboot info header is passed on into kserver together with paging directory
-    and free/used blocks list or bitmap.
-
-
 Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)

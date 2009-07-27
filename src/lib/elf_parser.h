@@ -11,7 +11,7 @@
 
 class boot_pmm_allocator;
 
-/**
+/*!
  * Parses an ELF file, generating symbolic information and loading code/data
  * segments.
  */

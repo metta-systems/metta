@@ -5,15 +5,24 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /*!
-Prepare kernel and init component for starting up.
+@file unpacker.cpp
+@brief Prepare kernel and init component for starting up.
+@ingroup Bootup
 
- * unpack kernel.assembly in-place and copy appropriate kernel to mapped KERNEL_BASE.
-   - TODO: use device tree from bootloader to figure out what kernel to use
- * unpack initrd to 0x1000
- * set up paging
- * jump to initrd entrypoint
+* system-specific loader (unpacker)
+  - GRUB will pass in kernel.assembly, initcp and initfs as loadable modules,
+  - loader will set up minimal paging,
+  - unpack one kernel from kernel.assembly and copy appropriate kernel
+    to mapped KERNEL_BASE,
+    @todo use device tree from bootloader to figure out what kernel to use
 
-TODO:
+  - set up kernel higher-half mappings,
+  - unpacker decompresses initcp to a predefined location (0x1000),
+  - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
+  - enter paged mode,
+  - jump to initcp entrypoint, starting a kernel init process.
+
+@todo enable/disable debugging output based on loader cmdline
 debug_console = (debug_on ? kconsole : bochs_console/null_console)
 pass debug_on via grub cmdline
 */
@@ -81,7 +90,11 @@ typedef void (*ctorfn)();
 extern ctorfn start_ctors; // defined by linker
 extern ctorfn end_ctors;
 
-// This part starts in protected mode, linear == physical, paging is off.
+/*!
+@brief Unpack and prepare initcp.
+
+This part starts in protected mode, linear == physical, paging is off.
+*/
 void setup_kernel(multiboot::header *mbh)
 {
     // run static ctors

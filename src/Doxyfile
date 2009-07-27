@@ -153,7 +153,7 @@ FILE_PATTERNS          = *.c \
                          *.dox
 
 RECURSIVE              = YES
-EXCLUDE                = lib/bstrlib lib/klibc lib/atomic lib/oskit _build_
+EXCLUDE                = _build_
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
@@ -309,7 +309,7 @@ PERL_PATH              = /usr/bin/perl
 # Configuration options related to the dot tool
 #---------------------------------------------------------------------------
 
-CLASS_DIAGRAMS         = NO
+CLASS_DIAGRAMS         = YES
 MSCGEN_PATH            =
 HIDE_UNDOC_RELATIONS   = YES
 HAVE_DOT               = YES
