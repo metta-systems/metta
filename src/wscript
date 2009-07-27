@@ -12,8 +12,8 @@ srcdir = '.'
 blddir = '_build_'
 
 source_dirs  = 'boot initcp vesper'.split()
-include_dirs = 'boot initcp vesper lib runtime vesper/memory vesper/pd'.split()
-archdep_includes = 'arch/ lib/oskit/oskit/'.split()
+include_dirs = 'boot initcp vesper lib runtime vesper/pd'.split()
+#archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
@@ -55,7 +55,7 @@ def configure(conf):
     conf.set_env_name('ENV', conf.env)
     conf.setenv('ENV') # Activate the environment
     # Set arch-specific include paths
-    conf.env.append_unique('INCLUDE_ARCH', map(lambda d: d + arch, archdep_includes))
+    #conf.env.append_unique('INCLUDE_ARCH', map(lambda d: d + arch, archdep_includes))
 
     # Generate config.h
     conf.define('ARCH', arch)
