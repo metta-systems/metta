@@ -1,8 +1,5 @@
 This document describes coding conventions used in Metta, be sure to comply to these guidelines to make merging easier.
 
-@todo astyle config for auto-maintaining this style
-
-
 This document is based on work by
     Scott Wheeler
     Stanislav Karchebny
@@ -115,6 +112,20 @@ b. The basic indentation step shall be 4 spaces.
 
 c. Block bodies, case statements within a switch are indented. Class bodies are indented, however access modifiers
    "public", "protected" and "private" are not.
+
+    switch (arg)
+    {
+        case 0:
+            debug() << "zero!";
+            break;
+
+        case 1:
+        {
+            //  big block with some local vars
+            int local_var = 0;
+            break;
+        }
+    }
 
 d. Namespaces are not indented except when in forward declarations (then they indent as block bodies).
    Comment the closing bracket of the namespace with // namespace foo
@@ -248,6 +259,7 @@ u. Variables in declaration blocks and their initialization can be justified to 
 
 v. Files usually include at the top licensing header from file src/license_header and at the bottom the vi/kate
    modelines from file src/modelines.txt. Ruby script apply_boilerplate.rb can be used to add them to new files.
+
 
 ========================================================================================================================
 4. Documentation
@@ -427,5 +439,29 @@ void test::apply_func2(something* sth)
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
+
+
+========================================================================================================================
+6. astylerc
+========================================================================================================================
+
+indent=spaces=4
+brackets=linux                         # attach brackets inside functions only
+indent-switches
+indent-preprocessor
+#no-indent-classes
+#no-indent-cases
+#no-indent-brackets
+#no-indent-blocks
+#no-indent-namespaces
+#no-indent-labels
+max-instatement-indent=80
+min-conditional-indent=4
+break-blocks
+delete-empty-lines
+unpad-paren
+keep-one-line-blocks
+convert-tabs
+
 
 ========================================================================================================================
