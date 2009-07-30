@@ -52,9 +52,9 @@ extern "C" {
 
 extern "C" address_t initial_esp; // in loader.s
 
+
+//! Remap stack for paging mode.
 /*!
-* @brief Remap stack for paging mode.
-*
 * Allocate enough pages to fit existing stack frame, copy data from old stack
 * and switch over to a new stack.
 * @todo Allocated stack pages are 1-1 mapped currently, but probably should be mapped
@@ -95,9 +95,8 @@ typedef void (*ctorfn)();
 extern ctorfn start_ctors; // defined by linker
 extern ctorfn end_ctors;
 
+//! Unpack and prepare initcp.
 /*!
-@brief Unpack and prepare initcp.
-
 This part starts in protected mode, linear == physical, paging is off.
 */
 void setup_kernel(multiboot::header *mbh)
