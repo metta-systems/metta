@@ -14,15 +14,16 @@
   - loader will set up minimal paging,
   - unpack one kernel from kernel.assembly and copy appropriate kernel
     to mapped KERNEL_BASE,
-    @todo use device tree from bootloader to figure out what kernel to use
-
   - set up kernel higher-half mappings,
   - unpacker decompresses initcp to a predefined location (0x1000),
   - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
   - enter paged mode,
   - jump to initcp entrypoint, starting a kernel init process.
 
-@todo enable/disable debugging output based on loader cmdline
+@todo Use device tree from bootloader to figure out which kernel to use.
+
+@todo Enable/disable debugging output based on loader cmdline.
+
 debug_console = (debug_on ? kconsole : bochs_console/null_console)
 pass debug_on via grub cmdline
 */
@@ -52,7 +53,12 @@ extern "C" {
 extern "C" address_t initial_esp; // in loader.s
 
 /*!
-* Remap stack for paging mode.
+* @brief Remap stack for paging mode.
+*
+* Allocate enough pages to fit existing stack frame, copy data from old stack
+* and switch over to a new stack.
+* @todo Allocated stack pages are 1-1 mapped currently, but probably should be mapped
+* to some reserved stack area?
 */
 void remap_stack()
 {
@@ -69,7 +75,6 @@ void remap_stack()
         init_memmgr.mapping_enter(p, p);
     }
 
-    // Flush the TLB
     flush_page_directory();
 
     int       offset            = stack_page + stack_npages * PAGE_SIZE - initial_esp;
