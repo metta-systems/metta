@@ -8,27 +8,31 @@ complex types that denote structured objects do not:
  * typedef int sint32_t;
  * class kernel;
 
-namespace metta {
-    namespace common { // runtime support
-        bit_array
-        ordered_array
-        string
-        uuid
-    }
-    // vesper is largely a machine-dependent implementation
-    namespace glue { // PD crossing glue support
-    }
-    namespace kernel { // kernel proper
-    }
-    namespace {
-    }
-    namespace libos { // higher level abstractions
-    }
-    // metta is machine-independent applications and servers
-    namespace userspace {
-        namespace graphics {
-        }
-        namespace gui {
-        }
-    }
+* Do not be too spacious in the code:
+
+Instead of 
+
+template < typename T >
+inline void construct_inplace(T * memory,const T & value)
+{
+    (void)new(static_cast < void * >(memory))T(value);
 }
+
+code should read
+
+template <typename T>
+inline void construct_inplace(T* memory,const T& value)
+{
+    (void)new(static_cast<void*>(memory))T(value);
+}
+
+* Instead of #define based include guards
+
+#ifndef __MEMORY_H
+#define __MEMORY_H
+// .....
+#endif
+
+better use 
+
+#pragma once
