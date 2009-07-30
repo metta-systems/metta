@@ -1,3 +1,17 @@
+Memory image at boot time:
+
+start of unpacker
+
+|          somewhere in low memory     |0x100000       |...
+|..........grub loaded modules         |unpacker image |...
+
+entry to initcp
+
+kernel should be mapped high to K_SPACE_START
+K_SPACE_START until end of memory is mapped into all processes
+end of memory occupied by pagedir (top 4Mb)
+
+
 Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
