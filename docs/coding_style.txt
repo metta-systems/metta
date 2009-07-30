@@ -1,38 +1,431 @@
-Use c_case_naming_convention everywhere instead of CamelCaseConvention --
-all symbols are lower case, words are separated by _ symbol (for example
-global_event_queue).
+This document describes coding conventions used in Metta, be sure to comply to these guidelines to make merging easier.
 
-Simple (atomic) types have _t appended,
-complex types that denote structured objects do not:
+@todo astyle config for auto-maintaining this style
 
- * typedef int sint32_t;
- * class kernel;
 
-* Do not be too spacious in the code:
+This document is based on work by
+    Scott Wheeler
+    Stanislav Karchebny
+    Frank Osterfeld
+    Ludvig Borgne
 
-Instead of 
 
-template < typename T >
-inline void construct_inplace(T * memory,const T & value)
+========================================================================================================================
+1. Names
+========================================================================================================================
+
+The following guidelines deal with naming of types, attributes, variables, constants, functions, namespaces etc:
+
+a. The following names shall be in lowercase C style:
+    * Types
+    * Named constants
+    * Enum values
+    * Namespaces
+    * Methods and functions
+    * Attributes
+    * Variables
+
+b. The following names should be in uppercase C style:
+    * Defined preprocessor macro names
+    * Defined constant names
+    
+c. Names of template parameters shall be single uppercase letters or C style lowercase identifiers.
+
+d. Names of methods and functions shall start with a verb.
+
+    format_string();
+    process_data();
+
+e. Accessors shall begin with "set" for setters and no prefix for getters.
+
+    int length();
+    void set_length(int new_length);
+
+    If internal property name is the same as accessor function name, property name shall have "_" appended.
+
+    int length_;
+
+f. Plural form shall be used for names representing a collection of objects.
+
+    list<rectangle> rectangles;
+    int points[n_points];
+
+g. Avoid long variable names in code blocks. When code is sufficiently concise variable meaning should be obvious.
+   Do not save on instance and class variable names though, these are visible throughout the class and serve documenting
+   purposes.
+
+h. Boolean variables and methods (including accessors) shall use suitable prefixes, such as "is", "has" or "can".
+
+    bool is_open;
+    bool has_subject(email& mail);
+
+i. Simple (atomic) types have _t appended, complex types that denote structured objects do not:
+
+    typedef int sint32_t;
+    class kernel;
+
+j. Needless to say, all names shall be in English.
+
+
+========================================================================================================================
+2. Files
+========================================================================================================================
+
+The following guidelines deal with the naming, contents and structure of source code and header files:
+
+a. C++ header files shall have the extension ".h", and C++ source files shall have the extension ".cpp".
+
+b. A class shall be declared in a header file and defined in a source file, where the names of the files
+   match the name of the class. Except in the case of templated classes, where method bodies should be defined
+   within the same header file, preferably outside of the class declaration.
+
+c. All definitions, except inline functions, shall reside in source files.
+
+d. The order of definitions in the source file shall be the same as the order of the corresponding declarations in the header file.
+
+e. Lines length shall be kept within 120 columns, whenever feasilble.
+
+f. Lines longer than 120 columns shall be split in a way that makes the line readable,
+   e.g. by breaking after a comma or an operator, and aligning the new line with the beginning of the expression on the previous line.
+
+g. Header files shall contain an include guard. Instead of #define based include guards
+
+    #ifndef __MEMORY_H
+    #define __MEMORY_H
+    // .....
+    #endif
+
+   better use 
+
+    #pragma once
+
+h. #include directives shall be located at the top of the file, after the header.
+   Header files shall be included in the following order: local headers, 3rd-party headers, standard headers.
+
+
+========================================================================================================================
+3. Layout
+========================================================================================================================
+
+The following guidelines deal with indentation and use of whitespace:
+
+a. Spaces shall always be used instead of tabs.
+
+b. The basic indentation step shall be 4 spaces.
+
+c. Block bodies, case statements within a switch are indented. Class bodies are indented, however access modifiers
+   "public", "protected" and "private" are not.
+
+d. Namespaces are not indented except when in forward declarations (then they indent as block bodies).
+   Comment the closing bracket of the namespace with // namespace foo
+
+    namespace boost
+    {
+        class regexp;
+    }
+
+    namespace example {
+
+    class foo
+    {
+    };
+
+    } // namespace example
+
+e. Opening brackets shall stand on their own line, execpt for enumerations and inline functions defined on a single line.
+
+    enum SomeEnum { Value1, Value2, Value3 };
+    
+    if (x > y)
+    {
+        x -= 5;
+        y += 5;
+    }
+
+    while (foo == bar &&
+        baz == quux &&
+        flop == pop)
+    {
+        // stuff
+    }
+
+f. Multiple statements should not ever be combined onto one line.
+
+g. Loop statements such as "if", "for", "foreach", "do...while" and "while" shall have brackets around their blocks
+   only if the blocks contain more than one line. "for" statements with empty bodies should be avoided. Side effects in
+   single-line bodies should be avoided (e.g. no use of macros as bodies).
+
+h. The condition in an "if" statement shall always be put on a separate line.
+
+    if (x == 5)
+        y = x;
+
+i. C++ pointers and references shall have their reference symbol next to the type rather than to the name.
+
+    float* x;
+    some_class& object;
+
+j. In class declarations, "public" declarations shall precede "protected" declarations which in turn shall precede
+   "private" declarations. In many cases "private" declarations may precede all other declarations without specifying
+   "private" (using default class access).
+
+   The organization of the members in a class declaration should be roughly as follows:
+
+    public typedefs:       ------\
+    public ctors/dtors:          |
+    public methods:              |
+    public slots:                +--> part of the class API
+    signals:                     |
+    protected slots:             |
+    private slots:         ------/
+    protected methods:     ------\
+    private methods:             |
+    private ctors/dtors:         +--> class implementation details
+    protected attributes:        |
+    private attributes:    ------/
+
+   Methods and attributes should be clearly separated.
+
+k. Virtual functions should always be marked as such even in derived classes where it is not technically necessary.
+
+l. In a function definition, the function return type shall be put to the left of the function name (not above it).
+
+    some_type some_function(some_other_type& object)
+    {
+        // ...
+    }
+
+m. In a template function definition, the function template arguments shall be put to the line above function signature.
+
+    template <typename T, int N>
+    some_type some_function(some_other_type& object)
+    {
+        // ...
+    }
+
+n. The following items shall be surrounded by a space character:
+    * Conventional operators,
+    * Curly braces used in single-lined enum declarations,
+    * Curly braces used in single-lined inline function definitions.
+
+    a = 5 + 3;
+
+o. The following items shall be followed by a space character:
+    * C++ reserved words,
+    * Commas,
+    * Semicolons in "for" statements
+
+    for (x = 0; x < 10; ++x, y += x)
+        do_something(x, y, 0);
+
+p. Function names, various C++ casts operators should not be followed by a space character.
+
+    static_cast<void*>(var)
+    
+q. Opening parentheses shall not be followed by white space. Closing parentheses shall not be preceded by white space.
+
+r. Logical units within a block shall be separated by one blank line, and each block shall start with a comment
+   if it is unclear what the block does.
+
+s. Function definitions shall be separated by two blank lines.
+
+t. Initializer lists in constructors are one assignment per line, indented, with colon or comma before the assignment.
+   This allows for easier rearrangement in case class layout changes.
+
+    object::object(int a, double b, other& c)
+        : int_value(a)
+        , double_value(b)
+        , reference(c)
+    {
+        // other initialization
+    }
+
+u. Variables in declaration blocks and their initialization can be justified to the left whenever it enhances readability.
+
+    int     long_variable_name = 0;
+    double  avoid_long_names   = 1.1;
+    bool    long_names         = true;
+
+v. Files usually include at the top licensing header from file src/license_header and at the bottom the vi/kate
+   modelines from file src/modelines.txt. Ruby script apply_boilerplate.rb can be used to add them to new files.
+
+========================================================================================================================
+4. Documentation
+========================================================================================================================
+
+The following guidelines deal with comments and documentation of the code:
+
+a. All comments shall be written in English.
+
+b. Use "//" for single-line text comments, and "//" or "/* */" for multi-line text comments.
+   "#if 0 ... #endif" preprocessor directives can be used to temporarily disable code without erasing it.
+   Eventually, such code shall be removed, though.
+
+c. Classes, functions and methods shall be documented using simple Doxygen comments where they are declared. This means
+   functions in public API will carry their own documentation in the header files. Internal documentation can be
+   appended by writing it in the source file.
+
+   Doxygen comments shall include a brief description ("//!") of the method/attribute, and may also contain
+   a detailed description ("/*! ... */"), if that is considered necessary.
+
+    //! A brief description of the function, normally on one line.
+    /*! An optional detailed description,
+        normally on several lines. */
+    void my_function(int x)
+    {
+        ...
+    }
+
+d. For inline functions, defined on a single line in the header file, a brief description just above the definition is enough.
+
+    //! A brief description of the function.
+    void my_inline_function(int x) { a = x; }
+
+e. For structs, enums and attributes, a brief description is enough. Enum values and attributes may be documented
+after the value, using "//!<".
+
+    //! Type of line used for drawing.
+    enum line_type
+    {
+        no_line,     //!< No line at all.
+        thin_line,   //!< Thin line (1-3 pixels).
+        thick_line,  //!< Thick line (3-9 pixels).
+    };
+
+
+========================================================================================================================
+5. An example here
+========================================================================================================================
+
+
+test.h:
+
+//
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#pragma once
+
+#include "localinclude1.h"
+#include "anotherlocalinclude.h"
+#include <extinclude1.h>
+#include <extinclude2.h>
+#include <sysinclude1.h>
+#include <sysinclude2.h>
+
+class something;
+
+namespace example {
+
+//! This is an example test object.
+class test : public object
 {
-    (void)new(static_cast < void * >(memory))T(value);
-}
+public:
+    //! Shorthand type for list of test objects.
+    typedef value_list<test> list;
 
-code should read
+    //! Obtain a singleton instance of test class.
+    static test* instance() { return instance_; } // singleton/factory methods go in constructors place
 
-template <typename T>
-inline void construct_inplace(T* memory,const T& value)
-{
-    (void)new(static_cast<void*>(memory))T(value);
-}
+    virtual ~test();
 
-* Instead of #define based include guards
+    void perform_func();
+    void apply_func2(something* sth);
 
-#ifndef __MEMORY_H
-#define __MEMORY_H
-// .....
+    // accessors
+    int   private_var()               { return private_var_; }
+    void  set_private_var(int new_v)  { private_var_ = new_v; }
+
+public slots:
+    void receive(something&);
+
+signals:
+    void send(something&);
+
+// Protected and private stuff is usually documented in the implementation file.
+protected:
+    void some_protected_func();
+    static void some_protected_static_func();
+
+protected slots:
+    void protected_slot();
+
+protected:
+    int protected_attr;
+
+private:
+    test();
+    test(string some_string);
+
+    int private_method();
+    static int static_private_method();
+
+private slots:
+    void private_slot(int param_pam_pam);
+
+private:
+    int private_var_;
+    something* tasty_thingie;
+
+    static test* instance_;
+};
+
+} // namespace example
+
 #endif
 
-better use 
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
 
-#pragma once
+
+test.cpp:
+
+//
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "test.h"
+#include "localinclude2.h"
+#include <extinclude3.h>
+#include <sysinclude3.h>
+
+namespace example
+{
+
+test* test::instance_ = 0;
+
+test::test()
+    : object()
+    , protected_attr(0)
+    , private_var_(0)
+    , tasty_thingie(0)
+{
+}
+
+test::test(string some_string)
+    : object()
+    , protected_attr(0)
+    , private_var_(0)
+    , tasty_thingie(from_string(some_string))
+{
+    if (!tasty_thingie)
+        debug() << "from_string failed";
+}
+
+void test::apply_func2(something* sth)
+{
+    for (int x = 0; x < 10; x++)
+        if (x == 5)
+            send(*sth);
+}
+
+} // namespace example
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
+
+========================================================================================================================
