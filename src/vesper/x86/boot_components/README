@@ -1,0 +1,5 @@
+Component entry() point should return an initialized object.
+
+We will record them in the global trader structures?
+
+extern "C" component* entry();

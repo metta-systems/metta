@@ -1,3 +1,12 @@
+stage1 bootloader - usually grub stage1
+stage2 bootloader - usually grub stage2
+                    will load all 4 below pieces as modules and jump to unpacker
+unpacker - stage1 kernel bootloader
+kernel   - glue code and system calls (minimal nucleus in this case)
+initcp   - startup server which instantiates all libos services, stage 2 kernel bootloader
+initfs   - a specific format assembly of libos components loaded by initcp
+
+
 Memory image at boot time:
 
 start of unpacker

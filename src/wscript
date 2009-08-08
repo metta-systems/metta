@@ -11,8 +11,8 @@ APPNAME = 'vesper'
 srcdir = '.'
 blddir = '_build_'
 
-source_dirs  = 'boot initcp vesper'.split()
-include_dirs = 'boot initcp vesper lib runtime vesper/pd'.split()
+source_dirs  = 'vesper/x86/unpacker vesper/x86/kserver'.split()
+include_dirs = 'vesper/x86/unpacker vesper/x86/kserver vesper/x86/nucleus lib runtime'.split()
 #archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
@@ -22,10 +22,12 @@ linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
 
 def set_options(opt):
-    # platform spec is i686-pc-linux-gnu (arch-board-system-variant)
-    # i686-pc-metta-cp
-    # arm-beagleboard-metta-none
+    # platform spec "arch-vendor-os", vendor can be omitted.
+    # i686-exquance-metta
+    # arm-metta
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for.")
+
+    #opt.add_subdir('vesper')
 
 def configure(conf):
     # Configure for given platform
@@ -85,22 +87,31 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split())
     conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + linkflags)
 
+    #conf.add_subdir('vesper')
+
 
 def build(bld):
-    #bld.add_subdirs('tests')
+    #bld.add_subdirs('vesper')
+
+    mustl = bld.new_task_gen('cxx', 'staticlib')
+    mustl.source = map(lambda f: 'runtime/mustl/' + f + '.cpp', 'cmemlink memblock memlink ualgobase ubitset unew ustring'.split())
+    mustl.env = bld.env_of_name('KERNEL_ENV').copy()
+    mustl.env.append_unique('CXXFLAGS', '-mmmx -msse -msse2'.split()) # FIXME: need configure options for this
+    mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
+    mustl.target = 'mustl'
 
     loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'boot/loader.s boot/unpacker.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp lib/elf_parser.cpp lib/pmm.cpp lib/registers.s boot/page_fault_handler.cpp boot/interrupt_service_routine.cpp boot/interrupt_descriptor_table.cpp boot/interrupt.s'
+    loader.source = 'vesper/x86/unpacker/loader.s vesper/x86/unpacker/unpacker.cpp vesper/x86/unpacker/multiboot.cpp vesper/x86/unpacker/page_fault_handler.cpp vesper/x86/unpacker/interrupt_service_routine.cpp vesper/x86/unpacker/interrupt_descriptor_table.cpp vesper/x86/unpacker/interrupt.s runtime/g++support.cpp runtime/memutils.cpp lib/default_console.cpp lib/panic.cpp lib/elf_parser.cpp lib/pmm.cpp lib/registers.s'
     loader.env = bld.env_of_name('KERNEL_ENV').copy()
-    loader.env.append_unique('LINKFLAGS', ['-T', '../boot/loader.ld', '-Wl,-Map,bootloader.map'])
+    loader.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/unpacker/loader.ld', '-Wl,-Map,bootloader.map'])
     loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
     loader.target = 'bootloader'
 
     initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'initcp/initcp.cpp boot/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp initfs/initfs.cpp lib/pmm.cpp lib/registers.s'
+    initcp.source = 'vesper/x86/kserver/initcp.cpp vesper/x86/unpacker/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp vesper/initfs/initfs.cpp lib/pmm.cpp lib/registers.s'
     initcp.env = bld.env_of_name('KERNEL_ENV').copy()
-    initcp.env.append_unique('LINKFLAGS', ['-T', '../initcp/initcp.ld', '-Wl,-Map,initcomp.map'])
-    initcp.includes = include_dirs + ['initfs'] + initcp.env['INCLUDE_ARCH']
+    initcp.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kserver/initcp.ld', '-Wl,-Map,initcomp.map'])
+    initcp.includes = include_dirs + ['vesper/initfs'] + initcp.env['INCLUDE_ARCH']
     initcp.target = 'initcomp'
 
     # kernel:
@@ -109,7 +120,7 @@ def build(bld):
     # initfs:
     # build several components, build mkinitfs, run mkinitfs to bundle built components
     mkinitfs = bld.new_task_gen('cxx', 'program')
-    mkinitfs.source = 'initfs/mkinitfs.cpp'
+    mkinitfs.source = 'vesper/initfs/mkinitfs.cpp'
     mkinitfs.env = bld.env_of_name('ENV').copy()
     mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
     mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?

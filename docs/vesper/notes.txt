@@ -11,17 +11,19 @@ more threads kicked from kserver?
 
 src
 +--lib
-+--runtime            # kernel C++ runtime support: memutils, string, stl, boost.
++--runtime                   # kernel C++ runtime support: memutils, string, stl, boost.
+   +--mustl
 +--tests
-+--vesper             # Nucleus is arch-dependent entirely.
++--vesper                    # Nucleus is arch-dependent entirely.
+   +--initfs
    +--x86
-      +--boot         # Startup trampoline code - set up GDT/IDT/MTRRs/CPUs/load kernel.
-      +--initfs
-      +--kserver      # Userspace server running in kernel pd. Entrypoint to kernel services for clients.
-      +--memory       # Memory manager - heap allocator, pager.
-      +--pd           # protection domains support.
-         +--portal_mgr
-      +--schedule     # kernel part of scheduling: dispatcher.
+      +--unpacker            # Startup trampoline code - set up GDT/IDT/MTRRs/CPUs/load kernel.
+      +--nucleus             # protection domains support.
+      +--kserver             # Userspace server running in kernel pd. Entrypoint to kernel services for clients.
+      +--boot_components
+         +--memory           # Memory manager - heap allocator, pager.
+         +--schedule         # kernel part of scheduling: dispatcher.
    +--x86_64
    +--arm
 +--metta
+

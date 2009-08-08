@@ -6,6 +6,7 @@
 //
 #pragma once
 
+#define UNUSED_ARG    __attribute__((unused))
 #define UNUSED(x) ((void)(x))
 #define INLINE inline
 #define NOINLINE __attribute__((noinline))
