@@ -6,10 +6,15 @@
 //
 #pragma once
 
-#include <string.h>
+#include "types.h"
+#include "memory.h"
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+void obj_copy(T* dest, T* src, size_t count)
 {
-    memcpy(dest, src, count * sizeof(T));
+    while (count--)
+    {
+        destruct_inplace(dest);
+        construct_inplace(dest++, *src++);
+    }
 }

@@ -6,10 +6,10 @@
 //
 #pragma once
 
-#include <string.h>
+#include "types.h"
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+struct pod_destructor
 {
-    memcpy(dest, src, count * sizeof(T));
-}
+    static void destruct(T*, size_t) {}
+};

@@ -9,7 +9,10 @@
 #include <string.h>
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+struct pod_mover
 {
-    memcpy(dest, src, count * sizeof(T));
-}
+    static void move(T* dest, T* src, size_t count)
+    {
+        memmove(dest, src, count);
+    }
+};

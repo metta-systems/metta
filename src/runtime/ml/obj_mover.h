@@ -6,10 +6,13 @@
 //
 #pragma once
 
-#include <string.h>
+#include "obj_move.h"
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+struct obj_mover
 {
-    memcpy(dest, src, count * sizeof(T));
-}
+    static void move(T* dest, T* src, size_t count)
+    {
+        obj_move(dest, src, count);
+    }
+};

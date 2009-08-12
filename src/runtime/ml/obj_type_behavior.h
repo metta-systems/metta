@@ -6,10 +6,13 @@
 //
 #pragma once
 
-#include <string.h>
+#include "obj_destructor.h"
+#include "obj_mover.h"
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+struct obj_type_behavior
 {
-    memcpy(dest, src, count * sizeof(T));
-}
+    typedef T                           value_type;
+    typedef obj_destructor<value_type>  destructor;
+    typedef obj_mover<value_type>       mover;
+};

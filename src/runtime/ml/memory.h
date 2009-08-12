@@ -6,10 +6,16 @@
 //
 #pragma once
 
-#include <string.h>
+#include <new>
 
 template <typename T>
-void pod_copy(T* dest, T* src, size_t count)
+inline void construct_inplace(T* memory, const T& value)
 {
-    memcpy(dest, src, count * sizeof(T));
+    (void)new(static_cast<void*>(memory))T(value);
+}
+
+template <typename T>
+inline void destruct_inplace(T* object)
+{
+    object->~T();
 }
