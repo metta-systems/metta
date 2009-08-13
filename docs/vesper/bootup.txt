@@ -24,8 +24,10 @@ end of memory occupied by pagedir (top 4Mb)
 Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
-             | Last page always invalid| 0xFFFFFFFF (invalid address)
-             |_________________________| 0xFFFFF000
+             |                         | 0xFFFFFFFF (end of virtual mem)
+             |    Page directory       |
+             |                         |
+             |_________________________| K_PAGEDIR_START (4Mb below virtual memory end)
              | Kernel stacks area:     | K_STACKS_START
              | a few 4K stacks.        | Per-CPU stacks go here in interrupt model kernel.
              | Kernel stack end        | Per-thread stacks are scattered over the heap.

@@ -1,3 +1,39 @@
+Kernel interface:
+
+Interface page available via kernel_interface_syscall.
+
+1-1 thread mapping - but it will be possible for userspace code to schedule it's own threads using the same mechanisms?
+Each thread has KTCB and UTCB areas: kernel- and userspace-accessible parts.
+
+Address space (called Protection domain) can contain many threads.
+Thread may crawl through multiple protection domains maintaining a call stack.
+
+Newly started thread is awaiting for IPC message containing IP and SP to start execution from.
+
+Threads have pager (allocation) and scheduler (time-slice management). Thread can give back unused cpu time to threads
+for which it is a scheduler and return it back to its scheduler.
+
+exchange_registers_syscall allows switching between threads or modifying a thread.
+
+
+In kernel support for:
+Threads (cpu inheritance, migration)
+Protection domains (mapping/granting)
+IPC (fast LIPC/regular IPC/network IPC/asyncronous signals/exceptions, abstraction of hardware interrupts)
+
+Thread has a pager - master resource allocator for thread (@sa Parent interface?)
+
+Virtual Registers are per-thread state structures giving easy access to thread state and allowing safe IPC.
+
+Message Registers - could be used like BeOS' BMessage structured messages for high-level communications support.
+
+Unbuffered IPC - reduces memory copying.
+
+IPC types: Send, Receive, Wait, Call, Reply_and_Wait (+ idempotent versions?)
+
+
+Try and have separate ABI and APIs for the kernel, much better for portability and writing new good software.
+
 /*
 * The Pentium Pro and later support global PDE/PTE entries,
 * which are not removed from the TLB when we switch tasks.
@@ -27,3 +63,48 @@ src
    +--arm
 +--metta
 
+!!Print L4 docs when in office!!
+
+Pistachio's directory structure:
+kernel
++--config
++--kdb
++--src
+   +--api
+      +--v4
+   +--arch
+      +--powerpc
+      +--powerpc64
+      +--x86
+   +--generic
+   +--glue
+      +--v4-powerpc
+      +--v4-powerpc64
+      +--v4-x86
+   +--kdb
+   +--platform
+      +--efi
+      +--generic
+      +--ofg5
+      +--ofpower3
+      +--ofpower4
+      +--ofppc
+      +--pc99
+      +--simics
+
+
+Fiasco - a low-latency version of L4 kernel (L4v2 API with extensions) - messy, little docs, GPL
+L4Ka::Pistachio - a portable version, with portable API architecture - lots of docs, X.2 API, BSD
+
+
+A User Thread Control Block is defined for every unique thread on the system, known shortly as the UTCB of the thread. This block of memory can be used as thread-local storage as well as a buffer for inter-thread communication.
+
+UTCB memory regions are predefined in the virtual memory address space, but the task of allocating UTCBs to threads is left to the pagers as this is thought to add unnecessary policy to the microkernel.
+
+
+So in the end, Metta's nucleus architecture looks very much similar to L4 (todo: where does portal traversal fit there?)
+
+L4 initial threads:
+sigma0 - pager
+sigma1 - 
+root server - scheduler
