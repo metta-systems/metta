@@ -1,0 +1,357 @@
+nucleus_t:
+  - thread management,
+  - space traversal supported.
+
+space_t // essentially, a PD (@sa Pebble's domain_fork)
+  - contains a portal_table with indexes into available portals
+
+thread_t // thread abstraction inside nucleus_t
+  // fixme: how to create a thread that inherits portal table but runs in further subspaces.
+
+portal_t // a portal abstraction used inside the kernel to generate, optimize and address portals
+
+portal_manager_t (server):
+  - space traversal routines (portals) generation,
+  - privileged server, has access to spaces in order to add/remove portals to portal_table.
+
+vmm_server_t (server):
+  - serves paged memory to apps,
+  - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
+  - can map/grant/unmap memory pages upon request (via regions and mappings).
+
+scheduler_t (server):
+  - blocks and switches threads,
+  - not really privileged, other than having interrupts disabled during execution in some implementations,
+  - threads block here.
+
+interrupt_dispatcher_t (server):
+  - abstracts interrupt handling on particular architecture by translating interrupts to portals.
+
+========================================================================================================================
+
+Key Ideas (pebble)
+
+ * Minimal supervisor-mode nucleus, responsible for little more than context switches.
+   - Most functionality is provided by servers that execute in user mode without special privileges.
+   - The kernel is responsible only for switching between protection domains.
+   - If something can be run at user level, it is.
+   - Pebble kernel is much smaller than contemporary kernels (Unix, Inferno, L4).
+
+ * Safe extensibility: the system is constructed from untrusted components and reconfigured while running.
+   - Software components execute in separate protection domains enforced by hardware (MMU).
+   - Typical Pebble components:.
+    * CPU scheduler,
+    * device drivers (including interrupt handling),
+    * VM,
+    * file systems.
+
+ * Interrupt latency is low and predictable by design.
+
+ * Inter-domain communication is performed by portals which are generated dynamically.
+   - portal code is generated dynamically and performs portal-specific actions.
+   - portal code runs in kernel mode and may access or modify private data structures belonging to certain servers (e.g. VM).
+   - portal code has no loops and may not be blocked.
+   - each protection domain has a private portal table.
+
+
+Protection Domains, Threads and Portals
+
+ * A protection domain consists of the set of memory pages and the set of portals accessible to threads
+   executing in that domain. Protection domains may share memory and portals.
+ * A thread is a scheduleable entity that executes inside a protection domain and may switch to another
+   domain by portal traversal.
+ * A portal is a piece of trusted code that transfers the calling thread from the invoking domain to
+   the invoked domain and may perform additional actions (parameter modification, virtual memory, etc.).
+    - Portals transfer control to another protection domain.
+    - Portals cannot block.
+    - Portal code is trusted and managed by the portal manager.
+    - Portals are ***created in pairs***, a call portal and a return portal. The return portal may be shared.
+    - A short-circuit portal implements the operation without switching to another protection domain. It is similar to the Unix null system call getpid().
+    - Managing the portal table is crucial for enforcing protection (file access, server access, etc.) and safety (sandboxing, interposition, etc.).
+
+
+Dynamic Code Generation
+
+ * Pebble generates a separate portal pair for each communication path between every client and server (call and return portals).
+ * The portal code is specialized for the particular client and server.
+ * The portal code is instantiated from a template at the time that the portal is opened.
+ * Certain services may generate a set of portals to implemented various functions (e.g. read/write/seek portals for each FD).
+ * A domain may invoke only the portals that it can explicitly open or those that it inherited from its parent.
+ * Portal code and portal tables may be shared between domains.
+
+Notes: dynamic code generation
+* Pebble replaces generic paths through the kernel with specialized portals. Specialized portals are shorter.
+This is the reason why Pebble is more efficient than traditional OS on the same hardware.
+* Portals allow the client to call the desired server directly, without kernel de-multiplexing. For example, file operations call the
+corresponding server (file system, protocol stack, device driver, etc.) directly.
+* This is the usual time vs. space trade-off: more memory for fast, specialized portals.
+* Portals can replace other kernel data structures, such as the file descriptor table. The portals corresponding with the file operations
+encapsulate file information.
+
+
+Portal Specification
+
+The portal specification includes:
+* amount of state to save/restore.
+* level of trust between invoking and invoked domain (e.g. for stack sharing).
+* parameter manipulations:
+  - none
+  - a constant
+  - a function of nucleus-visible state
+  - a piece of code that was registered by a trusted server (e.g. dynamic sharing of memory windows)
+* identity and entry point of invoked domain.
+
+
+Servers
+
+* Pebble servers run in separate protection domains in user mode.
+* Servers may have limited privileges:
+  - access to a portion of the physical memory
+  - modify the portal table
+  - run with interrupts disabled (only the interrupt dispatcher and scheduler)
+* Some servers are trusted (not malicious) and form the TCB.
+* Errors are localized in the faulty server.
+
+
+Scheduling and Synchronization
+
+* The scheduler is a replaceable component.
+* The scheduler runs in user mode.
+* The scheduler implements all actions that may change the calling thread’s state (e.g. run → blocked and blocked → ready).
+* Threads cannot block anywhere except inside the scheduler. The scheduler knows all waiting and active threads.
+* The scheduler provides synchronization via semaphores.
+  - Semaphores are implemented by a pair of portals (for the P and V operations)
+
+
+Interrupt Processing
+
+* Interrupts are delivered promptly, since most of the system executes in user-mode with interrupts enabled.
+* The scheduler unifies the handling of interrupts and threads. Interrupt handler threads are scheduled according to priority.
+* Interrupt latency is determined mostly by the length of the longest interrupt-disabled path (in a portal and in the scheduler).
+  - The only parts of Pebble that run with interrupts disabled are portals, the interrupt dispatcher and the scheduler (a design trade-off; will run with interrupts enabled in a future release).
+  - Most Pebble servers and all user applications execute in user-mode with interrupts enabled, interrupts are not delayed.
+  - Thus: interrupt latency is lower
+* Portals implement different functions:
+  - portal1 saves the entire state and switches to the interrupt stack.
+  - portal2 saves few registers and shares stack with scheduler.
+  - portal3 restores entire state and switches to user stack (runs the thread).
+* The scheduler handles priority inversion.
+* The scheduler can either decide to return to the thread that was interrupted, or it can queue that thread (preempt it), select another
+thread and return to it.
+
+
+Related Work
+
+Pebble includes a combination of combination of old ideas:
+* Micro-kernels: Mach and L4.
+* Protection domains and portals: SPACE.
+* Specialized code generation: Synthesis and Synthetix.
+* Efficient parameter passing: LRPC.
+* Object oriented OS: Spring.
+* Dynamically replaceable components: Kea.
+* User-level implementation of high-level abstractions: Exokernel
+
+***** *****
+
+The privileged-mode nucleus is only responsible for switching between protection domains.
+
+Transferring control between protection domains is done by ***a generalization of hardware interrupt handling***, termed portal traversal. Portal code is generated dynamically (at the time portal is opened) and performs portal-specific actions.
+
+System is composed out of components.
+Components run in their own Protection Domains (which consist of memory pages and portal table which contains addresses of the portal code
+for portals this component has access to). Both memory pages and portals can be shared with other Protection Domains.
+ - Parent PD may share its portal table with its child. Changes to portal table reflected in both parent and child.
+ - Child may receive a copy of PT during creation.
+
+A thread in PD A can invoke service of PD B only if A has successfully opened a portal to B. PD B, which exports the service, controls who can open portals to it, either directly or via help of security server.
+
+To transfer control to B, A's thread executes ***a trap instruction***, which transfers control to nucleus.
+The nucleus
+ - determines which portal shall be executed,
+ - looks up the portal code adress and
+ - jumps to the portal code
+The rest of control transfer is performed by portal code (registers save, argument copy, stack change, page mapping).
+
+Portal code may never block and may not contain loops.
+
+As part of the Pebble philosophy, system services are provided by ***server components***, which run in user mode inside separate protection domains. Unlike applications, server components may be granted limited privileges not afforded to application components. For example, the scheduler runs with interrupts disabled (Pebble design flaw, scheduler can be implemented lock-free), device drivers have device registers mapped into their memory region, and the portal manager may add portals to pro tection domains (a protection domain can not modify its portal table directly).
+
+Threads cannot block anywhere except inside the scheduler. In particular, Pebble’s synchronization primitives are managed entirely by the
+user-level scheduler. When a thread running in a protection domain creates a semaphore, two portals that
+invoke the scheduler (for P and V operations) are added to the protection domain’s portal table. The thread
+invokes P in order to acquire the semaphore. If the P succeeds, the scheduler grants the calling protection
+domain the semaphore and returns. If the semaphore is held by another protection domain, the P fails, the
+scheduler marks the thread as blocked, and then schedules another thread. A V operation works analogously; if
+the operation unblocks a thread that has higher priority than the invoker, the scheduler can block the invoking
+thread and run the newly-awakened one.
+
+
+Portal manager generates portal code from a simple IDL, which specifies types of arguments and their required handling (which registers to save, whether to share stack, how to transform/map arguments).
+
+VM can register with portal manager several code templates, which are executed for particular argument types. E.g. a code requiring mapping
+of a page into target PD will need to access VM internal structures, but PM should not know about structure of this access.
+
+Shirt-circuit portals perform actions without switching to a new PD, thus saving time.
+
+Portals are generally created in pars - a call portal and a return portal.
+
+Portal registration with portal_manager:
+ * server registers a new entry point by specifying portal name, entrypoint address and interface definition,
+ * later, a client requests a portal by (fully-qualified) name from trader/portal_manager, which generates the portal code
+   and installs it in client's portal table. portal index is returned to the client.
+ * to invoke a portal thread then loads portal number into a registers and performs a trap instruction.
+
+(hence, in userspace threading library a semaphore is internally represented by something like a following structure:
+struct sem
+{
+    int P; // portal index of P operation
+    int V; // portal index of V operation
+};
+)
+
+Pebble nucleus maintains only a handful of data structures:
+each thread associated with a thread_t:
+- pointer to the thread's current portal_table
+- user stack
+- interrupt stack and
+- invocation stack
+
+thread_t
+{
+    portal_table_t* ptab;
+    int32_t* user_stack;
+    int32_t* interrupt_stack;
+    int32_t* invocation_stack;
+};
+
+user stack is used normally
+interrupt stack is used when interrupt or exception occurs
+The invocation stack keeps track of portal traversals and
+processor state. The portal call code saves the invoking
+domain’s state on this stack. It also saves the address of
+the corresponding return portal on the invocation stack.
+The portal return code restores the state from this stack.
+
+When interrupt comes, the interrupt portal switches to thread's interrupt stack, saves state on invocation stack and passes control to
+interrupt dispatcher.
+
+***** *****
+
+SPACE
+spaces, domains and portals
+
+Spaces provide the address mapping for processor
+addresses. Each space specifies the translation of pro-
+cessor addresses into bus addresses and portals. Bus
+addresses give the processor access to physical mem-
+ory or i/o. Portals are generalizations of traditional
+pagefault handling mechanisms, and are described be-
+low.
+A space may map a given processor address into
+both a bus address and a portal. Whether the bus
+address mapping or the portal mapping is used is not
+determined by the space alone, but depends on the
+protections associated with the bus address mapping,
+and the type of access being made.
+SPACE uses a protection scheme which qualifies
+each space into a set of domains.
+
+Domains
+SPACE extends the conventional protection mech-
+anism used when mapping addresses. Instead of pro-
+viding a single pair of valid and writable bits for each
+mapping, SPACE provides bit-vectors, which are in-
+dexed by the protection-id associated with the proces-
+sor.
+The qualification of a space by a protection-id is
+called a domain. For a given type of access, the cur-
+rent domain determines a mapping from each proces-
+sor address into either a bus address or a portal.
+
+Portals are the mechanism which allow processor
+execution to switch domains. Whenever processor ex-
+ecution encounters a trap (or fault or interrupt or ex-
+ception), the SPACE kernel executes brie
+y to lookup
+the portal corresponding to the trap (portals are as-
+sociated with addresses in the case of pagefaults), and
+then the processor continues execution in the domain
+specied by the portal.
+In addition to specifying the new domain (space
+and protection-id), portals specify an address at which
+to begin execution. (Portals also have a set of 
+ags
+which govern interaction with architectural details
+such as interrupts).
+
+Due to the nature of interrupts, their por-
+tals must always be available. Thus interrupt portals
+belong to a special class of global portals which are
+the same in all domains. Exceptions which are related
+to the execution of the processor (e.g. floating-point-
+under
+ow), are mapped into portals that are specific
+to each domain.
+
+In SPACE most trap instructions are mapped into portals. This facilitates
+the implementation of system calls that are executed
+within domains, rather than within the kernel. How-
+ever a few of the trap instructions are reserved for
+implementing calls into the SPACE kernel. These ker-
+nel calls are used to provide explicit access to the two
+basic kernel primitives.
+
+There are two primary operations supported by the
+SPACE kernel: portal_entry which is used to move be-
+tween domains, and resume_pcb which resumes exe-
+cution at a point where a portal entry had occurred.
+Portal entry can be implicit (e.g. a pagefault or i/o in-
+terrupt), or explicit through a kernel call. Resume pcb
+is always an explicit operation.
+
+*** PORTAL TRAVERSAL ***
+
+When a processor switches domains by passing
+through a portal, the code sequence that was previ-
+ously running usually needs to be resumed at some
+time. This requires that the processor state be saved.
+The SPACE kernel saves the processor state, as well
+as the identity of the current domain, in a data struc-
+ture called the processor control block (pcb). A new
+pcb may be allocated for processor execution at every
+portal entry, but it is only used if the code sequence
+in the new domain also enters a portal.
+Each pcb has a unique token associated with it.
+The new domain is recorded in the pcb as the owner
+of the token, so that only code sequences running in
+the new domain can use the token to do a resume_pcb.
+
+
+***** FLUKE ******
+
+Easily exportable kernel state for process to support user-level checkpointing etc.
+Pickling - saving exportable state.
+
+Flobs encapsulate all user-visible kernel state in well deﬁned objects. For example, a thread encapsulates the ﬂow
+of control in an address space. A mapping defines a range of memory imported to a space, while a region defines a
+range of memory that can be exported to other spaces. A mutex provides one synchronization primitive.
+Fluke represents pointers to flobs with references, so a mapping contains a reference to the region.
+
+State can be retrieved or set at any given point in time, with as little overhead as possible (hence userspace part of flobs in Fluke).
+
+Providing consistent kernel object state at arbitrary times requires a fundamental property of all kernel operations:
+every kernel operation must be either **transparently atomic or restartable**. If they were not, an object could have state
+stored in internal kernel data structures that is not exported by normal kernel operations. The Fluke kernel provides this
+transparent interruption and restart.
+
+In Fluke, all requests for services initially go to the parent process. As the parent process, a checkpointer can know what references were granted to the child, and more importantly, it can know what they **logically** point to. Understanding the logical connection is
+what allows the checkpointer to correctly re-establish external connections upon restart.
+Thus, Nested Process Model is crucial in supporting transparent resource virtualization/management by parent processes.
+
+
+
+
+
+
+
+

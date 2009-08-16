@@ -56,10 +56,10 @@ h. Boolean variables and methods (including accessors) shall use suitable prefix
     bool is_open;
     bool has_subject(email& mail);
 
-i. Simple (atomic) types have _t appended, complex types that denote structured objects do not:
+i. Types not inside namespaces have _t appended:
 
     typedef int sint32_t;
-    class kernel;
+    class kernel_t;
 
 j. Needless to say, all names shall be in English.
 
@@ -79,7 +79,8 @@ b. A class shall be declared in a header file and defined in a source file, wher
 c. All definitions, except inline functions, shall reside in source files.
 
 d. The order of definitions in the source file shall be the same as the order of the corresponding declarations in the header file.
-
+
+
 e. Lines length shall be kept within 120 columns, whenever feasilble.
 
 f. Lines longer than 120 columns shall be split in a way that makes the line readable,

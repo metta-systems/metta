@@ -10,6 +10,15 @@ thread_t::thread_t(address_t utcb_va, hash_t* hash)
     thread_create_syscall(utcb_va, hash);
 }
 
+
+We allow nesters to create sub-threads and sub-tasks, hence the thread_create_syscall does not specify address space for the new thread:
+it's derived from caller's address space (nesters are allowed to create only immediate children).
+To create a sub-task nester should call task_create_syscall.
+
+
+
+
+
 L4 pager == L4 space id == nester == protection domain
 L4 scheduler == parent thread (it gives it's children the timeslices, usually the same as nester?)
 L4 task = nester + threads running in it's space
