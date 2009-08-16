@@ -1,4 +1,4 @@
-Nucleus is the minimalistic core of an microkernel system.
+Nucleus is the minimalistic core of an microkernel system. (Call it ORB in a Go! sense, Object Request Broker?)
 
 This nucleus provides very low-level services to client applications using syscalls.
 
@@ -30,13 +30,16 @@ A thread may be in multiple address spaces at once, however, only one instance i
 
 PD control
 
-
+Protection domain control allows threads to migrate between protection domains in a controlled fashion.
+This is provided by a binding interface performed in cooperation by the nucleus, security server and trader component.
+Nucleus' part of PD control is minimal and includes only allowing tasks to map/grant/unmap regions of memory and jumping across a domain
+border when permitted.
 
 
 IPC
 
 Atomic IPC - no state is maintained within the kernel about the running IPC operation. Thread continuations may be manipulated to "restart"
-and IPC transaction.
+any IPC transaction.
 
 Atomic kernel API means there is no shared state to modify and syscalls can run without taking locks all the time.
 
