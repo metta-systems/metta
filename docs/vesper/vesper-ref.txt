@@ -1,6 +1,7 @@
 nucleus_t:
   - thread management,
   - space traversal supported.
+  - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
 
 space_t // essentially, a PD (@sa Pebble's domain_fork)
   - contains a portal_table with indexes into available portals
@@ -35,6 +36,8 @@ interrupt_dispatcher_t (server):
   - abstracts interrupt handling on particular architecture by translating interrupts to portals.
 
 ========================================================================================================================
+
+***** PEBBLE ******
 
 Key Ideas: Protection Domains, Threads and Portals
 
