@@ -6,17 +6,16 @@ Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
 VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
-APPNAME = 'vesper'
+APPNAME = 'metta'
 
 srcdir = '.'
 blddir = '_build_'
 
-source_dirs  = 'vesper/x86/unpacker vesper/x86/kserver'.split()
 include_dirs = 'vesper/x86/unpacker vesper/x86/kserver vesper/x86/nucleus lib runtime'.split()
 #archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
-cflags += ['-Os'] #FIXME: builddep FIXME: -O3 often causes screwups
+cflags += ['-Os'] #FIXME: builddep
 cxxflags = cflags #+ ['-std=gnu++0x']
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
@@ -25,14 +24,27 @@ def set_options(opt):
     # platform spec "arch-vendor-os", vendor can be omitted.
     # i686-exquance-metta
     # arm-metta
-    opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for.")
 
-    #opt.add_subdir('vesper')
+    # arch (x86, x86-64, ppc, ppc64) - a generic cpu format
+    # cpu (p4, arm11jsf) - a specific cpu format
+    opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for." + '[default: %default]')
+
+    # platform (efi, pc99) - a generic infrastructure
+    # board (vulcan, beagleboard) - a specific infrastructure
+    opt.add_option("--platform", action="store", default="pc99", help="Select platform to build for." + '[default: %default]')
+
+    # build type - release, debug, profile
+    opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile)." + '[default: %default]')
+
+    #opt.sub_options('vesper')
+
 
 def configure(conf):
     # Configure for given platform
     # Configuration name is composed of architecture, cpu, release
     arch = Options.options.arch
+    platform = Options.options.platform
+    build = Options.options.build
 
     conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
 
@@ -50,21 +62,23 @@ def configure(conf):
     # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
 
-    conf.env['variant'] = arch + '-release'
+    conf.env['variant'] = arch + '-' + platform + '-' + build
 
     # Template config for building
     conf.env.set_variant(conf.env['variant'])
     conf.set_env_name('ENV', conf.env)
     conf.setenv('ENV') # Activate the environment
+    conf.env.append_unique('INCLUDE_DIRS', include_dirs)
     # Set arch-specific include paths
     #conf.env.append_unique('INCLUDE_ARCH', map(lambda d: d + arch, archdep_includes))
 
     # Generate config.h
     conf.define('ARCH', arch)
+    conf.define('PLATFORM', platform)
+    conf.define('BUILD', build)
     conf.define('CONFIG_INLINING', 1)
     conf.define('HEAP_DEBUG', 1)
     conf.write_config_header('config.h')
-
 
     # Config for running tests
     conf.setenv('ENV') # Activate the environment
@@ -76,7 +90,6 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
     conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
 
-
     # Config for building kernel
     conf.setenv('ENV') # Activate the environment
     env = conf.env.copy() # Clone ENV
@@ -86,13 +99,12 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split())
     conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + linkflags)
+    conf.env.append_unique('INCLUDE_DIRS', include_dirs)
 
-    #conf.add_subdir('vesper')
+    #conf.sub_config('vesper')
 
 
 def build(bld):
-    #bld.add_subdirs('vesper')
-
     mustl = bld.new_task_gen('cxx', 'staticlib')
     mustl.source = map(lambda f: 'runtime/mustl/' + f + '.cpp', 'cmemlink memblock memlink ualgobase ubitset unew ustring'.split())
     mustl.env = bld.env_of_name('KERNEL_ENV').copy()
@@ -100,40 +112,7 @@ def build(bld):
     mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
     mustl.target = 'mustl'
 
-    loader = bld.new_task_gen('cxx', 'program')
-    loader.source = 'vesper/x86/unpacker/loader.s vesper/x86/unpacker/unpacker.cpp vesper/x86/unpacker/multiboot.cpp vesper/x86/unpacker/page_fault_handler.cpp vesper/x86/unpacker/interrupt_service_routine.cpp vesper/x86/unpacker/interrupt_descriptor_table.cpp vesper/x86/unpacker/interrupt.s runtime/g++support.cpp runtime/memutils.cpp lib/default_console.cpp lib/panic.cpp lib/elf_parser.cpp lib/pmm.cpp lib/registers.s'
-    loader.env = bld.env_of_name('KERNEL_ENV').copy()
-    loader.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/unpacker/loader.ld', '-Wl,-Map,bootloader.map'])
-    loader.includes = include_dirs + loader.env['INCLUDE_ARCH']
-    loader.target = 'bootloader'
-
-    initcp = bld.new_task_gen('cxx', 'program')
-    initcp.source = 'vesper/x86/kserver/initcp.cpp vesper/x86/unpacker/multiboot.cpp lib/default_console.cpp runtime/g++support.cpp runtime/memutils.cpp lib/panic.cpp vesper/initfs/initfs.cpp lib/pmm.cpp lib/registers.s'
-    initcp.env = bld.env_of_name('KERNEL_ENV').copy()
-    initcp.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kserver/initcp.ld', '-Wl,-Map,initcomp.map'])
-    initcp.includes = include_dirs + ['vesper/initfs'] + initcp.env['INCLUDE_ARCH']
-    initcp.target = 'initcomp'
-
-    # kernel:
-    # build vesper/kernel.*
-
-    # initfs:
-    # build several components, build mkinitfs, run mkinitfs to bundle built components
-    mkinitfs = bld.new_task_gen('cxx', 'program')
-    mkinitfs.source = 'vesper/initfs/mkinitfs.cpp'
-    mkinitfs.env = bld.env_of_name('ENV').copy()
-    mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
-    mkinitfs.includes = include_dirs
-    mkinitfs.target = 'mkinitfs'
-
-def shutdown():
-    if Options.commands['build']:
-        Utils.exec_command("sh ./update_image.sh")
-    #updater = bld.new_task_gen('command-output', outputs='floppy.img', argv=[vesper.target])
-    #updater.command = 'sh update_image.sh'
-    #updater.command_is_external = True
-    #updater.dependencies = [vesper]
+    bld.add_subdirs('vesper')
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
