@@ -6,13 +6,13 @@
 //
 #pragma once
 
-#include <string.h>
+#include "memutils.h"
 
 template <typename T>
 struct pod_mover
 {
     static void move(T* dest, T* src, size_t count)
     {
-        memmove(dest, src, count);
+        memutils::move_memory(dest, src, count);
     }
 };

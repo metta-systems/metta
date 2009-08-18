@@ -11,8 +11,7 @@ class reverse_iterator
 {
     typedef reverse_iterator<Iterator, ValueType, DiffType>     self_type;
 
-public :
-
+public:
     typedef Iterator                                            iterator;
     typedef ValueType                                           value_type;
     typedef DiffType                                            difference_type;
@@ -21,72 +20,72 @@ public :
     typedef value_type*                                         pointer;
 
     reverse_iterator(const iterator& _iterator)
-        : m_iterator(_iterator) {}
+        : m_iterator(_iterator)
+    {}
 
-    reference operator*() const
+    reference operator *() const
     {
         return *(m_iterator - 1);
     }
 
-    pointer operator->() const
+    pointer operator ->() const
     {
         return m_iterator - 1;
     }
 
-    self_type& operator++()
+    self_type& operator ++()
     {
         --m_iterator;
         return *this;
     }
 
-    self_type& operator++(int)
+    self_type& operator ++(int)
     {
-        self_type tmp = *this;
+        self_type tmp = *this; //FIXME: reference to stack object?
         --m_iterator;
         return tmp;
     }
 
-    self_type& operator--()
+    self_type& operator --()
     {
         ++m_iterator;
         return *this;
     }
 
-    self_type operator--(int)
+    self_type operator --(int) // missing & ?
     {
-        self_type tmp = *this;
+        self_type tmp = *this; //FIXME: reference to stack object?
         ++m_iterator;
         return tmp;
     }
 
-    self_type operator+(difference_type n) const
+    self_type operator +(difference_type n) const
     {
         return self_type(m_iterator - n);
     }
-    
-    self_type& operator+=(difference_type n)
+
+    self_type& operator +=(difference_type n)
     {
         m_iterator -= n;
         return *this;
     }
-  
-    self_type operator-(difference_type n) const
+
+    self_type operator -(difference_type n) const
     {
         return self_type(m_iterator + n);
     }
 
-    self_type& operator-=(difference_type n)
+    self_type& operator -=(difference_type n)
     {
         m_iterator += n;
         return *this;
     }
 
-    reference operator[](difference_type n) const
+    reference operator [](difference_type n) const
     { 
         return *(m_iterator + n);
     }
 
-private :
-
+private:
     iterator m_iterator;
 };

@@ -6,10 +6,10 @@
 //
 #pragma once
 
-#include <string.h>
+#include "memutils.h"
 
 template <typename T>
 void pod_copy(T* dest, T* src, size_t count)
 {
-    memcpy(dest, src, count * sizeof(T));
+    memutils::copy_memory(dest, src, count * sizeof(T));
 }

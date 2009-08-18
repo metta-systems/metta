@@ -6,12 +6,12 @@
 //
 #pragma once
 
-#include <new>
+#include <new> //FIXME: avoid host-includes
 
 template <typename T>
 inline void construct_inplace(T* memory, const T& value)
 {
-    (void)new(static_cast<void*>(memory))T(value);
+    (void)new(static_cast<void*>(memory)) T(value);
 }
 
 template <typename T>

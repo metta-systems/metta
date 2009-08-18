@@ -13,18 +13,17 @@ class memblock_base
 {
     typedef memblock_base<T, Allocator, Copier> self_type;
 
-public :
-
+public:
     typedef T                                   value_type;
     typedef Allocator                           allocator;
     typedef Copier                              copier;
 
-public :
-
-    memblock_base(const allocator& _allocator=allocator())
+public:
+    memblock_base(const allocator& _allocator = allocator())
         : m_allocator(_allocator)
         , m_data(0)
-        , m_capacity(0) {}
+        , m_capacity(0)
+    {}
 
     memblock_base(const self_type& other)
         : m_allocator(other.m_allocator)
@@ -68,7 +67,7 @@ public :
         }
     }
 
-    self_type& operator=(const self_type& other)
+    self_type& operator =(const self_type& other)
     {
         if (this != &other)
         {
@@ -87,8 +86,7 @@ public :
         return m_data;
     }
 
-private :
-
+private:
     bool copy_from(const self_type& other)
     {
         if (allocate(other.m_capacity))
@@ -98,9 +96,8 @@ private :
         }
         return false;
     }
-    
-private :
 
+private:
     allocator   m_allocator;
     value_type* m_data;
     size_t      m_capacity;

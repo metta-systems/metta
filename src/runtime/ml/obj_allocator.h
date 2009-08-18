@@ -16,8 +16,9 @@ struct obj_allocator
     typedef typename allocator::value_type  value_type;
     typedef obj_destructor<value_type>      destructor;
 
-    obj_allocator(const allocator& _allocator=allocator())
-        : m_allocator(_allocator) {}
+    obj_allocator(const allocator& _allocator = allocator())
+        : m_allocator(_allocator)
+    {}
 
     value_type* allocate(value_type* old_mem, size_t old_size, size_t new_size)
     {
@@ -49,5 +50,5 @@ struct obj_allocator
         m_allocator.deallocate(mem, size);
     }
 
-    allocator m_allocator;
+    allocator m_allocator; //FIXME: public access to member
 };

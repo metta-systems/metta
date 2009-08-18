@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include <stdlib.h>
+#include <stdlib.h> // FIXME: avoid host includes
 
 template <typename T>
 struct pod_allocator
