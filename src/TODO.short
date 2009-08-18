@@ -1,25 +1,15 @@
-== cleanup ==
-[+] Remove all string operations from the old/linux kernel.
-[+] Replace strings with bstrlib where necessary.
-[x] Port string operations to bstrlib/string.
-[ ] Implement rest of string class.
-[/] Implement string formatting a-la boost::format.
-  [+] Use variadic templates?
-[ ] Use ustl?
-
 == boot ==
 [ ] Use lzma decoder
-[ ] Load components from init modules
+[ ] Load components from initfs
 [ ] Call components constructors
 [ ] pass device tree to kernel from boostrap component (akin to PowerPC Linux)
 
 == design ==
 [ ] Design portal manager interface
-
-== portal manager ==
-[ ] Implement simple portal manager
+    - as simple as create_portal(from, to, spec)
 
 == common protocols ==
+[ ] Implement simple portal manager
 [ ] See to use Flick idl compiler
   [ ] Build
   [ ] Test
