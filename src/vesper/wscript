@@ -38,17 +38,11 @@ def build(bld):
     mkinitfs.target = 'mkinitfs'
 
     bld.new_task_gen(
-        source = mkinitfs.target,
-        target = 'initfs',
-        rule = 'mkinitfs',
-        cwd = bld.path.abspath()
-    )
-
-    bld.new_task_gen(
-        source = 'bootloader initcomp initfs',
-        target = 'floppy.img',
-        rule = 'sh ./update_image.sh',
-        cwd = bld.path.abspath()
+        source = 'mkinitfs initfs/component.lst',
+        target = 'initfs.img',
+        rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
+        name = 'initfs.img',
+        after = 'cxx_link'
     )
 
 # kate: indent-width 4; replace-tabs on;

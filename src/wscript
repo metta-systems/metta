@@ -114,5 +114,9 @@ def build(bld):
 
     bld.add_subdirs('vesper')
 
+def shutdown():
+    if Options.commands['build']:
+        Utils.exec_command("sh ./update_image.sh")
+
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
