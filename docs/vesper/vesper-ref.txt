@@ -40,6 +40,18 @@ scheduler_t (server):
 interrupt_dispatcher_t (server):
   - abstracts interrupt handling on particular architecture by translating interrupts to portals.
 
+trader_t (server):
+  - allocates portal IDs for clients
+  - lets clients find portal IDs by interface specification
+    * adopt sort of dbus-like portal spec with service,interface,method triplet.
+  - 0-65535 are system wide portal IDs (available in all PDs).
+  - 65536 and above are per-process portal IDs.
+
+security_server_t (server):
+  - controls who has access where.
+  - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
+    security information.
+
 ========================================================================================================================
 
 ***** PEBBLE ******

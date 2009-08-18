@@ -5,30 +5,30 @@ OUTPUT_FORMAT(elf32-i386)
 
 SECTIONS
 {
-    KERNEL_BASE = 0x100000;
+    KICKSTART_BASE = 0x100000;
     PAGE_SIZE = 0x1000;
 
-    . = KERNEL_BASE;
-    .text ALIGN (PAGE_SIZE) :
+    . = KICKSTART_BASE;
+    .text ALIGN (4) :
     {
-        *(.loader.text)
+        *(.multiboot_info)
         *(.text)
+        *(.rodata*)
         FILL(0x90)
     }
     text_end = .;
 
-    .data ALIGN (PAGE_SIZE) :
+    .data ALIGN (4) :
     {
         start_ctors = .;
         *(.ctor*)
         end_ctors = .;
         *(.data)
-        *(.rodata*)
         FILL(0x00)
     }
     data_end = .;
 
-    .bss ALIGN (PAGE_SIZE) :
+    .bss ALIGN (4) :
     {
         *(COMMON*)
         *(.bss*)

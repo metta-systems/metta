@@ -21,9 +21,6 @@ extern "C"  void flush_page_directory(void);
 
 extern "C"  void enable_paging(void);
 
-inline void enable_interrupts(void)  { asm volatile ("sti"); }
-inline void disable_interrupts(void) { asm volatile ("cli"); }
-
 // defined in schedule/critical_section.cpp
 extern "C" void critical_section();
 extern "C" void end_critical_section();

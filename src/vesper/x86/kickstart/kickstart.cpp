@@ -5,33 +5,36 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /*!
-@file unpacker.cpp
+@file kickstart.cpp
 @brief Prepare kernel and init component for starting up.
 @ingroup Bootup
 
-* system-specific loader (unpacker)
-  - GRUB will pass in kernel.assembly, initcp and initfs as loadable modules,
-  - loader will set up minimal paging,
-  - unpack one kernel from kernel.assembly and copy appropriate kernel
-    to mapped KERNEL_BASE,
-  - set up kernel higher-half mappings,
-  - unpacker decompresses initcp to a predefined location (0x1000),
+* put kernel in place
+  - set up minimal paging,
+  - map higher-half kernel to KERNEL_BASE,
+* init memory manager
   - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
   - enter paged mode,
-  - jump to initcp entrypoint, starting a kernel init process.
+* activate startup servers
+    * vm_server
+    * scheduler
+    * portal_manager
+    * interrupt_dispatcher
+    * trader
+    * security_server
+* enter root_server
 
-@todo Use device tree from bootloader to figure out which kernel to use.
-
-@todo Enable/disable debugging output based on loader cmdline.
-
-debug_console = (debug_on ? kconsole : bochs_console/null_console)
-pass debug_on via grub cmdline
+kernel /kickstart
+module /orb
+  orb is vesper nucleus
+module /bootcomps
+  bootcomps is initfs style assembly of abovementioned servers
 */
 #include "memutils.h"
 #include "multiboot.h"
-#include "memory.h"
-#include "global_descriptor_table.h"
-#include "interrupt_descriptor_table.h"
+#include "memory.h" // boot_pmm_allocator
+#include "global_descriptor_table.h" // gdt
+#include "interrupt_descriptor_table.h" // idt
 #include "default_console.h"
 #include "elf_parser.h"
 #include "registers.h"
@@ -99,7 +102,7 @@ extern ctorfn end_ctors;
 /*!
 This part starts in protected mode, linear == physical, paging is off.
 */
-void setup_kernel(multiboot::header *mbh)
+void kickstart(multiboot::header *mbh)
 {
     // run static ctors
     for (ctorfn* ctor = &start_ctors; ctor < &end_ctors; ctor++)

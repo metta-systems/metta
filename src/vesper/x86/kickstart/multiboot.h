@@ -8,7 +8,7 @@
 
 #include "types.h"
 #include "elf.h"
-#include "common.h" // panic_assert()
+#include "panic.h"
 
 /**
 * \brief Defines an interface to the multiboot header.
@@ -98,7 +98,10 @@ public:
 
 //     static multiboot& self() { return instance; }
 
-    multiboot(header *h = NULL) : header_(NULL), strtab(NULL), symtab(NULL)
+    multiboot(header *h = NULL)
+        : header_(NULL)
+        , strtab(NULL)
+        , symtab(NULL)
     {
         if (h)
             set_header(h);

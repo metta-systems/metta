@@ -6,12 +6,7 @@
 //
 #pragma once
 
-// [x] Use bstrlib for safe string operations.
-
 #include "types.h"
-
-extern "C" void panic(const char *message, const char *file, uint32_t line);
-extern "C" void panic_assert(const char *desc, const char *file, uint32_t line);
 
 /**
 * Write a byte out to the specified port.
@@ -42,11 +37,23 @@ static inline uint16_t inw(uint16_t port)
 	return ret;
 }
 
-// chg to uint64_t rdtsc()
-static inline void rdtsc(uint32_t* upper, uint32_t* lower)
+static inline uint64_t rdtsc()
 {
-    asm volatile("rdtsc" : "=a"(*lower), "=d"(*upper));
+    uint32_t upper, lower;
+    asm volatile("rdtsc" : "=a"(lower), "=d"(upper));
+    return (upper << 32) | lower;
 }
+
+static inline void enable_interrupts(void)
+{
+    asm volatile ("sti");
+}
+
+static inline void disable_interrupts(void)
+{
+    asm volatile ("cli");
+}
+
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

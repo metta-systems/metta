@@ -12,7 +12,7 @@ global loader                          ; making entry point visible to linker
 global activate_gdt
 global activate_idt
 global initial_esp
-extern setup_kernel
+extern kickstart
 extern KERNEL_BASE
 extern data_end
 extern bss_end
@@ -31,8 +31,8 @@ section .bss
 resb 0x1000
 initial_stack:                         ; reserve one page for startup stack
 
-section .loader.text
-align 4                                ; mboot header should fit in first 8KiB
+section .multiboot_info                ; mboot header should fit in first 8KiB so we make a section for it
+align 4
 multiboot_header:
     dd MAGIC
     dd FLAGS
@@ -54,7 +54,7 @@ loader:
 
     mov ebp, 0                         ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
-    call  setup_kernel                 ; call startup loader code
+    call  kickstart                    ; call startup loader code
 
     cli
     jmp short $                        ; halt machine should startup code return

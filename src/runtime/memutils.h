@@ -19,6 +19,7 @@ public:
     * @param[out] dest  Pointer to the start of the area.
     * @param[in]  value The byte to fill the area with
     * @param[in]  count The size of the area.
+    * @return           Pointer to the start of the area.
     *
     * @warning Do not use fill_memory() to access IO space,
     * use fill_io_memory() instead.
@@ -30,6 +31,7 @@ public:
     * @param[out] dest  Where to copy to
     * @param[in]  src   Where to copy from
     * @param[in]  count The size of the area.
+    * @return           Pointer to the start of the destination area.
     *
     * @warning You should not use this function to access IO space,
     * use copy_memory_to_io() or copy_memory_from_io() instead.
@@ -41,6 +43,7 @@ public:
     * @param[out] dest  Where to copy to
     * @param[in]  src   Where to copy from
     * @param[in]  count The size of the area.
+    * @return           Pointer to the start of the destination area.
     *
     * Unlike copy_memory(), this function copes with overlapping areas.
     **/
@@ -50,6 +53,7 @@ public:
     * Compare two C strings.
     * @param[in] s1 One string
     * @param[in] s2 Another string
+    * @return -1 if @c s1 precedes @c s2, 0 if strings are equal, 1 if @c s2 precedes @c s1
     *
     * @note Used only in multiboot::set_header.
     **/
