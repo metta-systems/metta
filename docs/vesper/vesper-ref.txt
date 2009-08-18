@@ -2,6 +2,11 @@ nucleus_t:
   - thread management,
   - space traversal supported.
   - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
+    - what's needed?
+      * create a thread in current space_t
+      * change thread's runnable property
+
+      client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread
 
 space_t // essentially, a PD (@sa Pebble's domain_fork)
   - contains a portal_table with indexes into available portals

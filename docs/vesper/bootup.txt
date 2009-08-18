@@ -1,10 +1,14 @@
-stage1 bootloader - usually grub stage1
-stage2 bootloader - usually grub stage2
-                    will load all 4 below pieces as modules and jump to unpacker
-unpacker - stage1 kernel bootloader
-kernel   - glue code and system calls (minimal nucleus in this case)
-initcp   - startup server which instantiates all libos services, stage 2 kernel bootloader
-initfs   - a specific format assembly of libos components loaded by initcp
+bootup procedure:
+
+ * We use GRUB for simplicity now.
+ * grub stage1 loads stage2
+ * grub stage2 loads
+      kickstart(kernel unpacker) as kernel, // kickstart is bootloader-specific startup code
+      nucleus(glue code and system calls),
+      boot_server(initcp) // boot_server is bootloader-independent startup code
+      and multiple libos components(initfs) as modules.
+ * enters the kickstart as if it was the kernel.
+
 
 
 Memory image at boot time:
@@ -13,6 +17,15 @@ start of unpacker
 
 |          somewhere in low memory     |0x100000       |...
 |..........grub loaded modules         |unpacker image |...
+
+
+
+
+
+
+
+
+
 
 entry to initcp
 
@@ -25,9 +38,12 @@ Process image
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
              |                         | 0xFFFFFFFF (end of virtual mem)
-             |    Page directory       |
+             |    Page directory       | Pagedir mapped into every process image so kernel doesn't have to reload caches.
              |                         |
              |_________________________| K_PAGEDIR_START (4Mb below virtual memory end)
+ok -^
+
+
              | Kernel stacks area:     | K_STACKS_START
              | a few 4K stacks.        | Per-CPU stacks go here in interrupt model kernel.
              | Kernel stack end        | Per-thread stacks are scattered over the heap.
@@ -87,6 +103,9 @@ Process image
              | ....................... |
              | ....................... |
              |                         |
+
+
+ok -v
              |_________________________| Unmapped heap watermark page at heap end for growing
              | Heap guard page         | process heap a-la brk()/sbrk() with system oom checks.
              |_________________________|
