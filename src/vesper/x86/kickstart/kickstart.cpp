@@ -28,7 +28,7 @@ kernel /kickstart
 module /orb
   orb is vesper nucleus
 module /bootcomps
-  bootcomps is initfs style assembly of abovementioned servers
+  bootcomps is initfs style assembly of abovementioned servers including root_server.
 */
 #include "memutils.h"
 #include "multiboot.h"
