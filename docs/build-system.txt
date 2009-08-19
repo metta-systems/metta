@@ -26,19 +26,40 @@ Metta build sequence
 for every supported arch:
     build kernel support libs
     build bootloader
-    build initcp
     build kernel
-    build components
+    build boot_components
     build mkinitfs
     run mkinitfs to build initfs
     build userspace support libs
     build userspace apps
-    update arch-specific image using arch-specific update task
-
-
+    create arch-specific images using arch-specific update task
 
 Buildsystem: yggdrasil (ygg)
  - Qt4 with JSON parser for configs?
 
 DSL: similar to premake
+
+
+/build                      -- builds everything, mkinitfs, runs update tasks
++--vesper
+   +--x86
+      +--build              -- builds kickstart, orb
+      +--boot_components
+         +--build           -- builds boot_components
+
+
+Can refer to build root $B$ and source root $S$ easily.
+
+env('KERNEL_ENV', env_named('ENV').clone, # template env
+   'INCLUDE_DIR' = 'blablabla'
+)
+
+output('cxx', 'program',
+   env = env_named('KERNEL_ENV'),
+   target = '$B$/kickstart',
+   sources = find_sources('kickstart'),
+   includes = magic_includes('kickstart'),
+   libs = 'kernel_runtime'
+)
+
 
