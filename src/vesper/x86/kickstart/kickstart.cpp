@@ -17,12 +17,18 @@
   - enter paged mode,
 * activate startup servers
     * vm_server
+      - give vm_server current mapping situation and active memory map
+      - further allocations will go on from vm_server
     * scheduler
     * portal_manager
     * interrupt_dispatcher
     * trader
     * security_server
 * enter root_server
+  - root_server can then use virtual memory, threads etc
+* activate extra servers
+  - root filesystem mounter,
+  - hardware detector,
 
 */
 #include "memutils.h"
@@ -33,6 +39,7 @@
 #include "default_console.h"
 #include "elf_parser.h"
 #include "registers.h"
+#include "initfs.h"
 
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
@@ -58,7 +65,7 @@ extern "C" address_t initial_esp; // in loader.s
 * @todo Allocated stack pages are 1-1 mapped currently, but probably should be mapped
 * to some reserved stack area?
 */
-void remap_stack()
+static void remap_stack()
 {
     address_t old_stack_pointer = read_stack_pointer();
     address_t old_base_pointer  = read_base_pointer();
@@ -105,35 +112,23 @@ void kickstart(multiboot::header *mbh)
 
     multiboot mb(mbh);
 
-    ASSERT(mb.mod_count() == 3);
-    // Look at the beginning of passed in modules.
+    ASSERT(mb.mod_count() == 2);
 
     // For modules that are not compressed, map them into their corresponding space directly.
-    multiboot::modinfo *kernel = mb.mod(0); // kernel
-    multiboot::modinfo *initcp = mb.mod(1); // initcomp
-    multiboot::modinfo *initfs = mb.mod(2); // initfs
+    multiboot::modinfo *kernel = mb.mod(0); // orb
+    multiboot::modinfo *bootcp = mb.mod(1); // bootcomps
     ASSERT(kernel);
-    ASSERT(initcp);
-    ASSERT(initfs);
-
-    // For modules that are compressed, set up decompression area, unpack and set up mappings.
-    // (not used atm).
-    // FIXME: if we use entirely compressed image, we would waste memory to
-    // first uncompress the elf image and then to copy it to destination address.
-    // TODO: compress individual program sections (filesz will be compressed size and memsz - uncompressed, will need some crc to verify section correctness, so each compressed section will have a header { 4 bytes = magic, 4 bytes = crc }
-    //
+    ASSERT(bootcp);
 
     // Setup small pmm allocator.
     init_memmgr.adjust_alloced_start((address_t)&placement_address);
     init_memmgr.adjust_alloced_start(kernel->mod_end);
-    init_memmgr.adjust_alloced_start(initcp->mod_end);
-    init_memmgr.adjust_alloced_start(initfs->mod_end);
-    // now we can allocate extra pages from alloced_start using pmm_alloc_next_page()
+    init_memmgr.adjust_alloced_start(bootcp->mod_end);
+    // now we can allocate extra pages from alloced_start using alloc_next_page()
 
     kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
-                      << "Kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
-                      << "Initcp module at " << initcp->mod_start << ", end " << initcp->mod_end << endl
-                      << "Initfs module at " << initfs->mod_start << ", end " << initfs->mod_end << endl
+                      << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
+                      << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
 
     init_memmgr.setup_pagetables();
@@ -141,20 +136,18 @@ void kickstart(multiboot::header *mbh)
     unsigned int k;
 
     elf_parser elf;
-// TODO: map kernel to highmem
     elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr);
-    // load initcp last, because of implicit elf state in header_
-    // we will use it to jump to initcp entry point below.
-    elf.load_image(initcp->mod_start, initcp->mod_end - initcp->mod_start, &init_memmgr);
+    elf.load_image(bootcp->mod_start, bootcp->mod_end - bootcp->mod_start, &init_memmgr);
     // identity map start of initcp so we can access header_ from paging mode.
-    init_memmgr.mapping_enter(initcp->mod_start, initcp->mod_start);
+    init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
-    // Identity map initfs (we will load_image components from it later).
-    kconsole << endl << "Mapping initfs: ";
-    for (k = initfs->mod_start/PAGE_SIZE; k < page_align_up<address_t>(initfs->mod_end)/PAGE_SIZE; k++)
-    {
-        init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
-    }
+    // Identity map bootcp (we will load_image components from it later).
+//FIXME: load components here and now!
+//     kconsole << endl << "Mapping initfs: ";
+//     for (k = initfs->mod_start/PAGE_SIZE; k < page_align_up<address_t>(initfs->mod_end)/PAGE_SIZE; k++)
+//     {
+//         init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
+//     }
 
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KERNEL_BASE;
@@ -194,11 +187,52 @@ void kickstart(multiboot::header *mbh)
 
     init_memmgr.start_paging();
 
-    // jump to initcomp entry point linear address
-    typedef void (*initfunc)(multiboot::header *, boot_pmm_allocator *);
-    initfunc init = (initfunc)elf.get_entry_point();
-    kconsole << endl << "Jumping to " << elf.get_entry_point() << endl << endl;
-    init(mbh, &init_memmgr);
+/*!
+@brief Boot up the system - kernel and libOS.
+@ingroup Booting
+
+Stack mapping is set up for us in unpacker, but we might need a larger one.
+
+* initcp
+ - initcp expects cpu to be in paging mode with pagedir in highmem, kernel
+   mapped high and exception handlers set up in low mem - these will be relocated
+   and reinstated by interrupts component when it's loaded,
+ - verify required components are present in initfs (pmm, cpu, interrupts,
+   security manager, portal manager, object loader),
+ - instantiate/initialize components taking dependencies into account,
+ - enter preexisting pmm mappings into pmm component
+ - set up security contexts and permissions
+ - mount root filesystem
+ - boot other cpus if present,
+ - switch to usermode and continue execution in the init process,
+ - initcp is the first nester, that provides base Common Protocols components
+   and boots up other components such as:
+   - scheduler
+   - security server
+   - object (security) manager
+
+* component constructors
+ - run in kernel mode, have the ability to set up their system tables etcetc,
+*/
+    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+
+    kconsole << GREEN << "mb.lower_mem = " << mb.lower_mem() << endl
+    << "mb.upper_mem = " << mb.upper_mem() << endl;
+
+    kconsole << "need " << (address_t)bootcp << " mapped" << endl;
+    ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
+
+    initfs fs(bootcp->mod_start);
+    uint32_t i = 0;
+
+    while (i < fs.count())
+    {
+        kconsole << YELLOW << "initfs file " << fs.get_file_name(i) << " @ " << fs.get_file(i) << endl;
+        //         elf_image img(
+        i += 1;
+    }
+
+    while(1) {}
 
     /* Never reached */
     PANIC("init() returned!");

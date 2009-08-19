@@ -9,7 +9,7 @@ def build(bld):
     runtime.target = 'kernel_runtime'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp multiboot.cpp page_fault_handler.cpp interrupt_service_routine.cpp interrupt_descriptor_table.cpp interrupt.s'.split())
+    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp multiboot.cpp page_fault_handler.cpp interrupt_service_routine.cpp interrupt_descriptor_table.cpp interrupt.s initfs.cpp'.split())
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = '../../lib ../../runtime lib kickstart orb'

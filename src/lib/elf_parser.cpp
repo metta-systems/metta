@@ -56,7 +56,7 @@ bool elf_parser::load_image(address_t start, size_t size, boot_pmm_allocator *al
     if (h->version != EV_CURRENT)
         return false;
 
-    header_ = h; // FIXME this address is out of pagedir mapping
+    header_ = h;
 
     for (int i = 0; i < h->phnum; i++)
     {

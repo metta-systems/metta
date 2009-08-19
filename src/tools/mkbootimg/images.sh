@@ -2,7 +2,7 @@
 # Script taken from Pedigree and slightly modified
 
 IMAGEDIR=../../images
-BUILDDIR=../../_build_/x86-pc99-release/vesper
+BUILDDIR=../../_build_/x86-pc99-release
 
 # Create directory fd
 mkdir fd
@@ -18,9 +18,9 @@ mke2fs -F $IMAGEDIR/floppy.img
 sudo mount -oloop $IMAGEDIR/floppy.img fd
 mkdir -p fd/boot/grub
 cp menu.lst stage{1,2} fd/boot/grub
-cp $BUILDDIR/bootloader fd/kickstart
-cp $BUILDDIR/initcomp   fd/orb
-cp $BUILDDIR/initfs.img fd/bootcomps
+cp $BUILDDIR/vesper/x86/kickstart.bin fd/kickstart
+cp $BUILDDIR/vesper/x86/kickstart.bin fd/orb
+cp $BUILDDIR/initfs.img               fd/bootcomps
 sudo umount fd
 
 # Install grub
@@ -37,8 +37,8 @@ rmdir fd
 mkdir -p iso/boot/grub
 cp stage2_eltorito iso/boot/grub
 cp menu.lst.cd iso/boot/grub/menu.lst
-cp $BUILDDIR/bootloader iso/kickstart
-cp $BUILDDIR/initcomp   iso/orb
-cp $BUILDDIR/initfs.img iso/bootcomps
+cp $BUILDDIR/vesper/x86/kickstart.bin iso/kickstart
+cp $BUILDDIR/vesper/x86/kickstart.bin iso/orb
+cp $BUILDDIR/initfs.img               iso/bootcomps
 mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -o $IMAGEDIR/metta.iso iso
 rm -rf iso
