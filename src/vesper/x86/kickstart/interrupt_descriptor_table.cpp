@@ -5,7 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "interrupt_descriptor_table.h"
-#include "common.h"
+#include "asm_inlines.h"
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern "C"

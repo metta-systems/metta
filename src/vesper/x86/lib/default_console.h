@@ -6,8 +6,7 @@
 //
 #pragma once
 
-#include "macros.h" // for PANIC()
-#include "common.h" // for panic()
+#include "panic.h"
 
 // FIXME these defines poison global identifier space
 #define kconsole default_console::self()

@@ -41,7 +41,7 @@ static inline uint64_t rdtsc()
 {
     uint32_t upper, lower;
     asm volatile("rdtsc" : "=a"(lower), "=d"(upper));
-    return (upper << 32) | lower;
+    return ((uint64_t)upper << 32) | lower;
 }
 
 static inline void enable_interrupts(void)

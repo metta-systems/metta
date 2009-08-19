@@ -82,7 +82,7 @@ inline void gdt_entry_t::set_seg(uint32_t base, uint32_t limit, segtype_e type, 
     x.d.avl = 0;
 }
 
-inline void gdt_entry::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
+inline void gdt_entry_t::set_sys(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
     x.d.limit_low  =  limit        &   0xFFFF;
     x.d.limit_high = (limit >> 16) &     0xFF;

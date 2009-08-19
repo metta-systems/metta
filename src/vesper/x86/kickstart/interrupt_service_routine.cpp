@@ -7,7 +7,7 @@
 #include "default_console.h"
 #include "interrupt_service_routine.h"
 #include "interrupt_descriptor_table.h"
-#include "common.h"
+#include "asm_inlines.h"
 
 extern "C"
 {

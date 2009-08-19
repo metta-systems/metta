@@ -1,5 +1,5 @@
-/* Ensure everything goes in the right order. */
 /* This is x86 linker script. */
+/* Ensure everything goes in the right order. */
 ENTRY (loader)
 OUTPUT_FORMAT(elf32-i386)
 

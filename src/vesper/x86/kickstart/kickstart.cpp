@@ -24,11 +24,6 @@
     * security_server
 * enter root_server
 
-kernel /kickstart
-module /orb
-  orb is vesper nucleus
-module /bootcomps
-  bootcomps is initfs style assembly of abovementioned servers including root_server.
 */
 #include "memutils.h"
 #include "multiboot.h"
@@ -47,7 +42,7 @@ boot_pmm_allocator init_memmgr;
 interrupt_descriptor_table interrupts_table;
 
 extern "C" {
-    void setup_kernel(multiboot::header *mbh);
+    void kickstart(multiboot::header *mbh);
 
     address_t placement_address;
     address_t KERNEL_BASE;

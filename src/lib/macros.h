@@ -22,8 +22,6 @@
 // const function to return void.
 #define CONST_FN __attribute__((const))
 
-#define PANIC(msg) panic(msg, __FILE__, __LINE__);
-
 #ifdef UNIT_TESTS
 #define ASSERT(b) assert(b)
 #else

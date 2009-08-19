@@ -11,12 +11,12 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'vesper/x86/unpacker vesper/x86/kserver vesper/x86/nucleus lib runtime'.split()
+include_dirs = 'vesper/x86/kickstart vesper/x86/orb vesper/x86/lib lib runtime'.split()
 #archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-Os'] #FIXME: builddep
-cxxflags = cflags #+ ['-std=gnu++0x']
+cxxflags = cflags
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
 
@@ -46,6 +46,13 @@ def configure(conf):
     platform = Options.options.platform
     build = Options.options.build
 
+    # Define categories for building:
+    # * Base template environment. (ENV)
+    # * Kernel and bootstrap, with no external dependencies. (KERNEL_ENV)
+    # * Apps/servers running on target system, with possible kernel/boot deps. (APP_ENV)
+    # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
+    # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
+
     conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
@@ -54,17 +61,9 @@ def configure(conf):
     #conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
     conf.env.append_unique('NASM_FLAGS', ['-f elf'])
 
-
-    # TODO: Define categories for building:
-    # * Base template environment. (ENV)
-    # * Kernel and bootstrap, with no external dependencies. (KERNEL_ENV)
-    # * Apps/servers running on target system, with possible kernel/boot deps. (APP_ENV)
-    # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
-    # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
-
     conf.env['variant'] = arch + '-' + platform + '-' + build
 
-    # Template config for building
+    # Base template env
     conf.env.set_variant(conf.env['variant'])
     conf.set_env_name('ENV', conf.env)
     conf.setenv('ENV') # Activate the environment
@@ -80,21 +79,19 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.write_config_header('config.h')
 
+    # Copy template env to specific ones
+    conf.set_env_name('KERNEL_ENV', conf.env.copy())
+    conf.set_env_name('APP_ENV', conf.env.copy())
+    conf.set_env_name('TOOLS_ENV', conf.env.copy())
+    conf.set_env_name('TEST_ENV', conf.env.copy())
+
     # Config for running tests
-    conf.setenv('ENV') # Activate the environment
-    env = conf.env.copy() # Clone environment
-    env.set_variant(conf.env['variant'])
-    conf.set_env_name('TEST_ENV', env)
-    conf.setenv('TEST_ENV') # Activate the environment
+    conf.setenv('TEST_ENV')
     conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
     conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
     conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
 
     # Config for building kernel
-    conf.setenv('ENV') # Activate the environment
-    env = conf.env.copy() # Clone ENV
-    env.set_variant(conf.env['variant']) # Output to the same variant
-    conf.set_env_name('KERNEL_ENV', env)
     conf.setenv('KERNEL_ENV')
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split())
@@ -112,11 +109,27 @@ def build(bld):
     mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
     mustl.target = 'mustl'
 
-    bld.add_subdirs('vesper')
+    bld.add_subdirs('vesper/'+Options.options.arch)
+
+    mkinitfs = bld.new_task_gen('cxx', 'program')
+    mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
+    mkinitfs.env = bld.env_of_name('TOOLS_ENV').copy()
+    mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
+    mkinitfs.target = 'mkinitfs'
+
+    bld.new_task_gen(
+        source = 'mkinitfs vesper/x86/kickstart/component.lst',
+        target = 'initfs.img',
+        rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
+        name = 'initfs.img',
+        after = 'cxx_link'
+    )
 
 def shutdown():
     if Options.commands['build']:
-        Utils.exec_command("sh ./update_image.sh")
+        Utils.exec_command("sh tools/mkbootimg/images.sh")
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
