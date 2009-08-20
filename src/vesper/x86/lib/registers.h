@@ -15,12 +15,6 @@ extern "C"  address_t read_base_pointer();
 extern "C"  void write_stack_pointer(address_t ptr);
 extern "C"  void write_base_pointer(address_t ptr);
 
-extern "C"  address_t read_page_directory();
-extern "C"  void write_page_directory(address_t pageDirPhysical);
-extern "C"  void flush_page_directory(void);
-
-extern "C"  void enable_paging(void);
-
 // defined in schedule/critical_section.cpp
 extern "C" void critical_section();
 extern "C" void end_critical_section();

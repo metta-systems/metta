@@ -29,7 +29,7 @@ filebinio& operator << (filebinio& io, vector<char> stringtable)
     return io;
 }
 
-filebinio& operator << (filebinio& io, initfs::header& header)
+filebinio& operator << (filebinio& io, initfs_t::header_t& header)
 {
     io.write32le(header.magic);
     io.write32le(header.version);
@@ -40,7 +40,7 @@ filebinio& operator << (filebinio& io, initfs::header& header)
     return io;
 }
 
-filebinio& operator << (filebinio& io, initfs::entry& entry)
+filebinio& operator << (filebinio& io, initfs_t::entry_t& entry)
 {
     io.write32le(entry.magic);
     io.write32le(entry.name_offset);
@@ -85,8 +85,8 @@ int main(int argc, char** argv)
 
     uint32_t                   i;
     std::string                str;
-    initfs::header             header;
-    vector<initfs::entry>      entry;
+    initfs_t::header_t         header;
+    vector<initfs_t::entry_t>  entry;
     vector<char>               name_storage;
     int                        name_offset = 0;
     int                        data_offset = sizeof(header);
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
             out.write(buf, bytes);
             bytes = in_data.read(buf, 4096);
         }
-        entry.push_back(initfs::entry(stringtable_append(name_storage, right), data_offset, in_size));
+        entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
         data_offset += in_size;
     }
 

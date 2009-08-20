@@ -11,7 +11,7 @@
 
 * put kernel in place
   - set up minimal paging,
-  - map higher-half kernel to KERNEL_BASE,
+  - map higher-half kernel to K_SPACE_START,
 * init memory manager
   - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
   - enter paged mode,
@@ -48,6 +48,7 @@
 #include "elf_parser.h"
 #include "registers.h"
 #include "initfs.h"
+#include "mmu.h"
 
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
@@ -58,7 +59,7 @@ interrupt_descriptor_table_t interrupts_table;
 
 extern "C" void kickstart(multiboot::header* mbh);
 extern "C" address_t placement_address;
-extern "C" address_t KERNEL_BASE;
+extern "C" address_t KICKSTART_BASE;
 extern "C" address_t initial_esp; // in loader.s
 
 
@@ -84,7 +85,7 @@ static void remap_stack()
         init_memmgr.mapping_enter(p, p);
     }
 
-    flush_page_directory();
+    ia32_mmu_t::flush_page_directory();
 
     int       offset            = stack_page + stack_npages * PAGE_SIZE - initial_esp;
     address_t new_stack_pointer = old_stack_pointer + offset;
@@ -101,8 +102,7 @@ static void remap_stack()
 }
 
 typedef void (*ctorfn)();
-extern ctorfn start_ctors; // defined by linker
-extern ctorfn end_ctors;
+extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
 
 //! Unpack and prepare initcp.
 /*!
@@ -111,8 +111,8 @@ This part starts in protected mode, linear == physical, paging is off.
 void kickstart(multiboot::header* mbh)
 {
     // Run static constructors
-    for (ctorfn* ctor = &start_ctors; ctor; ctor++)
-        (*ctor)();
+    for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
+        ctors_GLOBAL[m]();
 
     multiboot mb(mbh);
 
@@ -129,7 +129,7 @@ void kickstart(multiboot::header* mbh)
     init_memmgr.adjust_alloced_start(bootcp->mod_end);
     // now we can allocate extra pages from alloced_start using alloc_next_page()
 
-    kconsole << WHITE << "We are loaded at " << (unsigned)&KERNEL_BASE << endl
+    kconsole << WHITE << "We are loaded at " << (unsigned)&KICKSTART_BASE << endl
                       << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
@@ -156,7 +156,7 @@ void kickstart(multiboot::header* mbh)
     }
 
     // Identity map currently executing code.
-    address_t ph_start = (address_t)&KERNEL_BASE;
+    address_t ph_start = (address_t)&KICKSTART_BASE;
     address_t ph_end   = page_align_up<address_t>((address_t)&placement_address); // one after end
     kconsole << endl << "Mapping loader: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
@@ -183,7 +183,7 @@ void kickstart(multiboot::header* mbh)
 
     kconsole << endl << "Mapped." << endl;
 
-    global_descriptor_table<> gdt;
+    global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
     interrupts_table.set_isr_handler(14, &page_fault_handler);
@@ -200,6 +200,8 @@ void kickstart(multiboot::header* mbh)
 
     kconsole << "need " << (address_t)bootcp << " mapped" << endl;
     ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
+
+    *((char*)0) = 'b';
 
     /* Never reached */
     PANIC("init() returned!");

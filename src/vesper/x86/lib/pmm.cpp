@@ -11,8 +11,8 @@
 */
 #include "memory.h"
 #include "default_console.h"
-#include "registers.h"
 #include "minmax.h"
+#include "mmu.h"
 
 void boot_pmm_allocator::setup_pagetables()
 {
@@ -34,10 +34,9 @@ void boot_pmm_allocator::start_paging()
     kernelpagedir[0] = (address_t)lowpagetable | 0x3;
     kernelpagedir[768] = (address_t)highpagetable | 0x3;
 
-    // enable paging
-    write_page_directory((address_t)kernelpagedir);
-    kconsole << "Set CR3." << endl;
-    enable_paging(); // from registers.s
+    ia32_mmu_t::set_active_pagetable((address_t)kernelpagedir);
+    ia32_mmu_t::enable_paged_mode();
+
     kconsole << "Enabled paging." << endl;
 }
 
@@ -67,7 +66,7 @@ address_t *boot_pmm_allocator::select_pagetable(address_t vaddr)
 void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr)
 {
     address_t *pagetable = select_pagetable(vaddr);
-    kconsole << "Entering mapping " << vaddr << " => " << paddr << endl;
+//     kconsole << "Entering mapping " << vaddr << " => " << paddr << endl;
     pagetable[vaddr / PAGE_SIZE] = paddr | 0x3;
 }
 

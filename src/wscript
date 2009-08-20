@@ -129,23 +129,23 @@ def build(bld):
     )
 
     # Replacement for images.sh
-    def myfunc(self);
-        print self.generator.mycwd
-        top = self.path.find_dir(self.generator.mycwd)
-        for x in self.inputs:
-            print x.relpath_gen(top)
+    #def myfunc(self);
+        #print self.generator.mycwd
+        #top = self.path.find_dir(self.generator.mycwd)
+        #for x in self.inputs:
+            #print x.relpath_gen(top)
 
-        return Utils.exec_command(["ls", "-l"], cwd=self.generator.mycwd)
+        #return Utils.exec_command(["ls", "-l"], cwd=self.generator.mycwd)
 
-    bld.new_task_gen(
-        source = 'a.c b.c',
-        target = 'mytarget',
-        rule = myfunc,
-        mycwd = '/usr/lib')
+    #bld.new_task_gen(
+        #source = 'a.c b.c',
+        #target = 'mytarget',
+        #rule = myfunc,
+        #mycwd = '/usr/lib')
 
-def shutdown():
-    if Options.commands['build']:
-        Utils.exec_command("sh tools/mkbootimg/images.sh")
+#def shutdown():
+    #if Options.commands['build']:
+        #Utils.exec_command("sh tools/mkbootimg/images.sh")
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

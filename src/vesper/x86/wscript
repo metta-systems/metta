@@ -3,16 +3,16 @@
 
 def build(bld):
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp lib/default_console.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp lib/pmm.cpp lib/registers.s'.split()
+    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp lib/default_console.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp lib/pmm.cpp lib/registers.s lib/idt.cpp'.split()
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
-    runtime.includes = '../../lib ../../runtime lib'
+    runtime.includes = '. ../../lib ../../runtime lib'
     runtime.target = 'kernel_runtime'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp multiboot.cpp page_fault_handler.cpp interrupt_service_routine.cpp interrupt_descriptor_table.cpp interrupt.s initfs.cpp'.split())
+    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp multiboot.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp'.split())
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
-    kickstart.includes = '../../lib ../../runtime lib kickstart orb'
+    kickstart.includes = '. ../../lib ../../runtime lib kickstart orb'
     kickstart.target = 'kickstart.bin'
     kickstart.uselib_local = 'kernel_runtime'
 

@@ -4,9 +4,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "asm_inlines.h"
 #include "default_console.h"
 #include "page_fault_handler.h"
+#include "mmu.h"
 
 /*!
 @internal
@@ -16,13 +16,11 @@ static bool test_flag(int flag, int mask)
     return (flag & mask) ? true : false;
 }
 
+// A page fault has occurred.
 // Interrupts are disabled upon entry to run()
 void page_fault_handler_t::run(registers_t* r)
 {
-    // A page fault has occurred.
-    // The faulting address is stored in the CR2 register.
-    uint32_t faulting_address;
-    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+    address_t faulting_address = ia32_mmu_t::get_pagefault_address();
 
     // The error code gives us details of what happened.
     bool present  = test_flag(r->err_code, 0x01); // Page present?

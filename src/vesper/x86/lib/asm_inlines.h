@@ -39,9 +39,9 @@ static inline uint16_t inw(uint16_t port)
 
 static inline uint64_t rdtsc()
 {
-    uint32_t upper, lower;
-    asm volatile("rdtsc" : "=a"(lower), "=d"(upper));
-    return ((uint64_t)upper << 32) | lower;
+    uint64_t ret;
+    asm volatile("rdtsc" : "=A"(ret));
+    return ret;
 }
 
 static inline void enable_interrupts(void)
@@ -52,6 +52,26 @@ static inline void enable_interrupts(void)
 static inline void disable_interrupts(void)
 {
     asm volatile ("cli");
+}
+
+static inline address_t read_page_directory() // FIXME: use ia32_mmu_t
+{
+    uint32_t ret;
+    asm volatile ("movl %%cr3, %0" : "=r"(ret));
+    return ret;
+}
+
+static inline void flush_page_directory(void) // FIXME: use ia32_mmu_t
+{
+    asm volatile ("movl %%cr3, %%eax\n\t"
+                  "movl %%eax, %%cr3\n");
+}
+
+static inline void enable_paging(void) // FIXME: use ia32_mmu_t
+{
+    asm volatile ("movl %%cr0, %%eax\n\t"
+    "orl $0x80000000, %%eax\n\t"
+    "movl %%eax, %%cr0");
 }
 
 

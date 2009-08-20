@@ -9,10 +9,9 @@
 ; this file only contains several boot-helpers in assembly.
 ;
 global loader                          ; making entry point visible to linker
-global activate_gdt
 global initial_esp
 extern kickstart
-extern KERNEL_BASE
+extern KICKSTART_BASE
 extern data_end
 extern bss_end
 
@@ -37,7 +36,7 @@ multiboot_header:
     dd FLAGS
     dd CHECKSUM
     dd multiboot_header
-    dd KERNEL_BASE
+    dd KICKSTART_BASE
     dd data_end                        ; set load_end_addr == 0 to load whole bootloader
     dd bss_end
     dd loader
@@ -57,19 +56,6 @@ loader:
 
     cli
     jmp short $                        ; halt machine should startup code return
-
-activate_gdt:
-    mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
-    lgdt [eax]        ; Load the new GDT pointer
-    jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
-.flush:
-    mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
-    mov ds, ax        ; Load all data segment selectors
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    ret
 
 ; kate: indent-width 4; replace-tabs on;
 ; vim: set et sw=4 ts=4 sts=4 cino=(4 :

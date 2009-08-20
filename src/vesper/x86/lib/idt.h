@@ -69,7 +69,7 @@ class interrupt_service_routine_t;
 class interrupt_descriptor_table_t
 {
 public:
-    inline interrupt_descriptor_table()
+    inline interrupt_descriptor_table_t()
     {
         // FIXME: use memset()
         for (int i = 0; i < 256; i++)
@@ -79,18 +79,18 @@ public:
     void install(); // called from kernel::run()
 
     // Generic interrupt service routines.
-    inline void set_isr_handler(int isr_num, interrupt_service_routine* isr)
+    inline void set_isr_handler(int isr_num, interrupt_service_routine_t* isr)
     {
         interrupt_routines[isr_num] = isr;
     }
 
-    // Hardware interrupt requests routines. (FIXME: archdep)
-    inline void set_irq_handler(int irq, interrupt_service_routine* isr)
+    // Hardware interrupt requests routines.
+    inline void set_irq_handler(int irq, interrupt_service_routine_t* isr)
     {
         interrupt_routines[irq+32] = isr;
     }
 
-    inline interrupt_service_routine* get_isr(int isr_num)
+    inline interrupt_service_routine_t* get_isr(int isr_num)
     {
         return interrupt_routines[isr_num];
     }

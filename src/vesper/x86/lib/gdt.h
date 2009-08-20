@@ -7,7 +7,7 @@
 #pragma once
 
 #include "types.h"
-// #include "macros.h"
+#include "config.h"
 
 class gdt_entry_t
 {
@@ -29,7 +29,7 @@ private:
         uint32_t raw[2];
         struct {
             uint32_t limit_low  : 16;
-            uint32_t base_low   : 24;
+            uint32_t base_low   : 24 PACKED;
             uint32_t type       :  4;
             uint32_t s          :  1;
             uint32_t dpl        :  2;
@@ -101,34 +101,48 @@ inline void gdt_entry_t::set_sys(uint32_t base, uint32_t limit, segtype_e type, 
     x.d.avl = 0;
 }
 
-extern "C" void activate_gdt(address_t gdtr);
-
-template <int n_entries = 5>
-class global_descriptor_table
+class global_descriptor_table_t
 {
 public:
-    inline global_descriptor_table()
+    inline global_descriptor_table_t()
     {
         setup_standard_entries();
 
         limit = sizeof(entries)-1;
         base = (address_t)&entries;
 
-        activate_gdt((address_t)this); //&limit
+        install();
+    }
+    inline int idx(int sel)
+    {
+        return sel >> 3;
     }
     inline void setup_standard_entries()
     {
-        entries[0].set_null();                                 // null
-        entries[1].set_seg(0, 0xFFFFFFFF, gdt_entry_t::code, 0); // ring0 CS
-        entries[2].set_seg(0, 0xFFFFFFFF, gdt_entry_t::data, 0); // ring0 DS
-        entries[3].set_seg(0, 0xFFFFFFFF, gdt_entry_t::code, 3); // ring3 CS
-        entries[4].set_seg(0, 0xFFFFFFFF, gdt_entry_t::data, 3); // ring3 DS
+        entries[0].set_null();
+        entries[idx(KERNEL_CS)].set_seg(0, ~0, gdt_entry_t::code, 0);
+        entries[idx(KERNEL_DS)].set_seg(0, ~0, gdt_entry_t::data, 0);
+        entries[idx(USER_CS)].set_seg(0, ~0, gdt_entry_t::code, 3);
+        entries[idx(USER_DS)].set_seg(0, ~0, gdt_entry_t::data, 3);
+    }
+    inline void install()
+    {
+        asm volatile("lgdtl %0\n\t"
+        "ljmp %1, $reload_segments\n\t"
+        "reload_segments:\n\t"
+        "movl %2, %%eax\n\t"
+        "movl %%eax, %%ds\n\t"
+        "movl %%eax, %%es\n\t"
+        "movl %%eax, %%fs\n\t"
+        "movl %%eax, %%gs\n\t"
+        "movl %%eax, %%ss"
+        :: "m"(*this), "i"(KERNEL_CS), "i"(KERNEL_DS));
     }
 
 private:
     uint16_t  limit PACKED;
     uint32_t  base  PACKED;
-    gdt_entry_t entries[n_entries];
+    gdt_entry_t entries[5];
 };
 
 // kate: indent-width 4; replace-tabs on;
