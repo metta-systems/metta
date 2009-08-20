@@ -2,8 +2,14 @@
 #include "macros.h"
 #include "default_console.h"
 
+typedef void (*ctorfn)();
+extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
+
+// Run static constructors for kernel.
 extern "C" void entry()
 {
+    for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
+        ctors_GLOBAL[m]();
 }
 
 namespace nucleus

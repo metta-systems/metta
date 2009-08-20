@@ -19,9 +19,10 @@ SECTIONS
 
     .data ALIGN(PAGE_SIZE) : AT(ADDR(.data) - K_SPACE_START)
     {
-        start_ctors = .;
+        /* global static initializers */
+        ctors_GLOBAL = .;
         *(SORT(.ctor*))
-        end_ctors = .;
+        QUAD(0)
         *(.data)
         FILL(0x00)
     }
