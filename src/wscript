@@ -128,24 +128,15 @@ def build(bld):
         after = 'cxx_link'
     )
 
-    # Replacement for images.sh
-    #def myfunc(self);
-        #print self.generator.mycwd
-        #top = self.path.find_dir(self.generator.mycwd)
-        #for x in self.inputs:
-            #print x.relpath_gen(top)
+    def mkimages(self):
+        return Utils.exec_command(["./images.sh"], cwd=self.generator.mycwd.abspath())
 
-        #return Utils.exec_command(["ls", "-l"], cwd=self.generator.mycwd)
-
-    #bld.new_task_gen(
-        #source = 'a.c b.c',
-        #target = 'mytarget',
-        #rule = myfunc,
-        #mycwd = '/usr/lib')
-
-#def shutdown():
-    #if Options.commands['build']:
-        #Utils.exec_command("sh tools/mkbootimg/images.sh")
+    bld.new_task_gen(
+        #source = bld.path.ant_glob('**/*.img', bld=1, src=0, dir=0, flat=True)
+        source = 'vesper/x86/kickstart.bin vesper/x86/orb.bin initfs.img tools/mkbootimg/images.sh',
+        target = 'floppy.img',
+        rule = mkimages,
+        mycwd = bld.path.find_dir('tools/mkbootimg'))
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
