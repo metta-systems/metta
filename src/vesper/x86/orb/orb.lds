@@ -8,7 +8,8 @@ SECTIONS
     K_SPACE_START = 0xF0000000;
     PAGE_SIZE = 4K;
 
-    .text K_SPACE_START ALIGN(PAGE_SIZE) : AT(ADDR(.text) - K_SPACE_START)
+    . = K_SPACE_START;
+    .text ALIGN(PAGE_SIZE) : AT(ADDR(.text) - K_SPACE_START)
     {
         *(.kernel_infopage)
         *(.text)
@@ -16,7 +17,7 @@ SECTIONS
     }
     text_end = .;
 
-    .data . ALIGN(PAGE_SIZE) : AT(ADDR(.data) - K_SPACE_START)
+    .data ALIGN(PAGE_SIZE) : AT(ADDR(.data) - K_SPACE_START)
     {
         start_ctors = .;
         *(SORT(.ctor*))
@@ -26,7 +27,7 @@ SECTIONS
     }
     data_end = .;
 
-    .bss . ALIGN (PAGE_SIZE) : AT(ADDR(.bss) - K_SPACE_START)
+    .bss ALIGN (PAGE_SIZE) : AT(ADDR(.bss) - K_SPACE_START)
     {
         *(COMMON*)
         *(.bss*)

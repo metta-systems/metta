@@ -9,6 +9,7 @@
 #include "memutils.h"
 #include "memory.h"
 #include "minmax.h"
+// #include "debugger.h"
 
 using namespace elf32;
 
@@ -43,18 +44,19 @@ bool elf_parser::load_image(address_t start, size_t size, boot_pmm_allocator *al
 {
     header* h = reinterpret_cast<header*>(start);
 
-    if (h->magic != ELF_MAGIC)
-        return false;
-    if (h->elfclass != ELF_CLASS_32)
-        return false;
-    if (h->data != ELF_DATA_2LSB)
-        return false;
-    if (h->type != ET_EXEC)
-        return false;
-    if (h->machine != EM_386)
-        return false;
-    if (h->version != EV_CURRENT)
-        return false;
+//     debugger_t::dump_memory(start, 128);
+#define ERROR_RETURN_ON(x) \
+if (x) { \
+    kconsole << RED << #x <<endl; \
+    return false; \
+}
+
+    ERROR_RETURN_ON(h->magic != ELF_MAGIC)
+    ERROR_RETURN_ON(h->elfclass != ELF_CLASS_32)
+    ERROR_RETURN_ON(h->data != ELF_DATA_2LSB)
+    ERROR_RETURN_ON(h->type != ET_EXEC)
+    ERROR_RETURN_ON(h->machine != EM_386)
+    ERROR_RETURN_ON(h->version != EV_CURRENT)
 
     header_ = h;
 

@@ -139,8 +139,15 @@ void kickstart(multiboot::header* mbh)
     unsigned int k;
 
     elf_parser elf;
-    elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr);
-    elf.load_image(bootcp->mod_start, bootcp->mod_end - bootcp->mod_start, &init_memmgr);
+    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr))
+        kconsole << RED << "kernel NOT loaded (bad)" << endl;
+    else
+        kconsole << GREEN << "kernel loaded (ok)" << endl;
+    if (!elf.load_image(bootcp->mod_start, bootcp->mod_end - bootcp->mod_start, &init_memmgr))
+        kconsole << GREEN << "bootcp not an ELF file (ok)" << endl;
+    else
+        kconsole << RED << "bootcp is an ELF file (bad)" << endl;
+
     // identity map start of initcp so we can access header_ from paging mode.
     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
@@ -151,7 +158,8 @@ void kickstart(multiboot::header* mbh)
     while (i < initfs.count())
     {
         kconsole << YELLOW << "initfs file " << initfs.get_file_name(i) << " @ " << initfs.get_file(i) << endl;
-        elf.load_image(initfs.get_file(i), initfs.get_file_size(i), &init_memmgr);
+        if (!elf.load_image(initfs.get_file(i), initfs.get_file_size(i), &init_memmgr))
+            kconsole << RED << "not an ELF file, load failed" << endl;
         i += 1;
     }
 
@@ -192,6 +200,12 @@ void kickstart(multiboot::header* mbh)
     remap_stack();
 
     init_memmgr.start_paging();
+
+    /// here we have paging enabled and can call kernel functions
+    /// start by creating PDs for boot_components and load them in their PDs
+    /// fill in startup portals code
+
+    /// call vm_server.init(mbh->mmap, current_pdir)
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
