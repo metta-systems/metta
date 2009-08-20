@@ -6,26 +6,18 @@
 //
 #include "initfs.h"
 
-initfs::initfs(address_t s) : start((header*)s), entries((entry*)(s + ((header*)s)->index_offset))
+initfs_t::initfs_t(address_t s)
+    : start((header_t*)s)
+    , entries((entry_t*)(s + ((header_t*)s)->index_offset))
 {
 }
 
-bool initfs::valid()
+bool initfs_t::valid()
 {
-    return true;
+    return start->magic == FOURCC_MAGIC('I','i','f','S') and start->version == 2;
 }
 
-/*address_t initfs::get_file(string spec)
-{
-    for (int i = 0; i < start->count; i++)
-    {*/
-//         if (strncmp())
-//             return (address_t)start + entries[i]->location;
-//     }
-//     return 0; // not found
-// }
-
-address_t initfs::get_file(uint32_t num)
+address_t initfs_t::get_file(uint32_t num)
 {
     if (num >= count())
         return 0;
@@ -33,7 +25,7 @@ address_t initfs::get_file(uint32_t num)
     return (address_t)start + entries[num].location;
 }
 
-const char* initfs::get_file_name(uint32_t num)
+const char* initfs_t::get_file_name(uint32_t num)
 {
     if (num >= count())
         return 0;
@@ -41,7 +33,15 @@ const char* initfs::get_file_name(uint32_t num)
     return (const char*)start + entries[num].name_offset;
 }
 
-uint32_t initfs::count()
+uint32_t initfs_t::get_file_size(uint32_t num)
+{
+    if (num >= count())
+        return 0;
+
+    return entries[num].size;
+}
+
+uint32_t initfs_t::count()
 {
     return start->count;
 }

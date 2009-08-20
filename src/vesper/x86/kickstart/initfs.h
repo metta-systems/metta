@@ -30,10 +30,10 @@ initfs file consists of four areas: the header, data area, names area and the in
 
 the header contains information about loadable areas - data, names and index.
 */
-class initfs
+class initfs_t
 {
 public:
-    explicit initfs(address_t start);
+    explicit initfs_t(address_t start);
 //     address_t get_file(string spec);
 
     /*! Silly iterator interface
@@ -41,11 +41,12 @@ public:
      */
     address_t get_file(uint32_t num);
     const char* get_file_name(uint32_t num);
+    uint32_t get_file_size(uint32_t num);
     uint32_t count();
 
     bool valid();
 
-    struct header
+    struct header_t
     {
         uint32_t magic;        //!< contains header magic value 'IifS'
         uint32_t version;      //!< contains initfs format version, currently 2
@@ -54,7 +55,7 @@ public:
         uint32_t names_size;   //!< size of names area (unaligned)
         uint32_t count;        //!< count of index entries
 
-        header()
+        header_t()
             : magic(FOURCC_MAGIC('I','i','f','S'))
             , version(2)
             , index_offset(0)
@@ -64,14 +65,14 @@ public:
         {}
     };
 
-    struct entry
+    struct entry_t
     {
         uint32_t magic;
         uint32_t name_offset;
         uint32_t location;
         uint32_t size;
 
-        entry(uint32_t name_offset_ = 0, uint32_t location_ = 0, uint32_t size_ = 0)
+        entry_t(uint32_t name_offset_ = 0, uint32_t location_ = 0, uint32_t size_ = 0)
             : magic(FOURCC_MAGIC('F','E','n','t'))
             , name_offset(name_offset_)
             , location(location_)
@@ -80,8 +81,8 @@ public:
     };
 
 private:
-    header* start;
-    entry*  entries;
+    header_t* start;
+    entry_t*  entries;
 };
 
 // kate: indent-width 4; replace-tabs on;

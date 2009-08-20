@@ -6,14 +6,14 @@
 //
 #pragma once
 
-#include "interrupt_service_routine.h"
+#include "isr.h"
 
-class page_fault_handler : public interrupt_service_routine
+class page_fault_handler_t : public interrupt_service_routine_t
 {
 public:
-    page_fault_handler() : interrupt_service_routine() {}
+    page_fault_handler_t() : interrupt_service_routine_t() {}
 
-    virtual void run(registers *r);
+    virtual void run(registers_t* r);
 };
 
 // kate: indent-width 4; replace-tabs on;

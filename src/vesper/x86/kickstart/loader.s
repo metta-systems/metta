@@ -10,7 +10,6 @@
 ;
 global loader                          ; making entry point visible to linker
 global activate_gdt
-global activate_idt
 global initial_esp
 extern kickstart
 extern KERNEL_BASE
@@ -70,11 +69,6 @@ activate_gdt:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    ret
-
-activate_idt:
-    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter.
-    lidt [eax]        ; Load the IDT pointer.
     ret
 
 ; kate: indent-width 4; replace-tabs on;

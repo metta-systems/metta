@@ -10,6 +10,10 @@ Minimal supervisor-mode nucleus, responsible for little more than context switch
 */
 class nucleus_t
 {
+public:
+    void enter_trap(int portal_no); // called from assembler glue code to process client trap and call corresponding portal
+    void create_pd(); // portal to create new address space and assign it to a pd
+    void destroy_pd();
 private:
     vector_base<pd_t> spaces;
 };

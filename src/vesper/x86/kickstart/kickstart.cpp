@@ -16,6 +16,7 @@
   - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
   - enter paged mode,
 * activate startup servers
+  - component constructors run in kernel mode, have the ability to set up their system tables etcetc,
     * vm_server
       - give vm_server current mapping situation and active memory map
       - further allocations will go on from vm_server
@@ -26,16 +27,23 @@
     * security_server
 * enter root_server
   - root_server can then use virtual memory, threads etc
+  - root_server expects cpu to be in paging mode with pagedir in highmem, kernel
+  mapped high and exception handlers set up in low mem - these will be relocated
+  and reinstated by interrupts component when it's loaded,
+  - verify required components are present in initfs (pmm, cpu, interrupts,
+  security manager, portal manager, object loader),
+  - set up security contexts and permissions
+  - boot other cpus if present,
+  - switch to usermode and continue execution in the init process,
 * activate extra servers
   - root filesystem mounter,
   - hardware detector,
-
 */
 #include "memutils.h"
 #include "multiboot.h"
 #include "memory.h" // boot_pmm_allocator
-#include "global_descriptor_table.h" // gdt
-#include "interrupt_descriptor_table.h" // idt
+#include "gdt.h" // gdt
+#include "idt.h" // idt
 #include "default_console.h"
 #include "elf_parser.h"
 #include "registers.h"
@@ -43,18 +51,14 @@
 
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
-page_fault_handler page_fault_handler_;
+page_fault_handler_t page_fault_handler;
 //}
 boot_pmm_allocator init_memmgr;
-interrupt_descriptor_table interrupts_table;
+interrupt_descriptor_table_t interrupts_table;
 
-extern "C" {
-    void kickstart(multiboot::header *mbh);
-
-    address_t placement_address;
-    address_t KERNEL_BASE;
-}
-
+extern "C" void kickstart(multiboot::header* mbh);
+extern "C" address_t placement_address;
+extern "C" address_t KERNEL_BASE;
 extern "C" address_t initial_esp; // in loader.s
 
 
@@ -104,19 +108,18 @@ extern ctorfn end_ctors;
 /*!
 This part starts in protected mode, linear == physical, paging is off.
 */
-void kickstart(multiboot::header *mbh)
+void kickstart(multiboot::header* mbh)
 {
-    // run static ctors
-    for (ctorfn* ctor = &start_ctors; ctor < &end_ctors; ctor++)
+    // Run static constructors
+    for (ctorfn* ctor = &start_ctors; ctor; ctor++)
         (*ctor)();
 
     multiboot mb(mbh);
 
     ASSERT(mb.mod_count() == 2);
 
-    // For modules that are not compressed, map them into their corresponding space directly.
-    multiboot::modinfo *kernel = mb.mod(0); // orb
-    multiboot::modinfo *bootcp = mb.mod(1); // bootcomps
+    multiboot::modinfo* kernel = mb.mod(0); // orb
+    multiboot::modinfo* bootcp = mb.mod(1); // bootcomps
     ASSERT(kernel);
     ASSERT(bootcp);
 
@@ -141,13 +144,16 @@ void kickstart(multiboot::header *mbh)
     // identity map start of initcp so we can access header_ from paging mode.
     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
-    // Identity map bootcp (we will load_image components from it later).
-//FIXME: load components here and now!
-//     kconsole << endl << "Mapping initfs: ";
-//     for (k = initfs->mod_start/PAGE_SIZE; k < page_align_up<address_t>(initfs->mod_end)/PAGE_SIZE; k++)
-//     {
-//         init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
-//     }
+    // Load components from bootcp.
+    initfs_t initfs(bootcp->mod_start);
+    uint32_t i = 0;
+
+    while (i < initfs.count())
+    {
+        kconsole << YELLOW << "initfs file " << initfs.get_file_name(i) << " @ " << initfs.get_file(i) << endl;
+        elf.load_image(initfs.get_file(i), initfs.get_file_size(i), &init_memmgr);
+        i += 1;
+    }
 
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KERNEL_BASE;
@@ -180,40 +186,13 @@ void kickstart(multiboot::header *mbh)
     global_descriptor_table<> gdt;
     kconsole << "Created gdt." << endl;
 
-    interrupts_table.set_isr_handler(14, &page_fault_handler_);
+    interrupts_table.set_isr_handler(14, &page_fault_handler);
     interrupts_table.install();
 
     remap_stack();
 
     init_memmgr.start_paging();
 
-/*!
-@brief Boot up the system - kernel and libOS.
-@ingroup Booting
-
-Stack mapping is set up for us in unpacker, but we might need a larger one.
-
-* initcp
- - initcp expects cpu to be in paging mode with pagedir in highmem, kernel
-   mapped high and exception handlers set up in low mem - these will be relocated
-   and reinstated by interrupts component when it's loaded,
- - verify required components are present in initfs (pmm, cpu, interrupts,
-   security manager, portal manager, object loader),
- - instantiate/initialize components taking dependencies into account,
- - enter preexisting pmm mappings into pmm component
- - set up security contexts and permissions
- - mount root filesystem
- - boot other cpus if present,
- - switch to usermode and continue execution in the init process,
- - initcp is the first nester, that provides base Common Protocols components
-   and boots up other components such as:
-   - scheduler
-   - security server
-   - object (security) manager
-
-* component constructors
- - run in kernel mode, have the ability to set up their system tables etcetc,
-*/
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
     kconsole << GREEN << "mb.lower_mem = " << mb.lower_mem() << endl
@@ -221,18 +200,6 @@ Stack mapping is set up for us in unpacker, but we might need a larger one.
 
     kconsole << "need " << (address_t)bootcp << " mapped" << endl;
     ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
-
-    initfs fs(bootcp->mod_start);
-    uint32_t i = 0;
-
-    while (i < fs.count())
-    {
-        kconsole << YELLOW << "initfs file " << fs.get_file_name(i) << " @ " << fs.get_file(i) << endl;
-        //         elf_image img(
-        i += 1;
-    }
-
-    while(1) {}
 
     /* Never reached */
     PANIC("init() returned!");

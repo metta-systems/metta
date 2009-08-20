@@ -1,34 +1,32 @@
-/* Ensure everything goes in the right order. */
 /* This is x86 linker script. */
-ENTRY (entry)
+/* Ensure everything goes in the right order. */
+ENTRY(entry)
 OUTPUT_FORMAT(elf32-i386)
 
 SECTIONS
 {
     K_SPACE_START = 0xF0000000;
-    PAGE_SIZE = 0x1000;
+    PAGE_SIZE = 4K;
 
-    . = K_SPACE_START;
-    .text ALIGN (PAGE_SIZE) :
+    .text K_SPACE_START ALIGN(PAGE_SIZE) : AT(ADDR(.text) - K_SPACE_START)
     {
         *(.kernel_infopage)
         *(.text)
-        FILL(0x90)
+        *(.rodata*)
     }
     text_end = .;
 
-    .data ALIGN (PAGE_SIZE) :
+    .data . ALIGN(PAGE_SIZE) : AT(ADDR(.data) - K_SPACE_START)
     {
         start_ctors = .;
-        *(.ctor*)
+        *(SORT(.ctor*))
         end_ctors = .;
         *(.data)
-        *(.rodata*)
         FILL(0x00)
     }
     data_end = .;
 
-    .bss ALIGN (PAGE_SIZE) :
+    .bss . ALIGN (PAGE_SIZE) : AT(ADDR(.bss) - K_SPACE_START)
     {
         *(COMMON*)
         *(.bss*)

@@ -76,6 +76,7 @@ def configure(conf):
     conf.define('PLATFORM', platform)
     conf.define('BUILD', build)
     conf.define('CONFIG_INLINING', 1)
+    conf.define('CONFIG_DEBUG_SYMBOLS', 1)
     conf.define('HEAP_DEBUG', 1)
     conf.write_config_header('config.h')
 
@@ -126,6 +127,21 @@ def build(bld):
         name = 'initfs.img',
         after = 'cxx_link'
     )
+
+    # Replacement for images.sh
+    def myfunc(self);
+        print self.generator.mycwd
+        top = self.path.find_dir(self.generator.mycwd)
+        for x in self.inputs:
+            print x.relpath_gen(top)
+
+        return Utils.exec_command(["ls", "-l"], cwd=self.generator.mycwd)
+
+    bld.new_task_gen(
+        source = 'a.c b.c',
+        target = 'mytarget',
+        rule = myfunc,
+        mycwd = '/usr/lib')
 
 def shutdown():
     if Options.commands['build']:

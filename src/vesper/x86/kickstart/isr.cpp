@@ -4,15 +4,17 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+// TODO: this will go into interrupt_dispatcher
+//
 #include "default_console.h"
-#include "interrupt_service_routine.h"
-#include "interrupt_descriptor_table.h"
+#include "isr.h"
+#include "idt.h"
 #include "asm_inlines.h"
 
 extern "C"
 {
-    void isr_handler(registers regs);
-    void irq_handler(registers regs);
+    void isr_handler(registers_t regs);
+    void irq_handler(registers_t regs);
 }
 
 /*!
@@ -21,11 +23,11 @@ extern "C"
 * It gets called from our asm interrupt handler stub.
 * TODO: implement handling from usermode.
 */
-void isr_handler(registers regs)
+void isr_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received interrupt: " << regs.int_no << endl;
 
-    interrupt_service_routine* isr = interrupts_table.get_isr(regs.int_no);
+    interrupt_service_routine_t* isr = interrupts_table.get_isr(regs.int_no);
     if (isr)
     {
         isr->run(&regs);
@@ -40,11 +42,11 @@ void isr_handler(registers regs)
 * This is architecture specific!
 * It gets called from our asm hardware interrupt handler stub.
 */
-void irq_handler(registers regs)
+void irq_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received irq: " << regs.int_no-32 << endl;
 
-    interrupt_service_routine* isr = interrupts_table.get_isr(regs.int_no);
+    interrupt_service_routine_t* isr = interrupts_table.get_isr(regs.int_no);
     if (isr)
     {
         isr->run(&regs);
@@ -57,7 +59,7 @@ void irq_handler(registers regs)
         // Send reset signal to slave.
         outb(0xA0, 0x20);
     }
-    // Send reset signal to master. (As well as slave, if necessary).
+    // Send reset signal to master.
     outb(0x20, 0x20);
 }
 

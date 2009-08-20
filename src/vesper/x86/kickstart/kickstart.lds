@@ -8,8 +8,7 @@ SECTIONS
     KICKSTART_BASE = 0x100000;
     PAGE_SIZE = 0x1000;
 
-    . = KICKSTART_BASE;
-    .text ALIGN (4) :
+    .text KICKSTART_BASE ALIGN (4) :
     {
         *(.multiboot_info)
         *(.text)
@@ -20,9 +19,10 @@ SECTIONS
 
     .data ALIGN (4) :
     {
+        /* global static initializers */
         start_ctors = .;
         *(.ctor*)
-        end_ctors = .;
+        QUAD(0)
         *(.data)
         FILL(0x00)
     }

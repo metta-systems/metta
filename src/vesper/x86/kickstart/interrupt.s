@@ -4,7 +4,7 @@
 ; Distributed under the Boost Software License, Version 1.0.
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 ;
-extern isr_handler    ; in interrupt_service_routine.cpp
+extern isr_handler    ; in isr.cpp
 extern irq_handler
 
 %macro ISR_NOERRCODE 1
@@ -85,8 +85,10 @@ IRQ  13,    45
 IRQ  14,    46
 IRQ  15,    47
 
+%define KERNEL_DS 0x10
+
 ; This is our common ISR stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
+; up kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 isr_common_stub:
 	cli
@@ -96,7 +98,7 @@ isr_common_stub:
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 
-	mov ax, 0x10  ; load the kernel data segment descriptor
+	mov ax, KERNEL_DS
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -126,7 +128,7 @@ irq_common_stub:
 	mov ax, ds               ; Lower 16-bits of eax = ds.
 	push eax                 ; save the data segment descriptor
 
-	mov ax, 0x10  ; load the kernel data segment descriptor
+	mov ax, KERNEL_DS
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
