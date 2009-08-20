@@ -44,6 +44,7 @@ bool elf_parser::load_image(address_t start, size_t size, boot_pmm_allocator *al
 {
     header* h = reinterpret_cast<header*>(start);
 
+//     kconsole << h->magic;
 //     debugger_t::dump_memory(start, 128);
 #define ERROR_RETURN_ON(x) \
 if (x) { \

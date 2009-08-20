@@ -49,7 +49,7 @@
 #include "registers.h"
 #include "initfs.h"
 #include "mmu.h"
-
+#include "debugger.h"
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
 page_fault_handler_t page_fault_handler;
@@ -137,6 +137,8 @@ void kickstart(multiboot::header* mbh)
     init_memmgr.setup_pagetables();
 
     unsigned int k;
+
+//     debugger_t::dump_memory(kernel->mod_start, 128);
 
     elf_parser elf;
     if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr))
