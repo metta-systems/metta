@@ -1,2 +1,1 @@
-bootloader.map:id1
-initcomp.map:id2
+x86-pc99-release/vesper/x86/boot_components/interrupt_dispatcher/interrupt_dispatcher.comp:interrupt_dispatcher

@@ -132,7 +132,9 @@ def build(bld):
         source = 'vesper/x86/kickstart.bin vesper/x86/orb.bin initfs.img tools/mkbootimg/images.sh',
         target = 'floppy.img',
         rule = './images.sh',
-        cwd = bld.path.find_dir('tools/mkbootimg').abspath())
+        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+        after = 'initfs.img'
+    )
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
