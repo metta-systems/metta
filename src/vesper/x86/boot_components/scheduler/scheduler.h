@@ -1,3 +1,5 @@
+#pragma once
+
 namespace scheduler
 {
 
@@ -9,6 +11,7 @@ Scheduler manages threads.
 */
 class scheduler_t
 {
+    scheduler_t();
 private:
 };
 

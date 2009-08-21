@@ -1,3 +1,5 @@
+#pragma once
+
 /*!
 Trader allows applications to find appropriate portals for communication.
 
@@ -17,5 +19,6 @@ Predefined system portal IDs:
 */
 class trader_t
 {
+    trader_t();
 private:
 };
