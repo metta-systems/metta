@@ -28,30 +28,5 @@
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
 #endif
 
-#if BOCHS_IO_HACKS
-//outputs a character to the debug console
-#define BochsConsolePrintChar(c) outb(0xe9, (c))
-//stops simulation and breaks into the debug console
-#define BochsBreak() do { outw(0x8A00,0x8A00); outw(0x8A00,0x08AE0); } while (0)
-//traps into debug console (add "magic_break: enabled=1" to bochs config)
-#define BochsMagicTrap() asm volatile("xchg %%bx, %%bx"::)
-//monitor memory area from start to end for writes and reads
-#define BochsAddWatchRegion(start,end) do { \
-    outw(0x8A00,0x8A00);                    \
-    outw(0x8A00,0x8A01);                    \
-    outw(0x8A01,(start>>16)&0xffff);        \
-    outw(0x8A01,start&0xffff);              \
-    outw(0x8A00,0x8A02);                    \
-    outw(0x8A01,(end>>16)&0xffff);          \
-    outw(0x8A01,end&0xffff);                \
-    outw(0x8A00,0x8A80);                    \
-} while (0)
-#else
-#define BochsConsolePrintChar(c)
-#define BochsBreak()
-#define BochsMagicTrap()
-#define BochsAddWatchRegion(start,end)
-#endif
-
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

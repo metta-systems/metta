@@ -34,3 +34,46 @@ public:
     **/
     static void print_stacktrace(unsigned int n = 64);
 };
+
+// Helpers for easier debugging in Bochs
+#if BOCHS_IO_HACKS
+#include "asm_inlines.h"
+
+//outputs a character to the debug console
+inline void bochs_console_print_char(int c)
+{
+    outb(0xe9, c);
+}
+
+//stops simulation and breaks into the debug console
+inline void bochs_break()
+{
+    outw(0x8A00,0x8A00);
+    outw(0x8A00,0x08AE0);
+}
+
+//traps into debug console (add "magic_break: enabled=1" to bochs config)
+inline void bochs_magic_trap()
+{
+    asm volatile("xchg %bx, %bx");
+}
+
+//monitor memory area from start to end for writes and reads
+inline void bochs_add_watch_region(address_t start, address_t end)
+{
+    outw(0x8A00,0x8A00);
+    outw(0x8A00,0x8A01);
+    outw(0x8A01,(start>>16)&0xffff);
+    outw(0x8A01,start&0xffff);
+    outw(0x8A00,0x8A02);
+    outw(0x8A01,(end>>16)&0xffff);
+    outw(0x8A01,end&0xffff);
+    outw(0x8A00,0x8A80);
+}
+
+#else
+#define bochs_console_print_char(c)
+#define bochs_break()
+#define bochs_magic_trap()
+#define bochs_add_watch_region(start,end)
+#endif
