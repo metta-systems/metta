@@ -53,9 +53,9 @@ void irq_handler(registers_t regs)
     }
 
     // Send an EOI (end of interrupt) signal to the PICs.
-    // If this interrupt involved the slave.
     if (regs.int_no >= SLAVE_IRQ)
     {
+        // If this interrupt involved the slave.
         // Send reset signal to slave.
         outb(0xA0, 0x20);
     }
