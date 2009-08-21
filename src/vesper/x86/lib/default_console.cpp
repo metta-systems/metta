@@ -7,7 +7,7 @@
 #include "default_console.h"
 #include "asm_inlines.h"
 #include "memutils.h"
-#include "macros.h"
+#include "debugger.h"
 
 const char default_console::eol = 10;
 
@@ -148,7 +148,7 @@ void default_console::print_char(char ch)
         scroll_up();
         *cursor = LINE_PITCH * (LINE_COUNT - 1);
     }
-    BochsConsolePrintChar(ch);
+    bochs_console_print_char(ch);
 }
 
 void default_console::wait_ack()
