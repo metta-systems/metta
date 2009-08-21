@@ -16,6 +16,26 @@ it's derived from caller's address space (nesters are allowed to create only imm
 To create a sub-task nester should call task_create_syscall.
 
 
+1-1 thread mapping - but it will be possible for userspace code to schedule it's own threads using the same mechanisms?
+Each thread has KTCB and UTCB areas: kernel- and userspace-accessible parts.
+
+A User Thread Control Block is defined for every unique thread on the system, known shortly as the UTCB of the thread. This block of memory can be used as thread-local storage as well as a buffer for inter-thread communication.
+
+UTCB memory regions are predefined in the virtual memory address space, but the task of allocating UTCBs to threads is left to the pagers as this is thought to add unnecessary policy to the microkernel.
+
+
+Newly started thread is awaiting for IPC message containing IP and SP to start execution from.
+
+Thread has a pager - master resource allocator for thread (@sa Parent interface?).
+Threads have pager (allocation) and scheduler (time-slice management). Thread can give back unused cpu time to threads
+for which it is a scheduler and return it back to its scheduler.
+
+exchange_registers_syscall allows switching between threads or modifying a thread.
+
+
+Virtual Registers are per-thread state structures giving easy access to thread state and allowing safe IPC.
+
+Message Registers - could be used like BeOS' BMessage structured messages for high-level communications support.
 
 
 
