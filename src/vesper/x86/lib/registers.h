@@ -15,9 +15,5 @@ extern "C"  address_t read_base_pointer();
 extern "C"  void write_stack_pointer(address_t ptr);
 extern "C"  void write_base_pointer(address_t ptr);
 
-// defined in schedule/critical_section.cpp
-extern "C" void critical_section();
-extern "C" void end_critical_section();
-
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
