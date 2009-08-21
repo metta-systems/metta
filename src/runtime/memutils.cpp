@@ -45,7 +45,7 @@ void* memutils::move_memory(void* dest, const void* src, size_t count)
     return dest;
 }
 
-int memutils::strcmp(const char *s1, const char *s2)
+bool memutils::strequal(const char *s1, const char *s2)
 {
     signed char __res;
 
@@ -53,7 +53,7 @@ int memutils::strcmp(const char *s1, const char *s2)
         if ((__res = *s1 - *s2++) != 0 || !*s1++)
             break;
     }
-    return __res;
+    return __res == 0;
 }
 
 // kate: indent-width 4; replace-tabs on;

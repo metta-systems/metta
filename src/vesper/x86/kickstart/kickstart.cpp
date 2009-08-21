@@ -57,7 +57,7 @@ page_fault_handler_t page_fault_handler;
 boot_pmm_allocator init_memmgr;
 interrupt_descriptor_table_t interrupts_table;
 
-extern "C" void kickstart(multiboot::header* mbh);
+extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
 extern "C" address_t KICKSTART_BASE;
 extern "C" address_t initial_esp; // in loader.s
@@ -104,22 +104,22 @@ static void remap_stack()
 typedef void (*ctorfn)();
 extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
 
-//! Unpack and prepare initcp.
+//! Prepare and boot system.
 /*!
 This part starts in protected mode, linear == physical, paging is off.
 */
-void kickstart(multiboot::header* mbh)
+void kickstart(multiboot_t::header_t* mbh)
 {
     // Run static constructors
     for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
         ctors_GLOBAL[m]();
 
-    multiboot mb(mbh);
+    multiboot_t mb(mbh);
 
-    ASSERT(mb.mod_count() == 2);
+    ASSERT(mb.module_count() == 2);
 
-    multiboot::modinfo* kernel = mb.mod(0); // orb
-    multiboot::modinfo* bootcp = mb.mod(1); // bootcomps
+    multiboot_t::modinfo_t* kernel = mb.module(0); // orb
+    multiboot_t::modinfo_t* bootcp = mb.module(1); // bootcomps
     ASSERT(kernel);
     ASSERT(bootcp);
 
@@ -136,33 +136,28 @@ void kickstart(multiboot::header* mbh)
 
     init_memmgr.setup_pagetables();
 
-    unsigned int k;
-
-//     debugger_t::dump_memory(kernel->mod_start, 128);
+    uint32_t k;
 
     elf_parser elf;
     if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr))
         kconsole << RED << "kernel NOT loaded (bad)" << endl;
     else
         kconsole << GREEN << "kernel loaded (ok)" << endl;
-    if (!elf.load_image(bootcp->mod_start, bootcp->mod_end - bootcp->mod_start, &init_memmgr))
-        kconsole << GREEN << "bootcp not an ELF file (ok)" << endl;
-    else
-        kconsole << RED << "bootcp is an ELF file (bad)" << endl;
 
     // identity map start of initcp so we can access header_ from paging mode.
     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
+    // TODO: Move this to post-paging, when orb can create new PDs.
     // Load components from bootcp.
     initfs_t initfs(bootcp->mod_start);
-    uint32_t i = 0;
+    k = 0;
 
-    while (i < initfs.count())
+    while (k < initfs.count())
     {
-        kconsole << YELLOW << "initfs file " << initfs.get_file_name(i) << " @ " << initfs.get_file(i) << endl;
-        if (!elf.load_image(initfs.get_file(i), initfs.get_file_size(i), &init_memmgr))
+        kconsole << YELLOW << "initfs file " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
+        if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
             kconsole << RED << "not an ELF file, load failed" << endl;
-        i += 1;
+        k += 1;
     }
 
     // Identity map currently executing code.
@@ -188,7 +183,7 @@ void kickstart(multiboot::header* mbh)
     init_memmgr.mapping_enter(a, a);
 
     kconsole << endl << "Mapping modules list: ";
-    a = page_align_down<address_t>(mb.mod(0));
+    a = page_align_down<address_t>(mb.module(0));
     init_memmgr.mapping_enter(a, a);
 
     kconsole << endl << "Mapped." << endl;
@@ -216,8 +211,6 @@ void kickstart(multiboot::header* mbh)
 
     kconsole << "need " << (address_t)bootcp << " mapped" << endl;
     ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
-
-    *((char*)0) = 'b';
 
     /* Never reached */
     PANIC("init() returned!");

@@ -53,11 +53,11 @@ public:
     * Compare two C strings.
     * @param[in] s1 One string
     * @param[in] s2 Another string
-    * @return -1 if @c s1 precedes @c s2, 0 if strings are equal, 1 if @c s2 precedes @c s1
+    * @return true if @c s1 equals @c s2, false if strings are different.
     *
     * @note Used only in multiboot::set_header.
     **/
-    static int strcmp(const char *s1, const char *s2);
+    static bool strequal(const char *s1, const char *s2);
 };
 
 // kate: indent-width 4; replace-tabs on;

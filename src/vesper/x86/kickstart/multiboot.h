@@ -10,14 +10,14 @@
 #include "elf.h"
 #include "panic.h"
 
-/**
+/*!
 * \brief Defines an interface to the multiboot header.
 * \ingroup Boot
 **/
-class multiboot
+class multiboot_t
 {
 public:
-    /**
+    /*!
     * Header flags.
     **/
     enum {
@@ -34,23 +34,23 @@ public:
         FLAG_VBE     = 0x0400
     };
 
-    /**
+    /*!
     * Boot information passed in by multiboot loader.
     **/
-    struct header
+    struct header_t
     {
         uint32_t flags; // enum above
 
         // memory here usually excludes occupid memory in mmapinfo
-        uint32_t mem_lower; // kilobytes of lower memory
-        uint32_t mem_upper; // kilobytes of upper memory
+        uint32_t mem_lower; //!< kilobytes of lower memory
+        uint32_t mem_upper; //!< kilobytes of upper memory
 
         uint32_t boot_device;
 
         uint32_t cmdline;
 
-        uint32_t mods_count;
-        uint32_t mods_addr;
+        uint32_t modules_count;
+        uint32_t modules_addr;
 
         /* ELF information */
         uint32_t num;
@@ -58,7 +58,7 @@ public:
         uint32_t addr;
         uint32_t shndx;
 
-        struct memmap {
+        struct memmap_t {
             uint32_t length;
             uint32_t addr;
         } mmap PACKED;
@@ -80,7 +80,7 @@ public:
         uint32_t vbe_interface_len;
     } PACKED;
 
-    struct modinfo
+    struct modinfo_t
     {
         uint32_t mod_start;
         uint32_t mod_end;
@@ -88,7 +88,7 @@ public:
         uint32_t reserved;
     } PACKED;
 
-    struct mmapinfo
+    struct mmapinfo_t
     {
         uint32_t size;      ///< size of the mmapinfo entry
         uint64_t base_addr; ///< base address of memory region
@@ -96,71 +96,70 @@ public:
         uint32_t type;      ///< type == 1 for free regions, anything else means occupied
     } PACKED;
 
-//     static multiboot& self() { return instance; }
-
-    multiboot(header *h = NULL)
-        : header_(NULL)
+    multiboot_t(header_t* h = NULL)
+        : header(NULL)
         , strtab(NULL)
         , symtab(NULL)
     {
-        if (h)
-            set_header(h);
+        set_header(h);
     }
 
-    void set_header(header *h);
+    void set_header(header_t* h);
 
-    inline uint32_t lower_mem()  const { return header_->mem_lower; }
-    inline uint32_t upper_mem()  const { return header_->mem_upper; }
-    inline uint32_t flags()      const { return header_->flags; }
+    inline uint32_t lower_mem()  const { return header->mem_lower; }
+    inline uint32_t upper_mem()  const { return header->mem_upper; }
+    inline uint32_t flags()      const { return header->flags; }
 
     inline bool flags_set(uint32_t flag_mask) const { return (flags() & flag_mask) == flag_mask; }
 
-    inline modinfo* mod(uint32_t i) const
+    inline modinfo_t* module(uint32_t i) const
     {
-        ASSERT(sizeof(modinfo)==16);
+        ASSERT(sizeof(modinfo_t)==16);
         if (flags_set(FLAG_MODS)
-            && header_->mods_count
-            && i < header_->mods_count)
+            && header->modules_count
+            && i < header->modules_count)
         {
-            return (modinfo*)(header_->mods_addr + i * sizeof(modinfo));
+            return (modinfo_t*)(header->modules_addr + i * sizeof(modinfo_t));
         }
         return 0;
     }
 
-    inline uint32_t mod_count() const
+    inline uint32_t module_count() const
     {
         if (flags_set(FLAG_MODS))
-            return header_->mods_count;
+            return header->modules_count;
         return 0;
     }
 
     /**
     * Return highest address occupied by loaded modules.
-    *
-    * This method assumes that modules are sorted in order of their
-    * load address, which might not be the case.
     **/
     inline address_t last_mod_end() const
     {
-        modinfo *m = mod(header_->mods_count-1);
-        return m ? m->mod_end : 0;
+        if (!flags_set(FLAG_MODS))
+            return 0;
+
+        address_t top = 0;
+        for (uint32_t k = 0; k < header->modules_count; k++)
+        {
+            modinfo_t* m = module(k);
+            if (m && m->mod_end > top)
+                top = m->mod_end;
+        }
+        return top;
     }
 
-    inline uint32_t elf_num_headers()     const { return header_->num; }
-    inline uint32_t elf_header_size()     const { return header_->size; }
-    inline uint32_t elf_header_addr()     const { return header_->addr; }
-    inline uint32_t elf_strtab_index()    const { return header_->shndx; }
+    inline uint32_t elf_num_headers()     const { return header->num; }
+    inline uint32_t elf_header_size()     const { return header->size; }
+    inline uint32_t elf_header_addr()     const { return header->addr; }
+    inline uint32_t elf_strtab_index()    const { return header->shndx; }
     inline elf32::section_header* symtab_start() const
     {
         return symtab;
     }
     inline address_t symtab_end() const
     {
-        if (symtab)
-        {
-            return (address_t)symtab->addr + symtab->size;
-        }
-        return 0;
+        return symtab ? (address_t)symtab->addr + symtab->size : 0;
     }
     inline elf32::section_header* strtab_start() const
     {
@@ -168,25 +167,19 @@ public:
     }
     inline address_t strtab_end() const
     {
-        if (strtab)
-        {
-            return (address_t)strtab->addr + strtab->size;
-        }
-        return 0;
+        return strtab ? (address_t)strtab->addr + strtab->size : 0;
     }
 
     inline bool is_elf() const { return flags_set(FLAG_ELF); }
     inline bool has_mem_info() const { return flags_set(FLAG_MEM); }
 
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
-    header::memmap* memory_map() const;
+    header_t::memmap_t* memory_map() const;
 
 private:
-    header*                header_;
+    header_t*              header;
     elf32::section_header* strtab;
     elf32::section_header* symtab;
-
-    static multiboot       instance;
 };
 
 // kate: indent-width 4; replace-tabs on;

@@ -7,49 +7,49 @@
 #include "multiboot.h"
 #include "memutils.h"
 
-void multiboot::set_header(multiboot::header *h)
+void multiboot_t::set_header(multiboot_t::header_t* h)
 {
-    header_ = h;
+    header = h;
 
     symtab = NULL;
     strtab = NULL;
 
-    if (!header_)
+    if (!header)
         return;
 
     // try and find the symtab/strtab
     if (!is_elf())
         return;
 
-    elf32::section_header* shstrtab = (elf32::section_header*)(header_->addr +
-                                        header_->shndx * header_->size);
+    elf32::section_header* shstrtab = (elf32::section_header*)(header->addr + header->shndx * header->size);
     // loop through the section headers, try to find the symbol table.
-    for(uint32_t i = 0; i < header_->num; i++)
+    for(uint32_t i = 0; i < header->num; i++)
     {
-        elf32::section_header* sh = (elf32::section_header*)(header_->addr + i *
-                                    header_->size);
+        elf32::section_header* sh = (elf32::section_header*)(header->addr + i * header->size);
 
-        if (sh->type == SHT_SYMTAB)
+        switch (sh->type)
         {
-            symtab = sh;
-        }
-        else if (sh->type == SHT_STRTAB)
-        {
-            char *c = (char *)shstrtab->addr + sh->name;
-            if (!memutils::strcmp(c, ".strtab"))//FIXME: replace with const_string method
-            {
-                strtab = sh;
-            }
+            case SHT_SYMTAB:
+                symtab = sh;
+                break;
+
+            case SHT_STRTAB:
+                char *c = (char *)shstrtab->addr + sh->name;
+                if (memutils::strequal(c, ".strtab"))//FIXME: replace with const_string method
+                {
+                    strtab = sh;
+                }
+                break;
         }
     }
 }
 
-multiboot::header::memmap* multiboot::memory_map() const
+multiboot_t::header_t::memmap_t* multiboot_t::memory_map() const
 {
     if (!has_mmap_info())
         return 0;
-    ASSERT(sizeof(mmapinfo)==24);
-    return &header_->mmap;
+    ASSERT(sizeof(mmapinfo_t)==24);
+    return &header->mmap;
 }
 
 // kate: indent-width 4; replace-tabs on;
