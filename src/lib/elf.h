@@ -6,19 +6,19 @@
 //
 //
 //  ELF file format structure definitions.
-//  According to Portable Formats Specification, version 1.1
-//  (FIXME: update to 1.2)
+//  According to Portable Formats Specification, version 1.2
 //
 #pragma once
 
 #include "types.h"
 #include "macros.h"
 
-namespace elf32 {
+namespace elf32
+{
 
 /*!
- * ELF data types
- */
+* ELF data types
+*/
 typedef uint32_t  addr_t;  /*!< 4 bytes/4 align/unsigned */
 typedef uint16_t  half_t;  /*!< 2 bytes/2 align/unsigned */
 typedef uint32_t  off_t;   /*!< 4 bytes/4 align/unsigned */
@@ -28,14 +28,14 @@ typedef  uint8_t  byte_t;  /*!< 1 byte /1 align/unsigned */
 
 
 /*!
- * ELF file Header
- */
+* ELF file Header
+*/
 struct header
 {
     word_t  magic;
-    byte_t  elfclass;
-    byte_t  data;
-    byte_t  hdrversion;
+    byte_t  elfclass;       /*!< File class */
+    byte_t  data;           /*!< Data encoding */
+    byte_t  hdrversion;     /*!< File version */
     byte_t  padding[9];
     half_t  type;           /*!< Identifies object file type */
     half_t  machine;        /*!< Specifies required architecture */
@@ -82,7 +82,8 @@ struct header
 #define EM_68K   0x0004          /*!< Motorola 68000 */
 #define EM_88K   0x0005          /*!< Motorola 88000 */
 #define EM_860   0x0007          /*!< Intel 80860    */
-#define EM_MIPS  0x0008          /*!< MIPS RS3000    */
+#define EM_MIPS  0x0008          /*!< MIPS RS3000 big-endian    */
+#define EM_MIPS_RS4_BE 0x000a    /*!< MIPS RS4000 big-endian */
 
 /* header.version */
 #define EV_NONE        0         /*!< Invalid version */
@@ -90,8 +91,8 @@ struct header
 
 
 /*!
- * Section header entry.
- */
+* Section header entry.
+*/
 struct section_header
 {
     word_t  name;          /*!< Section name, index in string table */
@@ -115,7 +116,7 @@ struct section_header
 #define SHN_COMMON    0xfff2
 #define SHN_HIRESERVE 0xffff
 
-/* section_header.sh_type */
+/* section_header.type */
 #define SHT_NULL      0x00000000
 #define SHT_PROGBITS  0x00000001 /*!< The data is contained in program file */
 #define SHT_SYMTAB    0x00000002 /*!< Symbol table */
@@ -137,8 +138,7 @@ struct section_header
 #define SHT_FINI      0x0000000f
 #define SHT_PREINIT   0x00000010
 
-
-/* section_header.sh_flags */
+/* section_header.flags */
 #define SHF_WRITE     0x00000001
 #define SHF_ALLOC     0x00000002
 #define SHF_EXECINSTR 0x00000004
@@ -146,34 +146,34 @@ struct section_header
 
 
 /*!
- * Symbol Table entry.
- */
+* Symbol Table entry.
+*/
 struct symbol
 {
     word_t  name;          /*!< Symbol name, index into string table */
     addr_t  value;         /*!< Symbol value */
     word_t  size;          /*!< Size occupied by this symbol */
     byte_t  info;          /*!< Symbol type and binding */
-    byte_t  other;
+    byte_t  other;         /*!< This member currently holds 0 and has no defined meaning. */
     half_t  shndx;         /*!< Section index this symbol belongs to */
 } PACKED;
 
 /* Symbol Table index: first/undefined entry */
 #define STN_UNDEF 0x0000
 
-/* symbol.st_info manipulation macros */
+/* symbol.info manipulation macros */
 #define ELF32_ST_BIND(i)    ((i) >> 4)
 #define ELF32_ST_TYPE(i)    ((i) & 0xf)
 #define ELF32_ST_INFO(b,t)  ((b) << 4 + ((t) & 0xf))
 
-/* ELF32_ST_BIND(symbol.st_info) values */
+/* ELF32_ST_BIND(symbol.info) values */
 #define STB_LOCAL  0x0
 #define STB_GLOBAL 0x1
 #define STB_WEAK   0x2
 #define STB_LOPROC 0xd
 #define STB_HIPROC 0xf
 
-/* ELF32_ST_TYPE(symbol.st_info) values */
+/* ELF32_ST_TYPE(symbol.info) values */
 #define STT_NOTYPE  0x0
 #define STT_OBJECT  0x1
 #define STT_FUNC    0x2
@@ -181,6 +181,75 @@ struct symbol
 #define STT_FILE    0x4
 #define STT_LOPROC  0xd
 #define STT_HIPROC  0xf
+
+
+/*!
+* Relocation Entries
+*/
+struct rel
+{
+    addr_t  offset;
+    word_t  info;
+};
+
+struct rela
+{
+    addr_t   offset;
+    word_t   info;
+    sword_t  addend;
+};
+
+/* rel|a.info manipulation macros */
+#define ELF32_R_SYM(i)     ((i) >> 8)
+#define ELF32_R_TYPE(i)    ((i) & 0xff)
+#define ELF32_R_INFO(s,t)  ((s) << 8 + (t) & 0xff)
+
+/* ELF32_R_TYPE(rel|a.info) values */
+#define R_386_NONE      0x00
+#define R_386_32        0x01
+#define R_386_PC32      0x02
+/* Following relocation types are reserved for i386 architecture */
+#define R_386_GOT32     0x03
+#define R_386_PLT32     0x04
+#define R_386_COPY      0x05
+#define R_386_GLOB_DAT  0x06
+#define R_386_JMP_SLOT  0x07
+#define R_386_RELATIVE  0x08
+#define R_386_GOTOFF    0x09
+#define R_386_GOTPC     0x0a
+
+
+/*!
+* Program Header entry.
+*/
+struct program_header
+{
+    word_t  type;           /*!< Program section type */
+    off_t   offset;         /*!< File offset */
+    addr_t  vaddr;          /*!< Execution virtual address */
+    addr_t  paddr;          /*!< Execution physical address */
+    word_t  filesz;         /*!< Size in file */
+    word_t  memsz;          /*!< Size in memory */
+    word_t  flags;          /*!< Section flags */
+    word_t  align;          /*!< Section alignment */
+};
+
+/* program_header.type */
+#define PT_NULL     0
+#define PT_LOAD     1
+#define PT_DYNAMIC  2
+#define PT_INTERP   3
+#define PT_NOTE     4
+#define PT_SHLIB    5
+#define PT_PHDR     6
+#define PT_LOPROC   0x70000000
+#define PT_HIPROC   0x7fffffff
+
+/* program_header.flags */
+#define PF_X        0x1
+#define PF_W        0x2
+#define PF_R        0x4
+#define PF_MASKPROC 0xf0000000
 
 
 /*!
@@ -195,8 +264,10 @@ struct dyn
         addr_t ptr;
     } u;
 };
+//extern dyn _DYNAMIC[];
+//extern addr_t _GLOBAL_OFFSET_TABLE_[];
 
-/* dyn.d_tag */
+/* dyn.tag */
 #define DT_NULL     0x00000000
 #define DT_NEEDED   0x00000001
 #define DT_PLTRELSZ 0x00000002
@@ -225,77 +296,9 @@ struct dyn
 #define DT_LOPROC   0x70000000
 #define DT_HIPROC   0x7fffffff
 
-/*!
- * Relocation Entries
- */
-struct rel
-{
-    addr_t  offset;
-    word_t  info;
-};
-
-struct rela
-{
-    addr_t   offset;
-    word_t   info;
-    sword_t  addend;
-};
-
-/* rel|a.r_info manipulation macros */
-#define ELF32_R_SYM(i)     ((i) >> 8)
-#define ELF32_R_TYPE(i)    ((i) & 0xff)
-#define ELF32_R_INFO(s,t)  ((s) << 8 + (t) & 0xff)
-
-/* ELF32_R_TYPE(rel|a.r_info) values */
-#define R_386_NONE      0x00
-#define R_386_32        0x01
-#define R_386_PC32      0x02
-#define R_386_GOT32     0x03
-#define R_386_PLT32     0x04
-#define R_386_COPY      0x05
-#define R_386_GLOB_DAT  0x06
-#define R_386_JMP_SLOT  0x07
-#define R_386_RELATIVE  0x08
-#define R_386_GOTOFF    0x09
-#define R_386_GOTPC     0x0a
-
-
-/*!
- * Program Header entry.
- */
-struct program_header
-{
-    word_t  type;           /*!< Program section type */
-    off_t   offset;         /*!< File offset */
-    addr_t  vaddr;          /*!< Execution virtual address */
-    addr_t  paddr;          /*!< Execution physical address */
-    word_t  filesz;         /*!< Size in file */
-    word_t  memsz;          /*!< Size in memory */
-    word_t  flags;          /*!< Section flags */
-    word_t  align;          /*!< Section alignment */
-};
-
-/* program_header.p_type */
-#define PT_NULL     0
-#define PT_LOAD     1
-#define PT_DYNAMIC  2
-#define PT_INTERP   3
-#define PT_NOTE     4
-#define PT_SHLIB    5
-#define PT_PHDR     6
-#define PT_LOPROC   0x70000000
-#define PT_HIPROC   0x7fffffff
-
-/* program_header.p_flags */
-#define PF_X        0x1
-#define PF_W        0x2
-#define PF_R        0x4
-#define PF_MASKPROC 0xf0000000
-
 
 /*! Symbol Hash table hashing function */
-inline uint32_t
-elf_hash(const unsigned char *name)
+inline uint32_t elf_hash(const char* name)
 {
     uint32_t h = 0, g;
     while (*name)
