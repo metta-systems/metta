@@ -1,6 +1,5 @@
 == boot ==
 [ ] Use lzma decoder
-[ ] Load components from initfs
 [ ] Call components constructors
 [ ] pass device tree to kernel from boostrap component (akin to PowerPC Linux)
 
@@ -20,5 +19,4 @@
 
 == wscript ==
 [ ] environment selection from cmdline
-[+] run update_image.sh automagically after build
-[ ] migrate to llvm/yasm
+[ ] migrate to llvm/yasm/gold
