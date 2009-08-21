@@ -11,6 +11,7 @@
 
 #include "types.h"
 #include "macros.h"
+#include "memutils.h"
 
 class idt_entry_t
 {
@@ -71,9 +72,7 @@ class interrupt_descriptor_table_t
 public:
     inline interrupt_descriptor_table_t()
     {
-        // FIXME: use memset()
-        for (int i = 0; i < 256; i++)
-            interrupt_routines[i] = 0;
+        memutils::fill_memory(interrupt_routines, 0, sizeof(interrupt_routines));
     }
 
     void install(); // called from kernel::run()
