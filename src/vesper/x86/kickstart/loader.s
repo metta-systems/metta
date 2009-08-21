@@ -5,8 +5,7 @@
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 ;
 ; x86 GRUB loader.
-; jump to setup_kernel in unpacker.cpp to do all the dirty job.
-; this file only contains several boot-helpers in assembly.
+; jump to kickstart() in kickstart.cpp to do all the dirty job.
 ;
 global loader                          ; making entry point visible to linker
 global initial_esp
