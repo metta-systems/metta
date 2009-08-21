@@ -1,3 +1,5 @@
+#pragma once
+
 namespace nucleus
 {
 
@@ -7,6 +9,7 @@ Protection domain governs an address space and threads that execute in this spac
 */
 class pd_t
 {
+    pd_t();
 private:
     portal_table portals;
     mapping_t mappings;
@@ -14,4 +17,4 @@ private:
     security_id_t sec_id;
 };
 
-}
+} // namespace nucleus

@@ -181,9 +181,9 @@ void default_console::print_str(const char *str)
         print_char(*b++);
 }
 
-void default_console::debug_cp(const char *str)
+void default_console::checkpoint(const char *str)
 {
-    print_str("\n[DBGCHKPT] ");
+    print_str("\n[CHECKPOINT] ");
     print_str(str);
     print_str("\nPress ENTER to continue...\n");
     wait_ack();

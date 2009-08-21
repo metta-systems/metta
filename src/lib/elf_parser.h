@@ -11,24 +11,24 @@
 
 class boot_pmm_allocator;
 
-//! Parses an ELF file, generating symbolic information and loading code/data segments.
+//! Parse an ELF file, generate symbolic information and load code/data segments.
 class elf_parser
 {
 public:
-    //! Creates a blank ELF parser, preparing for a call to loadKernel.
+    //! Creates a blank ELF parser, prepared for a call to load_image.
     elf_parser();
 
     //! Loads the image file from specified memory location.
     /*!
-     * @param allocator is a silly kludge to let load_image get more memory pages.
-     */
-    bool load_image(address_t start, size_t size, boot_pmm_allocator *allocator);
+    * @param allocator is a silly kludge to let load_image get more memory pages.
+    */
+    bool load_image(address_t start, size_t size, boot_pmm_allocator* allocator);
 
     //! Returns the symbol name for an address.
     /*!
-     *  Also returns the start address of that symbol in startAddr if startAddr != NULL.
-     */
-    char* find_symbol(address_t addr, address_t *symbol_start = NULL);
+    *  Also returns the start address of that symbol in symbol_start if symbol_start is non-NULL.
+    */
+    char* find_symbol(address_t addr, address_t* symbol_start = NULL);
 
     //! Returns the address of a symbol with name str.
     address_t find_symbol(char* str);
@@ -37,7 +37,7 @@ public:
     address_t find_dynamic_symbol_location(address_t o);
 
     //! Returns a NULL terminated name of the symbol at given offset in the relocation symbol table.
-    char *find_dynamic_symbol_name(address_t o);
+    char* find_dynamic_symbol_name(address_t o);
 
     //! Gets the address of the global offset table.
     address_t get_global_offset_table();

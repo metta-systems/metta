@@ -39,10 +39,10 @@ public:
     /*! Silly iterator interface
      * TODO: replace with normal iterator.
      */
-    address_t get_file(uint32_t num);
+    address_t   get_file(uint32_t num);
     const char* get_file_name(uint32_t num);
-    uint32_t get_file_size(uint32_t num);
-    uint32_t count();
+    uint32_t    get_file_size(uint32_t num);
+    uint32_t    count();
 
     bool valid();
 

@@ -9,7 +9,6 @@
 #include "memutils.h"
 #include "memory.h"
 #include "minmax.h"
-// #include "debugger.h"
 
 using namespace elf32;
 
@@ -23,29 +22,30 @@ elf_parser::elf_parser()
     filename            = NULL;
 }
 
+#if 0
 static void print_phent(int i, program_header *ph)
 {
-    kconsole << "== section " << i << " ==" << endl <<
-                "type   " << ph->type << endl <<
-                "offset " << ph->offset << endl <<
-                "vaddr  " << ph->vaddr << endl <<
-                "paddr  " << ph->paddr << endl <<
-                "filesz " << ph->filesz << endl <<
-                "memsz  " << ph->memsz << endl <<
-                "flags  [" << (ph->flags & PF_R ? "R" : "-") << (ph->flags & PF_W ? "W" : "-") << (ph->flags & PF_X ? "X" : "-")<< "]" << endl <<
-                "align  " << ph->align << endl;
+    kconsole <<
+        "== section " << i << " ==" << endl <<
+        "type   " << ph->type << endl <<
+        "offset " << ph->offset << endl <<
+        "vaddr  " << ph->vaddr << endl <<
+        "paddr  " << ph->paddr << endl <<
+        "filesz " << ph->filesz << endl <<
+        "memsz  " << ph->memsz << endl <<
+        "flags  [" << (ph->flags & PF_R ? "R" : "-") << (ph->flags & PF_W ? "W" : "-") << (ph->flags & PF_X ? "X" : "-")<< "]" << endl <<
+        "align  " << ph->align << endl;
 }
+#endif
 
 /*!
- * Load ELF program image, allocate pages and frames from memory.
- * Set up pagedir and copy from @p start to actual image start.
- */
-bool elf_parser::load_image(address_t start, size_t size, boot_pmm_allocator *allocator)
+* Load ELF program image, allocate pages and frames from memory.
+* Set up pagedir and copy from @p start to actual image start.
+*/
+bool elf_parser::load_image(address_t start, UNUSED_ARG size_t size, boot_pmm_allocator* allocator)
 {
     header* h = reinterpret_cast<header*>(start);
 
-//     kconsole << h->magic;
-//     debugger_t::dump_memory(start, 128);
 #define ERROR_RETURN_ON(x) \
 if (x) { \
     kconsole << RED << #x <<endl; \
@@ -70,8 +70,8 @@ if (x) { \
 
         size_t npages = page_align_up<size_t>(ph->memsz) / PAGE_SIZE;
 
-        print_phent(i, ph);
-        kconsole << "Allocating " << npages << " pages (including bss)" << endl;
+//         print_phent(i, ph);
+//         kconsole << "Allocating " << npages << " pages (including bss)" << endl;
 
         size_t remain_to_copy = ph->filesz;
         size_t remain_to_zero = page_align_up<size_t>(ph->memsz) - ph->filesz;
@@ -98,34 +98,29 @@ if (x) { \
                 remain_to_zero -= to_zero;
             }
             vaddr += PAGE_SIZE;
-            kconsole << "  " << (p+1) << " " << endl;
+//             kconsole << "  " << (p+1) << " " << endl;
         }
     }
 
-    (void)size;
     return true;
 }
 
 // @todo use debugging info if present
-char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
+char* elf_parser::find_symbol(address_t addr, address_t* symbol_start)
 {
     address_t max = 0;
-    elf32::symbol *fallback_symbol = 0;
-    for (unsigned int i = 0; i < symbol_table->size /
-            symbol_table->entsize; i++)
-    {
-        elf32::symbol *symbol = (elf32::symbol *)(symbol_table->addr
-                                + i * symbol_table->entsize);
+    elf32::symbol* fallback_symbol = 0;
 
-        if ((addr >= symbol->value) &&
-            (addr <  symbol->value + symbol->size) )
+    for (unsigned int i = 0; i < symbol_table->size / symbol_table->entsize; i++)
+    {
+        elf32::symbol* symbol = reinterpret_cast<elf32::symbol*>(symbol_table->addr + i * symbol_table->entsize);
+
+        if ((addr >= symbol->value) && (addr <  symbol->value + symbol->size))
         {
-            char *c = (char *)(symbol->name) + string_table->addr;
+            char* c = reinterpret_cast<char*>(symbol->name) + string_table->addr;
 
             if (symbol_start)
-            {
                 *symbol_start = symbol->value;
-            }
             return c;
         }
 
@@ -140,12 +135,10 @@ char* elf_parser::find_symbol(address_t addr, address_t *symbol_start)
     // Use a biggest symbol value less than addr (if found).
     if (fallback_symbol)
     {
-        char *c = (char *)(fallback_symbol->name) + string_table->addr;
+        char* c = reinterpret_cast<char*>(fallback_symbol->name) + string_table->addr;
 
         if (symbol_start)
-        {
             *symbol_start = fallback_symbol->value;
-        }
         return c;
     }
 

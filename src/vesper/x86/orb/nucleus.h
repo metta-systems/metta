@@ -1,3 +1,5 @@
+#pragma once
+
 namespace nucleus
 {
 
@@ -19,4 +21,4 @@ private:
 //     vector_base<pd_t> spaces;
 };
 
-}
+} // namespace nucleus

@@ -75,7 +75,7 @@ public:
         memutils::fill_memory(interrupt_routines, 0, sizeof(interrupt_routines));
     }
 
-    void install(); // called from kernel::run()
+    void install();
 
     // Generic interrupt service routines.
     inline void set_isr_handler(int isr_num, interrupt_service_routine_t* isr)
@@ -95,7 +95,7 @@ public:
     }
 
 private:
-    // Two fields are part of the IDT
+    // Two fields are part of the IDTR
     uint16_t limit;
     uint32_t base;
 

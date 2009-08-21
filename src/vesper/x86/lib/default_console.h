@@ -8,7 +8,6 @@
 
 #include "panic.h"
 
-// FIXME these defines poison global identifier space
 #define kconsole default_console::self()
 #define endl default_console::eol
 
@@ -40,7 +39,7 @@ public:
 
     void set_color(Color col);
     void set_background(Color col);
-    void set_attr(Color fore, Color back);// GREEN on BLACK
+    void set_attr(Color fore, Color back);// e.g. GREEN on BLACK
 
     void clear();
     void locate(int row, int col);
@@ -68,7 +67,7 @@ public:
     void wait_ack();
 
     void debug_log(const char *str, ...);
-    void debug_cp(const char *str);
+    void checkpoint(const char *str); // FIXME: move to debugger_t?
 
 private:
     default_console();

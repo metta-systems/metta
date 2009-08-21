@@ -10,6 +10,12 @@
 
 #define PANIC(msg) panic(msg, __FILE__, __LINE__)
 
+#ifdef UNIT_TESTS
+#define ASSERT(b) assert(b)
+#else
+#define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
+#endif
+
 extern "C" void panic(const char* message, const char* file, uint32_t line);
 extern "C" void panic_assert(const char* desc, const char* file, uint32_t line);
 

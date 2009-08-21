@@ -63,16 +63,17 @@ extern "C"
 }
 
 // Remap the irq table so that IRQ interrupts start at MASTER_VEC
-static inline void reprogram_pic()
+static inline void reprogram_pic() // TODO: move to ia32_pic_t
 {
-    #define PICM 0x20
-    #define PICS 0xA0
-    #define ICW1 0x11
-    #define PICMI 0x21
-    #define PICSI 0xA1
-    #define MASTER_VEC 0x20
-    #define SLAVE_VEC  0x28
-    #define ICW4 0x01
+#define PICM 0x20
+#define PICS 0xA0
+#define ICW1 0x11
+#define PICMI 0x21
+#define PICSI 0xA1
+#define MASTER_VEC 0x20
+#define SLAVE_VEC  0x28
+#define ICW4 0x01
+
     outb(PICM, ICW1);
     outb(PICS, ICW1);
     outb(PICMI, MASTER_VEC);
@@ -125,7 +126,7 @@ void interrupt_descriptor_table_t::install()
     idt_entries[30].set(KERNEL_CS, isr30, idt_entry_t::interrupt, 3);
     idt_entries[31].set(KERNEL_CS, isr31, idt_entry_t::interrupt, 3);
 
-    reprogram_pic();//TODO: use ia32_pic_t
+    reprogram_pic();
 
     // 32-47 are IRQs.
     // DPL is 3 so that interrupts can happen from user mode.

@@ -1,3 +1,5 @@
+#pragma once
+
 namespace nucleus
 {
 
@@ -6,6 +8,7 @@ Mapping represents part of address space received from another PD via exported r
 */
 class mapping_t
 {
+    mapping_t();
 };
 
-}
+} // namespace nucleus
