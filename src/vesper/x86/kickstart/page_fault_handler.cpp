@@ -16,11 +16,13 @@ static bool test_flag(int flag, int mask)
     return (flag & mask) ? true : false;
 }
 
-// A page fault has occurred.
-// Interrupts are disabled upon entry to run()
+//! A page fault has occurred.
+/*!
+* Interrupts are disabled upon entry to run()
+*/
 void page_fault_handler_t::run(registers_t* r)
 {
-    address_t faulting_address = ia32_mmu_t::get_pagefault_address();
+    address_t fault_address = ia32_mmu_t::get_pagefault_address();
 
     // The error code gives us details of what happened.
     bool present  = test_flag(r->err_code, 0x01); // Page present?
@@ -31,7 +33,7 @@ void page_fault_handler_t::run(registers_t* r)
 
     // Output an error message.
     kconsole.set_attr(LIGHTRED, BLACK);
-    kconsole.print("Page fault! at EIP=%x, faulty address=%x ", r->eip, faulting_address);
+    kconsole.print("Page fault! at EIP=%x, fault address=%x ", r->eip, fault_address);
     kconsole.set_attr(WHITE, BLACK);
     if (!present) kconsole.print("<Page not present>");
     if (rw) kconsole.print("<Write to read-only memory>");

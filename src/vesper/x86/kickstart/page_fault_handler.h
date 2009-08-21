@@ -11,7 +11,9 @@
 class page_fault_handler_t : public interrupt_service_routine_t
 {
 public:
-    page_fault_handler_t() : interrupt_service_routine_t() {}
+    page_fault_handler_t()
+        : interrupt_service_routine_t()
+    {}
 
     virtual void run(registers_t* r);
 };

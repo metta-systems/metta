@@ -129,6 +129,9 @@ void kickstart(multiboot_t::header_t* mbh)
     init_memmgr.adjust_alloced_start(bootcp->mod_end);
     // now we can allocate extra pages from alloced_start using alloc_next_page()
 
+    kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
+                      << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
+
     kconsole << WHITE << "We are loaded at " << (unsigned)&KICKSTART_BASE << endl
                       << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
@@ -205,9 +208,6 @@ void kickstart(multiboot_t::header_t* mbh)
     /// call vm_server.init(mbh->mmap, current_pdir)
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
-
-    kconsole << GREEN << "mb.lower_mem = " << mb.lower_mem() << endl
-    << "mb.upper_mem = " << mb.upper_mem() << endl;
 
     kconsole << "need " << (address_t)bootcp << " mapped" << endl;
     ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
