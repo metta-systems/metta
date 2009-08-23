@@ -124,6 +124,7 @@ public:
         entries[idx(KERNEL_DS)].set_seg(0, ~0, gdt_entry_t::data, 0);
         entries[idx(USER_CS)].set_seg(0, ~0, gdt_entry_t::code, 3);
         entries[idx(USER_DS)].set_seg(0, ~0, gdt_entry_t::data, 3);
+//         entries[idx(0x28)].set_sys(&tss, sizeof(tss)-1, gdt_entry_t::tss, 3);
     }
     inline void install()
     {
@@ -142,7 +143,8 @@ public:
 private:
     uint16_t  limit PACKED;
     uint32_t  base  PACKED;
-    gdt_entry_t entries[5];
+    tss_t       tss;
+    gdt_entry_t entries[6] ALIGNED(16);
 };
 
 // kate: indent-width 4; replace-tabs on;
