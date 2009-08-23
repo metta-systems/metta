@@ -56,7 +56,7 @@ h. Boolean variables and methods (including accessors) shall use suitable prefix
     bool is_open;
     bool has_subject(email& mail);
 
-i. Types not inside namespaces have _t appended:
+i. Types have _t appended (some types inside namespaces can omit it, but rarely):
 
     typedef int sint32_t;
     class kernel_t;
