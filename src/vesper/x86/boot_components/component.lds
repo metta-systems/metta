@@ -10,13 +10,14 @@ Components are linked with classical layout:
              |                         | 0xFFFFFFFF (end of virtual mem)
              |    Page directory       | Pagedir mapped into every process image so kernel doesn't have to reload caches.
              |                         |
-             |_________________________| K_PAGEDIR_START (4Mb below virtual memory end)
+             |_________________________| K_PAGEDIR_START (4Mb below virtual memory end) == 0xFFC00000
              |                         |
              |    ................     |
+             |                         | 0xC0001000 kernel vsyscall page (drifting, linked from interface page)
          3GB |_________________________| 0xC0000000 kernel info/interface page (L4-like)
              |                         | U_PROC_END (Usually 3GB) end of process space
-             | Guarded userspace stacks|
-             |    (n pages)            | U_STACK_START
+             | Guarded userspace stacks| U_STACK_START
+             |    (n pages)            |
              |_________________________| U_STACK_END
              | Libraries mapped from   | U_LIBS_START
              | here downwards.         |
