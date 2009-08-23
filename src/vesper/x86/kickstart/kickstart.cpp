@@ -157,7 +157,7 @@ void kickstart(multiboot_t::header_t* mbh)
 
     while (k < initfs.count())
     {
-        kconsole << YELLOW << "initfs file " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
+        kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
             kconsole << RED << "not an ELF file, load failed" << endl;
         k += 1;
