@@ -35,6 +35,9 @@ SECTIONS
     }
     bss_end = .;
 
+    . = ALIGN(PAGE_SIZE);
+    image_end = .;
+
     /* Strip unnecessary stuff */
     /DISCARD/ : { *(.comment .note* .eh_frame .dtors) }
 }
