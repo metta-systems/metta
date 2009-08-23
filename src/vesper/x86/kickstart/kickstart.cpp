@@ -69,6 +69,8 @@ extern "C" address_t initial_esp; // in loader.s
 * and switch over to a new stack.
 * @todo Allocated stack pages are 1-1 mapped currently, but probably should be mapped
 * to some reserved stack area?
+* Changes the original stack given by the bootloader to one at
+* a virtual memory location defined at compile time.
 */
 static void remap_stack()
 {
