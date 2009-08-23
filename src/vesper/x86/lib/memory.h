@@ -8,7 +8,6 @@
 
 #include "types.h"
 
-// Excerpted from "memory_manager-arch.h"
 const size_t PAGE_SIZE = 0x1000;
 const address_t PAGE_MASK = 0xFFFFF000;
 
@@ -34,6 +33,12 @@ inline T page_align_down(void* a)
 {
     const T b = reinterpret_cast<T>(a);
     return b - b % PAGE_SIZE;
+}
+
+template <typename T>
+inline bool is_page_aligned(T a)
+{
+    return a % PAGE_SIZE == 0;
 }
 
 // Bootloader micro PMM allocator.
