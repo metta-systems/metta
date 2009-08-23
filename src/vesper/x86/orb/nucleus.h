@@ -14,11 +14,15 @@ class nucleus_t
 {
 public:
     nucleus_t();
+
+    page_directory_t& root_pagedir() { return pagedir; }
+
     void enter_trap(int portal_no); // called from assembler glue code to process client trap and call corresponding portal
     void create_pd(); // portal to create new address space and assign it to a pd
     void destroy_pd();
 private:
 //     vector_base<pd_t> spaces;
+    page_directory_t pagedir; //!< Kernel page directory.
 };
 
 } // namespace nucleus
