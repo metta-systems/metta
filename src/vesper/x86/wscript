@@ -17,7 +17,7 @@ def build(bld):
     kickstart.uselib_local = 'kernel_runtime'
 
     orb = bld.new_task_gen('cxx', 'program')
-    orb.source = 'orb/nucleus.cpp'# orb/orb.lds
+    orb.source = 'orb/nucleus.cpp orb/pd.cpp'# orb/orb.lds
     orb.env = bld.env_of_name('KERNEL_ENV').copy()
     orb.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/orb/orb.lds', '-Wl,-Map,orb.map'])
     orb.includes = '. ../../lib ../../runtime lib orb'
