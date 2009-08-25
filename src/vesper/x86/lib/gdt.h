@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "config.h"
+#include "tss.h"
 
 class gdt_entry_t
 {
