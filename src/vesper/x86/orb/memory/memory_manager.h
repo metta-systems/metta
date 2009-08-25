@@ -9,14 +9,12 @@
 #include "types.h"
 #include "heap.h"
 #include "multiboot.h"
+#include "page_allocator.h"
 
 //TODO: move these to the linker script
 #define K_HEAP_START              0xF0000000
 #define K_HEAP_INITIAL_SIZE       0x100000
 #define K_HEAP_END                0xFFFFF000
-// #define U_HEAP_START         0xD0000000
-// #define U_HEAP_INITIAL_SIZE  0x100000
-// #define U_HEAP_END           0xDFFFFFFF
 #define STACK_START             (0xF8000000-0x4)
 #define STACK_INITIAL_SIZE      0x10000
 #define STACK_END               0xF0000000
@@ -24,7 +22,6 @@
 
 #define STACK_ADDRESS(x)  ((address_t)x <= STACK_START && (address_t)x > STACK_END)
 #define K_HEAP_ADDRESS(x) ((address_t)x >= K_HEAP_START && (address_t)x <= K_HEAP_END)
-// #define U_HEAP_ADDRESS(x) ((address_t)x >= U_HEAP_START && (address_t)x <= U_HEAP_END)
 
 class page_t;
 class page_directory_t;
@@ -41,11 +38,16 @@ public:
     friend class heap_t;
 
     /*!
+    * Default constructor, does nothing.
+    */
+    memory_manager_t();
+
+    /*!
     * Normal constructor - passes the address of end of memory.
     * Initialises paging and sets up a standard kernel page directory. //FIXME
     * Enables paging, then maps some pages for the heap.
     */
-    void init(address_t mem_end, multiboot_t::header_t::memmap_t* mmap);
+    void init(address_t mem_end, multiboot_t::mmap_t* mmap);
 
     /*!
     * Allocate @c size bytes, returning the physical address of the
@@ -86,9 +88,9 @@ public:
     /*!
     * Accessor functions for kernel_directory, current_directory
     */
-    inline page_directory* get_kernel_directory()  { return kernel_directory; }
-    inline page_directory* get_current_directory() { return current_directory; }
-    void set_current_directory(page_directory* p) { current_directory = p; }
+    inline page_directory_t* get_kernel_directory()  { return kernel_directory; }
+    inline page_directory_t* get_current_directory() { return current_directory; }
+    void set_current_directory(page_directory_t* p)  { current_directory = p; }
 
     /*!
     * Causes the given range of virtual memory to get allocated physical
@@ -106,11 +108,7 @@ public:
     */
     void check_integrity();
 
-private:
-    /*!
-    * Default constructor, does nothing.
-    */
-    memory_manager_t();
+    page_frame_allocator_t& page_frame_allocator() { return frame_allocator; }
 
 private:
     /*!
@@ -121,7 +119,7 @@ private:
     /*!
     * Has the kernel heap been initialised yet?
     */
-    bool heap_initialised;
+    bool heap_initialized;
 
     /*!
     * The kernel heap
@@ -142,14 +140,14 @@ private:
     /*!
     * The currently active page directory
     */
-    page_directory *current_directory;
+    page_directory_t* current_directory;
 
     /*!
     * Pointer to the "master" page directory. This holds page table pointers for kernel
     * space. All other page directories must match the entries in here to maintain easy
     * consistency of kernel-space over memory spaces.
     */
-    page_directory *kernel_directory;
+    page_directory_t* kernel_directory;
 };
 
 // kate: indent-width 4; replace-tabs on;

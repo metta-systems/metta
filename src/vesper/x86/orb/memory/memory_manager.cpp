@@ -7,6 +7,9 @@
 #include "memory_manager.h"
 #include "registers.h"
 #include "memutils.h"
+#include "stack_page_allocator.h"
+#include "page_directory.h"
+#include "new.h"
 
 extern address_t image_end; // defined by linker
 
@@ -26,17 +29,17 @@ memory_manager_t::memory_manager_t()
     align_placement_address();//FIXME not necessary?
     // try to not use placement_address at all, init heap early.
 
-    heap_initialised = false;
+    heap_initialized = false;
     current_directory = kernel_directory = NULL;
 }
 
-void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* mmap)
+void memory_manager_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
 {
     frame_allocator.init(mem_end, mmap);
     // now we can allocate frames of physical memory
 
     // Make a page directory.
-    kernel_directory = new(true/*page align*/) page_directory();
+    kernel_directory = new(true) page_directory_t();
     current_directory = kernel_directory;
 
     // Map kernel code
@@ -45,7 +48,7 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* 
     // Here we call getPage but not alloc_frame. This causes PageTables
     // to be created where nessecary. We can't allocate frames yet because
     // they need to be identity mapped first below.
-    for (uint32_t i = HEAP_START; i < HEAP_END; i += PAGE_SIZE)
+    for (uint32_t i = K_HEAP_START; i < K_HEAP_END; i += PAGE_SIZE)
     {
         kernel_directory->get_page(i, /*make:*/true);
     }
@@ -56,7 +59,7 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* 
     while (i < placement_address + 16*PAGE_SIZE)
     {
         // Kernel code is readable but not writable from userspace.
-        alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
+        frame_allocator.alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
         i += PAGE_SIZE;
     }
 
@@ -64,7 +67,7 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* 
     for (i = K_HEAP_START; i < K_HEAP_START + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
         // Kernel heap is readable but not writable from userspace.
-        alloc_frame(kernel_directory->get_page(i, true), false, false);
+        frame_allocator.alloc_frame(kernel_directory->get_page(i, true), false, false);
     }
 
 //FIXME paging is already enabled by kickstart
@@ -74,12 +77,12 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* 
     // Initialise the heaps.
     heap.init(K_HEAP_START, K_HEAP_START + K_HEAP_INITIAL_SIZE, K_HEAP_END & PAGE_MASK /* see memory map */, true);
 
-    heap_initialised = true;
+    heap_initialized = true;
 }
 
 void* memory_manager_t::allocate(uint32_t size, bool page_align, address_t* physical_address)
 {
-    ASSERT(heap_initialised);
+    ASSERT(heap_initialized);
     heap.lock();
     void* addr = heap.allocate(size, page_align);
     heap.unlock();
@@ -93,7 +96,7 @@ void* memory_manager_t::allocate(uint32_t size, bool page_align, address_t* phys
 
 void* memory_manager_t::reallocate(void* ptr, size_t size)
 {
-    ASSERT(heap_initialised);
+    ASSERT(heap_initialized);
     heap.lock();
     void* p = heap.realloc(ptr, size);
     heap.unlock();
@@ -102,7 +105,7 @@ void* memory_manager_t::reallocate(void* ptr, size_t size)
 
 void memory_manager_t::free(void* p)
 {
-    ASSERT(heap_initialised);
+    ASSERT(heap_initialized);
     heap.lock();
     heap.free(p);
     heap.unlock();
@@ -128,7 +131,7 @@ uint32_t memory_manager_t::get_heap_size()
 void memory_manager_t::check_integrity()
 {
     // TODO: heap should be locked
-    if(heap_initialised)
+    if(heap_initialized)
     {
         heap.check_integrity();
     }

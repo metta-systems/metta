@@ -1,5 +1,7 @@
 #pragma once
 
+#include "page_directory.h"
+
 namespace nucleus
 {
 
@@ -13,10 +15,10 @@ class pd_t
 private:
     page_directory_t pagedir;
 
-    portal_table portals;
-    mapping_t mappings;
-    region_t regions;
-    security_id_t sec_id;
+//     portal_table portals;
+//     mapping_t mappings;
+//     region_t regions;
+//     security_id_t sec_id;
 };
 
 } // namespace nucleus

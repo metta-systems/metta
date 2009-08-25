@@ -4,7 +4,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "page_allocator.h"
+#include "stack_page_allocator.h"
+#include "default_console.h"
+#include "page_directory.h"
+#include "memory.h"
+#include "panic.h"
 
 // Page frame allocator gives PHYSICAL memory addresses.
 
@@ -85,7 +89,7 @@ At 8 or 16 bytes per free page stack I could probably have millions of them with
 */
 
 
-stack_page_frame_allocator_t::stack_page_frame_allocator_t(address_t mem_end, multiboot_t::header_t::memmap_t* mmap)
+void stack_page_frame_allocator_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
 {
     // Make enough frames to reach 0x00000000 .. memEnd.
     // make sure memEnd is on a page boundary.
@@ -96,50 +100,46 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t(address_t mem_end, mu
     {
         address_t highest = mem_end_page;
 
-        multiboot::mmapinfo* mmi = (multiboot::mmapinfo*)(mmap->addr);
-        multiboot::mmapinfo* end = (multiboot::mmapinfo*)(mmap->addr + mmap->length);
-        while (mmi < end)
+        multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
+        while (mmi)
         {
-            address_t end = page_align_up<address_t>(mmi->base_addr + mmi->length);
+            address_t end = page_align_up<address_t>(mmi->address() + mmi->size());
             if (end > highest)
                 highest = end;
-            mmi = (multiboot::mmapinfo*)(((char *)mmi) + mmi->size + 4);
+            mmi = mmap->next_entry(mmi);
         }
 
         mem_end_page = highest;
     }
 
-    n_frames = mem_end_page / PAGE_SIZE;
+//     uint32_t n_frames = mem_end_page / PAGE_SIZE;
 
     // use mmap if provided to mark unavailable areas
     if (mmap)
     {
-        kconsole.print("MMAP is provided @ %p:\n", mmap->addr);
-        multiboot::mmapinfo* mmi = (multiboot::mmapinfo*)(mmap->addr);
-        multiboot::mmapinfo* end = (multiboot::mmapinfo*)(mmap->addr + mmap->length);
-        while (mmi < end)
+        multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
+        while (mmi)
         {
-            kconsole.print("[entry @ %p, %d bytes]  %llx, %llu bytes (type %u = %s)\n", mmi, mmi->size, mmi->base_addr, mmi->length, mmi->type, mmi->type == 1 ? "Free" : "Occupied");
-            if (mmi->type != 1) // occupied space
+            if (!mmi->is_free()) // occupied space
             {
-                address_t start = page_align_down<address_t>(mmi->base_addr);
-                address_t end = page_align_up<address_t>(mmi->base_addr + mmi->length);
+                address_t start = page_align_down<address_t>(mmi->address());
+                address_t end = page_align_up<address_t>(mmi->address() + mmi->size());
                 // mark frames bitmap as occupied
                 kconsole.print(" > marking as occupied from %08x to %08x\n", start, end);
-                for (i = start; i < end; i += PAGE_SIZE)
-                {
-                    frames->set(i / PAGE_SIZE);
-                }
+//                 for (i = start; i < end; i += PAGE_SIZE)
+//                 {
+//                     frames->set(i / PAGE_SIZE);
+//                 }
             }
-            mmi = (multiboot::mmapinfo*)(((char *)mmi) + mmi->size + 4);
+            mmi = mmap->next_entry(mmi);
         }
     }
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
 {
-    assert(p);
-    assert(!p->frame);
+    ASSERT(p);
+    ASSERT(!p->frame());
 
     p->set_present(true);
     p->set_writable(is_writeable);
@@ -147,12 +147,13 @@ void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool i
     p->set_frame(alloc_frame());
 }
 
-void stack_page_frame_allocator_t::free_frame(page* p)
+void stack_page_frame_allocator_t::free_frame(page_t* p)
 {
-    assert(p);
+    ASSERT(p);
+    ASSERT(p->frame());
 
-    free_frame(p->frame);
-    p->setFrame(0);
+    free_frame(p->frame());
+    p->set_frame(0);
 }
 
 address_t stack_page_frame_allocator_t::alloc_frame()
@@ -165,18 +166,6 @@ void stack_page_frame_allocator_t::free_frame(address_t frame)
     *++top = frame;
 }
 
-//
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
 // Is there any easy way to read/write physical address?
 // Postby torshie on August 16th, 2009, 1:34 pm
 // 

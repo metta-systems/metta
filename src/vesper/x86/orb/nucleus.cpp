@@ -19,8 +19,10 @@ namespace nucleus
 nucleus_t orb;
 
 nucleus_t::nucleus_t()
+    : memory_manager()
 {
     kconsole << GREEN << "Hello, ORB!" << endl;
+//     mem_mgr.init();
 }
 
 void nucleus_t::enter_trap(UNUSED_ARG int portal_no)

@@ -9,14 +9,16 @@
 #pragma once
 
 #include "types.h"
+#include "multiboot.h"
 
 class page_t;
 
 class page_frame_allocator_impl_t
 {
 public:
+    virtual void init(address_t mem_end, multiboot_t::mmap_t* mmap) = 0;
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable) = 0;
-    virtual void free_frame(page* p) = 0;
+    virtual void free_frame(page_t* p) = 0;
     virtual address_t alloc_frame() = 0;
     virtual void free_frame(address_t frame) = 0;
 };
@@ -25,13 +27,25 @@ public:
 class page_frame_allocator_t
 {
 public:
-    page_frame_allocator(page_frame_allocator_impl_t* implementation);
-    ~page_frame_allocator();
+    page_frame_allocator_t(page_frame_allocator_impl_t* implementation)
+    {
+        impl = implementation;
+    }
+
+    ~page_frame_allocator_t() {}
+
+    /*!
+    * Initialize free physical memory map.
+    */
+    inline void init(address_t mem_end, multiboot_t::mmap_t* mmap)
+    {
+        impl->init(mem_end, mmap);
+    }
 
     /*!
     * Finds a free frame (swaps out if necessary) and allocates it to p.
     */
-    inline void alloc_frame(page* p, bool is_kernel = true, bool is_writeable = true)
+    inline void alloc_frame(page_t* p, bool is_kernel = true, bool is_writeable = true)
     {
         impl->alloc_frame(p, is_kernel, is_writeable);
     }

@@ -92,7 +92,7 @@ public:
     {
         for(int i = 0; i < 1024; i++)
         {
-            pages[i] = page();
+            pages[i] = page_t();
         }
     }
 
@@ -124,7 +124,7 @@ public:
 
     address_t get_physical()
     {
-        return physical_addr;
+        return physical_address;
     }
 
     page_t* get_page(address_t addr, bool make = true);
