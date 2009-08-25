@@ -49,8 +49,8 @@ public:
     void print_int(int n);
     void print_char(char ch);
     void print_byte(unsigned char n);
-    void print_hex(unsigned int n);
-    void print_hex8(unsigned long long n);
+    void print_hex(uint32_t n);
+    void print_hex8(uint64_t n);
     void print_str(const char *s);
 
     // Wrappers for template version
