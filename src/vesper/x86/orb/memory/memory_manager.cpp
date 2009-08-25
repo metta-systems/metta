@@ -17,15 +17,15 @@ extern address_t image_end; // defined by linker
 * be mapped on to \c frames - equally sized blocks of physical memory.
 */
 
-memory_manager_t& memory_manager_t::self()
-{
-    static memory_manager_t manager;
-    return manager;
-}
+static stack_page_frame_allocator_t stack_allocator;
 
 memory_manager_t::memory_manager_t()
+    : frame_allocator(&stack_allocator)
 {
     placement_address = (address_t)&image_end;
+    align_placement_address();//FIXME not necessary?
+    // try to not use placement_address at all, init heap early.
+
     heap_initialised = false;
     current_directory = kernel_directory = NULL;
 }
@@ -33,6 +33,7 @@ memory_manager_t::memory_manager_t()
 void memory_manager_t::init(address_t mem_end, multiboot_t::header_t::memmap_t* mmap)
 {
     frame_allocator.init(mem_end, mmap);
+    // now we can allocate frames of physical memory
 
     // Make a page directory.
     kernel_directory = new(true/*page align*/) page_directory();

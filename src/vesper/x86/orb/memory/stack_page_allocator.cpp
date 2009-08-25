@@ -35,21 +35,55 @@
 //
 // The stack of index pages has the same problem - you have to map the current index page into linear memory before you can access it. Because of the way it works you can get 1022 free pages easily, but when an index page becomes a free page you need map the next index page into linear memory.
 
-// Stack-based page allocator implementation.
-class stack_page_frame_allocator_t : public page_frame_allocator_impl_t
-{
-public:
-    stack_page_frame_allocator_t(address_t mem_end, multiboot_t::header_t::memmap_t* mmap);
+/* (Brendan@osdev.forum)
 
-    virtual void alloc_frame(page* p, bool is_kernel, bool is_writeable);
-    virtual void free_frame(page* p);
-    virtual address_t alloc_frame();
-    virtual void free_frame(address_t frame);
+The minimum you need is 4 bytes.
 
-private:
-    address_t *stack; // Stack of available page frames
-    address_t *top;   // Top of stack, this is where we get new frames from.
-};
+Assume the free page stack is empty, and you've got a "physical address of the next free page on the stack" pointer
+which is NULL. When someone frees a page they tell you the current linear address of the page and the physical address
+of the page; and you store the current "physical address of the next free page on the stack" at this linear address,
+then set the new "physical address of the next free page on the stack" pointer to the physical address of the free page.
+Then the page is removed from the linear address space. Now you're using 4 bytes for the pointer, plus 4 bytes in the
+free page (which doesn't really matter because the page is free and wouldn't be used for anything else anyway).
+You can keep doing this and you still only end up needing 4 bytes (plus the first 4 bytes of each free page,
+which doesn't really matter).
+
+When someone allocates a page you tell them the physical address of the first page on the stack,
+they map it into the address space and tell you where, then you get the physical address of the next page
+on the stack from this linear address.
+
+The only real problem with this approach is that you end up with TLB misses.
+
+There are variations on this that are intended to reduce the TLB misses. One idea is to have a stack of "index pages",
+where the top "index page" is mapped into the address space and contains the physical addresses of up to 512 or 1024
+more free pages. In this case it costs you 4100 or 4104 bytes per free page stack (but in theory you get
+a lot less TLB misses).
+
+I use the first method. Partly because it's very likely that a newly allocated page will be accessed soon,
+and the TLB miss will happen anyway, so there isn't too much point trying to avoid it; and there are other benefits...
+
+For pages that are above 0x0000000100000000 you'd need to use 8 bytes (64-bit physical addresses). However,
+it's a good idea to use 2 free page stacks (one for pages below 0x0000000100000000 and one for pages
+above 0x0000000100000000), because sometimes you need to allocate a page that has a 32-bit physical address
+(e.g. for a "page directory pointer table" when you're using PAE, or for some 32-bit PCI devices,
+or for some 64-bit PCI devices that are behind a dodgy "32-bit only" PCI to PCI bridge).
+
+However, why stop at just 2 free page stacks? For each free page stack you'll probably need a re-entrancy lock,
+and you don't want all the CPUs (potentially) fighting for the same lock at the same time.
+If you increase the number of free page stacks for no reason at all, then you'd have more locks and less lock
+contention, and because of that you'll get better performance on "many CPU" systems (with almost no extra overhead).
+
+However, if you're going to have lots of free page stacks, why not use them for different things? It's easy to
+implement page colouring by having one free page stack per page/cache colour, and that will improve performance
+by improving cache efficiency. It's also possible to have a different group of free page stacks for each NUMA
+domain (to improve performance by minimizing "distant" RAM accesses), or have different groups of free page stacks
+for other purposes.
+
+The previous version of my OS used 1024 free page stacks (but the new version will probably use many more).
+At 8 or 16 bytes per free page stack I could probably have millions of them without any problem; but at
+4104 bytes per free page stack it starts to get expensive... ;)
+*/
+
 
 stack_page_frame_allocator_t::stack_page_frame_allocator_t(address_t mem_end, multiboot_t::header_t::memmap_t* mmap)
 {
@@ -131,29 +165,7 @@ void stack_page_frame_allocator_t::free_frame(address_t frame)
     *++top = frame;
 }
 
-// (Brendan@osdev.forum)
-// 
-// The minimum you need is 4 bytes.
-// 
-// Assume the free page stack is empty, and you've got a "physical address of the next free page on the stack" pointer which is NULL. When someone frees a page they tell you the current linear address of the page and the physical address of the page; and you store the current "physical address of the next free page on the stack" at this linear address, then set the new "physical address of the next free page on the stack" pointer to the physical address of the free page. Then the page is removed from the linear address space. Now you're using 4 bytes for the pointer, plus 4 bytes in the free page (which doesn't really matter because the page is free and wouldn't be used for anything else anyway). You can keep doing this and you still only end up needing 4 bytes (plus the first 4 bytes of each free page, which doesn't really matter).
-// 
-// When someone allocates a page you tell them the physical address of the first page on the stack, they map it into the address space and tell you where, then you get the physical address of the next page on the stack from this linear address.
-// 
-// The only real problem with this approach is that you end up with TLB misses.
-// 
-// There are variations on this that are intended to reduce the TLB misses. One idea is to have a stack of "index pages", where the top "index page" is mapped into the address space and contains the physical addresses of up to 512 or 1024 more free pages. In this case it costs you 4100 or 4104 bytes per free page stack (but in theory you get a lot less TLB misses).
-// 
-// I use the first method. Partly because it's very likely that a newly allocated page will be accessed soon, and the TLB miss will happen anyway, so there isn't too much point trying to avoid it; and there are other benefits...
-// 
-// For pages that are above 0x0000000100000000 you'd need to use 8 bytes (64-bit physical addresses). However, it's a good idea to use 2 free page stacks (one for pages below 0x0000000100000000 and one for pages above 0x0000000100000000), because sometimes you need to allocate a page that has a 32-bit physical address (e.g. for a "page directory pointer table" when you're using PAE, or for some 32-bit PCI devices, or for some 64-bit PCI devices that are behind a dodgy "32-bit only" PCI to PCI bridge).
-// 
-// However, why stop at just 2 free page stacks? For each free page stack you'll probably need a re-entrancy lock, and you don't want all the CPUs (potentially) fighting for the same lock at the same time. If you increase the number of free page stacks for no reason at all, then you'd have more locks and less lock contention, and because of that you'll get better performance on "many CPU" systems (with almost no extra overhead).
-// 
-// However, if you're going to have lots of free page stacks, why not use them for different things? It's easy to implement page colouring by having one free page stack per page/cache colour, and that will improve performance by improving cache efficiency. It's also possible to have a different group of free page stacks for each NUMA domain (to improve performance by minimizing "distant" RAM accesses), or have different groups of free page stacks for other purposes.
-// 
-// The previous version of my OS used 1024 free page stacks (but the new version will probably use many more). At 8 or 16 bytes per free page stack I could probably have millions of them without any problem; but at 4104 bytes per free page stack it starts to get expensive... ;)
-// 
-// 
+//
 // 
 // 
 // 

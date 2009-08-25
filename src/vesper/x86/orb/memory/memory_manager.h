@@ -29,8 +29,6 @@
 class page_t;
 class page_directory_t;
 
-#define kmemmgr memory_manager::self()
-
 /*!
 * Kernel memory manager controls physical and virtual memory allocation.
 */
@@ -41,11 +39,6 @@ public:
     * Heap can call our private alloc_frame() functions.
     */
     friend class heap_t;
-
-    /*!
-    * Singleton accessor.
-    */
-    static memory_manager_t& self();
 
     /*!
     * Normal constructor - passes the address of end of memory.
