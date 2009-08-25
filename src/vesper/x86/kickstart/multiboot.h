@@ -13,13 +13,13 @@
 /*!
 * \brief Defines an interface to the multiboot header.
 * \ingroup Boot
-**/
+*/
 class multiboot_t
 {
 public:
     /*!
     * Header flags.
-    **/
+    */
     enum {
         FLAG_MEM     = 0x0001,
         FLAG_DEVICE  = 0x0002,
@@ -34,14 +34,42 @@ public:
         FLAG_VBE     = 0x0400
     };
 
+    class mmap_entry_t;
+
+    class mmap_t
+    {
+    public:
+        mmap_entry_t* first_entry();
+        mmap_entry_t* next_entry(mmap_entry_t* prev);
+        void dump();
+    private:
+        uint32_t length;
+        uint32_t addr;
+    } PACKED;
+
+    class mmap_entry_t
+    {
+    public:
+        uint64_t address() const { return base_addr; }
+        uint64_t size() const    { return length; }
+        bool     is_free() const { return type == 1; }
+    private:
+        uint32_t entry_size;//!< size of the mmap entry
+        uint64_t base_addr; //!< base address of memory region (physical)
+        uint64_t length;    //!< size of memory region
+        uint32_t type;      //!< type == 1 for free regions, anything else means occupied
+
+        friend class multiboot_t::mmap_t;
+    } PACKED;
+
     /*!
     * Boot information passed in by multiboot loader.
-    **/
+    */
     struct header_t
     {
         uint32_t flags; // enum above
 
-        // memory here usually excludes occupid memory in mmapinfo
+        // memory here usually excludes occupied memory in mmapinfo
         uint32_t mem_lower; //!< kilobytes of lower memory
         uint32_t mem_upper; //!< kilobytes of upper memory
 
@@ -58,10 +86,7 @@ public:
         uint32_t addr;
         uint32_t shndx;
 
-        struct memmap_t {
-            uint32_t length;
-            uint32_t addr;
-        } mmap PACKED;
+        mmap_t mmap;
 
         uint32_t drives_length;
         uint32_t drives_addr;
@@ -86,14 +111,6 @@ public:
         uint32_t mod_end;
         const char* str;
         uint32_t reserved;
-    } PACKED;
-
-    struct mmapinfo_t
-    {
-        uint32_t size;      ///< size of the mmapinfo entry
-        uint64_t base_addr; ///< base address of memory region
-        uint64_t length;    ///< size of memory region
-        uint32_t type;      ///< type == 1 for free regions, anything else means occupied
     } PACKED;
 
     multiboot_t(header_t* h = NULL)
@@ -174,7 +191,7 @@ public:
     inline bool has_mem_info() const { return flags_set(FLAG_MEM); }
 
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
-    header_t::memmap_t* memory_map() const;
+    mmap_t* memory_map() const;
 
 private:
     header_t*              header;

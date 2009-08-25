@@ -201,6 +201,16 @@ void kickstart(multiboot_t::header_t* mbh)
 
     remap_stack();
 
+    // Print mmap
+//     mb.memory_map()->dump();
+    multiboot_t::mmap_entry_t* mmi = mb.memory_map()->first_entry();
+    kconsole.print("MMAP is provided\n");
+    while (mmi)
+    {
+        kconsole << "[entry @ " << (uint32_t)mmi << "]  " << (uint32_t)mmi->address() << ", " << (int32_t)mmi->size() << " bytes, type " <<  (mmi->is_free() ? "Free" : "Occupied") << endl;
+        mmi = mb.memory_map()->next_entry(mmi);
+    }
+
     init_memmgr.start_paging();
 
     /// here we have paging enabled and can call kernel functions

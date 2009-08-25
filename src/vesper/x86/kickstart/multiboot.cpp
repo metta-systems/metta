@@ -6,6 +6,7 @@
 //
 #include "multiboot.h"
 #include "memutils.h"
+#include "debugger.h"
 
 void multiboot_t::set_header(multiboot_t::header_t* h)
 {
@@ -44,12 +45,36 @@ void multiboot_t::set_header(multiboot_t::header_t* h)
     }
 }
 
-multiboot_t::header_t::memmap_t* multiboot_t::memory_map() const
+multiboot_t::mmap_t* multiboot_t::memory_map() const
 {
     if (!has_mmap_info())
         return 0;
-    ASSERT(sizeof(mmapinfo_t)==24);
+    ASSERT(sizeof(mmap_entry_t)==24);
     return &header->mmap;
+}
+
+void multiboot_t::mmap_t::dump()
+{
+    debugger_t::dump_memory(addr, length);
+}
+
+multiboot_t::mmap_entry_t* multiboot_t::mmap_t::first_entry()
+{
+    return reinterpret_cast<multiboot_t::mmap_entry_t*>(addr);
+}
+
+multiboot_t::mmap_entry_t* multiboot_t::mmap_t::next_entry(multiboot_t::mmap_entry_t* prev)
+{
+    if (!prev)
+        return 0;
+
+    multiboot_t::mmap_entry_t* end  = reinterpret_cast<multiboot_t::mmap_entry_t*>(addr + length);
+    multiboot_t::mmap_entry_t* next = reinterpret_cast<multiboot_t::mmap_entry_t*>((char*)prev + prev->entry_size + 4);
+
+    if (next < end)
+        return next;
+
+    return 0;
 }
 
 // kate: indent-width 4; replace-tabs on;
