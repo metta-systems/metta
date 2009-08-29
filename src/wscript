@@ -129,8 +129,8 @@ def build(bld):
     )
 
     bld.new_task_gen(
-        source = 'vesper/x86/kickstart.bin vesper/x86/orb.bin initfs.img tools/mkbootimg/images.sh',
-        target = 'floppy.img',
+        source = 'vesper/x86/kickstart.bin vesper/x86/nucleus.bin initfs.img tools/mkbootimg/images.sh',
+        target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
         after = 'initfs.img'

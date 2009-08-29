@@ -3,5 +3,5 @@ timeout 1
 title Metta
     root (fd0)
     kernel /kickstart
-    module /orb
+    module /nucleus
     module /bootcomps

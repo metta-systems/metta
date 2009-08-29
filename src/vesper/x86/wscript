@@ -12,17 +12,17 @@ def build(bld):
     kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp'.split())# kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
-    kickstart.includes = '. ../../lib ../../runtime lib kickstart orb'
+    kickstart.includes = '. ../../lib ../../runtime lib kickstart nucleus'
     kickstart.target = 'kickstart.bin'
     kickstart.uselib_local = 'kernel_runtime'
 
-    orb = bld.new_task_gen('cxx', 'program')
-    orb.source = 'orb/nucleus.cpp orb/pd.cpp orb/page_directory.cpp orb/memory/new.cpp orb/memory/memory_manager.cpp orb/memory/page_allocator.cpp orb/memory/stack_page_allocator.cpp orb/memory/heap.cpp'# orb/orb.lds
-    orb.env = bld.env_of_name('KERNEL_ENV').copy()
-    orb.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/orb/orb.lds', '-Wl,-Map,orb.map'])
-    orb.includes = '. ../../lib ../../runtime lib orb'
-    orb.target = 'orb.bin'
-    orb.uselib_local = 'kernel_runtime'
+    nucleus = bld.new_task_gen('cxx', 'program')
+    nucleus.source = 'nucleus/nucleus.cpp nucleus/pd.cpp nucleus/page_directory.cpp nucleus/memory/new.cpp nucleus/memory/memory_manager.cpp nucleus/memory/page_allocator.cpp nucleus/memory/stack_page_allocator.cpp nucleus/memory/heap.cpp'# nucleus/nucleus.lds
+    nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
+    nucleus.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/nucleus/nucleus.lds', '-Wl,-Map,nucleus.map'])
+    nucleus.includes = '. ../../lib ../../runtime lib nucleus'
+    nucleus.target = 'nucleus.bin'
+    nucleus.uselib_local = 'kernel_runtime'
 
     bld.add_subdirs('boot_components')
 
