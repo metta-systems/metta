@@ -41,6 +41,8 @@ inline bool is_page_aligned(T a)
     return a % PAGE_SIZE == 0;
 }
 
+class page_table_t;
+
 // Bootloader micro PMM allocator.
 // Defined in pmm.cpp.
 class boot_pmm_allocator
@@ -61,14 +63,14 @@ public:
 
 private:
     //! Helper to select either low or high pagetable depending on address.
-    address_t *select_pagetable(address_t vaddr);
+    page_table_t* select_pagetable(address_t vaddr);
 
     //! Start (FIXME: and end?) of allocated pages for passing into initcp.
     address_t alloced_start;
 
-    address_t *kernelpagedir;
-    address_t *lowpagetable;
-    address_t *highpagetable;
+    address_t* kernelpagedir;
+    page_table_t* lowpagetable;
+    page_table_t* highpagetable;
 };
 
 // kate: indent-width 4; replace-tabs on;
