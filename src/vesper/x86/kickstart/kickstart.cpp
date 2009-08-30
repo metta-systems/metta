@@ -191,6 +191,8 @@ void kickstart(multiboot_t::header_t* mbh)
     while (mmi)
     {
         kconsole << "[entry @ " << (uint32_t)mmi << "]  " << (uint32_t)mmi->address() << ", " << (int32_t)mmi->size() << " bytes, type " <<  (mmi->is_free() ? "Free" : "Occupied") << endl;
+        // We will need to access mmap from paging mode
+        init_memmgr.mapping_enter((address_t)mmi, (address_t)mmi);
         mmi = mb.memory_map()->next_entry(mmi);
     }
 
