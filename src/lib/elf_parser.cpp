@@ -10,6 +10,8 @@
 #include "memory.h"
 #include "minmax.h"
 
+#define ELF_LOADER_DEBUG 1
+
 using namespace elf32;
 
 elf_parser::elf_parser()
@@ -22,7 +24,7 @@ elf_parser::elf_parser()
     filename            = NULL;
 }
 
-#if 0
+#if ELF_LOADER_DEBUG
 static void print_phent(int i, program_header *ph)
 {
     kconsole <<
@@ -70,8 +72,10 @@ if (x) { \
 
         size_t npages = page_align_up<size_t>(ph->memsz) / PAGE_SIZE;
 
-//         print_phent(i, ph);
-//         kconsole << "Allocating " << npages << " pages (including bss)" << endl;
+#if ELF_LOADER_DEBUG
+        print_phent(i, ph);
+        kconsole << "Allocating " << npages << " pages (including bss)" << endl;
+#endif
 
         size_t remain_to_copy = ph->filesz;
         size_t remain_to_zero = page_align_up<size_t>(ph->memsz) - ph->filesz;
@@ -98,8 +102,13 @@ if (x) { \
                 remain_to_zero -= to_zero;
             }
             vaddr += PAGE_SIZE;
-//             kconsole << "  " << (p+1) << " " << endl;
+#if ELF_LOADER_DEBUG
+            kconsole << "  " << (int)(p+1) << " ";
+#endif
         }
+#if ELF_LOADER_DEBUG
+            kconsole << endl;
+#endif
     }
 
     return true;
