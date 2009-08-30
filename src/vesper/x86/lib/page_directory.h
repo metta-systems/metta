@@ -40,6 +40,9 @@ public:
     void set_dirty(bool b)      { pg.dirty     = b ? 1 : 0; }
     void set_frame(address_t f) { pg.base      = (f >> 12); }
 
+    uint32_t/*FIXME rettype*/ operator =(uint32_t v) { raw = v; return v; }
+    operator uint32_t()                              { return raw; }
+
 private:
     union {
         struct {
@@ -102,6 +105,11 @@ public:
     }
 
     page_table_t* clone(address_t* phys);
+
+    page_t& operator[](uint32_t n)
+    {
+        return pages[n];
+    }
 
 private:
     void copy_frame(uint32_t from_phys, uint32_t to_phys);
