@@ -13,7 +13,7 @@ chmod 0777 fd
 dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 
 # Format the image
-mke2fs -F $FLOPPY
+/sbin/mke2fs -F $FLOPPY
 
 # Mount the Ext2 image
 sudo mount -oloop $FLOPPY fd
@@ -26,7 +26,7 @@ sudo umount fd
 rm -rf fd
 
 # Install grub
-grub --batch --no-floppy <<EOT 1>/dev/null  || exit 1
+/sbin/grub --batch --no-floppy <<EOT 1>/dev/null  || exit 1
 device (fd0) $FLOPPY
 install (fd0)/boot/grub/stage1 (fd0) (fd0)/boot/grub/stage2 (fd0)/boot/grub/menu.lst
 quit
