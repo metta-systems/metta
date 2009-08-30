@@ -6,23 +6,29 @@ typedef void (*ctorfn)();
 extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
 
 // Run static constructors for kernel.
-extern "C" void entry()
+extern "C" void entry(address_t mem_end, multiboot_t::mmap_t* mmap)
 {
     for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
         ctors_GLOBAL[m]();
+
+    nucleus_n::nucleus.init(mem_end, mmap);
 }
 
-namespace nucleus
+namespace nucleus_n
 {
 
 // Our global static kernel object.
-nucleus_t orb;
+nucleus_t nucleus;
 
 nucleus_t::nucleus_t()
     : memory_manager()
 {
     kconsole << GREEN << "Hello, ORB!" << endl;
-//     mem_mgr.init();
+}
+
+void nucleus_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
+{
+    memory_manager.init(mem_end, mmap);
 }
 
 void nucleus_t::enter_trap(UNUSED_ARG int portal_no)

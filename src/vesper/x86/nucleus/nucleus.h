@@ -2,7 +2,7 @@
 
 #include "memory/memory_manager.h"
 
-namespace nucleus
+namespace nucleus_n
 {
 
 /*!
@@ -16,6 +16,7 @@ class nucleus_t
 {
 public:
     nucleus_t();
+    void init(address_t mem_end, multiboot_t::mmap_t* mmap);
 
     memory_manager_t& mem_mgr() { return memory_manager; }
 //     page_directory_t& root_pagedir() { return pagedir; }
@@ -29,6 +30,6 @@ private:
 //    page_directory_t pagedir; //!< Kernel page directory.
 };
 
-extern nucleus_t orb;
+extern nucleus_t nucleus;
 
 } // namespace nucleus
