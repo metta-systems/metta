@@ -1,16 +1,12 @@
 #include "nucleus.h"
 #include "macros.h"
 #include "default_console.h"
+#include "c++ctors.h"
 
-typedef void (*ctorfn)();
-extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
-
-// Run static constructors for kernel.
+// Run static construction for kernel.
 extern "C" void entry(address_t mem_end, multiboot_t::mmap_t* mmap)
 {
-    for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
-        ctors_GLOBAL[m]();
-
+    run_global_ctors();
     nucleus_n::nucleus.init(mem_end, mmap);
 }
 

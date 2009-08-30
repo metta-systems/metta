@@ -42,13 +42,14 @@
 #include "memutils.h"
 #include "multiboot.h"
 #include "memory.h" // boot_pmm_allocator
-#include "gdt.h" // gdt
-#include "idt.h" // idt
+#include "gdt.h"
+#include "idt.h"
 #include "default_console.h"
 #include "elf_parser.h"
 #include "registers.h"
 #include "initfs.h"
 #include "mmu.h"
+#include "c++ctors.h"
 #include "debugger.h"
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
@@ -103,18 +104,13 @@ static void remap_stack()
     kconsole << "done. Activated new stack." << endl;
 }
 
-typedef void (*ctorfn)();
-extern ctorfn ctors_GLOBAL[]; // zero terminated constructors table
-
 //! Prepare and boot system.
 /*!
 This part starts in protected mode, linear == physical, paging is off.
 */
 void kickstart(multiboot_t::header_t* mbh)
 {
-    // Run static constructors
-    for (unsigned int m = 0; ctors_GLOBAL[m]; m++)
-        ctors_GLOBAL[m]();
+    run_global_ctors();
 
     multiboot_t mb(mbh);
 
