@@ -27,12 +27,12 @@ public:
 class page_frame_allocator_t
 {
 public:
-    page_frame_allocator_t(page_frame_allocator_impl_t* implementation)
+    inline page_frame_allocator_t(page_frame_allocator_impl_t* implementation)
     {
         impl = implementation;
     }
 
-    ~page_frame_allocator_t() {}
+    inline ~page_frame_allocator_t() {}
 
     /*!
     * Initialize free physical memory map.
