@@ -8,12 +8,12 @@
 #include "macros.h"
 #include "nucleus.h"
 
-using nucleus::orb;
+using nucleus_n::nucleus;
 
 static inline void* placement_alloc(size_t size)
 {
-    uint32_t tmp = orb.mem_mgr().get_placement_address();
-    orb.mem_mgr().set_placement_address(tmp+size);
+    uint32_t tmp = nucleus.mem_mgr().get_placement_address();
+    nucleus.mem_mgr().set_placement_address(tmp+size);
     return (void *)tmp;
 }
 
@@ -24,14 +24,14 @@ void* operator new(UNUSED_ARG size_t size, uint32_t place)
 
 void* operator new(size_t size, bool page_align, address_t* addr)
 {
-    if (orb.mem_mgr().is_heap_initialized())
+    if (nucleus.mem_mgr().is_heap_initialized())
     {
-        return orb.mem_mgr().allocate(size, page_align, addr);
+        return nucleus.mem_mgr().allocate(size, page_align, addr);
     }
     else
     {
         if (page_align)
-            orb.mem_mgr().align_placement_address();
+            nucleus.mem_mgr().align_placement_address();
         void *tmp = placement_alloc(size);
         if (addr)
             *addr = (address_t)tmp;
@@ -56,14 +56,14 @@ void* operator new[](size_t size, bool page_align, address_t* addr)
 
 void operator delete(void* p)
 {
-    if (orb.mem_mgr().is_heap_initialized())
-        orb.mem_mgr().free(p);
+    if (nucleus.mem_mgr().is_heap_initialized())
+        nucleus.mem_mgr().free(p);
 }
 
 void operator delete[](void* p)
 {
-    if (orb.mem_mgr().is_heap_initialized())
-        orb.mem_mgr().free(p);
+    if (nucleus.mem_mgr().is_heap_initialized())
+        nucleus.mem_mgr().free(p);
 }
 
 // kate: indent-width 4; replace-tabs on;

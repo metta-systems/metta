@@ -11,7 +11,7 @@
 #include "page_directory.h"
 #include "nucleus.h"
 
-using nucleus::orb;
+using nucleus_n::nucleus;
 
 /**
 * XXX be careful not to use memory-allocating kconsole calls inside heap_t
@@ -417,7 +417,7 @@ void heap_t::expand(size_t new_size)
     uint32_t i = old_size;
     while(i < new_size)
     {
-        orb.mem_mgr().page_frame_allocator().alloc_frame(orb.mem_mgr().get_kernel_directory()->get_page(start_address+i), is_kernel);
+        nucleus.mem_mgr().page_frame_allocator().alloc_frame(nucleus.mem_mgr().get_kernel_directory()->get_page(start_address+i), is_kernel);
         i += PAGE_SIZE;
     }
 
@@ -456,7 +456,7 @@ size_t heap_t::contract(size_t new_size)
     uint32_t i = new_size;
     while(i < old_size)
     {
-        orb.mem_mgr().page_frame_allocator().free_frame(orb.mem_mgr().get_kernel_directory()->get_page(start_address+i));
+        nucleus.mem_mgr().page_frame_allocator().free_frame(nucleus.mem_mgr().get_kernel_directory()->get_page(start_address+i));
         i += PAGE_SIZE;
     }
 
