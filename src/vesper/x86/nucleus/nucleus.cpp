@@ -23,7 +23,7 @@ nucleus_t nucleus;
 nucleus_t::nucleus_t()
     : memory_manager()
 {
-    kconsole << GREEN << "Hello, ORB!" << endl;
+    kconsole << GREEN << "Hello, nucleus!" << endl;
 }
 
 void nucleus_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)

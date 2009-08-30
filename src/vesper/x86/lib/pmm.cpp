@@ -19,6 +19,21 @@
 
 #define BOOT_PMM_DEBUG 1
 
+#define PDE_SHIFT 22
+#define PDE_MASK  0x3ff
+#define PTE_SHIFT 12
+#define PTE_MASK  0x3ff
+
+inline int pde_entry(address_t vaddr)
+{
+    return (vaddr >> PDE_SHIFT) & PDE_MASK;
+}
+
+inline int pte_entry(address_t vaddr)
+{
+    return (vaddr >> PTE_SHIFT) & PTE_MASK;
+}
+
 void boot_pmm_allocator::setup_pagetables()
 {
     // Create and configure paging directory.
@@ -53,13 +68,13 @@ address_t boot_pmm_allocator::get_alloced_start()
 page_table_t* boot_pmm_allocator::select_pagetable(address_t vaddr)
 {
     page_table_t* pagetable = 0;
-    if (kernelpagedir[vaddr / (PAGE_SIZE * 1024)])
-        pagetable = reinterpret_cast<page_table_t*>(kernelpagedir[vaddr / (PAGE_SIZE * 1024)] & ~PAGE_MASK);
+    if (kernelpagedir[pde_entry(vaddr)])
+        pagetable = reinterpret_cast<page_table_t*>(kernelpagedir[pde_entry(vaddr)] & PAGE_MASK);
     else
     {
         pagetable = reinterpret_cast<page_table_t*>(alloc_next_page());
         memutils::fill_memory(pagetable, 0, PAGE_SIZE);
-        kernelpagedir[vaddr / (PAGE_SIZE * 1024)] =  (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+        kernelpagedir[pde_entry(vaddr)] = (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
     }
 
     return pagetable;
@@ -68,16 +83,21 @@ page_table_t* boot_pmm_allocator::select_pagetable(address_t vaddr)
 void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr)
 {
     page_table_t *pagetable = select_pagetable(vaddr);
+    ASSERT(pagetable);
 #if BOOT_PMM_DEBUG
-    kconsole << "+mapping " << vaddr << "=>" << paddr << " into " << (vaddr % (PAGE_SIZE*1024))/PAGE_SIZE << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE]) << ")" << endl;
+    kconsole << "+(" << vaddr << "=>" << paddr << ") to entry " << pte_entry(vaddr) << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[pte_entry(vaddr)]) << ")" << endl;
 #endif
-    (*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE] = paddr | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+    (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+
+    if (!mapping_entered((address_t)pagetable))
+        mapping_enter((address_t)pagetable, (address_t)pagetable);
 }
 
 bool boot_pmm_allocator::mapping_entered(address_t vaddr)
 {
     page_table_t *pagetable = select_pagetable(vaddr);
-    return (*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE] != 0;
+    ASSERT(pagetable);
+    return (*pagetable)[pte_entry(vaddr)] != 0;
 }
 
 // TODO: pmm interface + pmm_state transfer
