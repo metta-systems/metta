@@ -17,7 +17,7 @@
 #include "ia32.h"
 #include "page_directory.h"
 
-#define BOOT_PMM_DEBUG 1
+#define BOOT_PMM_DEBUG 0
 
 #define PDE_SHIFT 22
 #define PDE_MASK  0x3ff
