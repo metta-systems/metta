@@ -13,6 +13,7 @@
 #include "default_console.h"
 #include "minmax.h"
 #include "mmu.h"
+#include "memutils.h"
 #include "ia32.h"
 #include "page_directory.h"
 
@@ -22,23 +23,14 @@ void boot_pmm_allocator::setup_pagetables()
 {
     // Create and configure paging directory.
     kernelpagedir = reinterpret_cast<address_t*>(alloc_next_page());
-    // this completely doesn't work for kernel at 0xf0000000, TODO implement proper highmem pagedir
-    lowpagetable  = reinterpret_cast<page_table_t*>(alloc_next_page());
-    highpagetable = reinterpret_cast<page_table_t*>(alloc_next_page());
+    memutils::fill_memory(kernelpagedir, 0, PAGE_SIZE);
 
-    // TODO: map to top of memory
+    // TODO: map to top of memory (requires keeping track of pde/pte physical addresses)
     mapping_enter((address_t)kernelpagedir, (address_t)kernelpagedir);
-    mapping_enter((address_t)lowpagetable, (address_t)lowpagetable);
-    mapping_enter((address_t)highpagetable, (address_t)highpagetable);
-
-    (*lowpagetable)[0] = 0x0; // invalid page 0
 }
 
 void boot_pmm_allocator::start_paging()
 {
-    kernelpagedir[0] = (address_t)lowpagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
-    kernelpagedir[768] = (address_t)highpagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
-
     ia32_mmu_t::set_active_pagetable((address_t)kernelpagedir);
     ia32_mmu_t::enable_paged_mode();
 
@@ -61,12 +53,15 @@ address_t boot_pmm_allocator::get_alloced_start()
 page_table_t* boot_pmm_allocator::select_pagetable(address_t vaddr)
 {
     page_table_t* pagetable = 0;
-    if (vaddr < 256*1024*1024)
-        pagetable = lowpagetable;
-    else if (vaddr > 768*1024*1024)
-        pagetable = highpagetable;
+    if (kernelpagedir[vaddr / (PAGE_SIZE * 1024)])
+        pagetable = reinterpret_cast<page_table_t*>(kernelpagedir[vaddr / (PAGE_SIZE * 1024)] & ~PAGE_MASK);
     else
-        PANIC("invalid vaddr in select_pagetable");
+    {
+        pagetable = reinterpret_cast<page_table_t*>(alloc_next_page());
+        memutils::fill_memory(pagetable, 0, PAGE_SIZE);
+        kernelpagedir[vaddr / (PAGE_SIZE * 1024)] =  (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+    }
+
     return pagetable;
 }
 
@@ -74,15 +69,15 @@ void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr)
 {
     page_table_t *pagetable = select_pagetable(vaddr);
 #if BOOT_PMM_DEBUG
-    kconsole << "+mapping " << vaddr << "=>" << paddr << " into " << vaddr / PAGE_SIZE << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[vaddr / PAGE_SIZE]) << ")" << endl;
+    kconsole << "+mapping " << vaddr << "=>" << paddr << " into " << (vaddr % (PAGE_SIZE*1024))/PAGE_SIZE << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE]) << ")" << endl;
 #endif
-    (*pagetable)[vaddr / PAGE_SIZE] = paddr | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+    (*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE] = paddr | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
 }
 
 bool boot_pmm_allocator::mapping_entered(address_t vaddr)
 {
     page_table_t *pagetable = select_pagetable(vaddr);
-    return (*pagetable)[vaddr / PAGE_SIZE] != 0;
+    return (*pagetable)[(vaddr % (PAGE_SIZE*1024)) / PAGE_SIZE] != 0;
 }
 
 // TODO: pmm interface + pmm_state transfer
