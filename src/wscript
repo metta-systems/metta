@@ -58,7 +58,9 @@ def configure(conf):
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
-    #conf.env.append_unique('CXXDEFINES', ['CONFIG_CPU_IA32_P4'])
+    metta_flag = "__Metta__"
+    conf.env.append_unique('CDEFINES', metta_flag)
+    conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('NASM_FLAGS', ['-f elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build

@@ -17,7 +17,7 @@ def build(bld):
     kickstart.uselib_local = 'kernel_runtime'
 
     nucleus = bld.new_task_gen('cxx', 'program')
-    nucleus.source = 'nucleus/nucleus.cpp nucleus/pd.cpp nucleus/page_directory.cpp nucleus/memory/new.cpp nucleus/memory/memory_manager.cpp nucleus/memory/page_allocator.cpp nucleus/memory/stack_page_allocator.cpp nucleus/memory/heap.cpp'# nucleus/nucleus.lds
+    nucleus.source = 'nucleus/nucleus.cpp nucleus/pd.cpp nucleus/page_directory.cpp nucleus/memory/new.cpp nucleus/memory/memory_manager.cpp nucleus/memory/stack_page_allocator.cpp nucleus/memory/heap.cpp'# nucleus/nucleus.lds
     nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
     nucleus.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/nucleus/nucleus.lds', '-Wl,-Map,nucleus.map'])
     nucleus.includes = '. ../../lib ../../runtime lib nucleus'
