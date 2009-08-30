@@ -152,19 +152,6 @@ void kickstart(multiboot_t::header_t* mbh)
     // identity map start of initcp so we can access header_ from paging mode.
     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
-    // TODO: Move this to post-paging, when orb can create new PDs.
-    // Load components from bootcp.
-    initfs_t initfs(bootcp->mod_start);
-    k = 0;
-
-    while (k < initfs.count())
-    {
-        kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
-        if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
-            kconsole << RED << "not an ELF file, load failed" << endl;
-        k += 1;
-    }
-
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KICKSTART_BASE;
     address_t ph_end   = page_align_up<address_t>((address_t)&placement_address); // one after end
@@ -211,13 +198,36 @@ void kickstart(multiboot_t::header_t* mbh)
         mmi = mb.memory_map()->next_entry(mmi);
     }
 
+    // Get kernel entry before enabling paging, as this area won't be mapped.
+    typedef void (*kernel_entry)(address_t mem_end, multiboot_t::mmap_t* mmap);
+    kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
+
     init_memmgr.start_paging();
+
+    kconsole << "need " << (address_t)0xf0000000 << " mapped" << endl;
+    ASSERT(init_memmgr.mapping_entered((address_t)0xf0000000));
 
     /// here we have paging enabled and can call kernel functions
     /// start by creating PDs for boot_components and load them in their PDs
     /// fill in startup portals code
 
     /// call vm_server.init(mbh->mmap, current_pdir)
+    kconsole << RED << "going to init nucleus" << endl;
+    init_nucleus(0/*mem_end*/, mb.memory_map());
+    kconsole << GREEN << "done, instantiating components" << endl;
+
+    // Moved this to post-paging, when nucleus can create new PDs.
+    // Load components from bootcp.
+    initfs_t initfs(bootcp->mod_start);
+    k = 0;
+
+    while (k < initfs.count())
+    {
+        kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
+        if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
+            kconsole << RED << "not an ELF file, load failed" << endl;
+        k += 1;
+    }
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
