@@ -14,7 +14,6 @@
 #include "minmax.h"
 #include "mmu.h"
 #include "memutils.h"
-#include "ia32.h"
 #include "page_directory.h"
 
 #define BOOT_PMM_DEBUG 0
@@ -37,16 +36,16 @@ inline int pte_entry(address_t vaddr)
 void boot_pmm_allocator::setup_pagetables()
 {
     // Create and configure paging directory.
-    kernelpagedir = reinterpret_cast<address_t*>(alloc_next_page());
-    memutils::fill_memory(kernelpagedir, 0, PAGE_SIZE);
+    pagedir = reinterpret_cast<address_t*>(alloc_next_page());
+    memutils::fill_memory(pagedir, 0, PAGE_SIZE);
 
     // TODO: map to top of memory (requires keeping track of pde/pte physical addresses)
-    mapping_enter((address_t)kernelpagedir, (address_t)kernelpagedir);
+    mapping_enter((address_t)pagedir, (address_t)pagedir);
 }
 
 void boot_pmm_allocator::start_paging()
 {
-    ia32_mmu_t::set_active_pagetable((address_t)kernelpagedir);
+    ia32_mmu_t::set_active_pagetable((address_t)pagedir);
     ia32_mmu_t::enable_paged_mode();
 
 #if BOOT_PMM_DEBUG
@@ -65,29 +64,31 @@ address_t boot_pmm_allocator::get_alloced_start()
     return alloced_start;
 }
 
+// page_directory_t::get_page is identical in purpose
 page_table_t* boot_pmm_allocator::select_pagetable(address_t vaddr)
 {
     page_table_t* pagetable = 0;
-    if (kernelpagedir[pde_entry(vaddr)])
-        pagetable = reinterpret_cast<page_table_t*>(kernelpagedir[pde_entry(vaddr)] & PAGE_MASK);
+    if (pagedir[pde_entry(vaddr)])
+        pagetable = reinterpret_cast<page_table_t*>(pagedir[pde_entry(vaddr)] & PAGE_MASK);
     else
     {
         pagetable = reinterpret_cast<page_table_t*>(alloc_next_page());
         memutils::fill_memory(pagetable, 0, PAGE_SIZE);
-        kernelpagedir[pde_entry(vaddr)] = (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+        pagedir[pde_entry(vaddr)] = (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
     }
 
     return pagetable;
 }
 
-void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr)
+// should be in page_directory_t
+void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr, int flags)
 {
-    page_table_t *pagetable = select_pagetable(vaddr);
+    page_table_t* pagetable = select_pagetable(vaddr);
     ASSERT(pagetable);
 #if BOOT_PMM_DEBUG
     kconsole << "+(" << vaddr << "=>" << paddr << ") to entry " << pte_entry(vaddr) << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[pte_entry(vaddr)]) << ")" << endl;
 #endif
-    (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
+    (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | (flags & ~PAGE_MASK);
 
     if (!mapping_entered((address_t)pagetable))
         mapping_enter((address_t)pagetable, (address_t)pagetable);
