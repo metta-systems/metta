@@ -1,12 +1,13 @@
 #pragma once
 
 #include "page_allocator.h"
+#include "lockable.h"
 
 //! Stack-based page allocator implementation.
 /*!
 * Simple, because it doesn't do page coloring or use any other advanced techniques yet.
 */
-class stack_page_frame_allocator_t : public page_frame_allocator_impl_t
+class stack_page_frame_allocator_t : public page_frame_allocator_impl_t, public lockable_t
 {
 public:
     stack_page_frame_allocator_t();

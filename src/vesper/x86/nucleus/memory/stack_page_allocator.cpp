@@ -35,6 +35,7 @@ At 8 or 16 bytes per free page stack I could probably have millions of them with
 
 stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     : page_frame_allocator_impl_t()
+    , lockable_t()
     , next_free_phys(0)
     , total_frames(0)
     , free_frames(0)
@@ -58,9 +59,11 @@ void stack_page_frame_allocator_t::init(UNUSED_ARG address_t mem_end, multiboot_
         if (mmi->is_free())
         {
             // include pages into free stack
-//             free_frame(physical, linear);
-
-            free_frames += n_frames;
+            for (uint32_t n = 0; n < n_frames; n++)
+            {
+                free_frame(start);
+                start += PAGE_SIZE;
+            }
         }
         else
         {
@@ -70,7 +73,7 @@ void stack_page_frame_allocator_t::init(UNUSED_ARG address_t mem_end, multiboot_
         total_frames += n_frames;
         mmi = mmap->next_entry(mmi);
     }
-    kconsole << "Stack page frame allocator: detected " << total_frames << " frames of physical memory, " << reserved_frames << " frames reserved, " << free_frames << " frames free." << endl;
+    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE) << "KB) of physical memory, " << (int)reserved_frames << " frames reserved, " << (int)free_frames << " (" << (int)(free_frames*PAGE_SIZE) << "KB) frames free." << endl;
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
@@ -95,20 +98,28 @@ void stack_page_frame_allocator_t::free_frame(page_t* p)
 
 address_t stack_page_frame_allocator_t::alloc_frame()
 {
-/*alloc_page:
-    frame = next_free_phys
-    linear = map_mage(frame)
-    next_free_phys = *linear*/
-    return 0;
+    lock();
+    address_t next_frame = next_free_phys;
+    mapping_enter(PAGE_MASK, next_frame);
+    next_free_phys = *(address_t*)PAGE_MASK;
+    free_frames--;
+    ASSERT(free_frames <= total_frames);// catch underflow
+    unlock();
+    return next_frame;
 }
 
-
-void stack_page_frame_allocator_t::free_frame(UNUSED_ARG address_t frame)
+// phys_frame becomes the new free stack top.
+void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
-    // free_page(linear, physical):
-    //   *linear = next_free_phys
-    //   next_free_phys = physical
-    //   unmap_page(linear);
+    // map the topmost address space page temporarily to build free stacks
+    mapping_enter(PAGE_MASK, phys_frame);
+    lock();
+    *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top
+    next_free_phys = phys_frame; // remember phys as current free stack top
+    //   unmap_page(PAGE_MASK);
+    free_frames++;
+    ASSERT(free_frames <= total_frames);// catch overflow
+    unlock();
 }
 
 // kate: indent-width 4; replace-tabs on;
