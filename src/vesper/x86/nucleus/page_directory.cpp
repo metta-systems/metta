@@ -56,6 +56,21 @@ void page_table_t::copy_frame(uint32_t from_phys, uint32_t to_phys)
 // page_directory_t
 //======================================================================================================================
 
+#define PDE_SHIFT 22
+#define PDE_MASK  0x3ff
+#define PTE_SHIFT 12
+#define PTE_MASK  0x3ff
+
+inline int pde_entry(address_t vaddr)
+{
+    return (vaddr >> PDE_SHIFT) & PDE_MASK;
+}
+
+inline int pte_entry(address_t vaddr)
+{
+    return (vaddr >> PTE_SHIFT) & PTE_MASK;
+}
+
 page_directory_t::page_directory_t()
 {
     for (int i = 0; i < 1024; i++)
@@ -66,21 +81,24 @@ page_directory_t::page_directory_t()
     physical_address = (address_t)tables_physical;
 }
 
-page_t* page_directory_t::get_page(address_t addr, bool make)
+page_table_t* page_directory_t::get_page_table(address_t vaddr, bool make)
 {
-    addr /= PAGE_SIZE;
-    uint32_t table_idx = addr / 1024;
-    if (tables[table_idx]) // if the table is already assigned
-    {
-        return tables[table_idx]->get_page(addr % 1024);
-    }
-    else if (make)
+    uint32_t table_idx = pde_entry(vaddr);
+    if (!tables[table_idx] && make)
     {
         address_t phys;
         tables[table_idx] = new(true, &phys) page_table_t();
         tables_physical[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER;
-        return tables[table_idx]->get_page(addr % 1024);
     }
+    return tables[table_idx];
+}
+
+page_t* page_directory_t::get_page(address_t addr, bool make)
+{
+    page_table_t* pagetable = get_page_table(addr, make);
+
+    if (pagetable)
+        return pagetable->get_page(pte_entry(addr));
 
     return NULL;
 }
@@ -119,6 +137,19 @@ page_directory_t* page_directory_t::clone()
     }
 
     return dir;
+}
+
+void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags)
+{
+    page_table_t* pagetable = get_page_table(vaddr, true);
+    ASSERT(pagetable);
+#if MEMORY_DEBUG
+    kconsole << "+(" << vaddr << "=>" << paddr << ") to entry " << pte_entry(vaddr) << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[pte_entry(vaddr)]) << ")" << endl;
+#endif
+    (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | (flags & ~PAGE_MASK);
+
+//     if (!mapping_entered((address_t)pagetable))
+//         mapping_enter((address_t)pagetable, (address_t)pagetable);
 }
 
 void page_directory_t::dump()

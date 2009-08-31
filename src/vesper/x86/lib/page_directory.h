@@ -130,12 +130,16 @@ public:
         return tables[index];
     }
 
+    page_table_t* get_page_table(address_t vaddr, bool make = true);
+
     address_t get_physical()
     {
         return physical_address;
     }
 
     page_t* get_page(address_t addr, bool make = true);
+
+    void enter_mapping(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
 
     /*!
     * Create a new page directory, that is an identical copy of this.
