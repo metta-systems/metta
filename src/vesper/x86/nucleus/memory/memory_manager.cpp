@@ -25,8 +25,7 @@ static stack_page_frame_allocator_t stack_allocator;
 memory_manager_t::memory_manager_t()
     : frame_allocator(&stack_allocator)
 {
-    placement_address = (address_t)&image_end;
-    align_placement_address();//FIXME not necessary?
+    placement_address = (address_t)&image_end; // NOT PHYSICAL HERE, FIX IT by using frame_allocator
     // try to not use placement_address at all, init heap early.
 
     heap_initialized = false;
@@ -42,10 +41,10 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
     kernel_directory = new(true) page_directory_t();
     current_directory = kernel_directory;
 
-    // Map kernel code
+    // Map kernel code (mapped by elf loader already).
 
     // Map some pages in the kernel heap area.
-    // Here we call getPage but not alloc_frame. This causes PageTables
+    // Here we call get_page but not alloc_frame. This causes pagetables
     // to be created where nessecary. We can't allocate frames yet because
     // they need to be identity mapped first below.
     for (uint32_t i = K_HEAP_START; i < K_HEAP_END; i += PAGE_SIZE)
@@ -55,16 +54,16 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
 
     // Identity map from KERNEL_START to placementAddress.
     // reserve 16 pages above placement_address so that we can use placement alloc at start.
-    uint32_t i = 0;
-    while (i < placement_address + 16*PAGE_SIZE)
-    {
-        // Kernel code is readable but not writable from userspace.
-        frame_allocator.alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
-        i += PAGE_SIZE;
-    }
+//     uint32_t i = 0;
+//     while (i < placement_address + 16*PAGE_SIZE)
+//     {
+        // TODO Kernel code is readable but not writable from userspace.
+//         frame_allocator.alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
+//         i += PAGE_SIZE;
+//     }
 
     // Now allocate those pages we mapped earlier.
-    for (i = K_HEAP_START; i < K_HEAP_START + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
+    for (uint32_t i = K_HEAP_START; i < K_HEAP_START + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
         // Kernel heap is readable but not writable from userspace.
         frame_allocator.alloc_frame(kernel_directory->get_page(i, true), false, false);
@@ -75,7 +74,7 @@ void memory_manager_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
 //     ia32_mmu_t::enable_paged_mode();
 
     // Initialise the heaps.
-    heap.init(K_HEAP_START, K_HEAP_START + K_HEAP_INITIAL_SIZE, K_HEAP_END & PAGE_MASK /* see memory map */, true);
+    heap.init(K_HEAP_START, K_HEAP_START + K_HEAP_INITIAL_SIZE, K_HEAP_END & PAGE_MASK, true);
 
     heap_initialized = true;
 }
@@ -130,10 +129,11 @@ uint32_t memory_manager_t::get_heap_size()
 
 void memory_manager_t::check_integrity()
 {
-    // TODO: heap should be locked
     if(heap_initialized)
     {
+        heap.lock();
         heap.check_integrity();
+        heap.unlock();
     }
 }
 
