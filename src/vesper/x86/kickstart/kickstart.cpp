@@ -107,6 +107,9 @@ static void remap_stack()
 //! Prepare and boot system.
 /*!
 This part starts in protected mode, linear == physical, paging is off.
+
+As a rule: whatever we intend to bring to paging mode, we copy to an allocated frame
+ourselves.
 */
 void kickstart(multiboot_t::header_t* mbh)
 {
@@ -116,7 +119,7 @@ void kickstart(multiboot_t::header_t* mbh)
 
     ASSERT(mb.module_count() == 2);
 
-    multiboot_t::modinfo_t* kernel = mb.module(0); // orb
+    multiboot_t::modinfo_t* kernel = mb.module(0); // nucleus
     multiboot_t::modinfo_t* bootcp = mb.module(1); // bootcomps
     ASSERT(kernel);
     ASSERT(bootcp);
@@ -130,7 +133,7 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
-    kconsole << WHITE << "We are loaded at " << (unsigned)&KICKSTART_BASE << endl
+    kconsole << WHITE << "We are loaded at " << (address_t)&KICKSTART_BASE << endl
                       << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
@@ -200,10 +203,10 @@ void kickstart(multiboot_t::header_t* mbh)
     typedef void (*kernel_entry)(address_t mem_end, multiboot_t::mmap_t* mmap);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
-    init_memmgr.start_paging();
+    // TODO: We've allocated memory from a contiguous region, mark it and modify
+    // bootloader memory map to exclude this region as occupied.
 
-    kconsole << "need " << (address_t)0xf0000000 << " mapped" << endl;
-    ASSERT(init_memmgr.mapping_entered((address_t)0xf0000000));
+    init_memmgr.start_paging();
 
     /// here we have paging enabled and can call kernel functions
     /// start by creating PDs for boot_components and load them in their PDs
@@ -214,7 +217,6 @@ void kickstart(multiboot_t::header_t* mbh)
     init_nucleus(0/*mem_end*/, mb.memory_map());
     kconsole << GREEN << "done, instantiating components" << endl;
 
-    // Moved this to post-paging, when nucleus can create new PDs.
     // Load components from bootcp.
     initfs_t initfs(bootcp->mod_start);
     k = 0;
@@ -233,7 +235,7 @@ void kickstart(multiboot_t::header_t* mbh)
     ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
 
     /* Never reached */
-    PANIC("init() returned!");
+    PANIC("root_server returned!");
 }
 
 // kate: indent-width 4; replace-tabs on;
