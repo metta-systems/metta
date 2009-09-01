@@ -32,9 +32,9 @@ memory_manager_t::memory_manager_t()
     current_directory = kernel_directory = NULL;
 }
 
-void memory_manager_t::init(address_t mem_end, multiboot_t::mmap_t* mmap)
+void memory_manager_t::init(multiboot_t::mmap_t* mmap)
 {
-    frame_allocator.init(mem_end, mmap);
+    frame_allocator.init(mmap);
     // now we can allocate frames of physical memory
 
     // Make a page directory.

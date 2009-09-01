@@ -16,7 +16,7 @@ class page_t;
 class page_frame_allocator_impl_t
 {
 public:
-    virtual void init(address_t mem_end, multiboot_t::mmap_t* mmap) = 0;
+    virtual void init(multiboot_t::mmap_t* mmap) = 0;
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable) = 0;
     virtual void free_frame(page_t* p) = 0;
     virtual address_t alloc_frame() = 0;
@@ -37,9 +37,9 @@ public:
     /*!
     * Initialize free physical memory map.
     */
-    inline void init(address_t mem_end, multiboot_t::mmap_t* mmap)
+    inline void init(multiboot_t::mmap_t* mmap)
     {
-        impl->init(mem_end, mmap);
+        impl->init(mmap);
     }
 
     /*!

@@ -50,6 +50,7 @@
 #include "initfs.h"
 #include "mmu.h"
 #include "c++ctors.h"
+#include "bootinfo.h"
 #include "debugger.h"
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
@@ -138,7 +139,14 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
 
+    // fake_mmap_entry->start = init_memmgr.get_alloced_start();
+
     init_memmgr.setup_pagetables();
+
+    address_t bootinfo_page = init_memmgr.alloc_next_page();
+    init_memmgr.mapping_enter(bootinfo_page, bootinfo_page);
+    mb.copy(bootinfo_page);
+    mb.set_header(reinterpret_cast<multiboot_t::header_t*>(bootinfo_page + sizeof(uint32_t)));
 
     uint32_t k;
 
@@ -148,8 +156,8 @@ void kickstart(multiboot_t::header_t* mbh)
     else
         kconsole << GREEN << "kernel loaded (ok)" << endl;
 
-    // identity map start of initcp so we can access header_ from paging mode.
-    init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
+    // identity map start of initcp so we can access header_ from paging mode. FIXME??
+//     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KICKSTART_BASE;
@@ -169,14 +177,6 @@ void kickstart(multiboot_t::header_t* mbh)
         init_memmgr.mapping_enter(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
-    kconsole << endl << "Mapping multiboot info: ";
-    address_t a = page_align_down<address_t>(mbh);
-    init_memmgr.mapping_enter(a, a);
-
-    kconsole << endl << "Mapping modules list: ";
-    a = page_align_down<address_t>(mb.module(0));
-    init_memmgr.mapping_enter(a, a);
-
     kconsole << endl << "Mapped." << endl;
 
     global_descriptor_table_t gdt;
@@ -187,24 +187,15 @@ void kickstart(multiboot_t::header_t* mbh)
 
     remap_stack();
 
-    // Print mmap
-//     mb.memory_map()->dump();
-    multiboot_t::mmap_entry_t* mmi = mb.memory_map()->first_entry();
-    kconsole.print("MMAP is provided\n");
-    while (mmi)
-    {
-        kconsole << "[entry @ " << (uint32_t)mmi << "]  " << (uint32_t)mmi->address() << ", " << (int32_t)mmi->size() << " bytes, type " <<  (mmi->is_free() ? "Free" : "Occupied") << endl;
-        // We will need to access mmap from paging mode
-        init_memmgr.mapping_enter((address_t)mmi, (address_t)mmi);
-        mmi = mb.memory_map()->next_entry(mmi);
-    }
-
     // Get kernel entry before enabling paging, as this area won't be mapped.
-    typedef void (*kernel_entry)(address_t mem_end, multiboot_t::mmap_t* mmap);
+    typedef void (*kernel_entry)(address_t bootinfo_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
+    bootinfo_t bootinfo(bootinfo_page);
+    debugger_t::dump_memory(bootinfo_page, bootinfo.size());
+
     // TODO: We've allocated memory from a contiguous region, mark it and modify
-    // bootloader memory map to exclude this region as occupied.
+    // boot info page to exclude this region as occupied.
 
     init_memmgr.start_paging();
 
@@ -214,7 +205,7 @@ void kickstart(multiboot_t::header_t* mbh)
 
     /// call vm_server.init(mbh->mmap, current_pdir)
     kconsole << RED << "going to init nucleus" << endl;
-    init_nucleus(0/*mem_end*/, mb.memory_map());
+    init_nucleus(bootinfo_page);
     kconsole << GREEN << "done, instantiating components" << endl;
 
     // Load components from bootcp.
@@ -226,13 +217,11 @@ void kickstart(multiboot_t::header_t* mbh)
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
             kconsole << RED << "not an ELF file, load failed" << endl;
+//         init_component(bootinfo_page);
         k += 1;
     }
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
-
-    kconsole << "need " << (address_t)bootcp << " mapped" << endl;
-    ASSERT(init_memmgr.mapping_entered((address_t)bootcp));
 
     /* Never reached */
     PANIC("root_server returned!");

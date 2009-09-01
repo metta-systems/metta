@@ -12,7 +12,7 @@ class stack_page_frame_allocator_t : public page_frame_allocator_impl_t, public 
 public:
     stack_page_frame_allocator_t();
 
-    virtual void init(address_t mem_end, multiboot_t::mmap_t* mmap);
+    virtual void init(multiboot_t::mmap_t* mmap);
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable);
     virtual void free_frame(page_t* p);
     virtual address_t alloc_frame();

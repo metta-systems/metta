@@ -43,7 +43,7 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
 {}
 
 
-void stack_page_frame_allocator_t::init(UNUSED_ARG address_t mem_end, multiboot_t::mmap_t* mmap)
+void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap)
 {
     // Go through available physical memory frames, add them to the frame stack.
     ASSERT(mmap);
@@ -100,7 +100,7 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
-    mapping_enter(PAGE_MASK, next_frame);
+///     mapping_enter(PAGE_MASK, next_frame);
     next_free_phys = *(address_t*)PAGE_MASK;
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
@@ -112,7 +112,7 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
     // map the topmost address space page temporarily to build free stacks
-    mapping_enter(PAGE_MASK, phys_frame);
+///     mapping_enter(PAGE_MASK, phys_frame);
     lock();
     *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top
     next_free_phys = phys_frame; // remember phys as current free stack top

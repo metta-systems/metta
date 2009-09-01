@@ -16,7 +16,7 @@ class nucleus_t
 {
 public:
     nucleus_t();
-    void init(address_t mem_end, multiboot_t::mmap_t* mmap);
+    void init(address_t bootinfo_page);
 
     memory_manager_t& mem_mgr() { return memory_manager; }
 //     page_directory_t& root_pagedir() { return pagedir; }
