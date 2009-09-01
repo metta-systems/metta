@@ -6,6 +6,7 @@
 //
 #include "memutils.h"
 
+
 void* memutils::fill_memory(void* dest, int value, size_t count)
 {
     char *xs = (char *)dest;
@@ -13,6 +14,7 @@ void* memutils::fill_memory(void* dest, int value, size_t count)
         *xs++ = value;
     return dest;
 }
+
 
 void* memutils::copy_memory(void* dest, const void* src, size_t count)
 {
@@ -23,6 +25,7 @@ void* memutils::copy_memory(void* dest, const void* src, size_t count)
         *tmp++ = *s++;
     return dest;
 }
+
 
 void* memutils::move_memory(void* dest, const void* src, size_t count)
 {
@@ -45,7 +48,8 @@ void* memutils::move_memory(void* dest, const void* src, size_t count)
     return dest;
 }
 
-bool memutils::strequal(const char *s1, const char *s2)
+
+bool memutils::strequal(const char* s1, const char* s2)
 {
     signed char __res;
 
@@ -55,6 +59,17 @@ bool memutils::strequal(const char *s1, const char *s2)
     }
     return __res == 0;
 }
+
+
+size_t memutils::strlen(const char* s)
+{
+    size_t len = 0;
+    char*  t   = (char*)s;
+    while (*t++)
+        len++;
+    return len;
+}
+
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

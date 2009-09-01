@@ -58,6 +58,8 @@ public:
     * @note Used only in multiboot::set_header.
     **/
     static bool strequal(const char *s1, const char *s2);
+
+    static size_t strlen(const char *s);
 };
 
 // kate: indent-width 4; replace-tabs on;
