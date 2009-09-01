@@ -63,7 +63,7 @@ multiboot_t::mmap_t* multiboot_t::memory_map() const
 */
 uint32_t multiboot_t::size()
 {
-    uint32_t total = sizeof(multiboot_t::header_t);
+    uint32_t total = sizeof(uint32_t) + sizeof(multiboot_t::header_t);
     uint32_t alignment_space, cmdline_len;
 
     cmdline_len = 1 + memutils::strlen(header->cmdline);
@@ -87,43 +87,94 @@ uint32_t multiboot_t::size()
 /*!
 * Copies the current multiboot info into a new location.
 *
+* Boot info page gathers some data from the bootloader and passes it unto nucleus for memory regions and
+* pagetables initialization. Multiboot info is at the start of boot info page.
+*
+* Layout of boot info page:
+* uint32_t first_free_byte; // address of first free byte within this page (after all infos), size of useful data.
+* multiboot_t::header_t mb_header;
+* char cmdline[]; // aligned
+* multiboot_t::modinfo_t  mod_infos[num_infos];
+* char mod_cmdlines[]; // aligned
+* mmap_entry_t mmap[];
+*
+* use elf loader to unpack modules and update markings in modinfos (need to extend modinfos to include mappping info?)
+* add fake mmap entry to cover newly allocated blocks and mark them as bootloader_specific memory type
+*
 * @param target The destination for the new copy. Must have enough
 *               space to store the copy. The space is calculated
 *               via the size() method.
 */
 void multiboot_t::copy(address_t target)
 {
-    // Put strings after the target mbi and after the modules.
-//     char* strings = (char *)(L4_Word_t(target) + sizeof(mbi_t) + sizeof(mbi_module_t)*this->modcount);
+    uint32_t* size_ptr = reinterpret_cast<uint32_t*>(target);
+    target += sizeof(uint32_t);
 
-    // Copy the structure.
-//     memcopy(target, this, sizeof(mbi_t));
-    // Copy the command line.
-//     if (this->cmdline)
-//     {
-//         target->cmdline = strings;
-//         strcpy(target->cmdline, this->cmdline);
-//         strings = strings + 1 + strlen(this->cmdline);
-        // TODO: align the strings pointer.
-//     }
+    header_t* target_header = reinterpret_cast<header_t*>(target);
 
-    // Put modules at end of the target mbi.  Assume this will get
-    // proper aligment.
-//     target->mods = (mbi_module_t *)(L4_Word_t(target) + sizeof(mbi_t));
+    // Copy the multiboot header structure.
+    memutils::copy_memory(reinterpret_cast<void*>(target), header, sizeof(header_t));
 
-//     for (L4_Word_t i = 0; i < this->modcount; i++)
-//     {
-        // Copy the structure.
-//         memcopy(&target->mods[i], &this->mods[i], sizeof(mbi_module_t));
-        // Copy the command line.
-//         if (this->mods[i].cmdline)
+    target += sizeof(header_t);
+
+    // Copy kickstart command line.
+    uint32_t alignment_space, cmdline_len;
+
+    cmdline_len = 1 + memutils::strlen(header->cmdline);
+    alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
+
+    memutils::copy_memory(reinterpret_cast<void*>(target), header->cmdline, cmdline_len);
+
+    // Point to the local copy.
+    target_header->cmdline = reinterpret_cast<char*>(target);
+
+    // This is where we store modules info.
+    target += cmdline_len + alignment_space;
+    // This is where we store modules command lines.
+    char* strings = reinterpret_cast<char*>(target + module_count() * sizeof(modinfo_t));
+
+    target_header->modules = reinterpret_cast<modinfo_t*>(target);
+
+    for (uint32_t i = 0; i < module_count(); i++)
+    {
+        memutils::copy_memory(reinterpret_cast<void*>(target), module(i), sizeof(modinfo_t));
+        target += sizeof(modinfo_t);
+
+        if (module(i)->str)
         {
-//             target->mods[i].cmdline = strings;
-//             strcpy(target->mods[i].cmdline, this->mods[i].cmdline);
-//             strings = strings + 1 + strlen(this->mods[i].cmdline);
-            // TODO: align the strings pointer.
-//         }
-//     }
+            target_header->modules[i].str = strings;
+
+            cmdline_len = 1 + memutils::strlen(module(i)->str);
+            alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
+
+            memutils::copy_memory(strings, module(i)->str, cmdline_len);
+
+            strings += cmdline_len + alignment_space;
+        }
+    }
+
+    // This is where we put our memmap.
+    target = reinterpret_cast<address_t>(strings);
+    // We update header anyway, because we will be adding our fake mmap entry for allocated blocks.
+    target_header->mmap.set_addr(target);
+
+    mmap_t* memmap = memory_map();
+    if (memmap)
+    {
+        uint32_t mmap_length = 0;
+        multiboot_t::mmap_entry_t* mmi = memmap->first_entry();
+        while (mmi)
+        {
+            memutils::copy_memory(reinterpret_cast<void*>(target), mmi, sizeof(mmap_entry_t));
+            reinterpret_cast<mmap_entry_t*>(target)->set_entry_size(sizeof(mmap_entry_t)); //  ignore any extra fields
+            mmap_length += sizeof(mmap_entry_t);
+            target += sizeof(mmap_entry_t);
+            mmi = memmap->next_entry(mmi);
+        }
+        target_header->mmap.set_length(mmap_length);
+    }
+
+    *size_ptr = target - reinterpret_cast<address_t>(size_ptr); // black muti magic
 }
 
 

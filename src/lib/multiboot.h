@@ -44,6 +44,10 @@ public:
         mmap_entry_t* next_entry(mmap_entry_t* prev);
         uint32_t      size();
         void          dump();
+
+        void          set_addr(address_t new_addr)   { addr = reinterpret_cast<mmap_entry_t*>(new_addr); } // Can't resist being evil ^v^
+        void          set_length(size_t new_length)  { length = new_length; }
+
     private:
         uint32_t      length;
         mmap_entry_t* addr;
@@ -55,6 +59,9 @@ public:
         uint64_t address() const { return base_addr; }
         uint64_t size() const    { return length; }
         bool     is_free() const { return type == 1; }
+
+        void     set_entry_size(uint32_t new_size) { entry_size = new_size; }
+
     private:
         uint32_t entry_size;//!< size of the mmap entry
         uint64_t base_addr; //!< base address of memory region (physical)
