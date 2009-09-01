@@ -35,16 +35,18 @@ public:
     };
 
     class mmap_entry_t;
+    struct modinfo_t;
 
     class mmap_t
     {
     public:
         mmap_entry_t* first_entry();
         mmap_entry_t* next_entry(mmap_entry_t* prev);
-        void dump();
+        uint32_t      size();
+        void          dump();
     private:
-        uint32_t length;
-        uint32_t addr;
+        uint32_t      length;
+        mmap_entry_t* addr;
     } PACKED;
 
     class mmap_entry_t
@@ -75,10 +77,10 @@ public:
 
         uint32_t boot_device;
 
-        uint32_t cmdline;
+        char* cmdline;
 
-        uint32_t modules_count;
-        uint32_t modules_addr;
+        uint32_t   modules_count;
+        modinfo_t* modules;
 
         /* ELF information */
         uint32_t num;
@@ -136,7 +138,7 @@ public:
             && header->modules_count
             && i < header->modules_count)
         {
-            return (modinfo_t*)(header->modules_addr + i * sizeof(modinfo_t));
+            return &header->modules[i];
         }
         return 0;
     }
@@ -192,6 +194,9 @@ public:
 
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
     mmap_t* memory_map() const;
+
+    uint32_t  size();
+    void      copy(address_t target);
 
 private:
     header_t*              header;
