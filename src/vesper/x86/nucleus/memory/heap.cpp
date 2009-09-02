@@ -13,11 +13,12 @@
 
 using nucleus_n::nucleus;
 
-/**
+/*!
+* @class heap_t
 * XXX be careful not to use memory-allocating kconsole calls inside heap_t
 * as heap methods run with heap locked and asking to malloc from inside heap_t
 * will deadlock.
-**/
+*/
 
 #define HEAP_MAGIC        0xbeefbead
 #define HEAP_MIN_SIZE     0x70000

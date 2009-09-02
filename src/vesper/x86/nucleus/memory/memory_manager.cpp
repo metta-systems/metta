@@ -16,8 +16,8 @@ extern address_t image_end; // defined by linker
 /*!
 * @internal
 * Paging works by splitting the virtual address space into blocks
-* called \c pages, which are usually 4KB in size. Pages can then
-* be mapped on to \c frames - equally sized blocks of physical memory.
+* called @a pages, which are usually 4KB in size. Pages can then
+* be mapped onto @a frames - equally sized blocks of physical memory.
 */
 
 static stack_page_frame_allocator_t stack_allocator;
