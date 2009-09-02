@@ -24,3 +24,6 @@ void obj_move(T* dest, T* src, size_t count)
     else
         obj_copy(dest, src, count);
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
