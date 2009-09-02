@@ -7,10 +7,6 @@ void debugger_t::dump_memory(address_t start, size_t size)
     char *ptr = (char *)start;
     int run;
 
-    // Silly limitation, probably.
-    if (size > 256)
-        size = 256;
-
     kconsole.newline();
 
     while (size > 0)
