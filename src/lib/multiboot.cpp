@@ -192,7 +192,7 @@ void multiboot_t::mmap_t::dump()
 
 multiboot_t::mmap_entry_t* multiboot_t::mmap_t::first_entry()
 {
-    return reinterpret_cast<multiboot_t::mmap_entry_t*>(addr);
+    return addr;
 }
 
 
@@ -201,7 +201,7 @@ multiboot_t::mmap_entry_t* multiboot_t::mmap_t::next_entry(multiboot_t::mmap_ent
     if (!prev)
         return 0;
 
-    multiboot_t::mmap_entry_t* end  = reinterpret_cast<multiboot_t::mmap_entry_t*>(addr + length);
+    multiboot_t::mmap_entry_t* end  = reinterpret_cast<multiboot_t::mmap_entry_t*>((char*)addr + length);
     multiboot_t::mmap_entry_t* next = reinterpret_cast<multiboot_t::mmap_entry_t*>((char*)prev + prev->entry_size + 4);
 
     if (next < end)
