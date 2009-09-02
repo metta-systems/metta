@@ -62,48 +62,6 @@ interrupt_descriptor_table_t interrupts_table;
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
 extern "C" address_t KICKSTART_BASE;
-extern "C" address_t initial_esp; // in loader.s
-
-
-//! Remap stack for paging mode.
-/*!
-* Allocate enough pages to fit existing stack frame, copy data from old stack
-* and switch over to a new stack.
-* @todo Allocated stack pages are 1-1 mapped currently, but probably should be mapped
-* to some reserved stack area?
-* Changes the original stack given by the bootloader to one at
-* a virtual memory location defined at compile time.
-*/
-static void remap_stack()
-{
-    address_t old_stack_pointer = read_stack_pointer();
-    address_t old_base_pointer  = read_base_pointer();
-
-    size_t    stack_size   = initial_esp - old_stack_pointer;
-    size_t    stack_npages = page_align_up<address_t>(stack_size) / PAGE_SIZE;
-    address_t stack_page   = init_memmgr.alloc_next_page();
-    init_memmgr.mapping_enter(stack_page, stack_page);
-    for (size_t i = 1; i < stack_npages; i++)
-    {
-        address_t p = init_memmgr.alloc_next_page();
-        init_memmgr.mapping_enter(p, p);
-    }
-
-    ia32_mmu_t::flush_page_directory();
-
-    int       offset            = stack_page + stack_npages * PAGE_SIZE - initial_esp;
-    address_t new_stack_pointer = old_stack_pointer + offset;
-    address_t new_base_pointer  = old_base_pointer + offset;
-
-    kconsole.print("Copying stack from %p-%p to %p-%p (%d bytes)..", old_stack_pointer, initial_esp, new_stack_pointer, new_stack_pointer + stack_size, stack_size);
-
-    memutils::copy_memory((void*)new_stack_pointer, (const void*)old_stack_pointer, stack_size);
-
-    write_stack_pointer(new_stack_pointer);
-    write_base_pointer(new_base_pointer);
-
-    kconsole << "done. Activated new stack." << endl;
-}
 
 //! Prepare and boot system.
 /*!
@@ -139,7 +97,7 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloced_start() << endl;
 
-    // fake_mmap_entry->start = init_memmgr.get_alloced_start();
+    uint32_t fake_mmap_entry_start = init_memmgr.get_alloced_start();
 
     init_memmgr.setup_pagetables();
 
@@ -147,8 +105,6 @@ void kickstart(multiboot_t::header_t* mbh)
     init_memmgr.mapping_enter(bootinfo_page, bootinfo_page);
     mb.copy(bootinfo_page);
     bootinfo_t bootinfo(bootinfo_page);
-    debugger_t::dump_memory(bootinfo_page, bootinfo.size());
-
     mb.set_header(bootinfo.multiboot_header());
 
     uint32_t k;
@@ -185,14 +141,22 @@ void kickstart(multiboot_t::header_t* mbh)
     interrupts_table.set_isr_handler(14, &page_fault_handler);
     interrupts_table.install();
 
-    remap_stack();
+    // Map stack page
+    address_t old_stack_pointer = read_stack_pointer();
+    init_memmgr.mapping_enter(old_stack_pointer, old_stack_pointer);
 
     // Get kernel entry before enabling paging, as this area won't be mapped.
     typedef void (*kernel_entry)(bootinfo_t bi_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
-    // TODO: We've allocated memory from a contiguous region, mark it and modify
+    // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
+
+    uint32_t fake_mmap_entry_end = init_memmgr.get_alloced_start();
+    multiboot_t::mmap_entry_t fake_mmap_entry;
+
+    fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, multiboot_t::mmap_entry_t::bootinfo);
+    bootinfo.append_mmap_entry(&fake_mmap_entry);
 
     init_memmgr.start_paging();
 
