@@ -107,8 +107,8 @@ uint32_t multiboot_t::size()
 */
 void multiboot_t::copy(address_t target)
 {
-    uint32_t* size_ptr = reinterpret_cast<uint32_t*>(target);
-    target += sizeof(uint32_t);
+    size_t* size_ptr = reinterpret_cast<size_t*>(target);
+    target += sizeof(size_t);
 
     header_t* target_header = reinterpret_cast<header_t*>(target);
 
@@ -171,16 +171,10 @@ void multiboot_t::copy(address_t target)
             target += sizeof(mmap_entry_t);
             mmi = memmap->next_entry(mmi);
         }
-        target_header->mmap.set_length(mmap_length);
+        target_header->mmap.set_size(mmap_length);
     }
 
     *size_ptr = target - reinterpret_cast<address_t>(size_ptr); // black muti magic
-}
-
-
-uint32_t multiboot_t::mmap_t::size()
-{
-    return length;
 }
 
 

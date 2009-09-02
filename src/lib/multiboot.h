@@ -42,11 +42,10 @@ public:
     public:
         mmap_entry_t* first_entry();
         mmap_entry_t* next_entry(mmap_entry_t* prev);
-        uint32_t      size();
+        size_t        size()                        { return length; }
+        void          set_size(size_t new_length)   { length = new_length; }
+        void          set_addr(address_t new_addr)  { addr = reinterpret_cast<mmap_entry_t*>(new_addr); } // Can't resist being evil ^v^
         void          dump();
-
-        void          set_addr(address_t new_addr)   { addr = reinterpret_cast<mmap_entry_t*>(new_addr); } // Can't resist being evil ^v^
-        void          set_length(size_t new_length)  { length = new_length; }
 
     private:
         uint32_t      length;
@@ -56,11 +55,22 @@ public:
     class mmap_entry_t
     {
     public:
+        enum entry_type_e {
+            free = 1,
+            bootinfo = 111
+        };
+
         uint64_t address() const { return base_addr; }
         uint64_t size() const    { return length; }
         bool     is_free() const { return type == 1; }
 
         void     set_entry_size(uint32_t new_size) { entry_size = new_size; }
+        void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
+        {
+            base_addr = new_addr;
+            length = new_length;
+            type = new_type;
+        }
 
     private:
         uint32_t entry_size;//!< size of the mmap entry
