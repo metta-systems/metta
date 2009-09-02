@@ -146,7 +146,10 @@ void kickstart(multiboot_t::header_t* mbh)
     address_t bootinfo_page = init_memmgr.alloc_next_page();
     init_memmgr.mapping_enter(bootinfo_page, bootinfo_page);
     mb.copy(bootinfo_page);
-    mb.set_header(reinterpret_cast<multiboot_t::header_t*>(bootinfo_page + sizeof(uint32_t)));
+    bootinfo_t bootinfo(bootinfo_page);
+    debugger_t::dump_memory(bootinfo_page, bootinfo.size());
+
+    mb.set_header(bootinfo.multiboot_header());
 
     uint32_t k;
 
@@ -155,9 +158,6 @@ void kickstart(multiboot_t::header_t* mbh)
         kconsole << RED << "kernel NOT loaded (bad)" << endl;
     else
         kconsole << GREEN << "kernel loaded (ok)" << endl;
-
-    // identity map start of initcp so we can access header_ from paging mode. FIXME??
-//     init_memmgr.mapping_enter(bootcp->mod_start, bootcp->mod_start);
 
     // Identity map currently executing code.
     address_t ph_start = (address_t)&KICKSTART_BASE;
@@ -190,9 +190,6 @@ void kickstart(multiboot_t::header_t* mbh)
     // Get kernel entry before enabling paging, as this area won't be mapped.
     typedef void (*kernel_entry)(address_t bootinfo_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
-
-    bootinfo_t bootinfo(bootinfo_page);
-    debugger_t::dump_memory(bootinfo_page, bootinfo.size());
 
     // TODO: We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
