@@ -2,13 +2,12 @@
 #include "macros.h"
 #include "default_console.h"
 #include "c++ctors.h"
-#include "bootinfo.h"
 
 // Run static construction for kernel.
-extern "C" void entry(address_t bootinfo_page)
+extern "C" void entry(bootinfo_t bi_page)
 {
     run_global_ctors();
-    nucleus_n::nucleus.init(bootinfo_page);
+    nucleus_n::nucleus.init(bi_page);
 }
 
 namespace nucleus_n
@@ -23,10 +22,9 @@ nucleus_t::nucleus_t()
     kconsole << GREEN << "Hello, nucleus!" << endl;
 }
 
-void nucleus_t::init(address_t bootinfo_page)
+void nucleus_t::init(bootinfo_t bi_page)
 {
-    bootinfo_t bootinfo(bootinfo_page);
-    multiboot_t mb(bootinfo.multiboot_header());
+    multiboot_t mb(bi_page.multiboot_header());
     memory_manager.init(mb.memory_map());
 }
 

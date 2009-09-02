@@ -1,6 +1,7 @@
 #pragma once
 
 #include "memory/memory_manager.h"
+#include "bootinfo.h"
 
 namespace nucleus_n
 {
@@ -16,7 +17,7 @@ class nucleus_t
 {
 public:
     nucleus_t();
-    void init(address_t bootinfo_page);
+    void init(bootinfo_t bi_page);
 
     memory_manager_t& mem_mgr() { return memory_manager; }
 //     page_directory_t& root_pagedir() { return pagedir; }

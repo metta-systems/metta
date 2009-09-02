@@ -188,7 +188,7 @@ void kickstart(multiboot_t::header_t* mbh)
     remap_stack();
 
     // Get kernel entry before enabling paging, as this area won't be mapped.
-    typedef void (*kernel_entry)(address_t bootinfo_page);
+    typedef void (*kernel_entry)(bootinfo_t bi_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
     // TODO: We've allocated memory from a contiguous region, mark it and modify
@@ -202,7 +202,7 @@ void kickstart(multiboot_t::header_t* mbh)
 
     /// call vm_server.init(mbh->mmap, current_pdir)
     kconsole << RED << "going to init nucleus" << endl;
-    init_nucleus(bootinfo_page);
+    init_nucleus(bootinfo);
     kconsole << GREEN << "done, instantiating components" << endl;
 
     // Load components from bootcp.
