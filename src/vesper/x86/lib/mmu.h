@@ -142,3 +142,6 @@ inline void ia32_mmu_t::set_active_pagetable(address_t page_dir_physical)
     asm volatile ("movl %0, %%cr3\n" :: "r"(page_dir_physical));
 }
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
