@@ -155,35 +155,37 @@ void kickstart(multiboot_t::header_t* mbh)
     uint32_t fake_mmap_entry_end = init_memmgr.get_alloced_start();
     multiboot_t::mmap_entry_t fake_mmap_entry;
 
-    fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, multiboot_t::mmap_entry_t::bootinfo);
+    fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
     bootinfo.append_mmap_entry(&fake_mmap_entry);
 
     init_memmgr.start_paging();
 
-    /// here we have paging enabled and can call kernel functions
-    /// start by creating PDs for boot_components and load them in their PDs
-    /// fill in startup portals code
+    //! here we have paging enabled and can call kernel functions
+    //! start by creating PDs for boot_components and load them in their PDs
+    //! fill in startup portals code
 
-    /// call vm_server.init(mbh->mmap, current_pdir)
+    //! call vm_server.init(mbh->mmap, current_pdir)
     kconsole << RED << "going to init nucleus" << endl;
     init_nucleus(bootinfo);
     kconsole << GREEN << "done, instantiating components" << endl;
 
     // Load components from bootcp.
     initfs_t initfs(bootcp->mod_start);
-    k = 0;
 
-    while (k < initfs.count())
+    for (k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
             kconsole << RED << "not an ELF file, load failed" << endl;
+        // TODO: mark memory used for loading components as occupied also
+        // FIXME: instead, start using kernel memory allocator here, so everyone is happy
         kernel_entry init_component = (kernel_entry)elf.get_entry_point();
         init_component(bootinfo_page);
-        k += 1;
     }
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+
+    // TODO: run a predefined root_server_entry portal here
 
     /* Never reached */
     PANIC("root_server returned!");

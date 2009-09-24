@@ -8,6 +8,7 @@
 
 #include "multiboot.h"
 #include "memory.h"
+#include "memutils.h"
 
 /*!
 * Provide access to boot info page structures.
@@ -16,6 +17,11 @@ class bootinfo_t
 {
 public:
     bootinfo_t(address_t bootinfo_page) : boot_info(bootinfo_page) {}
+    /*!
+    * Get size of the boot info page, stored in the first word of the page.
+    * You can typically store more info at the end of the page and then
+    * call increase_size() to indicate size of the added block.
+    */
     size_t size();
     void increase_size(size_t addend);
     multiboot_t::header_t* multiboot_header();
@@ -42,12 +48,12 @@ inline multiboot_t::header_t* bootinfo_t::multiboot_header()
 //TODO: move to bootinfo.cpp
 inline bool bootinfo_t::append_mmap_entry(multiboot_t::mmap_entry_t* entry)
 {
-    if (size() + sizeof(multiboot_t::mmap_entry_t) > PAGE_SIZE)
+    size_t entry_size = sizeof(multiboot_t::mmap_entry_t);
+    if (size() + entry_size > PAGE_SIZE)
         return false;
 
     multiboot_t::header_t* header = multiboot_header();
     uint32_t end = boot_info + size();
-    size_t entry_size = sizeof(multiboot_t::mmap_entry_t);
 
     memutils::copy_memory(reinterpret_cast<void*>(end), entry, entry_size);
     reinterpret_cast<multiboot_t::mmap_entry_t*>(end)->set_entry_size(entry_size); //  ignore any extra fields
