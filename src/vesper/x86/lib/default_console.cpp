@@ -138,6 +138,8 @@ void default_console::print_char(char ch)
     }
     else
     {
+        if (ch < ' ')
+            ch = '.'; // replace non-printable chars
         videoram[*cursor] = ch; /* character */
         videoram[*cursor+1] = attr; /* foreground, background colors. */
         (*cursor) += 2;

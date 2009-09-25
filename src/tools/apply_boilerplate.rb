@@ -7,11 +7,12 @@
 #
 #
 # Apply license and modeline changes to text source files.
+# Run as tools/apply_boilerplate.rb
 #
 require 'find'
 
 exclude_dirs = ['./_build_']
-no_license_dirs = ['./vesper/lib/bstrlib', './vesper/lib/oskit', './vesper/lib/atomic']
+no_license_dirs = ['./runtime/mustl', './runtime/ml']
 
 class Array
     def do_not_has?(path)
@@ -19,8 +20,8 @@ class Array
     end
 end
 
-license = IO.readlines('license_header').join
-modelines = IO.readlines('modelines.txt').join
+license = IO.readlines('tools/license_header').join
+modelines = IO.readlines('tools/modelines.txt').join
 exts = {
     '.cpp'=>[license, modelines],
     '.c'=>[license, modelines],

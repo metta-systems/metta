@@ -35,24 +35,43 @@ public:
     };
 
     class mmap_entry_t;
+    struct modinfo_t;
 
     class mmap_t
     {
     public:
         mmap_entry_t* first_entry();
         mmap_entry_t* next_entry(mmap_entry_t* prev);
-        void dump();
+        size_t        size()                        { return length; }
+        void          set_size(size_t new_length)   { length = new_length; }
+        void          set_addr(address_t new_addr)  { addr = reinterpret_cast<mmap_entry_t*>(new_addr); } // Can't resist being evil ^v^
+        void          dump();
+
     private:
-        uint32_t length;
-        uint32_t addr;
+        uint32_t      length;
+        mmap_entry_t* addr;
     } PACKED;
 
     class mmap_entry_t
     {
     public:
+        enum entry_type_e {
+            free = 1,
+            bootinfo = 111
+        };
+
         uint64_t address() const { return base_addr; }
         uint64_t size() const    { return length; }
         bool     is_free() const { return type == 1; }
+
+        void     set_entry_size(uint32_t new_size) { entry_size = new_size; }
+        void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
+        {
+            base_addr = new_addr;
+            length = new_length;
+            type = new_type;
+        }
+
     private:
         uint32_t entry_size;//!< size of the mmap entry
         uint64_t base_addr; //!< base address of memory region (physical)
@@ -75,10 +94,10 @@ public:
 
         uint32_t boot_device;
 
-        uint32_t cmdline;
+        char* cmdline;
 
-        uint32_t modules_count;
-        uint32_t modules_addr;
+        uint32_t   modules_count;
+        modinfo_t* modules;
 
         /* ELF information */
         uint32_t num;
@@ -136,7 +155,7 @@ public:
             && header->modules_count
             && i < header->modules_count)
         {
-            return (modinfo_t*)(header->modules_addr + i * sizeof(modinfo_t));
+            return &header->modules[i];
         }
         return 0;
     }
@@ -192,6 +211,9 @@ public:
 
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
     mmap_t* memory_map() const;
+
+    uint32_t  size();
+    void      copy(address_t target);
 
 private:
     header_t*              header;

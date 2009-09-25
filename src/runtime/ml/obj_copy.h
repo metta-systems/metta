@@ -18,3 +18,6 @@ void obj_copy(T* dest, T* src, size_t count)
         construct_inplace(dest++, *src++);
     }
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

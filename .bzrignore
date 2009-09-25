@@ -10,3 +10,4 @@ vesper.tag
 *.kdev4
 .cproject
 .project
+debugger.log

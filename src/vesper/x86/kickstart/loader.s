@@ -8,7 +8,6 @@
 ; jump to kickstart() in kickstart.cpp to do all the dirty job.
 ;
 global loader                          ; making entry point visible to linker
-global initial_esp
 extern kickstart
 extern KICKSTART_BASE
 extern data_end
@@ -25,6 +24,7 @@ CHECKSUM    equ -(MAGIC + FLAGS)       ; checksum required
 bits 32                                ; 32 bit PM
 
 section .bss
+align 0x1000
 resb 0x1000
 initial_stack:                         ; reserve one page for startup stack
 
@@ -40,13 +40,10 @@ multiboot_header:
     dd bss_end
     dd loader
 
-initial_esp: dd 0                      ; referencing initial_stack from C doesn't work :(
-
 section .text
 loader:
     cli
     mov esp, initial_stack
-    mov [initial_esp], esp
     push ebx                           ; pass Multiboot info structure
 
     mov ebp, 0                         ; make base pointer NULL here so we know

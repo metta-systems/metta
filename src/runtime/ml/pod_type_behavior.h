@@ -16,3 +16,6 @@ struct pod_type_behavior
     typedef pod_destructor<value_type>  destructor;
     typedef pod_mover<value_type>       mover;
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

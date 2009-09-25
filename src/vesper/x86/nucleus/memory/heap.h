@@ -24,8 +24,8 @@ public:
     inline heap_t() : lockable_t() {}
 
     /*!
-    * Create a new Heap, with start address @param start, initial size @param end minus @param start,
-    * and expanding up to a maximum address of @param max.
+    * Create a new Heap, with start address @a start, initial size @a end minus @a start,
+    * and expanding up to a maximum address of @a max.
     */
     inline heap_t(address_t start, address_t end, address_t max, bool is_kernel)
         : lockable_t()
@@ -36,21 +36,23 @@ public:
     void init(address_t start, address_t end, address_t max, bool is_kernel);
 
     /*!
-    * Allocates a contiguous region of memory @param size in size. If @param page_align is @c true,
+    * Allocates a contiguous region of memory @a size in size. If @a page_align is @a true,
     * it creates that block starting on a page boundary.
+    * @return start address of the allocated memory block.
     */
     void* allocate(size_t size, bool page_align);
 
     /*!
-    * Releases a block allocated with @c allocate.
+    * Releases a block allocated with @a allocate.
     * Releasing a NULL pointer is safe and has no effect.
     */
     void free(void* p);
 
     /*!
-    * Reallocate memory block starting at @param ptr to be of size @param size.
+    * Reallocate memory block starting at @a ptr to be of size @a size.
     * For general characteristics of the algorithm see memory_manager::realloc.
     * Will inherit page_align property from the previously allocated block.
+    * @return start address of the memory block.
     */
     void* realloc(void* ptr, size_t size);
 
@@ -60,7 +62,7 @@ public:
     void check_integrity();
 
     /*!
-    * Returns the current heap size. For analysis purposes.
+    * @return the current heap size. For analysis purposes.
     */
     inline size_t size()
     {
@@ -69,16 +71,16 @@ public:
 
 private:
     /*!
-    * Increases the size of the heap, by requesting pages to be allocated.
-    * Heap size increases from @c size to the nearest page boundary above @param new_size.
+    * Increase the size of the heap, by requesting pages to be allocated.
+    * Heap size increases from @a size to the nearest page boundary above @a new_size.
     */
     void expand(size_t new_size);
 
     /*!
-    * Decreases the size of the heap, by requesting pages to be deallocated.
-    * Heap size decreases from @c size to the nearest page boundary above @param new_size.
+    * Decrease the size of the heap, by requesting pages to be deallocated.
+    * Heap size decreases from @a size to the nearest page boundary above @a new_size.
     * @returns the new size (end_address minus start_address) which is not guaranteed to be the
-    * same as @param new_size.
+    * same as @a new_size.
     */
     size_t contract(size_t new_size);
 
@@ -94,7 +96,7 @@ private:
     struct header_t
     {
         uint32_t magic;   ///< Magic number, used for error checking and identification.
-        bool     is_hole; ///< @c true if this is a hole. @c false if this is a block.
+        bool     is_hole; ///< @a true if this is a hole. @a false if this is a block.
         size_t   size;    ///< Size of the block, including the end footer.
 
         inline int operator < (const header_t& b)
