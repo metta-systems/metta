@@ -25,6 +25,7 @@ public:
     void init(bootinfo_t bi_page);
 
 //     page_directory_t& root_pagedir() { return pagedir; }
+    vm_server::kernel_interface vm_server();
 
     void enter_trap(int portal_no); // called from assembler glue code to process client trap and call corresponding portal
     void create_pd(); // portal to create new address space and assign it to a pd

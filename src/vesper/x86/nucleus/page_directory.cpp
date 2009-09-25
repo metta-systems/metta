@@ -23,7 +23,7 @@ page_table_t* page_table_t::clone(address_t* phys)
     {
         if (pages[i].frame())
         {
-            nucleus.mem_mgr().page_frame_allocator().alloc_frame(&table->pages[i]);
+            nucleus.vm_server().page_frame_allocator().alloc_frame(&table->pages[i]);
 
             table->pages[i].set_present(pages[i].present());
             table->pages[i].set_writable(pages[i].writable());
