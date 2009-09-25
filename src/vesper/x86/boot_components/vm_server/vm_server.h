@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "memory/memory_manager.h"
+// #include "memory/memory_manager.h"
 
 /*!
 * VM server manages available memory
@@ -21,7 +21,7 @@ class vm_server_t
     void init(bootinfo_t bi_page);
 
 private:
-    memory_manager_t memory_manager;
+//     memory_manager_t memory_manager;
 };
 
 // kate: indent-width 4; replace-tabs on;

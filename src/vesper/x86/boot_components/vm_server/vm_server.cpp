@@ -30,14 +30,14 @@ extern "C" void/*component_t**/ init(bootinfo_t bi_page)
 }
 
 vm_server_t::vm_server_t()
-    : memory_manager()
+//     : memory_manager()
 {
 }
 
 void vm_server_t::init(bootinfo_t bi_page)
 {
-    multiboot_t mb(bi_page.multiboot_header());
-    memory_manager.init(mb.memory_map());
+//     multiboot_t mb(bi_page.multiboot_header());
+//     memory_manager.init(mb.memory_map());
 
 //     memory_manager.init(bi_page);
 }

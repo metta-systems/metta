@@ -23,7 +23,7 @@ page_table_t* page_table_t::clone(address_t* phys)
     {
         if (pages[i].frame())
         {
-///             nucleus.vm_server().page_frame_allocator().alloc_frame(&table->pages[i]);
+            nucleus.mem_mgr().page_frame_allocator().alloc_frame(&table->pages[i]);
 
             table->pages[i].set_present(pages[i].present());
             table->pages[i].set_writable(pages[i].writable());
@@ -127,13 +127,13 @@ page_directory_t* page_directory_t::clone()
         if (!tables[i])
             continue;
 
-///         if (nucleus.mem_mgr().get_kernel_directory()->get_table(i) == tables[i])
+        if (nucleus.mem_mgr().get_kernel_directory()->get_table(i) == tables[i])
         {
             // It's in the kernel, so just use the same pointer.
             dir->tables[i] = tables[i];
             dir->tables_physical[i] = tables_physical[i];
         }
-///         else
+        else
         {
             // copy the table.
             address_t phys;

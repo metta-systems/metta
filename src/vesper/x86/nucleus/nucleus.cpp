@@ -23,12 +23,15 @@ namespace nucleus_n
 nucleus_t nucleus;
 
 nucleus_t::nucleus_t()
+    : memory_manager()
 {
     kconsole << GREEN << "Hello, nucleus!" << endl;
 }
 
-void nucleus_t::init(UNUSED_ARG bootinfo_t bi_page)
+void nucleus_t::init(bootinfo_t bi_page)
 {
+    multiboot_t mb(bi_page.multiboot_header());
+    memory_manager.init(mb.memory_map());
 }
 
 // nucleus portals

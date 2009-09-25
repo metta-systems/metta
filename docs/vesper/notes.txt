@@ -43,6 +43,7 @@ kernel
       +--simics
 
 
+When you send multiple or big files to someone, they will be transparently compressed into a vxa archive with decoder for recipient's architecture(s) embedded, and then transparently uncompressed at the receiving side.
 
 
 Re: Is there any easy way to read/write physical address?
