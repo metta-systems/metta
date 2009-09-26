@@ -46,7 +46,7 @@ public:
     static void set_active_pagetable(address_t page_dir_physical);
 };
 
-/**
+/*!
  * Flushes the tlb
  *
  * @param global specifies whether global TLB entries are also flushed
@@ -72,7 +72,7 @@ inline void ia32_mmu_t::flush_page_directory(bool global)
                     : "i" (~IA32_CR4_PGE), "i" (IA32_CR4_PGE));
 }
 
-/**
+/*!
  * Flushes the TLB entry for a linear address
  *
  * @param addr linear address
@@ -82,7 +82,7 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t addr)
     asm volatile ("invlpg (%0)\n" :: "r"(addr));
 }
 
-/**
+/*!
  * Enables extended page size (4M) support for IA32
  */
 // inline void ia32_mmu_t::enable_super_pages()
@@ -90,7 +90,7 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t addr)
 //     ia32_cr4_set(IA32_CR4_PSE);
 // }
 
-/**
+/*!
  * Enables global page support for IA32
  */
 // inline void ia32_mmu_t::enable_global_pages()
@@ -98,7 +98,7 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t addr)
 //     ia32_cr4_set(IA32_CR4_PGE); // ia32_cpu_t::cr4_enable()?
 // }
 
-/**
+/*!
  * Enables paged mode for IA32
  */
 inline void ia32_mmu_t::enable_paged_mode()
@@ -110,7 +110,7 @@ inline void ia32_mmu_t::enable_paged_mode()
     asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
 }
 
-/**
+/*!
  * @returns the linear address of the last pagefault
  */
 inline address_t ia32_mmu_t::get_pagefault_address()
@@ -120,7 +120,7 @@ inline address_t ia32_mmu_t::get_pagefault_address()
     return faulting_address;
 }
 
-/**
+/*!
  * Get the active page table
  *
  * @returns the physical base address of the currently active page directory
@@ -132,7 +132,7 @@ inline address_t ia32_mmu_t::get_active_pagetable()
     return ret;
 }
 
-/**
+/*!
  * Sets the active page table
  *
  * @param page_dir_physical page directory physical base address
