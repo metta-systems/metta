@@ -13,7 +13,7 @@ chmod 0777 fd
 dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 
 # Format the image
-/sbin/mke2fs -F $FLOPPY
+/sbin/mke2fs -L Metta -m 0 -F $FLOPPY
 
 # Mount the Ext2 image
 sudo mount -oloop $FLOPPY fd
