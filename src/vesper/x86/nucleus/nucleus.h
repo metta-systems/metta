@@ -25,7 +25,6 @@ public:
     nucleus_t();
     void init(bootinfo_t bi_page);
 
-//     page_directory_t& root_pagedir() { return pagedir; }
 //     vm_server::kernel_interface vm_server();
     memory_manager_t& mem_mgr() { return memory_manager; }
 
