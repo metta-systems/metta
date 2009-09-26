@@ -1,7 +1,0 @@
-timeout 1
-
-title Metta
-    root (cd)
-    kernel /kickstart
-    module /nucleus
-    module /bootcomps

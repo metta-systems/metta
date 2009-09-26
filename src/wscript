@@ -130,8 +130,20 @@ def build(bld):
         after = 'cxx_link'
     )
 
+    bld.new_task_gen('subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.cd',
+        dict = {'ROOT': 'cd'}
+    )
+
+    bld.new_task_gen('subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.fd0',
+        dict = {'ROOT': 'fd0'}
+    )
+
     bld.new_task_gen(
-        source = 'vesper/x86/kickstart.bin vesper/x86/nucleus.bin initfs.img tools/mkbootimg/images.sh',
+        source = 'vesper/x86/kickstart.bin vesper/x86/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
         target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),

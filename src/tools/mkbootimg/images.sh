@@ -18,7 +18,8 @@ dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 # Mount the Ext2 image
 sudo mount -oloop $FLOPPY fd
 mkdir -p fd/boot/grub
-cp menu.lst stage{1,2} fd/boot/grub
+cp stage{1,2} fd/boot/grub
+cp menu.lst.fd0 fd/boot/grub/menu.lst
 cp $BUILDDIR/vesper/x86/kickstart.bin fd/kickstart
 cp $BUILDDIR/vesper/x86/nucleus.bin   fd/nucleus
 cp $BUILDDIR/initfs.img               fd/bootcomps

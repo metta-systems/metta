@@ -1,0 +1,25 @@
+timeout 1
+
+title Metta
+    root (@ROOT@)
+    kernel /kickstart
+    module /nucleus
+    module /bootcomps
+
+title Metta [debug output]
+    root (@ROOT@)
+    kernel /kickstart debug
+    module /nucleus
+    module /bootcomps
+
+title Metta 32-bit only
+    root (@ROOT@)
+    kernel /kickstart no64
+    module /nucleus
+    module /bootcomps
+
+title Metta 32-bit only [debug output]
+    root (@ROOT@)
+    kernel /kickstart no64 debug
+    module /nucleus
+    module /bootcomps
