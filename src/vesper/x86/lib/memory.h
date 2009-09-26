@@ -62,8 +62,8 @@ public:
     void start_paging();
 
 private:
-    address_t alloc_start;
     page_directory_t pagedir;
+    address_t alloc_start;
 };
 //different new impls will allocate data for page_directory_t differently, so alloc strategies
 // inside kickstart and in nucleus will differ, while structures used will be the same.

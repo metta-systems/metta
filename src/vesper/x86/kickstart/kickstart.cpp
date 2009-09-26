@@ -58,7 +58,7 @@ Use different new implementations for kickstart initialization and nucleus code.
 #include "page_fault_handler.h"
 page_fault_handler_t page_fault_handler;
 //}
-kickstart_n::memory_allocator_t init_memmgr;
+kickstart_n::memory_allocator_t init_memmgr ALIGNED(0x1000);
 interrupt_descriptor_table_t interrupts_table;
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);

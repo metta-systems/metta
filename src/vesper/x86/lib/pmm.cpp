@@ -22,8 +22,8 @@ namespace kickstart_n
 {
 
 memory_allocator_t::memory_allocator_t()
-    : alloc_start(0)
-    , pagedir()
+    : pagedir()
+    , alloc_start(0)
 {
     // TODO: map to top of memory (requires keeping track of pde/pte physical addresses)
 //     mapping_enter((address_t)pagedir, (address_t)pagedir);
