@@ -140,6 +140,7 @@ void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags
 #endif
     (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | (flags & ~PAGE_MASK);
 
+    // FIXME: this is used only when booting up
     if (!mapping_exists((address_t)pagetable))
         enter_mapping((address_t)pagetable, (address_t)pagetable);
 }
@@ -154,32 +155,27 @@ bool page_directory_t::mapping_exists(address_t vaddr)
 
 void page_directory_t::dump()
 {
-    bool b = false;
     kconsole << WHITE << "Dumping page directory:" << endl;
-    for (int i = 0; i < 0xFFFFF; i++)
+    for (int i = 0; i < 1024; i++)
     {
-        page_t* page = 0;
-        if (tables[i / 1024])
-            page = tables[i / 1024]->get_page(i % 1024);
-        else if (b)
-        {
-            kconsole << "    End of table." << endl;
-            b = false;
-        }
-        else
+        page_table_t* pagetable = get_page_table(i << PDE_SHIFT, false);
+        if (!pagetable)
             continue;
 
-        if (!b && page->present())
+        kconsole << "  Page table " << i << endl;
+
+        for (int k = 0; k < 1024; k++)
         {
-            b = true;
-            kconsole << "    " << (unsigned int)(i << 12) << endl;
+            page_t* page = pagetable->get_page(k);
+
+            if (!page)
+                continue;
+
+            if (page->present())
+                kconsole << "    " << (unsigned int)(i << PDE_SHIFT) + (k << PTE_SHIFT) << " => " << page->frame() << endl;
         }
-        else
-            if(b && !page->present())
-            {
-                b = false;
-                kconsole << "    " << (unsigned int)(i << 12) << endl;
-            }
+
+        kconsole << "  End of table." << endl;
     }
 }
 
