@@ -42,7 +42,9 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     , total_frames(0)
     , free_frames(0)
     , reserved_frames(0)
-{}
+{
+    kconsole << GREEN << "stacked frame allocator: ctor" << endl;
+}
 
 template <typename address_type>
 struct area_t
@@ -59,6 +61,9 @@ void mmap_to_regions(multiboot_t::mmap_t* mmap)
     alloc_area_t areas[N_AREAS];
     uint32_t n_areas = 1;
 
+    UNUSED(mmap);
+    UNUSED(areas);
+    UNUSED(n_areas);
     // Start with 1 region covering whole available memory.
     // Use memory map to cut bits off of left or right edge of region
     // or split it up in two.
@@ -66,6 +71,8 @@ void mmap_to_regions(multiboot_t::mmap_t* mmap)
 
 void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap)
 {
+    kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
+
     // Go through available physical memory frames, add them to the frame stack.
     ASSERT(mmap);
 
@@ -83,6 +90,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap)
 
         if (mmi->is_free())
         {
+            kconsole << RED << "free frame found" << endl;
             // include pages into free stack
             for (uint32_t n = 0; n < n_frames; n++)
             {
@@ -137,7 +145,8 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
     // map the topmost address space page temporarily to build free stacks
-///     mapping_enter(PAGE_MASK, phys_frame);
+//     mapping_enter(PAGE_MASK, phys_frame);
+
     lock();
     *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top
     next_free_phys = phys_frame; // remember phys as current free stack top
