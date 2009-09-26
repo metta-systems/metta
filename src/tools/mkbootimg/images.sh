@@ -19,7 +19,7 @@ dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 sudo mount -oloop $FLOPPY fd
 mkdir -p fd/boot/grub
 cp stage{1,2} fd/boot/grub
-cp menu.lst.fd0 fd/boot/grub/menu.lst
+cp $BUILDDIR/tools/mkbootimg/menu.lst.fd0 fd/boot/grub/menu.lst
 cp $BUILDDIR/vesper/x86/kickstart.bin fd/kickstart
 cp $BUILDDIR/vesper/x86/nucleus.bin   fd/nucleus
 cp $BUILDDIR/initfs.img               fd/bootcomps
@@ -36,7 +36,7 @@ EOT
 # Create an ISO image
 mkdir -p iso/boot/grub
 cp stage2_eltorito iso/boot/grub
-cp menu.lst.cd iso/boot/grub/menu.lst
+cp $BUILDDIR/tools/mkbootimg/menu.lst.cd iso/boot/grub/menu.lst
 cp $BUILDDIR/vesper/x86/kickstart.bin iso/kickstart
 cp $BUILDDIR/vesper/x86/nucleus.bin   iso/nucleus
 cp $BUILDDIR/initfs.img               iso/bootcomps
