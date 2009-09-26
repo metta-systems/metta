@@ -9,6 +9,7 @@
 #include "page_directory.h"
 #include "memory.h"
 #include "panic.h"
+#include "debugger.h"
 
 /*
 Brendan@osdev:
@@ -42,6 +43,7 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     , total_frames(0)
     , free_frames(0)
     , reserved_frames(0)
+    , pd_mgr(0)
 {
     kconsole << GREEN << "stacked frame allocator: ctor" << endl;
 }
@@ -55,7 +57,7 @@ struct area_t
 
 typedef area_t<address_t> alloc_area_t;
 
-void mmap_to_regions(multiboot_t::mmap_t* mmap)
+void mmap_to_areas(multiboot_t::mmap_t* mmap)
 {
 #define N_AREAS 32
     alloc_area_t areas[N_AREAS];
@@ -69,16 +71,17 @@ void mmap_to_regions(multiboot_t::mmap_t* mmap)
     // or split it up in two.
 }
 
-void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap)
+void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
 {
     kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
+    pd_mgr = mmgr;
 
     // Go through available physical memory frames, add them to the frame stack.
     ASSERT(mmap);
 
     // We have created a dent in our memory map, so we need to sort it
     // and build contiguous allocation regions.
-    mmap_to_regions(mmap);
+    mmap_to_areas(mmap);
 
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -90,7 +93,6 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap)
 
         if (mmi->is_free())
         {
-            kconsole << RED << "free frame found" << endl;
             // include pages into free stack
             for (uint32_t n = 0; n < n_frames; n++)
             {
@@ -133,7 +135,9 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
-///     mapping_enter(PAGE_MASK, next_frame);
+
+    pd_mgr->root_pagedir().enter_mapping(PAGE_MASK, next_frame);
+
     next_free_phys = *(address_t*)PAGE_MASK;
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
@@ -145,14 +149,14 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
     // map the topmost address space page temporarily to build free stacks
-//     mapping_enter(PAGE_MASK, phys_frame);
+    pd_mgr->root_pagedir().enter_mapping(PAGE_MASK, phys_frame);
 
     lock();
     *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top
     next_free_phys = phys_frame; // remember phys as current free stack top
     //   unmap_page(PAGE_MASK);
     free_frames++;
-    ASSERT(free_frames <= total_frames);// catch overflow
+//     ASSERT(free_frames <= total_frames);// catch overflow
     unlock();
 }
 

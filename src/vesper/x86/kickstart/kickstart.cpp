@@ -161,10 +161,6 @@ void kickstart(multiboot_t::header_t* mbh)
     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
     bootinfo.append_mmap_entry(&fake_mmap_entry);
     bootinfo.set_memmgr(&init_memmgr);
-    kconsole << GREEN << "memmgr @ " << (address_t)&init_memmgr << endl;
-    kconsole << GREEN << "physic @ " << init_memmgr.root_pagedir().get_physical() << endl;
-
-    init_memmgr.root_pagedir().dump();
 
     init_memmgr.start_paging();
 

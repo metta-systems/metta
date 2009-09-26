@@ -36,7 +36,7 @@ memory_manager_t::memory_manager_t()
 void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
 {
     kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
-    frame_allocator.init(mmap);
+    frame_allocator.init(mmap, mmgr);
     // now we can allocate frames of physical memory
 
     // Make a page directory.
