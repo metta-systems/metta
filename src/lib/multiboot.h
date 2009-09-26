@@ -11,15 +11,15 @@
 #include "panic.h"
 
 /*!
-* \brief Defines an interface to the multiboot header.
-* \ingroup Boot
-*/
+ * @brief Defines an interface to the multiboot header.
+ * @ingroup Boot
+ */
 class multiboot_t
 {
 public:
     /*!
-    * Header flags.
-    */
+     * Header flags.
+     */
     enum {
         FLAG_MEM     = 0x0001,
         FLAG_DEVICE  = 0x0002,
