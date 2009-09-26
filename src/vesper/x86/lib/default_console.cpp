@@ -9,49 +9,48 @@
 #include "memutils.h"
 #include "debugger.h"
 
-const char default_console::eol = 10;
-
 // Screen dimensions (for default 80x25 console)
 #define LINE_PITCH 160       // line width in bytes
 #define LINE_COUNT 25
 
-default_console& default_console::self()
+default_console_t& default_console_t::self()
 {
-    static default_console console;
+    static default_console_t console;
     return console;
 }
 
-default_console::default_console()
+default_console_t::default_console_t()
+    : console_t()
 {
-    videoram = (volatile unsigned char *) 0xb8000;
-    cursor = (volatile unsigned int *) 0xb903c;
+    videoram = (volatile unsigned char*)0xb8000;
+    cursor = (volatile unsigned int*)0xb903c;
     clear();
 }
 
-void default_console::clear()
+void default_console_t::clear()
 {
     memutils::fill_memory((void*)videoram, 0, LINE_PITCH*LINE_COUNT);
     locate(0,0);
     attr = 0x07;
 }
 
-void default_console::set_color(Color col)
+void default_console_t::set_color(Color col)
 {
     attr = (attr & 0xF0) | (col & 0x0F);
 }
 
-void default_console::set_background(Color col)
+void default_console_t::set_background(Color col)
 {
     attr = (attr & 0x0F) | ((col & 0x0F) << 8);
 }
 
-void default_console::set_attr(Color fore, Color back)
+void default_console_t::set_attr(Color fore, Color back)
 {
     set_color(fore);
     set_background(back);
 }
 
-void default_console::locate(int row, int col)
+void default_console_t::locate(int row, int col)
 {
     *cursor = (row * LINE_PITCH) + (col * 2);
     // Set VGA hardware cursor
@@ -61,19 +60,19 @@ void default_console::locate(int row, int col)
     outb(0x3d5, (*cursor) & 0xff);      // Send the low cursor byte.
 }
 
-void default_console::scroll_up()
+void default_console_t::scroll_up()
 {
     memutils::move_memory((void*)videoram, (void*)(videoram+LINE_PITCH), LINE_PITCH*(LINE_COUNT-1));
     memutils::fill_memory((void*)(videoram+LINE_PITCH*(LINE_COUNT-1)), 0, LINE_PITCH);
 }
 
-void default_console::newline()
+void default_console_t::newline()
 {
     print_char(eol);
 }
 
-/** Print decimal integer */
-void default_console::print_int(int n)
+/*! Print decimal integer */
+void default_console_t::print_int(int n)
 {
     if (n == 0)
     {
@@ -101,8 +100,8 @@ void default_console::print_int(int n)
     }
 }
 
-/** Print hexadecimal byte */
-void default_console::print_byte(unsigned char n)
+/*! Print hexadecimal byte */
+void default_console_t::print_byte(unsigned char n)
 {
     const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
     char c = hexdigits[(n >> 4) & 0xF];
@@ -111,24 +110,24 @@ void default_console::print_byte(unsigned char n)
     print_char(c);
 }
 
-/** Print hexadecimal integer */
-void default_console::print_hex(unsigned int n)
+/*! Print hexadecimal integer */
+void default_console_t::print_hex(unsigned int n)
 {
     print_str("0x");
     for(int i = 4; i > 0; i--)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
 
-/** Print 64 bit hex integer */
-void default_console::print_hex8(unsigned long long n)
+/*! Print 64 bit hex integer */
+void default_console_t::print_hex8(unsigned long long n)
 {
     print_str("0x");
     for(int i = 8; i > 0; i--)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
 
-/** Print a single character */
-void default_console::print_char(char ch)
+/*! Print a single character */
+void default_console_t::print_char(char ch)
 {
     if (ch == eol)
     {
@@ -153,7 +152,8 @@ void default_console::print_char(char ch)
     bochs_console_print_char(ch);
 }
 
-void default_console::wait_ack()
+/*! Wait for Enter key press and release on keyboard */
+void default_console_t::wait_ack()
 {
     uint8_t keycode;
     uint8_t irqmask = inb(0x21);
@@ -175,15 +175,15 @@ void default_console::wait_ack()
         outb(0x21, inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
-/** Print string without formatting */
-void default_console::print_str(const char *str)
+/*! Print string without formatting */
+void default_console_t::print_str(const char *str)
 {
     char *b = (char *)str;
     while (*b)
         print_char(*b++);
 }
 
-void default_console::checkpoint(const char *str)
+void default_console_t::checkpoint(const char *str)
 {
     print_str("\n[CHECKPOINT] ");
     print_str(str);
@@ -191,7 +191,7 @@ void default_console::checkpoint(const char *str)
     wait_ack();
 }
 
-void default_console::debug_log(const char *str, ...)
+void default_console_t::debug_log(const char *str, ...)
 {
     unsigned char old_attr = attr;
     set_attr(WHITE, BLACK);
