@@ -7,10 +7,8 @@
 #include "default_console.h"
 #include "page_directory.h"
 #include "memory/new.h"
-#include "nucleus.h"
+#include "memory.h"
 #include "ia32.h"
-
-using nucleus_n::nucleus;
 
 //======================================================================================================================
 // page_table_t
@@ -18,13 +16,15 @@ using nucleus_n::nucleus;
 
 page_table_t* page_table_t::clone(address_t* phys)
 {
-    page_table_t* table = new(true, phys) page_table_t();
+    page_table_t* table = new(true, phys) page_table_t;
     for(int i = 0; i < 1024; i++)
     {
         if (pages[i].frame())
         {
-            nucleus.mem_mgr().page_frame_allocator().alloc_frame(&table->pages[i]);
+            address_t* p = 0;
+            new(true, p) char [PAGE_SIZE];
 
+            table->pages[i].set_frame(*p);
             table->pages[i].set_present(pages[i].present());
             table->pages[i].set_writable(pages[i].writable());
             table->pages[i].set_user(pages[i].user());
@@ -62,21 +62,6 @@ void page_table_t::copy_frame(uint32_t from_phys, uint32_t to_phys)
 // page_directory_t
 //======================================================================================================================
 
-#define PDE_SHIFT 22
-#define PDE_MASK  0x3ff
-#define PTE_SHIFT 12
-#define PTE_MASK  0x3ff
-
-inline int pde_entry(address_t vaddr)
-{
-    return (vaddr >> PDE_SHIFT) & PDE_MASK;
-}
-
-inline int pte_entry(address_t vaddr)
-{
-    return (vaddr >> PTE_SHIFT) & PTE_MASK;
-}
-
 page_directory_t::page_directory_t()
 {
     for (int i = 0; i < 1024; i++)
@@ -93,7 +78,7 @@ page_table_t* page_directory_t::get_page_table(address_t vaddr, bool make)
     if (!tables[table_idx] && make)
     {
         address_t phys;
-        tables[table_idx] = new(true, &phys) page_table_t();
+        tables[table_idx] = new(true, &phys) page_table_t;
         tables_physical[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER;
     }
     return tables[table_idx];
@@ -112,7 +97,7 @@ page_t* page_directory_t::get_page(address_t addr, bool make)
 page_directory_t* page_directory_t::clone()
 {
     address_t phys;
-    page_directory_t* dir = new(true, &phys) page_directory_t();
+    page_directory_t* dir = new(true, &phys) page_directory_t;
 
     // Get the offset of tables_physical from the start of
     // the page_directory object.
@@ -127,13 +112,14 @@ page_directory_t* page_directory_t::clone()
         if (!tables[i])
             continue;
 
-        if (nucleus.mem_mgr().get_kernel_directory()->get_table(i) == tables[i])
-        {
+//FIXME: requires knowledge of nucleus internals, candidate for vm_server method?
+//         if (nucleus.mem_mgr().get_kernel_directory()->get_table(i) == tables[i])
+//         {
             // It's in the kernel, so just use the same pointer.
-            dir->tables[i] = tables[i];
-            dir->tables_physical[i] = tables_physical[i];
-        }
-        else
+//             dir->tables[i] = tables[i];
+//             dir->tables_physical[i] = tables_physical[i];
+//         }
+//         else
         {
             // copy the table.
             address_t phys;
@@ -154,8 +140,16 @@ void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags
 #endif
     (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | (flags & ~PAGE_MASK);
 
-//     if (!mapping_entered((address_t)pagetable))
-//         mapping_enter((address_t)pagetable, (address_t)pagetable);
+    if (!mapping_exists((address_t)pagetable))
+        enter_mapping((address_t)pagetable, (address_t)pagetable);
+}
+
+bool page_directory_t::mapping_exists(address_t vaddr)
+{
+    page_table_t* pagetable = get_page_table(vaddr, false);
+    if (!pagetable)
+        return false;
+    return (*pagetable)[pte_entry(vaddr)] != 0;
 }
 
 void page_directory_t::dump()

@@ -6,7 +6,8 @@
 //
 #pragma once
 
-#include "memory.h"
+#include "types.h"
+#include "ia32.h"
 
 /**
 * A page is a pointer to a frame.
@@ -116,9 +117,9 @@ private:
     page_t pages[1024];
 };
 
-/**
+/*!
 * Holds 1024 pagetables.
-**/
+*/
 class page_directory_t
 {
 public:
@@ -140,11 +141,12 @@ public:
     page_t* get_page(address_t addr, bool make = true);
 
     void enter_mapping(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
+    bool mapping_exists(address_t vaddr);
 
     /*!
     * Create a new page directory, that is an identical copy of this.
     * TODO: implement copy-on-write.
-    **/
+    */
     page_directory_t* clone();
     void dump();
 
@@ -164,6 +166,21 @@ private:
     */
     address_t physical_address;
 };
+
+#define PDE_SHIFT 22
+#define PDE_MASK  0x3ff
+#define PTE_SHIFT 12
+#define PTE_MASK  0x3ff
+
+inline int pde_entry(address_t vaddr)
+{
+    return (vaddr >> PDE_SHIFT) & PDE_MASK;
+}
+
+inline int pte_entry(address_t vaddr)
+{
+    return (vaddr >> PTE_SHIFT) & PTE_MASK;
+}
 
 // Recursive PDE/PTE explained by Brendan @ http://forum.osdev.org/viewtopic.php?f=15&t=19387
 //
