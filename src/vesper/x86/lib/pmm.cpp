@@ -8,114 +8,63 @@
 * Minimal paged memory allocator.
 *
 * Used for startup and paged mode initialization.
+* Uses new/delete from c++boot.cpp
 */
 #include "memory.h"
 #include "default_console.h"
 #include "minmax.h"
 #include "mmu.h"
 #include "memutils.h"
-#include "page_directory.h"
 
 #define BOOT_PMM_DEBUG 0
 
-#define PDE_SHIFT 22
-#define PDE_MASK  0x3ff
-#define PTE_SHIFT 12
-#define PTE_MASK  0x3ff
-
-inline int pde_entry(address_t vaddr)
+namespace kickstart_n
 {
-    return (vaddr >> PDE_SHIFT) & PDE_MASK;
-}
 
-inline int pte_entry(address_t vaddr)
+memory_allocator_t::memory_allocator_t()
+    : alloc_start(0)
+    , pagedir()
 {
-    return (vaddr >> PTE_SHIFT) & PTE_MASK;
-}
-
-void boot_pmm_allocator::setup_pagetables()
-{
-    // Create and configure paging directory.
-    pagedir = reinterpret_cast<address_t*>(alloc_next_page());
-    memutils::fill_memory(pagedir, 0, PAGE_SIZE);
-
     // TODO: map to top of memory (requires keeping track of pde/pte physical addresses)
-    mapping_enter((address_t)pagedir, (address_t)pagedir);
+//     mapping_enter((address_t)pagedir, (address_t)pagedir);
 }
 
-void boot_pmm_allocator::start_paging()
+void memory_allocator_t::start_paging()
 {
-    ia32_mmu_t::set_active_pagetable((address_t)pagedir);
+    ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
     ia32_mmu_t::enable_paged_mode();
 
 #if BOOT_PMM_DEBUG
-    kconsole << "Enabled paging." << endl;
+    kconsole << WHITE << "Enabled paging." << endl;
 #endif
 }
 
-void boot_pmm_allocator::adjust_alloced_start(address_t new_start)
+void memory_allocator_t::adjust_alloc_start(address_t new_start)
 {
-    alloced_start = max(alloced_start, new_start);
-    alloced_start = page_align_up<address_t>(alloced_start);
+    alloc_start = max(alloc_start, new_start);
+    alloc_start = page_align_up<address_t>(alloc_start);
 }
 
-address_t boot_pmm_allocator::get_alloced_start()
+address_t memory_allocator_t::get_alloc_start()
 {
-    return alloced_start;
+    return alloc_start;
 }
 
-// page_directory_t::get_page is identical in purpose
-page_table_t* boot_pmm_allocator::select_pagetable(address_t vaddr)
+address_t memory_allocator_t::alloc_next_page()
 {
-    page_table_t* pagetable = 0;
-    if (pagedir[pde_entry(vaddr)])
-        pagetable = reinterpret_cast<page_table_t*>(pagedir[pde_entry(vaddr)] & PAGE_MASK);
-    else
-    {
-        pagetable = reinterpret_cast<page_table_t*>(alloc_next_page());
-        memutils::fill_memory(pagetable, 0, PAGE_SIZE);
-        pagedir[pde_entry(vaddr)] = (address_t)pagetable | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE;
-    }
-
-    return pagetable;
-}
-
-// should be in page_directory_t
-void boot_pmm_allocator::mapping_enter(address_t vaddr, address_t paddr, int flags)
-{
-    page_table_t* pagetable = select_pagetable(vaddr);
-    ASSERT(pagetable);
-#if BOOT_PMM_DEBUG
-    kconsole << "+(" << vaddr << "=>" << paddr << ") to entry " << pte_entry(vaddr) << " @" << (address_t)pagetable << "(" << (address_t)&((*pagetable)[pte_entry(vaddr)]) << ")" << endl;
-#endif
-    (*pagetable)[pte_entry(vaddr)] = paddr | IA32_PAGE_PRESENT | (flags & ~PAGE_MASK);
-
-    if (!mapping_entered((address_t)pagetable))
-        mapping_enter((address_t)pagetable, (address_t)pagetable);
-}
-
-bool boot_pmm_allocator::mapping_entered(address_t vaddr)
-{
-    page_table_t *pagetable = select_pagetable(vaddr);
-    ASSERT(pagetable);
-    return (*pagetable)[pte_entry(vaddr)] != 0;
-}
-
-// TODO: pmm interface + pmm_state transfer
-
-address_t boot_pmm_allocator::alloc_next_page()
-{
-    address_t ret = alloced_start;
-    alloced_start += PAGE_SIZE;
+    address_t ret = alloc_start;
+    alloc_start += PAGE_SIZE;
     return ret;
 }
 
-address_t boot_pmm_allocator::alloc_page(address_t vaddr)
+address_t memory_allocator_t::alloc_page(address_t vaddr)
 {
     address_t ret = alloc_next_page();
-    mapping_enter(vaddr, ret);
+    pagedir.enter_mapping(vaddr, ret);
     return ret;
 }
+
+} // namespace kickstart_n
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

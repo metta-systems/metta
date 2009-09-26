@@ -8,8 +8,9 @@
 
 #include "types.h"
 #include "ia32.h"
+#include "page_directory.h"
 
-const size_t PAGE_SIZE = 0x1000;
+const size_t    PAGE_SIZE = 0x1000;
 const address_t PAGE_MASK = 0xFFFFF000;
 
 template <typename T>
@@ -42,38 +43,31 @@ inline bool is_page_aligned(T a)
     return a % PAGE_SIZE == 0;
 }
 
-class page_table_t;
+namespace kickstart_n {
 
-// Bootloader micro PMM allocator.
+// Primitive page frame allocator for bootstrap.
 // Defined in pmm.cpp.
-class boot_pmm_allocator
+class memory_allocator_t
 {
 public:
-    boot_pmm_allocator() : alloced_start(0) {}
+    memory_allocator_t();
+    page_directory_t& root_pagedir() { return pagedir; }
 
-    void adjust_alloced_start(address_t new_start);
-    address_t get_alloced_start();
+    void adjust_alloc_start(address_t new_start);
+    address_t get_alloc_start();
 
     address_t alloc_next_page();
     address_t alloc_page(address_t vaddr);
 
-    // this should be in page_directory_t
-    void setup_pagetables();
-    void mapping_enter(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
-    bool mapping_entered(address_t vaddr);
     void start_paging();
 
 private:
-    //! Helper to select correct pagetable depending on address.
-    /*!
-    * Allocate and initialize a new pagetable if it's not present.
-    */
-    page_table_t* select_pagetable(address_t vaddr);
-
-    //! Start (FIXME: and end?) of allocated pages for passing into initcp.
-    address_t alloced_start;
-    address_t* pagedir;
+    address_t alloc_start;
+    page_directory_t pagedir;
 };
+//different new impls will allocate data for page_directory_t differently, so alloc strategies
+// inside kickstart and in nucleus will differ, while structures used will be the same.
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
