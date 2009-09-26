@@ -52,11 +52,16 @@ template <typename address_type>
 struct area_t
 {
     address_type start, end;
-    size_t npages(); // type_traits<address_type>::size_type
+
+    size_t npages() // type_traits<address_type>::size_type
+    {
+        return (end - start) / PAGE_SIZE;
+    }
 };
 
 typedef area_t<address_t> alloc_area_t;
 
+// move region merging to kickstart
 void mmap_to_areas(multiboot_t::mmap_t* mmap)
 {
 #define N_AREAS 32
@@ -69,6 +74,24 @@ void mmap_to_areas(multiboot_t::mmap_t* mmap)
     // Start with 1 region covering whole available memory.
     // Use memory map to cut bits off of left or right edge of region
     // or split it up in two.
+    areas[0].start = 0;
+    areas[0].end   = ~0;
+    ASSERT(areas[0].npages() == 0xfffff);
+
+    multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
+    while (mmi)
+    {
+        if (mmi->is_free())
+        {
+        }
+        else
+        {
+            // occupied regions take precedence over free regions
+        }
+
+        mmi = mmap->next_entry(mmi);
+    }
+
 }
 
 void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
