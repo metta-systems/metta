@@ -34,7 +34,7 @@ vm_server_t::vm_server_t()
 {
 }
 
-void vm_server_t::init(bootinfo_t bi_page)
+void vm_server_t::init(UNUSED_ARG bootinfo_t bi_page)
 {
 //     multiboot_t mb(bi_page.multiboot_header());
 //     memory_manager.init(mb.memory_map());

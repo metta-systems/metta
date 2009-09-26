@@ -6,6 +6,7 @@
 //
 #pragma once
 
+#include "bootinfo.h"
 // #include "memory/memory_manager.h"
 
 /*!
@@ -17,6 +18,7 @@
 */
 class vm_server_t
 {
+public:
     vm_server_t();
     void init(bootinfo_t bi_page);
 
