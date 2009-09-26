@@ -9,7 +9,9 @@
 #include "elf.h"
 #include "types.h"
 
-class boot_pmm_allocator;
+namespace kickstart_n {
+    class memory_allocator_t;
+}
 
 //! Parse an ELF file, generate symbolic information and load code/data segments.
 class elf_parser
@@ -22,7 +24,7 @@ public:
     /*!
     * @param allocator is a silly kludge to let load_image get more memory pages.
     */
-    bool load_image(address_t start, size_t size, boot_pmm_allocator* allocator);
+    bool load_image(address_t start, size_t size, kickstart_n::memory_allocator_t* allocator);
 
     //! Returns the symbol name for an address.
     /*!

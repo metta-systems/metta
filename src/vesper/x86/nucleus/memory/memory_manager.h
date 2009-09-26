@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "heap.h"
+#include "memory.h"
 #include "multiboot.h"
 #include "page_allocator.h"
 
@@ -47,7 +48,7 @@ public:
     * Initialises paging and sets up a standard kernel page directory. //FIXME
     * Enables paging, then maps some pages for the heap.
     */
-    void init(multiboot_t::mmap_t* mmap);
+    void init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr);
 
     /*!
     * Allocate @c size bytes, returning the physical address of the

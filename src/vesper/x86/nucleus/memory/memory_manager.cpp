@@ -25,6 +25,7 @@ static stack_page_frame_allocator_t stack_allocator;
 memory_manager_t::memory_manager_t()
     : frame_allocator(&stack_allocator)
 {
+    kconsole << GREEN << "memory_manager: ctor" << endl;
     placement_address = (address_t)&image_end; // NOT PHYSICAL HERE, FIX IT by using frame_allocator
     // try to not use placement_address at all, init heap early.
 
@@ -32,8 +33,9 @@ memory_manager_t::memory_manager_t()
     current_directory = kernel_directory = NULL;
 }
 
-void memory_manager_t::init(multiboot_t::mmap_t* mmap)
+void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
 {
+    kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
     frame_allocator.init(mmap);
     // now we can allocate frames of physical memory
 
