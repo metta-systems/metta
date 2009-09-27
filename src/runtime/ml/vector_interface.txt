@@ -1,0 +1,75 @@
+//vector interface (Qt-inspired)
+vector()
+vector(int size)
+vector(int size, const T& value)
+vector(const vector<T>& other)
+~vector()
+void append(const T& value)
+const T& at(int i) const
+int capacity() const
+void clear()
+const T* const_data() const
+bool contains(const T& value) const
+int count(const T& value) const
+int count() const
+pointer data()
+const pointer data() const
+bool ends_with(const T& value) const
+iterator erase(iterator pos)
+iterator erase(iterator begin, iterator end)
+vector<T>& fill(const T& value, int size = -1)
+reference first()
+const_reference first() const
+int index_of(const T& value, int from = 0) const
+void insert(int i, const T& value)
+iterator insert(iterator before, int count, const T& value)
+void insert(int i, int count, const T& value)
+iterator insert(iterator before, const T& value)
+bool is_empty() const
+reference last()
+const_reference last() const
+int last_index_of(const T& value, int from = -1) const
+vector mid(int pos, int length = -1) const
+void prepend(const T& value)
+void remove(int i)
+void remove(int i, int count)
+void replace(int i, const T& value)
+void reserve(int size)
+void resize(int size)
+int size() const
+void squeeze()
+bool starts_with(const T& value) const
+list<T> to_list() const
+T value(int i) const
+T value(int i, const T& default_value) const
+bool operator!=(const vector& other) const
+vector operator+(const vector& other) const
+vector& operator+=(const vector& other)
+vector& operator+=(const T& value)
+vector& operator<<(const T& value)
+vector& operator<<(const vector& other)
+vector& operator=(const vector& other)
+bool operator==(const vector<T>& other) const
+reference operator[](int i)
+const_reference operator[](int i) const
+
+static vector<T> from_list(const list<T>& list)
+
+// stl compatibility crap
+reference back()
+const_reference back() const
+bool empty() const
+reference front()
+const_reference front() const
+void pop_back()
+void pop_front()
+void push_back(const T& value)
+void push_front(const T& value)
+
+// stl iterators
+iterator begin()
+const_iterator begin() const
+const_iterator const_begin() const
+const_iterator const_end() const
+iterator end()
+const_iterator end() const
