@@ -64,7 +64,7 @@ public:
         uint64_t size() const    { return length; }
         bool     is_free() const { return type == 1; }
 
-        void     set_entry_size(uint32_t new_size) { entry_size = new_size; }
+        void     set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
         void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
         {
             base_addr = new_addr;
