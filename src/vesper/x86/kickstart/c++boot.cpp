@@ -44,7 +44,6 @@ static inline void* small_alloc(size_t size)
 
 void* operator new(UNUSED_ARG size_t size, uint32_t place)
 {
-    kconsole << LIGHTRED << "in-place operator new @" << place << endl;
     return (void *)place;
 }
 
