@@ -160,6 +160,12 @@ void kickstart(multiboot_t::header_t* mbh)
 
     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
     bootinfo.append_mmap_entry(&fake_mmap_entry);
+
+    // We have created a dent in our memory map, so we need to sort it
+    // and build contiguous allocation regions.
+//     mmap_to_areas(mmap);
+
+
     bootinfo.set_memmgr(&init_memmgr);
 
     init_memmgr.start_paging();

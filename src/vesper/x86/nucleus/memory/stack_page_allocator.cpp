@@ -48,63 +48,13 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     kconsole << GREEN << "stacked frame allocator: ctor" << endl;
 }
 
-template <typename address_type>
-struct area_t
-{
-    address_type start, end;
-
-    size_t npages() // type_traits<address_type>::size_type
-    {
-        return (end - start) / PAGE_SIZE;
-    }
-};
-
-typedef area_t<address_t> alloc_area_t;
-
-// move region merging to kickstart
-void mmap_to_areas(multiboot_t::mmap_t* mmap)
-{
-#define N_AREAS 32
-    alloc_area_t areas[N_AREAS];
-    uint32_t n_areas = 1;
-
-    UNUSED(mmap);
-    UNUSED(areas);
-    UNUSED(n_areas);
-    // Start with 1 region covering whole available memory.
-    // Use memory map to cut bits off of left or right edge of region
-    // or split it up in two.
-    areas[0].start = 0;
-    areas[0].end   = ~0;
-    ASSERT(areas[0].npages() == 0xfffff);
-
-    multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
-    while (mmi)
-    {
-        if (mmi->is_free())
-        {
-        }
-        else
-        {
-            // occupied regions take precedence over free regions
-        }
-
-        mmi = mmap->next_entry(mmi);
-    }
-
-}
-
+// Go through available physical memory frames, add them to the frame stack.
 void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
 {
     kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
     pd_mgr = mmgr;
 
-    // Go through available physical memory frames, add them to the frame stack.
     ASSERT(mmap);
-
-    // We have created a dent in our memory map, so we need to sort it
-    // and build contiguous allocation regions.
-    mmap_to_areas(mmap);
 
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -113,6 +63,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::
         address_t start = page_align_up(mmi->address());
         address_t end   = page_align_down(mmi->address() + mmi->size());
         uint32_t n_frames = (end - start) / PAGE_SIZE;
+        total_frames += n_frames;
 
         if (mmi->is_free())
         {
@@ -128,7 +79,6 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::
             reserved_frames += n_frames;
         }
 
-        total_frames += n_frames;
         mmi = mmap->next_entry(mmi);
     }
     kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE) << "KB) of physical memory, " << (int)reserved_frames << " frames reserved, " << (int)free_frames << " (" << (int)(free_frames*PAGE_SIZE) << "KB) frames free." << endl;
@@ -179,7 +129,7 @@ void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
     next_free_phys = phys_frame; // remember phys as current free stack top
     //   unmap_page(PAGE_MASK);
     free_frames++;
-//     ASSERT(free_frames <= total_frames);// catch overflow
+    ASSERT(free_frames <= total_frames);// catch overflow
     unlock();
 }
 
