@@ -9,10 +9,10 @@ def build(bld):
     runtime.target = 'kernel_runtime'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp ../nucleus/page_directory.cpp c++boot.cpp'.split())# kickstart.lds
+    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp ../nucleus/page_directory.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
-    kickstart.includes = '. ../../lib ../../runtime lib kickstart nucleus'
+    kickstart.includes = '. ../../lib ../../runtime ../../runtime/ml lib kickstart nucleus'
     kickstart.target = 'kickstart.bin'
     kickstart.uselib_local = 'kernel_runtime'
 
