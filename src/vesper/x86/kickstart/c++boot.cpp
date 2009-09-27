@@ -15,6 +15,7 @@ extern kickstart_n::memory_allocator_t init_memmgr;
 
 static inline void* placement_alloc(size_t size)
 {
+    kconsole << " .normal alloc. ";
     address_t tmp = init_memmgr.get_alloc_start();
     init_memmgr.adjust_alloc_start(tmp+size);
     return (void*)tmp;
@@ -24,6 +25,7 @@ static inline void* placement_alloc(size_t size)
 // switching to a new page as necessary.
 static inline void* small_alloc(size_t size)
 {
+    kconsole << " .small alloc. ";
     ASSERT(size < PAGE_SIZE/4);
     static address_t alloc_page = 0;
     static size_t alloc_pos = 0;
@@ -42,12 +44,18 @@ static inline void* small_alloc(size_t size)
 
 void* operator new(UNUSED_ARG size_t size, uint32_t place)
 {
+    kconsole << LIGHTRED << "in-place operator new @" << place << endl;
     return (void *)place;
+}
+
+void* operator new(size_t size, void* place)
+{
+    return operator new(size, (uint32_t)place);
 }
 
 void* operator new(size_t size, bool page_align, address_t* addr)
 {
-    kconsole << RED << "operator new(" << size << ", " << (int)page_align << ", " << (address_t)addr << ")" << endl;
+    kconsole << RED << "operator new(" << size << ", " << (int)page_align << ", " << (address_t)addr << ")";
     void* tmp;
 
     if (!page_align && (size < PAGE_SIZE/4))
@@ -58,7 +66,7 @@ void* operator new(size_t size, bool page_align, address_t* addr)
     if (addr)
         *addr = (address_t)tmp;
 
-    kconsole << LIGHTRED << "operator new: return " << (address_t)tmp << endl;
+    kconsole << LIGHTRED << "return " << (address_t)tmp << endl;
     return tmp;
 }
 
