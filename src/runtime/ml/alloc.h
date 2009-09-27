@@ -6,8 +6,6 @@
 //
 #pragma once
 
-#include <new> //FIXME: avoid host-includes
-
 template <typename T>
 inline void construct_inplace(T* memory, const T& value)
 {

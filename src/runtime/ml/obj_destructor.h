@@ -7,7 +7,7 @@
 #pragma once
 
 #include "types.h"
-#include "memory.h"
+#include "alloc.h"
 
 template <typename T>
 struct obj_destructor

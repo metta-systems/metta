@@ -7,7 +7,7 @@
 #pragma once
 
 #include "types.h"
-#include "memory.h"
+#include "alloc.h"
 
 template <typename T>
 void obj_copy(T* dest, T* src, size_t count)
