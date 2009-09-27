@@ -2,7 +2,7 @@
 
 bool bootinfo_t::append_mmap_entry(multiboot_t::mmap_entry_t* entry)
 {
-    size_t entry_size = sizeof(multiboot_t::mmap_entry_t);
+    const size_t entry_size = sizeof(multiboot_t::mmap_entry_t);
     if (size() + entry_size > PAGE_SIZE - optional_fields_size())
         return false;
 
