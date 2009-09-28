@@ -163,9 +163,9 @@ void kickstart(multiboot_t::header_t* mbh)
 
     // We have created a dent in our memory map, so we need to sort it
     // and build contiguous allocation regions.
-    extern void mmap_prepare(multiboot_t::mmap_t* mmap);
+    extern void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page);
     kconsole << "preprocessing mmap" << endl;
-    mmap_prepare(mb.memory_map());
+    mmap_prepare(mb.memory_map(), bootinfo);
 
     bootinfo.set_memmgr(&init_memmgr);
 

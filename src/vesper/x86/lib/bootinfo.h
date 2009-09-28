@@ -41,6 +41,7 @@ public:
     uint32_t& flags();
     uint32_t optional_fields_size();
     void increase_size(size_t addend);
+    void decrease_size(size_t addend);
     multiboot_t::header_t* multiboot_header();
     bool append_mmap_entry(multiboot_t::mmap_entry_t* entry);
     kickstart_n::memory_allocator_t* memmgr();
@@ -67,6 +68,11 @@ inline uint32_t bootinfo_t::optional_fields_size()
 inline void bootinfo_t::increase_size(size_t addend)
 {
     *reinterpret_cast<size_t*>(boot_info) += addend;
+}
+
+inline void bootinfo_t::decrease_size(size_t addend)
+{
+    *reinterpret_cast<size_t*>(boot_info) -= addend;
 }
 
 inline multiboot_t::header_t* bootinfo_t::multiboot_header()
