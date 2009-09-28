@@ -48,10 +48,10 @@ area_t::intersect area_t::intersects(const area_t& a2)
     return left_edge;
 }
 
-template <class T>
+template <int N, class T>
 class inplace_allocator
 {
-    char buf[1024];
+    char buf[N * sizeof(T)];
 public:
     typedef T value_type;
 
@@ -62,7 +62,7 @@ public:
     void deallocate(T* /*mem*/, size_t /*size*/) {}
 };
 
-typedef vector_base<memblock_base<area_t, obj_allocator<inplace_allocator<area_t>>, obj_copier<area_t>>, obj_type_behavior<area_t>, tight_allocation_policy> area_vector_t;
+typedef vector_base<memblock_base<area_t, obj_allocator<inplace_allocator<32, area_t>>, obj_copier<area_t>>, obj_type_behavior<area_t>, tight_allocation_policy> area_vector_t;
 
 // Given a multiboot_t::mmap_t create a sorted memory regions map.
 void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page)
