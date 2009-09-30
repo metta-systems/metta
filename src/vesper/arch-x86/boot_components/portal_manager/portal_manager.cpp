@@ -4,13 +4,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "trader.h"
+#include "portal_manager.h"
 
-extern "C" void entry()
+extern "C" void init()
 {
 }
 
-trader_t::trader_t()
+portal_manager_t::portal_manager_t()
 {
 }
 

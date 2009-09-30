@@ -4,13 +4,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "security_server.h"
+#include "trader.h"
 
-extern "C" void entry()
+extern "C" void init()
 {
 }
 
-security_server_t::security_server_t()
+trader_t::trader_t()
 {
 }
 

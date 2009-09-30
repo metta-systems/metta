@@ -3,11 +3,11 @@
 
 def build(bld):
     idisp = bld.new_task_gen('cxx', 'program')
-    idisp.source = 'scheduler.cpp'# ../component.lds
+    idisp.source = 'security_server.cpp'# ../component.lds
     idisp.env = bld.env_of_name('KERNEL_ENV').copy()
-    idisp.env.append_unique('LINKFLAGS', ['-T', '../vesper/x86/boot_components/component.lds', '-Wl,-Map,scheduler.map'])
+    idisp.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,security_server.map'])
     idisp.includes = '. ../../../../lib ../../../../runtime'
-    idisp.target = 'scheduler.comp'
+    idisp.target = 'security_server.comp'
     #idisp.uselib_local = 'component_runtime'
 
 # kate: indent-width 4; replace-tabs on;

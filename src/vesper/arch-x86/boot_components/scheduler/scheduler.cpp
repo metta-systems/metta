@@ -4,15 +4,20 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "portal_manager.h"
+#include "scheduler.h"
 
-extern "C" void entry()
+extern "C" void init()
 {
 }
 
-portal_manager_t::portal_manager_t()
+namespace scheduler
+{
+
+scheduler_t::scheduler_t()
 {
 }
+
+} // namespace scheduler
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

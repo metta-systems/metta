@@ -11,7 +11,7 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'vesper/x86/kickstart vesper/x86/orb vesper/x86/lib lib runtime'.split()
+include_dirs = 'vesper/arch-x86/kickstart vesper/arch-x86/orb vesper/arch-x86/lib lib runtime'.split()
 #archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
@@ -112,7 +112,7 @@ def build(bld):
     mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
     mustl.target = 'mustl'
 
-    bld.add_subdirs('vesper/'+Options.options.arch)
+    bld.add_subdirs('vesper/arch-'+Options.options.arch)
 
     mkinitfs = bld.new_task_gen('cxx', 'program')
     mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
@@ -123,7 +123,7 @@ def build(bld):
     mkinitfs.target = 'mkinitfs'
 
     bld.new_task_gen(
-        source = 'mkinitfs vesper/x86/kickstart/component.lst',
+        source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep
         target = 'initfs.img',
         rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
         name = 'initfs.img',
@@ -143,7 +143,7 @@ def build(bld):
     )
 
     bld.new_task_gen(
-        source = 'vesper/x86/kickstart.bin vesper/x86/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
+        source = 'vesper/arch-x86/kickstart.bin vesper/arch-x86/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',#arch dep
         target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
