@@ -81,7 +81,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::
 
         mmi = mmap->next_entry(mmi);
     }
-    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE) << "KB) of physical memory, " << (int)reserved_frames << " frames reserved, " << (int)free_frames << " (" << (int)(free_frames*PAGE_SIZE) << "KB) frames free." << endl;
+    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames reserved, " << (int)free_frames << " (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) frames free." << endl;
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
