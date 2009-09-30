@@ -39,6 +39,8 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     frame_allocator.init(mmap, mmgr);
     // now we can allocate frames of physical memory
 
+    mmgr->root_pagedir().dump();
+
     // Make a page directory.
     kernel_directory = new(true) page_directory_t();
     current_directory = kernel_directory;
