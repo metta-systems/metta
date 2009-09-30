@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+def build(bld):
+    idisp = bld.new_task_gen('cxx', 'program')
+    idisp.source = 'interrupt_dispatcher.cpp'# ../component.lds
+    idisp.env = bld.env_of_name('KERNEL_ENV').copy()
+    idisp.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,interrupt_dispatcher.map'])
+    idisp.includes = '. ../../../../lib ../../../../runtime'
+    idisp.target = 'interrupt_dispatcher.comp'
+    #idisp.uselib_local = 'component_runtime'
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

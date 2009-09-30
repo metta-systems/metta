@@ -87,11 +87,12 @@ uint32_t multiboot_t::size()
 /*!
 * Copies the current multiboot info into a new location.
 *
-* Boot info page gathers some data from the bootloader and passes it unto nucleus for memory regions and
-* pagetables initialization. Multiboot info is at the start of boot info page.
+* Boot info page gathers some data from the bootloader and passes it into nucleus for memory regions and
+* pagetables initialization. Multiboot info is almost at the start of boot info page.
 *
 * Layout of boot info page:
 * uint32_t first_free_byte; // address of first free byte within this page (after all infos), size of useful data.
+* uint32_t flags;
 * multiboot_t::header_t mb_header;
 * char cmdline[]; // aligned
 * multiboot_t::modinfo_t  mod_infos[num_infos];
@@ -108,7 +109,7 @@ uint32_t multiboot_t::size()
 void multiboot_t::copy(address_t target)
 {
     size_t* size_ptr = reinterpret_cast<size_t*>(target);
-    target += sizeof(size_t);
+    target += sizeof(size_t) + sizeof(uint32_t);
 
     header_t* target_header = reinterpret_cast<header_t*>(target);
 
@@ -155,12 +156,12 @@ void multiboot_t::copy(address_t target)
 
     // This is where we put our memmap.
     target = reinterpret_cast<address_t>(strings);
-    // We update header anyway, because we will be adding our fake mmap entry for allocated blocks.
-    target_header->mmap.set_addr(target);
 
     mmap_t* memmap = memory_map();
     if (memmap)
     {
+        target_header->mmap.set_addr(target);
+
         uint32_t mmap_length = 0;
         multiboot_t::mmap_entry_t* mmi = memmap->first_entry();
         while (mmi)

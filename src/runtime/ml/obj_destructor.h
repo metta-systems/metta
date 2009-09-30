@@ -7,11 +7,16 @@
 #pragma once
 
 #include "types.h"
-#include "memory.h"
+#include "alloc.h"
 
 template <typename T>
 struct obj_destructor
 {
+    static void destruct(T* ptr)
+    {
+        destruct_inplace(ptr);
+    }
+
     static void destruct(T* ptr, size_t count)
     {
         while (count--)

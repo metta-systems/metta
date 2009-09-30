@@ -11,15 +11,15 @@
 #include "panic.h"
 
 /*!
-* \brief Defines an interface to the multiboot header.
-* \ingroup Boot
-*/
+ * @brief Defines an interface to the multiboot header.
+ * @ingroup Boot
+ */
 class multiboot_t
 {
 public:
     /*!
-    * Header flags.
-    */
+     * Header flags.
+     */
     enum {
         FLAG_MEM     = 0x0001,
         FLAG_DEVICE  = 0x0002,
@@ -64,7 +64,7 @@ public:
         uint64_t size() const    { return length; }
         bool     is_free() const { return type == 1; }
 
-        void     set_entry_size(uint32_t new_size) { entry_size = new_size; }
+        void     set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
         void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
         {
             base_addr = new_addr;

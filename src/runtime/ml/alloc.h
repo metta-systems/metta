@@ -6,17 +6,16 @@
 //
 #pragma once
 
-#include "types.h"
-#include "alloc.h"
+template <typename T>
+inline void construct_inplace(T* memory, const T& value)
+{
+    (void)new(static_cast<void*>(memory)) T(value);
+}
 
 template <typename T>
-void obj_copy(T* dest, T* src, size_t count)
+inline void destruct_inplace(T* object)
 {
-    while (count--)
-    {
-        destruct_inplace(dest);
-        construct_inplace(dest++, *src++);
-    }
+    object->~T();
 }
 
 // kate: indent-width 4; replace-tabs on;
