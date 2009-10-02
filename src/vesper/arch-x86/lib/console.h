@@ -110,6 +110,12 @@ inline console_t& operator << (console_t& con, unsigned char data)
     return con;
 }
 
+inline console_t& operator << (console_t& con, const void* data)
+{
+    con.print_hex((uint32_t)data);
+    return con;
+}
+
 template<typename T, typename... Args>
 void console_t::print(const char* str, T value, Args... args)
 {
