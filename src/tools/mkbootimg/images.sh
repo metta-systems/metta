@@ -19,15 +19,15 @@ dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 sudo mount -o loop -t ext2 $FLOPPY fd
 mkdir -p fd/boot/grub
 cp stage{1,2} fd/boot/grub
-cp $BUILDDIR/tools/mkbootimg/menu.lst.fd0 fd/boot/grub/menu.lst
-cp $BUILDDIR/vesper/x86/kickstart.bin fd/kickstart
-cp $BUILDDIR/vesper/x86/nucleus.bin   fd/nucleus
-cp $BUILDDIR/initfs.img               fd/bootcomps
+cp $BUILDDIR/tools/mkbootimg/menu.lst.fd0  fd/boot/grub/menu.lst
+cp $BUILDDIR/vesper/arch-x86/kickstart.bin fd/kickstart
+cp $BUILDDIR/vesper/arch-x86/nucleus.bin   fd/nucleus
+cp $BUILDDIR/initfs.img                    fd/bootcomps
 sudo umount fd
 rm -rf fd
 
 # Install grub
-/sbin/grub --batch --no-floppy <<EOT 1>/dev/null  || exit 1
+/sbin/grub --batch --no-floppy <<EOT || exit 1
 device (fd0) $FLOPPY
 install (fd0)/boot/grub/stage1 (fd0) (fd0)/boot/grub/stage2 (fd0)/boot/grub/menu.lst
 quit
@@ -36,9 +36,9 @@ EOT
 # Create an ISO image
 mkdir -p iso/boot/grub
 cp stage2_eltorito iso/boot/grub
-cp $BUILDDIR/tools/mkbootimg/menu.lst.cd iso/boot/grub/menu.lst
-cp $BUILDDIR/vesper/x86/kickstart.bin iso/kickstart
-cp $BUILDDIR/vesper/x86/nucleus.bin   iso/nucleus
-cp $BUILDDIR/initfs.img               iso/bootcomps
+cp $BUILDDIR/tools/mkbootimg/menu.lst.cd   iso/boot/grub/menu.lst
+cp $BUILDDIR/vesper/arch-x86/kickstart.bin iso/kickstart
+cp $BUILDDIR/vesper/arch-x86/nucleus.bin   iso/nucleus
+cp $BUILDDIR/initfs.img                    iso/bootcomps
 mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -o $CDISO iso
 rm -rf iso
