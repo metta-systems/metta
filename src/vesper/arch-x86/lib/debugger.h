@@ -43,19 +43,19 @@ public:
 
 // Helpers for easier debugging in Bochs
 #if BOCHS_IO_HACKS
-#include "asm_inlines.h"
+#include "cpu.h"
 
 //outputs a character to the debug console
 inline void bochs_console_print_char(int c)
 {
-    outb(0xe9, c);
+    x86_cpu_t::outb(0xe9, c);
 }
 
 //stops simulation and breaks into the debug console
 inline void bochs_break()
 {
-    outw(0x8A00,0x8A00);
-    outw(0x8A00,0x08AE0);
+    x86_cpu_t::outw(0x8A00,0x8A00);
+    x86_cpu_t::outw(0x8A00,0x08AE0);
 }
 
 //traps into debug console (add "magic_break: enabled=1" to bochs config)
@@ -67,14 +67,14 @@ inline void bochs_magic_trap()
 //monitor memory area from start to end for writes and reads
 inline void bochs_add_watch_region(address_t start, address_t end)
 {
-    outw(0x8A00,0x8A00);
-    outw(0x8A00,0x8A01);
-    outw(0x8A01,(start>>16)&0xffff);
-    outw(0x8A01,start&0xffff);
-    outw(0x8A00,0x8A02);
-    outw(0x8A01,(end>>16)&0xffff);
-    outw(0x8A01,end&0xffff);
-    outw(0x8A00,0x8A80);
+    x86_cpu_t::outw(0x8A00,0x8A00);
+    x86_cpu_t::outw(0x8A00,0x8A01);
+    x86_cpu_t::outw(0x8A01,(start>>16)&0xffff);
+    x86_cpu_t::outw(0x8A01,start&0xffff);
+    x86_cpu_t::outw(0x8A00,0x8A02);
+    x86_cpu_t::outw(0x8A01,(end>>16)&0xffff);
+    x86_cpu_t::outw(0x8A01,end&0xffff);
+    x86_cpu_t::outw(0x8A00,0x8A80);
 }
 
 #else
