@@ -16,7 +16,7 @@ dd if=/dev/zero of=$FLOPPY bs=1024 count=1440
 /sbin/mke2fs -L Metta -m 0 -F $FLOPPY
 
 # Mount the Ext2 image
-sudo mount -oloop $FLOPPY fd
+sudo mount -o loop -t ext2 $FLOPPY fd
 mkdir -p fd/boot/grub
 cp stage{1,2} fd/boot/grub
 cp $BUILDDIR/tools/mkbootimg/menu.lst.fd0 fd/boot/grub/menu.lst
