@@ -1,8 +1,8 @@
 nucleus_t:
-  - space traversal supported.
+  - pd traversal supported.
 
-space_t // essentially, a PD (@sa Pebble's domain_fork)
-  - contains a portal_table with indexes into available portals
+pd_t: // (@sa Pebble's domain_fork)
+  - contains a portal_table with indexes into available portals as means of crossing pd boundaries
 
 scheduler_t (server):
   - thread management,
@@ -19,23 +19,23 @@ scheduler_t (server):
 interrupt_dispatcher_t (server):
   - abstracts interrupt handling on particular architecture by translating interrupts to portals.
 
-thread_t // thread abstraction inside nucleus_t
+thread_t: // thread abstraction inside scheduler_t
     thread_t
     {
-        portal_table_t* ptab;
+        portal_table_t* ptab; // in pd_t actually
         int32_t* user_stack;
         int32_t* interrupt_stack;
         int32_t* invocation_stack;
     };
-  // fixme: how to create a thread that inherits portal table but runs in further subspaces.
+  // FIXME: how to create a thread that inherits portal table but runs in further subspaces.
 
-portal_t // a portal abstraction used inside the kernel to generate, optimize and address portals
+portal_t: // a portal abstraction used inside the kernel to generate, optimize and address portals
 
 portal_manager_t (server):
   - space traversal routines (portals) generation,
   - privileged server, has access to spaces in order to add/remove portals to portal_table.
 
-vmm_server_t (server):
+vm_server_t (server):
   - serves paged memory to apps,
   - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
   - can map/grant/unmap memory pages upon request (via regions and mappings).
