@@ -12,14 +12,13 @@
 #include "multiboot.h"
 
 class page_t;
-namespace kickstart_n {
-    class memory_allocator_t;
-}
+class page_directory_t;
 
 class page_frame_allocator_impl_t
 {
 public:
-    virtual void init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr) = 0;
+    // TODO: add set_pagedir() as separate method
+    virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd) = 0;
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable) = 0;
     virtual void free_frame(page_t* p) = 0;
     virtual address_t alloc_frame() = 0;
@@ -40,9 +39,9 @@ public:
     /*!
     * Initialize free physical memory map.
     */
-    inline void init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
+    inline void init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
     {
-        impl->init(mmap, mmgr);
+        impl->init(mmap, pd);
     }
 
     /*!

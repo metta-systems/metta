@@ -43,16 +43,16 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     , total_frames(0)
     , free_frames(0)
     , reserved_frames(0)
-    , pd_mgr(0)
+    , pagedir(0)
 {
     kconsole << GREEN << "stacked frame allocator: ctor" << endl;
 }
 
 // Go through available physical memory frames, add them to the frame stack.
-void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
+void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
 {
     kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
-    pd_mgr = mmgr;
+    pagedir = pd;
 
     ASSERT(mmap);
 
@@ -109,7 +109,7 @@ address_t stack_page_frame_allocator_t::alloc_frame()
     lock();
     address_t next_frame = next_free_phys;
 
-    pd_mgr->root_pagedir().enter_mapping(PAGE_MASK, next_frame);
+    pagedir->enter_mapping(PAGE_MASK, next_frame);
 
     next_free_phys = *(address_t*)PAGE_MASK;
     free_frames--;
@@ -122,7 +122,7 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
     // map the topmost address space page temporarily to build free stacks
-    pd_mgr->root_pagedir().enter_mapping(PAGE_MASK, phys_frame);
+    pagedir->enter_mapping(PAGE_MASK, phys_frame);
 
     lock();
     *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top

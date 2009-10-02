@@ -18,7 +18,7 @@ class stack_page_frame_allocator_t : public page_frame_allocator_impl_t, public 
 public:
     stack_page_frame_allocator_t();
 
-    virtual void init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr);
+    virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd);
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable);
     virtual void free_frame(page_t* p);
     virtual address_t alloc_frame();
@@ -29,7 +29,7 @@ private:
     uint32_t   total_frames;
     uint32_t   free_frames;
     uint32_t   reserved_frames;
-    kickstart_n::memory_allocator_t* pd_mgr; // FIXME: needed to operate page directory
+    page_directory_t* pagedir;
 };
 
 // kate: indent-width 4; replace-tabs on;

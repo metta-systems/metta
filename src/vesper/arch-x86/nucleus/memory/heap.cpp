@@ -10,6 +10,7 @@
 #include "config.h" // for HEAP_DEBUG
 #include "page_directory.h"
 #include "nucleus.h"
+#include "linksyms.h"
 
 using nucleus_n::nucleus;
 
@@ -236,7 +237,7 @@ void *heap_t::allocate(size_t size, bool page_align)
 
         footer_t *hole_footer = (footer_t *)((address_t)hole_header + orig_hole_size - new_size - sizeof(footer_t));
         // Check we didn't go outside allowed heap_t area.
-        if ((address_t)hole_footer < K_HEAP_START || (address_t)hole_footer > K_HEAP_END)
+        if ((address_t)hole_footer < LINKSYM(K_HEAP_START) || (address_t)hole_footer > LINKSYM(K_HEAP_END))
         {
             kconsole.set_color(LIGHTRED);
             kconsole.print("Footer %p outside bounds!\n orig_hole_size: %d\n new_size: %d\n header_t: %p\n", hole_footer, orig_hole_size, new_size, hole_header);

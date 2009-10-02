@@ -12,16 +12,10 @@
 #include "multiboot.h"
 #include "page_allocator.h"
 
-//TODO: move these to the linker script
-#define K_HEAP_START              0xF0000000
 #define K_HEAP_INITIAL_SIZE       0x100000
-#define K_HEAP_END                0xFFFFF000
-#define STACK_START             (0xF8000000-0x4)
 #define STACK_INITIAL_SIZE      0x10000
-#define STACK_END               0xF0000000
-// #define KERNEL_START            0xC0000000 use K_SPACE_START defined by linker
 
-#define STACK_ADDRESS(x)  ((address_t)x <= STACK_START && (address_t)x > STACK_END)
+#define STACK_ADDRESS(x)  ((address_t)x <= K_STACK_START && (address_t)x > K_STACK_END)
 #define K_HEAP_ADDRESS(x) ((address_t)x >= K_HEAP_START && (address_t)x <= K_HEAP_END)
 
 class page_t;
@@ -89,7 +83,7 @@ public:
     /*!
     * Accessor functions for kernel_directory, current_directory
     */
-    inline page_directory_t* get_kernel_directory()  { return kernel_directory; }
+    inline page_directory_t* get_kernel_directory()  { return &kernel_directory; }
     inline page_directory_t* get_current_directory() { return current_directory; }
     void set_current_directory(page_directory_t* p)  { current_directory = p; }
 
@@ -113,42 +107,37 @@ public:
 
 private:
     /*!
-    * Total number of physical memory frames. TODO should be in frame_allocator
-    */
-//     uint32_t n_frames;
+     * Pointer to the "master" page directory. This holds page table pointers for kernel
+     * space. All other page directories must match the entries in here to maintain easy
+     * consistency of kernel-space over memory spaces.
+     */
+    page_directory_t kernel_directory ALIGNED(0x1000);
 
     /*!
-    * Has the kernel heap been initialised yet?
-    */
+     * Has the kernel heap been initialised yet?
+     */
     bool heap_initialized;
 
     /*!
-    * The kernel heap
-    */
+     * The kernel heap
+     */
     heap_t heap;
 
     /*!
-    * The page frame allocator.
-    */
+     * The page frame allocator.
+     */
     page_frame_allocator_t frame_allocator;
 
     /*!
-    * Before the heap is initialised, this holds the next available location
-    * for 'placement new' to be called on.
-    */
+     * Before the heap is initialised, this holds the next available location
+     * for 'placement new' to be called on.
+     */
     address_t placement_address;
 
     /*!
-    * The currently active page directory
-    */
+     * The currently active page directory
+     */
     page_directory_t* current_directory;
-
-    /*!
-    * Pointer to the "master" page directory. This holds page table pointers for kernel
-    * space. All other page directories must match the entries in here to maintain easy
-    * consistency of kernel-space over memory spaces.
-    */
-    page_directory_t* kernel_directory;
 };
 
 // kate: indent-width 4; replace-tabs on;
