@@ -7,6 +7,7 @@
 #include "default_console.h"
 #include "page_fault_handler.h"
 #include "mmu.h"
+#include "debugger.h"
 
 /*!
 @internal
@@ -18,8 +19,8 @@ static bool test_flag(int flag, int mask)
 
 //! A page fault has occurred.
 /*!
-* Interrupts are disabled upon entry to run()
-*/
+ * Interrupts are disabled upon entry to run()
+ */
 void page_fault_handler_t::run(registers_t* r)
 {
     address_t fault_address = ia32_mmu_t::get_pagefault_address();
@@ -31,9 +32,12 @@ void page_fault_handler_t::run(registers_t* r)
     bool reserved = test_flag(r->err_code, 0x08); // Overwritten CPU-reserved bits of page entry?
     bool insn     = test_flag(r->err_code, 0x10); // Caused by an instruction fetch?
 
+    const char* line = "=======================================================\n";
     // Output an error message.
+    kconsole.set_attr(YELLOW, BLACK);
+    kconsole.print(line);
     kconsole.set_attr(LIGHTRED, BLACK);
-    kconsole.print("Page fault! at EIP=%x, fault address=%x ", r->eip, fault_address);
+    kconsole.print("Page fault! at EIP=%x, fault address=%x\n", r->eip, fault_address);
     kconsole.set_attr(WHITE, BLACK);
     if (!present) kconsole.print("<Page not present>");
     if (rw) kconsole.print("<Write to read-only memory>");
@@ -41,8 +45,9 @@ void page_fault_handler_t::run(registers_t* r)
     if (reserved) kconsole.print("<Overwritten reserved bits>");
     if (insn) kconsole.print("<Instruction fetch>");
     kconsole.print("\n");
-// kernel.printBacktrace();
-    PANIC("Page fault");
+    debugger_t::print_backtrace();
+    kconsole << YELLOW << line;
+    halt();
 }
 
 // kate: indent-width 4; replace-tabs on;

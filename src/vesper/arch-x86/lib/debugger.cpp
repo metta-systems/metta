@@ -62,7 +62,7 @@ address_t debugger_t::backtrace(int n)
     address_t base_pointer = read_base_pointer();
     address_t eip = 1;
     int i = 0;
-    while (base_pointer && eip /*&& eip < 0x87000000*/)
+    while (base_pointer && eip)
     {
         base_pointer = backtrace(base_pointer, eip);
         if (i == n)
@@ -88,9 +88,7 @@ void debugger_t::print_backtrace(address_t base_pointer, int n)
         kconsole << n;
     kconsole << " stack frames:" << endl;
     int i = 0;
-    while (base_pointer && eip &&
-        ( (n && i<n) || !n) &&
-        eip < 0x87000000)//FIXME higher half kernel!
+    while (base_pointer && eip && ((n && i<n) || !n))
     {
         base_pointer = backtrace(base_pointer, eip);
 //         unsigned int offset;
