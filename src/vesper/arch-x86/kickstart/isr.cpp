@@ -9,7 +9,7 @@
 #include "default_console.h"
 #include "isr.h"
 #include "idt.h"
-#include "asm_inlines.h"
+#include "cpu.h"
 
 extern "C"
 {
@@ -57,10 +57,10 @@ void irq_handler(registers_t regs)
     {
         // If this interrupt involved the slave.
         // Send reset signal to slave.
-        outb(0xA0, 0x20);
+        x86_cpu_t::outb(0xA0, 0x20);
     }
     // Send reset signal to master.
-    outb(0x20, 0x20);
+    x86_cpu_t::outb(0x20, 0x20);
 }
 
 // kate: indent-width 4; replace-tabs on;

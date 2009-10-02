@@ -5,7 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "idt.h"
-#include "asm_inlines.h"
+#include "cpu.h"
 #include "config.h"
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
@@ -63,7 +63,7 @@ extern "C"
 }
 
 // Remap the irq table so that IRQ interrupts start at MASTER_VEC
-static inline void reprogram_pic() // TODO: move to ia32_pic_t
+static inline void reprogram_pic() // FIXME: move to ia32_pic_t
 {
 #define PICM 0x20
 #define PICS 0xA0
@@ -74,16 +74,16 @@ static inline void reprogram_pic() // TODO: move to ia32_pic_t
 #define SLAVE_VEC  0x28
 #define ICW4 0x01
 
-    outb(PICM, ICW1);
-    outb(PICS, ICW1);
-    outb(PICMI, MASTER_VEC);
-    outb(PICSI, SLAVE_VEC);
-    outb(PICMI, 4);
-    outb(PICSI, 2);
-    outb(PICMI, ICW4);
-    outb(PICSI, ICW4);
-    outb(PICMI, 0xff);//0?
-    outb(PICSI, 0xff);//0?
+    x86_cpu_t::outb(PICM, ICW1);
+    x86_cpu_t::outb(PICS, ICW1);
+    x86_cpu_t::outb(PICMI, MASTER_VEC);
+    x86_cpu_t::outb(PICSI, SLAVE_VEC);
+    x86_cpu_t::outb(PICMI, 4);
+    x86_cpu_t::outb(PICSI, 2);
+    x86_cpu_t::outb(PICMI, ICW4);
+    x86_cpu_t::outb(PICSI, ICW4);
+    x86_cpu_t::outb(PICMI, 0xff);//0?
+    x86_cpu_t::outb(PICSI, 0xff);//0?
 }
 
 void interrupt_descriptor_table_t::install()

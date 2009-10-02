@@ -6,28 +6,31 @@
 //
 #include "default_console.h"
 #include "panic.h"
-#include "asm_inlines.h"
+#include "cpu.h"
 
 void panic(const char* message, const char* file, uint32_t line)
 {
-    disable_interrupts();
+    x86_cpu_t::disable_interrupts();
 
     kconsole.set_attr(RED, YELLOW);
     kconsole.print("PANIC! %s at %s:%d\n", message, file, (int)line);
-//kernel.print_backtrace();
 
-    // Halt by going into an infinite loop.
-    while(1) {}
+    halt();
 }
 
-void panic_assert(const char *desc, const char *file, uint32_t line)
+void panic_assert(const char* desc, const char* file, uint32_t line)
 {
-    disable_interrupts();
+    x86_cpu_t::disable_interrupts();
 
     kconsole.set_attr(WHITE, RED);
     kconsole.print("ASSERTION FAILED! %s at %s:%d\n", desc, file, (int)line);
-//kernel.print_backtrace();
 
+    halt();
+}
+
+void halt()
+{
+    x86_cpu_t::disable_interrupts();
     // Halt by going into an infinite loop.
     while(1) {}
 }

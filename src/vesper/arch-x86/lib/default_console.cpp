@@ -5,7 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "default_console.h"
-#include "asm_inlines.h"
+#include "cpu.h"
 #include "memutils.h"
 #include "debugger.h"
 
@@ -54,10 +54,10 @@ void default_console_t::locate(int row, int col)
 {
     *cursor = (row * LINE_PITCH) + (col * 2);
     // Set VGA hardware cursor
-    outb(0x3d4, 14); // Tell the VGA board we are setting the high cursor byte.
-    outb(0x3d5, (*cursor) >> 8); // Send the high cursor byte.
-    outb(0x3d4, 15); // Tell the VGA board we are setting the low cursor byte.
-    outb(0x3d5, (*cursor) & 0xff);      // Send the low cursor byte.
+    x86_cpu_t::outb(0x3d4, 14); // Tell the VGA board we are setting the high cursor byte.
+    x86_cpu_t::outb(0x3d5, (*cursor) >> 8); // Send the high cursor byte.
+    x86_cpu_t::outb(0x3d4, 15); // Tell the VGA board we are setting the low cursor byte.
+    x86_cpu_t::outb(0x3d5, (*cursor) & 0xff);      // Send the low cursor byte.
 }
 
 void default_console_t::scroll_up()
@@ -156,23 +156,23 @@ void default_console_t::print_char(char ch)
 void default_console_t::wait_ack()
 {
     uint8_t keycode;
-    uint8_t irqmask = inb(0x21);
-    outb(0x21, irqmask | 0x02); // mask irq1 - keyboard
+    uint8_t irqmask = x86_cpu_t::inb(0x21);
+    x86_cpu_t::outb(0x21, irqmask | 0x02); // mask irq1 - keyboard
 
     /* wait keypress */
     do {
-        while ((inb(0x64) & 0x01) == 0) {}
-        keycode = inb(0x60);
+        while ((x86_cpu_t::inb(0x64) & 0x01) == 0) {}
+        keycode = x86_cpu_t::inb(0x60);
     } while (keycode != 0x1c); // "make code" == enter
 
     /* wait keyrelease */
     do {
-        while ((inb(0x64) & 0x01) == 0) {}
-        keycode = inb(0x60);
+        while ((x86_cpu_t::inb(0x64) & 0x01) == 0) {}
+        keycode = x86_cpu_t::inb(0x60);
     } while (keycode != 0x9c); // "break code" == enter
 
     if (!(irqmask & 0x02)) // if irq1 was unmasked previously,
-        outb(0x21, inb(0x21) & 0xfd); // unmask it now without changing other flags
+        x86_cpu_t::outb(0x21, x86_cpu_t::inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
 /*! Print string without formatting */
