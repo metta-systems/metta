@@ -61,7 +61,7 @@ def configure(conf):
     metta_flag = "__Metta__"
     conf.env.append_unique('CDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', metta_flag)
-    conf.env.append_unique('NASM_FLAGS', ['-f elf'])
+    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build
 
