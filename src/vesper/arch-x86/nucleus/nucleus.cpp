@@ -40,8 +40,9 @@ void nucleus_t::enter_trap(UNUSED_ARG int portal_no)
 {
 }
 
-void nucleus_t::create_pd()
+void nucleus_t::create_pd(/*portal_t<type> arg*/) /*NORETURN*/
 {
+//     arg.return_to_caller(new_pd);
 }
 
 void nucleus_t::destroy_pd()
