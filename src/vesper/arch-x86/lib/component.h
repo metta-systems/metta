@@ -1,5 +1,4 @@
-// Component is a gemstone or a facade, providing access to different aspects or interfaces
-// of the object/server.
+// Component is a gemstone or a facade, providing access to different aspects or interfaces of the object/server.
 // Namespaces shorten component pathnames, e.g. "metta:" ns expands to "com.exquance.metta"
 //
 // dbus like interface specifications
@@ -7,12 +6,16 @@
 // dbus: org.freedesktop.dbus + /dbus/DesktopServices + Notify
 // object path + interface + method
 //
-// metta:vm_server/Kernel.v1#alloc_frame
+// metta:vm_server/Kernel.v1#alloc_frame[i]
 // namespace:object path/interface#method[paramspec]
 //
 // you can find the component by namespace and object path from the trader.
 // then query interface from the component and call methods on this interface.
 // querying interface causes portal manager to build portals between components.
+//
+// Component interface is further improved by providing a typesafe wrapper
+// around portal_set_t, with templates:
+// component_if_t<vm_server_interface_v1_t> get_interface("facet_name");
 //
 class component_t
 {
