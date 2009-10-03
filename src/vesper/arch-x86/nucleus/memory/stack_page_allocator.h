@@ -19,6 +19,7 @@ public:
     stack_page_frame_allocator_t();
 
     virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd);
+    virtual void set_pagedir(page_directory_t* pd);
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable);
     virtual void free_frame(page_t* p);
     virtual address_t alloc_frame();

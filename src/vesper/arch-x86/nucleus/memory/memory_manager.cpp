@@ -43,10 +43,10 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
 //     kconsole << GREEN << "K_HEAP_START " << &K_HEAP_START << " K_HEAP_END " << &K_HEAP_END << endl;
 
     // TODO: Copy old page directory to kernel one.
-//     kernel_directory = mmgr->root_pagedir();
+    kernel_directory.copy_from(mmgr->root_pagedir());
     current_directory = &kernel_directory;
 
-//     frame_allocator.set_pagedir(current_directory);
+    frame_allocator.set_pagedir(current_directory);
 
     // Map kernel code (mapped by elf loader already).
 

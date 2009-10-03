@@ -17,8 +17,8 @@ class page_directory_t;
 class page_frame_allocator_impl_t
 {
 public:
-    // TODO: add set_pagedir() as separate method
     virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd) = 0;
+    virtual void set_pagedir(page_directory_t* pd) = 0;
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable) = 0;
     virtual void free_frame(page_t* p) = 0;
     virtual address_t alloc_frame() = 0;
@@ -42,6 +42,14 @@ public:
     inline void init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
     {
         impl->init(mmap, pd);
+    }
+
+    /*!
+     * Set page directory used for frame manipulation.
+     */
+    inline void set_pagedir(page_directory_t* pd)
+    {
+        impl->set_pagedir(pd);
     }
 
     /*!

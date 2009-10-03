@@ -131,6 +131,15 @@ page_directory_t* page_directory_t::clone()
     return dir;
 }
 
+// almost like a copy ctor? copy contents from other page_dir,
+// update physical addresses for correct cr3 loading.
+void page_directory_t::copy_from(const page_directory_t& other)
+{
+    copy_memory(tables);
+    copy_memory(tables_physical); //?
+    physical = other.physical; //?
+}
+
 void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags)
 {
     page_table_t* pagetable = get_page_table(vaddr, true);
