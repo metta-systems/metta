@@ -8,12 +8,14 @@
 #include "c++ctors.h"
 
 // vm server provides two facets: kernel interface and user interface
+//
 // kernel interface is wider and provides more granular manipulation
 // vm server needs privileges to manipulate page tables and
 // regions in client address spaces. hence it runs in ring0.
 // kernel interface provides means to allocate physical frames
 // with given properties, open windows between clients for duration of
 // portal call or client lifetime.
+//
 // user interface provides means for clients to allocate more memory pages or
 // release them and also to map/grant pages to other clients.
 
