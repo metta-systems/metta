@@ -150,6 +150,10 @@ public:
     page_directory_t* clone();
     void dump();
 
+private: friend class memory_manager_t;
+    void copy_from(const page_directory_t& other);
+    void set_physical(address_t phys) { physical_address = phys; }
+
 private:
     /*!
     * Array of pointers to pagetables.

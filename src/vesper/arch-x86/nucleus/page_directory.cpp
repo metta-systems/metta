@@ -8,6 +8,7 @@
 #include "page_directory.h"
 #include "memory/new.h"
 #include "memory.h"
+#include "memutils.h"
 #include "ia32.h"
 
 //======================================================================================================================
@@ -135,9 +136,9 @@ page_directory_t* page_directory_t::clone()
 // update physical addresses for correct cr3 loading.
 void page_directory_t::copy_from(const page_directory_t& other)
 {
-    copy_memory(tables);
-    copy_memory(tables_physical); //?
-    physical = other.physical; //?
+    memutils::copy_memory(tables, other.tables, sizeof(tables));
+    memutils::copy_memory(tables_physical, other.tables_physical, sizeof(tables_physical));
+//     physical = tables_physical; will be actualized by memory_manager_t
 }
 
 void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags)
