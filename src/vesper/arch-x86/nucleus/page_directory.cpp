@@ -80,7 +80,7 @@ page_table_t* page_directory_t::get_page_table(address_t vaddr, bool make)
     {
         address_t phys;
         tables[table_idx] = new(true, &phys) page_table_t;
-        tables_physical[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER;
+        tables_physical[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER; //FIXME: pagedir change
     }
     return tables[table_idx];
 }

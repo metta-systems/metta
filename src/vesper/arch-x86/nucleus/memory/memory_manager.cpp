@@ -37,7 +37,7 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
 {
     kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
     frame_allocator.init(mmap, &mmgr->root_pagedir());
-    // now we can allocate frames of physical memory
+    // now we can allocate frames of physical memory (and can use new()/malloc())
 
     // Copy old page directory to kernel one.
     kernel_directory.copy_from(mmgr->root_pagedir());

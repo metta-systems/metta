@@ -112,6 +112,9 @@ public:
         return pages[n];
     }
 
+    void* operator new(size_t size);
+    void* operator new(size_t size, bool page_align, address_t* physical_address);//FIXME: always page-aligned
+
 private:
     void copy_frame(uint32_t from_phys, uint32_t to_phys);
     page_t pages[1024];
