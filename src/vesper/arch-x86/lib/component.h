@@ -17,6 +17,10 @@
 // around portal_set_t, with templates:
 // component_if_t<vm_server_interface_v1_t> get_interface("facet_name");
 //
+// http://en.wikipedia.org/wiki/IBM_System_Object_Model (vs. COM)
+// http://en.wikipedia.org/wiki/Distributed_Objects_Everywhere
+// http://en.wikipedia.org/wiki/Portable_Distributed_Objects
+//
 class component_t
 {
     portal_set_t* query_interface(symbol_t interface_spec);
