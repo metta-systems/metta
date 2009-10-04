@@ -11,6 +11,7 @@
 #include "page_directory.h"
 #include "new.h"
 #include "linksyms.h"
+#include "mmu.h"
 
 /*!
 * @internal
@@ -38,15 +39,24 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     frame_allocator.init(mmap, &mmgr->root_pagedir());
     // now we can allocate frames of physical memory
 
-//     mmgr->root_pagedir().dump();
-
-//     kconsole << GREEN << "K_HEAP_START " << &K_HEAP_START << " K_HEAP_END " << &K_HEAP_END << endl;
-
-    // TODO: Copy old page directory to kernel one.
+    // Copy old page directory to kernel one.
     kernel_directory.copy_from(mmgr->root_pagedir());
+
+    // convert virtual address in kernel_directory to physical
+    address_t virt = kernel_directory.get_physical();
+
+    page_t* pg = kernel_directory.get_page(virt, false);
+    address_t phys = pg->frame() + virt % PAGE_SIZE;
+
+    kernel_directory.set_physical(phys);
+
+    ia32_mmu_t::set_active_pagetable(kernel_directory.get_physical());
     current_directory = &kernel_directory;
 
     frame_allocator.set_pagedir(current_directory);
+
+    // Now we operate kernel_directory with old instance of pagetables.
+    // We will construct the heap first and then replace page_tables by cloning them.
 
     // Map kernel code (mapped by elf loader already).
 
@@ -60,25 +70,12 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     }
 
     // Identity map from KERNEL_START to placementAddress.
-    // reserve 16 pages above placement_address so that we can use placement alloc at start.
-//     uint32_t i = 0;
-//     while (i < placement_address + 16*PAGE_SIZE)
-//     {
-        // TODO Kernel code is readable but not writable from userspace.
-//         frame_allocator.alloc_frame(kernel_directory->get_page(i, true) , /*kernel:*/false, /*writable:*/false);
-//         i += PAGE_SIZE;
-//     }
-
     // Now allocate those pages we mapped earlier.
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
         // Kernel heap is readable but not writable from userspace.
         frame_allocator.alloc_frame(kernel_directory.get_page(i, true), false, false);
     }
-
-//FIXME paging is already enabled by kickstart
-//     ia32_mmu_t::set_active_pagetable((address_t)kernel_directory->get_physical());
-//     ia32_mmu_t::enable_paged_mode();
 
     // Initialise the heap.
     heap.init(LINKSYM(K_HEAP_START), LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE, LINKSYM(K_HEAP_END) & PAGE_MASK, true);
