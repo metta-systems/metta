@@ -34,6 +34,9 @@ struct csw_state_t
 class thread_t
 {
     thread_t();
+
+    void delay_until(time_t& timestamp);
+    void delay_for(uint32_t nanoseconds);//FIXME: or milliseconds?
 private:
 };
 
