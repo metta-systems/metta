@@ -1,0 +1,21 @@
+Recursive PDE/PTE explained by Brendan @ http://forum.osdev.org/viewtopic.php?f=15&t=19387
+
+The area from 0xFFFFF000 to 0xFFFFFFFF becomes a mapping of all page directory entries, and the area from 0xFFC00000 to 0xFFFFFFFF becomes a mapping of all page table entries (if the corresponding page table is present). These areas overlap because the page directory is being used as a page table - the area from 0xFFFFF000 to 0xFFFFFFFF contains the page directory entries and the page table entries for the last page table (which is the same thing).
+
+To access the page directory entry for any virtual address you'd be able to do "mov eax,[0xFFFFF000 + (virtualAddress >> 20) * 4]", and (if the page table is present) to access the page table entry for any virtual address you'd be able to do "mov eax,[0xFFC00000 + (virtualAddress >> 12) * 4]". Most C programmers would use these areas as arrays and let the compiler do some of the work, so they can access any page directory entry as "PDE = pageDirectoryMapping[virtualAddress >> 20]" and any page table entry as "PTE = pageTableMapping[virtualAddress >> 12]".
+
+Now imagine that someone wants to allocate a new page at 0x12345000. You need to check if a page table exists for this area (and if the page table doesn't exist, allocate a new page of RAM to use as a page table, create a page directory entry for it, and INVLPG the mapping for the new page table), then check if the page already exists (and if the page doesn't exist, allocate a new page of RAM, create a page table entry for the new page, and INVLPG the new page).
+
+The same sort of lookups are needed for lots of things - freeing a page, checking accessed/dirty bits, changing page attributes (read, write, execute, etc), page fault handling, etc. Basically, having fast access to page directory entries and page table entries is important, because it speeds up everything your virtual memory management code does.
+
+Without making a page directory entry refer to the page directory, you need to find some other way to access page directory entries and page table entries, and there is no better way (all the other ways are slower, more complicated and waste more RAM).
+
+Combuster@osdev
+
+To avoid deadlocks due to unmapped structures, I reserve an unmapped region where the pagetable for it is guaranteed to exist (and use algorithms that use fixed amounts of address space to complete) - which is essentially equivalent to granting access to physical memory without tripping the VMM into recursion. You may find a way to fix your implementation based on this concept.
+
+Brendan@osdev
+
+The first method (plain free page stack) looks simple but it isn't because "currentPageStackTop" is a physical address and "currentPageStackTop->nextFreePage;" doesn't work. You have to map "currentPageStackTop" into linear memory before you can get the next free page. This usually means combining it with the linear memory manager - when you're allocating a linear page you'd store "currentPageStackTop" into the page table, then use INVLPG to flush the TLB entry, then get the address of the next free page from whereever you mapped "currentPageStackTop".
+
+http://www.rohitab.com/discuss/index.php?showtopic=31139
