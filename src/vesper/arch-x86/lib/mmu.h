@@ -32,14 +32,15 @@
 #pragma once
 
 #include "types.h"
+#include "ia32.h"
 
 class ia32_mmu_t
 {
 public:
     static void flush_page_directory(bool global = false);
     static void flush_page_directory_entry(address_t addr);
-//     static void enable_super_pages();
-//     static void enable_global_pages();
+    static void enable_super_pages();
+    static void enable_global_pages();
     static void enable_paged_mode();
     static address_t get_pagefault_address(void);
     static address_t get_active_pagetable(void);
@@ -53,9 +54,7 @@ public:
  */
 inline void ia32_mmu_t::flush_page_directory(bool global)
 {
-#define IA32_CR4_PGE    (1 <<  7)   /* enable global pages      */
-
-    address_t dummy, dummy2;
+    uint32_t dummy, dummy2;
     if (!global)
         asm volatile ("movl %%cr3, %0\n"
                     "movl %0, %%cr3\n"
@@ -82,31 +81,38 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t addr)
     asm volatile ("invlpg (%0)\n" :: "r"(addr));
 }
 
+// FIXME: ia32_cpu_t::cr4_enable()?
+inline void ia32_cr4_set(uint32_t flag)
+{
+    uint32_t dummy;
+    asm volatile ("movl %%cr4, %0\n"
+                  "orl %1, %0\n"
+                  "movl %0, %%cr4\n"
+                  : "=r"(dummy)
+                  : "i"(flag));
+}
+
 /*!
  * Enables extended page size (4M) support for IA32
  */
-// inline void ia32_mmu_t::enable_super_pages()
-// {
-//     ia32_cr4_set(IA32_CR4_PSE);
-// }
+inline void ia32_mmu_t::enable_super_pages()
+{
+    ia32_cr4_set(IA32_CR4_PSE);
+}
 
 /*!
  * Enables global page support for IA32
  */
-// inline void ia32_mmu_t::enable_global_pages()
-// {
-//     ia32_cr4_set(IA32_CR4_PGE); // ia32_cpu_t::cr4_enable()?
-// }
+inline void ia32_mmu_t::enable_global_pages()
+{
+    ia32_cr4_set(IA32_CR4_PGE);
+}
 
 /*!
  * Enables paged mode for IA32
  */
 inline void ia32_mmu_t::enable_paged_mode()
 {
-#define IA32_CR0_PE (1 <<  0)   /* enable protected mode    */
-#define IA32_CR0_WP (1 << 16)   /* force write protection on user read only pages for kernel   */
-#define IA32_CR0_PG (1 << 31)   /* enable paging        */
-
     asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
 }
 
