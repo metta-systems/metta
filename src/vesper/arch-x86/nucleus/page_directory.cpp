@@ -63,24 +63,26 @@ void page_table_t::copy_frame(uint32_t from_phys, uint32_t to_phys)
 // page_directory_t
 //======================================================================================================================
 
+const address_t* pagedir_base = RPAGEDIR_VBASE;
+const address_t* pagetab_base = RPAGETAB_VBASE;
+
 page_directory_t::page_directory_t()
 {
-    for (int i = 0; i < 1024; i++)
-    {
+    for (int i = 0; i < 1023; i++)
         tables[i] = 0;
-        tables_physical[i] = 0;
-    }
-    physical_address = (address_t)tables_physical;
+    tables[1023] = tables; //RPD trick
 }
 
 page_table_t* page_directory_t::get_page_table(address_t vaddr, bool make)
 {
     uint32_t table_idx = pde_entry(vaddr);
-    if (!tables[table_idx] && make)
+    if (!(pagedir_base[table_idx] & IA32_PAGE_PRESENT) && make)
     {
         address_t phys;
         tables[table_idx] = new(true, &phys) page_table_t;
-        tables_physical[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER; //FIXME: pagedir change
+        pagedir_base[table_idx] = phys | IA32_PAGE_PRESENT | IA32_PAGE_WRITABLE | IA32_PAGE_USER;
+        //FIXME: pagedir change, do invlpg here
+//         ia32_mmu_t::flush_page_directory_entry(address_t addr);
     }
     return tables[table_idx];
 }
@@ -132,25 +134,14 @@ page_directory_t* page_directory_t::clone()
     return dir;
 }
 
-// almost like a copy ctor? copy contents from other page_dir,
+// copy contents from other page_dir,
 // update physical addresses for correct cr3 loading.
-void page_directory_t::copy_from(const page_directory_t& other)
+// physical address should be actualized by memory_manager_t
+page_directory_t::page_directory_t(const page_directory_t& other)
 {
     memutils::copy_memory(tables, other.tables, sizeof(tables));
-    memutils::copy_memory(tables_physical, other.tables_physical, sizeof(tables_physical));
-//     physical = tables_physical; will be actualized by memory_manager_t
 }
 
-/* Combuster@osdev
-
-To avoid deadlocks due to unmapped structures, I reserve an unmapped region where the pagetable for it is guaranteed to exist (and use algorithms that use fixed amounts of address space to complete) - which is essentially equivalent to granting access to physical memory without tripping the VMM into recursion. You may find a way to fix your implementation based on this concept.
-
-Brendan@osdev
-
-The first method (plain free page stack) looks simple but it isn't because "currentPageStackTop" is a physical address and "currentPageStackTop->nextFreePage;" doesn't work. You have to map "currentPageStackTop" into linear memory before you can get the next free page. This usually means combining it with the linear memory manager - when you're allocating a linear page you'd store "currentPageStackTop" into the page table, then use INVLPG to flush the TLB entry, then get the address of the next free page from whereever you mapped "currentPageStackTop".
-
-http://www.rohitab.com/discuss/index.php?showtopic=31139
-*/
 void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags)
 {
     page_table_t* pagetable = get_page_table(vaddr, true);

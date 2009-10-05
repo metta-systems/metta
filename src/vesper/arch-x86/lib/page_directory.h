@@ -120,6 +120,10 @@ private:
     page_t pages[1024];
 };
 
+// Last 4 megs of address space are for recursive page directory
+#define RPAGETAB_VBASE 0xffc00000 // page tables addressable from this base
+#define RPAGEDIR_VBASE 0xfffff000 // page directory addressable from this base
+
 /*!
 * Holds 1024 pagetables.
 */
@@ -138,7 +142,7 @@ public:
 
     address_t get_physical()
     {
-        return physical_address;
+        return table[1023];
     }
 
     page_t* get_page(address_t addr, bool make = true);
@@ -154,24 +158,15 @@ public:
     void dump();
 
 private: friend class memory_manager_t;
-    void copy_from(const page_directory_t& other);
-    void set_physical(address_t phys) { physical_address = phys; }
+    page_directory_t(const page_directory_t& other);
+    void set_physical(address_t phys) { tables[1023] = phys; }
 
 private:
     /*!
-    * Array of pointers to pagetables.
-    */
+     * Array of pointers to pagetables, but gives their *physical* location,
+     * for loading into the CR3 register.
+     */
     page_table_t* tables[1024];
-
-    /*!
-    * Array of pointers to the pagetables above, but gives their *physical* location, for loading into the CR3 register.
-    */
-    address_t tables_physical[1024];
-
-    /*!
-    * The physical address of tables_physical.
-    */
-    address_t physical_address;
 };
 
 #define PDE_SHIFT 22
@@ -188,18 +183,6 @@ inline int pte_entry(address_t vaddr)
 {
     return (vaddr >> PTE_SHIFT) & PTE_MASK;
 }
-
-// Recursive PDE/PTE explained by Brendan @ http://forum.osdev.org/viewtopic.php?f=15&t=19387
-//
-// The area from 0xFFFFF000 to 0xFFFFFFFF becomes a mapping of all page directory entries, and the area from 0xFFC00000 to 0xFFFFFFFF becomes a mapping of all page table entries (if the corresponding page table is present). These areas overlap because the page directory is being used as a page table - the area from 0xFFFFF000 to 0xFFFFFFFF contains the page directory entries and the page table entries for the last page table (which is the same thing).
-//
-// To access the page directory entry for any virtual address you'd be able to do "mov eax,[0xFFFFF000 + (virtualAddress >> 20) * 4]", and (if the page table is present) to access the page table entry for any virtual address you'd be able to do "mov eax,[0xFFC00000 + (virtualAddress >> 12) * 4]". Most C programmers would use these areas as arrays and let the compiler do some of the work, so they can access any page directory entry as "PDE = pageDirectoryMapping[virtualAddress >> 20]" and any page table entry as "PTE = pageTableMapping[virtualAddress >> 12]".
-//
-// Now imagine that someone wants to allocate a new page at 0x12345000. You need to check if a page table exists for this area (and if the page table doesn't exist, allocate a new page of RAM to use as a page table, create a page directory entry for it, and INVLPG the mapping for the new page table), then check if the page already exists (and if the page doesn't exist, allocate a new page of RAM, create a page table entry for the new page, and INVLPG the new page).
-//
-// The same sort of lookups are needed for lots of things - freeing a page, checking accessed/dirty bits, changing page attributes (read, write, execute, etc), page fault handling, etc. Basically, having fast access to page directory entries and page table entries is important, because it speeds up everything your virtual memory management code does.
-//
-// Without making a page directory entry refer to the page directory, you need to find some other way to access page directory entries and page table entries, and there is no better way (all the other ways are slower, more complicated and waste more RAM).
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
