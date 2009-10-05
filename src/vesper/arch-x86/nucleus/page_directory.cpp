@@ -23,7 +23,7 @@ page_table_t* page_table_t::clone(address_t* phys)
         if (pages[i].frame())
         {
             address_t* p = 0;
-            new(true, p) char [PAGE_SIZE];
+            new(true, p) char [PAGE_SIZE]; // use available frame allocator to get a frame for page_table
 
             table->pages[i].set_frame(*p);
             table->pages[i].set_present(pages[i].present());
@@ -141,6 +141,16 @@ void page_directory_t::copy_from(const page_directory_t& other)
 //     physical = tables_physical; will be actualized by memory_manager_t
 }
 
+/* Combuster@osdev
+
+To avoid deadlocks due to unmapped structures, I reserve an unmapped region where the pagetable for it is guaranteed to exist (and use algorithms that use fixed amounts of address space to complete) - which is essentially equivalent to granting access to physical memory without tripping the VMM into recursion. You may find a way to fix your implementation based on this concept.
+
+Brendan@osdev
+
+The first method (plain free page stack) looks simple but it isn't because "currentPageStackTop" is a physical address and "currentPageStackTop->nextFreePage;" doesn't work. You have to map "currentPageStackTop" into linear memory before you can get the next free page. This usually means combining it with the linear memory manager - when you're allocating a linear page you'd store "currentPageStackTop" into the page table, then use INVLPG to flush the TLB entry, then get the address of the next free page from whereever you mapped "currentPageStackTop".
+
+http://www.rohitab.com/discuss/index.php?showtopic=31139
+*/
 void page_directory_t::enter_mapping(address_t vaddr, address_t paddr, int flags)
 {
     page_table_t* pagetable = get_page_table(vaddr, true);
