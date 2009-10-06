@@ -5,13 +5,16 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 // Architecture-dependent defines.
-// Do not put any functions in this file: it is used with assembler.
+// Do not put any functions in this file: it is used with assembler. (FIXME?)
 //
 #pragma once
 
 //======================================================================================================================
 // MMU
 //======================================================================================================================
+
+const size_t    PAGE_SIZE = 0x1000;
+const address_t PAGE_MASK = 0xFFFFF000;
 
 // Page attributes
 #define IA32_PAGE_PRESENT        (1<<0)

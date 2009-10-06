@@ -99,10 +99,12 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloc_start() << endl;
 
-    uint32_t fake_mmap_entry_start = init_memmgr.get_alloc_start();
+    uint32_t fake_mmap_entry_start = (address_t)&KICKSTART_BASE; //init_memmgr.get_alloc_start();
+    // preserve the currently executing kickstart ^^ code in the memory allocator init
+    // we will give up these frames later.
 
     address_t bootinfo_page = init_memmgr.alloc_next_page();
-    init_memmgr.root_pagedir().enter_mapping(bootinfo_page, bootinfo_page);
+    init_memmgr.root_pagedir().create_mapping(bootinfo_page, bootinfo_page);
     mb.copy(bootinfo_page);
     bootinfo_t bootinfo(bootinfo_page);
     mb.set_header(bootinfo.multiboot_header());
@@ -121,7 +123,7 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << endl << "Mapping loader: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        init_memmgr.root_pagedir().enter_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
+        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
     }
 
     // Identity map video memory/bios area.
@@ -130,11 +132,8 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << endl << "Mapping VRAM: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
-        init_memmgr.root_pagedir().enter_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
+        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
     }
-
-    // Allocate mapping page for kernel use
-    init_memmgr.root_pagedir().enter_mapping(PAGE_MASK, PAGE_MASK);
 
     kconsole << endl << "Mapped." << endl;
 
@@ -146,7 +145,8 @@ void kickstart(multiboot_t::header_t* mbh)
 
     // Map stack page
     address_t old_stack_pointer = read_stack_pointer();
-    init_memmgr.root_pagedir().enter_mapping(old_stack_pointer, old_stack_pointer);
+    kconsole << "Mapping stack: " << old_stack_pointer << endl;
+    init_memmgr.root_pagedir().create_mapping(old_stack_pointer, old_stack_pointer);
 
     // Get kernel entry before enabling paging, as this area won't be mapped.
     typedef void (*kernel_entry)(bootinfo_t bi_page);
@@ -154,7 +154,6 @@ void kickstart(multiboot_t::header_t* mbh)
 
     // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
-
     uint32_t fake_mmap_entry_end = init_memmgr.get_alloc_start();
     multiboot_t::mmap_entry_t fake_mmap_entry;
 
@@ -164,7 +163,7 @@ void kickstart(multiboot_t::header_t* mbh)
     // We have created a dent in our memory map, so we need to sort it
     // and build contiguous allocation regions.
     extern void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page);
-    kconsole << "preprocessing mmap" << endl;
+    kconsole << "Preprocessing mmap." << endl;
     mmap_prepare(mb.memory_map(), bootinfo);
 
     bootinfo.set_memmgr(&init_memmgr);

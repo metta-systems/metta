@@ -10,20 +10,15 @@
 
 using nucleus_n::nucleus;
 
-void* page_table_t::operator new(size_t size)
-{
-    return operator new(size, false, 0);
-}
-
-void* page_table_t::operator new(size_t size, bool, address_t* physical_address)
+// TODO: cleanup!
+void* page_table_t::operator new(size_t size, address_t* physical_address)
 {
     kconsole << "using custom operator new("<<size<<")";
-    address_t ret = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
-    kconsole << ".. allocated at "<<ret<<endl;
-    nucleus.mem_mgr().get_current_directory()->enter_mapping(ret, ret);
+    address_t phys = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
+    kconsole << ".. allocated at "<<phys<<endl;
     if (physical_address)
-        *physical_address = ret;
-    return (void*)ret;
+        *physical_address = phys;
+    return (void*)phys;
 }
 
 // 1. use mem_mgr().page_frame_allocator().alloc_frame()

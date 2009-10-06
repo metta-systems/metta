@@ -18,6 +18,10 @@
 #define STACK_ADDRESS(x)  ((address_t)x <= K_STACK_START && (address_t)x > K_STACK_END)
 #define K_HEAP_ADDRESS(x) ((address_t)x >= K_HEAP_START && (address_t)x <= K_HEAP_END)
 
+// Last 4 megs of address space are for recursive page directory
+#define RPAGETAB_VBASE 0xffc00000 // page tables addressable from this base
+#define RPAGEDIR_VBASE 0xfffff000 // page directory addressable from this base
+
 class page_t;
 class page_directory_t;
 
@@ -83,7 +87,7 @@ public:
     /*!
     * Accessor functions for kernel_directory, current_directory
     */
-    inline page_directory_t* get_kernel_directory()  { return &kernel_directory; }
+    inline page_directory_t* get_kernel_directory()  { return kernel_directory; }
     inline page_directory_t* get_current_directory() { return current_directory; }
     void set_current_directory(page_directory_t* p)  { current_directory = p; }
 
@@ -111,7 +115,7 @@ private:
      * space. All other page directories must match the entries in here to maintain easy
      * consistency of kernel-space over memory spaces.
      */
-    page_directory_t kernel_directory ALIGNED(0x1000);
+    page_directory_t* kernel_directory/* ALIGNED(0x1000)*/;
 
     /*!
      * Has the kernel heap been initialised yet?

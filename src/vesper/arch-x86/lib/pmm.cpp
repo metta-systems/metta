@@ -60,7 +60,7 @@ address_t memory_allocator_t::alloc_next_page()
 address_t memory_allocator_t::alloc_page(address_t vaddr)
 {
     address_t ret = alloc_next_page();
-    pagedir.enter_mapping(vaddr, ret);
+    pagedir.create_mapping(vaddr, ret);
     return ret;
 }
 

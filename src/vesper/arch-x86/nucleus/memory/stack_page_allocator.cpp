@@ -7,6 +7,7 @@
 #include "stack_page_allocator.h"
 #include "default_console.h"
 #include "page_directory.h"
+#include "memory/memory_manager.h" // for RPAGETAB_VBASE
 #include "memory.h"
 #include "panic.h"
 #include "debugger.h"
@@ -61,6 +62,21 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
 
     ASSERT(mmap);
 
+    // an ugly hack here
+    uint32_t i, k;
+    page_directory_t* pagedir = reinterpret_cast<page_directory_t*>(RPAGEDIR_VBASE);
+    for (i = 0; i < 1024; i++)
+        if (pagedir->get_page_table(i << PDE_SHIFT, false))
+            break;
+    if (i == 1024)
+        PANIC("No page tables!");
+    for (k = 0; k < 1024; i++)
+        if (!pagedir->get_page((i << PDE_SHIFT) + (k << PTE_SHIFT)))
+            break;
+    if (k == 1024)
+        PANIC("No pages!");
+    address_t temp_mapping = (i << PDE_SHIFT) + (k << PTE_SHIFT); // this address is not present and will not cause a frame alloc
+
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
     while (mmi)
@@ -75,7 +91,15 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
             // include pages into free stack
             for (uint32_t n = 0; n < n_frames; n++)
             {
-                free_frame(start);
+//                 free_frame(start);
+                // another ugly hack: basically a modified copy of free_frame()
+                pagedir->create_mapping(temp_mapping, start);
+                *(address_t*)temp_mapping = next_free_phys; // store phys of previous free stack top
+                pagedir->remove_mapping(temp_mapping);
+
+                next_free_phys = start; // remember phys as current free stack top
+                free_frames++;
+
                 start += PAGE_SIZE;
             }
         }
@@ -109,14 +133,17 @@ void stack_page_frame_allocator_t::free_frame(page_t* p)
     p->set_frame(0);
 }
 
+#define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
+
 address_t stack_page_frame_allocator_t::alloc_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
 
-    pagedir->enter_mapping(PAGE_MASK, next_frame);
+    pagedir->create_mapping(TEMP_MAPPING, next_frame); // FIXME: can cause a call to alloc_frame()!!!
+    next_free_phys = *(address_t*)TEMP_MAPPING;
+    pagedir->remove_mapping(TEMP_MAPPING);
 
-    next_free_phys = *(address_t*)PAGE_MASK;
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
     unlock();
@@ -126,13 +153,13 @@ address_t stack_page_frame_allocator_t::alloc_frame()
 // phys_frame becomes the new free stack top.
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
-    // map the topmost address space page temporarily to build free stacks
-    pagedir->enter_mapping(PAGE_MASK, phys_frame);
-
     lock();
-    *(address_t*)PAGE_MASK = next_free_phys; // store phys of previous free stack top
+
+    pagedir->create_mapping(TEMP_MAPPING, phys_frame);
+    *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
+    pagedir->remove_mapping(TEMP_MAPPING);
+
     next_free_phys = phys_frame; // remember phys as current free stack top
-    //   unmap_page(PAGE_MASK);
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
     unlock();

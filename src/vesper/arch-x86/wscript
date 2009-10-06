@@ -3,13 +3,13 @@
 
 def build(bld):
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp ../../lib/multiboot.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp lib/console.cpp lib/default_console.cpp lib/bootinfo.cpp lib/pmm.cpp lib/registers.s lib/idt.cpp lib/debugger.cpp'.split()
+    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp ../../lib/multiboot.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp lib/console.cpp lib/default_console.cpp lib/bootinfo.cpp lib/pmm.cpp lib/registers.s lib/idt.cpp lib/debugger.cpp lib/page_directory_common.cpp'.split()
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = '. ../../lib ../../runtime lib'
     runtime.target = 'kernel_runtime'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp ../nucleus/page_directory.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
+    kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = '. ../../lib ../../runtime ../../runtime/ml lib kickstart nucleus'
@@ -17,7 +17,7 @@ def build(bld):
     kickstart.uselib_local = 'kernel_runtime'
 
     nucleus = bld.new_task_gen('cxx', 'program')
-    nucleus.source = 'nucleus/nucleus.cpp nucleus/pd.cpp nucleus/page_directory.cpp nucleus/memory/new.cpp nucleus/memory/memory_manager.cpp nucleus/memory/stack_page_allocator.cpp nucleus/memory/heap.cpp'# nucleus/nucleus.lds
+    nucleus.source = map(lambda f: 'nucleus/' + f, 'nucleus.cpp pd.cpp page_directory_nucleus.cpp memory/new.cpp memory/memory_manager.cpp memory/stack_page_allocator.cpp memory/heap.cpp'.split())# nucleus/nucleus.lds
     nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
     nucleus.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/nucleus/nucleus.lds', '-Wl,-Map,nucleus.map'])
     nucleus.includes = '. ../../lib ../../runtime lib nucleus'

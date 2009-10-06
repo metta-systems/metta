@@ -30,35 +30,17 @@ memory_manager_t::memory_manager_t()
     // try to not use placement_address at all, init heap early.
 
     heap_initialized = false;
-    current_directory = NULL;
+    current_directory = kernel_directory = NULL;
 }
 
 void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
 {
     kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
-    frame_allocator.init(mmap, &mmgr->root_pagedir());
+    kernel_directory = reinterpret_cast<page_directory_t*>(RPAGEDIR_VBASE);
+    current_directory = kernel_directory;
+
+    frame_allocator.init(mmap, kernel_directory);
     // now we can allocate frames of physical memory (and can use new()/malloc())
-
-    // Copy old page directory to kernel one.
-    kernel_directory.copy_from(mmgr->root_pagedir());
-
-    // convert virtual address in kernel_directory to physical
-    address_t virt = kernel_directory.get_physical();
-
-    page_t* pg = kernel_directory.get_page(virt, false);
-    address_t phys = pg->frame() + virt % PAGE_SIZE;
-
-    kernel_directory.set_physical(phys);
-
-    ia32_mmu_t::set_active_pagetable(kernel_directory.get_physical());
-    current_directory = &kernel_directory;
-
-    frame_allocator.set_pagedir(current_directory);
-
-    // Now we operate kernel_directory with old instance of pagetables.
-    // We will construct the heap first and then replace page_tables by cloning them.
-
-    // Map kernel code (mapped by elf loader already).
 
     // Map some pages in the kernel heap area.
     // Here we call get_page but not alloc_frame. This causes pagetables
@@ -66,7 +48,7 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     // they need to be identity mapped first below.
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_END); i += PAGE_SIZE)
     {
-        kernel_directory.get_page(i, /*make:*/true);
+//         kernel_directory->get_page(i, /*make:*/true);
     }
 
     // Identity map from KERNEL_START to placementAddress.
@@ -74,7 +56,7 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
         // Kernel heap is readable but not writable from userspace.
-        frame_allocator.alloc_frame(kernel_directory.get_page(i, true), false, false);
+//         frame_allocator.alloc_frame(kernel_directory->get_page(i, true), false, false);
     }
 
     // Initialise the heap.
@@ -91,7 +73,7 @@ void* memory_manager_t::allocate(uint32_t size, bool page_align, address_t* phys
     heap.unlock();
     if (physical_address)
     {
-        page_t* pg = kernel_directory.get_page((address_t)addr, false);
+        page_t* pg = kernel_directory->get_page((address_t)addr);
         *physical_address = pg->frame() + (address_t)addr % PAGE_SIZE;
     }
     return addr;

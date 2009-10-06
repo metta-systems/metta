@@ -11,14 +11,9 @@
 #include "memory.h"
 #include "default_console.h"
 
-void* page_table_t::operator new(size_t size)
+void* page_table_t::operator new(size_t size, address_t* physical_address)
 {
-    return ::operator new(size, false, 0);
-}
-
-void* page_table_t::operator new(size_t size, bool align, address_t* physical_address)
-{
-    return ::operator new(size, align, physical_address);
+    return ::operator new(size, true, physical_address);
 }
 
 extern kickstart_n::memory_allocator_t init_memmgr;

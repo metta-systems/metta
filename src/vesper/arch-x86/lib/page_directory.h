@@ -9,9 +9,9 @@
 #include "types.h"
 #include "ia32.h"
 
-/**
-* A page is a pointer to a frame.
-**/
+/*!
+ * A page is a pointer to a frame.
+ */
 class page_t
 {
 public:
@@ -87,8 +87,8 @@ private:
 };
 
 /*!
-* A page table holds 1024 pages
-*/
+ * A page table holds 1024 pages
+ */
 class page_table_t
 {
 public:
@@ -112,61 +112,45 @@ public:
         return pages[n];
     }
 
-    void* operator new(size_t size);
-    void* operator new(size_t size, bool page_align, address_t* physical_address);//FIXME: always page-aligned
+    void* operator new(size_t size, address_t* physical_address);
 
 private:
     void copy_frame(uint32_t from_phys, uint32_t to_phys);
     page_t pages[1024];
 };
 
-// Last 4 megs of address space are for recursive page directory
-#define RPAGETAB_VBASE 0xffc00000 // page tables addressable from this base
-#define RPAGEDIR_VBASE 0xfffff000 // page directory addressable from this base
-
 /*!
-* Holds 1024 pagetables.
-*/
+ * Holds 1024 pagetables.
+ */
 class page_directory_t
 {
 public:
     page_directory_t();
 
-    page_table_t* get_table(uint32_t index)
-    {
-        //ASSERT(index >= 0 && index < 1024);
-        return tables[index];
-    }
-
-    page_table_t* get_page_table(address_t vaddr, bool make = true);
-
     address_t get_physical()
     {
-        return table[1023];
+        return tables[1023] & PAGE_MASK;
     }
 
-    page_t* get_page(address_t addr, bool make = true);
-
-    void enter_mapping(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
+    bool create_mapping(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
+    void remove_mapping(address_t vaddr);
     bool mapping_exists(address_t vaddr);
+    page_t* get_page(address_t virt);
+    page_table_t* get_page_table(address_t virt, bool make);
 
     /*!
-    * Create a new page directory, that is an identical copy of this.
-    * TODO: implement copy-on-write.
-    */
-    page_directory_t* clone();
+     * Create a new page directory, that is an identical copy of this.
+     * TODO: implement copy-on-write.
+     */
+//     page_directory_t* clone();
     void dump();
-
-private: friend class memory_manager_t;
-    page_directory_t(const page_directory_t& other);
-    void set_physical(address_t phys) { tables[1023] = phys; }
 
 private:
     /*!
      * Array of pointers to pagetables, but gives their *physical* location,
      * for loading into the CR3 register.
      */
-    page_table_t* tables[1024];
+    address_t tables[1024];
 };
 
 #define PDE_SHIFT 22

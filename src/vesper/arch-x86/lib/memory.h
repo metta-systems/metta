@@ -10,9 +10,6 @@
 #include "ia32.h"
 #include "page_directory.h"
 
-const size_t    PAGE_SIZE = 0x1000;
-const address_t PAGE_MASK = 0xFFFFF000;
-
 template <typename T>
 inline T page_align_up(T a)
 {
