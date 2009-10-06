@@ -64,7 +64,6 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
 
     // an ugly hack here
     uint32_t i, k;
-    page_directory_t* pagedir = reinterpret_cast<page_directory_t*>(RPAGEDIR_VBASE);
     for (i = 0; i < 1024; i++)
         if (pagedir->get_page_table(i << PDE_SHIFT, false))
             break;
@@ -110,7 +109,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
 
         mmi = mmap->next_entry(mmi);
     }
-    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames reserved, " << (int)free_frames << " (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) frames free." << endl;
+    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
