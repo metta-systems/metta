@@ -6,7 +6,7 @@
 #ifndef UTYPES_H_118BBB3B50B7DBF22F5460C52E515C83
 #define UTYPES_H_118BBB3B50B7DBF22F5460C52E515C83
 
-#include "config.h"
+#include "settings.h"
 #ifndef STDC_HEADERS
     #error "This library requires standard C and C++ headers to compile."
 #endif

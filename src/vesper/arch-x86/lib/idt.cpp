@@ -6,7 +6,7 @@
 //
 #include "idt.h"
 #include "cpu.h"
-#include "config.h"
+#include "segs.h"
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern "C"

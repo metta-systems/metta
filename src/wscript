@@ -80,7 +80,8 @@ def configure(conf):
     conf.define('CONFIG_INLINING', 1)
     conf.define('CONFIG_DEBUG_SYMBOLS', 1)
     conf.define('HEAP_DEBUG', 1)
-    conf.write_config_header('config.h')
+    conf.define('MEMORY_DEBUG', 1)
+    conf.write_config_header('lib/config.h')
 
     # Copy template env to specific ones
     conf.set_env_name('KERNEL_ENV', conf.env.copy())
