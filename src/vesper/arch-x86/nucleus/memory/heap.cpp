@@ -7,10 +7,10 @@
 #include "heap.h"
 #include "memory.h"
 #include "memory_manager.h"
-#include "config.h" // for HEAP_DEBUG
 #include "page_directory.h"
 #include "nucleus.h"
 #include "linksyms.h"
+#include "config.h" // for HEAP_DEBUG
 
 using nucleus_n::nucleus;
 
