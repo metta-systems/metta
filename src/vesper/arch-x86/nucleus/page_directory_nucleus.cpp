@@ -12,6 +12,7 @@
 #include "ia32.h"
 #include "mmu.h"
 #include "nucleus.h"
+#include "config.h"
 
 using nucleus_n::nucleus;
 
@@ -33,7 +34,9 @@ page_table_t* page_directory_t::page_table(address_t virt, bool make)
     else if (make) // doesn't exist, so alloc a page and add into pdir
     {
         address_t new_phys = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
+#if MEMORY_DEBUG
         kconsole << "allocating new pagetable " << pde << " @ " << new_phys << endl;
+#endif
         page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
 
         tables[pde] = (new_phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;

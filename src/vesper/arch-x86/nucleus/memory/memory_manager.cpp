@@ -12,6 +12,7 @@
 #include "new.h"
 #include "linksyms.h"
 #include "mmu.h"
+#include "config.h"
 
 /*!
 * @internal
@@ -25,7 +26,9 @@ static stack_page_frame_allocator_t stack_allocator;
 memory_manager_t::memory_manager_t()
     : frame_allocator(&stack_allocator)
 {
+#if MEMORY_DEBUG
     kconsole << GREEN << "memory_manager: ctor" << endl;
+#endif
     placement_address = LINKSYM(image_end); // NOT PHYSICAL HERE, FIX IT by using frame_allocator
     // try to not use placement_address at all, init heap early.
 
@@ -33,9 +36,11 @@ memory_manager_t::memory_manager_t()
     current_directory = kernel_directory = NULL;
 }
 
-void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr)
+void memory_manager_t::init(multiboot_t::mmap_t* mmap)
 {
+#if MEMORY_DEBUG
     kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
+#endif
     kernel_directory = reinterpret_cast<page_directory_t*>(RPAGEDIR_VBASE);
     current_directory = kernel_directory;
 
@@ -45,13 +50,17 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     // Map some pages in the kernel heap area.
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_END); i += PAGE_SIZE)
     {
+#if MEMORY_DEBUG
         kconsole << "mapping heap page @ " << i << endl;
+#endif
         kernel_directory->mapping(i, true);
     }
 
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
+#if MEMORY_DEBUG
         kconsole << "allocating heap page @ " << i << endl;
+#endif
         // Kernel heap is readable but not writable from userspace.
         frame_allocator.alloc_frame(kernel_directory->mapping(i, true));
     }

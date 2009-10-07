@@ -32,7 +32,7 @@ void nucleus_t::init(bootinfo_t bi_page)
 {
     multiboot_t mb(bi_page.multiboot_header());
     kconsole << GREEN << "nucleus: init mem_mgr" << endl;
-    memory_manager.init(mb.memory_map(), bi_page.memmgr());
+    memory_manager.init(mb.memory_map());
 }
 
 // nucleus portals

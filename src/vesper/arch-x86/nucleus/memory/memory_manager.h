@@ -32,21 +32,15 @@ class memory_manager_t
 {
 public:
     /*!
-    * Heap can call our private alloc_frame() functions.
-    */
-    friend class heap_t;
-
-    /*!
     * Default constructor, does nothing.
     */
     memory_manager_t();
 
     /*!
     * Normal constructor.
-    * Initialises paging and sets up a standard kernel page directory. //FIXME
-    * Enables paging, then maps some pages for the heap.
+    * Initialises frame allocator, then maps some pages for the heap.
     */
-    void init(multiboot_t::mmap_t* mmap, kickstart_n::memory_allocator_t* mmgr);
+    void init(multiboot_t::mmap_t* mmap);
 
     /*!
     * Allocate @c size bytes, returning the physical address of the

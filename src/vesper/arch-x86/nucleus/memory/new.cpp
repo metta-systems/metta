@@ -11,8 +11,6 @@
 
 using nucleus_n::nucleus;
 
-// arrgh this alloc_frame recursion!
-
 // TODO: cleanup!
 void* page_table_t::operator new(size_t /*size*/, address_t* /*physical_address*/)
 {
