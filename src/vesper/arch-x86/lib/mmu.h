@@ -74,11 +74,11 @@ inline void ia32_mmu_t::flush_page_directory(bool global)
 /*!
  * Flushes the TLB entry for a linear address
  *
- * @param addr linear address
+ * @param virt linear address
  */
-inline void ia32_mmu_t::flush_page_directory_entry(address_t addr)
+inline void ia32_mmu_t::flush_page_directory_entry(address_t virt)
 {
-    asm volatile ("invlpg (%0)\n" :: "r"(addr));
+    asm volatile ("invlpg (%0)\n" :: "r"(virt));
 }
 
 // FIXME: ia32_cpu_t::cr4_enable()?

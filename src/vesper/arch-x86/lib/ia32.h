@@ -28,13 +28,14 @@ const address_t PAGE_MASK = 0xFFFFF000;
 #define IA32_PAGE_GLOBAL         (1<<8)
 
 // CR0 register
-#define IA32_CR0_PE (1 <<  0)   /* enable protected mode    */
-#define IA32_CR0_WP (1 << 16)   /* force write protection on user read only pages for kernel   */
-#define IA32_CR0_PG (1 << 31)   /* enable paging        */
+#define IA32_CR0_PE (1 <<  0)   /*!< enable protected mode    */
+#define IA32_CR0_WP (1 << 16)   /*!< force write protection on user read only pages for kernel   */
+#define IA32_CR0_PG (1 << 31)   /*!< enable paging        */
 
 // CR4 register
-#define IA32_CR4_PSE    (1 <<  4)   /* page size extension (4MB)    */
-#define IA32_CR4_PGE    (1 <<  7)   /* enable global pages      */
+#define IA32_CR4_PSE    (1 << 4)   /*!< page size extensions (enable 4MB pages)       */
+#define IA32_CR4_PAE    (1 << 5)   /*!< physical address extension (enable 2MB pages) */
+#define IA32_CR4_PGE    (1 << 7)   /*!< enable global pages                           */
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
