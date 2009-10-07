@@ -46,14 +46,14 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_END); i += PAGE_SIZE)
     {
         kconsole << "mapping heap page @ " << i << endl;
-        kernel_directory->get_page(i, true);
+        kernel_directory->mapping(i, true);
     }
 
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
         kconsole << "allocating heap page @ " << i << endl;
         // Kernel heap is readable but not writable from userspace.
-        frame_allocator.alloc_frame(kernel_directory->get_page(i, true));
+        frame_allocator.alloc_frame(kernel_directory->mapping(i, true));
     }
 
     // Initialise the heap.
@@ -70,7 +70,7 @@ void* memory_manager_t::allocate(uint32_t size, bool page_align, address_t* phys
     heap.unlock();
     if (physical_address)
     {
-        page_t* pg = kernel_directory->get_page((address_t)addr);
+        page_t* pg = kernel_directory->mapping((address_t)addr);
         *physical_address = pg->frame() + (address_t)addr % PAGE_SIZE;
     }
     return addr;

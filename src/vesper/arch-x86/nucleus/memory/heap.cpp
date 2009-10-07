@@ -31,7 +31,7 @@ void heap_t::init(address_t start, address_t end, address_t max, bool supervisor
     max_address   = max;
     is_kernel     = supervisor;
 
-    kconsole.print("Initializing heap_t (%08x..%08x, kernel: %d).\n", start, end, is_kernel);
+    kconsole << "Initializing heap (" << start << ".." << end << ", max: " << max << ", kernel: " << is_kernel << ")." << endl;
 
     ASSERT(is_page_aligned<address_t>(start_address));
     ASSERT(is_page_aligned<address_t>(end_address));
@@ -419,7 +419,7 @@ void heap_t::expand(size_t new_size)
     uint32_t i = old_size;
     while(i < new_size)
     {
-        nucleus.mem_mgr().page_frame_allocator().alloc_frame(nucleus.mem_mgr().get_kernel_directory()->get_page(start_address+i), is_kernel);
+        nucleus.mem_mgr().page_frame_allocator().alloc_frame(nucleus.mem_mgr().get_kernel_directory()->mapping(start_address+i), is_kernel);
         i += PAGE_SIZE;
     }
 
@@ -458,7 +458,7 @@ size_t heap_t::contract(size_t new_size)
     uint32_t i = new_size;
     while(i < old_size)
     {
-        nucleus.mem_mgr().page_frame_allocator().free_frame(nucleus.mem_mgr().get_kernel_directory()->get_page(start_address+i));
+        nucleus.mem_mgr().page_frame_allocator().free_frame(nucleus.mem_mgr().get_kernel_directory()->mapping(start_address+i));
         i += PAGE_SIZE;
     }
 

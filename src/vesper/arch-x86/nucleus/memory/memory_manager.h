@@ -12,7 +12,7 @@
 #include "multiboot.h"
 #include "page_allocator.h"
 
-#define K_HEAP_INITIAL_SIZE       0x100000
+#define K_HEAP_INITIAL_SIZE     0x100000
 #define STACK_INITIAL_SIZE      0x10000
 
 #define STACK_ADDRESS(x)  ((address_t)x <= K_STACK_START && (address_t)x > K_STACK_END)

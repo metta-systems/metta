@@ -8,7 +8,7 @@ SECTIONS
     K_SPACE_START             = 0xF0000000;
 
     K_HEAP_START              = 0xF1000000;
-    K_HEAP_END                = 0xFFFFF000;
+    K_HEAP_END                = 0xF2000000;
 
     K_STACK_START             = (0xF8000000-0x4);
     K_STACK_END               = 0xF0000000;
