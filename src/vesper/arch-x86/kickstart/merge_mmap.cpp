@@ -33,13 +33,14 @@ area_t::area_t(multiboot_t::mmap_entry_t *ent)
 //(1,2).intersect(3,4) == none
 //(1,2).intersect(0,1) == left_edge
 //(1,2).intersect(2,3) == right_edge
-//(1,3).intersect(1,2) == within
-//(1,3).intersect(2,3) == within
+//(1,3).intersect(1,2) == left_edge
+//(1,3).intersect(2,3) == right_edge
+//(1,4).intersect(2,3) == within
 area_t::intersect area_t::intersects(const area_t& a2)
 {
     if (a2.end < start || a2.start > end)
         return none;
-    if (a2.start >= start && a2.end <= end)
+    if (a2.start > start && a2.end < end)
         return within;
 
     if (a2.start <= end && a2.end > end)
@@ -115,8 +116,12 @@ void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page)
                     case area_t::none: // do nothing
                         break;
                     case area_t::left_edge:
+                        kconsole << "sub from existing area on left" << endl;
+                        areas[i] = area_t(introduced.end + 1, existing.end);
+                        break;
                     case area_t::right_edge:
-                        kconsole << "sub from existing area" << endl;
+                        kconsole << "sub from existing area on right" << endl;
+                        areas[i] = area_t(existing.start, introduced.start - 1);
                         break;
                     case area_t::within:
                         kconsole << "split area in 2:";
