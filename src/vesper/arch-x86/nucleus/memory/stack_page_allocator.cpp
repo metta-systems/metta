@@ -75,6 +75,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
     if (k == 1024)
         PANIC("No pages!");
     address_t temp_mapping = (i << PDE_SHIFT) + (k << PTE_SHIFT); // this address is not present and will not cause a frame alloc
+    // you know, if temp_mapping is 0 anyway, we can skip all this searching above
 
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -94,7 +95,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
                 // another ugly hack: basically a modified copy of free_frame()
                 pagedir->create_mapping(temp_mapping, start);
                 *(address_t*)temp_mapping = next_free_phys; // store phys of previous free stack top
-                pagedir->remove_mapping(temp_mapping);
+                pagedir->remove_mapping(temp_mapping); //FIXME: this is slow!
 
                 next_free_phys = start; // remember phys as current free stack top
                 free_frames++;
@@ -154,7 +155,7 @@ void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
     lock();
 
-    pagedir->create_mapping(TEMP_MAPPING, phys_frame);
+    pagedir->create_mapping(TEMP_MAPPING, phys_frame); // FIXME: can cause a call to alloc_frame()!!!
     *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
     pagedir->remove_mapping(TEMP_MAPPING);
 
