@@ -37,6 +37,8 @@ At 8 or 16 bytes per free page stack I could probably have millions of them with
 4104 bytes per free page stack it starts to get expensive... ;)
 */
 
+#define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
+
 stack_page_frame_allocator_t::stack_page_frame_allocator_t()
     : page_frame_allocator_impl_t()
     , lockable_t()
@@ -63,7 +65,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
     ASSERT(mmap);
 
     // an ugly hack here
-    address_t temp_mapping = 0; // this address is not present and will not cause a frame alloc
+    const address_t temp_mapping = 0; // this address is not present and will not cause a frame alloc
 
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -79,15 +81,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
             // include pages into free stack
             for (uint32_t n = 0; n < n_frames; n++)
             {
-//                 free_frame(start);
-                // another ugly hack: basically a modified copy of free_frame()
-                pagedir->create_mapping(temp_mapping, start);
-                *(address_t*)temp_mapping = next_free_phys; // store phys of previous free stack top
-                pagedir->remove_mapping(temp_mapping);
-
-                next_free_phys = start; // remember phys as current free stack top
-                free_frames++;
-
+                free_frame_internal(start, temp_mapping);
                 start += PAGE_SIZE;
             }
         }
@@ -95,15 +89,16 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
         {
             reserved_frames += n_frames;
         }
-
         mmi = mmap->next_entry(mmi);
     }
+
     kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
 
     // Allocate top frame to act as temporary page table for temp mapping.
-//     set_mapping_frame(TEMP_MAPPING, next_free_phys);
     pagedir->set_page_table(TEMP_MAPPING, next_free_phys);
+    pagedir->create_mapping(TEMP_MAPPING, next_free_phys);
     next_free_phys = *(address_t*)TEMP_MAPPING;
+    pagedir->remove_mapping(TEMP_MAPPING);
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
@@ -111,10 +106,10 @@ void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool i
     ASSERT(p);
     ASSERT(!p->frame());
 
-    p->set_present(true);
+    p->set_frame(alloc_frame());
     p->set_writable(is_writeable);
     p->set_user(!is_kernel);
-    p->set_frame(alloc_frame());
+    p->set_present(true);
 }
 
 void stack_page_frame_allocator_t::free_frame(page_t* p)
@@ -126,36 +121,43 @@ void stack_page_frame_allocator_t::free_frame(page_t* p)
     p->set_frame(0);
 }
 
-#define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
-
 address_t stack_page_frame_allocator_t::alloc_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
+    pagedir->create_mapping(TEMP_MAPPING, next_frame);
 
-    pagedir->create_mapping(TEMP_MAPPING, next_frame); // FIXME: can cause a call to alloc_frame()!!!
     next_free_phys = *(address_t*)TEMP_MAPPING;
-    pagedir->remove_mapping(TEMP_MAPPING);
-
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
+
+    // wipe it clean
+    memutils::fill_memory((void*)TEMP_MAPPING, 0, PAGE_SIZE);
+
     unlock();
+
+    pagedir->remove_mapping(TEMP_MAPPING);
     return next_frame;
 }
 
 // phys_frame becomes the new free stack top.
 void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
 {
+    free_frame_internal(phys_frame, TEMP_MAPPING);
+}
+
+void stack_page_frame_allocator_t::free_frame_internal(address_t frame, address_t mapping)
+{
     lock();
+    pagedir->create_mapping(mapping, frame);
 
-    pagedir->create_mapping(TEMP_MAPPING, phys_frame);
-    *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
-    pagedir->remove_mapping(TEMP_MAPPING);
-
-    next_free_phys = phys_frame; // remember phys as current free stack top
+    *(address_t*)mapping = next_free_phys; // store phys of previous free stack top
+    next_free_phys = frame; // remember phys as current free stack top
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
     unlock();
+
+    pagedir->remove_mapping(mapping);
 }
 
 // kate: indent-width 4; replace-tabs on;

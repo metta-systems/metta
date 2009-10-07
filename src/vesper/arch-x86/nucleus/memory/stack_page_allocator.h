@@ -26,6 +26,8 @@ public:
     virtual void free_frame(address_t frame);
 
 private:
+    void free_frame_internal(address_t frame, address_t mapping);
+
     address_t  next_free_phys; //!< Top of the stack, this is where we get new frame from. This is physical address.
     uint32_t   total_frames;
     uint32_t   free_frames;

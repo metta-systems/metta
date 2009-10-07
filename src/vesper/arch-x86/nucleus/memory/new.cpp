@@ -7,20 +7,16 @@
 #include "memory/new.h"
 #include "macros.h"
 #include "nucleus.h"
+#include "panic.h"
 
 using nucleus_n::nucleus;
 
 // arrgh this alloc_frame recursion!
 
 // TODO: cleanup!
-void* page_table_t::operator new(size_t size, address_t* physical_address)
+void* page_table_t::operator new(size_t /*size*/, address_t* /*physical_address*/)
 {
-    kconsole << "using custom operator new("<<size<<")";
-    address_t phys = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
-    kconsole << ".. allocated at "<<phys<<endl;
-    if (physical_address)
-        *physical_address = phys;
-    return (void*)phys;
+    PANIC("wrong operator new() called");
 }
 
 // 1. use mem_mgr().page_frame_allocator().alloc_frame()
