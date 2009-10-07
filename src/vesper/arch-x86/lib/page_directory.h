@@ -145,6 +145,13 @@ public:
 //     page_directory_t* clone();
     void dump();
 
+private: friend class page_allocator_t;
+    void set_page_table(uint32_t idx, address_t phys)
+    {
+        ASSERT(idx >= 0 && idx < 1024);
+        tables[idx] = phys | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
+    }
+
 private:
     /*!
      * Array of pointers to pagetables, but gives their *physical* location,

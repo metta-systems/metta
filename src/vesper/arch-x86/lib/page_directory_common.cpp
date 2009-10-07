@@ -109,23 +109,26 @@ void page_directory_t::remove_mapping(address_t virt)
             // page is mapped, so unmap it
             (*page_table)[pte] = IA32_PAGE_WRITABLE; // r/w, not present
         }
-
-        // check if there are any more present PTEs in this page table
-        for (i = 0; i < 1024; i++)
-        {
-            if(page_table->get_page(i)->present())
-                break;
-        }
-
-        // if there are none, then free the space allocated to the page table and delete mappings
-        if (i == 1024)
-        {
-            page_table_t* pt = reinterpret_cast<page_table_t*>(tables[pde] & PAGE_MASK);
-            delete pt;
-            tables[pde] = IA32_PAGE_WRITABLE;
-        }
     }
 }
+
+// bool page_directory_t::reclaim_pagetable(page_table_t* page_table)
+// {
+//     // check if there are any more present PTEs in this page table
+//     for (i = 0; i < 1024; i++)
+//     {
+//         if(page_table->get_page(i)->present())
+//             break;
+//     }
+// 
+//     // if there are none, then free the space allocated to the page table and delete mappings
+//     if (i == 1024)
+//     {
+//         page_table_t* pt = reinterpret_cast<page_table_t*>(tables[pde] & PAGE_MASK);
+//         delete pt;
+//         tables[pde] = IA32_PAGE_WRITABLE;
+//     }
+// }
 
 bool page_directory_t::mapping_exists(address_t virt)
 {

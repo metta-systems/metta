@@ -63,18 +63,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
     ASSERT(mmap);
 
     // an ugly hack here
-    uint32_t i, k;
-    for (i = 0; i < 1024; i++)
-        if (pagedir->get_page_table(i << PDE_SHIFT, false))
-            break;
-    if (i == 1024)
-        PANIC("No page tables!");
-    for (k = 0; k < 1024; i++)
-        if (!pagedir->get_page((i << PDE_SHIFT) + (k << PTE_SHIFT)))
-            break;
-    if (k == 1024)
-        PANIC("No pages!");
-    address_t temp_mapping = (i << PDE_SHIFT) + (k << PTE_SHIFT); // this address is not present and will not cause a frame alloc
+    address_t temp_mapping = 0; // this address is not present and will not cause a frame alloc
 
     // map different physical pages into single linear address and update their "next_free_phys" pointer.
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -111,7 +100,10 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
     }
     kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
 
-    pagedir->create_mapping(TEMP_MAPPING, next_free_phys);
+    // Allocate top frame to act as temporary page table for temp mapping.
+//     set_mapping_frame(TEMP_MAPPING, next_free_phys);
+    pagedir->set_page_table(TEMP_MAPPING, next_free_phys);
+    next_free_phys = *(address_t*)TEMP_MAPPING;
 }
 
 void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
