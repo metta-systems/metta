@@ -140,14 +140,14 @@ bool page_directory_t::mapping_exists(address_t virt)
     return true;
 }
 
-page_t* page_directory_t::get_page(address_t virt)
+page_t* page_directory_t::get_page(address_t virt, bool make)
 {
-    page_table_t* page_table = get_page_table(virt, false);
+    page_table_t* page_table = get_page_table(virt, make);
     if (!page_table)
         return 0;
 
     uint32_t pte = pte_entry(virt);
-    if (!page_table->get_page(pte)->present())
+    if (!page_table->get_page(pte)->present() && !make)
         return 0;
 
     return page_table->get_page(pte);

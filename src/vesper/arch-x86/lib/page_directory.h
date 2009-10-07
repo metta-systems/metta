@@ -135,7 +135,7 @@ public:
     bool create_mapping(address_t vaddr, address_t paddr, int flags = IA32_PAGE_WRITABLE);
     void remove_mapping(address_t vaddr);
     bool mapping_exists(address_t vaddr);
-    page_t* get_page(address_t virt);
+    page_t* get_page(address_t virt, bool make = false);
     page_table_t* get_page_table(address_t virt, bool make);
 
     /*!

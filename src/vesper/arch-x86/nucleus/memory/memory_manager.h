@@ -115,7 +115,7 @@ private:
      * space. All other page directories must match the entries in here to maintain easy
      * consistency of kernel-space over memory spaces.
      */
-    page_directory_t* kernel_directory/* ALIGNED(0x1000)*/;
+    page_directory_t* kernel_directory;
 
     /*!
      * Has the kernel heap been initialised yet?
