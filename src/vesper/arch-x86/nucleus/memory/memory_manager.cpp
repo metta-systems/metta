@@ -43,20 +43,17 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap, kickstart_n::memory_alloc
     // now we can allocate frames of physical memory (and can use new()/malloc())
 
     // Map some pages in the kernel heap area.
-    // Here we call get_page but not alloc_frame. This causes pagetables
-    // to be created where nessecary. We can't allocate frames yet because
-    // they need to be identity mapped first below.
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_END); i += PAGE_SIZE)
     {
-//         kernel_directory->get_page(i, /*make:*/true);
+        kconsole << "mapping heap page @ " << i << endl;
+        kernel_directory->get_page(i, true);
     }
 
-    // Identity map from KERNEL_START to placementAddress.
-    // Now allocate those pages we mapped earlier.
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
     {
+        kconsole << "allocating heap page @ " << i << endl;
         // Kernel heap is readable but not writable from userspace.
-//         frame_allocator.alloc_frame(kernel_directory->get_page(i, true), false, false);
+        frame_allocator.alloc_frame(kernel_directory->get_page(i, true));
     }
 
     // Initialise the heap.
