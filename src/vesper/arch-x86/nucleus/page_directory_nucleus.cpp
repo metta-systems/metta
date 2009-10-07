@@ -10,13 +10,17 @@
 #include "memory.h"
 #include "memutils.h"
 #include "ia32.h"
+#include "mmu.h"
+#include "nucleus.h"
+
+using nucleus_n::nucleus;
 
 /*!
  * Abstracted away process of getting pointers to page tables.
  *
  * Nucleus version via recursive pagedir.
  */
-page_table_t* page_directory_t::get_page_table(address_t virt, bool make)
+page_table_t* page_directory_t::page_table(address_t virt, bool make)
 {
     uint32_t pde = pde_entry(virt);
     page_table_t* page_table = 0;
@@ -26,15 +30,15 @@ page_table_t* page_directory_t::get_page_table(address_t virt, bool make)
         // page table exists.
         page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
     }
-    else if (make)
+    else if (make) // doesn't exist, so alloc a page and add into pdir
     {
-        // doesn't exist, so alloc a page and add into pdir
-        address_t new_phys;
-        new(&new_phys) page_table_t;
+        address_t new_phys = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
+        kconsole << "allocating new pagetable " << pde << " @ " << new_phys << endl;
         page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
 
-        tables[pde] = (new_phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; // add the new page table into the pdir
-        //FIXME: invlpg here
+        tables[pde] = (new_phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
+        ia32_mmu_t::flush_page_directory_entry(virt);
+        page_table->zero();
     }
 
     return page_table;
