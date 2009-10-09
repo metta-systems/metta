@@ -8,19 +8,22 @@
 #include "macros.h"
 #include "nucleus.h"
 #include "panic.h"
+#include "frame.h"
 
 using nucleus_n::nucleus;
 
-// TODO: cleanup!
-void* page_table_t::operator new(size_t /*size*/, address_t* /*physical_address*/)
+void* frame_t::operator new(size_t, address_t& virt)
 {
-    PANIC("wrong operator new() called");
+    address_t phys = nucleus.mem_mgr().page_frame_allocator().alloc_frame();
+    nucleus.mem_mgr().get_current_directory()->create_mapping(virt, phys);
+    return (void*)phys;
 }
 
-// 1. use mem_mgr().page_frame_allocator().alloc_frame()
-// 2. copy small object allocator code from c++boot.cpp
-// 3. split off specific implementation of placement_alloc and small_alloc and use common code for new/delete.
-// (if possible at all, see nucleus dep below)
+void frame_t::operator delete(void* ptr)
+{
+    nucleus.mem_mgr().get_current_directory()->remove_mapping((address_t)ptr);
+    nucleus.mem_mgr().page_frame_allocator().free_frame((address_t)ptr);
+}
 
 static inline void* placement_alloc(size_t size)
 {

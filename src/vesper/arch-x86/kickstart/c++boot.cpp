@@ -9,14 +9,24 @@
 #include "c++boot.h"
 #include "macros.h"
 #include "memory.h"
+#include "frame.h"
 #include "default_console.h"
+
+extern kickstart_n::memory_allocator_t init_memmgr;
+
+void* frame_t::operator new(size_t, address_t& virt)
+{
+    return reinterpret_cast<void*>(init_memmgr.alloc_page(virt));
+}
+
+void frame_t::operator delete(void*)
+{
+}
 
 void* page_table_t::operator new(size_t size, address_t* physical_address)
 {
     return ::operator new(size, true, physical_address);
 }
-
-extern kickstart_n::memory_allocator_t init_memmgr;
 
 static inline void* placement_alloc(size_t size)
 {

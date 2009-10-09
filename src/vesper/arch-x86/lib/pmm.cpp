@@ -52,6 +52,7 @@ address_t memory_allocator_t::get_alloc_start()
 
 address_t memory_allocator_t::alloc_next_page()
 {
+    alloc_start = page_align_up<address_t>(alloc_start);
     address_t ret = alloc_start;
     alloc_start += PAGE_SIZE;
     return ret;

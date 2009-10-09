@@ -9,8 +9,8 @@
 #include "memutils.h"
 #include "memory.h"
 #include "minmax.h"
-
-#define ELF_LOADER_DEBUG 1
+#include "frame.h"
+#include "config.h"
 
 using namespace elf32;
 
@@ -44,7 +44,7 @@ static void print_phent(int i, program_header *ph)
 * Load ELF program image, allocate pages and frames from memory.
 * Set up pagedir and copy from @p start to actual image start.
 */
-bool elf_parser::load_image(address_t start, UNUSED_ARG size_t size, kickstart_n::memory_allocator_t* allocator)
+bool elf_parser::load_image(address_t start, UNUSED_ARG size_t size/*, kickstart_n::memory_allocator_t* allocator*/)
 {
     header* h = reinterpret_cast<header*>(start);
 
@@ -83,22 +83,22 @@ if (x) { \
         address_t copy_from = start + ph->offset;
         for (size_t p = 0; p < npages; p++)
         {
-            address_t paddr = allocator->alloc_page(vaddr);
+            frame_t* paddr = new(vaddr) frame_t;
             size_t page_offset = 0;
             if (remain_to_copy > 0)
             {
                 size_t to_copy = min(remain_to_copy, PAGE_SIZE);
-                memutils::copy_memory((void*)paddr, (const void*)copy_from, to_copy);
+                memutils::copy_memory(paddr, (const void*)copy_from, to_copy);
                 remain_to_copy -= to_copy;
                 copy_from += to_copy;
                 page_offset = to_copy;
             }
-            //! Zero bss part of the page, if any.
+            // Zero bss part of the page, if any.
             if (remain_to_copy == 0 && remain_to_zero > 0 && page_offset < PAGE_SIZE)
             {
                 size_t to_zero = min(remain_to_zero, PAGE_SIZE - page_offset);
                 paddr += page_offset;
-                memutils::fill_memory((void*)paddr, 0, to_zero);
+                memutils::fill_memory(paddr, 0, to_zero);
                 remain_to_zero -= to_zero;
             }
             vaddr += PAGE_SIZE;
@@ -114,7 +114,7 @@ if (x) { \
     return true;
 }
 
-// @todo use debugging info if present
+// TODO: use debugging info if present
 char* elf_parser::find_symbol(address_t addr, address_t* symbol_start)
 {
     address_t max = 0;

@@ -24,7 +24,7 @@ public:
     /*!
     * @param allocator is a silly kludge to let load_image get more memory pages.
     */
-    bool load_image(address_t start, size_t size, kickstart_n::memory_allocator_t* allocator);
+    bool load_image(address_t start, size_t size/*, kickstart_n::memory_allocator_t* allocator*/);
 
     //! Returns the symbol name for an address.
     /*!

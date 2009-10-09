@@ -112,7 +112,7 @@ void kickstart(multiboot_t::header_t* mbh)
     uint32_t k;
 
     elf_parser elf;
-    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start, &init_memmgr))
+    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
         kconsole << RED << "kernel NOT loaded (bad)" << endl;
     else
         kconsole << GREEN << "kernel loaded (ok)" << endl;
@@ -185,7 +185,7 @@ void kickstart(multiboot_t::header_t* mbh)
     for (k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
-        if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k), &init_memmgr))
+        if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
             kconsole << RED << "not an ELF file, load failed" << endl;
         // TODO: mark memory used for loading components as occupied also
         // FIXME: instead, start using kernel memory allocator here, so everyone is happy
