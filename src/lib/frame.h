@@ -1,7 +1,10 @@
 #pragma once
 
 #include "types.h"
+#include "frame_allocator.h"
 
+//TODO: frame should actually refer static page_frame_allocator internally.
+//after switching to paging mode this allocator shall be replaced with paged one.
 /*!
  * Frame abstracts away 4Kb physical frame allocations.
  */
@@ -22,8 +25,12 @@ public:
      */
     void operator delete(void* ptr);
 
+    static void set_frame_allocator(frame_allocator_t* alloc) { frame_allocator = alloc; }
+
 private:
     // Copying or assigning a frame is not allowed
     frame_t& operator=(const frame_t&);
     frame_t(const frame_t&);
+
+    static frame_allocator_t* frame_allocator;
 };

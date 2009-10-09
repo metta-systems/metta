@@ -18,7 +18,6 @@ class page_frame_allocator_impl_t
 {
 public:
     virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd) = 0;
-    virtual void set_pagedir(page_directory_t* pd) = 0;
     virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable) = 0;
     virtual void free_frame(page_t* p) = 0;
     virtual address_t alloc_frame() = 0;
@@ -26,15 +25,15 @@ public:
 };
 
 //! Allocate frames of physical memory for requested pages.
-class page_frame_allocator_t
+class frame_allocator_t
 {
 public:
-    inline page_frame_allocator_t(page_frame_allocator_impl_t* implementation)
+    inline frame_allocator_t(page_frame_allocator_impl_t* implementation)
     {
         impl = implementation;
     }
 
-    inline ~page_frame_allocator_t() {}
+    inline ~frame_allocator_t() {}
 
     /*!
     * Initialize free physical memory map.
@@ -42,14 +41,6 @@ public:
     inline void init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
     {
         impl->init(mmap, pd);
-    }
-
-    /*!
-     * Set page directory used for frame manipulation.
-     */
-    inline void set_pagedir(page_directory_t* pd)
-    {
-        impl->set_pagedir(pd);
     }
 
     /*!

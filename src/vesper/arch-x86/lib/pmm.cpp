@@ -5,11 +5,12 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /*!
-* Minimal paged memory allocator.
-*
-* Used for startup and paged mode initialization.
-* Uses new/delete from c++boot.cpp
-*/
+ * @class memory_allocator_t
+ * @brief Minimal paged memory allocator.
+ *
+ * Used for startup and paged mode initialization.
+ * Uses new/delete from c++boot.cpp
+ */
 #include "memory.h"
 #include "default_console.h"
 #include "minmax.h"
@@ -27,6 +28,11 @@ memory_allocator_t::memory_allocator_t()
 {
     // TODO: map to top of memory (requires keeping track of pde/pte physical addresses)
 //     mapping_enter((address_t)pagedir, (address_t)pagedir);
+}
+
+frame_allocator_t* memory_allocator_t::frame_allocator()
+{
+    return 0;
 }
 
 void memory_allocator_t::start_paging()

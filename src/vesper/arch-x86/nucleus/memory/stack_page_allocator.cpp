@@ -54,18 +54,13 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
 #endif
 }
 
-void stack_page_frame_allocator_t::set_pagedir(page_directory_t* pd)
-{
-    pagedir = pd;
-}
-
 // Go through available physical memory frames, add them to the frame stack.
 void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
 #endif
-    set_pagedir(pd);
+    pagedir = pd;
 
     ASSERT(mmap);
 

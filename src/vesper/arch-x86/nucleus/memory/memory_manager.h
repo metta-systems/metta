@@ -10,7 +10,7 @@
 #include "heap.h"
 #include "memory.h"
 #include "multiboot.h"
-#include "page_allocator.h"
+#include "frame_allocator.h"
 
 #define K_HEAP_INITIAL_SIZE     0x100000
 #define STACK_INITIAL_SIZE      0x10000
@@ -101,7 +101,7 @@ public:
     */
     void check_integrity();
 
-    page_frame_allocator_t& page_frame_allocator() { return frame_allocator; }
+    frame_allocator_t& page_frame_allocator() { return frame_allocator; }
 
 private:
     /*!
@@ -124,7 +124,7 @@ private:
     /*!
      * The page frame allocator.
      */
-    page_frame_allocator_t frame_allocator;
+    frame_allocator_t frame_allocator;
 
     /*!
      * Before the heap is initialised, this holds the next available location

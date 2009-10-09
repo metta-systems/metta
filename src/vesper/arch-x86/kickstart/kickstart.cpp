@@ -54,6 +54,9 @@ Use different new implementations for kickstart initialization and nucleus code.
 #include "c++ctors.h"
 #include "bootinfo.h"
 #include "debugger.h"
+#include "linksyms.h"
+#include "frame.h"
+#include "config.h"
 //{ DEBUG STUFF
 #include "page_fault_handler.h"
 page_fault_handler_t page_fault_handler;
@@ -67,11 +70,10 @@ extern "C" address_t KICKSTART_BASE;
 
 //! Prepare and boot system.
 /*!
-This part starts in protected mode, linear == physical, paging is off.
-
-As a rule: whatever we intend to bring to paging mode, we copy to an allocated frame
-ourselves.
-*/
+ * This part starts in protected mode, linear addresses equal physical, paging is off.
+ *
+ * As a rule: whatever we intend to bring to paging mode, we copy to an allocated frame ourselves.
+ */
 void kickstart(multiboot_t::header_t* mbh)
 {
     run_global_ctors();
@@ -86,20 +88,22 @@ void kickstart(multiboot_t::header_t* mbh)
     ASSERT(bootcp);
 
     // Setup bootstrap allocator.
-    init_memmgr.adjust_alloc_start((address_t)&placement_address);
+    init_memmgr.adjust_alloc_start(LINKSYM(placement_address));
     init_memmgr.adjust_alloc_start(kernel->mod_end);
     init_memmgr.adjust_alloc_start(bootcp->mod_end);
     // now we can allocate extra pages from alloced_start using alloc_next_page()
 
+    frame_t::set_frame_allocator(init_memmgr.frame_allocator());
+
     kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
-    kconsole << WHITE << "We are loaded at " << (address_t)&KICKSTART_BASE << endl
+    kconsole << WHITE << "We are loaded at " << LINKSYM(KICKSTART_BASE) << endl
                       << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << init_memmgr.get_alloc_start() << endl;
 
-    uint32_t fake_mmap_entry_start = (address_t)&KICKSTART_BASE; //init_memmgr.get_alloc_start();
+    uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE); //init_memmgr.get_alloc_start();
     // preserve the currently executing kickstart ^^ code in the memory allocator init
     // we will give up these frames later.
 
@@ -118,9 +122,17 @@ void kickstart(multiboot_t::header_t* mbh)
         kconsole << GREEN << "kernel loaded (ok)" << endl;
 
     // Identity map currently executing code.
-    address_t ph_start = (address_t)&KICKSTART_BASE;
-    address_t ph_end   = page_align_up<address_t>((address_t)&placement_address); // one after end
+    address_t ph_start = LINKSYM(KICKSTART_BASE);
+    address_t ph_end   = page_align_up<address_t>(LINKSYM(placement_address)); // one after end
     kconsole << endl << "Mapping loader: ";
+    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
+    {
+        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
+    }
+
+    ph_start = bootcp->mod_start;
+    ph_end   = page_align_up<address_t>(bootcp->mod_end); // one after end
+    kconsole << endl << "Mapping bootcp: ";
     for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
     {
         init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
@@ -169,12 +181,12 @@ void kickstart(multiboot_t::header_t* mbh)
     bootinfo.set_memmgr(&init_memmgr);
 
     init_memmgr.start_paging();
+//     frame_t::set_frame_allocator(/*need to get addr of nucleus frame allocator!*/);
 
-    //! here we have paging enabled and can call kernel functions
-    //! start by creating PDs for boot_components and load them in their PDs
-    //! fill in startup portals code
+    // Here we have paging enabled and can call kernel functions.
+    // Start by initializing nucleus, creating PDs for boot_components;
+    // load them in their PDs, fill in startup portals code.
 
-    //! call vm_server.init(mbh->mmap, current_pdir)
     kconsole << RED << "going to init nucleus" << endl;
     init_nucleus(bootinfo);
     kconsole << GREEN << "done, instantiating components" << endl;
@@ -182,13 +194,14 @@ void kickstart(multiboot_t::header_t* mbh)
     // Load components from bootcp.
     initfs_t initfs(bootcp->mod_start);
 
+    kconsole << "iterating components" << endl;
     for (k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
             kconsole << RED << "not an ELF file, load failed" << endl;
-        // TODO: mark memory used for loading components as occupied also
-        // FIXME: instead, start using kernel memory allocator here, so everyone is happy
+        else
+            kconsole << GREEN << "ELF file loaded, entering component init" << endl;
         kernel_entry init_component = (kernel_entry)elf.get_entry_point();
         init_component(bootinfo_page);
     }

@@ -3,7 +3,7 @@
 
 def build(bld):
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp ../../lib/multiboot.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp lib/console.cpp lib/default_console.cpp lib/bootinfo.cpp lib/pmm.cpp lib/registers.s lib/idt.cpp lib/debugger.cpp lib/page_directory_common.cpp'.split()
+    runtime.source = '../../runtime/g++support.cpp ../../runtime/memutils.cpp ../../lib/multiboot.cpp ../../lib/panic.cpp ../../lib/elf_parser.cpp ../../lib/frame.cpp lib/console.cpp lib/default_console.cpp lib/bootinfo.cpp lib/pmm.cpp lib/registers.s lib/idt.cpp lib/debugger.cpp lib/page_directory_common.cpp'.split()
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = '. ../../lib ../../runtime lib'
     runtime.target = 'kernel_runtime'

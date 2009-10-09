@@ -84,6 +84,7 @@ if (x) { \
         for (size_t p = 0; p < npages; p++)
         {
             frame_t* paddr = new(vaddr) frame_t;
+            ASSERT(sizeof(frame_t)==1);
             size_t page_offset = 0;
             if (remain_to_copy > 0)
             {
