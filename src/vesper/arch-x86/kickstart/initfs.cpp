@@ -5,11 +5,31 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "initfs.h"
+#include "default_console.h"
 
 initfs_t::initfs_t(address_t s)
-    : start((header_t*)s)
-    , entries((entry_t*)(s + ((header_t*)s)->index_offset))
+/*    : start(reinterpret_cast<header_t*>(s))
+    , entries(reinterpret_cast<entry_t*>(s + start->index_offset))*/
 {
+    kconsole << "initfs_t::ctor " << s << endl;
+    start = reinterpret_cast<header_t*>(s);
+
+    kconsole << " magic        " << start->magic << endl
+             << " version      " << start->version << endl
+             << " index_offset " << start->index_offset << endl
+             << " names_offset " << start->names_offset << endl
+             << " names_size   " << start->names_size << endl
+             << " count        " << start->count << endl;
+
+    entries = reinterpret_cast<entry_t*>(s + start->index_offset);
+    for (uint32_t k = 0; k < start->count; k++)
+    {
+        kconsole << "** entry " << k+1 << endl
+                 << " * magic " << entries[k].magic << endl
+                 << " * name_offset " << entries[k].name_offset << endl
+                 << " * location " << entries[k].location << endl
+                 << " * size " << entries[k].size << endl;
+    }
 }
 
 bool initfs_t::valid()

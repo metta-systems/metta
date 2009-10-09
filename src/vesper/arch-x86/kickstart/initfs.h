@@ -17,6 +17,10 @@
 ((unsigned long)r << 8)  |  (unsigned long)d)
 #endif
 
+/*!
+ * initfs file consists of four areas: the header, data area, names area and the index.
+ * 
+ * the header contains information about loadable areas - data, names and index.
 // Initfs file layout:
 // version 1: uses separate index structure, not in production.
 // version 2: current.
@@ -24,12 +28,7 @@
 // files data
 // aligned: names area
 // aligned: initfs::entry * count
-
-/*!
-initfs file consists of four areas: the header, data area, names area and the index.
-
-the header contains information about loadable areas - data, names and index.
-*/
+ */
 class initfs_t
 {
 public:
