@@ -39,6 +39,11 @@ public:
     * Prints first @p n words from the stack
     **/
     static void print_stacktrace(unsigned int n = 64);
+
+    /**
+     * Prints [checkpoint] followed by checkpoint name from @p str and then waits for Enter keypress.
+     */
+    static void checkpoint(const char* str);
 };
 
 // Helpers for easier debugging in Bochs

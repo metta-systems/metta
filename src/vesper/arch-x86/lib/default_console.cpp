@@ -183,14 +183,6 @@ void default_console_t::print_str(const char *str)
         print_char(*b++);
 }
 
-void default_console_t::checkpoint(const char *str)
-{
-    print_str("\n[CHECKPOINT] ");
-    print_str(str);
-    print_str("\nPress ENTER to continue...\n");
-    wait_ack();
-}
-
 void default_console_t::debug_log(const char *str, ...)
 {
     unsigned char old_attr = attr;

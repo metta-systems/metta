@@ -30,8 +30,8 @@ enum Color {
 };
 
 /*!
-* Abstract base class for console output.
-*/
+ * Abstract base class for console output.
+ */
 class console_t
 {
 public:
@@ -67,7 +67,6 @@ public:
     virtual void wait_ack() = 0;
 
     virtual void debug_log(const char *str, ...) = 0;
-    virtual void checkpoint(const char *str) = 0; // FIXME: move to debugger_t?
 
 protected:
     console_t();

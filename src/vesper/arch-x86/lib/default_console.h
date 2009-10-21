@@ -36,7 +36,6 @@ public:
     virtual void wait_ack();
 
     virtual void debug_log(const char *str, ...);
-    virtual void checkpoint(const char *str); // FIXME: move to debugger_t?
 
 private:
     default_console_t();
