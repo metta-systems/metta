@@ -21,12 +21,12 @@ using nucleus_n::nucleus;
  *
  * Nucleus version via recursive pagedir.
  */
-page_table_t* page_directory_t::page_table(address_t virt, bool make)
+page_table_t* nucleus_page_directory_t::page_table(address_t virt, bool make)
 {
     uint32_t pde = pde_entry(virt);
     page_table_t* page_table = 0;
 
-    if (tables[pde] & IA32_PAGE_PRESENT)
+    if (directory[pde] & IA32_PAGE_PRESENT)
     {
         // page table exists.
         page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
@@ -39,7 +39,7 @@ page_table_t* page_directory_t::page_table(address_t virt, bool make)
 #endif
         page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
 
-        tables[pde] = (new_phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
+        directory[pde] = (new_phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
         ia32_mmu_t::flush_page_directory_entry(virt);
         page_table->zero();
     }

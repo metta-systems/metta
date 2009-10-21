@@ -3,10 +3,10 @@
 #include "types.h"
 #include "frame_allocator.h"
 
-//TODO: frame should actually refer static page_frame_allocator internally.
-//after switching to paging mode this allocator shall be replaced with paged one.
 /*!
- * Frame abstracts away 4Kb physical frame allocations.
+ * Frame abstracts away 4Kb physical frame allocations. It uses a frame_allocator
+ * to do actual allocations. This allocator can be replaced at runtime, providing
+ * necessary flexibility for e.g. kickstart initialization.
  */
 class frame_t
 {
@@ -14,9 +14,15 @@ public:
     frame_t() {}
 
     /*!
+     * Allocate a frame, identity map it and return @em physical address.
+     * @p size argument is ignored. Allocations are always of PAGE_SIZE bytes.
+     */
+    void* operator new(size_t size);
+
+    /*!
      * Allocate a frame, enter into page mapping at address @p virt
      * and return @em physical address.
-     * @p size argument is ignored.
+     * @p size argument is ignored. Allocations are always of PAGE_SIZE bytes.
      */
     void* operator new(size_t size, address_t& virt);
 

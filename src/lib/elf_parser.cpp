@@ -89,6 +89,7 @@ if (x) { \
             if (remain_to_copy > 0)
             {
                 size_t to_copy = min(remain_to_copy, PAGE_SIZE);
+                /*! FIXME: Copying should be to paddr in non-paged mode and to vaddr in paged mode, how to solve? */
                 memutils::copy_memory(paddr, (const void*)copy_from, to_copy);
                 remain_to_copy -= to_copy;
                 copy_from += to_copy;

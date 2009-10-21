@@ -15,16 +15,18 @@
 #include "config.h"
 
 /*!
-* @internal
-* Paging works by splitting the virtual address space into blocks
-* called @a pages, which are usually 4KB in size. Pages can then
-* be mapped onto @a frames - equally sized blocks of physical memory.
-*/
+ * @class memory_manager_t
+ * @internal
+ * Paging works by splitting the virtual address space into blocks
+ * called @a pages, which are usually 4KB in size. Pages can then
+ * be mapped onto @a frames - equally sized blocks of physical memory.
+ */
 
-static stack_page_frame_allocator_t stack_allocator;
+static stack_frame_allocator_t stack_allocator;
 
 memory_manager_t::memory_manager_t()
-    : frame_allocator(&stack_allocator)
+    : kernel_directory((address_t*)RPAGEDIR_VBASE)
+    , frame_allocator(&stack_allocator)
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "memory_manager: ctor" << endl;
@@ -33,18 +35,17 @@ memory_manager_t::memory_manager_t()
     // try to not use placement_address at all, init heap early.
 
     heap_initialized = false;
-    current_directory = kernel_directory = NULL;
+    current_directory = NULL;
 }
 
 void memory_manager_t::init(multiboot_t::mmap_t* mmap)
 {
 #if MEMORY_DEBUG
-    kconsole << GREEN << "memory_manager: init " << (address_t)mmgr << endl;
+    kconsole << GREEN << "memory_manager: init" << endl;
 #endif
-    kernel_directory = reinterpret_cast<page_directory_t*>(RPAGEDIR_VBASE);
-    current_directory = kernel_directory;
+    current_directory = &kernel_directory;
 
-    frame_allocator.init(mmap, kernel_directory);
+    frame_allocator->init(mmap, current_directory);
     // now we can allocate frames of physical memory (and can use new()/malloc())
 
     // Map some pages in the kernel heap area.
@@ -53,7 +54,7 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap)
 #if MEMORY_DEBUG
         kconsole << "mapping heap page @ " << i << endl;
 #endif
-        kernel_directory->mapping(i, true);
+        kernel_directory.mapping(i, true);
     }
 
     for (uint32_t i = LINKSYM(K_HEAP_START); i < LINKSYM(K_HEAP_START) + K_HEAP_INITIAL_SIZE; i += PAGE_SIZE)
@@ -62,7 +63,7 @@ void memory_manager_t::init(multiboot_t::mmap_t* mmap)
         kconsole << "allocating heap page @ " << i << endl;
 #endif
         // Kernel heap is readable but not writable from userspace.
-        frame_allocator.alloc_frame(kernel_directory->mapping(i, true));
+        frame_allocator->alloc_frame(kernel_directory.mapping(i, true));
     }
 
     // Initialise the heap.
@@ -79,7 +80,7 @@ void* memory_manager_t::allocate(uint32_t size, bool page_align, address_t* phys
     heap.unlock();
     if (physical_address)
     {
-        page_t* pg = kernel_directory->mapping((address_t)addr);
+        page_t* pg = kernel_directory.mapping((address_t)addr);
         *physical_address = pg->frame() + (address_t)addr % PAGE_SIZE;
     }
     return addr;

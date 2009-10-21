@@ -10,16 +10,17 @@
 #include "page_directory.h"
 #include "nucleus.h"
 #include "linksyms.h"
+#include "debugger.h"
 #include "config.h" // for HEAP_DEBUG
 
 using nucleus_n::nucleus;
 
 /*!
-* @class heap_t
-* XXX be careful not to use memory-allocating kconsole calls inside heap_t
-* as heap methods run with heap locked and asking to malloc from inside heap_t
-* will deadlock.
-*/
+ * @class heap_t
+ * XXX be careful not to use memory-allocating kconsole calls inside heap_t
+ * as heap methods run with heap locked and asking to malloc from inside heap_t
+ * will deadlock.
+ */
 
 #define HEAP_MAGIC        0xbeefbead
 #define HEAP_MIN_SIZE     0x70000
@@ -392,7 +393,7 @@ void heap_t::free(void *p)
 
 void* heap_t::realloc(void *ptr, size_t size)
 {
-    kconsole.checkpoint("heap_t::realloc");
+    debugger_t::checkpoint("heap_t::realloc");
     (void)size;
     return ptr;
 }

@@ -10,7 +10,8 @@
 #include "heap.h"
 #include "memory.h"
 #include "multiboot.h"
-#include "frame_allocator.h"
+#include "page_directory.h"
+#include "nucleus_frame_allocator.h"
 
 #define K_HEAP_INITIAL_SIZE     0x100000
 #define STACK_INITIAL_SIZE      0x10000
@@ -81,7 +82,7 @@ public:
     /*!
     * Accessor functions for kernel_directory, current_directory
     */
-    inline page_directory_t* get_kernel_directory()  { return kernel_directory; }
+    inline page_directory_t* get_kernel_directory()  { return &kernel_directory; }
     inline page_directory_t* get_current_directory() { return current_directory; }
     void set_current_directory(page_directory_t* p)  { current_directory = p; }
 
@@ -101,7 +102,7 @@ public:
     */
     void check_integrity();
 
-    frame_allocator_t& page_frame_allocator() { return frame_allocator; }
+    frame_allocator_t& page_frame_allocator() { return *frame_allocator; }
 
 private:
     /*!
@@ -109,7 +110,7 @@ private:
      * space. All other page directories must match the entries in here to maintain easy
      * consistency of kernel-space over memory spaces.
      */
-    page_directory_t* kernel_directory;
+    nucleus_page_directory_t kernel_directory;
 
     /*!
      * Has the kernel heap been initialised yet?
@@ -124,7 +125,7 @@ private:
     /*!
      * The page frame allocator.
      */
-    frame_allocator_t frame_allocator;
+    /*nucleus_*/frame_allocator_t* frame_allocator;//FIXME: stack_frame_allocator_t?
 
     /*!
      * Before the heap is initialised, this holds the next available location

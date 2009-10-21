@@ -10,13 +10,24 @@
 #include "memutils.h"
 #include "ia32.h"
 #include "mmu.h"
+#include "frame.h"
 #include "config.h"
 
-page_directory_t::page_directory_t()
+void page_directory_t::init()
 {
+    address_t virt;
+    directory = (address_t*)new(virt) frame_t;
     for (int i = 0; i < 1023; i++)
-        tables[i] = 0;
-    tables[1023] = (address_t)tables | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
+        directory[i] = 0;
+    directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
+}
+
+void page_directory_t::init(uint32_t* placement_area)
+{
+    directory = placement_area;
+    for (int i = 0; i < 1023; i++)
+        directory[i] = 0;
+    directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
 }
 
 page_t* page_directory_t::create_mapping(address_t virt, address_t phys)
@@ -91,7 +102,7 @@ void page_directory_t::dump()
     kconsole << WHITE << "Dumping page directory:" << endl;
     for (int i = 0; i < 1024; i++)
     {
-        if(!(tables[i] & IA32_PAGE_PRESENT))
+        if(!(directory[i] & IA32_PAGE_PRESENT))
             continue;
 
         page_table_t* pt = page_table(i << PDE_SHIFT, false);
@@ -113,7 +124,7 @@ void page_directory_t::dump()
 
 void page_directory_t::set_page_table(address_t virt, address_t phys)
 {
-    tables[pde_entry(virt)] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
+    directory[pde_entry(virt)] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
     ia32_mmu_t::flush_page_directory_entry(virt);
 }
 
@@ -131,9 +142,9 @@ void page_directory_t::set_page_table(address_t virt, address_t phys)
 //     // if there are none, then free the space allocated to the page table and delete mappings
 //     if (i == 1024)
 //     {
-//         page_table_t* pt = reinterpret_cast<page_table_t*>(tables[pde] & PAGE_MASK);
+//         page_table_t* pt = reinterpret_cast<page_table_t*>(directory[pde] & PAGE_MASK);
 //         delete pt;
-//         tables[pde] = IA32_PAGE_WRITABLE;
+//         directory[pde] = IA32_PAGE_WRITABLE;
 //     }
 // }
 

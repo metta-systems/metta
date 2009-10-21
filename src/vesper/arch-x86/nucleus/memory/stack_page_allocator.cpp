@@ -40,9 +40,8 @@ At 8 or 16 bytes per free page stack I could probably have millions of them with
 
 #define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
 
-stack_page_frame_allocator_t::stack_page_frame_allocator_t()
-    : page_frame_allocator_impl_t()
-    , lockable_t()
+stack_frame_allocator_t::stack_frame_allocator_t()
+    : lockable_t()
     , next_free_phys(0)
     , total_frames(0)
     , free_frames(0)
@@ -55,7 +54,7 @@ stack_page_frame_allocator_t::stack_page_frame_allocator_t()
 }
 
 // Go through available physical memory frames, add them to the frame stack.
-void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
+void stack_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_directory_t* pd)
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "stacked frame allocator: init " << (address_t)mmap << endl;
@@ -101,27 +100,7 @@ void stack_page_frame_allocator_t::init(multiboot_t::mmap_t* mmap, page_director
     pagedir->remove_mapping(TEMP_MAPPING);
 }
 
-void stack_page_frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)
-{
-    ASSERT(p);
-    ASSERT(!p->frame());
-
-    p->set_frame(alloc_frame());
-    p->set_writable(is_writeable);
-    p->set_user(!is_kernel);
-    p->set_present(true);
-}
-
-void stack_page_frame_allocator_t::free_frame(page_t* p)
-{
-    ASSERT(p);
-    ASSERT(p->frame());
-
-    free_frame(p->frame());
-    p->set_frame(0);
-}
-
-address_t stack_page_frame_allocator_t::alloc_frame()
+address_t stack_frame_allocator_t::alloc_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
@@ -140,13 +119,34 @@ address_t stack_page_frame_allocator_t::alloc_frame()
     return next_frame;
 }
 
-// phys_frame becomes the new free stack top.
-void stack_page_frame_allocator_t::free_frame(address_t phys_frame)
+address_t stack_frame_allocator_t::alloc_frame(address_t virt)
 {
-    free_frame_internal(phys_frame, TEMP_MAPPING);
+    lock();
+    address_t next_frame = next_free_phys;
+    pagedir->create_mapping(TEMP_MAPPING, next_frame);
+    
+    next_free_phys = *(address_t*)TEMP_MAPPING;
+    free_frames--;
+    ASSERT(free_frames <= total_frames);// catch underflow
+    
+    // wipe it clean
+    memutils::fill_memory((void*)TEMP_MAPPING, 0, PAGE_SIZE);
+    pagedir->create_mapping(virt, next_frame);
+    
+    unlock();
+    
+    pagedir->remove_mapping(TEMP_MAPPING);
+    return next_frame;
 }
 
-void stack_page_frame_allocator_t::free_frame_internal(address_t frame, address_t mapping)
+// phys_frame becomes the new free stack top.
+void stack_frame_allocator_t::free_frame(address_t phys_frame, address_t virt)
+{
+    free_frame_internal(phys_frame, TEMP_MAPPING);
+    pagedir->remove_mapping(virt);
+}
+
+void stack_frame_allocator_t::free_frame_internal(address_t frame, address_t mapping)
 {
     lock();
     pagedir->create_mapping(mapping, frame);

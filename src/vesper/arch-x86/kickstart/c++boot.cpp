@@ -10,17 +10,25 @@
 #include "macros.h"
 #include "memory.h"
 #include "frame.h"
+#include "page_directory.h"
 #include "default_console.h"
+#include "kickstart_frame_allocator.h"
 
-extern kickstart_n::memory_allocator_t init_memmgr;
+extern kickstart_frame_allocator_t frame_allocator; //FIXME: doh
+
+void* frame_t::operator new(size_t)
+{
+    return reinterpret_cast<void*>(frame_allocator->alloc_frame());
+}
 
 void* frame_t::operator new(size_t, address_t& virt)
 {
-    return reinterpret_cast<void*>(init_memmgr.alloc_page(virt));
+    return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
 }
 
 void frame_t::operator delete(void*)
 {
+    // we cannot free memory in kickstart
 }
 
 void* page_table_t::operator new(size_t size, address_t* physical_address)
@@ -30,10 +38,9 @@ void* page_table_t::operator new(size_t size, address_t* physical_address)
 
 static inline void* placement_alloc(size_t size)
 {
-    kconsole << " .normal alloc. ";
-    address_t tmp = init_memmgr.get_alloc_start();
-    init_memmgr.adjust_alloc_start(tmp+size);
-    return (void*)tmp;
+    kconsole << " .normal frame alloc. ";
+    UNUSED(size);
+    return reinterpret_cast<void*>(frame_allocator.alloc_frame());
 }
 
 // Allocate small non-page-aligned objects from a preallocated page,
@@ -47,8 +54,7 @@ static inline void* small_alloc(size_t size)
 
     if (!alloc_page || (alloc_pos + size > PAGE_SIZE))
     {
-        alloc_page = init_memmgr.get_alloc_start();
-        init_memmgr.adjust_alloc_start(alloc_page+PAGE_SIZE);
+        alloc_page = frame_allocator.alloc_frame();
         alloc_pos = 0;
     }
 

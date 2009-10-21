@@ -10,10 +10,11 @@
 #include "c++ctors.h"
 
 // Run static construction for kernel.
-extern "C" void init(bootinfo_t bi_page)
+extern "C" nucleus_n::nucleus_t* init(bootinfo_t bi_page)
 {
     run_global_ctors();
     nucleus_n::nucleus.init(bi_page);
+    return &nucleus_n::nucleus;
 }
 
 namespace nucleus_n

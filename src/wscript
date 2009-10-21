@@ -15,7 +15,7 @@ include_dirs = 'vesper/arch-x86/kickstart vesper/arch-x86/orb vesper/arch-x86/li
 #archdep_includes = 'arch/ lib/oskit/oskit/'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
-cflags += ['-Os'] #FIXME: builddep
+cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
 cxxflags = cflags
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
@@ -80,8 +80,8 @@ def configure(conf):
     conf.define('CONFIG_INLINING', 1)
     conf.define('CONFIG_DEBUG_SYMBOLS', 1)
     conf.define('HEAP_DEBUG', 1)
-    conf.define('MEMORY_DEBUG', 0)
-    conf.define('ELF_LOADER_DEBUG', 0)
+    conf.define('MEMORY_DEBUG', 1)
+    conf.define('ELF_LOADER_DEBUG', 1)
     conf.write_config_header('lib/config.h')
 
     # Copy template env to specific ones
@@ -107,12 +107,12 @@ def configure(conf):
 
 
 def build(bld):
-    mustl = bld.new_task_gen('cxx', 'staticlib')
-    mustl.source = map(lambda f: 'runtime/mustl/' + f + '.cpp', 'cmemlink memblock memlink ualgobase ubitset unew ustring'.split())
-    mustl.env = bld.env_of_name('KERNEL_ENV').copy()
-    mustl.env.append_unique('CXXFLAGS', '-mmmx -msse -msse2'.split()) # FIXME: need configure options for this
-    mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
-    mustl.target = 'mustl'
+    #mustl = bld.new_task_gen('cxx', 'staticlib')
+    #mustl.source = map(lambda f: 'runtime/mustl/' + f + '.cpp', 'cmemlink memblock memlink ualgobase ubitset unew ustring'.split())
+    #mustl.env = bld.env_of_name('KERNEL_ENV').copy()
+    #mustl.env.append_unique('CXXFLAGS', '-mmmx -msse -msse2'.split()) # FIXME: need configure options for this
+    #mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
+    #mustl.target = 'mustl'
 
     bld.add_subdirs('vesper/arch-'+Options.options.arch)
 

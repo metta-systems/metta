@@ -4,46 +4,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*!
-@file kickstart.cpp
-@brief Prepare kernel and init component for starting up.
-@ingroup Bootup
-
-Use different new implementations for kickstart initialization and nucleus code.
-
-* put kernel in place
-  - set up minimal paging,
-  - map higher-half kernel to K_SPACE_START,
-* init memory manager
-  - map memory pages for paged mode, mapping bios 1-1 and kernel to highmem,
-  - enter paged mode,
-* activate startup servers
-  - component constructors run in kernel mode, have the ability to set up their system tables etcetc,
-    * vm_server
-      - give vm_server current mapping situation and active memory map
-      - further allocations will go on from vm_server
-    * scheduler
-    * portal_manager
-    * interrupt_dispatcher
-    * trader
-    * security_server
-* enter root_server
-  - root_server can then use virtual memory, threads etc
-  - root_server expects cpu to be in paging mode with pagedir in highmem, kernel
-  mapped high and exception handlers set up in low mem - these will be relocated
-  and reinstated by interrupts component when it's loaded,
-  - verify required components are present in initfs (pmm, cpu, interrupts,
-  security manager, portal manager, object loader),
-  - set up security contexts and permissions
-  - boot other cpus if present,
-  - switch to usermode and continue execution in the init process,
-* activate extra servers
-  - root filesystem mounter,
-  - hardware detector,
-*/
 #include "memutils.h"
 #include "multiboot.h"
-#include "memory.h" // boot_pmm_allocator
 #include "gdt.h"
 #include "idt.h"
 #include "default_console.h"
@@ -51,28 +13,73 @@ Use different new implementations for kickstart initialization and nucleus code.
 #include "registers.h"
 #include "initfs.h"
 #include "mmu.h"
+#include "minmax.h"
 #include "c++ctors.h"
 #include "bootinfo.h"
 #include "debugger.h"
 #include "linksyms.h"
 #include "frame.h"
+#include "kickstart_frame_allocator.h"
+#include "nucleus.h"
 #include "config.h"
-//{ DEBUG STUFF
 #include "page_fault_handler.h"
+
 page_fault_handler_t page_fault_handler;
-//}
-kickstart_n::memory_allocator_t init_memmgr ALIGNED(0x1000);
 interrupt_descriptor_table_t interrupts_table;
+kickstart_frame_allocator_t frame_allocator;
+kickstart_page_directory_t pagedir;
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
 extern "C" address_t KICKSTART_BASE;
 
-//! Prepare and boot system.
+static void map_identity(const char* caption, address_t start, address_t end)
+{
+#if MEMORY_DEBUG
+    kconsole << "Mapping " << caption << endl;
+#endif
+    end = page_align_up<address_t>(end); // one past end
+    for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
+    {
+        pagedir.create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
+    }
+}
+
+// Scratch area for initial pagedir
+uint32_t pagedir_area[1024] ALIGNED(4096);
+
 /*!
+ * @brief Prepare kernel and init components and boot system.
+ * @ingroup Bootup
+ *
  * This part starts in protected mode, linear addresses equal physical, paging is off.
  *
- * As a rule: whatever we intend to bring to paging mode, we copy to an allocated frame ourselves.
+ * Put kernel in place
+ * - set up 1:1 page mapping as well as kernel higher-half mapping at K_SPACE_START
+ * - map 1:1 the bottom ~8Mb of RAM
+ * - enter paged mode,
+ * - run kernel ctor
+ *
+ * activate startup servers
+ * - component constructors run in kernel mode, have the ability to set up their system tables etcetc,
+ * vm_server
+ * - give vm_server current mapping situation and active memory map
+ * - further allocations will go on from vm_server
+ * scheduler
+ * portal_manager
+ * interrupt_dispatcher
+ * trader
+ * security_server
+ * enter root_server
+ * - root_server can then use virtual memory, threads etc
+ * - root_server expects cpu to be in paging mode with pagedir in highmem, kernel mapped high and exception handlers set up in low mem - these will be relocated and reinstated by interrupts component when it's loaded,
+ * - verify required components are present in initfs (pmm, cpu, interrupts, security manager, portal manager, object loader),
+ * - set up security contexts and permissions
+ * - boot other cpus if present,
+ * - switch to usermode and continue execution in the init process,
+ * activate extra servers
+ * - root filesystem mounter,
+ * - hardware detector,
  */
 void kickstart(multiboot_t::header_t* mbh)
 {
@@ -81,39 +88,40 @@ void kickstart(multiboot_t::header_t* mbh)
     multiboot_t mb(mbh);
 
     ASSERT(mb.module_count() == 2);
-
     multiboot_t::modinfo_t* kernel = mb.module(0); // nucleus
     multiboot_t::modinfo_t* bootcp = mb.module(1); // bootcomps
     ASSERT(kernel);
     ASSERT(bootcp);
 
-    // Setup bootstrap allocator.
-    init_memmgr.adjust_alloc_start(LINKSYM(placement_address));
-    init_memmgr.adjust_alloc_start(kernel->mod_end);
-    init_memmgr.adjust_alloc_start(bootcp->mod_end);
-    // now we can allocate extra pages from alloced_start using alloc_next_page()
+    address_t alloc_start = page_align_up<address_t>(max(LINKSYM(placement_address),max(kernel->mod_end, bootcp->mod_end)));
+    frame_allocator.init(0, &pagedir);
+    frame_allocator.set_start(alloc_start);
+    frame_t::set_frame_allocator(&frame_allocator);
+    // now we can allocate memory frames
 
-    frame_t::set_frame_allocator(init_memmgr.frame_allocator());
+    pagedir.init(pagedir_area);
+    // now we can create page mappings
 
+#if MEMORY_DEBUG
     kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
     kconsole << WHITE << "We are loaded at " << LINKSYM(KICKSTART_BASE) << endl
                       << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
                       << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
-                      << "Alloctn start at " << init_memmgr.get_alloc_start() << endl;
+                      << "Alloctn start at " << alloc_start << endl;
+#endif
 
-    uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE); //init_memmgr.get_alloc_start();
-    // preserve the currently executing kickstart ^^ code in the memory allocator init
-    // we will give up these frames later.
+    // Preserve the currently executing kickstart code in the memory allocator init.
+    // We will give up these frames later.
+    uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
 
-    address_t bootinfo_page = init_memmgr.alloc_next_page();
-    init_memmgr.root_pagedir().create_mapping(bootinfo_page, bootinfo_page);
-    mb.copy(bootinfo_page);
+    address_t bootinfo_page = (address_t)new frame_t;
     bootinfo_t bootinfo(bootinfo_page);
-    mb.set_header(bootinfo.multiboot_header());
 
-    uint32_t k;
+    bootinfo.init_from(mb);
+
+    mb.set_header(bootinfo.multiboot_header());
 
     elf_parser elf;
     if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
@@ -122,30 +130,17 @@ void kickstart(multiboot_t::header_t* mbh)
         kconsole << GREEN << "kernel loaded (ok)" << endl;
 
     // Identity map currently executing code.
-    address_t ph_start = LINKSYM(KICKSTART_BASE);
-    address_t ph_end   = page_align_up<address_t>(LINKSYM(placement_address)); // one after end
-    kconsole << endl << "Mapping loader: ";
-    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
-    {
-        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
-    }
+    map_identity("bottom 4Mb", 0, 4*MiB);
 
-    ph_start = bootcp->mod_start;
-    ph_end   = page_align_up<address_t>(bootcp->mod_end); // one after end
-    kconsole << endl << "Mapping bootcp: ";
-    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
-    {
-        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
-    }
+//     map_identity("bootinfo", bootinfo_page, bootinfo_page+PAGE_SIZE);
+//     map_identity("pagedir", pagedir.get_physical(), pagedir.get_physical()+PAGE_SIZE);
+//     map_identity("loader", LINKSYM(KICKSTART_BASE), LINKSYM(placement_address));
+//     map_identity("bootcp", bootcp->mod_start, bootcp->mod_end);
+//     map_identity("VRAM/BIOS", 0xa0000, 0x100000);
 
-    // Identity map video memory/bios area.
-    ph_start = (address_t)0xa0000;
-    ph_end   = 0x100000; // one after end
-    kconsole << endl << "Mapping VRAM: ";
-    for (k = ph_start/PAGE_SIZE; k < ph_end/PAGE_SIZE; k++)
-    {
-        init_memmgr.root_pagedir().create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
-    }
+    // Map stack page
+    address_t old_stack_pointer = read_stack_pointer();
+    map_identity("stack", old_stack_pointer, old_stack_pointer);
 
     kconsole << endl << "Mapped." << endl;
 
@@ -155,18 +150,13 @@ void kickstart(multiboot_t::header_t* mbh)
     interrupts_table.set_isr_handler(14, &page_fault_handler);
     interrupts_table.install();
 
-    // Map stack page
-    address_t old_stack_pointer = read_stack_pointer();
-    kconsole << "Mapping stack: " << old_stack_pointer << endl;
-    init_memmgr.root_pagedir().create_mapping(old_stack_pointer, old_stack_pointer);
-
     // Get kernel entry before enabling paging, as this area won't be mapped.
-    typedef void (*kernel_entry)(bootinfo_t bi_page);
+    typedef nucleus_n::nucleus_t* (*kernel_entry)(bootinfo_t bi_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
     // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
-    uint32_t fake_mmap_entry_end = init_memmgr.get_alloc_start();
+    address_t fake_mmap_entry_end = (address_t)new frame_t;
     multiboot_t::mmap_entry_t fake_mmap_entry;
 
     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
@@ -174,36 +164,56 @@ void kickstart(multiboot_t::header_t* mbh)
 
     // We have created a dent in our memory map, so we need to sort it
     // and build contiguous allocation regions.
-    extern void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page);
+#if MEMORY_DEBUG
     kconsole << "Preprocessing mmap." << endl;
-    mmap_prepare(mb.memory_map(), bootinfo);
+#endif
+    bootinfo.mmap_prepare(mb.memory_map());
 
-    bootinfo.set_memmgr(&init_memmgr);
+    ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
+    ia32_mmu_t::enable_paged_mode();
 
-    init_memmgr.start_paging();
-//     frame_t::set_frame_allocator(/*need to get addr of nucleus frame allocator!*/);
+#if MEMORY_DEBUG
+    kconsole << WHITE << "Enabled paging." << endl;
+#endif
 
-    // Here we have paging enabled and can call kernel functions.
-    // Start by initializing nucleus, creating PDs for boot_components;
-    // load them in their PDs, fill in startup portals code.
+    // now we have paging enabled and can call kernel functions.
 
     kconsole << RED << "going to init nucleus" << endl;
-    init_nucleus(bootinfo);
+    nucleus_n::nucleus_t* nucleus = init_nucleus(bootinfo);
     kconsole << GREEN << "done, instantiating components" << endl;
 
+    kconsole << GREEN << "getting allocator" << endl;
+    frame_allocator_t* fa = &nucleus->mem_mgr().page_frame_allocator();
+    kconsole << GREEN << "setting allocator " << fa << endl;
+    frame_t::set_frame_allocator(fa);
+    kconsole << "set allocator" << endl;
+
+    kconsole << "pagedir @ " << nucleus->mem_mgr().get_current_directory() << endl;
+    nucleus->mem_mgr().get_current_directory()->dump();
+
+/*    Initializing heap (0xf1000000..0xf1100000, max: 0xf2000000, kernel: 1).
+    done, instantiating components
+    getting allocator
+    setting allocator 0xf0008030 -- ??
+    set allocator
+    pagedir @ 0xf0008000 -- ??
+    Dumping page directory:*/
+
     // Load components from bootcp.
+    kconsole << "opening initfs @ " << bootcp->mod_start << endl;
     initfs_t initfs(bootcp->mod_start);
+    typedef void (*comp_entry)(bootinfo_t bi_page);
 
     kconsole << "iterating components" << endl;
-    for (k = 0; k < initfs.count(); k++)
+    for (uint32_t k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
             kconsole << RED << "not an ELF file, load failed" << endl;
         else
             kconsole << GREEN << "ELF file loaded, entering component init" << endl;
-        kernel_entry init_component = (kernel_entry)elf.get_entry_point();
-        init_component(bootinfo_page);
+        comp_entry init_component = (comp_entry)elf.get_entry_point();
+        init_component(bootinfo);
     }
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;

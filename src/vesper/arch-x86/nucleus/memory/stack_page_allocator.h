@@ -11,18 +11,17 @@
 
 //! Stack-based page allocator implementation.
 /*!
-* Simple, because it doesn't do page coloring or use any other advanced techniques yet.
-*/
-class stack_page_frame_allocator_t : public page_frame_allocator_impl_t, public lockable_t
+ * Simple, because it doesn't do page coloring or use any other advanced techniques yet.
+ */
+class stack_frame_allocator_t : public frame_allocator_t, public lockable_t
 {
 public:
-    stack_page_frame_allocator_t();
+    stack_frame_allocator_t();
 
     virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd);
-    virtual void alloc_frame(page_t* p, bool is_kernel, bool is_writeable);
-    virtual void free_frame(page_t* p);
     virtual address_t alloc_frame();
-    virtual void free_frame(address_t frame);
+    virtual address_t alloc_frame(address_t virt);
+    virtual void free_frame(address_t frame, address_t virt = 0);
 
 private:
     void free_frame_internal(address_t frame, address_t mapping);

@@ -56,7 +56,7 @@ public:
     void set_dirty(bool b)      { pg.dirty     = b ? 1 : 0; }
     void set_frame(address_t f) { pg.base      = f >> PTE_SHIFT; }
 
-    uint32_t operator =(uint32_t v) { raw = v; return v; }
+    page_t& operator =(uint32_t v)  { raw = v; return *this; }
     operator uint32_t()             { return raw; }
 
 private:
@@ -117,23 +117,31 @@ private:
     page_t pages[1024];
 };
 
+//! TODO: change design to use a pointer to actual directory instead of embedding it into the class
+// This way we could use virtual functions.
+
 /*!
  * Page directory holds 1024 pagetables.
  *
- * Page directory performs initialization in constructor, mainly to set up
+ * Page directory performs initialization in init(), mainly to set up
  * recursive PD structure.
  */
 class page_directory_t
 {
 public:
-    page_directory_t();
+    page_directory_t() : directory(0) {}
+    page_directory_t(address_t* existing_directory) : directory(existing_directory) {}
+    virtual ~page_directory_t() {}
+
+    void init();
+    void init(uint32_t* placement_area);
 
     /*!
      * Returns physical address of PD, for setting PDBR.
      */
     address_t get_physical()
     {
-        return tables[1023] & PAGE_MASK;
+        return directory[1023] & PAGE_MASK;
     }
 
     /*!
@@ -167,26 +175,47 @@ public:
      */
     void dump();
 
-private: friend class stack_page_frame_allocator_t;//page_allocator_t;
+protected:
+    /*!
+     * Obtain page table corresponding to address @p virt. If @p make is true, create
+     * page table if it doesn't exist.
+     * This method is virtual to allow different implementations of page directory between
+     * kickstart and nucleus. Kickstart needs to switch to nucleus version after paging is enabled.
+     */
+    virtual page_table_t* page_table(address_t virt, bool make) = 0;
+
+    /*!
+     * Pointer to a frame with array of pointers to pagetables, gives their @e physical location,
+     * for loading into the CR3 register.
+     */
+    address_t* directory;
+
+private: friend class stack_frame_allocator_t;//FIXME: page_allocator_t;
     /*!
      * Set @p phys to be address of the frame for page table for address @p virt.
      */
     void set_page_table(address_t virt, address_t phys);
+};
 
-private:
-    /*!
-     * Obtain page table corresponding to address @p virt. If @p make is true, create
-     * page table if it doesn't exist.
-     * FIXME: currently most problematic method, as make requires frame allocator
-     * if we create a new page table.
-     */
-    page_table_t* page_table(address_t virt, bool make);
+// Two separate subclasses are needed because we need to use code from both kickstart and nucleus during
+// kickstart boot up sequence and we cannot use virtual methods.
+class kickstart_page_directory_t : public page_directory_t
+{
+public:
+    kickstart_page_directory_t() : page_directory_t() {}
 
-    /*!
-     * Array of pointers to pagetables, gives their @e physical location,
-     * for loading into the CR3 register.
-     */
-    address_t tables[1024];
+protected:
+    virtual page_table_t* page_table(address_t virt, bool make);
+};
+
+class nucleus_page_directory_t : public page_directory_t
+{
+public:
+    nucleus_page_directory_t() : page_directory_t() {}
+    nucleus_page_directory_t(address_t* existing_directory) : page_directory_t(existing_directory) {}
+
+protected:
+    virtual page_table_t* page_table(address_t virt, bool make);
 };
 
 // kate: indent-width 4; replace-tabs on;

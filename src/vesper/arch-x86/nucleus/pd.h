@@ -19,7 +19,7 @@ class pd_t
 {
     pd_t();
 private:
-    page_directory_t pagedir;
+    page_directory_t* pagedir;
 
 //     portal_table portals;
 //     mapping_t mappings;

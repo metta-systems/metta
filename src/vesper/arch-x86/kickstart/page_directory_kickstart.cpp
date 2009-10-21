@@ -17,21 +17,21 @@
  *
  * Kickstart version via physmem pointers.
  */
-page_table_t* page_directory_t::page_table(address_t virt, bool make)
+page_table_t* kickstart_page_directory_t::page_table(address_t virt, bool make)
 {
     uint32_t pde = pde_entry(virt);
     page_table_t* page_table = 0;
 
-    if (tables[pde] & IA32_PAGE_PRESENT)
+    if (directory[pde] & IA32_PAGE_PRESENT)
     {
-        page_table = reinterpret_cast<page_table_t*>(tables[pde] & PAGE_MASK);
+        page_table = reinterpret_cast<page_table_t*>(directory[pde] & PAGE_MASK);
     }
     else if (make) // doesn't exist, so alloc a page and add into pdir
     {
         address_t phys;
         page_table = new(&phys) page_table_t;
 
-        tables[pde] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
+        directory[pde] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
         ia32_mmu_t::flush_page_directory_entry(virt);
         page_table->zero();
     }
