@@ -32,6 +32,7 @@ class bootinfo_t
 {
 public:
     bootinfo_t(address_t bootinfo_page) : boot_info(bootinfo_page) { flags() = 0; }
+    void init_from(multiboot_t& mb);
     /*!
     * Get size of the boot info page, stored in the first word of the page.
     * You can typically store more info at the end of the page and then
@@ -46,9 +47,15 @@ public:
     bool append_mmap_entry(multiboot_t::mmap_entry_t* entry);
     kickstart_n::memory_allocator_t* memmgr();
     bool set_memmgr(kickstart_n::memory_allocator_t*);
+    void mmap_prepare(multiboot_t::mmap_t* mmap);
 private:
     address_t boot_info;
 };
+
+inline void bootinfo_t::init_from(multiboot_t& mb)
+{
+    mb.copy(boot_info);
+}
 
 inline size_t bootinfo_t::size()
 {

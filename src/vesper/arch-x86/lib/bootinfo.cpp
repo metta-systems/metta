@@ -16,21 +16,3 @@ bool bootinfo_t::append_mmap_entry(multiboot_t::mmap_entry_t* entry)
 
     return true;
 }
-
-kickstart_n::memory_allocator_t* bootinfo_t::memmgr()
-{
-    if (flags() & 0x1)
-        return *reinterpret_cast<kickstart_n::memory_allocator_t**>(boot_info + PAGE_SIZE - sizeof(address_t));
-    return 0;
-}
-
-bool bootinfo_t::set_memmgr(kickstart_n::memory_allocator_t* mgr)
-{
-    if (size() > PAGE_SIZE - sizeof(address_t))
-        return false;
-
-    *reinterpret_cast<kickstart_n::memory_allocator_t**>(boot_info + PAGE_SIZE - sizeof(address_t)) = mgr;
-
-    flags() |= 0x1;
-    return true;
-}

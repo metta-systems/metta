@@ -66,7 +66,7 @@ public:
 typedef vector_base<memblock_base<area_t, obj_allocator<inplace_allocator<32, area_t>>, obj_copier<area_t>>, obj_type_behavior<area_t>, tight_allocation_policy> area_vector_t;
 
 // Given a multiboot_t::mmap_t create a sorted memory regions map.
-void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page)
+void bootinfo_t::mmap_prepare(multiboot_t::mmap_t* mmap)
 {
     area_vector_t areas;
     areas.reserve(32);
@@ -141,8 +141,8 @@ void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page)
     }
 
     kconsole << "finished. final free mmap:" << endl;
-    multiboot_t mb(bi_page.multiboot_header());
-    bi_page.decrease_size(mb.memory_map()->size());
+    multiboot_t mb(multiboot_header());
+    decrease_size(mb.memory_map()->size());
     mb.memory_map()->set_size(0);
     for (uint32_t i = 0; i < areas.size(); i++)
     {
@@ -151,6 +151,6 @@ void mmap_prepare(multiboot_t::mmap_t* mmap, bootinfo_t& bi_page)
         entry.set_region(a.start, a.end - a.start + 1, entry.free);
         entry.set_entry_size(sizeof(multiboot_t::mmap_entry_t));
         kconsole << "  " << a.start << " to " << a.end << endl;
-        bi_page.append_mmap_entry(&entry);
+        append_mmap_entry(&entry);
     }
 }
