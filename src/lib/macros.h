@@ -21,5 +21,12 @@
 #define CONST_FN            __attribute__((const))
 #define EXPORT_SYMBOL(sym)  extern typeof(sym) sym
 
+#define KB (1000)
+#define MB (1000*1000)
+#define GB (1000*1000*1000)
+#define KiB (1024)
+#define MiB (1024*1024)
+#define GiB (1024*1024*1024)
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
