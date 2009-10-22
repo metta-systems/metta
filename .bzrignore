@@ -11,3 +11,4 @@ vesper.tag
 .cproject
 .project
 debugger.log
+.waf-*
