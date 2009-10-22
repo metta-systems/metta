@@ -24,7 +24,7 @@ public:
      * and return @em physical address.
      * @p size argument is ignored. Allocations are always of PAGE_SIZE bytes.
      */
-    void* operator new(size_t size, address_t& virt);
+    void* operator new(size_t size, address_t virt);
 
     /*!
      * Delete a frame given @em physical address.

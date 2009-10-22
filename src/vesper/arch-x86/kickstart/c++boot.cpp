@@ -21,7 +21,7 @@ void* frame_t::operator new(size_t)
     return reinterpret_cast<void*>(frame_allocator->alloc_frame());
 }
 
-void* frame_t::operator new(size_t, address_t& virt)
+void* frame_t::operator new(size_t, address_t virt)
 {
     return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
 }
