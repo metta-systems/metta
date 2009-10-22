@@ -123,24 +123,8 @@ void kickstart(multiboot_t::header_t* mbh)
 
     mb.set_header(bootinfo.multiboot_header());
 
-    elf_parser elf;
-    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
-        kconsole << RED << "kernel NOT loaded (bad)" << endl;
-    else
-        kconsole << GREEN << "kernel loaded (ok)" << endl;
-
     // Identity map currently executing code.
     map_identity("bottom 4Mb", 0, 4*MiB);
-
-//     map_identity("bootinfo", bootinfo_page, bootinfo_page+PAGE_SIZE);
-//     map_identity("pagedir", pagedir.get_physical(), pagedir.get_physical()+PAGE_SIZE);
-//     map_identity("loader", LINKSYM(KICKSTART_BASE), LINKSYM(placement_address));
-//     map_identity("bootcp", bootcp->mod_start, bootcp->mod_end);
-//     map_identity("VRAM/BIOS", 0xa0000, 0x100000);
-
-    // Map stack page
-    address_t old_stack_pointer = read_stack_pointer();
-    map_identity("stack", old_stack_pointer, old_stack_pointer);
 
     kconsole << endl << "Mapped." << endl;
 
@@ -150,7 +134,16 @@ void kickstart(multiboot_t::header_t* mbh)
     interrupts_table.set_isr_handler(14, &page_fault_handler);
     interrupts_table.install();
 
-    // Get kernel entry before enabling paging, as this area won't be mapped.
+    ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
+    ia32_mmu_t::enable_paged_mode();
+    // now we have paging enabled and can call kernel functions.
+
+    elf_parser elf;
+    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
+        kconsole << RED << "kernel NOT loaded (bad)" << endl;
+    else
+        kconsole << GREEN << "kernel loaded (ok)" << endl;
+
     typedef nucleus_n::nucleus_t* (*kernel_entry)(bootinfo_t bi_page);
     kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
 
@@ -168,15 +161,6 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << "Preprocessing mmap." << endl;
 #endif
     bootinfo.mmap_prepare(mb.memory_map());
-
-    ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
-    ia32_mmu_t::enable_paged_mode();
-
-#if MEMORY_DEBUG
-    kconsole << WHITE << "Enabled paging." << endl;
-#endif
-
-    // now we have paging enabled and can call kernel functions.
 
     kconsole << RED << "going to init nucleus" << endl;
     nucleus_n::nucleus_t* nucleus = init_nucleus(bootinfo);
