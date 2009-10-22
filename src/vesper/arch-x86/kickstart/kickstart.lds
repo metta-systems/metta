@@ -12,19 +12,19 @@ SECTIONS
     .text ALIGN (4) :
     {
         *(.multiboot_info)
-        *(.text)
+        *(.text*)
         *(.rodata*)
+        /* global static initializers */
+        ctors_GLOBAL = .;
+        *(.ctor*)
+        QUAD(0)
         FILL(0x90)
     }
     text_end = .;
 
     .data ALIGN (4) :
     {
-        /* global static initializers */
-        ctors_GLOBAL = .;
-        *(.ctor*)
-        QUAD(0)
-        *(.data)
+        *(.data*)
         FILL(0x00)
     }
     data_end = .;

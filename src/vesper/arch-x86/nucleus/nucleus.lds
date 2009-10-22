@@ -19,23 +19,24 @@ SECTIONS
     .text ALIGN(PAGE_SIZE) : AT(ADDR(.text) - K_SPACE_START)
     {
         *(.kernel_infopage)
-        *(.text)
+        *(.text*)
         *(.rodata*)
+        /* global static initializers */
+        ctors_GLOBAL = .;
+        *(SORT(.ctor*))
+        QUAD(0)
+        FILL(0x90)
     }
     text_end = .;
 
     .data ALIGN(PAGE_SIZE) : AT(ADDR(.data) - K_SPACE_START)
     {
-        /* global static initializers */
-        ctors_GLOBAL = .;
-        *(SORT(.ctor*))
-        QUAD(0)
-        *(.data)
+        *(.data*)
         FILL(0x00)
     }
     data_end = .;
 
-    .bss ALIGN (PAGE_SIZE) : AT(ADDR(.bss) - K_SPACE_START)
+    .bss ALIGN (4) : AT(ADDR(.bss) - K_SPACE_START)
     {
         *(COMMON*)
         *(.bss*)
