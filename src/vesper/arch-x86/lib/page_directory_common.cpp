@@ -15,8 +15,7 @@
 
 void page_directory_t::init()
 {
-    address_t virt;
-    directory = (address_t*)new(virt) frame_t;
+    directory = (address_t*)new frame_t; // covered by default startup 4Mb mapping
     for (int i = 0; i < 1023; i++)
         directory[i] = 0;
     directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
@@ -39,7 +38,7 @@ page_t* page_directory_t::create_mapping(address_t virt, address_t phys)
     if (!pt->page(pte).present()) // page isn't mapped
     {
         pt->page(pte) = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
-        ia32_mmu_t::flush_page_directory_entry(virt); // or leave it to client?
+        ia32_mmu_t::flush_page_directory_entry(virt);
     }
     else
     {

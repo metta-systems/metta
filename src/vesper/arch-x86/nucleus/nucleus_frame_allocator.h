@@ -5,7 +5,7 @@
 /*!
  * @internal
  * This version of frame allocator allocates frames linearly starting from alloc_start onwards.
- * It uses physical addresses and enters them into page directory.
+ * It uses virtual? addresses and enters them into page directory.
  */
 class nucleus_frame_allocator_t : public frame_allocator_t
 {

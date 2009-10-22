@@ -26,8 +26,6 @@ private:
 inline kickstart_frame_allocator_t::kickstart_frame_allocator_t()
     : alloc_start(-1)
     , pagedir(0)
-//     : alloc_start(page_align_up<address_t>(alloc_start))
-//     , pagedir(0)
 {
 }
 
