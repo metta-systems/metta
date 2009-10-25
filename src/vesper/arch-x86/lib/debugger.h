@@ -56,6 +56,14 @@ inline void bochs_console_print_char(int c)
     x86_cpu_t::outb(0xe9, c);
 }
 
+//outputs a string to the debug console
+inline void bochs_console_print_str(const char* str)
+{
+    char *b = (char *)str;
+    while (*b)
+        bochs_console_print_char(*b++);
+}
+
 //stops simulation and breaks into the debug console
 inline void bochs_break()
 {
