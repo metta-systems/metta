@@ -20,5 +20,10 @@ typedef int32_t  ptrdiff_t;
 typedef uintptr_t address_t;
 typedef uint32_t hash_t;
 
+// Endian-aware types - FIXME: need wrapper classes that can do endianness-conversions.
+typedef uint32_t uint32_le_t;
+typedef uint32_t uint32_be_t;
+// etc
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
