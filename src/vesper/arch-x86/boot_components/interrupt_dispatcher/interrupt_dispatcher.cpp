@@ -5,13 +5,19 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "interrupt_dispatcher.h"
+#include "c++ctors.h"
+#include "debugger.h"
 
 extern "C" void init()
 {
+    static interrupt_dispatcher_t idisp;
+    run_global_ctors();
+    bochs_console_print_str("interrupt_dispatcher: init\n");
 }
 
 interrupt_dispatcher_t::interrupt_dispatcher_t()
 {
+    bochs_console_print_str("interrupt_dispatcher_t::ctor\n");
 }
 
 // kate: indent-width 4; replace-tabs on;

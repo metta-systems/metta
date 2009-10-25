@@ -12,6 +12,7 @@ by turning interrupts into threads with help of the scheduler.
 */
 class interrupt_dispatcher_t
 {
+public:
     interrupt_dispatcher_t();
 private:
 };

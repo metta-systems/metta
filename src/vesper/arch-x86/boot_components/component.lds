@@ -53,25 +53,25 @@ SECTIONS
     . = U_CODE_START;
     .text ALIGN(PAGE_SIZE) : AT(ADDR(.text) - U_CODE_START)
     {
-        *(.text)
+        *(.text*)
         *(.rodata*)
+        /* global static initializers */
+        ctors_GLOBAL = .;
+        *(SORT(.ctor*))
+        QUAD(0)
+        dtors_GLOBAL = .;
+        *(SORT(.dtor*))
+        QUAD(0)
     }
     text_end = .;
 
     .data ALIGN(PAGE_SIZE) : AT(ADDR(.data) - U_CODE_START)
     {
-        /* global static initializers */
-        ctors_GLOBAL = .;
-        *(.ctor*)
-        QUAD(0)
-        dtors_GLOBAL = .;
-        *(.dtor*)
-        QUAD(0)
         *(.data)
     }
     data_end = .;
 
-    .bss ALIGN(PAGE_SIZE) :  AT(ADDR(.bss) - U_CODE_START)
+    .bss ALIGN(4) :  AT(ADDR(.bss) - U_CODE_START)
     {
         *(COMMON*)
         *(.bss*)
