@@ -9,16 +9,22 @@
 #include "nucleus.h"
 #include "panic.h"
 #include "frame.h"
+#include "default_console.h"
+
+// Instead of creating complex allocation machinery for nucleus, we rely on the fact that we do not do any
+// allocations before memory manager is initialized.
 
 using nucleus_n::nucleus;
 
 void* frame_t::operator new(size_t)
 {
+    kconsole << "NUCLEUS: " << __PRETTY_FUNCTION__ << endl;
     return reinterpret_cast<void*>(frame_allocator->alloc_frame());
 }
 
 void* frame_t::operator new(size_t, address_t virt)
 {
+    kconsole << "NUCLEUS: " << __PRETTY_FUNCTION__ << endl;
     return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
 }
 
@@ -28,13 +34,6 @@ void frame_t::operator delete(void* ptr)
     frame_allocator->free_frame((address_t)ptr); // need a version that removes mapping
 }
 
-static inline void* placement_alloc(size_t size)
-{
-    uint32_t tmp = nucleus.mem_mgr().get_placement_address();
-    nucleus.mem_mgr().set_placement_address(tmp+size);
-    return (void *)tmp;
-}
-
 void* operator new(UNUSED_ARG size_t size, uint32_t place)
 {
     return (void *)place;
@@ -42,19 +41,8 @@ void* operator new(UNUSED_ARG size_t size, uint32_t place)
 
 void* operator new(size_t size, bool page_align, address_t* physical_address)
 {
-    if (nucleus.mem_mgr().is_heap_initialized())
-    {
-        return nucleus.mem_mgr().allocate(size, page_align, physical_address);
-    }
-    else
-    {
-        if (page_align)
-            nucleus.mem_mgr().align_placement_address();
-        void *tmp = placement_alloc(size);
-        if (physical_address)
-            *physical_address = (address_t)tmp;
-        return tmp;
-    }
+    kconsole << "NUCLEUS: " << __PRETTY_FUNCTION__ << endl;
+    return nucleus.mem_mgr().allocate(size, page_align, physical_address);
 }
 
 void* operator new(size_t size)
@@ -74,14 +62,12 @@ void* operator new[](size_t size, bool page_align, address_t* physical_address)
 
 void operator delete(void* p)
 {
-    if (nucleus.mem_mgr().is_heap_initialized())
-        nucleus.mem_mgr().free(p);
+    nucleus.mem_mgr().free(p);
 }
 
 void operator delete[](void* p)
 {
-    if (nucleus.mem_mgr().is_heap_initialized())
-        nucleus.mem_mgr().free(p);
+    nucleus.mem_mgr().free(p);
 }
 
 // kate: indent-width 4; replace-tabs on;
