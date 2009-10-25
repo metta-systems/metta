@@ -21,6 +21,15 @@
 #define CONST_FN            __attribute__((const))
 #define EXPORT_SYMBOL(sym)  extern typeof(sym) sym
 
+#if __GNUC__ > 2
+// Don't forget to -fprofile-arcs your code!
+#define likely(expr)        __builtin_expect(!!(expr), 1)
+#define unlikely(expr)      __builtin_expect(!!(expr), 0)
+#else
+#define likely(expr)        (expr)
+#define unlikely(expr)      (expr)
+#endif
+
 #define KB (1000)
 #define MB (1000*1000)
 #define GB (1000*1000*1000)
