@@ -27,51 +27,62 @@ private:
 class file
 {
 public:
-    file() // TODO: allow to actually open such file!
-    {
-    }
+    file() {}
+
     file(const char* fname, fstream::openmode mode)
+    {
+        open(fname, mode);
+    }
+
+    file(const std::string& fname, fstream::openmode mode)
+    {
+        open(fname.c_str(), mode);
+    }
+
+    ~file() { file_.close(); }
+
+    void open(const char* fname, fstream::openmode mode)
     {
         file_.open(fname, mode);
         if (!file_.good())
             throw file_error("file open failure");
     }
-    file(const std::string& fname, fstream::openmode mode)
-    {
-        file_.open(fname.c_str(), mode);
-        if (!file_.good())
-            throw file_error("file open failure");
-    }
-    ~file() { file_.close(); }
+
     void write(const void* buf, size_t count)
     {
         file_.write((const char*)buf, count);
         if (file_.bad())
             throw file_error("file write failure");
     }
+
     size_t read(void* buf, size_t size)
     {
         file_.read((char*)buf, size);
         return file_.gcount();
     }
+
     long read_pos()
     {
         return file_.tellg();
     }
+
     long write_pos()
     {
         return file_.tellp();
     }
+
     bool read_seek(long pos)
     {
         file_.seekg(pos);
         return !file_.fail();
     }
+
     bool write_seek(long pos)
     {
         file_.seekp(pos);
         return !file_.fail();
     }
+
     long size()
     {
         long old = read_pos();
@@ -80,10 +91,12 @@ public:
         read_seek(old);
         return sz;
     }
+
     bool getline(std::string& str, char delim)
     {
         return std::getline(file_, str, delim);
     }
+
     bool getline(std::string& str)
     {
         return std::getline(file_, str);
