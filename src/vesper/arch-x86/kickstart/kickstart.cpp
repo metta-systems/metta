@@ -175,14 +175,6 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << "pagedir @ " << nucleus->mem_mgr().get_current_directory() << endl;
     nucleus->mem_mgr().get_current_directory()->dump();
 
-/*    Initializing heap (0xf1000000..0xf1100000, max: 0xf2000000, kernel: 1).
-    done, instantiating components
-    getting allocator
-    setting allocator 0xf0008030 -- ??
-    set allocator
-    pagedir @ 0xf0008000 -- ??
-    Dumping page directory:*/
-
     // Load components from bootcp.
     kconsole << "opening initfs @ " << bootcp->mod_start << endl;
     initfs_t initfs(bootcp->mod_start);
@@ -192,6 +184,7 @@ void kickstart(multiboot_t::header_t* mbh)
     for (uint32_t k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
+        // here loading an image should create a separate PD with its own pagedir
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
             kconsole << RED << "not an ELF file, load failed" << endl;
         else

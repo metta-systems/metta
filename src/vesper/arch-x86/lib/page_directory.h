@@ -117,9 +117,6 @@ private:
     page_t pages[1024];
 };
 
-//! TODO: change design to use a pointer to actual directory instead of embedding it into the class
-// This way we could use virtual functions.
-
 /*!
  * Page directory holds 1024 pagetables.
  *
