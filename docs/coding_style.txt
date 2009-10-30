@@ -45,7 +45,7 @@ e. Accessors shall begin with "set" for setters and no prefix for getters.
 
 f. Plural form shall be used for names representing a collection of objects.
 
-    list<rectangle> rectangles;
+    list_t<rectangle_t> rectangles;
     int points[n_points];
 
 g. Avoid long variable names in code blocks. When code is sufficiently concise variable meaning should be obvious.
@@ -57,7 +57,7 @@ h. Boolean variables and methods (including accessors) shall use suitable prefix
     bool is_open;
     bool has_subject(email& mail);
 
-i. Types have _t appended (some types inside namespaces can omit it, but rarely). Namespaces have _t suffix. Enums have
+i. Types have _t appended (some types inside namespaces can omit it, but rarely). Namespaces have _n suffix. Enums have
    _e suffix:
 
     typedef int sint32_t;
@@ -79,7 +79,7 @@ a. C++ header files shall have the extension ".h", and C++ source files shall ha
 
 b. A class shall be declared in a header file and defined in a source file, where the names of the files
    match the name of the class. Except in the case of templated classes, where method bodies should be defined
-   within the same header file, preferably outside of the class declaration.
+   within the same header file, preferably outside of the class declaration, unless they are very short.
 
 c. All definitions, except inline functions, shall reside in source files.
 
@@ -135,7 +135,7 @@ c. Block bodies, case statements within a switch are indented. Class bodies are 
         }
     }
 
-d. Namespaces are not indented except when in forward declarations (there they indent as block bodies).
+d. Namespaces are not indented except when in forward declarations (where they indent as block bodies).
    Comment the closing bracket of the namespace with // namespace foo
 
     namespace boost
@@ -143,15 +143,16 @@ d. Namespaces are not indented except when in forward declarations (there they i
         class regexp;
     }
 
-    namespace example {
+    namespace example_n
+    {
 
-    class foo
+    class foo_t
     {
     public:
-        foo();
+        foo_t();
     };
 
-    } // namespace example
+    } // namespace example_n
 
 e. Opening brackets are on their own line, except for enumerations and inline functions defined on a single line.
 
@@ -171,7 +172,7 @@ e. Opening brackets are on their own line, except for enumerations and inline fu
     }
 
 f. Multiple statements should not ever be combined onto one line. Exception is the C++ idiom of deleting a pointer
-   and assigning NULL to it:
+   and assigning it NULL:
 
     delete ptr; ptr = NULL;
 
@@ -187,7 +188,7 @@ h. The condition in an "if" statement shall always be put on a separate line.
 i. C++ pointers and references shall have their reference symbol next to the type rather than to the name.
 
     float* x;
-    some_class& object;
+    some_class_t& object;
 
 j. In class declarations, "public" declarations shall precede "protected" declarations which in turn shall precede
    "private" declarations. In many cases "private" declarations may precede all other declarations without specifying
@@ -215,7 +216,7 @@ k. Virtual functions should always be marked as such even in derived classes whe
 
 l. In a function definition, the function return type shall be put to the left of the function name (not above it).
 
-    some_type some_function(some_other_type& object)
+    some_type_t some_function(some_other_type_t& object)
     {
         // ...
     }
@@ -223,7 +224,7 @@ l. In a function definition, the function return type shall be put to the left o
 m. In a template function definition, the function template arguments shall be put to the line above function signature.
 
     template <typename T, int N>
-    some_type some_function(some_other_type& object)
+    some_type_t some_function(some_other_type_t& object)
     {
         // ...
     }
@@ -258,10 +259,10 @@ r. Logical units within a block shall be separated by one blank line, and each b
 s. Function definitions shall be separated by two blank lines.
 
 t. Initializer lists in constructors are one assignment per line, indented, with colon or comma before the assignment.
-   This allows for easier rearrangement in case class layout changes.
+   This allows for easier rearrangement if class layout changes.
 
-    object::object(int a, double b, other& c)
-        : parent()
+    object_t::object_t(int a, double b, other_t& c)
+        : parent_t()
         , int_value(a)
         , double_value(b)
         , reference(c)
@@ -300,12 +301,12 @@ c. Classes, functions and methods shall be documented using simple Doxygen comme
 
     //! A brief description of the function, normally on one line.
     /*!
-    * An optional detailed description,
-    * normally on several lines.
-    */
+     * An optional detailed description,
+     * normally on several lines.
+     */
     void my_function(int x)
     {
-        ...
+        // ...
     }
 
 d. For inline functions, defined on a single line in the header file, a brief description just above the definition is enough.
