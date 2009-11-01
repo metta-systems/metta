@@ -41,14 +41,31 @@ void nucleus_t::enter_trap(UNUSED_ARG int portal_no)
 {
 }
 
-void nucleus_t::create_pd(/*portal_t<type> arg*/) /*NORETURN*/
+/*
+ * domain_t split into two parts - domain_t and domain_user_t.
+ *
+ * domain_user_t allocated in user address.
+ */
+//return domain_user_t*
+void nucleus_t::create_domain()
 {
-//     arg.return_to_caller(new_pd);
+//     domain_t* domain = new domain_t(parent_domain);
+//     domain->pagedir = mem_mgr().current_page_directory().clone();
+
+    //
+
+//     return domain->user();
 }
 
-void nucleus_t::destroy_pd()
+void nucleus_t::destroy_domain()
 {
 }
+
+// void nucleus_t::create_pd_portal(portal_t<type> arg) NORETURN
+// {
+//     arg.return_to_caller(new_pd);
+// }
+
 
 }
 

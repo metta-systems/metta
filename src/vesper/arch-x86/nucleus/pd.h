@@ -11,13 +11,16 @@
 namespace nucleus
 {
 
-//! Protection Domain
+//! Domain
 /*!
-* Protection domain governs an address space and threads that execute in this space.
-*/
-class pd_t
+ * The term domain is used to refer to an executing program and can be thought of as analogous to a UNIX process - i.e.
+ * a domain encapsulates the execution state of an application. Each domain has an associated scheduling domain
+ * (determining CPU time allocation) and protection domain (determining access rights to regions of the
+ * virtual address space).
+ */
+class domain_t
 {
-    pd_t();
+    domain_t();
 private:
     page_directory_t* pagedir;
 

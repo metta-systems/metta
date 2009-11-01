@@ -9,7 +9,7 @@
 namespace nucleus
 {
 
-pd_t::pd_t()
+domain_t::domain_t()
 {
 //     pagedir = orb.root_pagedir().clone();
 }
