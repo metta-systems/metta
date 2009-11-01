@@ -47,7 +47,7 @@ Components are linked with classical layout:
 */
 SECTIONS
 {
-    U_CODE_START = 1M;
+/*     U_CODE_START = 1M; */
     PAGE_SIZE = 4K;
 
     . = U_CODE_START;

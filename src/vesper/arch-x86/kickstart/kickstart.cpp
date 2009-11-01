@@ -55,21 +55,24 @@ uint32_t pagedir_area[1024] ALIGNED(4096);
  * This part starts in protected mode, linear addresses equal physical, paging is off.
  *
  * Put kernel in place
- * - set up 1:1 page mapping as well as kernel higher-half mapping at K_SPACE_START
- * - map 1:1 the bottom ~8Mb of RAM
+ * - set up 1:1 page mapping for the bottom 4Mb of RAM as well as kernel higher-half mapping at K_SPACE_START,
  * - enter paged mode,
- * - run kernel ctor
+ * - run kernel ctor.
  *
- * activate startup servers
- * - component constructors run in kernel mode, have the ability to set up their system tables etcetc,
+ * Activate startup servers
+ * - create separate PDs for startup components,
+ * - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
+ *
  * vm_server
  * - give vm_server current mapping situation and active memory map
  * - further allocations will go on from vm_server
+ *
  * scheduler
  * portal_manager
  * interrupt_dispatcher
  * trader
  * security_server
+ *
  * enter root_server
  * - root_server can then use virtual memory, threads etc
  * - root_server expects cpu to be in paging mode with pagedir in highmem, kernel mapped high and exception handlers set up in low mem - these will be relocated and reinstated by interrupts component when it's loaded,
@@ -124,7 +127,8 @@ void kickstart(multiboot_t::header_t* mbh)
     mb.set_header(bootinfo.multiboot_header());
 
     // Identity map currently executing code.
-    map_identity("bottom 4Mb", 0, 4*MiB);
+    // page 0 is not mapped to catch null pointers
+    map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
 
     kconsole << endl << "Mapped." << endl;
 
@@ -172,19 +176,22 @@ void kickstart(multiboot_t::header_t* mbh)
     frame_t::set_frame_allocator(fa);
     kconsole << "set allocator" << endl;
 
-    kconsole << "pagedir @ " << nucleus->mem_mgr().get_current_directory() << endl;
-    nucleus->mem_mgr().get_current_directory()->dump();
+//     kconsole << "pagedir @ " << nucleus->mem_mgr().get_current_directory() << endl;
+//     nucleus->mem_mgr().get_current_directory()->dump();
 
     // Load components from bootcp.
     kconsole << "opening initfs @ " << bootcp->mod_start << endl;
     initfs_t initfs(bootcp->mod_start);
     typedef void (*comp_entry)(bootinfo_t bi_page);
 
+    // For now, boot components are all linked at different virtual addresses so they don't overlap.
     kconsole << "iterating components" << endl;
     for (uint32_t k = 0; k < initfs.count(); k++)
     {
         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
         // here loading an image should create a separate PD with its own pagedir
+//         domain_t* d = nucleus->create_domain();
+
         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
             kconsole << RED << "not an ELF file, load failed" << endl;
         else

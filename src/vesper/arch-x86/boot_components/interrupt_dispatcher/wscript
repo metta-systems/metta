@@ -5,7 +5,7 @@ def build(bld):
     idisp = bld.new_task_gen('cxx', 'program')
     idisp.source = 'interrupt_dispatcher.cpp'# ../component.lds
     idisp.env = bld.env_of_name('KERNEL_ENV').copy()
-    idisp.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,interrupt_dispatcher.map'])
+    idisp.env.append_unique('LINKFLAGS', ['-Wl,-defsym,U_CODE_START=0x200000', '-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,interrupt_dispatcher.map'])
     idisp.includes = '. ../../lib ../../../../lib ../../../../runtime'
     idisp.target = 'interrupt_dispatcher.comp'
     idisp.uselib_local = 'kernel_runtime' #component

@@ -5,9 +5,13 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "trader.h"
+#include "c++ctors.h"
+#include "debugger.h"
 
 extern "C" void init()
 {
+    run_global_ctors();
+    bochs_console_print_str("trader: init\n");
 }
 
 trader_t::trader_t()

@@ -6,6 +6,14 @@
 //
 #include "vm_server.h"
 #include "c++ctors.h"
+#include "debugger.h"
+
+// component entry point
+extern "C" void init()
+{
+    run_global_ctors();
+    bochs_console_print_str("vm_server: init\n");
+}
 
 // vm server provides two facets: kernel interface and user interface
 //
@@ -19,17 +27,16 @@
 // user interface provides means for clients to allocate more memory pages or
 // release them and also to map/grant pages to other clients.
 
-vm_server_t vm_server;
+// vm_server_t vm_server;
 // component_t vm_server_component;
 
-// component entry point
-extern "C" void/*component_t**/ init(bootinfo_t bi_page)
-{
-    run_global_ctors();
-    vm_server.init(bi_page);
+// extern "C" void/*component_t**/ init(bootinfo_t bi_page)
+// {
+//     run_global_ctors();
+//     vm_server.init(bi_page);
 //     vm_server_component.add_interface(vm_server);
 //     return &vm_server_component;
-}
+// }
 
 vm_server_t::vm_server_t()
 //     : memory_manager()

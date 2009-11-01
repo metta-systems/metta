@@ -5,8 +5,8 @@ def build(bld):
     idisp = bld.new_task_gen('cxx', 'program')
     idisp.source = 'security_server.cpp'# ../component.lds
     idisp.env = bld.env_of_name('KERNEL_ENV').copy()
-    idisp.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,security_server.map'])
-    idisp.includes = '. ../../../../lib ../../../../runtime'
+    idisp.env.append_unique('LINKFLAGS', ['-Wl,-defsym,U_CODE_START=0x230000','-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,security_server.map'])
+    idisp.includes = '. ../../lib ../../../../lib ../../../../runtime'
     idisp.target = 'security_server.comp'
     #idisp.uselib_local = 'component_runtime'
 

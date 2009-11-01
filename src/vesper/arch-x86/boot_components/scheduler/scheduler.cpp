@@ -5,9 +5,13 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "scheduler.h"
+#include "c++ctors.h"
+#include "debugger.h"
 
 extern "C" void init()
 {
+    run_global_ctors();
+    bochs_console_print_str("scheduler: init\n");
 }
 
 namespace scheduler
