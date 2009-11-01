@@ -1,4 +1,6 @@
 Components are pieces of code and static data (which has no mutable state).
+(Clemens Szypersky defines a software component as a unit of composition with contractually specified
+interfaces and explicit context dependencies only.)
 
 Applications are built from interconnected components.
 
