@@ -1,3 +1,5 @@
+CHANGE ME!
+
 First, there is glue code. Glue code is very limited - its task is to switch protection domains. This allows threads to
 migrate though PD borders and execute in context of other tasks. Glue code works with page directory, other things that
 might need switching when PD changes and also records thread activations - points visible to the accepting protection

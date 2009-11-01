@@ -1,0 +1,53 @@
+
+Fluke:
+
+  * multiple address space
+  * nested virtual machines
+  * atomic API (thus very wide)
+    (Thread, Task, Region, Mapping, Port, Portset, IPC, Mutex, Condition, Reference are all part of kernel API
+    with IPC taking most width by specifying possible combinations of IPC transaction states. Reference objects
+    are only necessary to address same objects across separate address spaces).
+
+Pebble:
+
+  * SAS
+  * semaphores-controlled interrupt handler threads
+  * simple, small, aimed at embeddable OS tied together with the appplications, therefore
+    very simplified.
+
+Nemesis:
+
+  * SAS
+  * - nvm is hard in SAS
+  * interrupt stubs that schedule main driver threads
+  * Modula-3 influenced?
+  * pervasive interfaces
+
+*The kernel's view of a domain is limited to a single data structure called the Domain Control Block*
+
+domain startup: closure(methods: Go; state: everything new domain needs to get going)
+
+* LISP-like IDL? there were c++ and Modula like IDLs, why not parensparensparens?
+
+// cross-component interfaces
+class interface_closure
+{
+    ops_table_t* ops;
+    state_t* state;
+};
+
+
+All interfaces are strongly typed, and these types are defined in an interface definition language. It is clearly important, therefore, to start with a good type system, and [Evers 93] presents a good discussion of the issues of typing in a systems environment. As in many RPC systems, the type system used in Nemesis is a hybrid: it includes notions both of the abstract types of interfaces and of concrete data types. It represents a compromise between the conceptual elegance and software engineering benefits of purely abstract type systems such as that used in Emerald [Raj 91], and the requirements of efficiency and inter-operability: the goal is to implement an operating system with few restrictions on programming language.
+
+Concrete types are data types whose structure is explicit. They can be predefined (such as booleans, strings, and integers of various sizes) or constructed (as with records, arrays, etc). The space of concrete types also includes typed references to interfaces.
+
+Interfaces are instances of ADTs. Interfaces are rarely static: they can be dynamically created and references to them passed around freely. The type system includes a simple concept of subtyping. An interface type can be a subtype of another ADT, in which case it supports all the operations of the supertype, and an instance of the subtype can be used where an instance of the supertype is required.
+
+The operations supported by interfaces are like procedure calls: they take a number of arguments and normally return a number of results. They can also raise exceptions, which themselves can take arguments. Exceptions in Nemesis behave in a similar way to those in Modula-3 [Nelson 91].
+
+Interface types are defined in an IDL called MIDDL [Roscoe 94b]. MIDDL is similar in functionality to the IDLs used in object-based RPC systems, with some additional constructs to handle local and low-level operating system interfaces. A MIDDL specification defines a single ADT by declaring its supertype, if any, and giving the signatures of all the operations it supports. A specification can also include declarations of exceptions, and concrete types. Figure 2.1 shows a typical interface specification, the (slightly simplified) definition of the Context interface type.
+
+** NAME SPACES **
+
+There are few restrictions on how the name space is structured. The model followed is that of [Saltzer 79]: a name is a textual string, a binding is an association of a name with some value, and a context is a collection of bindings. Resolving a name is the process of locating the value bound to it. Name resolution requires that a context be specified.
+

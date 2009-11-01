@@ -1,8 +1,8 @@
 nucleus_t:
-  - pd traversal supported.
+  - domain traversal supported.
 
-pd_t: // (@sa Pebble's domain_fork)
-  - contains a portal_table with indexes into available portals as means of crossing pd boundaries
+domain_t: // (@sa Pebble's domain_fork)
+  - contains a portal_table with indexes into available portals as means of crossing domain boundaries
 
 scheduler_t (server):
   - thread management,
@@ -22,7 +22,7 @@ interrupt_dispatcher_t (server):
 thread_t: // thread abstraction inside scheduler_t
     thread_t
     {
-        portal_table_t* ptab; // in pd_t actually
+        portal_table_t* ptab; // in domain_t actually
         int32_t* user_stack;
         int32_t* interrupt_stack;
         int32_t* invocation_stack;

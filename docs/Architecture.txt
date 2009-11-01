@@ -1,0 +1,59 @@
+== Metta OS philosophy and architecture ==
+
+=== Philosophy ===
+
+ 1. The privileged-mode nucleus is as small as possible. If something can be run at user level, it is.
+ 1. System is constructed from fine-grained unprivileged components, connected using interfaces.
+
+
+Rework this into a sane architectural document for wiki (once we HAVE the sane idea, that is!)
+
+
+
+
+== Metta OS nucleus and userspace servers architecture ==
+
+The basic Nested Process Model is inherited from Fluke kernel, as illustrated in the following picture:
+
+[[Image(fluke.gif, align=center)]]
+
+The nucleus (or "micro-kernel") only provides the IPC calls necessary for safe transfer of control between Protection Domains (nesters or address spaces) and minimal primitives necessary to donate CPU time and memory space between Protection Domains.
+
+The rest of the OS functionality is based on Common Protocols implemented by various servers. CP interfaces can be selectively interposed on to allow nesters to implement custom memory allocation, scheduling and security policies.
+
+In this matter nucleus implements the well-known "mechanism not policy" architecture, leaving specific policy decisions to nesters.
+
+Default "kserver" nester provides basic root services for applications, including the dynamic loader/linker (OMOS).
+
+== Philosophy ==
+
+ 1. The privileged-mode nucleus is as small as possible. If something can be run at user level, it is. [Pebble]
+ 1. Relativity of structures and operations, state encapsulation, atomic IPC. [Fluke]
+    a. Nester's child memory is fully accessible to nester. Since child also uses standard low-level kernel API to create structures, parent can find and modify them if needed. Child's memory is seen as just an arbitrary address space chunk with bits of kernel-created structures and can be therefore copied, suspended or resumed by the parent nester freely. [Fluke]
+ 1. Flexible selective interposition on common services. [Fluke]
+ 1. Nested servers to provide finegrained set of abstractions to clients. [Fluke]
+
+== Architecture ==
+
+ 1. atomic API
+ 1. process-model (process-model w/ continuations like Mach, also possible?)
+ 1. fully preemptible kernel (possible to switch to "atomic API, interrupt model partially preemptible kernel" for memory-tight systems → using continuations shall reduce stacks to 1 per CPU).
+ 1. migrating threads model (passive server objects)
+
+Nucleus provides support for threads of execution to cross Protection Domains borders in a controllable way. [@sa glue code]
+
+A minimal virtual memory management primitives supported by nucleus too (map/demap/grant).
+
+Exportable state: kernel structures managed by user-level pager/allocator. (needed for snapshots/persistence)
+(also, atomic IPC)
+
+Fluke itself is task-based, which means little to no support for migrating threads in the kernel. Migrating implementation would throw away ports, port sets and spaces in favor of passive address spaces, continuations and migrating threads.
+
+Continuation shall be visible to user-level code simply as thread. This is the point at which thread execution can be restarted.
+
+=== More architectural notes (to be merged) === #notes
+
+Requirements:
+ * Efficiency: Multiple tasks efficiently operating on audio and video data (or any other data streams f.ex. network traffic) in realtime.
+ * Security: Protection of data between tasks (because of use of untrusted code from the Internet for carrying out some tasks). Isolation of tasks or whole task groups to a sandboxed environment.
+ * Emulation: Allow almost seamless execution of various code from different legacy operating systems of the same architecture and even efficient translation of code from other architectures.

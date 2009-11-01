@@ -1,0 +1,28 @@
+Components are pieces of code and static data (which has no mutable state).
+
+Applications are built from interconnected components.
+
+Components link from several shared libraries. Libraries are shared across whole system and provide means to save
+code size by sharing common implementations across running applications. Components are designed to offer services
+through interfaces, which embed references to current (per-thread) component state and list of methods that could be
+called through this interface.
+
+in-component dependencies: symbols and objects needed to build together component object.
+inter-component dependencies: other interfaces that are needed for functioning of this component, can be fullfilled
+ by building or finding other component objects which provide such interfaces.
+
+
+[Component1: file.c other.o library.so [exported interfaces: Interface1 Interface2] [required interfaces: FileIO]]
+
+here, library.so's code and static data can be shared between multiple components.
+
+Q: how to create proper component instance state if library.so needs to have some local data too?
+
+
+
+For efficient linking we use technique used by OMOS object/meta-object server.
+
+
+For now: link statically and with PIC code. The code could be relocated. No shared objects to resolve.
+    => Only minimal relocating loader is needed.
+

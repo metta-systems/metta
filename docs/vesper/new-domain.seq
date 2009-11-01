@@ -1,0 +1,41 @@
+.PS
+copy "../sequence.pic";
+
+# Create new domain
+
+object(P,"Parent");
+object(B,"Builder");
+object(H,"Heap");
+object(D,"Domain Manager");
+object(C,"Child");
+step();
+
+active(P);
+message(P,B,"Create new domain closure");
+step();
+
+message(B,H,"Create new heap");
+return_message(H,B,"");
+step();
+
+message(B,B,"Create domain state within heap");
+return_message(B,P,"");
+step();
+
+message(P,D,"Create new domain record");
+complete(P);
+step();
+
+return_message(D,B,"Activate domain record");
+step();
+
+message(B,H,"Construct heap local state");
+step();
+
+return_message(H,B,"Construct entry thread");
+step();
+
+message(B,C,"Child thread start execution");
+step();
+
+.PE
