@@ -94,12 +94,18 @@ if (x) { \
                 remain_to_copy -= to_copy;
                 copy_from += to_copy;
                 page_offset = to_copy;
+#if ELF_LOADER_DEBUG
+                kconsole << "Copying " << to_copy << " bytes from " << copy_from << " to " << vaddr << endl;
+#endif
             }
             // Zero bss part of the page, if any.
             if (remain_to_copy == 0 && remain_to_zero > 0 && page_offset < PAGE_SIZE)
             {
                 size_t to_zero = min(remain_to_zero, PAGE_SIZE - page_offset);
                 memutils::fill_memory((void*)(vaddr + page_offset), 0, to_zero);
+#if ELF_LOADER_DEBUG
+                kconsole << "Zeroing " << to_zero << " bytes at " << (vaddr + page_offset) << endl;
+#endif
                 remain_to_zero -= to_zero;
             }
             vaddr += PAGE_SIZE;
