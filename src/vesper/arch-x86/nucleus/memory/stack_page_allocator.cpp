@@ -124,17 +124,17 @@ address_t stack_frame_allocator_t::alloc_frame(address_t virt)
     lock();
     address_t next_frame = next_free_phys;
     pagedir->create_mapping(TEMP_MAPPING, next_frame);
-    
+
     next_free_phys = *(address_t*)TEMP_MAPPING;
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
-    
+
     // wipe it clean
     memutils::fill_memory((void*)TEMP_MAPPING, 0, PAGE_SIZE);
     pagedir->create_mapping(virt, next_frame);
-    
+
     unlock();
-    
+
     pagedir->remove_mapping(TEMP_MAPPING);
     return next_frame;
 }
