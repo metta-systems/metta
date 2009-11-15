@@ -1,0 +1,21 @@
+MMgmt in Nemesis:
+
+stretch allocator - allocates virtual memory
+frame allocator - allocates physical memory
+
+stretch - records location, size and protection of a vm region
+stretch driver - must be bound to a stretch and provides physical backing store. they talk to frame allocator and set up
+  virt2phys mappings for their stretch.
+ramtab - list of allocated physical frame ranges and their ownership and status
+
+
+1. map(va, pa, attr) : arrange that the virtual address va maps onto the physical address pa with the (machine-dependent) PTE attributes attr.
+2. unmap(va) : remove the mapping of the virtual address va. Any further access to the address should cause some form of memory fault.
+3. trans(va) ->  (pa, attr) : retrieve the current mapping of the virtual address va, if any.
+
+Either mapping or unmapping a virtual address va requires that the calling domain is executing in a protection domain which holds a meta right for the stretch containing va. A consequence of this is that it is not possible to map a virtual address which is not part of some stretch7.
+
+** For Metta: domain attr: list_t<stretch_t*> stretches;
+
+It is also necessary that the frame which is being used for mapping (or which is being unmapped) is validated. This involves ensuring that the calling domain owns the frame, and that the frame is not currently mapped or nailed. These conditions are checked by using the RamTab, which is a simple enough structure to be used by low-level code.
+

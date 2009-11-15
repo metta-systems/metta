@@ -1,10 +1,43 @@
+kickstart
+nucleus
+
+interrupt_dispatcher
+scheduler
+security_server
+portal_manager
+vm_server
+trader
+root_server
+
+
+what privileged operations does a module/application need to perform?
+ * memory pages map/unmap
+ * anything else?
+
+
+meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
+
+
+The user-space part of the operating system is comprised of a number of distinct /modules/, each of which exports one or more strongly-typed /interfaces/.
+
+An interface definition language called MIDDL is used to specify the types, exceptions and procedures of an interface, and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure invocations.
+
+A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and applications to pick and choose between them. This may be termed ``plug and play extensibility''; we note that it is implemented above the protection boundary.
+
+
+Each application should notionally exist in an accounting domain, and operating system QoS is provided to this entity.
+
+
+**** WIKI PAGE BELOW ****
+
+
 == Metta OS philosophy and architecture ==
 
 === Philosophy ===
 
  1. The privileged-mode nucleus is as small as possible. If something can be run at user level, it is.
  1. System is constructed from fine-grained unprivileged components, connected using interfaces.
-
+ 1. Reduce QoS crosstalk and provide certain QoS guarantees to applications.
 
 Rework this into a sane architectural document for wiki (once we HAVE the sane idea, that is!)
 
