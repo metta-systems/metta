@@ -7,7 +7,7 @@ bool bootinfo_t::append_mmap_entry(multiboot_t::mmap_entry_t* entry)
         return false;
 
     multiboot_t::header_t* header = multiboot_header();
-    uint32_t end = boot_info + size();
+    uint32_t end = uint32_t(this) + size();
 
     memutils::copy_memory(reinterpret_cast<void*>(end), entry, entry_size);
     reinterpret_cast<multiboot_t::mmap_entry_t*>(end)->set_entry_size(entry_size); // ignore any extra fields
