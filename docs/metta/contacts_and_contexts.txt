@@ -17,6 +17,8 @@ between you two. Even more - a group of people, such as a skype group chat or
 IRC chat room. Or your organization's structural unit, which is no different. Of
 course, there will be a way to stay alert of current incoming conversations,
 with popups and sounds and however else you configure it for yourself.
+Your peers are connected into a social graph, with multiple levels and different
+relations between them and other entities.
 
 Another nifty thing I'm thinking of is Contexts - the kind of activity you have
 at your computer. For example, a Chat context would definitely enable all popups
