@@ -44,6 +44,18 @@ and loading models allow to share code and static data between all domains effic
 
 -------8<------------------------------------------------------------------------------------------------------>8-------
 
+== higher level (ideas) ==
+
+Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator
+of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate 
+information from other sources into your exocortex and to publish your information to other media.
+This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you, 
+in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data
+across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out, 
+can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
+This way you do not have to go for the news, the news come to you.
+
+==
 
 
 meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
