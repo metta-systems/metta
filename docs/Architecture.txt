@@ -57,6 +57,11 @@ This way you do not have to go for the news, the news come to you.
 
 ==
 
+amines — little agents that bind social services to exocortex.
+Mettamphetamine - main driver
+Dopplamine - doppler binding
+Twittamine - twitter binding etc
+Tryptamine - googlewave binding? :D
 
 meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
 
