@@ -54,6 +54,9 @@ in your favourite application, in your home environment, then agents can publish
 across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out, 
 can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
 This way you do not have to go for the news, the news come to you.
+At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain
+your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is
+synced much like p2p networks share data.
 
 ==
 
