@@ -2,7 +2,7 @@ Metta architecture consists of glue code, trusted computing base components, whi
 application processes (components or tasks).
 Applications can be built from shared libraries and components, called modules, which may be located in different
 domains or colocated by portal manager into the same domain as application.
-Each application should notionally exist in an accounting domain, and operating system QoS is provided to this entity.
+Each application should notionally exist in an accounting domain and operating system QoS is provided to this entity.
 
 == Glue code ==
 
@@ -11,7 +11,7 @@ allowing protection domains switch.
 
 Code exists in glue layer for a number of reasons:
  - code is privileged and therefore needs to execute with supervisor permissions,
- - code is executed because of exception or interrupt and therefore needs to be both non-preemptible and uninterruptible,
+ - code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
  - code is generally used and needs to run atomically/uninterruptible.
 
 Interrupts are also implemented as stubs in glue code, due to their privileged nature.
@@ -41,6 +41,26 @@ Dynamic loader (Sjofn), similar to OMOS server, is used to perform component rel
 and loading models allow to share code and static data between all domains efficiently.
 
 
+== Tasks ==
+
+Tasks run as unprivileged, preemptible and according to negotiated QoS level.
+
+
+== Startup ==
+
+During startup system loads the TCB modules — these are the most important system modules, always trusted by other
+components.
+
+
+bootup phases:
+ Phase 1: System bootstrap, performed by GRUB or any other system loader. It loads kickstart - a small startup code that
+performs initialization and brings system to a well-known consistent state, for example initializes paging and builds
+or loads device tree.
+ Phase 2: TCB initialization, performed by kickstart, which loads glue code and TCB components and runs their startup
+initialization code. After this stage is over, the kernel proper is ready to start running userspace programs.
+ Phase 3: Complete bootup. Control is transferred from kickstart to first userspace application — root_server or init.
+init will load remaining system components and device drivers and perform initialization. Then a specified set of 
+startup programs is loaded and added to scheduling queue, control is then transferred to scheduler and all systems go.
 
 -------8<------------------------------------------------------------------------------------------------------>8-------
 
@@ -82,45 +102,7 @@ A name-space scheme (based on Plan-9 contexts) allows implementations of interfa
 to pick and choose between them. This may be termed ``plug and play extensibility''; we note that it is implemented 
 above the protection boundary.
 
-**** WIKI PAGE BELOW ****
-
-
-== Metta OS nucleus and userspace servers architecture ==
-
-The nucleus (or "micro-kernel") only provides the IPC calls necessary for safe transfer of control between 
-Protection Domains (nesters or address spaces) and minimal primitives necessary to donate CPU time and memory space
-between Protection Domains.
-
-The rest of the OS functionality is based on Common Protocols implemented by various servers. CP interfaces can be 
-selectively interposed on to allow nesters to implement custom memory allocation, scheduling and security policies.
-
-In this matter nucleus implements the well-known "mechanism not policy" architecture, leaving specific policy 
-decisions to nesters.
-
-Default "kserver" nester provides basic root services for applications, including the dynamic loader/linker (OMOS).
-
-== Philosophy ==
-
- 1. Relativity of structures and operations, state encapsulation, atomic IPC. [Fluke]
-    a. Nester's child memory is fully accessible to nester. Since child also uses standard low-level kernel API 
-to create structures, parent can find and modify them if needed. Child's memory is seen as just an arbitrary 
-address space chunk with bits of kernel-created structures and can be therefore copied, suspended or resumed 
-by the parent nester freely. [Fluke]
- 1. Flexible selective interposition on common services. [Fluke]
- 1. Nested servers to provide finegrained set of abstractions to clients. [Fluke]
-
-== Architecture ==
-
- 1. atomic API
- 1. process-model (process-model w/ continuations like Mach, also possible?)
- 1. fully preemptible kernel (possible to switch to "atomic API, interrupt model partially preemptible kernel" 
-for memory-tight systems → using continuations shall reduce stacks to 1 per CPU).
- 1. migrating threads model (passive server objects)
-
-A minimal virtual memory management primitives supported by nucleus too (map/demap/grant).
+== from Fluke ==
 
 Exportable state: kernel structures managed by user-level pager/allocator. (needed for snapshots/persistence)
 (also, atomic IPC)
-
-Continuation shall be visible to user-level code simply as thread. 
-This is the point at which thread execution can be restarted.
