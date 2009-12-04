@@ -4,6 +4,29 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+/*
+
+bootloader
++---kickstart
+	+---setup initial page mappings
+	+---map/move glue and boot components to their designated addresses
+	+---enable paging
+	+---glue_init
+		+---initialize syscalls interface page
+	+---kernel_init
+	    +---initialize exception and interrupt handlers
+        +---find bootimage PCBs
+        +---run PCB initialization upcalls
+        +---enter them into schedule
+        +---run scheduler
+
+bootimage:
+
+ kernel: kickstart
+ module: initfs index | glue | boot TCBs
+
+*/
+
 #include "memutils.h"
 #include "multiboot.h"
 #include "gdt.h"
