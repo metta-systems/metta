@@ -1,0 +1,26 @@
+received: [interface1_data* instance; interface1_methods* methods]
+
+
+class interface1
+{
+void virtual method1();
+void virtual method2();
+}
+
+
+client:
+
+interface1* meth = trader::get_interface("interface1")
+meth->method1();
+
+
+
+struct interface1_c
+{
+void (*method1)();
+void (*method2)();
+}
+
+interface1_wrap* meth = trader::get_interface("interface1")
+meth->methods->method1(meth->instance);
+

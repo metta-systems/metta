@@ -1,0 +1,47 @@
+Available Nemo syscalls to glue code:
+
+  privileged:
+	sc_activate // Activate a process
+	sc_halt     // Halt the processor ??
+
+  unprivileged:
+	sc_kernel   // Activate kernel
+	sc_rfa      // Return from activation
+	sc_rfar     // Return from activation, resume given context
+	sc_deliver  // Deliver any pending events
+	sc_ici      // Invalidate given range of instruction cache
+	sc_dci      // Invalidate given range of data cache
+
+	ev_create
+	ev_accept
+	ev_reject
+	ev_signal
+	
+Available Nemesis syscalls to glue code:
+
+  privileged:
+ 	ntsc_swpipl        // Change interrupt priority level.
+	ntsc_entkern       // Enter kernel mode.
+	ntsc_leavekern     // Leave kernel mode.
+	ntsc_kevent        // Send an event from an interrupt stub.
+	ntsc_rti           // Return from an interrupt stub.
+
+  unprivileged:
+	ntsc_rfa           // Return from activation.
+	ntsc_rfa_resume    // Return from activation and resume context.
+	ntsc_rfa_block     // Return from activation and block.
+	ntsc_block         // Block awaiting an event.
+	ntsc_yield         // Relinquish CPU allocation for this period.
+	ntsc_send          // Send an event.
+
+Syscalls for metta glue:
+
+  privileged:
+	sc_activate(vcpu_t*)  Activate a process
+
+  unprivileged:
+	sc_kernel()    Activate kernel operation, details of operation marshalled into shared memory
+	               between kernel and process.
+	sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
+	sc_return_resume(context_t*) Return from activation, resuming passed context.
+

@@ -1,92 +1,108 @@
-kickstart
-nucleus
+Metta architecture consists of glue code, trusted computing base components, which together form kernel proper,
+application processes (components or tasks).
+Applications can be built from shared libraries and components, called modules, which may be located in different
+domains or colocated by portal manager into the same domain as application.
+Each application should notionally exist in an accounting domain and operating system QoS is provided to this entity.
 
-interrupt_dispatcher
-scheduler
-security_server
-portal_manager
-vm_server
-trader
-root_server
+== Glue code ==
+
+Glue code is privileged and is not preemptible. The task of glue code is to provide support for process scheduling by 
+allowing protection domains switch.
+
+Code exists in glue layer for a number of reasons:
+ - code is privileged and therefore needs to execute with supervisor permissions,
+ - code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
+ - code is generally used and needs to run atomically/uninterruptible.
+
+Interrupts are also implemented as stubs in glue code, due to their privileged nature.
+
+Some glue code syscalls are privileged and can be used only by members of the TCB, others are used by application
+processes to request work from other domains.
 
 
-what privileged operations does a module/application need to perform?
- * memory pages map/unmap
- * anything else?
+== TCB ==
 
+The following components comprise TCB: virtual processor scheduler, security server, portal manager, virtual memory
+server, trader/binder, loader. What about interrupt dispatcher, do we need one? Perhaps, at least to allow drivers 
+to register for their interrupts.
+
+
+Kernel components have almost no private data, on which contention could arise. Most of the data for kernel calls 
+is provided by the process engaged in the syscall, therefore not affecting service of other processes.
+This also helps API atomicity?
+
+Architecture allows in theory to implement any virtual processor scheduler and, for example, implement regular
+kernel threads with thread scheduler instead of current VCPU implementation.
+
+Memory allocation is peformed from a global interdomain heap, which uses entire available address space plus some
+specific application or driver requests, like low memory for 16-bit DMA etc.
+
+Dynamic loader (Sjofn), similar to OMOS server, is used to perform component relocation and linking. Employed memory
+and loading models allow to share code and static data between all domains efficiently.
+
+
+== Tasks ==
+
+Tasks run as unprivileged, preemptible and according to negotiated QoS level.
+
+
+== Startup ==
+
+During startup system loads the TCB modules — these are the most important system modules, always trusted by other
+components.
+
+
+bootup phases:
+ Phase 1: System bootstrap, performed by GRUB or any other system loader. It loads kickstart - a small startup code that
+performs initialization and brings system to a well-known consistent state, for example initializes paging and builds
+or loads device tree.
+ Phase 2: TCB initialization, performed by kickstart, which loads glue code and TCB components and runs their startup
+initialization code. After this stage is over, the kernel proper is ready to start running userspace programs.
+ Phase 3: Complete bootup. Control is transferred from kickstart to first userspace application — root_server or init.
+init will load remaining system components and device drivers and perform initialization. Then a specified set of 
+startup programs is loaded and added to scheduling queue, control is then transferred to scheduler and all systems go.
+
+-------8<------------------------------------------------------------------------------------------------------>8-------
+
+== higher level (ideas) ==
+
+Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator
+of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate 
+information from other sources into your exocortex and to publish your information to other media.
+This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you, 
+in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data
+across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out, 
+can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
+This way you do not have to go for the news, the news come to you.
+At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain
+your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is
+synced much like p2p networks share data.
+
+==
+
+amines — little agents that bind social services to exocortex.
+Mettamphetamine - main driver
+Dopplamine - doppler binding
+Twittamine - twitter binding etc
+Tryptamine - googlewave binding? :D
 
 meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
 
 
-The user-space part of the operating system is comprised of a number of distinct /modules/, each of which exports one or more strongly-typed /interfaces/.
+== from Nemesis ==
 
-An interface definition language called MIDDL is used to specify the types, exceptions and procedures of an interface, and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure invocations.
+The user-space part of the operating system is comprised of a number of distinct /modules/, each of which exports one 
+or more strongly-typed /interfaces/.
 
-A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and applications to pick and choose between them. This may be termed ``plug and play extensibility''; we note that it is implemented above the protection boundary.
+An interface definition language called MIDDL is used to specify the types, exceptions and procedures of an interface, 
+and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure 
+invocations.
 
+A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and applications 
+to pick and choose between them. This may be termed ``plug and play extensibility''; we note that it is implemented 
+above the protection boundary.
 
-Each application should notionally exist in an accounting domain, and operating system QoS is provided to this entity.
-
-
-**** WIKI PAGE BELOW ****
-
-
-== Metta OS philosophy and architecture ==
-
-=== Philosophy ===
-
- 1. The privileged-mode nucleus is as small as possible. If something can be run at user level, it is.
- 1. System is constructed from fine-grained unprivileged components, connected using interfaces.
- 1. Reduce QoS crosstalk and provide certain QoS guarantees to applications.
-
-Rework this into a sane architectural document for wiki (once we HAVE the sane idea, that is!)
-
-
-
-
-== Metta OS nucleus and userspace servers architecture ==
-
-The basic Nested Process Model is inherited from Fluke kernel, as illustrated in the following picture:
-
-[[Image(fluke.gif, align=center)]]
-
-The nucleus (or "micro-kernel") only provides the IPC calls necessary for safe transfer of control between Protection Domains (nesters or address spaces) and minimal primitives necessary to donate CPU time and memory space between Protection Domains.
-
-The rest of the OS functionality is based on Common Protocols implemented by various servers. CP interfaces can be selectively interposed on to allow nesters to implement custom memory allocation, scheduling and security policies.
-
-In this matter nucleus implements the well-known "mechanism not policy" architecture, leaving specific policy decisions to nesters.
-
-Default "kserver" nester provides basic root services for applications, including the dynamic loader/linker (OMOS).
-
-== Philosophy ==
-
- 1. The privileged-mode nucleus is as small as possible. If something can be run at user level, it is. [Pebble]
- 1. Relativity of structures and operations, state encapsulation, atomic IPC. [Fluke]
-    a. Nester's child memory is fully accessible to nester. Since child also uses standard low-level kernel API to create structures, parent can find and modify them if needed. Child's memory is seen as just an arbitrary address space chunk with bits of kernel-created structures and can be therefore copied, suspended or resumed by the parent nester freely. [Fluke]
- 1. Flexible selective interposition on common services. [Fluke]
- 1. Nested servers to provide finegrained set of abstractions to clients. [Fluke]
-
-== Architecture ==
-
- 1. atomic API
- 1. process-model (process-model w/ continuations like Mach, also possible?)
- 1. fully preemptible kernel (possible to switch to "atomic API, interrupt model partially preemptible kernel" for memory-tight systems → using continuations shall reduce stacks to 1 per CPU).
- 1. migrating threads model (passive server objects)
-
-Nucleus provides support for threads of execution to cross Protection Domains borders in a controllable way. [@sa glue code]
-
-A minimal virtual memory management primitives supported by nucleus too (map/demap/grant).
+== from Fluke ==
 
 Exportable state: kernel structures managed by user-level pager/allocator. (needed for snapshots/persistence)
 (also, atomic IPC)
-
-Fluke itself is task-based, which means little to no support for migrating threads in the kernel. Migrating implementation would throw away ports, port sets and spaces in favor of passive address spaces, continuations and migrating threads.
-
-Continuation shall be visible to user-level code simply as thread. This is the point at which thread execution can be restarted.
-
-=== More architectural notes (to be merged) === #notes
-
-Requirements:
- * Efficiency: Multiple tasks efficiently operating on audio and video data (or any other data streams f.ex. network traffic) in realtime.
- * Security: Protection of data between tasks (because of use of untrusted code from the Internet for carrying out some tasks). Isolation of tasks or whole task groups to a sandboxed environment.
- * Emulation: Allow almost seamless execution of various code from different legacy operating systems of the same architecture and even efficient translation of code from other architectures.
