@@ -4,29 +4,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*
-
-bootloader
-+---kickstart
-	+---setup initial page mappings
-	+---map/move glue and boot components to their designated addresses
-	+---enable paging
-	+---glue_init
-		+---initialize syscalls interface page
-	+---kernel_init
-	    +---initialize exception and interrupt handlers
-        +---find bootimage PCBs
-        +---run PCB initialization upcalls
-        +---enter them into schedule
-        +---run scheduler
-
-bootimage:
-
- kernel: kickstart
- module: initfs index | glue | boot TCBs
-
-*/
-
 #include "memutils.h"
 #include "multiboot.h"
 #include "gdt.h"
@@ -71,53 +48,15 @@ static void map_identity(const char* caption, address_t start, address_t end)
 // Scratch area for initial pagedir
 uint32_t pagedir_area[1024] ALIGNED(4096);
 
-/*!
- * @brief Prepare kernel and init components and boot system.
- * @ingroup Bootup
- *
- * This part starts in protected mode, linear addresses equal physical, paging is off.
- *
- * Put kernel in place
- * - set up 1:1 page mapping for the bottom 4Mb of RAM as well as kernel higher-half mapping at K_SPACE_START,
- * - enter paged mode,
- * - run kernel ctor.
- *
- * Activate startup servers
- * - create separate PDs for startup components,
- * - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
- *
- * vm_server
- * - give vm_server current mapping situation and active memory map
- * - further allocations will go on from vm_server
- *
- * scheduler
- * portal_manager
- * interrupt_dispatcher
- * trader
- * security_server
- *
- * enter root_server
- * - root_server can then use virtual memory, threads etc
- * - root_server expects cpu to be in paging mode with pagedir in highmem, kernel mapped high and exception handlers set up in low mem - these will be relocated and reinstated by interrupts component when it's loaded,
- * - verify required components are present in initfs (pmm, cpu, interrupts, security manager, portal manager, object loader),
- * - set up security contexts and permissions
- * - boot other cpus if present,
- * - switch to usermode and continue execution in the init process,
- * activate extra servers
- * - root filesystem mounter,
- * - hardware detector,
- */
 void kickstart(multiboot_t::header_t* mbh)
 {
     run_global_ctors();
 
     multiboot_t mb(mbh);
 
-    ASSERT(mb.module_count() == 2);
-    multiboot_t::modinfo_t* kernel = mb.module(0); // nucleus
-    multiboot_t::modinfo_t* bootcp = mb.module(1); // bootcomps
-    ASSERT(kernel);
-    ASSERT(bootcp);
+    ASSERT(mb.module_count() > 1);
+    multiboot_t::modinfo_t* bootimage = mb.module(0);
+    ASSERT(bootimage);
 
     address_t alloc_start = page_align_up<address_t>(max(LINKSYM(placement_address),max(kernel->mod_end, bootcp->mod_end)));
     frame_allocator.init(0, &pagedir);

@@ -1,0 +1,56 @@
+/*!
+ * @brief Prepare kernel and init components and boot system.
+ * @ingroup Bootup
+ *
+ * This part starts in protected mode, linear addresses equal physical, paging is off.
+ *
+ * - set up 1:1 page mapping for the bottom 4Mb of RAM
+ * - map glue and boot components to their designated addresses (starting, say at 4Mb)
+ * - enter paged mode
+ * - init glue code
+ *   - initialize exception and interrupt handlers
+ *   - init syscalls interface page
+ * - init linker
+ * - find bootimage PCBs
+ * - run PCB initialization upcalls
+ *   - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
+ * - enter them into schedule
+ * - run scheduler
+ *
+ * 
+
+ * glue code:
+ * - exception handlers/stubs
+ * - minimal privileged and uninterruptible code
+ * - syscalls interface page
+
+bootimage:
+
+kernel: kickstart
+module: initfs index | glue | boot TCBs
+
+*/
+/*!
+From the starting application process viewpoint:
+
+- load application code and data
+- read library dependencies
+- for missing libraries, load them and their dependencies
+- link calls from app to used libraries
+
+
+Library viewpoint:
+- library implements a component interface
+- this means per-client data is allocated by calling constructors of the interface
+- libraries which do not have per-client data may implement interfaces directly, but i presume this is rare.
+
+A typical application:
+- load trader library
+- load memory library
+- instantiate trader interface
+- instantiate memory interface
+- allocate something
+- use trader to locate a peer
+- instantiate a peer interface
+- send something to peer via interface instance
+*/
