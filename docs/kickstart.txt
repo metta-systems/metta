@@ -29,6 +29,10 @@ bootimage:
 kernel: kickstart
 module: initfs index | glue | boot TCBs
 
+for simplicity, prelink initial components at fixed addresses and put them into normal ELF files. store entry point
+address from ELF file to PCB using buildpcb tool.
+
+
 */
 /*!
 From the starting application process viewpoint:

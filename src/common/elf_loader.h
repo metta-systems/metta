@@ -14,7 +14,7 @@ namespace kickstart_n {
 }
 
 //! Parse an ELF file, generate symbolic information and load code/data segments.
-class elf_parser
+class elf_loader_t : public elf_parser_t
 {
 public:
     //! Creates a blank ELF parser, prepared for a call to load_image.

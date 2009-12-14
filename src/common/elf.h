@@ -16,9 +16,10 @@
 namespace elf32
 {
 
+
 /*!
-* ELF data types
-*/
+ * ELF data types
+ */
 typedef uint32_t  addr_t;  /*!< 4 bytes/4 align/unsigned */
 typedef uint16_t  half_t;  /*!< 2 bytes/2 align/unsigned */
 typedef uint32_t  off_t;   /*!< 4 bytes/4 align/unsigned */
@@ -28,9 +29,9 @@ typedef  uint8_t  byte_t;  /*!< 1 byte /1 align/unsigned */
 
 
 /*!
-* ELF file Header
-*/
-struct header
+ * ELF file Header
+ */
+struct header_t
 {
     word_t  magic;
     byte_t  elfclass;       /*!< File class */
@@ -55,7 +56,7 @@ struct header
 /* header.magic */
 #define ELF_MAGIC  0x464c457f    /*!< ASCII "ELF",0x7F */
 
-/* header.class */
+/* header.elfclass */
 #define ELF_CLASS_NONE 0x00      /*!< Invalid class  */
 #define ELF_CLASS_32   0x01      /*!< 32 bit objects */
 #define ELF_CLASS_64   0x02      /*!< 64 bit objects */
@@ -91,9 +92,9 @@ struct header
 
 
 /*!
-* Section header entry.
-*/
-struct section_header
+ * Section header entry.
+ */
+struct section_header_t
 {
     word_t  name;          /*!< Section name, index in string table */
     word_t  type;          /*!< Type of section */
@@ -146,9 +147,9 @@ struct section_header
 
 
 /*!
-* Symbol Table entry.
-*/
-struct symbol
+ * Symbol Table entry.
+ */
+struct symbol_t
 {
     word_t  name;          /*!< Symbol name, index into string table */
     addr_t  value;         /*!< Symbol value */
@@ -184,15 +185,15 @@ struct symbol
 
 
 /*!
-* Relocation Entries
-*/
-struct rel
+ * Relocation Entries
+ */
+struct rel_t
 {
     addr_t  offset;
     word_t  info;
 };
 
-struct rela
+struct rela_t
 {
     addr_t   offset;
     word_t   info;
@@ -220,9 +221,9 @@ struct rela
 
 
 /*!
-* Program Header entry.
-*/
-struct program_header
+ * Program Header entry.
+ */
+struct program_header_t
 {
     word_t  type;           /*!< Program section type */
     off_t   offset;         /*!< File offset */
@@ -255,7 +256,7 @@ struct program_header
 /*!
  * Dynamic linking info
  */
-struct dyn
+struct dyn_t
 {
     sword_t tag;
     union
