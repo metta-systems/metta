@@ -18,16 +18,96 @@
 #endif
 
 /*!
- * initfs file consists of four areas: the header, data area, names area and the index.
- * 
+
+Dictionary (plist) storage format: shared stringtable, entry struct: (ofs,len), tags table: array of (type,entry) structs -
+type describes the type of tag, associated entry stores tag metadata.
+plist: array of (tag,entry) - where tag is "key"- index into tags table, entry is value, data at ofs of len bytes.
+
+*/
+namespace proplists {
+class entry_t
+{
+    address_t offset;
+    size_t    size;
+};
+class tag_t
+{
+    uint32_t type;
+    entry_t  meta;
+};
+class property_t
+{
+    tag_t*   tag;
+    entry_t  value;
+};
+
+class proplist_t
+{
+public:
+    proplist_t(address_t start);
+
+private:
+    address_t   base;
+    tag_t*      tags;
+    property_t* contents;
+};
+}
+
+//in initfs
+enum tags_types { INITFS_MODULE, INITFS_BLOB, INITFS_DEPS };
+
+/*!
+
+Initfs contains modules, with dependency info, used to boot up the system.
+Index information in initfs should allow quick and easy dependency calculation and module instantiation.
+Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
+
+deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
+
+
+initfs nexus is a dictionary of initfs contents. initfs header contains a pointer to the nexus.
+
+
+<data blob>
+address
+size
+name
+<module>
+address
+size
+name
+dependencies list
+upcall record (PCB) location
+
+
+--------
+example initfs:
+module interrupts, depends:cpu,memory, upcall@6789xx
+module cpu, depends:none, upcall@1234xx
+module memory, depends:mmu, upcall@3456xx
+module mmu, depends:none, upcall@4567xx
+module keyboard, depends:keymaps, upcall@1278xx
+blob keymaps, @3333, size 2222
+tags table:
+tag 1: MODULE, meta: ?
+tag 2: BLOB, meta: ?
+--------
+
+
+* initfs file consists of four areas: the header, data area, names area and the index.
+ *
  * the header contains information about loadable areas - data, names and index.
 // Initfs file layout:
 // version 1: uses separate index structure, not in production.
-// version 2: current.
-// initfs::header
-// files data
-// aligned: names area
-// aligned: initfs::entry * count
+// version 2: previous format.
+//            * initfs::header
+//            * files data
+//            * aligned: names area
+//            * aligned: index of initfs::entry * count
+// version 3: current.
+              * initfs::header
+              * aligned: modules data
+              * aligned: nexus
  */
 class initfs_t
 {
