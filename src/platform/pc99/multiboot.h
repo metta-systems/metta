@@ -82,8 +82,8 @@ public:
     } PACKED;
 
     /*!
-    * Boot information passed in by multiboot loader.
-    */
+     * Boot information passed in by multiboot loader.
+     */
     struct header_t
     {
         uint32_t flags; // enum above
@@ -100,12 +100,12 @@ public:
         modinfo_t* modules;
 
         /* ELF information */
-        uint32_t num;
-        uint32_t size;
-        uint32_t addr;
-        uint32_t shndx;
+        uint32_t num;     /*!< Number of section headers, corresponds to elf32::shnum. */
+        uint32_t size;    /*!< Size of each section header entry, corresponds to elf32::shentsize. */
+        uint32_t addr;    /*!< Section header table address, corresponds to elf32::shoff. */
+        uint32_t shndx;   /*!< String table index in the section header table, corresponds to elf32::shstrndx. */
 
-        mmap_t mmap;
+        mmap_t mmap;      /*!< Memory map information. */
 
         uint32_t drives_length;
         uint32_t drives_addr;
@@ -124,11 +124,12 @@ public:
         uint32_t vbe_interface_len;
     } PACKED;
 
+    /*! Information about a boot module. */
     struct modinfo_t
     {
-        uint32_t mod_start;
-        uint32_t mod_end;
-        const char* str;
+        uint32_t mod_start; /*!< Module start address in memory. */
+        uint32_t mod_end;   /*!< Module end address. */
+        const char* str;    /*!< Pointer to module name as C string. */
         uint32_t reserved;
     } PACKED;
 
