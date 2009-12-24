@@ -5,6 +5,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "multiboot.h"
+#include "elf_parser.h"
 #include "memutils.h"
 #include "debugger.h"
 
@@ -22,9 +23,13 @@ void multiboot_t::set_header(multiboot_t::header_t* h)
     if (!is_elf())
         return;
 
-    elf32::section_header* shstrtab = (elf32::section_header*)(header->addr + header->shndx * header->size);
+//     elf_parser_t elf(header->addr);
+//     symtab = elf.section_header_by_type(SHT_SYMTAB);
+//     strtab = elf.section_header(".strtab");
+
+//     elf32::section_header* shstrtab = (elf32::section_header*)(header->addr + header->shndx * header->size);
     // loop through the section headers, try to find the symbol table.
-    for(uint32_t i = 0; i < header->num; i++)
+/*    for(uint32_t i = 0; i < header->num; i++)
     {
         elf32::section_header* sh = (elf32::section_header*)(header->addr + i * header->size);
 
@@ -42,7 +47,7 @@ void multiboot_t::set_header(multiboot_t::header_t* h)
                 }
                 break;
         }
-    }
+    }*/
 }
 
 
