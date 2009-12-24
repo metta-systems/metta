@@ -19,45 +19,6 @@
 
 /*!
 
-Dictionary (plist) storage format: shared stringtable, entry struct: (ofs,len), tags table: array of (type,entry) structs -
-type describes the type of tag, associated entry stores tag metadata.
-plist: array of (tag,entry) - where tag is "key"- index into tags table, entry is value, data at ofs of len bytes.
-
-*/
-namespace proplists {
-class entry_t
-{
-    address_t offset;
-    size_t    size;
-};
-class tag_t
-{
-    uint32_t type;
-    entry_t  meta;
-};
-class property_t
-{
-    tag_t*   tag;
-    entry_t  value;
-};
-
-class proplist_t
-{
-public:
-    proplist_t(address_t start);
-
-private:
-    address_t   base;
-    tag_t*      tags;
-    property_t* contents;
-};
-}
-
-//in initfs
-enum tags_types { INITFS_MODULE, INITFS_BLOB, INITFS_DEPS };
-
-/*!
-
 Initfs contains modules, with dependency info, used to boot up the system.
 Index information in initfs should allow quick and easy dependency calculation and module instantiation.
 Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
@@ -65,36 +26,22 @@ Modules can be ELF executables or data blobs loaded and mapped at specified addr
 deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
 
 
-initfs nexus is a dictionary of initfs contents. initfs header contains a pointer to the nexus.
-
-
 <data blob>
 address
 size
-name
+name ofs
 <module>
 address
 size
-name
-dependencies list
+name ofs
 upcall record (PCB) location
+dependencies list (ndeps * name ofs entries)
 
 
---------
-example initfs:
-module interrupts, depends:cpu,memory, upcall@6789xx
-module cpu, depends:none, upcall@1234xx
-module memory, depends:mmu, upcall@3456xx
-module mmu, depends:none, upcall@4567xx
-module keyboard, depends:keymaps, upcall@1278xx
-blob keymaps, @3333, size 2222
-tags table:
-tag 1: MODULE, meta: ?
-tag 2: BLOB, meta: ?
---------
 
 
-* initfs file consists of four areas: the header, data area, names area and the index.
+
+* initfs file consists of four areas: the header, data area, names area and the metadata index.
  *
  * the header contains information about loadable areas - data, names and index.
 // Initfs file layout:
@@ -107,7 +54,7 @@ tag 2: BLOB, meta: ?
 // version 3: current.
               * initfs::header
               * aligned: modules data
-              * aligned: nexus
+              * aligned: nexus with metadata index in tagged format.
  */
 class initfs_t
 {
@@ -128,7 +75,7 @@ public:
     struct header_t
     {
         uint32_t magic;        //!< contains header magic value 'IifS'
-        uint32_t version;      //!< contains initfs format version, currently 2
+        uint32_t version;      //!< contains initfs format version, currently 3
         uint32_t index_offset; //!< offset of index entries
         uint32_t names_offset; //!< offset of names area
         uint32_t names_size;   //!< size of names area (unaligned)
@@ -136,7 +83,7 @@ public:
 
         header_t()
             : magic(FOURCC_MAGIC('I','i','f','S'))
-            , version(2)
+            , version(3)
             , index_offset(0)
             , names_offset(0)
             , names_size(0)
@@ -144,12 +91,17 @@ public:
         {}
     };
 
+    enum tags_e { MODULE = 1, BLOB = 2 };
+
     struct entry_t
     {
         uint32_t magic;
+        uint32_t tag;
+        uint32_t entry_size;
         uint32_t name_offset;
         uint32_t location;
         uint32_t size;
+        // here can be extra fields
 
         entry_t(uint32_t name_offset_ = 0, uint32_t location_ = 0, uint32_t size_ = 0)
             : magic(FOURCC_MAGIC('F','E','n','t'))
@@ -157,6 +109,12 @@ public:
             , location(location_)
             , size(size_)
         {}
+    };
+
+    struct module_entry_t : public entry_t
+    {
+        uint32_t pcb_offset;
+        uint32_t ndeps;
     };
 
 private:
