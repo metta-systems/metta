@@ -48,13 +48,16 @@ static void map_identity(const char* caption, address_t start, address_t end)
 // Scratch area for initial pagedir
 uint32_t pagedir_area[1024] ALIGNED(4096);
 
+/*!
+ * Get the system going.
+ */
 void kickstart(multiboot_t::header_t* mbh)
 {
     run_global_ctors();
 
     multiboot_t mb(mbh);
 
-    ASSERT(mb.module_count() > 1);
+    ASSERT(mb.module_count() > 0);
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
 
@@ -72,8 +75,7 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
     kconsole << WHITE << "We are loaded at " << LINKSYM(KICKSTART_BASE) << endl
-                      << "kernel module at " << kernel->mod_start << ", end " << kernel->mod_end << endl
-                      << "bootcp module at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
+                      << "    bootimage at " << bootcp->mod_start << ", end " << bootcp->mod_end << endl
                       << "Alloctn start at " << alloc_start << endl;
 #endif
 
@@ -81,7 +83,7 @@ void kickstart(multiboot_t::header_t* mbh)
     // We will give up these frames later.
     uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
 
-    address_t bootinfo_page = (address_t)new frame_t;
+    address_t bootinfo_page = reinterpret_cast<address_t>(new frame_t);
     bootinfo_t bootinfo(bootinfo_page);
 
     bootinfo.init_from(mb);
@@ -102,16 +104,16 @@ void kickstart(multiboot_t::header_t* mbh)
 
     ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
     ia32_mmu_t::enable_paged_mode();
-    // now we have paging enabled and can call kernel functions.
+    // now we have paging enabled.
 
-    elf_parser elf;
-    if (!elf.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
+    elf_loader_t kernel_loader;
+    if (!kernel_loader.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
         kconsole << RED << "kernel NOT loaded (bad)" << endl;
     else
         kconsole << GREEN << "kernel loaded (ok)" << endl;
 
     typedef nucleus_n::nucleus_t* (*kernel_entry)(bootinfo_t bi_page);
-    kernel_entry init_nucleus = (kernel_entry)elf.get_entry_point();
+    kernel_entry init_nucleus = reinterpret_cast<kernel_entry>(kernel_loader.get_entry_point());
 
     // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
@@ -142,7 +144,7 @@ void kickstart(multiboot_t::header_t* mbh)
 //     nucleus->mem_mgr().get_current_directory()->dump();
 
     // Load components from bootcp.
-    kconsole << "opening initfs @ " << bootcp->mod_start << endl;
+    kconsole << "opening initfs @ " << bootimage->mod_start << endl;
     initfs_t initfs(bootcp->mod_start);
     typedef void (*comp_entry)(bootinfo_t bi_page);
 
