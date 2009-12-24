@@ -66,7 +66,9 @@ i. Types have _t appended (some types inside namespaces can omit it, but rarely)
 j. Namespaces nesting should not be abundant. Typically a single level flat namespace is more than enough to group
    classes together.
 
-k. Needless to say, all names shall be in English.
+k. Sometimes namespaces can be plural nouns or adjectives, indicating grouping classes by attribute.
+
+l. Needless to say, all names shall be in English.
 
 
 ========================================================================================================================
