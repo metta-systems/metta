@@ -162,8 +162,8 @@ void warning( const char *mess, ... );
 //------------------------------------------------------------------------
 
 char header[]       = "sjofn - version " __sjofn_VERSION " - compiled " __DATE__ " " __TIME__ "\n";
-char help_head[]    = "Copyright (c) 2001 Stanislav Karchebny <berk@madfire.net>\n"
-                      "Distributed under BSD License.\n"
+char help_head[]    = "Copyright (c) 2001 Stanislav Karchebny <berkus@exquance.com>\n"
+                      "Distributed under BOOST License.\n"
                       "usage: sjofn [options|files]+\n"
                       "where: options are\n";
 char help_tail[]    = "\n"

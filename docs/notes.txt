@@ -1,3 +1,19 @@
+
+specialization instead of plain inheritance?
+
+struct arch_x86 {};
+
+template<typename arch_t>
+class virtual_address_space_t;
+
+template
+class virtual_address_space_t<arch_x86>
+{
+    // Specialized for x86
+};
+
+----------------------------------------------------------------------
+
 Kernel interface:
 
 Interface page available via kernel_interface_syscall.
@@ -7,6 +23,8 @@ IPC types: Send, Receive, Wait, Call, Reply_and_Wait (+ idempotent versions?)
 
 Try and have separate ABI and APIs for the kernel, much better for portability and writing new software.
 
+----------------------------------------------------------------------
+
 /*
 * The Pentium Pro and later support global PDE/PTE entries,
 * which are not removed from the TLB when we switch tasks.
@@ -14,6 +32,8 @@ Try and have separate ABI and APIs for the kernel, much better for portability a
 pmap_global_ext = (base_cpuid.feature_flags & CPUF_PAGE_GLOBAL_EXT) ? INTEL_PTE_GLOBAL : 0;
 
 !!Print L4 docs when in office!!
+
+----------------------------------------------------------------------
 
 Pistachio's directory structure:
 kernel
@@ -42,5 +62,8 @@ kernel
       +--pc99
       +--simics
 
+----------------------------------------------------------------------
 
 When you send multiple or big files to someone, they will be transparently compressed into a vxa archive with decoder for recipient's architecture(s) embedded, and then transparently uncompressed at the receiving side.
+
+----------------------------------------------------------------------

@@ -11,9 +11,9 @@
 class kickstart_frame_allocator_t : public frame_allocator_t
 {
 public:
-    kickstart_frame_allocator_t();
+    kickstart_frame_allocator_t() INIT_ONLY;
     void set_start(address_t alloc_start);
-    virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd);
+    virtual void init(multiboot_t::mmap_t* mmap, page_directory_t* pd) INIT_ONLY;
     virtual address_t alloc_frame();
     virtual address_t alloc_frame(address_t);
     virtual void free_frame(address_t frame, address_t virt = 0);

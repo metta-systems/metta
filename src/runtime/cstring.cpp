@@ -1,3 +1,9 @@
+//
+// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "cstring.h"
 
 string_ascii_trait::code_point string_ascii_trait::get_code_point(const char* data) const
@@ -30,7 +36,7 @@ string_utf8_trait::code_point string_utf8_trait::get_code_point(const char* data
 
 size_t string_utf8_trait::get_sequence_length(const char data) const
 {
-    if (data < 0x80)
+    if (!(data & 0x80))
         return 1;
     else if ((data >> 5) == 0x6)
         return 2;

@@ -101,48 +101,55 @@ def configure(conf):
 
 
 def build(bld):
-    #mustl = bld.new_task_gen('cxx', 'staticlib')
-    #mustl.source = map(lambda f: 'runtime/mustl/' + f + '.cpp', 'cmemlink memblock memlink ualgobase ubitset unew ustring'.split())
-    #mustl.env = bld.env_of_name('KERNEL_ENV').copy()
-    #mustl.env.append_unique('CXXFLAGS', '-mmmx -msse -msse2'.split()) # FIXME: need configure options for this
-    #mustl.includes = include_dirs + ['runtime/mustl'] + mustl.env['INCLUDE_ARCH']
-    #mustl.target = 'mustl'
+    arch = Options.options.arch
 
-    mkinitfs = bld.new_task_gen('cxx', 'program')
-    mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
-    mkinitfs.env = bld.env_of_name('TOOLS_ENV').copy()
-    mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
-    mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
-    mkinitfs.target = 'mkinitfs'
+    runtime = bld.new_task_gen('cxx', 'staticlib')
+    runtime.source = 'runtime/g++support.cpp runtime/memutils.cpp runtime/cstring.cpp'.split()
+    runtime.env = bld.env_of_name('KERNEL_ENV').copy()
+    runtime.includes = include_dirs
+    runtime.target = 'libruntime'
 
-    bld.new_task_gen(
-        source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep
-        target = 'initfs.img',
-        rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
-        name = 'initfs.img',
-        after = 'cxx_link'
-    )
+    commons = bld.new_task_gen('cxx', 'staticlib')
+    commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/frame_allocator.cpp common/console.cpp'.split()
+    commons.env = bld.env_of_name('KERNEL_ENV').copy()
+    commons.includes = include_dirs
+    commons.target = 'libcommon'
 
-    bld.new_task_gen('subst',
-        source = 'tools/mkbootimg/menu.lst.in',
-        target = 'tools/mkbootimg/menu.lst.cd',
-        dict = {'ROOT': 'cd'}
-    )
+    #mkinitfs = bld.new_task_gen('cxx', 'program')
+    #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
+    #mkinitfs.env = bld.env_of_name('TOOLS_ENV').copy()
+    #mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    #mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    #mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
+    #mkinitfs.target = 'mkinitfs'
 
-    bld.new_task_gen('subst',
-        source = 'tools/mkbootimg/menu.lst.in',
-        target = 'tools/mkbootimg/menu.lst.fd0',
-        dict = {'ROOT': 'fd0'}
-    )
+    #bld.new_task_gen(
+        #source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep
+        #target = 'initfs.img',
+        #rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
+        #name = 'initfs.img',
+        #after = 'cxx_link'
+    #)
 
-    bld.new_task_gen(
-        source = 'arch/'+arch+'/kickstart.bin arch/'+arch+'/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',#arch dep
-        target = 'metta.fd0 metta.iso',
-        rule = './images.sh',
-        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-        after = 'initfs.img'
-    )
+    #bld.new_task_gen('subst',
+        #source = 'tools/mkbootimg/menu.lst.in',
+        #target = 'tools/mkbootimg/menu.lst.cd',
+        #dict = {'ROOT': 'cd'}
+    #)
+
+    #bld.new_task_gen('subst',
+        #source = 'tools/mkbootimg/menu.lst.in',
+        #target = 'tools/mkbootimg/menu.lst.fd0',
+        #dict = {'ROOT': 'fd0'}
+    #)
+
+    #bld.new_task_gen(
+        #source = 'arch/'+arch+'/kickstart.bin arch/'+arch+'/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',#arch dep
+        #target = 'metta.fd0 metta.iso',
+        #rule = './images.sh',
+        #cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+        #after = 'initfs.img'
+    #)
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
