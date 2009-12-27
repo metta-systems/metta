@@ -69,6 +69,7 @@ def configure(conf):
     conf.env.append_unique('INCLUDE_DIRS', include_dirs)
     # Set arch-specific include paths
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'arch/'.split()))
+    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'platform/'.split()))
 
     # Generate config.h
     conf.define('ARCH', arch)
@@ -103,17 +104,24 @@ def configure(conf):
 def build(bld):
     arch = Options.options.arch
 
+    # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
     runtime.source = 'runtime/g++support.cpp runtime/memutils.cpp runtime/cstring.cpp'.split()
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = include_dirs
-    runtime.target = 'libruntime'
+    runtime.target = 'runtime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
     commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/frame_allocator.cpp common/console.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
-    commons.includes = include_dirs
-    commons.target = 'libcommon'
+    commons.includes = commons.env['INCLUDE_DIRS']
+    commons.target = 'common'
+
+    platform = bld.new_task_gen('cxx', 'staticlib')
+    platform.source = map(lambda d: "platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split())
+    platform.env = bld.env_of_name('KERNEL_ENV').copy()
+    platform.includes = commons.env['INCLUDE_DIRS']
+    platform.target = 'platform'
 
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
@@ -122,6 +130,22 @@ def build(bld):
     #mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     #mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
     #mkinitfs.target = 'mkinitfs'
+
+    #kickstart = bld.new_task_gen('cxx', 'program')
+    #kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
+    #kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
+    #kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
+    #kickstart.includes = '. ../../lib ../../runtime ../../runtime/ml lib kickstart nucleus'
+    #kickstart.target = 'kickstart.bin'
+    #kickstart.uselib_local = 'kernel_runtime'
+
+    #nucleus = bld.new_task_gen('cxx', 'program')
+    #nucleus.source = map(lambda f: 'nucleus/' + f, 'nucleus.cpp pd.cpp page_directory_nucleus.cpp memory/new.cpp memory/memory_manager.cpp memory/stack_page_allocator.cpp memory/heap.cpp'.split())# nucleus/nucleus.lds
+    #nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
+    #nucleus.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/nucleus/nucleus.lds', '-Wl,-Map,nucleus.map'])
+    #nucleus.includes = '. ../../lib ../../runtime lib nucleus'
+    #nucleus.target = 'nucleus.bin'
+    #nucleus.uselib_local = 'kernel_runtime'
 
     #bld.new_task_gen(
         #source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep

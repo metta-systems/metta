@@ -186,11 +186,12 @@ public:
         return top;
     }
 
+    // FIXME: wrap this with an elf_parser_t?
     inline uint32_t elf_num_headers()     const { return header->num; }
     inline uint32_t elf_header_size()     const { return header->size; }
     inline uint32_t elf_header_addr()     const { return header->addr; }
     inline uint32_t elf_strtab_index()    const { return header->shndx; }
-    inline elf32::section_header* symtab_start() const
+    inline elf32::section_header_t* symtab_start() const
     {
         return symtab;
     }
@@ -198,7 +199,7 @@ public:
     {
         return symtab ? (address_t)symtab->addr + symtab->size : 0;
     }
-    inline elf32::section_header* strtab_start() const
+    inline elf32::section_header_t* strtab_start() const
     {
         return strtab;
     }
@@ -217,9 +218,9 @@ public:
     void      copy(address_t target);
 
 private:
-    header_t*              header;
-    elf32::section_header* strtab;
-    elf32::section_header* symtab;
+    header_t*                header;
+    elf32::section_header_t* strtab;
+    elf32::section_header_t* symtab;
 };
 
 // kate: indent-width 4; replace-tabs on;

@@ -1,4 +1,4 @@
-#include "page_directory.h"
+#include "page_directory.h" // for page_t
 #include "frame_allocator.h"
 
 void frame_allocator_t::alloc_frame(page_t* p, bool is_kernel, bool is_writeable)

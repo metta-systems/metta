@@ -71,14 +71,14 @@ uint32_t multiboot_t::size()
     uint32_t total = sizeof(uint32_t) + sizeof(multiboot_t::header_t);
     uint32_t alignment_space, cmdline_len;
 
-    cmdline_len = 1 + memutils::strlen(header->cmdline);
+    cmdline_len = 1 + memutils::string_length(header->cmdline);
     alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
     total += cmdline_len + alignment_space;
 
     for (uint32_t i = 0; i < module_count(); i++)
     {
         total += sizeof(modinfo_t);
-        cmdline_len = 1 + memutils::strlen(module(i)->str);
+        cmdline_len = 1 + memutils::string_length(module(i)->str);
         alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
         total += cmdline_len + alignment_space;
     }
@@ -126,7 +126,7 @@ void multiboot_t::copy(address_t target)
     // Copy kickstart command line.
     uint32_t alignment_space, cmdline_len;
 
-    cmdline_len = 1 + memutils::strlen(header->cmdline);
+    cmdline_len = 1 + memutils::string_length(header->cmdline);
     alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
 
     memutils::copy_memory(reinterpret_cast<void*>(target), header->cmdline, cmdline_len);
@@ -150,7 +150,7 @@ void multiboot_t::copy(address_t target)
         {
             target_header->modules[i].str = strings;
 
-            cmdline_len = 1 + memutils::strlen(module(i)->str);
+            cmdline_len = 1 + memutils::string_length(module(i)->str);
             alignment_space = sizeof(uint32_t) - cmdline_len % sizeof(uint32_t);
 
             memutils::copy_memory(strings, module(i)->str, cmdline_len);
