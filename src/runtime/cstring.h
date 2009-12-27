@@ -7,6 +7,7 @@
 #pragma once
 
 #include "types.h"
+#include "memutils.h"
 
 struct string_ascii_trait
 {
@@ -38,7 +39,7 @@ class string_t
 public:
 //     typedef string_type_trait::code_point code_point;
 
-    string_t();
+    string_t() : size(0), data(0) {}
     string_t(const char* data);
 
     size_t length() { return size; }
@@ -46,8 +47,9 @@ public:
     bool operator ==(string_t<string_type_trait>& other) const;
 
 private:
-    size_t size;
     char*  data;
+    size_t size;
+    size_t cp_length;
 
 /*    struct data
     {
@@ -64,6 +66,19 @@ private:
     data* dalloc(size_t size);
     void dfree(data* d);*/
 };
+
+template<class string_type_trait>
+string_t<string_type_trait>::string_t(const char* data)
+    : data(const_cast<char*>(data))
+    , size(memutils::string_length(data))
+{
+}
+
+template<class string_type_trait>
+bool string_t<string_type_trait>::operator ==(string_t<string_type_trait>& other) const
+{
+    return (size == other.size) && memutils::is_memory_equal(data, other.data, size);
+}
 
 typedef string_t<string_ascii_trait> cstring_t;
 typedef string_t<string_utf8_trait>  utf8_string_t;
