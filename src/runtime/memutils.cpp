@@ -6,20 +6,22 @@
 //
 #include "memutils.h"
 
-
-void* memutils::fill_memory(void* dest, int value, size_t count)
+namespace memutils
 {
-    char *xs = (char *)dest;
+
+void* fill_memory(void* dest, int value, size_t count)
+{
+    char *xs = reinterpret_cast<char*>(dest);
     while (count--)
         *xs++ = value;
     return dest;
 }
 
 
-void* memutils::copy_memory(void* dest, const void* src, size_t count)
+void* copy_memory(void* dest, const void* src, size_t count)
 {
-    char *tmp = (char *)dest;
-    const char *s = (const char *)src;
+    char *tmp = reinterpret_cast<char*>(dest);
+    const char *s = reinterpret_cast<const char*>(src);
 
     while (count--)
         *tmp++ = *s++;
@@ -27,20 +29,20 @@ void* memutils::copy_memory(void* dest, const void* src, size_t count)
 }
 
 
-void* memutils::move_memory(void* dest, const void* src, size_t count)
+void* move_memory(void* dest, const void* src, size_t count)
 {
     char *tmp;
     const char *s;
 
     if (dest <= src) {
-        tmp = (char *)dest;
-        s = (const char *)src;
+        tmp = reinterpret_cast<char*>(dest);
+        s = reinterpret_cast<const char*>(src);
         while (count--)
             *tmp++ = *s++;
     } else {
-        tmp = (char *)dest;
+        tmp = reinterpret_cast<char*>(dest);
         tmp += count;
-        s = (const char *)src;
+        s = reinterpret_cast<const char*>(src);
         s += count;
         while (count--)
             *--tmp = *--s;
@@ -49,9 +51,26 @@ void* memutils::move_memory(void* dest, const void* src, size_t count)
 }
 
 
-bool memutils::strequal(const char* s1, const char* s2)
+bool is_memory_equal(const void* left, const void* right, size_t count)
+{
+    const char* ltmp = reinterpret_cast<const char*>(left);
+    const char* rtmp = reinterpret_cast<const char*>(right);
+
+    while (count--)
+        if (*ltmp++ != *rtmp++)
+            return false;
+    return true;
+}
+
+
+bool is_string_equal(const char* s1, const char* s2)
 {
     signed char __res;
+
+    if (!s1 && !s2)
+        return true;
+    if (!s1 || !s2)
+        return false;
 
     while (1) {
         if ((__res = *s1 - *s2++) != 0 || !*s1++)
@@ -61,15 +80,16 @@ bool memutils::strequal(const char* s1, const char* s2)
 }
 
 
-size_t memutils::strlen(const char* s)
+size_t string_length(const char* s)
 {
     size_t len = 0;
-    char*  t   = (char*)s;
-    while (*t++)
-        len++;
+    if (s)
+        while (*s++)
+            len++;
     return len;
 }
 
+} // namespace memutils
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
