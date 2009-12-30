@@ -1,6 +1,0 @@
-x86-pc99-release/vesper/arch-x86/boot_components/interrupt_dispatcher/interrupt_dispatcher.comp:interrupt_dispatcher
-x86-pc99-release/vesper/arch-x86/boot_components/vm_server/vm_server.comp:vm_server
-x86-pc99-release/vesper/arch-x86/boot_components/portal_manager/portal_manager.comp:portal_manager
-x86-pc99-release/vesper/arch-x86/boot_components/scheduler/scheduler.comp:scheduler
-x86-pc99-release/vesper/arch-x86/boot_components/security_server/security_server.comp:security_server
-x86-pc99-release/vesper/arch-x86/boot_components/trader/trader.comp:trader
