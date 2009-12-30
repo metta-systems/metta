@@ -37,7 +37,7 @@ template <class string_type_trait>
 class string_t
 {
 public:
-//     typedef string_type_trait::code_point code_point;
+    typedef typename string_type_trait::code_point code_point;
 
     string_t() : size(0), data(0) {}
     string_t(const char* data);

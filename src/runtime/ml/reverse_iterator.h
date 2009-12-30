@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2009, Renārs Lediņš <renars@madfire.net>
+// Copyright 2007 - 2009, Renārs Lediņš <renars@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -33,28 +33,28 @@ public:
         return m_iterator - 1;
     }
 
-    self_type& operator ++()
+    self_type operator ++()
     {
         --m_iterator;
         return *this;
     }
 
-    self_type& operator ++(int)
+    self_type operator ++(int)
     {
-        self_type tmp = *this; //FIXME: reference to stack object?
+        self_type tmp = *this;
         --m_iterator;
         return tmp;
     }
 
-    self_type& operator --()
+    self_type operator --()
     {
         ++m_iterator;
         return *this;
     }
 
-    self_type operator --(int) // missing & ?
+    self_type operator --(int)
     {
-        self_type tmp = *this; //FIXME: reference to stack object?
+        self_type tmp = *this;
         ++m_iterator;
         return tmp;
     }

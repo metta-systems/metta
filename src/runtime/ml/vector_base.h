@@ -44,7 +44,7 @@ public:
     typedef value_type*                                                     iterator;
     typedef const value_type*                                               const_iterator;
     typedef reverse_iterator<const_iterator, value_type, difference_type>   const_reverse_iterator;
-    typedef reverse_iterator<iterator, value_type, difference_type>         back_iterator;
+    typedef typename reverse_iterator<iterator, value_type, difference_type>reverse_iterator;
     typedef value_type&                                                     reference;
     typedef const value_type&                                               const_reference;
 
