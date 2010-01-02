@@ -11,6 +11,7 @@
 template <typename T>
 struct pod_destructor
 {
+    static void destruct(T*)         {}
     static void destruct(T*, size_t) {}
 };
 
