@@ -1,5 +1,17 @@
 == Exocortex ==
 
+Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator
+of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate
+information from other sources into your exocortex and to publish your information to other media.
+This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you,
+in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data
+across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out,
+can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
+This way you do not have to go for the news, the news come to you.
+At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain
+your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is
+synced much like p2p networks share data.
+
 === Пользователи ===
 
 Пользователи соединены в социальные "круги" или сети. Фильтрация происходит через пользователей первого круга -
@@ -44,3 +56,31 @@ http://en.wikipedia.org/wiki/Memex - Associative trails
 
 @sa devices interchanging data when in proximity. find url.
 
+
+-- перенесено из Architecture.txt --
+
+amines — little agents that bind social services to exocortex.
+Mettamphetamine - main driver
+Dopplamine - doppler binding
+Twittamine - twitter binding etc
+Tryptamine - googlewave binding? :D
+
+
+Xanadu 17 rules:
+* Every Xanadu server is uniquely and securely identified.
+* Every Xanadu server can be operated independently or in a network.
+* Every user is uniquely and securely identified.
+* Every user can search, retrieve, create and store documents.
+* Every document can consist of any number of parts each of which may be of any data type.
+* Every document can contain links of any type including virtual copies ("transclusions") to any other document in the system accessible to its owner.
+* Links are visible and can be followed from all endpoints.
+* Permission to link to a document is explicitly granted by the act of publication.
+* Every document can contain a royalty mechanism at any desired degree of granularity to ensure payment on any portion accessed, including virtual copies ("transclusions") of all or part of the document.
+* Every document is uniquely and securely identified.
+* Every document can have secure access controls.
+* Every document can be rapidly searched, stored and retrieved without user knowledge of where it is physically stored.
+* Every document is automatically moved to physical storage appropriate to its frequency of access from any given location.
+* Every document is automatically stored redundantly to maintain availability even in case of a disaster.
+* Every Xanadu service provider can charge their users at any rate they choose for the storage, retrieval and publishing of documents.
+* Every transaction is secure and auditable only by the parties to that transaction.
+* The Xanadu client-server communication protocol is an openly published standard. Third-party software development and integration is encouraged.

@@ -1,3 +1,5 @@
+-- TODO: move this to exocortex.txt --
+
 "Ambient communication". You don't really have "programs" for communication, the
 protocol handlers will install at lower level and communicate using a low-level
 Common Protocol similar to Telepathy-on-top-of-DBus.
