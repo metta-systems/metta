@@ -4,11 +4,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "memory.h" //common/
+#include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
+#include "default_console.h"
 
 #define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
 
-static x86_frame_allocator_t x86_frame_allocator_t::instance_;
+x86_frame_allocator_t x86_frame_allocator_t::instance_;
 
 x86_frame_allocator_t::x86_frame_allocator_t()
     : lockable_t()
@@ -23,7 +26,7 @@ x86_frame_allocator_t::x86_frame_allocator_t()
 }
 
 /* Build memory-ranges and page stacks before paging is enabled, to avoid mapping frames. */
-void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap) INIT_ONLY
+void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap)
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "x86_frame_allocator: init " << (address_t)mmap << endl;
@@ -69,7 +72,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
-    pagedir->create_mapping(TEMP_MAPPING, next_frame);
+//     pagedir->create_mapping(TEMP_MAPPING, next_frame);
 
     next_free_phys = *(address_t*)TEMP_MAPPING;
     free_frames--;
@@ -80,7 +83,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 
     unlock();
 
-    pagedir->remove_mapping(TEMP_MAPPING);
+//     pagedir->remove_mapping(TEMP_MAPPING);
     return next_frame;
 }
 
@@ -88,24 +91,30 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 void x86_frame_allocator_t::free_frame(physical_address_t frame)
 {
     lock();
-    pagedir->create_mapping(TEMP_MAPPING, frame);
+//     pagedir->create_mapping(TEMP_MAPPING, frame);
 
-    *(address_t*)mapping = next_free_phys; // store phys of previous free stack top
+    *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
     next_free_phys = frame; // remember phys as current free stack top
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
 
-    pagedir->remove_mapping(TEMP_MAPPING);
+//     pagedir->remove_mapping(TEMP_MAPPING);
     unlock();
 }
 
-bool x86_frame_allocator_t::allocate_range(memory_range_t& range,
-                                size_t num_frames,
-                                flags_t page_constraints,
-                                flags_t flags,
-                                physical_address_t start = -1);
+bool x86_frame_allocator_t::allocate_range(memory_range_t& /*range*/,
+                                size_t /*num_frames*/,
+                                flags_t /*page_constraints*/,
+                                flags_t /*flags*/,
+                                physical_address_t /*start*/)
+{
+    return false;
+}
 
-bool x86_frame_allocator_t::free_range(memory_range_t& range);
+bool x86_frame_allocator_t::free_range(memory_range_t& /*range*/)
+{
+    return false;
+}
 
 /*
 Brendan@osdev:

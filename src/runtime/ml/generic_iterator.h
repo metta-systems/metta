@@ -48,7 +48,7 @@ public:
 //       : m_Node(x.m_Node){}
     /*! Constructor from a pointer to an instance of the data structure.
      * @param[in] node_ pointer to an instance of the data structure */
-    generic_iterator_t(Struct* node)
+    generic_iterator_t(Struct* node_)
         : node(node_)
     {}
     /*! The destructor does nothing */
@@ -100,7 +100,7 @@ public:
             return node->value;
         else
         {
-            static T ret = 0;
+            static type_t ret = 0;
             return ret;
         }
     }

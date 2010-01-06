@@ -1,5 +1,5 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,6 +7,9 @@
 #pragma once
 
 #include "generic_iterator.h"
+#include "obj_allocator.h"
+#include "obj_type_behavior.h"
+#include "default_allocator.h"
 
 // Allocate runs of small fixed-size objects, reusing freed space as soon as possible.
 // Allocates 2**factor units of sizeof(type_t) as backing storage.
@@ -26,6 +29,7 @@
 template<typename type_t>
 class list_node_t
 {
+public:
     // sequential_iterator_t interface:
     inline list_node_t* previous() { return previous_; }
     inline list_node_t* next()     { return next_; }
@@ -35,24 +39,24 @@ class list_node_t
     type_t       value;
 };
 
-template<typename T, typename Allocator, typename Behavior>
+template<class T, typename Allocator = obj_allocator<default_allocator<T>>, typename Behavior = obj_type_behavior<T>>
 class list_t
 {
-    typedef list_t<T, Behavior>                                             self_type;
+    typedef list_t<T, Allocator, Behavior>                                  self_type;
     typedef list_node_t<T>                                                  node_t;
 
 public:
     typedef Behavior                                                        value_type_behavior;
     typedef Allocator                                                       allocator_t; //fixme: allocator should be allocating node_t
 
-    typedef typename T                                                      value_type;
+    typedef T                                                               value_type;
     typedef size_t                                                          size_type;
     typedef ptrdiff_t                                                       difference_type;
     typedef value_type*                                                     pointer;
-    typedef generic_iterator<T, node_t>                                     iterator;
-    typedef iterator::const_iterator                                        const_iterator;
-    typedef iterator::reverse_iterator                                      reverse_iterator;
-    typedef iterator::const_reverse_iterator                                const_reverse_iterator;
+    typedef generic_iterator_t<T, node_t>                                   iterator;
+    typedef typename iterator::const_iterator                               const_iterator;
+    typedef typename iterator::reverse_iterator                             reverse_iterator;
+    typedef typename iterator::const_reverse_iterator                       const_reverse_iterator;
     typedef value_type&                                                     reference;
     typedef const value_type&                                               const_reference;
 
@@ -153,7 +157,7 @@ public:
 
     /// @returns reference to the object stored at specified index. O(n)
     //! @todo Should throw bad_subscript exception.
-    value_type& operator [](size_type index) throws()
+    value_type& operator [](size_type index)
     {
         iterator v = begin();
         while (index-- && v)
@@ -162,7 +166,7 @@ public:
     }
 
     /// @returns const reference to the object stored at specified index. O(n)
-    const value_type& operator [](size_type index) const throws()
+    const value_type& operator [](size_type index) const
     {
         const_iterator v = begin();
         while (index-- && v)
@@ -190,8 +194,8 @@ public:
     /// Removes element from the back of the sequence. O(1).
     value_type pop_back()
     {
-        if (!list_size)
-            throw bad_subscript();
+///         if (!list_size)
+///             throw bad_subscript();
 
         --list_size;
         node_t* node = tail;
@@ -221,8 +225,8 @@ public:
     /// Removes element from the start of the sequence. O(1).
     value_type pop_front()
     {
-        if (!list_size)
-            throw bad_subscript();
+///         if (!list_size)
+///             throw bad_subscript();
 
         --list_size;
         node_t* node = head;
@@ -341,6 +345,7 @@ private:
     }
 
 private:
+    allocator_t              allocator;
     list_node_t<value_type>* head;
     list_node_t<value_type>* tail;
     size_type                list_size;

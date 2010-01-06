@@ -11,7 +11,7 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'common runtime'.split()
+include_dirs = 'common runtime runtime/ml'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
@@ -112,7 +112,7 @@ def build(bld):
     runtime.target = 'runtime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
-    commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/frame_allocator.cpp common/console.cpp'.split()
+    commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/console.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'
@@ -122,6 +122,12 @@ def build(bld):
     platform.env = bld.env_of_name('KERNEL_ENV').copy()
     platform.includes = platform.env['INCLUDE_DIRS']
     platform.target = 'platform'
+
+    libkernel = bld.new_task_gen('cxx', 'staticlib')
+    libkernel.source = 'arch/x86/x86_frame_allocator.cpp'.split()
+    libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
+    libkernel.includes = libkernel.env['INCLUDE_DIRS']
+    libkernel.target = 'kernel'
 
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'

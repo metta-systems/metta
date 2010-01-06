@@ -12,17 +12,17 @@
 template <typename Allocator>
 struct obj_allocator
 {
-    typedef Allocator                       allocator;
-    typedef typename allocator::value_type  value_type;
-    typedef obj_destructor<value_type>      destructor;
+    typedef Allocator                         allocator_t;
+    typedef typename allocator_t::value_type  value_type;
+    typedef obj_destructor<value_type>        destructor;
 
-    obj_allocator(const allocator& _allocator = allocator())
-        : m_allocator(_allocator)
+    obj_allocator(const allocator_t& allocator_ = allocator_t())
+        : allocator(allocator_)
     {}
 
     value_type* allocate(value_type* old_mem, size_t old_size, size_t new_size)
     {
-        value_type* ptr = m_allocator.allocate(0, 0, new_size);
+        value_type* ptr = allocator.allocate(0, 0, new_size);
         if (ptr && old_mem)
         {
             value_type* old_mem_ptr = old_mem,
@@ -39,7 +39,7 @@ struct obj_allocator
                 while (distance--)
                     destruct_inplace(old_mem_ptr++);
             }
-            m_allocator.deallocate(old_mem, old_size);
+            allocator.deallocate(old_mem, old_size);
         }
         return ptr;
     }
@@ -47,10 +47,10 @@ struct obj_allocator
     void deallocate(value_type* mem, size_t size)
     {
         destructor::destruct(mem, size);
-        m_allocator.deallocate(mem, size);
+        allocator.deallocate(mem, size);
     }
 
-    allocator m_allocator; //FIXME: public access to member
+    allocator_t allocator; //FIXME: public access to member
 };
 
 // kate: indent-width 4; replace-tabs on;

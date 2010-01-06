@@ -26,8 +26,8 @@ public:
 
     static frame_allocator_t& instance();
 
-    inline static const size_t page_size() { return PAGE_SIZE; }
-    inline static const size_t page_mask() { return ~(PAGE_SIZE-1); }
+    inline static size_t page_size() { return PAGE_SIZE; }
+    inline static size_t page_mask() { return ~(PAGE_SIZE-1); }
 
     /*!
      * Allocate a non-constrained page frame. These kinds of pages can be used to map
@@ -41,21 +41,6 @@ public:
      * @param[in] frame physical address of the page frame.
      */
     virtual void free_frame(physical_address_t frame) = 0;
-
-    /*! Allocate a memory range with specific constraints the pages need to fulfill.
-     * @param[in] range reference to the MemoryRegion object
-     * @param[in] num_frames the number of pages to allocate for the MemoryRegion object
-     * @param[in] page_constraints the constraints the pages have to fullfill
-     * @param[in] flags flags from the VirtualAddressSpace class namespace
-     * @param[in] start the physical address of the beginning of the region (optional)
-     * @return true, if a valid MemoryRegion object is created, false otherwise */
-    virtual bool allocate_range(memory_range_t& range,
-                                size_t num_frames,
-                                flags_t page_constraints,
-                                flags_t flags,
-                                physical_address_t start = -1) = 0;
-
-    virtual bool free_range(memory_range_t& range) = 0;
 
     /*! Structure containing information about one memory range. */
     struct memory_range_t
@@ -85,6 +70,22 @@ public:
         /*! Pointer to the user-visible name of the memory region */
         const char* name;
     };
+
+    /*! Allocate a memory range with specific constraints the pages need to fulfill.
+     * @param[in] range reference to the MemoryRegion object
+     * @param[in] num_frames the number of pages to allocate for the MemoryRegion object
+     * @param[in] page_constraints the constraints the pages have to fullfill
+     * @param[in] flags flags from the VirtualAddressSpace class namespace
+     * @param[in] start the physical address of the beginning of the region (optional)
+     * @return true, if a valid MemoryRegion object is created, false otherwise
+     */
+    virtual bool allocate_range(memory_range_t& range,
+                                size_t num_frames,
+                                flags_t page_constraints,
+                                flags_t flags,
+                                physical_address_t start = -1) = 0;
+
+    virtual bool free_range(memory_range_t& range) = 0;
 
     // Questionable API items:
     /*!
