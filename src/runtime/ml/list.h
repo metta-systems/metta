@@ -27,8 +27,8 @@ template<typename type_t>
 class list_node_t
 {
     // sequential_iterator_t interface:
-    list_node_t* previous() { return previous_; }
-    list_node_t* next()     { return next_; }
+    inline list_node_t* previous() { return previous_; }
+    inline list_node_t* next()     { return next_; }
 
     list_node_t* previous_;
     list_node_t* next_;
@@ -174,53 +174,140 @@ public:
     void push_back(const value_type& value)
     {
         node_t* node = allocator.allocate(0, 0, 1);
+        node->next_ = 0;
+        node->previous_ = tail;
         node->value = value;
+
         if (tail)
-            tail->next = node;
-        node->prev = tail;
+            tail->next_ = node;
+        else
+            head = node;
+
         tail = node;
         list_size++;
     }
 
-    /// Removes element at the back of the sequence. O(1).
-    void pop_back()
+    /// Removes element from the back of the sequence. O(1).
+    value_type pop_back()
     {
-        if (list_size)
-        {
-            --list_size;
-//             value_type_behavior::destructor::destruct(end(), 1);
-        }
+        if (!list_size)
+            throw bad_subscript();
+
+        --list_size;
+        node_t* node = tail;
+        unlink_node(node);
+        value_type tmp = node->value;
+        allocator.deallocate(node, 1);
+        return tmp;
+    }
+
+    /// Appends specified value to the start of the sequence. O(1).
+    void push_front(const value_type& value)
+    {
+        node_t* node = allocator.allocate(0, 0, 1);
+        node->next_ = head;
+        node->previous_ = 0;
+        node->value = value;
+
+        if (head)
+            head->previous_ = node;
+        else
+            tail = node;
+
+        head = node;
+        list_size++;
+    }
+
+    /// Removes element from the start of the sequence. O(1).
+    value_type pop_front()
+    {
+        if (!list_size)
+            throw bad_subscript();
+
+        --list_size;
+        node_t* node = head;
+        unlink_node(node);
+        value_type tmp = node->value;
+        allocator.deallocate(node, 1);
+        return tmp;
     }
 
     /// Inserts specified value at specified position in sequence. O(n).
-    void insert(size_type pos, const value_type& value);
+    void insert(size_type pos, const value_type& value)
+    {
+        if (pos < list_size)
+        {
+            node_t* node = head;
+            while (pos-- && node)
+                node = node->next_;
+            if (node)
+            {
+                node_t* add = allocator.allocate(0, 0, 1);
+                node_t* next = node->next_;
+                add->value = value;
+                node->next_ = add;
+                add->previous_ = node;
+                add->next_ = next;
+                if (next)
+                    next->previous_ = add;
+                list_size++;
+            }
+            else
+            {
+//                 WARNING("Corrupted list chain.");
+                push_back(value);
+            }
+        }
+        else
+            push_back(value);
+    }
 
+    //! Inserts specified value at specified position in sequence. O(n).
+    //! Should be O(1) for doubly-linked list when given an iterator.
     void insert(iterator pos, const value_type& value)
     {
         insert(pos - begin(), value);
     }
 
-    /// Removes value at specified position in sequence. O(n).
-    void erase(size_type pos);
+    //! Removes value at specified position in sequence. O(n).
+    //! Should be O(1) for doubly-linked list when given an iterator.
+    void erase(size_type pos)
+    {
+        if (list_size == 1)
+            clear();
+        else if (pos < list_size)
+        {
+            node_t* node = head;
+            while (pos-- && node)
+                node = node->next_;
+            if (node)
+            {
+                unlink_node(node);
+//                 value_type_behavior::destructor::destruct(node->value);
+                allocator.deallocate(node, 1);
+                --list_size;
+            }
+        }
+        else
+            pop_back();
+    }
 
     /// Preallocates memory so that vector can store at least specified amount of items.
     void reserve(size_type reserve_size)
     {
-        m_memblock.allocate(reserve_size);
     }
 
     /// Releases memory allocated for data storage and clears vector.
     void destroy()
     {
-        m_memblock.deallocate();
-        m_size = 0;
+        clear();
     }
 
     /// Clears vector object.
     void clear()
     {
-        value_type_behavior::destructor::destruct(begin(), m_size);
-        m_size = 0;
+        while (list_size)
+            pop_back();
     }
 
     self_type& operator =(const self_type& other)
@@ -231,8 +318,27 @@ public:
     }
 
 private:
-    /// Copies data from other vector object.
-    void copy_from(const self_type& other);
+    /// Copies data from other list object.
+    void copy_from(const self_type& other)
+    {
+        clear();
+        iterator it = other.begin();
+        while (it)
+            push_back(*it++);
+    }
+
+    void unlink_node(node_t* node)
+    {
+        if (node->previous_)
+            node->previous_->next_ = node->next_;
+        else
+            head = node->next_;
+
+        if (node->next_)
+            node->next_->previous_ = node->previous_;
+        else
+            tail = node->previous_;
+    }
 
 private:
     list_node_t<value_type>* head;
