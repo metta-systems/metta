@@ -9,9 +9,15 @@
 //
 #pragma once
 
+#include "types.h"
+
 //======================================================================================================================
 // MMU
 //======================================================================================================================
+
+// Last 4 megs of address space are for recursive page directory
+#define RPAGETAB_VBASE 0xffc00000 // page tables addressable from this base
+#define RPAGEDIR_VBASE 0xfffff000 // page directory addressable from this base
 
 const size_t    PAGE_SIZE = 0x1000;
 const address_t PAGE_MASK = 0xFFFFF000;
