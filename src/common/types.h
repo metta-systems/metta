@@ -20,6 +20,7 @@ typedef int32_t  ptrdiff_t;
 typedef uintptr_t address_t;          //!< Virtual address type.
 typedef uintptr_t physical_address_t; //!< Physical address type. Used in physical memory allocation.
 //typedef uint32_t hash_t;
+typedef uint32_t flags_t;
 
 // Endian-aware types - FIXME: need wrapper classes that can do endianness-conversions.
 //typedef uint32_t uint32_le_t;

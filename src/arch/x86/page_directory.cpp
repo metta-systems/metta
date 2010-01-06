@@ -15,7 +15,7 @@
 
 void page_directory_t::init()
 {
-    directory = (address_t*)new frame_t; // covered by default startup 4Mb mapping
+    directory_virtual = new(&directory_physical) frame_t;
     for (int i = 0; i < 1023; i++)
         directory[i] = 0;
     directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
@@ -70,7 +70,7 @@ void page_directory_t::remove_mapping(address_t virt)
     }
 }
 
-bool page_directory_t::mapping_exists(address_t virt)
+bool page_directory_t::is_mapped(address_t virt)
 {
     page_table_t* pt = page_table(virt, false);
     if (!pt)
@@ -125,6 +125,34 @@ void page_directory_t::set_page_table(address_t virt, address_t phys)
 {
     directory[pde_entry(virt)] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
     ia32_mmu_t::flush_page_directory_entry(virt);
+}
+
+#include "memory/memory_manager.h" // for RPAGETAB_VBASE
+page_table_t* page_directory_t::page_table(address_t virt, bool make)
+{
+    uint32_t pde = pde_entry(virt);
+    page_table_t* page_table = 0;
+
+    if (directory_access[pde] & IA32_PAGE_PRESENT)
+    {
+        if (directory_access == directory_physical)
+            page_table = reinterpret_cast<page_table_t*>(directory[pde] & PAGE_MASK);
+        else
+            page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
+    }
+    else if (make) // doesn't exist, so alloc a page and add into pdir
+    {
+        address_t phys;
+        page_table = new(&phys) page_table_t;
+#if MEMORY_DEBUG
+        kconsole << "allocating new pagetable " << pde << " @ " << phys << endl;
+#endif
+
+        set_page_table(virt, phys);
+        page_table->zero();
+    }
+
+    return page_table;
 }
 
 // bool page_directory_t::reclaim_pagetable(page_table_t* page_table)

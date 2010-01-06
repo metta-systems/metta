@@ -1,0 +1,13 @@
+
+Window win = new Window();
+
+class Window {
+
+	int x, y;
+	
+	void Window() {
+		x = 5;
+		y = 6;
+	}
+
+}

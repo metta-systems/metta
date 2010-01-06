@@ -23,6 +23,8 @@
 #include "nucleus.h"
 #include "config.h"
 #include "page_fault_handler.h"
+// -- new includes --
+#include "x86_frame_allocator.h"
 
 page_fault_handler_t page_fault_handler;
 interrupt_descriptor_table_t interrupts_table;
@@ -60,6 +62,8 @@ void kickstart(multiboot_t::header_t* mbh)
     ASSERT(mb.module_count() > 0);
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
+
+    x86_frame_allocator_t::instance().initialise_before_paging();
 
     address_t alloc_start = page_align_up<address_t>(max(LINKSYM(placement_address),max(kernel->mod_end, bootcp->mod_end)));
     frame_allocator.init(0, &pagedir);

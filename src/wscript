@@ -131,13 +131,13 @@ def build(bld):
     #mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
     #mkinitfs.target = 'mkinitfs'
 
-    #kickstart = bld.new_task_gen('cxx', 'program')
+#    kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
-    #kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
+#    kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     #kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
     #kickstart.includes = '. ../../lib ../../runtime ../../runtime/ml lib kickstart nucleus'
-    #kickstart.target = 'kickstart.bin'
-    #kickstart.uselib_local = 'kernel_runtime'
+#    kickstart.target = 'kickstart.bin'
+#    kickstart.uselib_local = 'runtime'
 
     #nucleus = bld.new_task_gen('cxx', 'program')
     #nucleus.source = map(lambda f: 'nucleus/' + f, 'nucleus.cpp pd.cpp page_directory_nucleus.cpp memory/new.cpp memory/memory_manager.cpp memory/stack_page_allocator.cpp memory/heap.cpp'.split())# nucleus/nucleus.lds

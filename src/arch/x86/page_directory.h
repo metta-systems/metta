@@ -122,24 +122,29 @@ private:
  *
  * Page directory performs initialization in init(), mainly to set up
  * recursive PD structure.
+ *
+ * Kernel temporary service mappings are located just below the RPD mark (4 reserved pages).
  */
 class page_directory_t
 {
 public:
-    page_directory_t() : directory(0) {}
-    page_directory_t(address_t* existing_directory) : directory(existing_directory) {}
+    page_directory_t() : directory_physical(0), directory_virtual(0) {}
+    page_directory_t(physical_address_t* existing_directory) : directory_physical(existing_directory) {}
     virtual ~page_directory_t() {}
 
     void init();
-    void init(uint32_t* placement_area);
+    void init(physical_address_t* placement_area);
 
     /*!
      * Returns physical address of PD, for setting PDBR.
      */
-    address_t get_physical()
+    physical_address_t get_physical()
     {
         return directory[1023] & PAGE_MASK;
     }
+
+    void enable_paging();
+    void disable_paging();
 
     /*!
      * Create mapping from virtual address @p virt to physical frame at @p phys
@@ -158,7 +163,7 @@ public:
     /*!
      * @returns true if mapping of virtual address @p virt exists, false otherwise.
      */
-    bool mapping_exists(address_t virt);
+    bool is_mapped(address_t virt);
 
     /*!
      * Obtain mapping information from virtual address @p virt. @p make specifies if
@@ -176,43 +181,22 @@ protected:
     /*!
      * Obtain page table corresponding to address @p virt. If @p make is true, create
      * page table if it doesn't exist.
-     * This method is virtual to allow different implementations of page directory between
-     * kickstart and nucleus. Kickstart needs to switch to nucleus version after paging is enabled.
      */
-    virtual page_table_t* page_table(address_t virt, bool make) = 0;
+    page_table_t* page_table(address_t virt, bool make);
 
     /*!
      * Pointer to a frame with array of pointers to pagetables, gives their @e physical location,
      * for loading into the CR3 register.
      */
-    address_t* directory;
+    physical_address_t* directory_physical;
+    address_t* directory_virtual;
+    address_t* directory_access;
 
 private: friend class stack_frame_allocator_t;//FIXME: page_allocator_t;
     /*!
      * Set @p phys to be address of the frame for page table for address @p virt.
      */
     void set_page_table(address_t virt, address_t phys);
-};
-
-// Two separate subclasses are needed because we need to use code from both kickstart and nucleus during
-// kickstart boot up sequence and we cannot use virtual methods.
-class kickstart_page_directory_t : public page_directory_t
-{
-public:
-    kickstart_page_directory_t() : page_directory_t() {}
-
-protected:
-    virtual page_table_t* page_table(address_t virt, bool make);
-};
-
-class nucleus_page_directory_t : public page_directory_t
-{
-public:
-    nucleus_page_directory_t() : page_directory_t() {}
-    nucleus_page_directory_t(address_t* existing_directory) : page_directory_t(existing_directory) {}
-
-protected:
-    virtual page_table_t* page_table(address_t virt, bool make);
 };
 
 // kate: indent-width 4; replace-tabs on;
