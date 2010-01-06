@@ -12,3 +12,5 @@ vesper.tag
 .project
 debugger.log
 .waf-*
+.settings
+Debug
