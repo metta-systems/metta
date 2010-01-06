@@ -1,21 +1,24 @@
-/*! Associative filesystem:
+/*!
+ * @brief Associative filesystem.
+ *
  * A semantic net with objects and indexed metadata about objects.
  * DB-like structure for fast information retrieval and cross-referencing.
  * Multi-storage scalability, inter-device syncronization support through versioning/merging.
  *
  * Underlying structure similar to btrfs - btree with shadowing/cow.
- * File operations mostly similar to btrfs. 
+ * File objects operations mostly similar to btrfs.
  */
+#pragma once
 
 namespace assocfs {
 
-class superblock_t
+struct superblock_t
 {
     uint8_t  magic[8]; //!< 'AssocFS.'
     uint64_t root_tree;
 };
 
-class block_header_t
+struct block_header_t
 {
     uint8_t  csum[32]; //!< SHA256 block checksum.
     uint8_t  fsid[16]; //!< UUID of parent filesystem.
@@ -29,21 +32,21 @@ class block_header_t
 };
 
 // Key components are ordered from most significant (object_id) to least significant (offset).
-class key_t
+struct key_t
 {
     uint64_t object_id;
     uint8_t  type;
     uint64_t offset;
 };
 
-class item_t
+struct item_t
 {
     key_t    key;
     uint32_t offset;
     uint32_t size;
 };
 
-class file_extent_item_t : public item_t
+struct file_extent_item_t : public item_t
 {
     uint64_t generation;
     uint64_t start_block;
