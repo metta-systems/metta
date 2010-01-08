@@ -129,6 +129,13 @@ def build(bld):
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
+    tests = bld.new_task_gen('cxx', 'program')
+    tests.source = 'tests/test_suite_main.cpp tests/test_rbtree.cpp'.split()
+    tests.env = bld.env_of_name('TEST_ENV').copy()
+    tests.includes = tests.env['INCLUDE_DIRS']
+    tests.uselib = 'TEST'
+    tests.target = 'testrunner'
+
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
     #mkinitfs.env = bld.env_of_name('TOOLS_ENV').copy()
