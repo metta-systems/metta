@@ -1,0 +1,119 @@
+Menu menu = new Menu();
+
+// Setup the Processing Canvas
+void setup(){
+  size(600, 600);
+  smooth();
+  frameRate(30);
+  
+  menu.prepare();
+}
+
+// Main draw loop
+void draw(){
+  
+  //radius = radius + sin( frameCount / 4 );
+  
+  // Fill canvas grey
+  background(100);
+  
+  if (mousePressed) menu.update(mouseX, mouseY);
+  
+  // Set fill-color to blue
+  // fill( 0, 121, 184 );
+  
+  // Set stroke-color white
+  // stroke(255, .33); 
+  
+  // Draw circle
+  // ellipse(++X, Y, radius, radius );          
+}
+
+class RadialComponent {
+
+    void update(float center_x, float center_y) {};
+
+};
+
+class MenuCloseButton extends RadialComponent {
+        
+    float btn_radius = 10;
+    color button_color = color(#660000);
+    
+    MenuCloseButton() {
+        
+    } 
+    
+    void update(float center_x, float center_y) {
+        fill(button_color);   
+        ellipse(center_x, center_y, btn_radius * 2, btn_radius * 2);
+    } 
+    
+}
+
+class MenuItem extends RadialComponent {
+
+    String name;
+
+    color item_color;
+    float start_radius, end_radius;    
+    float start_angle, end_angle;
+    
+    MenuItem(String name, float start_angle, float end_angle, color item_color) {
+        MenuItem(name, 0, start_angle, end_angle);
+    }
+    
+    MenuItem(String name, float start_radius, float start_angle, float end_angle, color item_color) {
+        this.name = name;
+        this.start_radius = start_radius;
+        this.end_radius = 90.0;
+        this.start_angle = start_angle;
+        this.end_angle = end_angle;
+        this.item_color = item_color;        
+    }
+
+    void update(float center_x, float center_y) {        
+        fill(item_color);        
+        arc(center_x, center_y, 
+            end_radius * 2, end_radius * 2, 
+            start_angle, end_angle); // outer arc        
+        noFill();                        
+        arc(center_x, center_y, 
+            start_radius * 2, start_radius * 2, 
+            start_angle, end_angle); // inner arc        
+    }
+
+};
+
+class Menu extends RadialComponent {
+
+    color stroke_color = color(#EEEEEE);
+
+    MenuItem[] items;
+    MenuCloseButton close_btn;
+    
+    Menu() {
+        close_btn = new MenuCloseButton();
+        
+        float one_sixth_pi = HALF_PI / 3;
+        float start_radius = close_btn.btn_radius + 1;
+    
+        items = new MenuItem[];
+        items[0] = new MenuItem("Cut", start_radius, 0, one_sixth_pi, color(#000066));
+        items[1] = new MenuItem("Paste", start_radius, one_sixth_pi, one_sixth_pi * 2, color(#006600));
+        items[2] = new MenuItem("Copy", start_radius, one_sixth_pi * 2, one_sixth_pi * 3, color(#660066));
+        items[3] = new MenuItem("Send To...", start_radius, one_sixth_pi * 3, one_sixth_pi * 4, color(#006666));
+    }
+    
+    void prepare() {
+        stroke(stroke_color);        
+    }
+
+    void update(float center_x, float center_y) {
+        for (int i = 0; i < items.length; i++) {
+            items[i].update(center_x, center_y);
+        }
+        close_btn.update(center_x, center_y);        
+    }
+
+};
