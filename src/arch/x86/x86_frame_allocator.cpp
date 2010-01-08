@@ -72,7 +72,9 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 {
     lock();
     address_t next_frame = next_free_phys;
-//     pagedir->create_mapping(TEMP_MAPPING, next_frame);
+//     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
+//     ASSERT(domain == protection_domain_t::privileged());
+//     domain->map(next_frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
     next_free_phys = *(address_t*)TEMP_MAPPING;
     free_frames--;
@@ -83,7 +85,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 
     unlock();
 
-//     pagedir->remove_mapping(TEMP_MAPPING);
+//     domain->unmap(TEMP_MAPPING);
     return next_frame;
 }
 
@@ -91,14 +93,16 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 void x86_frame_allocator_t::free_frame(physical_address_t frame)
 {
     lock();
-//     pagedir->create_mapping(TEMP_MAPPING, frame);
+//     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
+//     ASSERT(domain == protection_domain_t::privileged());
+//     domain->map(frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
     *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
     next_free_phys = frame; // remember phys as current free stack top
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
 
-//     pagedir->remove_mapping(TEMP_MAPPING);
+//     domain->unmap(TEMP_MAPPING);
     unlock();
 }
 
