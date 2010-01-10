@@ -28,11 +28,11 @@ struct pair_t
     V value;
 
     pair_t(K k, V v) : key(k), value(v) {}
-    bool operator <(self_type other) { return key < other.key; }
-    bool operator <=(self_type other) { return key <= other.key; }
-    bool operator >(self_type other) { return key > other.key; }
-    bool operator >=(self_type other) { return key >= other.key; }
-    bool operator ==(self_type other) { return key == other.key; }
+    bool operator <(self_type other) const { return key < other.key; }
+    bool operator <=(self_type other) const { return key <= other.key; }
+    bool operator >(self_type other) const { return key > other.key; }
+    bool operator >=(self_type other) const { return key >= other.key; }
+    bool operator ==(self_type other) const { return key == other.key; }
 };
 
 BOOST_AUTO_TEST_CASE(test_rbtree)
@@ -45,8 +45,20 @@ BOOST_AUTO_TEST_CASE(test_rbtree)
     tree.insert(3);
     BOOST_CHECK_EQUAL(tree.fulfills_invariant(), true);
 
+    int find = 3;
+    BOOST_CHECK_EQUAL(tree.search(find), true);
+    BOOST_CHECK_EQUAL(find, 3);
+    find = 4;
+    BOOST_CHECK_EQUAL(tree.search(find), false);
+    BOOST_CHECK_EQUAL(find, 4);
+
     tree.insert(4);
     tree.insert(5);
+
+    tree.remove(3);
+    find = 3;
+    BOOST_CHECK_EQUAL(tree.search(find), false);
+
     BOOST_CHECK_EQUAL(tree.fulfills_invariant(), true);
 
     typedef pair_t<int,int> int_pair;
@@ -57,6 +69,13 @@ BOOST_AUTO_TEST_CASE(test_rbtree)
     tree2.insert(int_pair(2,3));
     tree2.insert(int_pair(3,4));
     BOOST_CHECK_EQUAL(tree2.fulfills_invariant(), true);
+
+    int_pair find_pair(3,11);
+    BOOST_CHECK_EQUAL(tree2.search(find_pair), true);
+    BOOST_CHECK_EQUAL(find_pair == int_pair(3, 98), true);
+    find_pair = int_pair(4,15);
+    BOOST_CHECK_EQUAL(tree2.search(find_pair), false);
+    BOOST_CHECK_EQUAL(find_pair == int_pair(4, 166), true);
 
     tree2.insert(int_pair(4,5));
     tree2.insert(int_pair(5,6));

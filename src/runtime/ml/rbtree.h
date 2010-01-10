@@ -112,6 +112,32 @@ public:
             insert_case2(node);
     }
 
+    void remove(value_type value)
+    {
+        node_t* node = root;
+
+        while (node != 0)
+        {
+            if (node->value == value)
+            {
+                if (!node->left && !node->right)
+                {
+                    //todo check for root node
+                    if (node->parent->left == node)
+                        node->parent->left = 0;
+                    else
+                        node->parent->right = 0;
+                    delete node;
+                }
+                return;
+            }
+            if (value < node->value)
+                node = node->left;
+            else if (value > node->value)
+                node = node->right;
+        }
+    }
+
     bool search(V& value)
     {
         node_t* node = root;

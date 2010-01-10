@@ -1,3 +1,9 @@
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "rbtree.h"
@@ -9,23 +15,29 @@
 template <typename K, typename V>
 class map_t
 {
-    template <typename K, typename V>
+//     template <typename K, typename V>
     struct pair_t
     {
-        typedef pair_t<K,V> self_type;
+        typedef pair_t/*<K,V>*/ self_type;
 
         K key;
         V value;
 
         pair_t(K k, V v) : key(k), value(v) {}
-        bool operator <(self_type other) { return key < other.key; }
-        bool operator <=(self_type other) { return key <= other.key; }
-        bool operator >(self_type other) { return key > other.key; }
-        bool operator >=(self_type other) { return key >= other.key; }
-        bool operator ==(self_type other) { return key == other.key; }
+        bool operator <(self_type other) const { return key < other.key; }
+        bool operator <=(self_type other) const { return key <= other.key; }
+        bool operator >(self_type other) const { return key > other.key; }
+        bool operator >=(self_type other) const { return key >= other.key; }
+        bool operator ==(self_type other) const { return key == other.key; }
     };
 
-    rbtree_t<pair_t<K,V>> data;
+    rbtree_t<pair_t> data;
+
+public:
+    map_t() : data() {}
+
+    inline void insert(K k, V v) { data.insert(pair_t(k,v)); }
+//     V search(K k) { V ret; if(data.search(pair_t(k,ret))) return ret; else return V::null; }
 };
 
 // template <typename V>

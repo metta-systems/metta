@@ -4,6 +4,9 @@
 #include "frame_allocator.h"
 #include "range_list.h"
 #include "multiboot.h"
+#include "map.h"
+
+class protection_domain_t;
 
 class x86_frame_allocator_t : public frame_allocator_t, public lockable_t
 {
@@ -34,7 +37,7 @@ private:
 //     virtual void unmap_range(memory_range_t* range);
 
 private:
-//     map_t<protection_domain_t*, memory_resrec_t*> qos_allocations; ///TODO
+    map_t<protection_domain_t*, memory_resrec_t*> qos_allocations;
     range_list_t<physical_address_t> ram_ranges;
 
     // Page Stack structures (TODO: move to subclass, like in Pedigree?)
