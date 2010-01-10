@@ -111,6 +111,12 @@ def build(bld):
     runtime.includes = include_dirs
     runtime.target = 'runtime'
 
+    toolruntime = bld.new_task_gen('cxx', 'staticlib')
+    toolruntime.source = 'runtime/memutils.cpp runtime/cstring.cpp'.split()
+    toolruntime.env = bld.env_of_name('TOOLS_ENV').copy()
+    toolruntime.includes = include_dirs
+    toolruntime.target = 'toolruntime'
+
     commons = bld.new_task_gen('cxx', 'staticlib')
     commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/console.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
@@ -135,6 +141,15 @@ def build(bld):
     tests.includes = tests.env['INCLUDE_DIRS']
     tests.uselib = 'TEST'
     tests.target = 'testrunner'
+
+    parsedwarf = bld.new_task_gen('cxx', 'program')
+    parsedwarf.source = 'tools/parsedwarf/parsedwarf.cpp'
+    parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
+    #parsedwarf.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    #parsedwarf.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
+    parsedwarf.target = 'parsedwarf'
+    parsedwarf.uselib_local = 'toolruntime common'
 
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
