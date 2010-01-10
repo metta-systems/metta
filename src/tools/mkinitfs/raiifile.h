@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "types.h"
 
 namespace raii_wrapper {
 
