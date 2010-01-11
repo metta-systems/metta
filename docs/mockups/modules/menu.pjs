@@ -3,7 +3,7 @@ Menu menu = new Menu([
         "Copy",
         "Paste",
         "Send to..."
-    ]); /*
+    ]); /* 
 menu.add_item(new MenuItem("Cut"));
 menu.add_item(new MenuItem("Copy"));
 menu.add_item(new MenuItem("Paste"));
@@ -24,13 +24,14 @@ void draw() {
   
     background(#666666);
   
-    if (menuShown) menu.update(mouseX, mouseY);
+    if (menuShown) menu.update();
   
 }
 
 void mousePressed() {
    
-   menuShown = true; 
+   menu.set_pos(mouseX, mouseY); 
+   menuShown = true;   
    
     if (menuShown) {
        if (menu.mouse_in(mouseX, mouseY)) {
@@ -43,18 +44,31 @@ void mouseMoved() {
     
     if (menuShown) {
        if (menu.mouse_in(mouseX, mouseY)) {
-           menu.on_mouse_move(mouseX, mouseY); 
+           menu.on_mouse_over(mouseX, mouseY); 
        } 
     }
     
 }
 
-class RadialComponent {
+class Component {
 
-    void update(float center_x, float center_y) {};
+    // Component[] events_listeners;
+
     boolean mouse_in(float mouse_x, float mouse_y) { return true; };
-    boolean on_mouse_move(float mouse_x, float mouse_y) { return true; };
-    boolean on_mouse_click(float mouse_x, float mouse_y) { return true; };    
+    boolean on_mouse_over(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_click(float mouse_x, float mouse_y) { return true; };
+    void update() {};    
+
+}
+
+class RadialComponent extends Component {
+
+    float center_x, center_y = .0;
+
+    void set_pos(float center_x, float center_y) {
+        this.center_x = center_x;
+        this.center_y = center_y;
+    }
 
 };
 
@@ -67,7 +81,7 @@ class MenuCloseButton extends RadialComponent {
         
     } 
     
-    void update(float center_x, float center_y) {
+    void update() {
         fill(button_color);   
         ellipse(center_x, center_y, btn_radius * 2, btn_radius * 2);
     } 
@@ -119,7 +133,7 @@ class MenuItem extends RadialComponent {
         return (item_color != null);
     }    
 
-    void update(float center_x, float center_y) {        
+    void update() {        
         fill(item_color);
         arc(center_x, center_y, 
             end_radius * 2, end_radius * 2, 
@@ -156,7 +170,7 @@ class Menu extends RadialComponent {
     
     Menu() {
         close_btn = new MenuCloseButton();
-        this.items = new MenuItem[];
+        items     = new MenuItem[];
     }
     
     void add_item(MenuItem item) {
@@ -188,12 +202,47 @@ class Menu extends RadialComponent {
         }        
     }
 
-    void update(float center_x, float center_y) {
+    void update() {
         stroke(stroke_color);
         for (int i = 0; i < items.length; i++) {
-            items[i].update(center_x, center_y);
+            items[i].update();
         }
-        close_btn.update(center_x, center_y);        
+        close_btn.update();
     }
+    
+    void set_pos(float center_x, float center_y) {
+        close_btn.set_pos(center_x, center_y);
+        for (int i = 0; i < items.length; i++) {
+            items[i].set_pos(center_x, center_y);
+        }
+    }
+    
+    boolean mouse_in(float mouse_x, float mouse_y) {
+        return true; 
+    };
+    
+    boolean on_mouse_over(float mouse_x, float mouse_y) { 
+        // FIXME: must be handled by component and passed to the listeners
+        if (close_btn.mouse_in(mouse_x, mouse_y)) {
+            close_btn.on_mouse_over(mouse_x, mouse_y);
+        } 
+        for (int i = 0; i < items.length; i++) {
+            if (items[i].mouse_in(mouse_x, mouse_y)) {
+                items[i].on_mouse_over(mouse_x, mouse_y);
+            }
+        } 
+    };
+    
+    boolean on_mouse_click(float mouse_x, float mouse_y) {
+        // FIXME: must be handled by component and passed to the listeners
+        if (close_btn.mouse_in(mouse_x, mouse_y)) {
+            close_btn.on_mouse_click(mouse_x, mouse_y);
+        } 
+        for (int i = 0; i < items.length; i++) {
+            if (items[i].mouse_in(mouse_x, mouse_y)) {
+                items[i].on_mouse_click(mouse_x, mouse_y);
+            }
+        }
+    };    
 
 };
