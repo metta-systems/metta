@@ -2,8 +2,12 @@ Menu menu = new Menu([
         "Cut",
         "Copy",
         "Paste",
-        "Send To..."
-    ]);
+        "Send to..."
+    ]); /*
+menu.add_item(new MenuItem("Cut"));
+menu.add_item(new MenuItem("Copy"));
+menu.add_item(new MenuItem("Paste"));
+menu.add_item(new MenuItem("Send to...")); */
 
 boolean menuShown = false;
 
@@ -28,11 +32,29 @@ void mousePressed() {
    
    menuShown = true; 
    
+    if (menuShown) {
+       if (menu.mouse_in(mouseX, mouseY)) {
+           menu.on_mouse_click(mouseX, mouseY); 
+       } 
+    }   
+}
+
+void mouseMoved() {
+    
+    if (menuShown) {
+       if (menu.mouse_in(mouseX, mouseY)) {
+           menu.on_mouse_move(mouseX, mouseY); 
+       } 
+    }
+    
 }
 
 class RadialComponent {
 
     void update(float center_x, float center_y) {};
+    boolean mouse_in(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_move(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_click(float mouse_x, float mouse_y) { return true; };    
 
 };
 
@@ -56,9 +78,9 @@ class MenuItem extends RadialComponent {
 
     String name;
 
-    color item_color;
-    float start_radius, end_radius;    
-    float start_angle, end_angle;
+    color item_color = null;
+    float start_radius, end_radius = null;
+    float start_angle, end_angle = null;
     
     MenuItem(String name) {
         this.name = name;
@@ -74,14 +96,28 @@ class MenuItem extends RadialComponent {
         set_radius(start_radius, this.end_radius);
     }
     
+    boolean is_radius_set() {
+        return (start_radius != null) &&
+               (end_radius != null);
+    }
+    
     void set_angle(float start_angle, float end_angle) {
         this.start_angle = start_angle;
         this.end_angle = end_angle;
     }
     
+    boolean is_angle_set() {
+        return (start_angle != null) &&
+               (end_angle != null);        
+    }
+    
     void set_color(color item_color) {
         this.item_color = item_color;
     }
+    
+    boolean is_color_set() {
+        return (item_color != null);
+    }    
 
     void update(float center_x, float center_y) {        
         fill(item_color);
@@ -106,9 +142,33 @@ class Menu extends RadialComponent {
     MenuItem[] items;
     MenuCloseButton close_btn;
     
+    Menu(MenuItem[] items) {
+        close_btn = new MenuCloseButton();
+        this.items = items;                
+    }
+    
     Menu(String[] items_names) {
         close_btn = new MenuCloseButton();
-        
+        for (int i = 0; i < items_names.length; i++) {
+            this.items[i] = new MenuItem(items_names[i]);
+        }
+    }    
+    
+    Menu() {
+        close_btn = new MenuCloseButton();
+        this.items = new MenuItem[];
+    }
+    
+    void add_item(MenuItem item) {
+        items[items.length] = item;
+    }
+    
+    void add_item(String item_name) {
+        items[items.length] = new MenuItem(item_name);
+    }    
+    
+    void prepare() {
+        // called on processing setup()
         float one_sixth_pi = HALF_PI / 3;
         float start_radius = close_btn.btn_radius /*+ 1*/;
         
@@ -116,23 +176,16 @@ class Menu extends RadialComponent {
         float cur_angle = start_angle;
         float end_angle = cur_angle + one_sixth_pi;
         
-        items = new MenuItem[];
-        for (int i = 0; i <= items_names.length; i++) {
+        for (int i = 0; i < items.length; i++) {
             
-            MenuItem item = new MenuItem(items_names[i]);
-            item.set_color(cur_color);            
-            item.set_radius(start_radius);
-            item.set_angle(cur_angle, end_angle);
-            items[i] = item;
+            MenuItem item = items[i];
+            if (!item.is_color_set())  item.set_color(cur_color);            
+            if (!item.is_radius_set()) item.set_radius(start_radius);
+            if (!item.is_angle_set())  item.set_angle(cur_angle, end_angle);
             
             cur_angle += one_sixth_pi;
             end_angle = cur_angle + one_sixth_pi;
         }        
-        
-    }
-    
-    void prepare() {
-        // called on processing setup()
     }
 
     void update(float center_x, float center_y) {
