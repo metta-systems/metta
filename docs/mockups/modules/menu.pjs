@@ -1,32 +1,33 @@
-Menu menu = new Menu();
+Menu menu = new Menu([
+        "Cut",
+        "Copy",
+        "Paste",
+        "Send To..."
+    ]);
 
-// Setup the Processing Canvas
-void setup(){
-  size(600, 600);
-  smooth();
-  frameRate(30);
+boolean menuShown = false;
+
+void setup() {
+    size(600, 600);
+    smooth();
+    frameRate(30);
   
-  menu.prepare();
+    menu.prepare();
 }
 
 // Main draw loop
-void draw(){
+void draw() {
   
-  //radius = radius + sin( frameCount / 4 );
+    background(#666666);
   
-  // Fill canvas grey
-  background(100);
+    if (menuShown) menu.update(mouseX, mouseY);
   
-  if (mousePressed) menu.update(mouseX, mouseY);
-  
-  // Set fill-color to blue
-  // fill( 0, 121, 184 );
-  
-  // Set stroke-color white
-  // stroke(255, .33); 
-  
-  // Draw circle
-  // ellipse(++X, Y, radius, radius );          
+}
+
+void mousePressed() {
+   
+   menuShown = true; 
+   
 }
 
 class RadialComponent {
@@ -59,57 +60,83 @@ class MenuItem extends RadialComponent {
     float start_radius, end_radius;    
     float start_angle, end_angle;
     
-    MenuItem(String name, float start_angle, float end_angle, color item_color) {
-        MenuItem(name, 0, start_angle, end_angle);
+    MenuItem(String name) {
+        this.name = name;
+        this.end_radius = 90.0;
     }
     
-    MenuItem(String name, float start_radius, float start_angle, float end_angle, color item_color) {
-        this.name = name;
+    void set_radius(float start_radius, float end_radius) {
         this.start_radius = start_radius;
-        this.end_radius = 90.0;
+        this.end_radius = end_radius;
+    }
+    
+    void set_radius(float start_radius) {
+        set_radius(start_radius, this.end_radius);
+    }
+    
+    void set_angle(float start_angle, float end_angle) {
         this.start_angle = start_angle;
         this.end_angle = end_angle;
-        this.item_color = item_color;        
+    }
+    
+    void set_color(color item_color) {
+        this.item_color = item_color;
     }
 
     void update(float center_x, float center_y) {        
-        fill(item_color);        
+        fill(item_color);
         arc(center_x, center_y, 
             end_radius * 2, end_radius * 2, 
-            start_angle, end_angle); // outer arc        
-        noFill();                        
+            start_angle, end_angle); // outer arc
+        noFill();
         arc(center_x, center_y, 
             start_radius * 2, start_radius * 2, 
-            start_angle, end_angle); // inner arc        
+            start_angle, end_angle); // inner arc
     }
 
 };
 
 class Menu extends RadialComponent {
 
-    color stroke_color = color(#EEEEEE);
+    color stroke_color = color(#eeeeee);
+    color start_color = color(#606060);
+    // color[] items_colors;
+    float start_angle = 0;
 
     MenuItem[] items;
     MenuCloseButton close_btn;
     
-    Menu() {
+    Menu(String[] items_names) {
         close_btn = new MenuCloseButton();
         
         float one_sixth_pi = HALF_PI / 3;
-        float start_radius = close_btn.btn_radius + 1;
-    
+        float start_radius = close_btn.btn_radius /*+ 1*/;
+        
+        float cur_color = start_color;
+        float cur_angle = start_angle;
+        float end_angle = cur_angle + one_sixth_pi;
+        
         items = new MenuItem[];
-        items[0] = new MenuItem("Cut", start_radius, 0, one_sixth_pi, color(#000066));
-        items[1] = new MenuItem("Paste", start_radius, one_sixth_pi, one_sixth_pi * 2, color(#006600));
-        items[2] = new MenuItem("Copy", start_radius, one_sixth_pi * 2, one_sixth_pi * 3, color(#660066));
-        items[3] = new MenuItem("Send To...", start_radius, one_sixth_pi * 3, one_sixth_pi * 4, color(#006666));
+        for (int i = 0; i <= items_names.length; i++) {
+            
+            MenuItem item = new MenuItem(items_names[i]);
+            item.set_color(cur_color);            
+            item.set_radius(start_radius);
+            item.set_angle(cur_angle, end_angle);
+            items[i] = item;
+            
+            cur_angle += one_sixth_pi;
+            end_angle = cur_angle + one_sixth_pi;
+        }        
+        
     }
     
     void prepare() {
-        stroke(stroke_color);        
+        // called on processing setup()
     }
 
     void update(float center_x, float center_y) {
+        stroke(stroke_color);
         for (int i = 0; i < items.length; i++) {
             items[i].update(center_x, center_y);
         }
