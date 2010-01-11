@@ -1,4 +1,5 @@
 Menu menu = new Menu();
+
 menu.add_item(new MenuItem("Cut"));
 menu.add_item(new MenuItem("Copy"));
 menu.add_item(new MenuItem("Paste"));
@@ -6,6 +7,9 @@ menu.add_item(new MenuItem("Send to..."));
 menu.add_item(new MenuItem("What the?"));
 menu.add_item(new MenuItem("Let's party"));
 menu.add_item(new MenuItem("Happy New Year"));
+
+menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+menu.set_radius(90);
 
 boolean menuShown = false;
 
@@ -43,7 +47,9 @@ void mouseMoved() {
     if (menuShown) {
        if (menu.mouse_in(mouseX, mouseY)) {
            menu.mouse_over(mouseX, mouseY); 
-       } 
+       } else {
+           menu.mouse_out();
+       }
     }
     
 }
@@ -53,10 +59,6 @@ void mouseMoved() {
 class Component {
 
     static Component[] listeners = new Component[];
-    
-    void Component() {
-        add_listener(this);
-    }
     
     static void add_listener(Component comp) {
         listeners[listeners.length] = comp;
@@ -83,7 +85,14 @@ class Component {
                 listeners[i].on_mouse_over(mouse_x, mouse_y);
             }
         }
-    };   
+    };  
+    
+    static void mouse_out() { 
+        for (int i = 0; i < listeners.length; i++) {
+            listeners[i].on_mouse_out();
+        }
+    }; 
+        
     
     static void mouse_click(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
@@ -93,9 +102,10 @@ class Component {
         }
     };
     
-    boolean is_mouse_in(float mouse_x, float mouse_y) { return true; };
+    boolean is_mouse_in(float mouse_x, float mouse_y) { return false; };    
     boolean on_mouse_over(float mouse_x, float mouse_y) { return true; };
     boolean on_mouse_click(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_out() { return true; };    
     void update() {};    
 
 }
@@ -121,13 +131,36 @@ class MenuCloseButton extends RadialComponent {
     color button_color = color(#660000);
     
     MenuCloseButton() {
-        
+
     } 
     
     void update() {
         fill(button_color);   
         ellipse(center_x, center_y, btn_radius * 2, btn_radius * 2);
+    }
+    
+    boolean is_mouse_in(float mouse_x, float mouse_y) {        
+        if ((abs(center_x - mouse_x) <= btn_radius) &&
+            (abs(center_y - mouse_y) <= btn_radius)) {
+             float at_angle = atan2(mouse_y - center_y, mouse_x - center_x);
+             float x_way = btn_radius * abs(cos(at_angle));
+             float y_way = btn_radius * abs(sin(at_angle));
+             return (((center_x - x_way) <= mouse_x) &&
+                     ((center_y - y_way) <= mouse_y) &&
+                     ((center_x + x_way) >= mouse_x) &&
+                     ((center_y + y_way) <= mouse_y));
+        } else {
+            return false;
+        }
     } 
+    
+    boolean on_mouse_over(float mouse_x, float mouse_y) {
+        button_color = color(#ffffff);
+    }    
+    
+    boolean on_mouse_out() {
+        button_color = color(#660000);
+    }    
     
 }
 
@@ -137,22 +170,17 @@ class MenuItem extends RadialComponent {
 
     String name;
 
-    color item_color = null;
+    color item_color, over_color = null;
     float start_radius, end_radius = null;
     float start_angle, end_angle = null;
     
     MenuItem(String name) {
         this.name = name;
-        this.end_radius = 90.0;
     }
     
     void set_radius(float start_radius, float end_radius) {
         this.start_radius = start_radius;
         this.end_radius = end_radius;
-    }
-    
-    void set_radius(float start_radius) {
-        set_radius(start_radius, this.end_radius);
     }
     
     boolean is_radius_set() {
@@ -188,6 +216,36 @@ class MenuItem extends RadialComponent {
             start_radius * 2, start_radius * 2, 
             start_angle, end_angle); // inner arc
     }
+    
+    boolean is_mouse_in(float mouse_x, float mouse_y) {        
+        if ((abs(center_x - mouse_x) <= end_radius) &&
+            (abs(center_y - mouse_y) <= end_radius) &&
+            (abs(center_x - mouse_x) >= start_radius) &&
+            (abs(center_y - mouse_y) >= start_radius)) {
+            float at_angle = atan2(mouse_y - center_y, mouse_x - center_x);
+            if ((abs(at_angle) >= abs(start_angle)) && 
+                (abs(at_angle) <= abs(end_angle))) { 
+                float x_way = end_radius * abs(cos(at_angle));
+                float y_way = end_radius * abs(sin(at_angle));
+                return (((center_x - x_way) <= mouse_x) &&
+                        ((center_y - y_way) <= mouse_y) &&
+                        ((center_x + x_way) >= mouse_x) &&
+                        ((center_y + y_way) <= mouse_y));   
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    
+    boolean on_mouse_over(float mouse_x, float mouse_y) {
+        item_color = color(#ffffff);
+    }
+    
+    boolean on_mouse_out(float mouse_x, float mouse_y) {
+        item_color = color(#333333);
+    } 
 
 };
 
@@ -199,6 +257,8 @@ class Menu extends RadialComponent {
     color start_color = color(#000033);
     color end_color = color(#000066);
     // color[] items_colors;
+    
+    float menu_radius = 90;
     float start_angle = -HALF_PI;
     float end_angle = HALF_PI * 3 / 2;
 
@@ -207,7 +267,10 @@ class Menu extends RadialComponent {
     
     Menu(MenuItem[] items) {
         close_btn = new MenuCloseButton();
+        add_listener(close_btn); 
+               
         this.items = items;
+        add_listeners(this.items);
     }
     
     /* Menu(String[] items_names) {  // FIXME: setting through array moves in recursion
@@ -221,17 +284,30 @@ class Menu extends RadialComponent {
     
     Menu() {
         close_btn = new MenuCloseButton();
-        items     = new MenuItem[];
+        add_listener(close_btn);
+        
+        items = new MenuItem[];
     }
     
     void add_item(MenuItem item) {
         items[items.length] = item;
+        add_listener(item);
     }
     
     void add_item(String item_name) {
         // add_item(new MenuItem(item_name));
         MenuItem item = new MenuItem(item_name);
-        items[items.length] = item;    
+        items[items.length] = item; 
+        add_listener(item);   
+    }
+    
+    void set_bounds(float start_angle, float end_angle) {
+        this.start_angle = start_angle;
+        this.end_angle = end_angle;
+    }
+    
+    void set_radius(float new_radius) {
+        this.menu_radius = new_radius;
     }
     
     void prepare() {
@@ -248,7 +324,8 @@ class Menu extends RadialComponent {
             
             MenuItem item = items[i];
             if (!item.is_color_set())  item.set_color(cur_color);            
-            if (!item.is_radius_set()) item.set_radius(start_radius);
+            if (!item.is_radius_set()) item.set_radius(start_radius, 
+                                                       menu_radius);
             if (!item.is_angle_set())  item.set_angle(cur_start_angle, 
                                                       cur_end_angle);
             
@@ -272,10 +349,6 @@ class Menu extends RadialComponent {
         for (int i = 0; i < items.length; i++) {
             items[i].set_pos(center_x, center_y);
         }
-    }   
-    
-    void on_mouse_over(float mouse_x, float mouse_y) {
-        
     }
 
 };
