@@ -1,13 +1,11 @@
-Menu menu = new Menu(/*[
-        "Cut",
-        "Copy",
-        "Paste",
-        "Send to..."
-    ]*/); // FIXME: setting through array moves in recursion
+Menu menu = new Menu();
 menu.add_item(new MenuItem("Cut"));
 menu.add_item(new MenuItem("Copy"));
 menu.add_item(new MenuItem("Paste"));
 menu.add_item(new MenuItem("Send to..."));
+menu.add_item(new MenuItem("What the?"));
+menu.add_item(new MenuItem("Let's party"));
+menu.add_item(new MenuItem("Happy New Year"));
 
 boolean menuShown = false;
 
@@ -50,21 +48,27 @@ void mouseMoved() {
     
 }
 
+/* ======================== Component ========================================*/
+
 class Component {
 
-    Component[] listeners = new Component[];
+    static Component[] listeners = new Component[];
     
-    void add_listener(Component comp) {
+    void Component() {
+        add_listener(this);
+    }
+    
+    static void add_listener(Component comp) {
         listeners[listeners.length] = comp;
     };  
     
-    void add_listeners(Component[] comps) {
+    static void add_listeners(Component[] comps) {
         for (int i = 0; i < comps.length; i++) {
             listeners[listeners.length] = comps[i];
         }
     };      
 
-    boolean mouse_in(float mouse_x, float mouse_y) { 
+    static boolean mouse_in(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 return true;
@@ -73,7 +77,7 @@ class Component {
         return false;
     };
     
-    void mouse_over(float mouse_x, float mouse_y) { 
+    static void mouse_over(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_over(mouse_x, mouse_y);
@@ -81,7 +85,7 @@ class Component {
         }
     };   
     
-    void mouse_click(float mouse_x, float mouse_y) { 
+    static void mouse_click(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_click(mouse_x, mouse_y);
@@ -96,6 +100,8 @@ class Component {
 
 }
 
+/* ======================== RadialComponent ==================================*/
+
 class RadialComponent extends Component {
 
     float center_x, center_y = .0;
@@ -106,6 +112,8 @@ class RadialComponent extends Component {
     }
 
 };
+
+/* ======================== MenuCloseButton ==================================*/
 
 class MenuCloseButton extends RadialComponent {
         
@@ -122,6 +130,8 @@ class MenuCloseButton extends RadialComponent {
     } 
     
 }
+
+/* ======================== MenuItem =========================================*/
 
 class MenuItem extends RadialComponent {
 
@@ -181,12 +191,16 @@ class MenuItem extends RadialComponent {
 
 };
 
+/* ======================== Menu =============================================*/
+
 class Menu extends RadialComponent {
 
     color stroke_color = color(#eeeeee);
-    color start_color = color(#606060);
+    color start_color = color(#000033);
+    color end_color = color(#000066);
     // color[] items_colors;
-    float start_angle = 0;
+    float start_angle = -HALF_PI;
+    float end_angle = HALF_PI * 3 / 2;
 
     MenuItem[] items;
     MenuCloseButton close_btn;
@@ -194,57 +208,54 @@ class Menu extends RadialComponent {
     Menu(MenuItem[] items) {
         close_btn = new MenuCloseButton();
         this.items = items;
-        
-        add_listener(close_btn);
-        add_listeners(items);
     }
     
-    Menu(String[] items_names) {
+    /* Menu(String[] items_names) {  // FIXME: setting through array moves in recursion
         close_btn = new MenuCloseButton();
         add_listener(close_btn);
         
         for (int i = 0; i < items_names.length; i++) {
             add_item(new MenuItem(items_names[i]));
         }
-    }    
+    }  */
     
     Menu() {
         close_btn = new MenuCloseButton();
         items     = new MenuItem[];
-        
-        add_listener(close_btn);
     }
     
     void add_item(MenuItem item) {
         items[items.length] = item;
-        add_listener(item);
     }
     
     void add_item(String item_name) {
         // add_item(new MenuItem(item_name));
         MenuItem item = new MenuItem(item_name);
-        items[items.length] = item;
-        add_listener(item);        
-    }    
+        items[items.length] = item;    
+    }
     
     void prepare() {
         // called on processing setup()
-        float one_sixth_pi = HALF_PI / 3;
+        float angle_step = (end_angle - start_angle) / items.length;
         float start_radius = close_btn.btn_radius /*+ 1*/;
+        float lerp_amount = 1 / items.length;
         
         float cur_color = start_color;
-        float cur_angle = start_angle;
-        float end_angle = cur_angle + one_sixth_pi;
+        float cur_start_angle = start_angle;
+        float cur_end_angle = cur_start_angle + angle_step;
         
         for (int i = 0; i < items.length; i++) {
             
             MenuItem item = items[i];
             if (!item.is_color_set())  item.set_color(cur_color);            
             if (!item.is_radius_set()) item.set_radius(start_radius);
-            if (!item.is_angle_set())  item.set_angle(cur_angle, end_angle);
+            if (!item.is_angle_set())  item.set_angle(cur_start_angle, 
+                                                      cur_end_angle);
             
-            cur_angle += one_sixth_pi;
-            end_angle = cur_angle + one_sixth_pi;
+            cur_start_angle += angle_step;
+            cur_end_angle = cur_start_angle + angle_step;
+            
+            cur_color = lerpColor(start_color, end_color, lerp_amount * (i + 1));
         }        
     }
 
@@ -262,5 +273,9 @@ class Menu extends RadialComponent {
             items[i].set_pos(center_x, center_y);
         }
     }   
+    
+    void on_mouse_over(float mouse_x, float mouse_y) {
+        
+    }
 
 };
