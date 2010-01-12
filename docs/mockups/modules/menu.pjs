@@ -119,7 +119,7 @@ class RadialComponent extends Component {
         }
     }
     
-    static boolean on_ring(float point_x, float point_y,
+    static boolean on_a_ring(float point_x, float point_y,
                     float ring_x, float ring_y,
                     float min_radius, float max_radius) {
         float dx = abs(point_x - ring_x);
@@ -144,17 +144,28 @@ class RadialComponent extends Component {
         }                    
     }
     
-    static boolean in_circle_sector(float point_x, float point_y,
-                                    float circle_x, float circle_y,
-                                    float circle_radius,
-                                    float sector_start, float sector_end) {
-        
-    }
-    
     static boolean in_ring_sector(float point_x, float point_y,
                                   float ring_x, float ring_y,
                                   float min_radius, float max_radius,
                                   float sector_start, float sector_end) {
+        /* float chk_start = ((sector_start >= PI) ? (sector_start - TWO_PI) : sector_start);
+           float chk_end = ((sector_end >= PI) ? (sector_end - TWO_PI) : sector_end); */
+        float chk_start = ((sector_start < 0) ? (sector_start + TWO_PI) : sector_start);
+        float chk_end = ((sector_end < 0) ? (sector_end + TWO_PI) : sector_end);
+        if (chk_end < chk_start) {
+            // the dirty old trick to change two values
+            chk_start = chk_start + chk_end;
+            chk_end = chk_start - chk_end;
+            chk_start = chk_start - chk_end;
+        };
+        float dx = point_x - ring_x;
+        float dy = point_y - ring_y;        
+        float ang_tan = atan2(dy, dx);
+        if (ang_tan < 0) ang_tan += TWO_PI;
+        return ((ang_tan >= chk_start) && (ang_tan <= chk_end))
+               && on_a_ring(point_x, point_y,
+                            ring_x, ring_y,
+                            min_radius, max_radius);
     }
 
 };
@@ -245,9 +256,13 @@ class MenuItem extends RadialComponent {
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
-        return on_ring(mouse_x, mouse_y,
+        /* return on_a_ring(mouse_x, mouse_y,
                        center_x, center_y,
-                       start_radius, end_radius);
+                       start_radius, end_radius); */
+        return in_ring_sector(mouse_x, mouse_y,
+                              center_x, center_y,
+                              start_radius, end_radius,
+                              start_angle, end_angle);                       
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
