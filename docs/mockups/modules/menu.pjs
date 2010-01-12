@@ -11,7 +11,7 @@ menu.add_item(new MenuItem("Happy New Year"));
 menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
 menu.set_radius(90);
 
-boolean menuShown = false;
+boolean menuShown = false;  // FIXME: menu itself must store this var
 
 void setup() {
     size(600, 600);
@@ -26,7 +26,10 @@ void draw() {
   
     background(#666666);
   
-    if (menuShown) menu.update();
+    if (menuShown) {
+        menu.mouse_move(mouseX, mouseY)
+        menu.update();
+    }
   
 }
 
@@ -36,22 +39,9 @@ void mousePressed() {
    menuShown = true;   
    
     if (menuShown) {
-       if (menu.mouse_in(mouseX, mouseY)) {
-           menu.mouse_click(mouseX, mouseY); 
-       } 
+        menu.mouse_click(mouseX, mouseY); 
+        // FIXME: Component.mouse_click(mouseX. mouseY)
     }   
-}
-
-void mouseMoved() {
-    
-    if (menuShown) {
-       if (menu.mouse_in(mouseX, mouseY)) {
-           menu.mouse_over(mouseX, mouseY); 
-       } else {
-           menu.mouse_out();
-       }
-    }
-    
 }
 
 /* ======================== Component ========================================*/
@@ -68,31 +58,17 @@ class Component {
         for (int i = 0; i < comps.length; i++) {
             listeners[listeners.length] = comps[i];
         }
-    };      
-
-    static boolean mouse_in(float mouse_x, float mouse_y) { 
-        for (int i = 0; i < listeners.length; i++) {
-            if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
-                return true;
-            }
-        }
-        return false;
     };
     
-    static void mouse_over(float mouse_x, float mouse_y) { 
+    static void mouse_move(float mouse_x, float mouse_y) {
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_over(mouse_x, mouse_y);
+            } else {
+                listeners[i].on_mouse_out();
             }
         }
-    };  
-    
-    static void mouse_out() { 
-        for (int i = 0; i < listeners.length; i++) {
-            listeners[i].on_mouse_out();
-        }
-    }; 
-        
+    }      
     
     static void mouse_click(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
@@ -140,7 +116,7 @@ class MenuCloseButton extends RadialComponent {
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) {        
-        if ((abs(center_x - mouse_x) <= btn_radius) &&
+        /* if ((abs(center_x - mouse_x) <= btn_radius) &&
             (abs(center_y - mouse_y) <= btn_radius)) {
              float at_angle = atan2(mouse_y - center_y, mouse_x - center_x);
              float x_way = btn_radius * abs(cos(at_angle));
@@ -151,7 +127,8 @@ class MenuCloseButton extends RadialComponent {
                      ((center_y + y_way) <= mouse_y));
         } else {
             return false;
-        }
+        } */
+        return true;
     } 
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
@@ -217,7 +194,8 @@ class MenuItem extends RadialComponent {
             start_angle, end_angle); // inner arc
     }
     
-    boolean is_mouse_in(float mouse_x, float mouse_y) {        
+    boolean is_mouse_in(float mouse_x, float mouse_y) { 
+        /*   
         if ((abs(center_x - mouse_x) <= end_radius) &&
             (abs(center_y - mouse_y) <= end_radius) &&
             (abs(center_x - mouse_x) >= start_radius) &&
@@ -236,14 +214,15 @@ class MenuItem extends RadialComponent {
             }
         } else {
             return false;
-        }
+        } */
+        return false;
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
         item_color = color(#ffffff);
     }
     
-    boolean on_mouse_out(float mouse_x, float mouse_y) {
+    boolean on_mouse_out() {
         item_color = color(#333333);
     } 
 
