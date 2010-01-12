@@ -99,38 +99,33 @@ class RadialComponent extends Component {
     }
     
     // means "is point lies on circular disk"
-    boolean in_circle(float point_x, float point_y,
+    static boolean in_circle(float point_x, float point_y,
                       float circle_x, float circle_y,
                       float circle_radius) {
         // if point lies on the square describing this circle
-        if ((abs(circle_x - point_x) <= circle_radius) &&
-            (abs(circle_y - point_y) <= circle_radius)) {
+        float dx = abs(point_x - circle_x); 
+        float dy = abs(point_y - circle_y);
+        if ((dx <= circle_radius) && (dy <= circle_radius)) {
              // get angle from the circle center to the point
-             float at_angle = atan2(point_y - circle_y, point_x - circle_x);
+             float at_angle = atan2(dy, dx);
              // get distance to the instersection point 
              // of this angle and ring with given radius
-             float x_way = abs(circle_radius * cos(at_angle));
-             float y_way = abs(circle_radius * sin(at_angle));
+             float x_way = circle_radius * cos(at_angle);
+             float y_way = circle_radius * sin(at_angle);
              // check if given point is in bounds of this distance
-             return (abs(point_x - circle_x) <= x_way) &&
-                    (abs(point_y - circle_y) <= y_way); 
-             /* return ((point_x >= (circle_x - x_way)) &&
-                     (point_y >= (circle_y - y_way)) &&
-                     (point_x <= (circle_x + x_way)) &&
-                     (point_y <= (circle_y + y_way))); */
+             return (dx <= x_way) && (dy <= y_way); 
         } else {
             return false;
         }
     }
     
-    boolean on_ring(float point_x, float point_y,
+    static boolean on_ring(float point_x, float point_y,
                     float ring_x, float ring_y,
                     float min_radius, float max_radius) {
-        // if point lies on the square describing this ring
-        if ((abs(ring_x - point_x) <= max_radius) &&
-            (abs(ring_y - point_y) <= max_radius)) {
-             float dx = abs(point_x - ring_x);
-             float dy = abs(point_y - ring_y);             
+        float dx = abs(point_x - ring_x);
+        float dy = abs(point_y - ring_y);
+        // if point lies on the square describing this ring        
+        if ((dx <= max_radius) && (dy <= max_radius)) {            
              // get angle from the ring center to the point
              float at_angle = atan2(dy, dx);
              // get distance to the instersection point 
@@ -147,6 +142,19 @@ class RadialComponent extends Component {
         } else {
             return false;
         }                    
+    }
+    
+    static boolean in_circle_sector(float point_x, float point_y,
+                                    float circle_x, float circle_y,
+                                    float circle_radius,
+                                    float sector_start, float sector_end) {
+        
+    }
+    
+    static boolean in_ring_sector(float point_x, float point_y,
+                                  float ring_x, float ring_y,
+                                  float min_radius, float max_radius,
+                                  float sector_start, float sector_end) {
     }
 
 };
