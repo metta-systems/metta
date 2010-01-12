@@ -8,7 +8,8 @@ menu.add_item(new MenuItem("What the?"));
 menu.add_item(new MenuItem("Let's party"));
 menu.add_item(new MenuItem("Happy New Year"));
 
-menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+// menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
 menu.set_radius(90);
 
 boolean menuShown = false;  // FIXME: menu itself must store this var
@@ -96,6 +97,57 @@ class RadialComponent extends Component {
         this.center_x = center_x;
         this.center_y = center_y;
     }
+    
+    // means "is point lies on circular disk"
+    boolean in_circle(float point_x, float point_y,
+                      float circle_x, float circle_y,
+                      float circle_radius) {
+        // if point lies on the square describing this circle
+        if ((abs(circle_x - point_x) <= circle_radius) &&
+            (abs(circle_y - point_y) <= circle_radius)) {
+             // get angle from the circle center to the point
+             float at_angle = atan2(point_y - circle_y, point_x - circle_x);
+             // get distance to the instersection point 
+             // of this angle and ring with given radius
+             float x_way = abs(circle_radius * cos(at_angle));
+             float y_way = abs(circle_radius * sin(at_angle));
+             // check if given point is in bounds of this distance
+             return (abs(point_x - circle_x) <= x_way) &&
+                    (abs(point_y - circle_y) <= y_way); 
+             /* return ((point_x >= (circle_x - x_way)) &&
+                     (point_y >= (circle_y - y_way)) &&
+                     (point_x <= (circle_x + x_way)) &&
+                     (point_y <= (circle_y + y_way))); */
+        } else {
+            return false;
+        }
+    }
+    
+    boolean on_ring(float point_x, float point_y,
+                    float ring_x, float ring_y,
+                    float min_radius, float max_radius) {
+        // if point lies on the square describing this ring
+        if ((abs(ring_x - point_x) <= max_radius) &&
+            (abs(ring_y - point_y) <= max_radius)) {
+             float dx = abs(point_x - ring_x);
+             float dy = abs(point_y - ring_y);             
+             // get angle from the ring center to the point
+             float at_angle = atan2(dy, dx);
+             // get distance to the instersection point 
+             // of this angle and ring with max radius
+             float x_max_way = max_radius * cos(at_angle);
+             float y_max_way = max_radius * sin(at_angle);
+             // get distance to the instersection point 
+             // of this angle and ring with min radius
+             float x_min_way = min_radius * cos(at_angle);
+             float y_min_way = min_radius * sin(at_angle);             
+             // check if given point is in bounds of these distances             
+             return (dx >= x_min_way) && (dx <= x_max_way) &&
+                    (dy >= y_min_way) && (dy <= y_max_way); 
+        } else {
+            return false;
+        }                    
+    }
 
 };
 
@@ -115,20 +167,10 @@ class MenuCloseButton extends RadialComponent {
         ellipse(center_x, center_y, btn_radius * 2, btn_radius * 2);
     }
     
-    boolean is_mouse_in(float mouse_x, float mouse_y) {        
-        /* if ((abs(center_x - mouse_x) <= btn_radius) &&
-            (abs(center_y - mouse_y) <= btn_radius)) {
-             float at_angle = atan2(mouse_y - center_y, mouse_x - center_x);
-             float x_way = btn_radius * abs(cos(at_angle));
-             float y_way = btn_radius * abs(sin(at_angle));
-             return (((center_x - x_way) <= mouse_x) &&
-                     ((center_y - y_way) <= mouse_y) &&
-                     ((center_x + x_way) >= mouse_x) &&
-                     ((center_y + y_way) <= mouse_y));
-        } else {
-            return false;
-        } */
-        return true;
+    boolean is_mouse_in(float mouse_x, float mouse_y) {
+        return in_circle(mouse_x, mouse_y,
+                         center_x, center_y,
+                         btn_radius);
     } 
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
@@ -195,27 +237,9 @@ class MenuItem extends RadialComponent {
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
-        /*   
-        if ((abs(center_x - mouse_x) <= end_radius) &&
-            (abs(center_y - mouse_y) <= end_radius) &&
-            (abs(center_x - mouse_x) >= start_radius) &&
-            (abs(center_y - mouse_y) >= start_radius)) {
-            float at_angle = atan2(mouse_y - center_y, mouse_x - center_x);
-            if ((abs(at_angle) >= abs(start_angle)) && 
-                (abs(at_angle) <= abs(end_angle))) { 
-                float x_way = end_radius * abs(cos(at_angle));
-                float y_way = end_radius * abs(sin(at_angle));
-                return (((center_x - x_way) <= mouse_x) &&
-                        ((center_y - y_way) <= mouse_y) &&
-                        ((center_x + x_way) >= mouse_x) &&
-                        ((center_y + y_way) <= mouse_y));   
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        } */
-        return false;
+        return on_ring(mouse_x, mouse_y,
+                       center_x, center_y,
+                       start_radius, end_radius);
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
