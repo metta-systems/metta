@@ -1,12 +1,14 @@
 boolean floatMenuShown = false;
 
 PFont djvuSansFont = loadFont("DejaVuSans.svg");
+//PFont cjkFont = loadFont("CJKGothic.svg");
 
 void setup() {
     size(900, 900);
     smooth();
     frameRate(30);
     
+    //textFont(cjkFont);
     textFont(djvuSansFont);
   
     left_menu.prepare();
@@ -337,9 +339,12 @@ class MenuItem extends RadialComponent {
         pushMatrix();
         fill(lerpColor(cur_color, color(#ffffff), .6));   
         translate(center_x, center_y);
-        rotate(start_angle + abs(end_angle - start_angle) / 2);
+        /* rotate(start_angle + abs(end_angle - start_angle) / 2);
         float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
-        text(item_name, start_radius + padding_x, -8);
+        text(item_name, start_radius + padding_x, -8); */
+        // to show at the side of the sector
+        rotate(start_angle);
+        text(item_name, start_radius + 10, 4);        
         popMatrix();
     }
     
