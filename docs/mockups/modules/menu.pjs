@@ -20,8 +20,6 @@ void draw() {
   
     background(#666666);
     
-    text("hola!", 10, 10);
-    
     left_menu.mouse_move(mouseX, mouseY);
     center_menu.mouse_move(mouseX, mouseY);
     right_menu.mouse_move(mouseX, mouseY);
@@ -337,13 +335,13 @@ class MenuItem extends RadialComponent {
              center_y + end_radius * sin(end_angle)); */            
         
         pushMatrix();
-        fill(lerpColor(cur_color, color(#ffffff), .8));
-        float rotateAngle = start_angle;
+        fill(lerpColor(cur_color, color(#ffffff), .5));
+        float rotateAngle = start_angle + abs(end_angle - start_angle) / 2;        
         translate(center_x, 
                   center_y);
-        rotate(rotateAngle);
+        rotate(rotateAngle);                  
         // text(name, start_radius * cos(rotateAngle), start_radius * sin(rotateAngle));*/
-        text(item_name, start_radius + 10, 5);
+        text(item_name, start_radius + (end_radius - start_radius) / 10, -8);
         popMatrix();
     }
     
