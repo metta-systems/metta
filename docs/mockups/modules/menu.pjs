@@ -1,68 +1,133 @@
-Menu menu = new Menu();
-
-menu.add_item(new MenuItem("Cut"));
-menu.add_item(new MenuItem("Copy"));
-menu.add_item(new MenuItem("Paste"));
-menu.add_item(new MenuItem("Send to..."));
-menu.add_item(new MenuItem("What the?"));
-menu.add_item(new MenuItem("Let's party"));
-menu.add_item(new MenuItem("Happy New Year"));
-
-//menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
-menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
-menu.set_colors(color(#000033), color(#000066));
-menu.set_radius(120);
-
-boolean menuShown = false;  // FIXME: menu itself must store this var
+boolean floatMenuShown = false;
 
 void setup() {
-    size(600, 600);
+    size(900, 900);
     smooth();
     frameRate(30);
   
-    menu.prepare();
+    left_menu.prepare();
+    center_menu.prepare();
+    right_menu.prepare();
+    float_menu.prepare();
 }
 
 // Main draw loop
 void draw() {
   
     background(#666666);
+    
+    left_menu.mouse_move(mouseX, mouseY);
+    center_menu.mouse_move(mouseX, mouseY);
+    right_menu.mouse_move(mouseX, mouseY);
+            
+    left_menu.update();
+    center_menu.update();    
+    right_menu.update();
   
-    if (menuShown) {
-        menu.mouse_move(mouseX, mouseY)
-        menu.update();
+    if (floatMenuShown) {
+        float_menu.mouse_move(mouseX, mouseY);
+        float_menu.update();        
     }
   
 }
 
 void mousePressed() {
+
+   left_menu.mouse_click(mouseX, mouseY);
+   center_menu.mouse_click(mouseX, mouseY);
+   right_menu.mouse_click(mouseX, mouseY);   
    
-   menu.set_pos(mouseX, mouseY); 
-   menuShown = true;   
+   float_menu.set_pos(mouseX, mouseY); 
+   floatMenuShown = true;   
    
-    if (menuShown) {
-        menu.mouse_click(mouseX, mouseY); 
-        // FIXME: Component.mouse_click(mouseX. mouseY)
+    if (floatMenuShown) {
+        float_menu.mouse_click(mouseX, mouseY);
     }   
 }
 
-/* ======================== Component ========================================*/
+/* ======================== setting menus =================================== */
+
+// Left Menu
+
+Menu left_menu = new Menu();
+
+left_menu.add_item(new MenuItem("Cut"));
+left_menu.add_item(new MenuItem("Copy"));
+left_menu.add_item(new MenuItem("Paste"));
+left_menu.add_item(new MenuItem("Delete"));
+left_menu.add_item(new MenuItem("Back"));
+left_menu.add_item(new MenuItem("Forward"));
+left_menu.add_item(new MenuItem("Reload"));
+
+left_menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+left_menu.set_colors(color(#330000), color(#660000));
+left_menu.set_radius(120);
+
+left_menu.set_pos(100, 200);
+
+// Center Menu
+
+Menu center_menu = new Menu();
+
+center_menu.add_item(new MenuItem("A"));
+center_menu.add_item(new MenuItem("B"));
+center_menu.add_item(new MenuItem("C"));
+center_menu.add_item(new MenuItem("D"));
+
+center_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
+center_menu.set_colors(color(#003333), color(#006666));
+center_menu.set_radius(90);
+
+center_menu.set_pos(300, 200);
+
+// Right Menu
+
+Menu right_menu = new Menu();
+
+right_menu.add_item(new MenuItem("Say"));
+right_menu.add_item(new MenuItem("a"));
+right_menu.add_item(new MenuItem("word"));
+right_menu.add_item(new MenuItem("here"));
+
+right_menu.set_bounds(-(HALF_PI / 2), HALF_PI * 7 / 2);
+right_menu.set_colors(color(#003300), color(#006600));
+right_menu.set_radius(130);
+
+right_menu.set_pos(500, 200);
+
+// Floating Menu
+
+Menu float_menu = new Menu();
+
+float_menu.add_item(new MenuItem("Cut"));
+float_menu.add_item(new MenuItem("Copy"));
+float_menu.add_item(new MenuItem("Paste"));
+float_menu.add_item(new MenuItem("Send to..."));
+float_menu.add_item(new MenuItem("What the?"));
+float_menu.add_item(new MenuItem("Let's party"));
+float_menu.add_item(new MenuItem("Happy New Year"));
+
+float_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
+float_menu.set_colors(color(#000033), color(#000066));
+float_menu.set_radius(120);
+
+/* ======================== Component ======================================= */
 
 class Component {
 
-    static Component[] listeners = new Component[];
+    Component[] listeners = new Component[]; // TODO: static?
     
-    static void add_listener(Component comp) {
+    void add_listener(Component comp) {
         listeners[listeners.length] = comp;
     };  
     
-    static void add_listeners(Component[] comps) {
+    void add_listeners(Component[] comps) {
         for (int i = 0; i < comps.length; i++) {
             listeners[listeners.length] = comps[i];
         }
     };
     
-    static void mouse_move(float mouse_x, float mouse_y) {
+    void mouse_move(float mouse_x, float mouse_y) {
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_over(mouse_x, mouse_y);
@@ -72,7 +137,7 @@ class Component {
         }
     }      
     
-    static void mouse_click(float mouse_x, float mouse_y) { 
+    void mouse_click(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_click(mouse_x, mouse_y);
@@ -88,7 +153,7 @@ class Component {
 
 }
 
-/* ======================== RadialComponent ==================================*/
+/* ======================== RadialComponent ================================= */
 
 class RadialComponent extends Component {
 
@@ -166,7 +231,7 @@ class RadialComponent extends Component {
 
 };
 
-/* ======================== MenuCloseButton ==================================*/
+/* ======================== MenuCloseButton ================================= */
 
 class MenuCloseButton extends RadialComponent {
         
@@ -198,7 +263,7 @@ class MenuCloseButton extends RadialComponent {
     
 }
 
-/* ======================== MenuItem =========================================*/
+/* ======================== MenuItem ======================================== */
 
 class MenuItem extends RadialComponent {
 
@@ -253,6 +318,15 @@ class MenuItem extends RadialComponent {
         arc(center_x, center_y, 
             start_radius * 2, start_radius * 2, 
             start_angle, end_angle); // inner arc
+        /* // [un]comment to turn on[off] lines between sectors
+        line(center_x + start_radius * cos(start_angle),
+             center_y + start_radius * sin(start_angle),
+             center_x + end_radius * cos(start_angle),
+             center_y + end_radius * sin(start_angle));
+        line(center_x + start_radius * cos(end_angle),
+             center_y + start_radius * sin(end_angle),
+             center_x + end_radius * cos(end_angle),
+             center_y + end_radius * sin(end_angle)); */        
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
@@ -260,7 +334,7 @@ class MenuItem extends RadialComponent {
                        center_x, center_y,
                        start_radius, end_radius); */
         return in_ring_sector(mouse_x, mouse_y,
-                              center_x, center_y,
+                              this.center_x, this.center_y,
                               start_radius, end_radius,
                               start_angle, end_angle);                       
     }
@@ -275,7 +349,7 @@ class MenuItem extends RadialComponent {
 
 };
 
-/* ======================== Menu =============================================*/
+/* ======================== Menu ============================================ */
 
 class Menu extends RadialComponent {
 
