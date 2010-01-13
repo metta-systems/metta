@@ -28,7 +28,7 @@ public:
     }
 
     /*! Destructor frees the list. */
-    ~range_list_t();
+    ~range_list_t() {} /* FIXME: temporarily empty */
 
     range_list_t(const range_list_t&);
 

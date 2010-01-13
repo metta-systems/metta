@@ -39,7 +39,7 @@ SECTIONS
     placement_address = ALIGN(PAGE_SIZE);
 
     /* Strip unnecessary stuff */
-    /DISCARD/ : { *(.comment .note* .eh_frame .dtors) }
+    /DISCARD/ : { *(.comment .note* .eh_frame .dtors) } /* FIXME: eh_frame is needed for dwarf debug info! */
 }
 
 /*

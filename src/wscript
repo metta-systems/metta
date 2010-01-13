@@ -24,7 +24,7 @@ def set_options(opt):
     # i686-exquance-metta
     # arm-metta
 
-    # arch (x86, x86-64, ppc, ppc64) - a generic cpu format
+    # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
     # cpu (p4, arm11jsf) - a specific cpu format
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for." + '[default: %default]')
 
@@ -106,9 +106,9 @@ def build(bld):
 
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = 'runtime/g++support.cpp runtime/memutils.cpp runtime/cstring.cpp'.split()
+    runtime.source = 'runtime/g++support.cpp runtime/newdelete.cpp runtime/memutils.cpp runtime/cstring.cpp'.split()
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
-    runtime.includes = include_dirs
+    runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
 
     toolruntime = bld.new_task_gen('cxx', 'staticlib')
@@ -124,7 +124,7 @@ def build(bld):
     commons.target = 'common'
 
     platform = bld.new_task_gen('cxx', 'staticlib')
-    platform.source = map(lambda d: "platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split())
+    platform.source = map(lambda d: "platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split()) + map(lambda d: "arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
     platform.env = bld.env_of_name('KERNEL_ENV').copy()
     platform.includes = platform.env['INCLUDE_DIRS']
     platform.target = 'platform'
@@ -159,13 +159,14 @@ def build(bld):
     #mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
     #mkinitfs.target = 'mkinitfs'
 
-#    kickstart = bld.new_task_gen('cxx', 'program')
-    #kickstart.source = map(lambda f: 'kickstart/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp'.split())# kickstart.lds
-#    kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    #kickstart.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/kickstart/kickstart.lds', '-Wl,-Map,kickstart.map'])
-    #kickstart.includes = '. ../../lib ../../runtime ../../runtime/ml lib kickstart nucleus'
-#    kickstart.target = 'kickstart.bin'
-#    kickstart.uselib_local = 'runtime'
+    kickstart = bld.new_task_gen('cxx', 'program')
+    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp'.split())
+    # page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp kickstart.lds
+    kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
+    kickstart.env.append_unique('LINKFLAGS', ['-T', '../arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
+    kickstart.includes = kickstart.env['INCLUDE_DIRS']
+    kickstart.target = 'kickstart.sys'
+    kickstart.uselib_local = 'platform common kernel runtime'
 
     #nucleus = bld.new_task_gen('cxx', 'program')
     #nucleus.source = map(lambda f: 'nucleus/' + f, 'nucleus.cpp pd.cpp page_directory_nucleus.cpp memory/new.cpp memory/memory_manager.cpp memory/stack_page_allocator.cpp memory/heap.cpp'.split())# nucleus/nucleus.lds

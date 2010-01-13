@@ -6,24 +6,31 @@
 //
 // Minimal operator new/delete implementation for use during bootstrap.
 //
-#include "c++boot.h"
+#include "newdelete.h"
 #include "macros.h"
 #include "memory.h"
 #include "frame.h"
-#include "page_directory.h"
+// #include "page_directory.h"
 #include "default_console.h"
-#include "kickstart_frame_allocator.h"
+// #include "kickstart_frame_allocator.h"
 
-extern kickstart_frame_allocator_t frame_allocator; //FIXME: doh
+// extern kickstart_frame_allocator_t frame_allocator; //FIXME: doh
+extern "C" address_t placement_address;
 
 void* frame_t::operator new(size_t)
 {
-    return reinterpret_cast<void*>(frame_allocator->alloc_frame());
+    address_t tmp = placement_address;
+    placement_address += PAGE_SIZE;
+    return reinterpret_cast<void*>(tmp);
+//     return reinterpret_cast<void*>(frame_allocator->alloc_frame());
 }
 
-void* frame_t::operator new(size_t, address_t virt)
+void* frame_t::operator new(size_t, address_t /*virt*/)
 {
-    return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
+    address_t tmp = placement_address;
+    placement_address += PAGE_SIZE;
+    return reinterpret_cast<void*>(tmp);
+//     return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
 }
 
 void frame_t::operator delete(void*)
@@ -31,16 +38,20 @@ void frame_t::operator delete(void*)
     // we cannot free memory in kickstart
 }
 
-void* page_table_t::operator new(size_t size, address_t* physical_address)
-{
-    return ::operator new(size, true, physical_address);
-}
+// void* page_table_t::operator new(size_t size, address_t* physical_address)
+// {
+//     return ::operator new(size, true, physical_address);
+// }
 
 static inline void* placement_alloc(size_t size)
 {
     kconsole << " .normal frame alloc. ";
     UNUSED(size);
-    return reinterpret_cast<void*>(frame_allocator.alloc_frame());
+    placement_address = page_align_up(placement_address);
+    address_t tmp = placement_address;
+    placement_address += PAGE_SIZE;
+    return reinterpret_cast<void*>(tmp);
+//     return reinterpret_cast<void*>(frame_allocator.alloc_frame());
 }
 
 // Allocate small non-page-aligned objects from a preallocated page,
@@ -54,7 +65,7 @@ static inline void* small_alloc(size_t size)
 
     if (!alloc_page || (alloc_pos + size > PAGE_SIZE))
     {
-        alloc_page = frame_allocator.alloc_frame();
+        alloc_page = reinterpret_cast<address_t>(placement_alloc(PAGE_SIZE));//frame_allocator.alloc_frame();
         alloc_pos = 0;
     }
 

@@ -34,7 +34,7 @@ struct default_allocator<T*>
         ASSERT(old_mem == 0 && old_size == 0);
         return reinterpret_cast<value_type*>(new char [new_size]);
     }
-    
+
     void deallocate(value_type* mem, size_t size)
     {
         delete reinterpret_cast<char*>(mem);

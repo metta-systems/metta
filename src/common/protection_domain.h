@@ -27,7 +27,7 @@
  * mapping setup. A default_stretch_driver provides default handling for applications.
  */
 // class virtual_address_space_t
-/*
+/*!
 The translation system deals with inserting, retrieving or deleting mappings between virtual and physical addresses.
 As such it may be considered an interface to a table of information held about these mappings; the actual mapping
 will typically be performed as necessary by whatever memory management hardware or software is present.
