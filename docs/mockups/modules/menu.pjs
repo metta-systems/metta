@@ -62,13 +62,13 @@ void mousePressed() {
 
 Menu left_menu = new Menu();
 
-left_menu.add_item(new MenuItem("Cut"));
-left_menu.add_item(new MenuItem("Copy"));
-left_menu.add_item(new MenuItem("Paste"));
-left_menu.add_item(new MenuItem("Delete"));
-left_menu.add_item(new MenuItem("Back"));
-left_menu.add_item(new MenuItem("Forward"));
-left_menu.add_item(new MenuItem("Reload"));
+left_menu.add_item(new MenuItem("cut"));
+left_menu.add_item(new MenuItem("copy"));
+left_menu.add_item(new MenuItem("paste"));
+left_menu.add_item(new MenuItem("delete"));
+left_menu.add_item(new MenuItem("back"));
+left_menu.add_item(new MenuItem("forward"));
+left_menu.add_item(new MenuItem("reload"));
 
 left_menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
 left_menu.set_colors(color(#330000), color(#660000));
@@ -80,10 +80,10 @@ left_menu.set_pos(100, 200);
 
 Menu center_menu = new Menu();
 
-center_menu.add_item(new MenuItem("A"));
-center_menu.add_item(new MenuItem("B"));
-center_menu.add_item(new MenuItem("C"));
-center_menu.add_item(new MenuItem("D"));
+center_menu.add_item(new MenuItem("a"));
+center_menu.add_item(new MenuItem("b"));
+center_menu.add_item(new MenuItem("c"));
+center_menu.add_item(new MenuItem("d"));
 
 center_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
 center_menu.set_colors(color(#003333), color(#006666));
@@ -95,7 +95,7 @@ center_menu.set_pos(300, 200);
 
 Menu right_menu = new Menu();
 
-right_menu.add_item(new MenuItem("Say"));
+right_menu.add_item(new MenuItem("say"));
 right_menu.add_item(new MenuItem("a"));
 right_menu.add_item(new MenuItem("word"));
 right_menu.add_item(new MenuItem("here"));
@@ -110,13 +110,13 @@ right_menu.set_pos(500, 200);
 
 Menu float_menu = new Menu();
 
-float_menu.add_item(new MenuItem("Cut"));
-float_menu.add_item(new MenuItem("Copy"));
-float_menu.add_item(new MenuItem("Paste"));
-float_menu.add_item(new MenuItem("Send to..."));
-float_menu.add_item(new MenuItem("What the?"));
-float_menu.add_item(new MenuItem("Let's party"));
-float_menu.add_item(new MenuItem("Happy New Year"));
+float_menu.add_item(new MenuItem("cut"));
+float_menu.add_item(new MenuItem("copy"));
+float_menu.add_item(new MenuItem("paste"));
+float_menu.add_item(new MenuItem("send to..."));
+float_menu.add_item(new MenuItem("what the?"));
+float_menu.add_item(new MenuItem("let's party"));
+float_menu.add_item(new MenuItem("happy new year"));
 
 float_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
 float_menu.set_colors(color(#000033), color(#000066));
@@ -286,7 +286,7 @@ class MenuItem extends RadialComponent {
     
     color cur_color = null;
     
-    boolean isMouseOver = false;
+    boolean is_mouse_over = false;
     
     MenuItem(String item_name) {
         this.item_name = item_name;
@@ -343,19 +343,17 @@ class MenuItem extends RadialComponent {
              center_x + end_radius * cos(end_angle),
              center_y + end_radius * sin(end_angle)); */            
         
-        if (isMouseOver) {
-            pushMatrix();
-            fill(lerpColor(cur_color, color(#ffffff), .6));   
-            translate(center_x, center_y);
-            /* // to show in the center of sector 
-            rotate(start_angle + abs(end_angle - start_angle) / 2);
-            float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
-            text(item_name, start_radius + padding_x, -8); */
-            // to show at the side of the sector
-            rotate(start_angle);
-            text(item_name, start_radius + 10, 4);        
-            popMatrix();
-        }
+        pushMatrix();
+        fill(lerpColor(cur_color, color(#ffffff), is_mouse_over ? .6 : .07));   
+        translate(center_x, center_y);
+        /* // to show in the center of sector 
+        rotate(start_angle + abs(end_angle - start_angle) / 2);
+        float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
+        text(item_name, start_radius + padding_x, -8); */
+        // to show at the side of the sector
+        rotate(start_angle);
+        text(item_name, start_radius, -20);        
+        popMatrix();
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
@@ -366,12 +364,12 @@ class MenuItem extends RadialComponent {
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
-        isMouseOver = true;
+        is_mouse_over = true;
         cur_color = over_color;
     }
     
     boolean on_mouse_out() {
-        isMouseOver = false;    
+        is_mouse_over = false;    
         cur_color = item_color;
     } 
 
@@ -446,7 +444,7 @@ class Menu extends RadialComponent {
         float cur_start_angle = start_angle;
         float cur_end_angle = cur_start_angle + angle_step;
         
-        textSize(10);        
+        textSize(40);        
         
         for (int i = 0; i < items.length; i++) {
             
