@@ -1,40 +1,16 @@
 boolean floatMenuShown = false;
 
-PFont djvuSansFont = loadFont("DejaVuSans.svg");
-//PFont cjkFont = loadFont("CJKGothic.svg");
-
-/* String[] textBlock = [
-"  Sed ut perspiciatis, unde omnis iste natus error sit voluptatem accusantium",
-"doloremque laudantium, totam rem aperiam eaque ipsa, quae ab illo inventore",
-"veritatis et quasi architecto beatae vitae dicta sunt, explicabo. Nemo enim",
-"ipsam voluptatem, quia voluptas sit, aspernatur aut odit aut fugit, sed quia",
-"consequuntur magni dolores eos, qui ratione voluptatem sequi nesciunt, neque",
-"porro quisquam est, qui dolorem ipsum, quia dolor sit amet, consectetur,",
-"adipisci[ng] velit, sed quia non numquam [do] eius modi tempora inci[di]dunt,",
-"ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima",
-"veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi",
-"ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit,",
-"qui in ea voluptate velit esse, quam nihil molestiae consequatur, vel illum,",
-"qui dolorem eum fugiat, quo voluptas nulla pariatur?",
-"   At vero eos et accusamus et iusto odio dignissimos ducimus, qui blanditiis",
-"praesentium voluptatum deleniti atque corrupti, quos dolores et quas molestias",
-"excepturi sint, obcaecati cupiditate non provident, similique sunt in culpa,",
-"qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum",
-"quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum",
-"soluta nobis est eligendi optio, cumque nihil impedit, quo minus id, quod",
-"maxime placeat, facere possimus, omnis voluptas assumenda est, omnis dolor",
-"repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum",
-"necessitatibus saepe eveniet, ut et voluptates repudiandae sint et molestiae",
-"non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut",
-"reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus",
-"asperiores repellat."]; */
+//PImage textBlock = null;
+PFont djvuSansFont = null;
 
 void setup() {
     size(900, 900);
     smooth();
     frameRate(30);
     
-    //textFont(cjkFont);
+    //textBlock = loadImage("textBlock.png");
+    djvuSansFont = loadFont("DejaVuSans.svg");
+    
     textFont(djvuSansFont);
   
     left_menu.prepare();
@@ -47,13 +23,9 @@ void setup() {
 void draw() {
   
     background(#666666);
-    
-    /* // text block
-    float line_y = .0;
-    for (int i = 0; i < textBlock.length; i++) {
-        text(textBlock[i], 20, line_y);
-        line_y += 10;
-    } */   
+  
+    //background(#ffffff);    
+    //image(textBlock, 20, 20); 
     
     left_menu.mouse_move(mouseX, mouseY);
     center_menu.mouse_move(mouseX, mouseY);
@@ -314,6 +286,8 @@ class MenuItem extends RadialComponent {
     
     color cur_color = null;
     
+    boolean isMouseOver = false;
+    
     MenuItem(String item_name) {
         this.item_name = item_name;
     }
@@ -369,22 +343,22 @@ class MenuItem extends RadialComponent {
              center_x + end_radius * cos(end_angle),
              center_y + end_radius * sin(end_angle)); */            
         
-        pushMatrix();
-        fill(lerpColor(cur_color, color(#ffffff), .6));   
-        translate(center_x, center_y);
-        /* rotate(start_angle + abs(end_angle - start_angle) / 2);
-        float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
-        text(item_name, start_radius + padding_x, -8); */
-        // to show at the side of the sector
-        rotate(start_angle);
-        text(item_name, start_radius + 10, 4);        
-        popMatrix();
+        if (isMouseOver) {
+            pushMatrix();
+            fill(lerpColor(cur_color, color(#ffffff), .6));   
+            translate(center_x, center_y);
+            /* // to show in the center of sector 
+            rotate(start_angle + abs(end_angle - start_angle) / 2);
+            float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
+            text(item_name, start_radius + padding_x, -8); */
+            // to show at the side of the sector
+            rotate(start_angle);
+            text(item_name, start_radius + 10, 4);        
+            popMatrix();
+        }
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
-        /* return on_a_ring(mouse_x, mouse_y,
-                       center_x, center_y,
-                       start_radius, end_radius); */
         return in_ring_sector(mouse_x, mouse_y,
                               this.center_x, this.center_y,
                               start_radius, end_radius,
@@ -392,10 +366,12 @@ class MenuItem extends RadialComponent {
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
+        isMouseOver = true;
         cur_color = over_color;
     }
     
     boolean on_mouse_out() {
+        isMouseOver = false;    
         cur_color = item_color;
     } 
 
