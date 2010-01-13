@@ -13,20 +13,21 @@ public:
         data = 0;
         int shift = 0;
         int size = 32; //number of bits in signed integer
+        uint8_t byte;
 
         while(true)
         {
-            uint8_t byte = *reinterpret_cast<uint8_t*>(from + offset);
+            byte = *reinterpret_cast<uint8_t*>(from + offset);
             data |= ((byte & 0x7F) << shift);
             shift += 7;
-            /* sign bit of byte is second high order bit (0x40) */
             if (!(byte & 0x80))
                 break;
             offset++;
         }
-        if ((shift < size) && (sign bit of byte is set))
+        /* sign bit of byte is second high order bit (0x40) */
+        if ((shift < size) && (byte & 0x40))
             /* sign extend */
-            result |= -(1 << shift);
+            data |= -(1 << shift);
     }
     operator int32_t() { return data; }
     sleb128_t operator =(int32_t d) { data = d; return *this; }
