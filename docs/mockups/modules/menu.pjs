@@ -7,7 +7,7 @@ void setup() {
     smooth();
     frameRate(30);
     
-    textFont(djvuSansFont, 10);
+    textFont(djvuSansFont);
   
     left_menu.prepare();
     center_menu.prepare();
@@ -335,13 +335,11 @@ class MenuItem extends RadialComponent {
              center_y + end_radius * sin(end_angle)); */            
         
         pushMatrix();
-        fill(lerpColor(cur_color, color(#ffffff), .5));
-        float rotateAngle = start_angle + abs(end_angle - start_angle) / 2;        
-        translate(center_x, 
-                  center_y);
-        rotate(rotateAngle);                  
-        // text(name, start_radius * cos(rotateAngle), start_radius * sin(rotateAngle));*/
-        text(item_name, start_radius + (end_radius - start_radius) / 10, -8);
+        fill(lerpColor(cur_color, color(#ffffff), .6));   
+        translate(center_x, center_y);
+        rotate(start_angle + abs(end_angle - start_angle) / 2);
+        float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
+        text(item_name, start_radius + padding_x, -8);
         popMatrix();
     }
     
@@ -433,6 +431,8 @@ class Menu extends RadialComponent {
         float cur_color = start_color;
         float cur_start_angle = start_angle;
         float cur_end_angle = cur_start_angle + angle_step;
+        
+        textSize(10);        
         
         for (int i = 0; i < items.length; i++) {
             
