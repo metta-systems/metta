@@ -1,0 +1,380 @@
+Menu menu = new Menu();
+
+menu.add_item(new MenuItem("Cut"));
+menu.add_item(new MenuItem("Copy"));
+menu.add_item(new MenuItem("Paste"));
+menu.add_item(new MenuItem("Send to..."));
+menu.add_item(new MenuItem("What the?"));
+menu.add_item(new MenuItem("Let's party"));
+menu.add_item(new MenuItem("Happy New Year"));
+
+// menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
+menu.set_radius(90);
+
+boolean menuShown = false;  // FIXME: menu itself must store this var
+
+void setup() {
+    size(600, 600);
+    smooth();
+    frameRate(30);
+  
+    menu.prepare();
+}
+
+// Main draw loop
+void draw() {
+  
+    background(#666666);
+  
+    if (menuShown) {
+        menu.mouse_move(mouseX, mouseY)
+        menu.update();
+    }
+  
+}
+
+void mousePressed() {
+   
+   menu.set_pos(mouseX, mouseY); 
+   menuShown = true;   
+   
+    if (menuShown) {
+        menu.mouse_click(mouseX, mouseY); 
+        // FIXME: Component.mouse_click(mouseX. mouseY)
+    }   
+}
+
+/* ======================== Component ========================================*/
+
+class Component {
+
+    static Component[] listeners = new Component[];
+    
+    static void add_listener(Component comp) {
+        listeners[listeners.length] = comp;
+    };  
+    
+    static void add_listeners(Component[] comps) {
+        for (int i = 0; i < comps.length; i++) {
+            listeners[listeners.length] = comps[i];
+        }
+    };
+    
+    static void mouse_move(float mouse_x, float mouse_y) {
+        for (int i = 0; i < listeners.length; i++) {
+            if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
+                listeners[i].on_mouse_over(mouse_x, mouse_y);
+            } else {
+                listeners[i].on_mouse_out();
+            }
+        }
+    }      
+    
+    static void mouse_click(float mouse_x, float mouse_y) { 
+        for (int i = 0; i < listeners.length; i++) {
+            if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
+                listeners[i].on_mouse_click(mouse_x, mouse_y);
+            }
+        }
+    };
+    
+    boolean is_mouse_in(float mouse_x, float mouse_y) { return false; };    
+    boolean on_mouse_over(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_click(float mouse_x, float mouse_y) { return true; };
+    boolean on_mouse_out() { return true; };    
+    void update() {};    
+
+}
+
+/* ======================== RadialComponent ==================================*/
+
+class RadialComponent extends Component {
+
+    float center_x, center_y = .0;
+
+    void set_pos(float center_x, float center_y) {
+        this.center_x = center_x;
+        this.center_y = center_y;
+    }
+    
+    // means "is point lies on circular disk"
+    static boolean in_circle(float point_x, float point_y,
+                      float circle_x, float circle_y,
+                      float circle_radius) {
+        // if point lies on the square describing this circle
+        float dx = abs(point_x - circle_x); 
+        float dy = abs(point_y - circle_y);
+        if ((dx <= circle_radius) && (dy <= circle_radius)) {
+             // get angle from the circle center to the point
+             float at_angle = atan2(dy, dx);
+             // get distance to the instersection point 
+             // of this angle and ring with given radius
+             float x_way = circle_radius * cos(at_angle);
+             float y_way = circle_radius * sin(at_angle);
+             // check if given point is in bounds of this distance
+             return (dx <= x_way) && (dy <= y_way); 
+        } else {
+            return false;
+        }
+    }
+    
+    static boolean on_a_ring(float point_x, float point_y,
+                    float ring_x, float ring_y,
+                    float min_radius, float max_radius) {
+        float dx = abs(point_x - ring_x);
+        float dy = abs(point_y - ring_y);
+        // if point lies on the square describing this ring        
+        if ((dx <= max_radius) && (dy <= max_radius)) {            
+             // get angle from the ring center to the point
+             float at_angle = atan2(dy, dx);
+             // get distance to the instersection point 
+             // of this angle and ring with max radius
+             float x_max_way = max_radius * cos(at_angle);
+             float y_max_way = max_radius * sin(at_angle);
+             // get distance to the instersection point 
+             // of this angle and ring with min radius
+             float x_min_way = min_radius * cos(at_angle);
+             float y_min_way = min_radius * sin(at_angle);             
+             // check if given point is in bounds of these distances             
+             return (dx >= x_min_way) && (dx <= x_max_way) &&
+                    (dy >= y_min_way) && (dy <= y_max_way); 
+        } else {
+            return false;
+        }                    
+    }
+    
+    static boolean in_ring_sector(float point_x, float point_y,
+                                  float ring_x, float ring_y,
+                                  float min_radius, float max_radius,
+                                  float sector_start, float sector_end) {
+        /* float chk_start = ((sector_start >= PI) ? (sector_start - TWO_PI) : sector_start);
+           float chk_end = ((sector_end >= PI) ? (sector_end - TWO_PI) : sector_end); */
+        float chk_start = ((sector_start < 0) ? (sector_start + TWO_PI) : sector_start);
+        float chk_end = ((sector_end < 0) ? (sector_end + TWO_PI) : sector_end);
+        if (chk_end < chk_start) {
+            // the dirty old trick to change two values
+            chk_start = chk_start + chk_end;
+            chk_end = chk_start - chk_end;
+            chk_start = chk_start - chk_end;
+        };
+        float dx = point_x - ring_x;
+        float dy = point_y - ring_y;        
+        float ang_tan = atan2(dy, dx);
+        if (ang_tan < 0) ang_tan += TWO_PI;
+        return ((ang_tan >= chk_start) && (ang_tan <= chk_end))
+               && on_a_ring(point_x, point_y,
+                            ring_x, ring_y,
+                            min_radius, max_radius);
+    }
+
+};
+
+/* ======================== MenuCloseButton ==================================*/
+
+class MenuCloseButton extends RadialComponent {
+        
+    float btn_radius = 10;
+    color button_color = color(#660000);
+    
+    MenuCloseButton() {
+
+    } 
+    
+    void update() {
+        fill(button_color);   
+        ellipse(center_x, center_y, btn_radius * 2, btn_radius * 2);
+    }
+    
+    boolean is_mouse_in(float mouse_x, float mouse_y) {
+        return in_circle(mouse_x, mouse_y,
+                         center_x, center_y,
+                         btn_radius);
+    } 
+    
+    boolean on_mouse_over(float mouse_x, float mouse_y) {
+        button_color = color(#ffffff);
+    }    
+    
+    boolean on_mouse_out() {
+        button_color = color(#660000);
+    }    
+    
+}
+
+/* ======================== MenuItem =========================================*/
+
+class MenuItem extends RadialComponent {
+
+    String name;
+
+    color item_color, over_color = null;
+    float start_radius, end_radius = null;
+    float start_angle, end_angle = null;
+    
+    MenuItem(String name) {
+        this.name = name;
+    }
+    
+    void set_radius(float start_radius, float end_radius) {
+        this.start_radius = start_radius;
+        this.end_radius = end_radius;
+    }
+    
+    boolean is_radius_set() {
+        return (start_radius != null) &&
+               (end_radius != null);
+    }
+    
+    void set_angle(float start_angle, float end_angle) {
+        this.start_angle = start_angle;
+        this.end_angle = end_angle;
+    }
+    
+    boolean is_angle_set() {
+        return (start_angle != null) &&
+               (end_angle != null);        
+    }
+    
+    void set_color(color item_color) {
+        this.item_color = item_color;
+    }
+    
+    boolean is_color_set() {
+        return (item_color != null);
+    }    
+
+    void update() {        
+        fill(item_color);
+        arc(center_x, center_y, 
+            end_radius * 2, end_radius * 2, 
+            start_angle, end_angle); // outer arc
+        noFill();
+        arc(center_x, center_y, 
+            start_radius * 2, start_radius * 2, 
+            start_angle, end_angle); // inner arc
+    }
+    
+    boolean is_mouse_in(float mouse_x, float mouse_y) { 
+        /* return on_a_ring(mouse_x, mouse_y,
+                       center_x, center_y,
+                       start_radius, end_radius); */
+        return in_ring_sector(mouse_x, mouse_y,
+                              center_x, center_y,
+                              start_radius, end_radius,
+                              start_angle, end_angle);                       
+    }
+    
+    boolean on_mouse_over(float mouse_x, float mouse_y) {
+        item_color = color(#ffffff);
+    }
+    
+    boolean on_mouse_out() {
+        item_color = color(#333333);
+    } 
+
+};
+
+/* ======================== Menu =============================================*/
+
+class Menu extends RadialComponent {
+
+    color stroke_color = color(#eeeeee);
+    color start_color = color(#000033);
+    color end_color = color(#000066);
+    // color[] items_colors;
+    
+    float menu_radius = 90;
+    float start_angle = -HALF_PI;
+    float end_angle = HALF_PI * 3 / 2;
+
+    MenuItem[] items;
+    MenuCloseButton close_btn;
+    
+    Menu(MenuItem[] items) {
+        close_btn = new MenuCloseButton();
+        add_listener(close_btn); 
+               
+        this.items = items;
+        add_listeners(this.items);
+    }
+    
+    /* Menu(String[] items_names) {  // FIXME: setting through array moves in recursion
+        close_btn = new MenuCloseButton();
+        add_listener(close_btn);
+        
+        for (int i = 0; i < items_names.length; i++) {
+            add_item(new MenuItem(items_names[i]));
+        }
+    }  */
+    
+    Menu() {
+        close_btn = new MenuCloseButton();
+        add_listener(close_btn);
+        
+        items = new MenuItem[];
+    }
+    
+    void add_item(MenuItem item) {
+        items[items.length] = item;
+        add_listener(item);
+    }
+    
+    void add_item(String item_name) {
+        // add_item(new MenuItem(item_name));
+        MenuItem item = new MenuItem(item_name);
+        items[items.length] = item; 
+        add_listener(item);   
+    }
+    
+    void set_bounds(float start_angle, float end_angle) {
+        this.start_angle = start_angle;
+        this.end_angle = end_angle;
+    }
+    
+    void set_radius(float new_radius) {
+        this.menu_radius = new_radius;
+    }
+    
+    void prepare() {
+        // called on processing setup()
+        float angle_step = (end_angle - start_angle) / items.length;
+        float start_radius = close_btn.btn_radius /*+ 1*/;
+        float lerp_amount = 1 / items.length;
+        
+        float cur_color = start_color;
+        float cur_start_angle = start_angle;
+        float cur_end_angle = cur_start_angle + angle_step;
+        
+        for (int i = 0; i < items.length; i++) {
+            
+            MenuItem item = items[i];
+            if (!item.is_color_set())  item.set_color(cur_color);            
+            if (!item.is_radius_set()) item.set_radius(start_radius, 
+                                                       menu_radius);
+            if (!item.is_angle_set())  item.set_angle(cur_start_angle, 
+                                                      cur_end_angle);
+            
+            cur_start_angle += angle_step;
+            cur_end_angle = cur_start_angle + angle_step;
+            
+            cur_color = lerpColor(start_color, end_color, lerp_amount * (i + 1));
+        }        
+    }
+
+    void update() {
+        stroke(stroke_color);
+        for (int i = 0; i < items.length; i++) {
+            items[i].update();
+        }
+        close_btn.update();
+    }
+    
+    void set_pos(float center_x, float center_y) {
+        close_btn.set_pos(center_x, center_y);
+        for (int i = 0; i < items.length; i++) {
+            items[i].set_pos(center_x, center_y);
+        }
+    }
+
+};
