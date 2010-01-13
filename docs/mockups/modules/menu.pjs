@@ -1,9 +1,13 @@
 boolean floatMenuShown = false;
 
+PFont djvuSansFont = loadFont("DejaVuSans.svg");
+
 void setup() {
     size(900, 900);
     smooth();
     frameRate(30);
+    
+    textFont(djvuSansFont, 10);
   
     left_menu.prepare();
     center_menu.prepare();
@@ -15,6 +19,8 @@ void setup() {
 void draw() {
   
     background(#666666);
+    
+    text("hola!", 10, 10);
     
     left_menu.mouse_move(mouseX, mouseY);
     center_menu.mouse_move(mouseX, mouseY);
@@ -267,7 +273,7 @@ class MenuCloseButton extends RadialComponent {
 
 class MenuItem extends RadialComponent {
 
-    String name;
+    String item_name;
 
     color item_color, over_color = null;
     float start_radius, end_radius = null;
@@ -275,8 +281,8 @@ class MenuItem extends RadialComponent {
     
     color cur_color = null;
     
-    MenuItem(String name) {
-        this.name = name;
+    MenuItem(String item_name) {
+        this.item_name = item_name;
     }
     
     void set_radius(float start_radius, float end_radius) {
@@ -310,6 +316,7 @@ class MenuItem extends RadialComponent {
     }    
 
     void update() {        
+    
         fill(cur_color);
         arc(center_x, center_y, 
             end_radius * 2, end_radius * 2, 
@@ -318,6 +325,7 @@ class MenuItem extends RadialComponent {
         arc(center_x, center_y, 
             start_radius * 2, start_radius * 2, 
             start_angle, end_angle); // inner arc
+            
         /* // [un]comment to turn on[off] lines between sectors
         line(center_x + start_radius * cos(start_angle),
              center_y + start_radius * sin(start_angle),
@@ -326,7 +334,17 @@ class MenuItem extends RadialComponent {
         line(center_x + start_radius * cos(end_angle),
              center_y + start_radius * sin(end_angle),
              center_x + end_radius * cos(end_angle),
-             center_y + end_radius * sin(end_angle)); */        
+             center_y + end_radius * sin(end_angle)); */            
+        
+        pushMatrix();
+        fill(lerpColor(cur_color, color(#ffffff), .8));
+        float rotateAngle = start_angle;
+        translate(center_x, 
+                  center_y);
+        rotate(rotateAngle);
+        // text(name, start_radius * cos(rotateAngle), start_radius * sin(rotateAngle));*/
+        text(item_name, start_radius + 10, 5);
+        popMatrix();
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
@@ -393,14 +411,7 @@ class Menu extends RadialComponent {
         items[items.length] = item;
         add_listener(item);
     }
-    
-    void add_item(String item_name) {
-        // add_item(new MenuItem(item_name));
-        MenuItem item = new MenuItem(item_name);
-        items[items.length] = item; 
-        add_listener(item);   
-    }
-    
+        
     void set_bounds(float start_angle, float end_angle) {
         this.start_angle = start_angle;
         this.end_angle = end_angle;
