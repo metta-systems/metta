@@ -8,7 +8,7 @@ menu.add_item(new MenuItem("What the?"));
 menu.add_item(new MenuItem("Let's party"));
 menu.add_item(new MenuItem("Happy New Year"));
 
-// menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+//menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
 menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
 menu.set_radius(90);
 
@@ -152,16 +152,16 @@ class RadialComponent extends Component {
            float chk_end = ((sector_end >= PI) ? (sector_end - TWO_PI) : sector_end); */
         float chk_start = ((sector_start < 0) ? (sector_start + TWO_PI) : sector_start);
         float chk_end = ((sector_end < 0) ? (sector_end + TWO_PI) : sector_end);
-        if (chk_end < chk_start) {
-            // the dirty old trick to change two values
-            chk_start = chk_start + chk_end;
-            chk_end = chk_start - chk_end;
-            chk_start = chk_start - chk_end;
-        };
         float dx = point_x - ring_x;
         float dy = point_y - ring_y;        
         float ang_tan = atan2(dy, dx);
-        if (ang_tan < 0) ang_tan += TWO_PI;
+        if (ang_tan < 0) ang_tan += TWO_PI;                
+        if (chk_end < chk_start) {
+            return ((ang_tan <= chk_end) || (ang_tan >= chk_start))
+               && on_a_ring(point_x, point_y,
+                            ring_x, ring_y,
+                            min_radius, max_radius);
+        };
         return ((ang_tan >= chk_start) && (ang_tan <= chk_end))
                && on_a_ring(point_x, point_y,
                             ring_x, ring_y,
