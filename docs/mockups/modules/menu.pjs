@@ -10,7 +10,8 @@ menu.add_item(new MenuItem("Happy New Year"));
 
 //menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
 menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
-menu.set_radius(90);
+menu.set_colors(color(#000033), color(#000066));
+menu.set_radius(120);
 
 boolean menuShown = false;  // FIXME: menu itself must store this var
 
@@ -148,24 +149,19 @@ class RadialComponent extends Component {
                                   float ring_x, float ring_y,
                                   float min_radius, float max_radius,
                                   float sector_start, float sector_end) {
-        /* float chk_start = ((sector_start >= PI) ? (sector_start - TWO_PI) : sector_start);
-           float chk_end = ((sector_end >= PI) ? (sector_end - TWO_PI) : sector_end); */
         float chk_start = ((sector_start < 0) ? (sector_start + TWO_PI) : sector_start);
         float chk_end = ((sector_end < 0) ? (sector_end + TWO_PI) : sector_end);
         float dx = point_x - ring_x;
         float dy = point_y - ring_y;        
         float ang_tan = atan2(dy, dx);
-        if (ang_tan < 0) ang_tan += TWO_PI;                
-        if (chk_end < chk_start) {
-            return ((ang_tan <= chk_end) || (ang_tan >= chk_start))
-               && on_a_ring(point_x, point_y,
-                            ring_x, ring_y,
-                            min_radius, max_radius);
-        };
-        return ((ang_tan >= chk_start) && (ang_tan <= chk_end))
-               && on_a_ring(point_x, point_y,
-                            ring_x, ring_y,
-                            min_radius, max_radius);
+        if (ang_tan < 0) ang_tan += TWO_PI;
+        boolean angle_fits = (chk_end >= chk_start) ? 
+                             ((ang_tan >= chk_start) && (ang_tan <= chk_end)) :
+                             ((ang_tan <= chk_end) || (ang_tan >= chk_start));
+        return angle_fits &&
+               on_a_ring(point_x, point_y,
+                         ring_x, ring_y,
+                         min_radius, max_radius);
     }
 
 };
@@ -174,7 +170,7 @@ class RadialComponent extends Component {
 
 class MenuCloseButton extends RadialComponent {
         
-    float btn_radius = 10;
+    float btn_radius = 18;
     color button_color = color(#660000);
     
     MenuCloseButton() {
@@ -212,6 +208,8 @@ class MenuItem extends RadialComponent {
     float start_radius, end_radius = null;
     float start_angle, end_angle = null;
     
+    color cur_color = null;
+    
     MenuItem(String name) {
         this.name = name;
     }
@@ -238,6 +236,8 @@ class MenuItem extends RadialComponent {
     
     void set_color(color item_color) {
         this.item_color = item_color;
+        this.over_color = lerpColor(item_color, color(#333333), .5)
+        this.cur_color = this.item_color;
     }
     
     boolean is_color_set() {
@@ -245,7 +245,7 @@ class MenuItem extends RadialComponent {
     }    
 
     void update() {        
-        fill(item_color);
+        fill(cur_color);
         arc(center_x, center_y, 
             end_radius * 2, end_radius * 2, 
             start_angle, end_angle); // outer arc
@@ -266,11 +266,11 @@ class MenuItem extends RadialComponent {
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
-        item_color = color(#ffffff);
+        cur_color = over_color;
     }
     
     boolean on_mouse_out() {
-        item_color = color(#333333);
+        cur_color = item_color;
     } 
 
 };
@@ -284,7 +284,7 @@ class Menu extends RadialComponent {
     color end_color = color(#000066);
     // color[] items_colors;
     
-    float menu_radius = 90;
+    float menu_radius = 120;
     float start_angle = -HALF_PI;
     float end_angle = HALF_PI * 3 / 2;
 
@@ -334,6 +334,11 @@ class Menu extends RadialComponent {
     
     void set_radius(float new_radius) {
         this.menu_radius = new_radius;
+    }
+    
+    void set_colors(float start_color, float end_color) {
+        this.start_color = start_color;
+        this.end_color = end_color;
     }
     
     void prepare() {
