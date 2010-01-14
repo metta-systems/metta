@@ -1,25 +1,22 @@
-Menu menu = new Menu();
+boolean floatMenuShown = false;
 
-menu.add_item(new MenuItem("Cut"));
-menu.add_item(new MenuItem("Copy"));
-menu.add_item(new MenuItem("Paste"));
-menu.add_item(new MenuItem("Send to..."));
-menu.add_item(new MenuItem("What the?"));
-menu.add_item(new MenuItem("Let's party"));
-menu.add_item(new MenuItem("Happy New Year"));
-
-// menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
-menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
-menu.set_radius(90);
-
-boolean menuShown = false;  // FIXME: menu itself must store this var
+//PImage textBlock = null;
+PFont djvuSansFont = null;
 
 void setup() {
-    size(600, 600);
+    size(900, 900);
     smooth();
     frameRate(30);
+    
+    //textBlock = loadImage("textBlock.png");
+    djvuSansFont = loadFont("DejaVuSans.svg");
+    
+    textFont(djvuSansFont);
   
-    menu.prepare();
+    left_menu.prepare();
+    center_menu.prepare();
+    right_menu.prepare();
+    float_menu.prepare();
 }
 
 // Main draw loop
@@ -27,41 +24,121 @@ void draw() {
   
     background(#666666);
   
-    if (menuShown) {
-        menu.mouse_move(mouseX, mouseY)
-        menu.update();
+    //background(#ffffff);    
+    //image(textBlock, 20, 20); 
+    
+    left_menu.mouse_move(mouseX, mouseY);
+    center_menu.mouse_move(mouseX, mouseY);
+    right_menu.mouse_move(mouseX, mouseY);
+            
+    left_menu.update();
+    center_menu.update();    
+    right_menu.update();
+  
+    if (floatMenuShown) {
+        float_menu.mouse_move(mouseX, mouseY);
+        float_menu.update();        
     }
   
 }
 
 void mousePressed() {
+
+   left_menu.mouse_click(mouseX, mouseY);
+   center_menu.mouse_click(mouseX, mouseY);
+   right_menu.mouse_click(mouseX, mouseY);   
    
-   menu.set_pos(mouseX, mouseY); 
-   menuShown = true;   
+   float_menu.set_pos(mouseX, mouseY); 
+   floatMenuShown = true;   
    
-    if (menuShown) {
-        menu.mouse_click(mouseX, mouseY); 
-        // FIXME: Component.mouse_click(mouseX. mouseY)
+    if (floatMenuShown) {
+        float_menu.mouse_click(mouseX, mouseY);
     }   
 }
 
-/* ======================== Component ========================================*/
+/* ======================== setting menus =================================== */
+
+// Left Menu
+
+Menu left_menu = new Menu();
+
+left_menu.add_item(new MenuItem("cut"));
+left_menu.add_item(new MenuItem("copy"));
+left_menu.add_item(new MenuItem("paste"));
+left_menu.add_item(new MenuItem("delete"));
+left_menu.add_item(new MenuItem("back"));
+left_menu.add_item(new MenuItem("forward"));
+left_menu.add_item(new MenuItem("reload"));
+
+left_menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
+left_menu.set_colors(color(#330000), color(#660000));
+left_menu.set_radius(120);
+
+left_menu.set_pos(100, 200);
+
+// Center Menu
+
+Menu center_menu = new Menu();
+
+center_menu.add_item(new MenuItem("a"));
+center_menu.add_item(new MenuItem("b"));
+center_menu.add_item(new MenuItem("c"));
+center_menu.add_item(new MenuItem("d"));
+
+center_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
+center_menu.set_colors(color(#003333), color(#006666));
+center_menu.set_radius(90);
+
+center_menu.set_pos(300, 200);
+
+// Right Menu
+
+Menu right_menu = new Menu();
+
+right_menu.add_item(new MenuItem("say"));
+right_menu.add_item(new MenuItem("a"));
+right_menu.add_item(new MenuItem("word"));
+right_menu.add_item(new MenuItem("here"));
+
+right_menu.set_bounds(-(HALF_PI / 2), HALF_PI * 7 / 2);
+right_menu.set_colors(color(#003300), color(#006600));
+right_menu.set_radius(130);
+
+right_menu.set_pos(500, 200);
+
+// Floating Menu
+
+Menu float_menu = new Menu();
+
+float_menu.add_item(new MenuItem("cut"));
+float_menu.add_item(new MenuItem("copy"));
+float_menu.add_item(new MenuItem("paste"));
+float_menu.add_item(new MenuItem("send to..."));
+float_menu.add_item(new MenuItem("what the?"));
+float_menu.add_item(new MenuItem("let's party"));
+float_menu.add_item(new MenuItem("happy new year"));
+
+float_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
+float_menu.set_colors(color(#000033), color(#000066));
+float_menu.set_radius(120);
+
+/* ======================== Component ======================================= */
 
 class Component {
 
-    static Component[] listeners = new Component[];
+    Component[] listeners = new Component[]; // TODO: static?
     
-    static void add_listener(Component comp) {
+    void add_listener(Component comp) {
         listeners[listeners.length] = comp;
     };  
     
-    static void add_listeners(Component[] comps) {
+    void add_listeners(Component[] comps) {
         for (int i = 0; i < comps.length; i++) {
             listeners[listeners.length] = comps[i];
         }
     };
     
-    static void mouse_move(float mouse_x, float mouse_y) {
+    void mouse_move(float mouse_x, float mouse_y) {
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_over(mouse_x, mouse_y);
@@ -71,7 +148,7 @@ class Component {
         }
     }      
     
-    static void mouse_click(float mouse_x, float mouse_y) { 
+    void mouse_click(float mouse_x, float mouse_y) { 
         for (int i = 0; i < listeners.length; i++) {
             if (listeners[i].is_mouse_in(mouse_x, mouse_y)) {
                 listeners[i].on_mouse_click(mouse_x, mouse_y);
@@ -87,7 +164,7 @@ class Component {
 
 }
 
-/* ======================== RadialComponent ==================================*/
+/* ======================== RadialComponent ================================= */
 
 class RadialComponent extends Component {
 
@@ -148,33 +225,28 @@ class RadialComponent extends Component {
                                   float ring_x, float ring_y,
                                   float min_radius, float max_radius,
                                   float sector_start, float sector_end) {
-        /* float chk_start = ((sector_start >= PI) ? (sector_start - TWO_PI) : sector_start);
-           float chk_end = ((sector_end >= PI) ? (sector_end - TWO_PI) : sector_end); */
         float chk_start = ((sector_start < 0) ? (sector_start + TWO_PI) : sector_start);
         float chk_end = ((sector_end < 0) ? (sector_end + TWO_PI) : sector_end);
-        if (chk_end < chk_start) {
-            // the dirty old trick to change two values
-            chk_start = chk_start + chk_end;
-            chk_end = chk_start - chk_end;
-            chk_start = chk_start - chk_end;
-        };
         float dx = point_x - ring_x;
         float dy = point_y - ring_y;        
         float ang_tan = atan2(dy, dx);
         if (ang_tan < 0) ang_tan += TWO_PI;
-        return ((ang_tan >= chk_start) && (ang_tan <= chk_end))
-               && on_a_ring(point_x, point_y,
-                            ring_x, ring_y,
-                            min_radius, max_radius);
+        boolean angle_fits = (chk_end >= chk_start) ? 
+                             ((ang_tan >= chk_start) && (ang_tan <= chk_end)) :
+                             ((ang_tan <= chk_end) || (ang_tan >= chk_start));
+        return angle_fits &&
+               on_a_ring(point_x, point_y,
+                         ring_x, ring_y,
+                         min_radius, max_radius);
     }
 
 };
 
-/* ======================== MenuCloseButton ==================================*/
+/* ======================== MenuCloseButton ================================= */
 
 class MenuCloseButton extends RadialComponent {
         
-    float btn_radius = 10;
+    float btn_radius = 18;
     color button_color = color(#660000);
     
     MenuCloseButton() {
@@ -202,18 +274,22 @@ class MenuCloseButton extends RadialComponent {
     
 }
 
-/* ======================== MenuItem =========================================*/
+/* ======================== MenuItem ======================================== */
 
 class MenuItem extends RadialComponent {
 
-    String name;
+    String item_name;
 
     color item_color, over_color = null;
     float start_radius, end_radius = null;
     float start_angle, end_angle = null;
     
-    MenuItem(String name) {
-        this.name = name;
+    color cur_color = null;
+    
+    boolean is_mouse_over = false;
+    
+    MenuItem(String item_name) {
+        this.item_name = item_name;
     }
     
     void set_radius(float start_radius, float end_radius) {
@@ -238,6 +314,8 @@ class MenuItem extends RadialComponent {
     
     void set_color(color item_color) {
         this.item_color = item_color;
+        this.over_color = lerpColor(item_color, color(#333333), .5)
+        this.cur_color = this.item_color;
     }
     
     boolean is_color_set() {
@@ -245,7 +323,8 @@ class MenuItem extends RadialComponent {
     }    
 
     void update() {        
-        fill(item_color);
+    
+        fill(cur_color);
         arc(center_x, center_y, 
             end_radius * 2, end_radius * 2, 
             start_angle, end_angle); // outer arc
@@ -253,29 +332,50 @@ class MenuItem extends RadialComponent {
         arc(center_x, center_y, 
             start_radius * 2, start_radius * 2, 
             start_angle, end_angle); // inner arc
+            
+        /* // [un]comment to turn on[off] lines between sectors
+        line(center_x + start_radius * cos(start_angle),
+             center_y + start_radius * sin(start_angle),
+             center_x + end_radius * cos(start_angle),
+             center_y + end_radius * sin(start_angle));
+        line(center_x + start_radius * cos(end_angle),
+             center_y + start_radius * sin(end_angle),
+             center_x + end_radius * cos(end_angle),
+             center_y + end_radius * sin(end_angle)); */            
+        
+        pushMatrix();
+        fill(lerpColor(cur_color, color(#ffffff), is_mouse_over ? .6 : .07));   
+        translate(center_x, center_y);
+        /* // to show in the center of sector 
+        rotate(start_angle + abs(end_angle - start_angle) / 2);
+        float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
+        text(item_name, start_radius + padding_x, -8); */
+        // to show at the side of the sector
+        rotate(start_angle);
+        text(item_name, start_radius, -20);        
+        popMatrix();
     }
     
     boolean is_mouse_in(float mouse_x, float mouse_y) { 
-        /* return on_a_ring(mouse_x, mouse_y,
-                       center_x, center_y,
-                       start_radius, end_radius); */
         return in_ring_sector(mouse_x, mouse_y,
-                              center_x, center_y,
+                              this.center_x, this.center_y,
                               start_radius, end_radius,
                               start_angle, end_angle);                       
     }
     
     boolean on_mouse_over(float mouse_x, float mouse_y) {
-        item_color = color(#ffffff);
+        is_mouse_over = true;
+        cur_color = over_color;
     }
     
     boolean on_mouse_out() {
-        item_color = color(#333333);
+        is_mouse_over = false;    
+        cur_color = item_color;
     } 
 
 };
 
-/* ======================== Menu =============================================*/
+/* ======================== Menu ============================================ */
 
 class Menu extends RadialComponent {
 
@@ -284,7 +384,7 @@ class Menu extends RadialComponent {
     color end_color = color(#000066);
     // color[] items_colors;
     
-    float menu_radius = 90;
+    float menu_radius = 120;
     float start_angle = -HALF_PI;
     float end_angle = HALF_PI * 3 / 2;
 
@@ -319,14 +419,7 @@ class Menu extends RadialComponent {
         items[items.length] = item;
         add_listener(item);
     }
-    
-    void add_item(String item_name) {
-        // add_item(new MenuItem(item_name));
-        MenuItem item = new MenuItem(item_name);
-        items[items.length] = item; 
-        add_listener(item);   
-    }
-    
+        
     void set_bounds(float start_angle, float end_angle) {
         this.start_angle = start_angle;
         this.end_angle = end_angle;
@@ -334,6 +427,11 @@ class Menu extends RadialComponent {
     
     void set_radius(float new_radius) {
         this.menu_radius = new_radius;
+    }
+    
+    void set_colors(float start_color, float end_color) {
+        this.start_color = start_color;
+        this.end_color = end_color;
     }
     
     void prepare() {
@@ -345,6 +443,8 @@ class Menu extends RadialComponent {
         float cur_color = start_color;
         float cur_start_angle = start_angle;
         float cur_end_angle = cur_start_angle + angle_step;
+        
+        textSize(40);        
         
         for (int i = 0; i < items.length; i++) {
             
