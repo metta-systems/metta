@@ -184,25 +184,25 @@ def build(bld):
         #after = 'cxx_link'
     #)
 
-    #bld.new_task_gen('subst',
-        #source = 'tools/mkbootimg/menu.lst.in',
-        #target = 'tools/mkbootimg/menu.lst.cd',
-        #dict = {'ROOT': 'cd'}
-    #)
+    bld.new_task_gen('subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.cd',
+        dict = {'ROOT': 'cd'}
+    )
 
-    #bld.new_task_gen('subst',
-        #source = 'tools/mkbootimg/menu.lst.in',
-        #target = 'tools/mkbootimg/menu.lst.fd0',
-        #dict = {'ROOT': 'fd0'}
-    #)
+    bld.new_task_gen('subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.fd0',
+        dict = {'ROOT': 'fd0'}
+    )
 
-    #bld.new_task_gen(
-        #source = 'arch/'+arch+'/kickstart.bin arch/'+arch+'/nucleus.bin initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',#arch dep
-        #target = 'metta.fd0 metta.iso',
-        #rule = './images.sh',
-        #cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-        #after = 'initfs.img'
-    #)
+    bld.new_task_gen(# arch/'+arch+'/nucleus.bin initfs.img
+        source = 'kickstart.sys tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
+        target = 'metta.fd0 metta.iso',
+        rule = './images.sh',
+        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+        after = 'cxx_link' #initfs.img
+    )
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
