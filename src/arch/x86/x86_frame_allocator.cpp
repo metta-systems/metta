@@ -43,7 +43,7 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap)
         size_t n_frames = (end - start) / PAGE_SIZE;
         total_frames += n_frames;
 
-        kconsole << "mmap entry: start " << start << ", end " << end << ", size " << mmi->size() << ", free " << mmi->is_free() << endl;
+        kconsole << "mmap entry: start " << start << ", end " << end << ", size " << (size_t)mmi->size() << ", free " << mmi->is_free() << endl;
 
         if (mmi->is_free())
         {
