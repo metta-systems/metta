@@ -30,7 +30,6 @@
 // page_fault_handler_t page_fault_handler;
 // interrupt_descriptor_table_t interrupts_table;
 // kickstart_frame_allocator_t frame_allocator;
-// kickstart_page_directory_t pagedir;
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
@@ -43,9 +42,8 @@ static void map_identity(const char* caption, address_t start, address_t end)
 #endif
     end = page_align_up<address_t>(end); // one past end
     for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
-    {
-//         pagedir.create_mapping(k * PAGE_SIZE, k * PAGE_SIZE);
-    }
+        ;
+//         protection_domain_t::privileged().map(k * PAGE_SIZE, k * PAGE_SIZE, 0);
 }
 
 // Scratch area for initial pagedir
@@ -63,6 +61,24 @@ void kickstart(multiboot_t::header_t* mbh)
     ASSERT(mb.module_count() > 0);
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
+
+    // Preserve the currently executing kickstart code in the memory allocator init.
+    // We will give up these frames later.
+    uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
+    // We've allocated memory from a contiguous region, mark it and modify
+    // boot info page to exclude this region as occupied.
+    address_t fake_mmap_entry_end = (address_t)new frame_t;
+    multiboot_t::mmap_entry_t fake_mmap_entry;
+
+    fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
+    bootinfo.append_mmap_entry(&fake_mmap_entry);
+
+    // We have created a dent in our memory map, so we need to sort it
+    // and build contiguous allocation regions.
+#if MEMORY_DEBUG
+    kconsole << "Preprocessing mmap." << endl;
+#endif
+    bootinfo.mmap_prepare(mb.memory_map());
 
     x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map());
 
@@ -84,10 +100,6 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "Alloctn start at " << alloc_start << endl;
 #endif
 
-    // Preserve the currently executing kickstart code in the memory allocator init.
-    // We will give up these frames later.
-//     uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
-// 
 //     address_t bootinfo_page = reinterpret_cast<address_t>(new frame_t);
 //     bootinfo_t bootinfo(bootinfo_page);
 // 
@@ -120,21 +132,6 @@ void kickstart(multiboot_t::header_t* mbh)
 //     typedef nucleus_n::nucleus_t* (*kernel_entry)(bootinfo_t bi_page);
 //     kernel_entry init_nucleus = reinterpret_cast<kernel_entry>(kernel_loader.get_entry_point());
 
-    // We've allocated memory from a contiguous region, mark it and modify
-    // boot info page to exclude this region as occupied.
-//     address_t fake_mmap_entry_end = (address_t)new frame_t;
-//     multiboot_t::mmap_entry_t fake_mmap_entry;
-// 
-//     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
-//     bootinfo.append_mmap_entry(&fake_mmap_entry);
-
-    // We have created a dent in our memory map, so we need to sort it
-    // and build contiguous allocation regions.
-#if MEMORY_DEBUG
-//     kconsole << "Preprocessing mmap." << endl;
-#endif
-//     bootinfo.mmap_prepare(mb.memory_map());
-// 
 //     kconsole << RED << "going to init nucleus" << endl;
 //     nucleus_n::nucleus_t* nucleus = init_nucleus(bootinfo);
 //     kconsole << GREEN << "done, instantiating components" << endl;

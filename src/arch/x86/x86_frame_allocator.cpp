@@ -4,6 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "config.h"
 #include "memory.h" //common/
 #include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
@@ -42,17 +43,21 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap)
         size_t n_frames = (end - start) / PAGE_SIZE;
         total_frames += n_frames;
 
+        kconsole << "mmap entry: start " << start << ", end " << end << ", size " << mmi->size() << ", free " << mmi->is_free() << endl;
+
         if (mmi->is_free())
         {
             // include pages into free stack
             for (size_t n = 0; n < n_frames; n++)
             {
-                *(address_t*)start = next_free_phys; // store phys of previous free stack top
+//                 free_frame(start);
+                *reinterpret_cast<address_t*>(start) = next_free_phys; // store phys of previous free stack top
                 next_free_phys = start; // remember phys as current free stack top
                 free_frames++;
+                kconsole << "adding " << start << " to stack" << endl;
                 start += PAGE_SIZE;
+                // TODO: update physmem ranges
             }
-            //TODO update physmem ranges
         }
         else
         {
@@ -61,7 +66,7 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap)
         mmi = mmap->next_entry(mmi);
     }
 
-    kconsole << "Stack page frame allocator: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
+    kconsole << "x86_frame_allocator_t: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
 }
 
 void x86_frame_allocator_t::initialisation_complete()
@@ -76,12 +81,12 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(next_frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
-    next_free_phys = *(address_t*)TEMP_MAPPING;
+    next_free_phys = *reinterpret_cast<address_t*>(TEMP_MAPPING);
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
 
     // wipe it clean
-    memutils::fill_memory((void*)TEMP_MAPPING, 0, PAGE_SIZE);
+    memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
 
     unlock();
 
@@ -97,7 +102,7 @@ void x86_frame_allocator_t::free_frame(physical_address_t frame)
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
-    *(address_t*)TEMP_MAPPING = next_free_phys; // store phys of previous free stack top
+    *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
     next_free_phys = frame; // remember phys as current free stack top
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
