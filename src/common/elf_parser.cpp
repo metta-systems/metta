@@ -80,7 +80,7 @@ section_header_t* elf_parser_t::section_header(cstring_t name) const
     for (int i = 0; i < header->shnum; i++)
     {
         s = section_header(i);
-        if (cstring_t(reinterpret_cast<char*>(header + s->name)) == name)
+        if (cstring_t(reinterpret_cast<char*>(header) + strtab->offset + s->name) == name)
             return s;
     }
     return 0;
