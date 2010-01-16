@@ -19,15 +19,17 @@ public:
         {
             byte = *reinterpret_cast<uint8_t*>(from + offset);
             data |= ((byte & 0x7F) << shift);
+            printf("encoded byte %x, decoded data %x\n", byte, data);
             shift += 7;
+            offset++;
             if (!(byte & 0x80))
                 break;
-            offset++;
         }
         /* sign bit of byte is second high order bit (0x40) */
         if ((shift < size) && (byte & 0x40))
             /* sign extend */
             data |= -(1 << shift);
+        printf("done decoding sleb128 number, final value %d\n", data);
     }
     operator int32_t() { return data; }
     sleb128_t operator =(int32_t d) { data = d; return *this; }
@@ -47,10 +49,10 @@ public:
         {
             uint8_t byte = *reinterpret_cast<uint8_t*>(from + offset);
             data |= ((byte & 0x7F) << shift);
+            shift += 7;
+            offset++;
             if (!(byte & 0x80))
                 break;
-            offset++;
-            shift += 7;
         }
     }
     operator uint32_t() { return data; }
