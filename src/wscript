@@ -142,11 +142,16 @@ def build(bld):
     tests.uselib = 'TEST'
     tests.target = 'testrunner'
 
+    slebtest = bld.new_task_gen('cxx', 'program')
+    slebtest.source = 'tests/slebtest.cpp'
+    slebtest.env = bld.env_of_name('TEST_ENV').copy()
+    slebtest.includes = slebtest.env['INCLUDE_DIRS']
+    slebtest.target = 'slebtest'
+    #slebtest.uselib_local = 'toolruntime common'
+
     parsedwarf = bld.new_task_gen('cxx', 'program')
     parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr'.split())
     parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
-    #parsedwarf.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    #parsedwarf.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
     parsedwarf.target = 'parsedwarf'
     parsedwarf.uselib_local = 'toolruntime common'

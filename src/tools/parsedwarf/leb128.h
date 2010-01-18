@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include <stdio.h> // for debug printfs, TODO: remove
+// #include <stdio.h> // for debug printfs, TODO: remove
 
 class sleb128_t
 {
@@ -20,7 +20,7 @@ public:
         {
             byte = *reinterpret_cast<uint8_t*>(from + offset);
             data |= ((byte & 0x7F) << shift);
-            printf("encoded byte %x, decoded data %x\n", byte, data);
+//             printf("encoded byte %x, decoded data %x\n", byte, data);
             shift += 7;
             ++offset;
             if (!(byte & 0x80))
@@ -30,7 +30,7 @@ public:
         if ((shift < size) && (byte & 0x40))
             /* sign extend */
             data |= -(1 << shift);
-        printf("done decoding sleb128 number, final value %d\n", data);
+//         printf("done decoding sleb128 number, final value %d\n", data);
     }
     operator int32_t() { return data; }
     sleb128_t operator =(int32_t d) { data = d; return *this; }
