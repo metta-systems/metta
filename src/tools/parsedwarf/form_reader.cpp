@@ -213,3 +213,100 @@ bool indirect_form_reader_t::decode(address_t from, size_t& offset)
     }
     return false;
 }
+
+// Printing
+void addr_form_reader_t::print()
+{
+    printf("<a>0x%08x\n", data);
+}
+
+void block_form_reader_t::print()
+{
+}
+
+void block1_form_reader_t::print()
+{
+}
+
+void block2_form_reader_t::print()
+{
+}
+
+void block4_form_reader_t::print()
+{
+}
+
+void sdata_form_reader_t::print()
+{
+    printf("<i>%d\n", (int32_t)data);
+}
+
+void udata_form_reader_t::print()
+{
+    printf("<u>%u\n", (uint32_t)data);
+}
+
+void data1_form_reader_t::print()
+{
+    printf("<8>0x%02x\n", data);
+}
+
+void data2_form_reader_t::print()
+{
+    printf("<16>0x%04x\n", data);
+}
+
+void data4_form_reader_t::print()
+{
+    printf("<32>0x%08x\n", data);
+}
+
+void data8_form_reader_t::print()
+{
+    printf("<64>0x%llu\n", data);
+}
+
+void flag_form_reader_t::print()
+{
+    printf("<f>%s\n", data == 0 ? "unset" : "set");
+}
+
+void string_form_reader_t::print()
+{
+    printf("<s>%s\n", data);
+}
+
+void strp_form_reader_t::print()
+{
+//     printf("%s\n", data);
+}
+
+void ref1_form_reader_t::print()
+{
+}
+
+void ref2_form_reader_t::print()
+{
+}
+
+void ref4_form_reader_t::print()
+{
+}
+
+void ref8_form_reader_t::print()
+{
+}
+
+void ref_udata_form_reader_t::print()
+{
+}
+
+void ref_addr_form_reader_t::print()
+{
+}
+
+void indirect_form_reader_t::print()
+{
+    printf("<I>");
+    data->print();
+}

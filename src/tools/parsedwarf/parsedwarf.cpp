@@ -2,7 +2,7 @@
  * Example code to parse DWARF2/3 debug info from an ELF format file.
  */
 #include <stdlib.h>
-#include "../mkinitfs/raiifile.h"
+#include "raiifile.h"
 #include "elf_parser.h"
 #include "leb128.h"
 #include "datarepr.h"
@@ -199,6 +199,9 @@ public:
             {
                 node_attributes[forms->attributes[i].name] = form_reader_t::create(forms->attributes[i].form);
                 node_attributes[forms->attributes[i].name]->decode(from, offset);
+
+                printf("  name: %s, value: ", attr2name(forms->attributes[i].name));
+                node_attributes[forms->attributes[i].name]->print();
             }
         }
     }
