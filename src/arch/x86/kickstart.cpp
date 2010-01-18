@@ -64,21 +64,21 @@ void kickstart(multiboot_t::header_t* mbh)
 
     // Preserve the currently executing kickstart code in the memory allocator init.
     // We will give up these frames later.
-    uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
+//     uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
     // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
-    address_t fake_mmap_entry_end = (address_t)new frame_t;
-    multiboot_t::mmap_entry_t fake_mmap_entry;
+//     address_t fake_mmap_entry_end = (address_t)new frame_t;
+//     multiboot_t::mmap_entry_t fake_mmap_entry;
 
-    fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
-    bootinfo.append_mmap_entry(&fake_mmap_entry);
+//     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
+//     bootinfo.append_mmap_entry(&fake_mmap_entry);
 
     // We have created a dent in our memory map, so we need to sort it
     // and build contiguous allocation regions.
 #if MEMORY_DEBUG
-    kconsole << "Preprocessing mmap." << endl;
+//     kconsole << "Preprocessing mmap." << endl;
 #endif
-    bootinfo.mmap_prepare(mb.memory_map());
+//     bootinfo.mmap_prepare(mb.memory_map());
 
     x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map());
 
