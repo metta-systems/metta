@@ -15,7 +15,7 @@ include_dirs = 'common runtime runtime/ml'.split()
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
-cxxflags = cflags
+cxxflags = cflags + ['-std=gnu++0x']
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
 flags = '-fno-stack-protector -fno-leading-underscore'.split()
 
@@ -97,7 +97,7 @@ def configure(conf):
     # Config for building kernel
     conf.setenv('KERNEL_ENV')
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions -std=gnu++0x'.split())
+    conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + linkflags)
 
 
@@ -143,7 +143,7 @@ def build(bld):
     tests.target = 'testrunner'
 
     parsedwarf = bld.new_task_gen('cxx', 'program')
-    parsedwarf.source = 'tools/parsedwarf/parsedwarf.cpp'
+    parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr'.split())
     parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
     #parsedwarf.env.append_unique('CXXFLAGS', ['-fexceptions'])
     #parsedwarf.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?

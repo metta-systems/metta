@@ -6,7 +6,9 @@
 #include "elf_parser.h"
 #include "leb128.h"
 #include "datarepr.h"
+#include "form_reader.h"
 #include <vector>
+#include <map>
 
 #define PANIC(s) panic(s)
 
@@ -19,41 +21,6 @@ void panic(const char* s)
 using namespace raii_wrapper;
 using namespace elf32; // FIXME: only elf32 is supported, will fail on x86-64
 
-/* Compilation Unit Header */
-/* Resides in: .debug_info */
-/* Referenced from: .debug_aranges */
-/* References: .debug_abbrev */
-class cuh_t
-{
-public:
-    uint32_t unit_length;
-    uint16_t version;
-    uint32_t debug_abbrev_offset;
-    uint8_t  address_size;
-
-    void decode(address_t from, size_t& offset)
-    {
-        unit_length = *reinterpret_cast<uint32_t*>(from + offset);
-        if (unit_length == 0xffffffff)
-            PANIC("DWARF64 is not supported!");
-        offset += sizeof(uint32_t);
-        version = *reinterpret_cast<uint16_t*>(from + offset);
-        offset += sizeof(uint16_t);
-        debug_abbrev_offset = *reinterpret_cast<uint32_t*>(from + offset);
-        offset += sizeof(uint32_t);
-        address_size = *reinterpret_cast<uint8_t*>(from + offset);
-        offset += sizeof(uint8_t);
-    }
-};
-
-/* Debug Information Entry */
-/* Resides in: .debug_info after cuh */
-class die_t
-{
-    uleb128_t abbreviation_entry;
-    //attribute values
-};
-
 class abbrev_attr_t
 {
 public:
@@ -64,6 +31,11 @@ public:
     {
         name.decode(from, offset);
         form.decode(from, offset);
+    }
+
+    bool is_empty() /* const fails */
+    {
+        return name == 0 && form == 0;
     }
 };
 
@@ -92,21 +64,97 @@ public:
         {
             abbr.decode(from, offset);
             attributes.push_back(abbr);
-            if (abbr.name == 0 && abbr.form == 0)
+            if (abbr.is_empty())
                 break;
         }
     }
 };
 
-class dwarf_debug_info_t
+class dwarf_debug_abbrev_t
 {
     address_t start;
     size_t    size;
+    std::vector<abbrev_declaration_t> abbrevs;
 
 public:
-    dwarf_debug_info_t(address_t st, size_t sz)
+    dwarf_debug_abbrev_t(address_t st, size_t sz)
         : start(st)
         , size(sz)
+    {
+    }
+
+    bool load_abbrev_set(size_t& offset)
+    {
+        abbrevs.clear();
+        while (1)
+        {
+            abbrev_declaration_t abbrev;
+
+            abbrev.decode(start, offset);
+            abbrevs.push_back(abbrev);
+            if (abbrev.abbreviation_code == 0)
+                break;
+            printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
+            for (unsigned i = 0; i < abbrev.attributes.size()-1; ++i)
+            {
+                abbrev_attr_t a;
+                a = abbrev.attributes[i];
+                printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
+            }
+        }
+        return true;
+    }
+
+    abbrev_declaration_t* find_abbrev(uint32_t abbreviation_code)
+    {
+        for (unsigned int i = 0; i < abbrevs.size(); ++i)
+        {
+            if (abbrevs[i].abbreviation_code == abbreviation_code)
+                return &abbrevs[i];
+        }
+        return 0;
+    }
+};
+
+
+/* Compilation Unit Header */
+/* Resides in: .debug_info */
+/* Referenced from: .debug_aranges */
+/* References: .debug_abbrev */
+class cuh_t
+{
+public:
+    uint32_t unit_length;
+    uint16_t version;
+    uint32_t debug_abbrev_offset;
+    uint8_t  address_size;
+
+    void decode(address_t from, size_t& offset)
+    {
+        unit_length = *reinterpret_cast<uint32_t*>(from + offset);
+        if (unit_length == 0xffffffff)
+            PANIC("DWARF64 is not supported!");
+        offset += sizeof(uint32_t);
+        version = *reinterpret_cast<uint16_t*>(from + offset);
+        offset += sizeof(uint16_t);
+        debug_abbrev_offset = *reinterpret_cast<uint32_t*>(from + offset);
+        offset += sizeof(uint32_t);
+        address_size = *reinterpret_cast<uint8_t*>(from + offset);
+        offset += sizeof(uint8_t);
+    }
+};
+
+class dwarf_debug_info_t
+{
+public:
+    address_t start;
+    size_t    size;
+    dwarf_debug_abbrev_t& abbrevs;
+
+    dwarf_debug_info_t(address_t st, size_t sz, dwarf_debug_abbrev_t& ab)
+        : start(st)
+        , size(sz)
+        , abbrevs(ab)
     {
     }
 
@@ -115,6 +163,49 @@ public:
         cuh_t cuh;
         cuh.decode(start, offset);
         return cuh;
+    }
+
+    abbrev_declaration_t* find_abbrev(uint32_t abbreviation_code)
+    {
+        return abbrevs.find_abbrev(abbreviation_code);
+    }
+};
+
+/* Debug Information Entry */
+/* Resides in: .debug_info after cuh */
+class die_t
+{
+    uleb128_t tag;
+    typedef std::map<uleb128_t, form_reader_t*> attr_map;
+    attr_map node_attributes;
+    dwarf_debug_info_t& debug_info;
+
+public:
+    die_t(dwarf_debug_info_t& di) : debug_info(di) {}
+
+    void decode(address_t from, size_t& offset)
+    {
+        tag.decode(from, offset);
+        if (tag == 0)
+        {
+            printf("Last sibling node\n");
+            return;
+        }
+        // find abbreviation for tag
+        auto forms = debug_info.find_abbrev(tag);
+        if (forms)
+        {
+            for (unsigned i = 0; i < forms->attributes.size()-1; ++i)
+            {
+                node_attributes[forms->attributes[i].name] = form_reader_t::create(forms->attributes[i].form);
+                node_attributes[forms->attributes[i].name]->decode(from, offset);
+            }
+        }
+    }
+
+    bool is_last()
+    {
+        return tag == 0;
     }
 };
 
@@ -212,10 +303,10 @@ public:
 /* Resides in: .debug_frame, .eh_frame */
 class cie_t
 {
-    uint32_t length;
-    uint32_t CIE_id;
-    uint8_t  version;
-    char*    augmentation;
+    uint32_t  length;
+    uint32_t  CIE_id;
+    uint8_t   version;
+    char*     augmentation;
     uleb128_t code_alignment_factor;
     sleb128_t data_alignment_factor;
     uleb128_t return_address_register;
@@ -254,8 +345,10 @@ int main(int argc, char** argv)
     section_header_t* g = elf.section_header(".debug_info");
     if (h && g && b)
     {
-        dwarf_debug_info_t    debug_info(start + g->offset, g->size);
+        dwarf_debug_abbrev_t  debug_abbrev(start + b->offset, b->size);
         dwarf_debug_aranges_t debug_aranges(start + h->offset, h->size);
+        dwarf_debug_info_t    debug_info(start + g->offset, g->size, debug_abbrev);
+
         size_t offset = 0;
         // find addr in debug info and figure function name and source file line
         if (debug_aranges.lookup(addr, offset))
@@ -265,24 +358,18 @@ int main(int argc, char** argv)
             cuh = debug_info.get_cuh(offset);
             printf("decoded cuh: unit-length %d, version %04x, debug-abbrev-offset %d\n", cuh.unit_length, cuh.version, cuh.debug_abbrev_offset);
 
-            std::vector<abbrev_declaration_t> abbrevs;
-            address_t base = start + b->offset;
             size_t abbr_offset = cuh.debug_abbrev_offset;
+            debug_abbrev.load_abbrev_set(abbr_offset); // TODO: cache abbrevs (key: given offset)
+
+            // continue parsing the cuh using abbrev data with given code
             while (1)
             {
-                abbrev_declaration_t abbrev;
-                abbrev.decode(base, abbr_offset);
-                abbrevs.push_back(abbrev);
-                if (abbrev.abbreviation_code == 0)
+                die_t die(debug_info);
+                die.decode(debug_info.start, offset);
+                if (die.is_last())
                     break;
-                printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
-                for (unsigned i = 0; i < abbrev.attributes.size()-1; i++)
-                {
-                    abbrev_attr_t a;
-                    a = abbrev.attributes[i];
-                    printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
-                }
             }
+
             // print output data:
             // [TID] 0xfault_addr func-name (source:line)
         }
@@ -290,7 +377,7 @@ int main(int argc, char** argv)
             printf("NOT FOUND\n");
     }
     else
-        printf("No .debug_aranges\n");
+        printf("No required DWARF debug sections found!\n");
 
     return 0;
 }
