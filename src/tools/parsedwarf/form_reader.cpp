@@ -2,53 +2,53 @@
 #include "datarepr.h"
 #include <stdio.h>
 
-form_reader_t* form_reader_t::create(uint32_t form)
+form_reader_t* form_reader_t::create(dwarf_parser_t& parser, uint32_t form)
 {
     printf("form_reader_t::create(%u)\n", form);
     switch (form)
     {
         case DW_FORM_addr:
-            return new addr_form_reader_t;
+            return new addr_form_reader_t(parser);
         case DW_FORM_block2:
-            return new block2_form_reader_t;
+            return new block2_form_reader_t(parser);
         case DW_FORM_block4:
-            return new block4_form_reader_t;
+            return new block4_form_reader_t(parser);
         case DW_FORM_data2:
-            return new data2_form_reader_t;
+            return new data2_form_reader_t(parser);
         case DW_FORM_data4:
-            return new data4_form_reader_t;
+            return new data4_form_reader_t(parser);
         case DW_FORM_data8:
-            return new data8_form_reader_t;
+            return new data8_form_reader_t(parser);
         case DW_FORM_string:
-            return new string_form_reader_t;
+            return new string_form_reader_t(parser);
         case DW_FORM_block:
-            return new block_form_reader_t;
+            return new block_form_reader_t(parser);
         case DW_FORM_block1:
-            return new block1_form_reader_t;
+            return new block1_form_reader_t(parser);
         case DW_FORM_data1:
-            return new data1_form_reader_t;
+            return new data1_form_reader_t(parser);
         case DW_FORM_flag:
-            return new flag_form_reader_t;
+            return new flag_form_reader_t(parser);
         case DW_FORM_sdata:
-            return new sdata_form_reader_t;
+            return new sdata_form_reader_t(parser);
         case DW_FORM_strp:
-            return new strp_form_reader_t;
+            return new strp_form_reader_t(parser);
         case DW_FORM_udata:
-            return new udata_form_reader_t;
+            return new udata_form_reader_t(parser);
         case DW_FORM_ref_addr:
-            return new ref_addr_form_reader_t;
+            return new ref_addr_form_reader_t(parser);
         case DW_FORM_ref1:
-            return new ref1_form_reader_t;
+            return new ref1_form_reader_t(parser);
         case DW_FORM_ref2:
-            return new ref2_form_reader_t;
+            return new ref2_form_reader_t(parser);
         case DW_FORM_ref4:
-            return new ref4_form_reader_t;
+            return new ref4_form_reader_t(parser);
         case DW_FORM_ref8:
-            return new ref8_form_reader_t;
+            return new ref8_form_reader_t(parser);
         case DW_FORM_ref_udata:
-            return new ref_udata_form_reader_t;
+            return new ref_udata_form_reader_t(parser);
         case DW_FORM_indirect:
-            return new indirect_form_reader_t;
+            return new indirect_form_reader_t(parser);
     }
     return 0;
 }
@@ -205,7 +205,7 @@ bool ref_addr_form_reader_t::decode(address_t from, size_t& offset)
 bool indirect_form_reader_t::decode(address_t from, size_t& offset)
 {
     form.decode(from, offset);
-    data = create(form);
+    data = create(parser, form);
     if (data)
     {
         data->decode(from, offset);
@@ -278,7 +278,8 @@ void string_form_reader_t::print()
 
 void strp_form_reader_t::print()
 {
-//     printf("%s\n", data);
+    const char* str = reinterpret_cast<const char*>(parser.elf_parser.start() + parser.debug_str->offset + data);
+    printf("<Is>%s\n", str);
 }
 
 void ref1_form_reader_t::print()
