@@ -2,7 +2,6 @@
 
 #include "types.h"
 #include "leb128.h"
-#include "dwarf_parser.h"
 #include "dwarf_abbrev.h"
 #include <map>
 
@@ -22,6 +21,7 @@ public:
 };
 
 class form_reader_t;
+class dwarf_parser_t;
 
 /* Debug Information Entry */
 /* Resides in: .debug_info after cuh */
@@ -39,6 +39,10 @@ public:
     die_t(dwarf_parser_t& p) : parser(p)
     , low_pc(0), high_pc(0), is_subprogram(false)
     {}
+    die_t(const die_t& d) : tag(d.tag), node_attributes(d.node_attributes), parser(d.parser)
+    , low_pc(d.low_pc), high_pc(d.high_pc), is_subprogram(d.is_subprogram)
+    {}
+    die_t& operator=(const die_t& d);
 
     void decode(address_t from, size_t& offset);
 

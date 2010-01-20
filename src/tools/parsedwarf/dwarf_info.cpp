@@ -18,6 +18,20 @@ void cuh_t::decode(address_t from, size_t& offset)
     offset += sizeof(uint8_t);
 }
 
+die_t& die_t::operator=(const die_t& d)
+{
+    if (this != &d)
+    {
+        tag = d.tag;
+        node_attributes = d.node_attributes;
+        parser = d.parser;
+        low_pc = d.low_pc;
+        high_pc = d.high_pc;
+        is_subprogram = d.is_subprogram;
+    }
+    return *this;
+}
+
 void die_t::decode(address_t from, size_t& offset)
 {
     tag.decode(from, offset);

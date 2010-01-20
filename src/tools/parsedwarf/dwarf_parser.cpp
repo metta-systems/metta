@@ -12,12 +12,14 @@ dwarf_parser_t::dwarf_parser_t(elf_parser_t& elf) : elf_parser(elf)
 {
     section_header_t* h = elf_parser.section_header(".debug_aranges");
     section_header_t* b = elf_parser.section_header(".debug_abbrev");
+//     section_header_t* l = elf_parser.section_header(".debug_line");
     section_header_t* g = elf_parser.section_header(".debug_info");
     debug_str = elf_parser.section_header(".debug_str");
-    if (h && g && b)
+    if (h && g && b /*&& l*/)
     {
         debug_abbrev = new dwarf_debug_abbrev_t(elf_parser.start() + b->offset, b->size);
         debug_aranges = new dwarf_debug_aranges_t(elf_parser.start() + h->offset, h->size);
+//         debug_lines = new dwarf_debug_lines_t(elf_parser.start() + l->offset, l->size);
         debug_info = new dwarf_debug_info_t(elf_parser.start() + g->offset, g->size, *debug_abbrev);
     }
     else
@@ -29,6 +31,20 @@ dwarf_parser_t::~dwarf_parser_t()
     delete debug_info;
     delete debug_aranges;
     delete debug_abbrev;
+}
+
+dwarf_parser_t& dwarf_parser_t::operator=(const dwarf_parser_t& d)
+{
+    if (this != &d)
+    {
+        elf_parser = d.elf_parser;
+        debug_info = d.debug_info;
+        debug_aranges = d.debug_aranges;
+        debug_abbrev = d.debug_abbrev;
+//         debug_lines = d.debug_lines;
+        debug_str = d.debug_str;
+    }
+    return *this;
 }
 
 bool dwarf_parser_t::lookup(address_t addr)
@@ -57,24 +73,18 @@ bool dwarf_parser_t::lookup(address_t addr)
             {
                 printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", die.low_pc, die.high_pc);
 
-                auto ref = dynamic_cast<ref4_form_reader_t*>(die.node_attributes[DW_AT_specification]);
-                if (ref)
+                die = resolve_refs(cuh_offset, die);
+
+                auto name = dynamic_cast<strp_form_reader_t*>(die.node_attributes[DW_AT_name]);
+                auto file = dynamic_cast<data1_form_reader_t*>(die.node_attributes[DW_AT_decl_file]);
+                auto line = dynamic_cast<data1_form_reader_t*>(die.node_attributes[DW_AT_decl_line]);
+                auto mang = dynamic_cast<strp_form_reader_t*>(die.node_attributes[DW_AT_GNU_cpp_mangled_name]);
+
+                if (name && file && line)
                 {
-                    die_t progdesc(*this);
-                    size_t progoff = ref->data + cuh_offset;
-                    progdesc.decode(debug_info->start, progoff);
-
-                    auto name = dynamic_cast<strp_form_reader_t*>(progdesc.node_attributes[DW_AT_name]);
-                    auto file = dynamic_cast<data1_form_reader_t*>(progdesc.node_attributes[DW_AT_decl_file]);
-                    auto line = dynamic_cast<data1_form_reader_t*>(progdesc.node_attributes[DW_AT_decl_line]);
-                    auto mang = dynamic_cast<strp_form_reader_t*>(progdesc.node_attributes[DW_AT_GNU_cpp_mangled_name]);
-
-                    if (name && file && line && mang)
-                    {
-                        // print output data:
-                        // [TID] 0xfault_addr func-name (source:line)
-                        printf("0x%08x %s / %s (file %x, line %d)\n", addr, name->data, mang->data, file->data, line->data);
-                    }
+                    // print output data:
+                    // [TID] 0xfault_addr func-name (source:line)
+                    printf("0x%08x %s (%s) (file %x, line %d)\n", addr, name->data, mang ? mang->data : "<no mangled name>", file->data, line->data);
                 }
 
                 break;
@@ -90,4 +100,23 @@ bool dwarf_parser_t::lookup(address_t addr)
         printf("NOT FOUND\n");
 
     return false;
+}
+
+die_t dwarf_parser_t::resolve_refs(address_t cuh_offset, die_t desc)
+{
+    auto name = dynamic_cast<strp_form_reader_t*>(desc.node_attributes[DW_AT_name]);
+    if (name)
+        return desc;
+    auto ref = dynamic_cast<ref4_form_reader_t*>(desc.node_attributes[DW_AT_specification]);
+    if (!ref)
+        ref = dynamic_cast<ref4_form_reader_t*>(desc.node_attributes[DW_AT_abstract_origin]);
+    if (ref)
+    {
+        die_t desc2(*this);
+        size_t progoff = ref->data + cuh_offset;
+        desc2.decode(debug_info->start, progoff);
+        return resolve_refs(cuh_offset, desc2);
+    }
+    else
+        return die_t(*this);
 }
