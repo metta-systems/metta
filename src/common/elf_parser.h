@@ -21,6 +21,7 @@ public:
     elf_parser_t(address_t image_base);
 
     bool parse(address_t image_base);
+    address_t start() { return reinterpret_cast<address_t>(header); }
 
     elf32::program_header_t* program_header(int index) const;
     inline size_t program_header_count() const { return header->phnum; }

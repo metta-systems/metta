@@ -39,14 +39,14 @@ static inline address_t elf2loc(header_t* base, size_t offset)
 
 program_header_t* elf_parser_t::program_header(int index) const
 {
-    if (index < 0 || index > header->phnum)
+    if (index < 0 || index >= header->phnum)
         return 0;
     return reinterpret_cast<program_header_t*>(elf2loc(header, header->phoff + index * header->phentsize));
 }
 
 section_header_t* elf_parser_t::section_header(int index) const
 {
-    if (index < 0 || index > header->shnum)
+    if (index < 0 || index >= header->shnum)
         return 0;
     return reinterpret_cast<section_header_t*>(elf2loc(header, header->shoff + index * header->shentsize));
 }
