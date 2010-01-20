@@ -4,7 +4,6 @@
 
 form_reader_t* form_reader_t::create(dwarf_parser_t& parser, uint32_t form)
 {
-    printf("form_reader_t::create(%u)\n", form);
     switch (form)
     {
         case DW_FORM_addr:
@@ -154,10 +153,10 @@ bool string_form_reader_t::decode(address_t from, size_t& offset)
 
 bool strp_form_reader_t::decode(address_t from, size_t& offset)
 {
+    const char* strpool = reinterpret_cast<const char*>(parser.elf_parser.start() + parser.debug_str->offset);
     uint32_t stroff = *reinterpret_cast<uint32_t*>(from + offset);
     offset += sizeof(uint32_t);
-    (void)stroff;
-//     data = debug_str_sect.offset(stroff);
+    data = strpool + stroff;
     return true;
 }
 
@@ -222,18 +221,22 @@ void addr_form_reader_t::print()
 
 void block_form_reader_t::print()
 {
+    printf("<bu>%u bytes\n", (uint32_t)length);
 }
 
 void block1_form_reader_t::print()
 {
+    printf("<b8>%u bytes\n", length);
 }
 
 void block2_form_reader_t::print()
 {
+    printf("<b16>%u bytes\n", length);
 }
 
 void block4_form_reader_t::print()
 {
+    printf("<b32>%u bytes\n", length);
 }
 
 void sdata_form_reader_t::print()
@@ -278,32 +281,37 @@ void string_form_reader_t::print()
 
 void strp_form_reader_t::print()
 {
-    const char* str = reinterpret_cast<const char*>(parser.elf_parser.start() + parser.debug_str->offset + data);
-    printf("<Is>%s\n", str);
+    printf("<Is>%s\n", data);
 }
 
 void ref1_form_reader_t::print()
 {
+    printf("<r8>0x%02x\n", data);
 }
 
 void ref2_form_reader_t::print()
 {
+    printf("<r16>0x%04x\n", data);
 }
 
 void ref4_form_reader_t::print()
 {
+    printf("<r32>0x%08x\n", data);
 }
 
 void ref8_form_reader_t::print()
 {
+    printf("<r64>0x%llu\n", data);
 }
 
 void ref_udata_form_reader_t::print()
 {
+    printf("<ru>%u\n", (uint32_t)data);
 }
 
 void ref_addr_form_reader_t::print()
 {
+    printf("<ra>%u\n", data);
 }
 
 void indirect_form_reader_t::print()

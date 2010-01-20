@@ -28,14 +28,17 @@ class form_reader_t;
 class die_t
 {
 public:
-    uleb128_t tag;
+    uleb128_t tag; // actually, abbrev code
     typedef std::map<uleb128_t, form_reader_t*> attr_map;
     attr_map node_attributes;
     dwarf_parser_t& parser;
     //temp perversion
     address_t low_pc, high_pc;
+    bool is_subprogram;
 
-    die_t(dwarf_parser_t& p) : parser(p) {}
+    die_t(dwarf_parser_t& p) : parser(p)
+    , low_pc(0), high_pc(0), is_subprogram(false)
+    {}
 
     void decode(address_t from, size_t& offset);
 

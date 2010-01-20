@@ -3,6 +3,7 @@
 #include "dwarf_aranges.h"
 #include "dwarf_info.h"
 #include "datarepr.h"
+#include "form_reader.h"
 #include <stdio.h>
 
 using namespace elf32; // FIXME: only elf32 is supported, will fail on x86-64
@@ -32,11 +33,13 @@ dwarf_parser_t::~dwarf_parser_t()
 
 bool dwarf_parser_t::lookup(address_t addr)
 {
+    size_t cuh_offset;
     size_t offset = 0;
     // find addr in debug info and figure function name and source file line
     if (debug_aranges->lookup(addr, offset))
     {
         printf("FOUND ADDRESS\n");
+        cuh_offset = offset;
         cuh_t cuh;
         cuh = debug_info->get_cuh(offset);
         printf("decoded cuh: unit-length %d, version %04x, debug-abbrev-offset %d\n", cuh.unit_length, cuh.version, cuh.debug_abbrev_offset);
@@ -50,17 +53,37 @@ bool dwarf_parser_t::lookup(address_t addr)
             die_t die(*this);
             die.decode(debug_info->start, offset);
 
-            if (die.tag == DW_TAG_subprogram)
+            if (die.is_subprogram && die.low_pc <= addr && die.high_pc >= addr)
             {
-                printf("FOUND SUBROUTINE FROM %x to %x\n", die.low_pc, die.high_pc);
+                printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", die.low_pc, die.high_pc);
+
+                auto ref = dynamic_cast<ref4_form_reader_t*>(die.node_attributes[DW_AT_specification]);
+                if (ref)
+                {
+                    die_t progdesc(*this);
+                    size_t progoff = ref->data + cuh_offset;
+                    progdesc.decode(debug_info->start, progoff);
+
+                    auto name = dynamic_cast<strp_form_reader_t*>(progdesc.node_attributes[DW_AT_name]);
+                    auto file = dynamic_cast<data1_form_reader_t*>(progdesc.node_attributes[DW_AT_decl_file]);
+                    auto line = dynamic_cast<data1_form_reader_t*>(progdesc.node_attributes[DW_AT_decl_line]);
+                    auto mang = dynamic_cast<strp_form_reader_t*>(progdesc.node_attributes[DW_AT_GNU_cpp_mangled_name]);
+
+                    if (name && file && line && mang)
+                    {
+                        // print output data:
+                        // [TID] 0xfault_addr func-name (source:line)
+                        printf("0x%08x %s / %s (file %x, line %d)\n", addr, name->data, mang->data, file->data, line->data);
+                    }
+                }
+
+                break;
             }
 
             if (die.is_last() && (offset >= debug_info->size))
                 break;
         }
 
-        // print output data:
-        // [TID] 0xfault_addr func-name (source:line)
         return true;
     }
     else

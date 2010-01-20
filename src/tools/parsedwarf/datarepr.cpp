@@ -156,6 +156,7 @@ const char* attr2name(uint32_t attr)
         ATTRNAME(DW_AT_elemental            );
         ATTRNAME(DW_AT_pure                 );
         ATTRNAME(DW_AT_recursive            );
+        ATTRNAME(DW_AT_GNU_cpp_mangled_name );
     }
     return "<UNKNOWN ATTR>";
 #undef ATTRNAME

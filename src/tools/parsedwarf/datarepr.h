@@ -157,6 +157,7 @@ enum {                                // Classes:
     DW_AT_pure                 = 0x67, // flag (dwarf3)
     DW_AT_recursive            = 0x68, // flag (dwarf3)
     DW_AT_lo_user              = 0x2000,
+    DW_AT_GNU_cpp_mangled_name = 0x2007, // C++ mangled name
     DW_AT_hi_user              = 0x3fff
 };
 
