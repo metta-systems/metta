@@ -13,6 +13,7 @@ struct lnp_filename_t
     uleb128_t file_bytes;
 
     bool decode(address_t from, size_t& offset);
+    void dump();
 };
 
 // Line Number Program header.
@@ -34,6 +35,7 @@ public:
     address_t line_program_start;
 
     void decode(address_t from, size_t& offset);
+    void dump();
 };
 
 class lineprogram_regs_t
@@ -96,6 +98,7 @@ public:
     }
 
     bool execute(address_t from, size_t& offset);
+    void dump();
 
     inline int address_increment(uint8_t opcode)
     {
@@ -139,6 +142,9 @@ class dwarf_debug_lines_t
 
 public:
     dwarf_debug_lines_t(address_t st, size_t sz);
+
+    // Populate state matrix from a given line program.
+    bool execute(size_t& offset);
 
     std::string file_name(int index);
     int line_number(address_t address);

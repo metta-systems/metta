@@ -16,7 +16,7 @@ public:
     dwarf_debug_info_t* debug_info;
     dwarf_debug_aranges_t* debug_aranges;
     dwarf_debug_abbrev_t* debug_abbrev;
-//     dwarf_debug_lines_t* debug_lines;
+    dwarf_debug_lines_t* debug_lines;
     elf32::section_header_t* debug_str;
 
     dwarf_parser_t(elf_parser_t& elf);
