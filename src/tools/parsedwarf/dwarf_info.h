@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "leb128.h"
+#include "datarepr.h"
 #include "dwarf_abbrev.h"
 #include <map>
 
@@ -28,28 +29,39 @@ class dwarf_parser_t;
 class die_t
 {
 public:
-    uleb128_t tag; // actually, abbrev code
     typedef std::map<uleb128_t, form_reader_t*> attr_map;
-    attr_map node_attributes;
+
     dwarf_parser_t& parser;
-    //temp perversion
-    address_t low_pc, high_pc;
-    bool is_subprogram;
+    uint32_t abbrev_code;
+    attr_map node_attributes;
+
+    size_t offs;
+    uint32_t tag; // fetched from abbreviation for faster lookups
+    uint8_t  has_children; // also from abbreviation
+    die_t* parent; // parent in tree
+    std::vector<die_t*> children; // children tree nodes
 
     die_t(dwarf_parser_t& p) : parser(p)
-    , low_pc(0), high_pc(0), is_subprogram(false)
+    , abbrev_code(0), tag(0), parent(0)
     {}
-    die_t(const die_t& d) : tag(d.tag), node_attributes(d.node_attributes), parser(d.parser)
-    , low_pc(d.low_pc), high_pc(d.high_pc), is_subprogram(d.is_subprogram)
+    die_t(const die_t& d) : parser(d.parser), abbrev_code(d.abbrev_code), node_attributes(d.node_attributes)
+    , tag(d.tag), parent(d.parent), children(d.children) // FIXME double-free!
     {}
     die_t& operator=(const die_t& d);
 
-    void decode(address_t from, size_t& offset);
+    bool decode(address_t from, size_t& offset);
 
+    bool is_subprogram() { return tag == DW_TAG_subprogram; }
     bool is_last()
     {
-        return tag == 0;
+        return abbrev_code == 0;
     }
+
+    die_t* find_address(address_t addr);
+    die_t* find_compile_unit();
+    die_t* find_by_offset(size_t offset);
+
+    void dump();
 };
 
 class dwarf_debug_info_t

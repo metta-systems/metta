@@ -18,11 +18,17 @@ public:
     dwarf_debug_abbrev_t* debug_abbrev;
     dwarf_debug_lines_t* debug_lines;
     elf32::section_header_t* debug_str;
+    die_t* root; // root of DIE tree
 
     dwarf_parser_t(elf_parser_t& elf);
     ~dwarf_parser_t();
     dwarf_parser_t& operator=(const dwarf_parser_t&);
 
     bool lookup(address_t addr);
-    die_t resolve_refs(address_t cuh_offset, die_t desc);
+
+    die_t* build_tree(size_t& offset);
+    die_t* find_named_node(die_t* node, size_t cuh_offset);
+
+private:
+    void build_tree_recurse(die_t* thisnode, size_t& offset);
 };

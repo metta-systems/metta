@@ -32,6 +32,12 @@ public:
             data |= -(1 << shift);
 //         printf("done decoding sleb128 number, final value %d\n", data);
     }
+    static int32_t decode(address_t from, size_t& offset, int /*dummy*/)
+    {
+        sleb128_t d;
+        d.decode(from, offset);
+        return d;
+    }
     operator int32_t() { return data; }
     sleb128_t operator =(int32_t d) { data = d; return *this; }
 //     friend bool operator==(sleb128_t left, sleb128_t right);
@@ -57,6 +63,12 @@ public:
             if (!(byte & 0x80))
                 break;
         }
+    }
+    static uint32_t decode(address_t from, size_t& offset, int /*dummy*/)
+    {
+        uleb128_t d;
+        d.decode(from, offset);
+        return d;
     }
     operator uint32_t() { return data; }
     uleb128_t operator =(uint32_t d) { data = d; return *this; }

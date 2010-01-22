@@ -110,17 +110,18 @@ bool lineprogram_regs_t::execute(address_t from, size_t& offset)
                         break;
                     }
                     default:
-                        printf("UNKNOWN EXTENDED OPCODE %x\n", sub_opcode);
+                        printf("UNKNOWN EXTENDED OPCODE 0x%x\n", sub_opcode);
                         return false;
                 }
                 if (offset != prev_offset + ext_area_length)
                 {
-                    printf("STREAM OUT OF SYNC! offset %x should be %x\n", offset, prev_offset + ext_area_length);
+                    printf("STREAM OUT OF SYNC! offset 0x%x should be 0x%x\n", offset, prev_offset + ext_area_length);
                     return false;
                 }
+                break;
             }
             default:
-                printf("UNKNOWN OPCODE %x\n", opcode);
+                printf("UNKNOWN OPCODE 0x%x\n", opcode);
                 return false;
         }
     }
@@ -136,7 +137,7 @@ bool lineprogram_regs_t::execute(address_t from, size_t& offset)
 
 void lineprogram_regs_t::dump()
 {
-    printf("*lineprog %08x %d %d:%d stmt:%s bb:%s endseq:%s prologue:%s epilogue:%s isa:%d\n",
+    printf("*lineprog 0x%08x %d %d:%d stmt:%s bb:%s endseq:%s prologue:%s epilogue:%s isa:%d\n",
            address, file, line, column, is_stmt?"yes":"no", basic_block?"yes":"no", end_sequence?"yes":"no", prologue_end?"yes":"no", epilogue_begin?"yes":"no", isa);
 }
 
@@ -194,12 +195,12 @@ void lnp_header_t::dump()
 {
     printf("* line program header:\n"
            "  unit_length: %d\n"
-           "  version: %x\n"
-           "  header_length: %d, line program start: %x\n"
+           "  version: 0x%x\n"
+           "  header_length: %d, line program start: 0x%x\n"
            "  minimum_instruction_length: %d\n"
            "  default_is_stmt: %s\n"
            "  line_base: %d\n"
-           "  line_rangeL %u\n"
+           "  line_range: %u\n"
            "  opcode_base: %u\n",
     unit_length, version,
     header_length, line_program_start,
@@ -264,7 +265,7 @@ bool dwarf_debug_lines_t::execute(size_t& offset)
 
     if (start + offset != header.line_program_start)
     {
-        printf("LINE PROGRAM HEADER OUT OF SYNC! offset %x should be %x\n", start + offset, header.line_program_start);
+        printf("LINE PROGRAM HEADER OUT OF SYNC! offset 0x%x should be 0x%x\n", start + offset, header.line_program_start);
         return false;
     }
 
