@@ -57,7 +57,7 @@ public:
         return abbrev_code == 0;
     }
 
-    die_t* find_address(address_t addr);
+    die_t* find_address(address_t addr, address_t& low_pc, address_t& high_pc);
     die_t* find_compile_unit();
     die_t* find_by_offset(size_t offset);
 

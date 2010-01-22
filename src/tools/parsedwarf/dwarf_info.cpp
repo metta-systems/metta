@@ -59,9 +59,10 @@ bool die_t::decode(address_t from, size_t& offset)
     return false;
 }
 
-die_t* die_t::find_address(address_t addr)
+die_t* die_t::find_address(address_t addr, address_t& low_pc, address_t& high_pc)
 {
-    address_t low_pc = -1, high_pc = 0;
+    low_pc = -1;
+    high_pc = 0;
 
     addr_form_reader_t* f1 = dynamic_cast<addr_form_reader_t*>(node_attributes[DW_AT_low_pc]);
     if (f1)
@@ -73,13 +74,13 @@ die_t* die_t::find_address(address_t addr)
 
     if (is_subprogram() && low_pc <= addr && high_pc >= addr)
     {
-        printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
+//         printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
         return this;
     }
 
     for (size_t i = 0; i < children.size(); ++i)
     {
-        die_t* c = children[i]->find_address(addr);
+        die_t* c = children[i]->find_address(addr, low_pc, high_pc);
         if (c)
             return c;
     }

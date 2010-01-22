@@ -1,6 +1,6 @@
 #include "dwarf_aranges.h"
 #include "local_panic.h"
-#include <stdio.h>
+// #include <stdio.h>
 
 void aranges_set_header_t::decode(address_t from, size_t& offset)
 {
@@ -37,17 +37,17 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
     arange_desc_t ad;
 
     sh.decode(from, offset);
-    printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
+//     printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
     while (offset < size)
     {
         ad.decode(from, offset);
         if (ad.start == 0 && ad.length == 0 && offset < size)
         {
             sh.decode(from, offset);
-            printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
+//             printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
             continue;
         }
-        printf("found range: 0x%x - 0x%x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
+//         printf("found range: 0x%x - 0x%x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
         if (ad.start <= target_pc && (ad.start + ad.length) > target_pc)
         {
             info_offset = sh.debug_info_offset;

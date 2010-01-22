@@ -137,7 +137,7 @@ bool lineprogram_regs_t::execute(address_t from, size_t& offset)
 
 void lineprogram_regs_t::dump()
 {
-    printf("*lineprog 0x%08x %d %d:%d stmt:%s bb:%s endseq:%s prologue:%s epilogue:%s isa:%d\n",
+    printf("*lineprog 0x%08x %d %d:%d stmt:%s bblock:%s endseq:%s prologue:%s epilogue:%s isa:%d\n",
            address, file, line, column, is_stmt?"yes":"no", basic_block?"yes":"no", end_sequence?"yes":"no", prologue_end?"yes":"no", epilogue_begin?"yes":"no", isa);
 }
 
@@ -269,26 +269,46 @@ bool dwarf_debug_lines_t::execute(size_t& offset)
         return false;
     }
 
-    header.dump();
+//     header.dump();
 
     while (offset - start_offset < header.unit_length)
     {
         if (!current_regs.execute(start, offset))
             return false;
 
-        current_regs.dump();
+//         current_regs.dump();
         state_matrix.push_back(current_regs);
     }
 
     return true;
 }
 
-std::string dwarf_debug_lines_t::file_name(int /*index*/)
+std::string dwarf_debug_lines_t::file_name(address_t address, address_t low_pc, address_t /*high_pc*/)
 {
-    return std::string("");
+    for (size_t i = 0; i < state_matrix.size()-1; ++i)
+    {
+        address_t pc_l = state_matrix[i].address;
+        address_t pc_h = state_matrix[i+1].address;
+//         printf("%08x <= %08x <= %08x <= %08x <= %08x\n", low_pc, pc_l, address, pc_h, high_pc);
+        if (pc_l >= low_pc && pc_l <= address
+         && pc_h >= address /*&& pc_h <= high_pc*/)
+            return header.file_names[state_matrix[i].file-1].filename;
+    }
+
+    return std::string();
 }
 
-int dwarf_debug_lines_t::line_number(address_t /*address*/)
+int dwarf_debug_lines_t::line_number(address_t address, address_t low_pc, address_t /*high_pc*/)
 {
+    for (size_t i = 0; i < state_matrix.size()-1; ++i)
+    {
+        address_t pc_l = state_matrix[i].address;
+        address_t pc_h = state_matrix[i+1].address;
+//         printf("%08x <= %08x <= %08x <= %08x <= %08x\n", low_pc, pc_l, address, pc_h, high_pc);
+        if (pc_l >= low_pc && pc_l <= address
+         && pc_h >= address /*&& pc_h <= high_pc*/)
+            return state_matrix[i].line;
+    }
+
     return 0;
 }

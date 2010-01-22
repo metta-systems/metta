@@ -93,14 +93,15 @@ bool dwarf_parser_t::lookup(address_t addr)
 {
     size_t cuh_offset;
     size_t offset = 0;
+    address_t low_pc, high_pc;
     // find addr in debug info and figure function name and source file line
     if (debug_aranges->lookup(addr, offset))
     {
-        printf("FOUND ADDRESS\n");
+//         printf("FOUND ADDRESS\n");
         cuh_offset = offset;
         cuh_t cuh;
         cuh = debug_info->get_cuh(offset);
-        printf("decoded cuh: unit-length %d, version %04x, debug-abbrev-offset %d\n", cuh.unit_length, cuh.version, cuh.debug_abbrev_offset);
+//         printf("decoded cuh: unit-length %d, version %04x, debug-abbrev-offset %d\n", cuh.unit_length, cuh.version, cuh.debug_abbrev_offset);
 
         size_t abbr_offset = cuh.debug_abbrev_offset;
         debug_abbrev->load_abbrev_set(abbr_offset); // TODO: cache abbrevs (key: given offset)
@@ -111,39 +112,41 @@ bool dwarf_parser_t::lookup(address_t addr)
         die_t* node = 0;
         // Traverse tree to find the subroutine containing addr
         if (root)
-            node = root->find_address(addr);
+            node = root->find_address(addr, low_pc, high_pc);
 
         if (node)
         {
-            node->dump();
+//             node->dump();
 
             die_t* named_node = find_named_node(node, cuh_offset);
             if (named_node)
             {
-                named_node->dump();
+//                 named_node->dump();
                 auto name = dynamic_cast<strp_form_reader_t*>(named_node->node_attributes[DW_AT_name]);
-                auto file = dynamic_cast<data1_form_reader_t*>(named_node->node_attributes[DW_AT_decl_file]);
-                auto line = dynamic_cast<data1_form_reader_t*>(named_node->node_attributes[DW_AT_decl_line]);
+/*                auto file = dynamic_cast<data1_form_reader_t*>(named_node->node_attributes[DW_AT_decl_file]);
+                auto line = dynamic_cast<data1_form_reader_t*>(named_node->node_attributes[DW_AT_decl_line]);*/
                 auto mang = dynamic_cast<strp_form_reader_t*>(named_node->node_attributes[DW_AT_GNU_cpp_mangled_name]);
 
-                if (name && file && line)
+                if (name /*&& file && line*/)
                 {
                     // print output data:
                     // [TID] 0xfault_addr func-name (source:line)
-                    printf("0x%08x %s (%s) (file %x, line %d)\n", addr, name->data, mang ? mang->data : "<no mangled name>", file->data, line->data);
+                    printf("0x%08x %s (%s)\n" /*(file %x, line %d)\n"*/, addr, name->data, mang ? mang->data : "<no mangled name>"/*, file->data, line->data*/);
                 }
             }
 
             die_t* cu_node = node->find_compile_unit();
             if (cu_node)
             {
-                cu_node->dump();
+//                 cu_node->dump();
                 auto stmt = dynamic_cast<data4_form_reader_t*>(cu_node->node_attributes[DW_AT_stmt_list]);
                 if (stmt)
                 {
                     size_t ofs = stmt->data;
                     if (debug_lines->execute(ofs))
-                        printf("line program PARSED OK\n");
+                    {
+                        printf("in file %s line %d\n", debug_lines->file_name(addr, low_pc, high_pc).c_str(), debug_lines->line_number(addr, low_pc, high_pc));
+                    }
                 }
             }
         }

@@ -42,6 +42,7 @@ class lineprogram_regs_t
 {
 public:
     address_t address;
+//     size_t    length;
     int file;
     int line;
     int column;
@@ -146,6 +147,6 @@ public:
     // Populate state matrix from a given line program.
     bool execute(size_t& offset);
 
-    std::string file_name(int index);
-    int line_number(address_t address);
+    std::string file_name(address_t address, address_t low_pc, address_t high_pc);
+    int line_number(address_t address, address_t low_pc, address_t high_pc);
 };

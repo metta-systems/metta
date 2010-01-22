@@ -1,13 +1,13 @@
 #include "dwarf_abbrev.h"
 #include "datarepr.h"
-#include <stdio.h>
+// #include <stdio.h>
 
 void abbrev_declaration_t::decode(address_t from, size_t& offset)
 {
     abbreviation_code.decode(from, offset);
     if (abbreviation_code == 0)
     {
-        printf("found last abbrev code in set\n");
+//         printf("found last abbrev code in set\n");
         return;
     }
     tag.decode(from, offset);
@@ -35,12 +35,12 @@ bool dwarf_debug_abbrev_t::load_abbrev_set(size_t& offset)
         abbrevs.push_back(abbrev);
         if (abbrev.abbreviation_code == 0)
             break;
-        printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
+//         printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
         for (unsigned i = 0; i < abbrev.attributes.size()-1; ++i)
         {
             abbrev_attr_t a;
             a = abbrev.attributes[i];
-            printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
+//             printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
         }
     }
     return true;
