@@ -1,0 +1,4 @@
+use: run.sh <mockup-name>
+
+<mockup-name> can be one of:
+	test.MyProcessingSketch

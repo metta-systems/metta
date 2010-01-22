@@ -478,3 +478,13 @@ class Menu extends RadialComponent {
     }
 
 };
+
+/* void applyMask(color[] source, color[] mask) {
+    loadPixels();
+    if ((pixels.length != source.length) || (source.length != mask.length)) return;
+    for (int i = 0; i < mask.length; i++) {
+        int alpha_amt = (red(mask[i]) + green(mask[i) + blue(mask[i])) / 3;
+        pixels[i] = color(red(mask[i]), green(mask[i]), blue(mask[i]), alpha_amt);         
+    }
+    updatePixels();
+} */

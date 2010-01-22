@@ -1,0 +1,27 @@
+<project default="build-jar">
+	
+    <property name="project.dir" value="${basedir}" />	
+	<property name="jar.name" value="runner" />		
+	
+    <target name="build-jar" depends="compile">
+        <jar destfile="${basedir}/jar/${jar.name}.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.exquance.metta.mockups.SketchRunner"/>
+                <attribute name="Class-Path" value=". ${project.dir}/lib/core.jar"/>
+            </manifest>
+            <fileset dir="${project.dir}/bin"/>
+        </jar>
+    </target>
+	
+    <target name="compile">
+        <delete dir="${project.dir}/bin" />
+        <mkdir dir="${project.dir}/bin" />
+        <javac destdir="${project.dir}/bin" srcdir="${project.dir}/src">
+            <classpath>
+                <fileset dir="${project.dir}/lib">
+                    <include name="core.jar" />
+                </fileset>
+            </classpath>
+        </javac>
+    </target>	
+</project>
