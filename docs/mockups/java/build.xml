@@ -1,45 +1,73 @@
 <project default="build-jar">
+    
+    <property name="project.dir" value="${basedir}" />
 	
-    <property name="project.dir" value="${basedir}" />	
-	<property name="jar.name" value="runner" />
+    <property name="jar.dir"  value="${project.dir}/jar"/>	
+    <property name="jar.name" value="runner" />
+
+    <property name="in.dir"      value="${project.dir}"/>		
+    <property name="in.src.dir"  value="${in.dir}/src"/>
+    <property name="in.lib.dir"  value="${in.dir}/lib"/>
+    <property name="in.data.dir" value="${in.dir}/fonts"/>	
 	
-	<property name="sketch" value="test.MyProcessingSketch" />
+    <property name="out.dir"      value="${project.dir}/bin"/>	
+    <property name="out.src.dir"  value="${out.dir}"/>
+    <!-- <property name="out.lib.dir"  value="${out.dir}/lib"/> -->
+    <property name="out.data.dir" value="${out.dir}/data"/>	
 	
-    <target name="build-jar" depends="compile">
-        <jar destfile="${basedir}/jar/${jar.name}.jar">
+    
+    <property name="sketch" value="test.MyProcessingSketch" />
+    
+	<target name="init">
+		<path id="compile.classpath"> 
+		    <fileset dir="${in.lib.dir}" includes="**/*.jar"/>
+		</path>	
+	</target>
+	
+    <target name="build-jar" depends="init,compile">
+        <manifestclasspath property="jar.classpath" jarfile="${jar.dir}/${jar.name}.jar">
+            <classpath refid="compile.classpath"/>
+        </manifestclasspath>    	
+        <jar destfile="${jar.dir}/${jar.name}.jar">
             <manifest>
                 <attribute name="Main-Class" value="com.exquance.metta.mockups.SketchRunner"/>
-                <attribute name="Class-Path" value=". ${project.dir}/lib/core.jar"/>
+                <attribute name="Class-Path" value="${jar.classpath}"/>
             </manifest>
-            <fileset dir="${project.dir}/bin"/>
+            <fileset dir="${out.dir}"/>         
         </jar>
     </target>
-	
-    <target name="compile">
-        <delete dir="${project.dir}/bin" />
-        <mkdir dir="${project.dir}/bin" />
-        <javac destdir="${project.dir}/bin" srcdir="${project.dir}/src">
-            <classpath>
-                <fileset dir="${project.dir}/lib">
-                    <include name="core.jar" />
-                </fileset>
-            </classpath>
+    
+    <target name="compile" depends="init">
+        <delete dir="${out.dir}" />
+        <mkdir dir="${out.dir}" />
+        <mkdir dir="${out.src.dir}" />      
+        <!-- <mkdir dir="${out.lib.dir}" /> -->      
+        <mkdir dir="${out.data.dir}" />
+        
+        <!-- <copy todir="${out.lib.dir}">
+              <fileset dir="${in.lib.dir}">
+                 <include name="*.jar" />
+        	  </fileset>
+        </copy> -->
+        <copy todir="${out.data.dir}">
+            <fileset dir="${in.data.dir}">
+               <include name="*.vlw" />
+            </fileset>        	
+        </copy>
+        
+        <javac destdir="${out.src.dir}" srcdir="${in.src.dir}">
+            <classpath refid="compile.classpath" />
         </javac>
     </target>
-	
-	<target name="build-and-run" depends="compile,build-jar,run" />
-	
-	<target name="run">
-	   <java classpath="${project.dir}/lib"
-	   	     jar="${basedir}/jar/${jar.name}.jar"
-	         fork="true">
-	        <arg value="${sketch}" />
-	        <jvmarg value="-Dfile.encoding=UTF-8" />	   	
-            <classpath>
-                <fileset dir="${project.dir}/lib">
-                    <include name="core.jar" />
-                </fileset>
-            </classpath>
-	   </java>
-	</target>
+    
+    <target name="build-and-run" depends="init,compile,build-jar,run" />
+    
+    <target name="run" depends="init">
+       <java jar="${jar.dir}/${jar.name}.jar"
+             fork="true">
+            <arg value="${sketch}" />
+            <jvmarg value="-Dfile.encoding=UTF-8" />        
+            <classpath refid="compile.classpath" />
+       </java>
+    </target>
 </project>

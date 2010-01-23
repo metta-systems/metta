@@ -2,4 +2,4 @@ use: run.sh <mockup-name>
 or:  ant -Dsketch=<mockup-name> run
 
 <mockup-name> can be one of:
-	test.MyProcessingSketch
+	menu.MenuSketch
