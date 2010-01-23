@@ -15,4 +15,4 @@ debugger.log
 .settings
 Debug
 Debug
-./docs/mockups/java/bin
+./docs/mockups/java/bin/*

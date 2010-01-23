@@ -1,7 +1,9 @@
 <project default="build-jar">
 	
     <property name="project.dir" value="${basedir}" />	
-	<property name="jar.name" value="runner" />		
+	<property name="jar.name" value="runner" />
+	
+	<property name="sketch" value="test.MyProcessingSketch" />
 	
     <target name="build-jar" depends="compile">
         <jar destfile="${basedir}/jar/${jar.name}.jar">
@@ -23,5 +25,21 @@
                 </fileset>
             </classpath>
         </javac>
-    </target>	
+    </target>
+	
+	<target name="build-and-run" depends="compile,build-jar,run" />
+	
+	<target name="run">
+	   <java classpath="${project.dir}/lib"
+	   	     jar="${basedir}/jar/${jar.name}.jar"
+	         fork="true">
+	        <arg value="${sketch}" />
+	        <jvmarg value="-Dfile.encoding=UTF-8" />	   	
+            <classpath>
+                <fileset dir="${project.dir}/lib">
+                    <include name="core.jar" />
+                </fileset>
+            </classpath>
+	   </java>
+	</target>
 </project>
