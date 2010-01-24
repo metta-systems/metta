@@ -25,6 +25,11 @@ public:
     typedef typename list_type::iterator iterator;
     typedef typename list_type::const_iterator const_iterator;
 
+    iterator begin() { return ranges.begin(); }
+    const_iterator begin() const { return ranges.begin(); }
+    iterator end() { return ranges.end(); }
+    const_iterator end() const { return ranges.end(); }
+
     inline range_list_t() : ranges() {}
 
     /*!
@@ -41,20 +46,52 @@ public:
     /*! Destructor frees the list. */
     ~range_list_t() { clear(); }
 
-    range_list_t(const range_list_t&);
+    /*! Deep-copy constructor. */
+    range_list_t(const range_list_t& other)
+        : ranges()
+    {
+        clear();
+        iterator it(other.ranges.begin());
+        for (; it != other.ranges.end(); ++it)
+        {
+            range_t* new_range = new range_t((*it)->start, (*it)->length);
+            ranges.push_back(new_range);
+        }
+    }
 
     /*!
-     * Allocate a range of a specific size.
+     * Allocate a range of a specific size. Pick a first-fit region.
      * @param[in] length the requested length
-     * @param[in,out] address the beginning address of the allocated range
+     * @param[in,out] start the beginning address of the allocated range
      * @returns true, if successfully allocated (and address is valid), false otherwise
      */
-    bool allocate(type_t length, type_t* address);
+    bool allocate(type_t length, type_t* start)
+    {
+        ASSERT(start);
+        iterator cur(ranges.begin());
+        const_iterator end(ranges.end());
+        for (; cur != end; ++cur)
+        {
+            if ((*cur)->length >= length)
+            {
+                *start = (*cur)->start;
+                (*cur)->start += length;
+                (*cur)->length -= length;
+                if ((*cur)->length == 0)
+                {
+                    delete *cur;
+                    ranges.erase(cur);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
 
     /*!
      * Allocate a range of specific size and beginning address.
      * @param[in] length the length
-     * @param[in] address the beginning address
+     * @param[in] start the beginning address
      * @return true, if successfully allocated, false otherwise
      */
     bool allocate(type_t length, type_t start)
@@ -98,17 +135,85 @@ public:
     /*!
      * Allocate a range of specific size and beginning address, with overlapping allowed.
      * @param[in] length the length
-     * @param[in] address the beginning address
-     * @return true, if successfully allocated at least one part of the range, false otherwise
+     * @param[in] start the beginning address
      */
-    bool allocate_overlapping(type_t length, type_t address);
+//     * @return true, if successfully allocated at least one part of the range, false otherwise
+    void allocate_overlapping(type_t length, type_t start)
+    {
+        iterator cur(ranges.begin());
+        const_iterator end(ranges.end());
+        for (; cur != end; ++cur)
+        {
+            // full overlap
+            if ((*cur)->start >= start &&
+                ((*cur)->start + (*cur)->length) <= (start + length))
+            {
+                delete *cur;
+                ranges.erase(cur);
+            }
+            // start overlaps, end out of bounds
+            else if ((*cur)->start >= start && (*cur)->start < (start + length) &&
+                ((*cur)->start + (*cur)->length) >= (start + length))
+            {
+                (*cur)->start += length - ((*cur)->start - start);
+                (*cur)->length -= length - ((*cur)->start - start);
+            }
+            // start out of bounds, end overlaps
+            else if ((*cur)->start < start &&
+                ((*cur)->start + (*cur)->length) <= (start + length))
+            {
+                (*cur)->length = (*cur)->start - start;
+            }
+            // existing range larger
+            else if ((*cur)->start < start &&
+                ((*cur)->start + (*cur)->length) > (start + length))
+            {
+                range_t* new_range = new range_t(start + length, (*cur)->start + (*cur)->length - start - length);
+                ranges.push_back(new_range);
+                (*cur)->length = start - (*cur)->start;
+            }
+        }
+    }
 
     /*!
      * Free a range.
-     * @param[in] address beginning address of the range
      * @param[in] length length of the range
+     * @param[in] start beginning address of the range
      */
-    void free(type_t length, type_t address);
+    void free(type_t length, type_t start)
+    {
+        iterator cur(ranges.begin());
+        const_iterator end(ranges.end());
+        // merge left
+        for (; cur != end; ++cur)
+        {
+            if (((*cur)->start + (*cur)->length) == start)
+            {
+                start = (*cur)->start;
+                length += (*cur)->length;
+                delete *cur;
+                ranges.erase(cur);
+                break;
+            }
+        }
+
+        cur = ranges.begin();
+        end = ranges.end();
+        // merge right
+        for (; cur != end; ++cur)
+        {
+            if ((*cur)->start == (start + length))
+            {
+                length += (*cur)->length;
+                delete *cur;
+                ranges.erase(cur);
+                break;
+            }
+        }
+
+        range_t* new_range = new range_t(start, length);
+        ranges.push_back(new_range);
+    }
 
     void clear()
     {
