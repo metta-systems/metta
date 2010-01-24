@@ -287,8 +287,8 @@ public:
   typedef _List_iterator<_Tp,const _Tp&,const _Tp*> const_iterator;
 
 #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator>       reverse_iterator;
+  typedef typename __STD::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef typename __STD::reverse_iterator<iterator>       reverse_iterator;
 #else /* __STL_CLASS_PARTIAL_SPECIALIZATION */
   typedef reverse_bidirectional_iterator<const_iterator,value_type,
                                          const_reference,difference_type>

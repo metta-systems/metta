@@ -27,7 +27,7 @@ x86_frame_allocator_t::x86_frame_allocator_t()
 }
 
 /* Build memory-ranges and page stacks before paging is enabled, to avoid mapping frames. */
-void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap)
+void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, memory_range_t /*reserved_boot_range*/)
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "x86_frame_allocator: init " << (address_t)mmap << endl;

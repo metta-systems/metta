@@ -17,9 +17,11 @@
 #include <string.h>
 #include <wchar.h>
 
+#ifdef __STL_USE_IOSTREAMS
 #if defined(__STL_USE_NEW_IOSTREAMS) && !defined(__SGI_STL_IOSFWD)
 #include <iosfwd>
 #endif /* use new iostreams */
+#endif /* __STL_USE_IOSTREAMS */
 
 __STL_BEGIN_NAMESPACE
 
@@ -29,11 +31,13 @@ template <class _CharT, class _IntT> class __char_traits_base {
 public:
   typedef _CharT char_type;
   typedef _IntT int_type;
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS
   typedef streamoff off_type;
   typedef streampos pos_type;
   typedef mbstate_t state_type;
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
   static void assign(char_type& __c1, const char_type& __c2) { __c1 = __c2; }
   static bool eq(const _CharT& __c1, const _CharT& __c2) 

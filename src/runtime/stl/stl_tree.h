@@ -349,18 +349,22 @@ _Rb_tree_rebalance_for_erase(_Rb_tree_node_base* __z,
         __z->_M_parent->_M_left = __x;
       else
         __z->_M_parent->_M_right = __x;
-    if (__leftmost == __z) 
+    if (__leftmost == __z)
+    {
       if (__z->_M_right == 0)        // __z->_M_left must be null also
         __leftmost = __z->_M_parent;
     // makes __leftmost == _M_header if __z == __root
       else
         __leftmost = _Rb_tree_node_base::_S_minimum(__x);
-    if (__rightmost == __z)  
+    }
+    if (__rightmost == __z)
+    {
       if (__z->_M_left == 0)         // __z->_M_right must be null also
         __rightmost = __z->_M_parent;  
     // makes __rightmost == _M_header if __z == __root
       else                      // __x == __z->_M_left
         __rightmost = _Rb_tree_node_base::_S_maximum(__x);
+    }
   }
   if (__y->_M_color != _S_rb_tree_red) { 
     while (__x != __root && (__x == 0 || __x->_M_color == _S_rb_tree_black))
@@ -524,7 +528,7 @@ class _Rb_tree : protected _Rb_tree_base<_Value, _Alloc> {
   typedef _Rb_tree_base<_Value, _Alloc> _Base;
 protected:
   typedef _Rb_tree_node_base* _Base_ptr;
-  typedef _Rb_tree_node<_Value> _Rb_tree_node;
+  typedef typename __STD::_Rb_tree_node<_Value> _Rb_tree_node;
   typedef _Rb_tree_Color_type _Color_type;
 public:
   typedef _Key key_type;
@@ -919,10 +923,12 @@ _Rb_tree<_Key,_Value,_KeyOfValue,_Compare,_Alloc>
   }
   iterator __j = iterator(__y);   
   if (__comp)
+  {
     if (__j == begin())     
       return pair<iterator,bool>(_M_insert(__x, __y, __v), true);
     else
       --__j;
+  }
   if (_M_key_compare(_S_key(__j._M_node), _KeyOfValue()(__v)))
     return pair<iterator,bool>(_M_insert(__x, __y, __v), true);
   return pair<iterator,bool>(__j, false);

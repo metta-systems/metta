@@ -24,11 +24,13 @@
 #include <memory>
 #include <algorithm>
 
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS
 #include <iosfwd>
 #else /* __STL_USE_NEW_IOSTREAMS */
 #include <char_traits.h>
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
 // Standard C++ string class.  This class has performance
 // characteristics very much like vector<>, meaning, for example, that
@@ -2016,6 +2018,7 @@ inline void swap(basic_string<_CharT,_Traits,_Alloc>& __x,
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
 
 // I/O.  
+#ifdef __STL_USE_IOSTREAMS
 
 #ifndef __STL_USE_NEW_IOSTREAMS 
 __STL_END_NAMESPACE
@@ -2340,6 +2343,8 @@ getline(istream& __is, basic_string<_CharT,_Traits,_Alloc>& __s)
 }
 
 #endif /* __STL_USE_NEW_IOSTREAMS */
+
+#endif /* __STL_USE_IOSTREAMS */
 
 template <class _CharT, class _Traits, class _Alloc>
 void _S_string_copy(const basic_string<_CharT,_Traits,_Alloc>& __s,

@@ -49,13 +49,15 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <new.h>
+#include <new.h> //FIXME: stdlib dep!
 
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS 
 #include <iosfwd>
 #else /* __STL_USE_NEW_IOSTREAMS */
 #include <iostream.h>
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
 #ifndef __SGI_STL_INTERNAL_ITERATOR_H
 #include <stl_iterator_base.h>

@@ -11,7 +11,11 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'common runtime runtime/ml'.split()
+include_dirs = 'common runtime'.split()
+
+# Local SGI STL instance.
+stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC'.split()
+stl_include_dirs = ['runtime/stl']
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
@@ -97,9 +101,18 @@ def configure(conf):
     # Config for building kernel
     conf.setenv('KERNEL_ENV')
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
+    conf.env.append_unique('CXXDEFINES', stl_defines)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + linkflags)
+    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
 
+    # Config for building system apps
+    conf.setenv('APP_ENV')
+    conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
+    conf.env.append_unique('CXXDEFINES', stl_defines)
+    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+
+    # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
 
 def build(bld):
     arch = Options.options.arch
@@ -136,7 +149,7 @@ def build(bld):
     libkernel.target = 'kernel'
 
     tests = bld.new_task_gen('cxx', 'program')
-    tests.source = 'tests/test_suite_main.cpp tests/test_rbtree.cpp'.split()
+    tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
     tests.env = bld.env_of_name('TEST_ENV').copy()
     tests.includes = tests.env['INCLUDE_DIRS']
     tests.uselib = 'TEST'

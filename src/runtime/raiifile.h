@@ -5,8 +5,10 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /*!
-* RAII file wrapper.
-*/
+ * RAII file wrapper.
+ *
+ * Usable only on host system atm.
+ */
 #include <iostream>
 #include <fstream>
 #include <string>

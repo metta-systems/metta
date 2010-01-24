@@ -124,5 +124,15 @@ void operator delete[](void*)
 {
 }
 
+// Compliant functions for STL allocator (TODO: replace stl malloc_alloc with other default allocator)
+extern "C" void* malloc(size_t size)
+{
+    return operator new(size, false, NULL);
+}
+
+extern "C" void free(void*)
+{
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

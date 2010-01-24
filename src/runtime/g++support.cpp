@@ -44,5 +44,11 @@ extern "C" void __cxa_pure_virtual()
 {
 }
 
+// Support for STL bad_alloc
+extern "C" void __bad_alloc_handler()
+{
+    //TODO: panic() here
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

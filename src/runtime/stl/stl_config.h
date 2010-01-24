@@ -126,6 +126,7 @@
 // * _NOTHREADS: if defined, don't use any multithreading support.  
 // * _STL_NO_CONCEPT_CHECKS: if defined, disables the error checking that
 //   we get from __STL_USE_CONCEPT_CHECKS.
+// * __STL_USE_IOSTREAMS: if defined, enable support for iostreams.
 // * __STL_USE_NEW_IOSTREAMS: if defined, then the STL will use new,
 //   standard-conforming iostreams (e.g. the <iosfwd> header).  If not
 //   defined, the STL will use old cfront-style iostreams (e.g. the
@@ -254,32 +255,21 @@
 
 
 # ifdef __GNUC__
-#   if __GNUC__ == 2 && __GNUC_MINOR__ <= 7
-#     define __STL_STATIC_TEMPLATE_MEMBER_BUG
-#   endif
-#   if __GNUC__ < 2 
-#     define __STL_NEED_TYPENAME
-#     define __STL_NEED_EXPLICIT
-#   endif
-#   if __GNUC__ == 2 && __GNUC_MINOR__ <= 8
-#     define __STL_NO_EXCEPTION_HEADER
-#     define __STL_NO_BAD_ALLOC
-#   endif
-#   if __GNUC__ == 2 && __GNUC_MINOR__ >= 8
-#     define __STL_CLASS_PARTIAL_SPECIALIZATION
+#   if __GNUC__ >= 3
+// #     define __STL_CLASS_PARTIAL_SPECIALIZATION TODO: doesn't work for some reason, investigate (due to concept checks?)
+#     define __STL_PARTIAL_SPECIALIZATION_SYNTAX
 #     define __STL_FUNCTION_TMPL_PARTIAL_ORDER
 #     define __STL_EXPLICIT_FUNCTION_TMPL_ARGS
 #     define __STL_MEMBER_TEMPLATES
+#     define __STL_MEMBER_TEMPLATE_CLASSES
+#     define __STL_MEMBER_TEMPLATE_KEYWORD
+#     define __STL_TEMPLATE_FRIENDS
 #     define __STL_CAN_THROW_RANGE_ERRORS
-      //    g++ 2.8.1 supports member template functions, but not member
-      //    template nested classes.
-#     if __GNUC_MINOR__ >= 9
-#       define __STL_MEMBER_TEMPLATE_CLASSES
-#       define __STL_TEMPLATE_FRIENDS
-#       define __SGI_STL_USE_AUTO_PTR_CONVERSIONS
-#       define __STL_HAS_NAMESPACES
-//#       define __STL_USE_NEW_IOSTREAMS
-#     endif
+#     define __SGI_STL_USE_AUTO_PTR_CONVERSIONS
+#     define __STL_HAS_NAMESPACES
+#     define __STL_LONG_LONG
+#   else
+#     error Unsupported GCC version.
 #   endif
 #   define __STL_DEFAULT_CONSTRUCTOR_BUG
 #   ifdef __EXCEPTIONS
@@ -287,9 +277,6 @@
 #   endif
 #   ifdef _REENTRANT
 #     define __STL_PTHREADS
-#   endif
-#   if (__GNUC__ < 2) || (__GNUC__ == 2 && __GNUC_MINOR__ < 95)
-#     define __STL_NO_FUNCTION_PTR_IN_CLASS_TEMPLATE
 #   endif
 # endif
 

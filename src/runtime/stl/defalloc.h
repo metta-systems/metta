@@ -30,7 +30,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h>
+#ifdef __STL_USE_IOSTREAMS
 #include <iostream.h>
+#endif /* __STL_USE_IOSTREAMS */
 #include <algobase.h>
 
 
@@ -39,8 +41,10 @@ inline T* allocate(ptrdiff_t size, T*) {
     set_new_handler(0);
     T* tmp = (T*)(::operator new((size_t)(size * sizeof(T))));
     if (tmp == 0) {
-	cerr << "out of memory" << endl; 
-	exit(1);
+#ifdef __STL_USE_IOSTREAMS
+        cerr << "out of memory" << endl; 
+#endif /* __STL_USE_IOSTREAMS */
+        exit(1);
     }
     return tmp;
 }

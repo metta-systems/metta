@@ -32,11 +32,13 @@
 #endif
 #include <stddef.h>
 
-#ifdef __STL_USE_NEW_IOSTREAMS 
+#ifdef __STL_USE_IOSTREAMS
+#ifdef __STL_USE_NEW_IOSTREAMS
 #include <iosfwd>
 #else /* __STL_USE_NEW_IOSTREAMS */
 #include <iostream.h>
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
 #ifndef __SGI_STL_INTERNAL_ITERATOR_BASE_H
 #include <stl_iterator_base.h>
@@ -94,8 +96,10 @@ using __STD::back_inserter;
 using __STD::reverse_iterator;
 using __STD::reverse_bidirectional_iterator;
 
+#ifdef __STL_USE_IOSTREAMS
 using __STD::istream_iterator;
 using __STD::ostream_iterator;
+#endif /* __STL_USE_IOSTREAMS */
 
 // Names from stl_construct.h
 using __STD::construct;

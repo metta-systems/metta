@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "list.h"
+#include "stl/list"
 
 /*!
  * This class manages a list of ranges. It automatically merges adjacent entries in the list.
@@ -79,6 +79,6 @@ public:
     inline size_t size() const { return ranges.size(); }
 
 private:
-    list_t<range_t*> ranges;
+    std::list<range_t*> ranges;
     range_list_t& operator =(const range_list_t& other);
 };

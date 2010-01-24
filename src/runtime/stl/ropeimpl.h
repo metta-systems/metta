@@ -15,13 +15,15 @@
  *   You should not attempt to use it directly.
  */
 
-# include <stdio.h>     
+#include <stdio.h> //FIXME: stdlib dep!
 
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS 
 # include <iostream>
 #else /* __STL_USE_NEW_IOSTREAMS */
 # include <iostream.h>
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
 #ifdef __STL_USE_EXCEPTIONS
 # include <stdexcept>

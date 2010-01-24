@@ -4,7 +4,7 @@
 #include "frame_allocator.h"
 #include "range_list.h"
 #include "multiboot.h"
-#include "map.h"
+#include "stl/map"
 
 class protection_domain_t;
 
@@ -16,7 +16,7 @@ public:
     /*!
      * Build pages free-lists before paging is enabled, to avoid setting up mappings.
      */
-    void initialise_before_paging(multiboot_t::mmap_t* mmap) INIT_ONLY;
+    void initialise_before_paging(multiboot_t::mmap_t* mmap, memory_range_t reserved_boot_range) INIT_ONLY;
     /*!
      * Unmap and free init memory pages.
      */
@@ -37,7 +37,7 @@ private:
 //     virtual void unmap_range(memory_range_t* range);
 
 private:
-    map_t<protection_domain_t*, memory_resrec_t*> qos_allocations;
+    std::map<protection_domain_t*, memory_resrec_t*> qos_allocations;
     range_list_t<physical_address_t> ram_ranges;
 
     // Page Stack structures (TODO: move to subclass, like in Pedigree?)

@@ -40,9 +40,8 @@
 
 #ifndef __THROW_BAD_ALLOC
 #  if defined(__STL_NO_BAD_ALLOC) || !defined(__STL_USE_EXCEPTIONS)
-#    include <stdio.h>
-#    include <stdlib.h>
-#    define __THROW_BAD_ALLOC fprintf(stderr, "out of memory\n"); exit(1)
+     extern "C" void __bad_alloc_handler();
+#    define __THROW_BAD_ALLOC __bad_alloc_handler()
 #  else /* Standard conforming out-of-memory handling */
 #    include <new>
 #    define __THROW_BAD_ALLOC throw std::bad_alloc()

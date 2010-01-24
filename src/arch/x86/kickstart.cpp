@@ -14,7 +14,6 @@
 #include "registers.h"
 #include "initfs.h"
 #include "mmu.h"
-#include "minmax.h"
 #include "c++ctors.h"
 // #include "bootinfo.h"
 #include "debugger.h"
@@ -62,8 +61,6 @@ void kickstart(multiboot_t::header_t* mbh)
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
 
-    // Preserve the currently executing kickstart code in the memory allocator init.
-    // We will give up these frames later.
 //     uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
     // We've allocated memory from a contiguous region, mark it and modify
     // boot info page to exclude this region as occupied.
@@ -80,9 +77,14 @@ void kickstart(multiboot_t::header_t* mbh)
 #endif
 //     bootinfo.mmap_prepare(mb.memory_map());
 
-    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map());
+    address_t alloc_start = page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end));
 
-    address_t alloc_start = page_align_up<address_t>(max(LINKSYM(placement_address), bootimage->mod_end));
+    // Preserve the currently executing kickstart code in the memory allocator init.
+    // We will give up these frames later.
+    frame_allocator_t::memory_range_t reserved_boot_range((void*)LINKSYM(KICKSTART_BASE), 0, alloc_start - LINKSYM(KICKSTART_BASE), "reserved during boot");
+
+    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), reserved_boot_range);
+
 //     frame_allocator.init(0, &pagedir);
 //     frame_allocator.set_start(alloc_start);
 //     frame_t::set_frame_allocator(&frame_allocator);

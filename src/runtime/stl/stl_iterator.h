@@ -582,6 +582,7 @@ operator+(_Dist __n,
 // istream_iterator and ostream_iterator look very different if we're
 // using new, templatized iostreams than if we're using the old cfront
 // version.
+#ifdef __STL_USE_IOSTREAMS
 
 #ifdef __STL_USE_NEW_IOSTREAMS
 
@@ -954,6 +955,8 @@ iterator_category(const ostream_iterator<_Tp>&) {
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 
 #endif /* __STL_USE_NEW_IOSTREAMS */
+
+#endif /* __STL_USE_IOSTREAMS */
 
 __STL_END_NAMESPACE
 
