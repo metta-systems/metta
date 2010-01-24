@@ -103,9 +103,11 @@ public:
         kconsole<<"range_list:allocate "<<start<<", "<<length<<endl;
         iterator cur(ranges.begin());
         const_iterator end(ranges.end());
-        kconsole<<"iter "<<(*cur)<<endl;
+        kconsole<<" iter1 "<<(*cur)<<endl;
+        kconsole<<" iter2 "<<(*end)<<endl;
         for (; cur != end; ++cur)
         {
+            kconsole<<" item "<<(*cur)->start<<" length "<<(*cur)->length<<endl;
             // exact match
             if ((*cur)->start == start && (*cur)->length == length)
             {
@@ -192,12 +194,13 @@ public:
      */
     void free(type_t start, type_t length)
     {
-        kconsole << "range_list:free "<<start<<", "<<length<<endl;
+        kconsole<<"range_list:free "<<start<<", "<<length<<endl;
         iterator cur(ranges.begin());
         const_iterator end(ranges.end());
         // merge left
         for (; cur != end; ++cur)
         {
+            kconsole<<" merge left"<<endl;
             if (((*cur)->start + (*cur)->length) == start)
             {
                 start = (*cur)->start;
@@ -213,6 +216,7 @@ public:
         // merge right
         for (; cur != end; ++cur)
         {
+            kconsole<<" merge right"<<endl;
             if ((*cur)->start == (start + length))
             {
                 length += (*cur)->length;
@@ -223,6 +227,7 @@ public:
         }
 
         range_t* new_range = new range_t(start, length);
+        kconsole<<" adding to list"<<endl;
         ranges.push_back(new_range);
     }
 
