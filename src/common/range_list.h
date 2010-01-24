@@ -1,15 +1,12 @@
-// TODO: merge_mmap algo will go into this class
 // Copyright (c) 2008 James Molloy, Jörg Pfähler, Matthew Iselin
-
 #pragma once
 
 #include "stl/list"
-#include "default_console.h"
 
 /*!
  * This class manages a list of ranges. It automatically merges adjacent entries in the list.
  *
- * @param[in] type_t integer type the range start and length are encoded in.
+ * @param[in] type_t integer type the range start and length are encoded with.
  */
 template<typename type_t>
 class range_list_t
@@ -18,10 +15,7 @@ public:
     class range_t
     {
         public:
-            inline range_t(type_t start_, type_t length_) : start(start_), length(length_)
-            {
-                kconsole << "constructed range_t "<<start<<", "<<length<<endl;
-            }
+            inline range_t(type_t start_, type_t length_) : start(start_), length(length_) {}
             type_t start, length;
     };
 
@@ -30,9 +24,9 @@ public:
     typedef typename list_type::const_iterator const_iterator;
 
     iterator begin() { return ranges.begin(); }
+    iterator end()   { return ranges.end(); }
     const_iterator begin() const { return ranges.begin(); }
-    iterator end() { return ranges.end(); }
-    const_iterator end() const { return ranges.end(); }
+    const_iterator end()   const { return ranges.end(); }
 
     inline range_list_t() : ranges() {}
 
@@ -41,14 +35,11 @@ public:
      * @param[in] start  beginning of the range.
      * @param[in] length length of the range.
      */
-    range_list_t(type_t start, type_t length)
+    inline range_list_t(type_t start, type_t length)
         : ranges()
     {
         ranges.push_back(new range_t(start, length));
     }
-
-    /*! Destructor frees the list. */
-    ~range_list_t() { clear(); }
 
     /*! Deep-copy constructor. */
     range_list_t(const range_list_t& other)
@@ -63,11 +54,14 @@ public:
         }
     }
 
+    /*! Destructor frees the list. */
+    ~range_list_t() { clear(); }
+
     /*!
      * Allocate a range of a specific size. Pick a first-fit region.
-     * @param[in,out] start the beginning address of the allocated range
-     * @param[in] length the requested length
-     * @returns true, if successfully allocated (and address is valid), false otherwise
+     * @param[in,out] start The beginning address of the allocated range.
+     * @param[in] length The requested length.
+     * @returns true, if successfully allocated (and address is valid), false otherwise.
      */
     bool allocate(type_t* start, type_t length)
     {
@@ -94,24 +88,19 @@ public:
 
     /*!
      * Allocate a range of specific size and beginning address.
-     * @param[in] start the beginning address
-     * @param[in] length the length
-     * @return true, if successfully allocated, false otherwise
+     * @param[in] start The beginning address.
+     * @param[in] length The length.
+     * @return true, if successfully allocated, false otherwise.
      */
     bool allocate(type_t start, type_t length)
     {
-        kconsole<<"range_list:allocate "<<start<<", "<<length<<endl;
         iterator cur(ranges.begin());
         const_iterator end(ranges.end());
-        kconsole<<" iter1 "<<(*cur)<<endl;
-        kconsole<<" iter2 "<<(*end)<<endl;
         for (; cur != end; ++cur)
         {
-            kconsole<<" item "<<(*cur)->start<<" length "<<(*cur)->length<<endl;
             // exact match
             if ((*cur)->start == start && (*cur)->length == length)
             {
-                kconsole<<" exact match"<<endl;
                 delete *cur;
                 ranges.erase(cur);
                 return true;
@@ -119,7 +108,6 @@ public:
             // match at start
             else if ((*cur)->start == start && (*cur)->length > length)
             {
-                kconsole<<" match at start"<<endl;
                 (*cur)->start += length;
                 (*cur)->length -= length;
                 return true;
@@ -127,14 +115,12 @@ public:
             // match at end
             else if ((*cur)->start < start && ((*cur)->start + (*cur)->length) == (start + length))
             {
-                kconsole<<" match at end"<<endl;
                 (*cur)->length -= length;
                 return true;
             }
             // split
             else if ((*cur)->start < start && ((*cur)->start + (*cur)->length) > (start + length))
             {
-                kconsole<<" split"<<endl;
                 range_t* new_range = new range_t(start + length, (*cur)->start + (*cur)->length - start - length);
                 ranges.push_back(new_range);
                 (*cur)->length = start - (*cur)->start;
@@ -146,10 +132,10 @@ public:
 
     /*!
      * Allocate a range of specific size and beginning address, with overlapping allowed.
-     * @param[in] start the beginning address
-     * @param[in] length the length
+     * @param[in] start The beginning address.
+     * @param[in] length The length.
      */
-//     * @return true, if successfully allocated at least one part of the range, false otherwise
+//     * @return true, if successfully allocated at least one part of the range, false otherwise.
     void allocate_overlapping(type_t start, type_t length)
     {
         iterator cur(ranges.begin());
@@ -189,18 +175,16 @@ public:
 
     /*!
      * Free a range.
-     * @param[in] start beginning address of the range
-     * @param[in] length length of the range
+     * @param[in] start Beginning address of the range.
+     * @param[in] length Length of the range.
      */
     void free(type_t start, type_t length)
     {
-        kconsole<<"range_list:free "<<start<<", "<<length<<endl;
         iterator cur(ranges.begin());
         const_iterator end(ranges.end());
         // merge left
         for (; cur != end; ++cur)
         {
-            kconsole<<" merge left"<<endl;
             if (((*cur)->start + (*cur)->length) == start)
             {
                 start = (*cur)->start;
@@ -216,7 +200,6 @@ public:
         // merge right
         for (; cur != end; ++cur)
         {
-            kconsole<<" merge right"<<endl;
             if ((*cur)->start == (start + length))
             {
                 length += (*cur)->length;
@@ -227,7 +210,6 @@ public:
         }
 
         range_t* new_range = new range_t(start, length);
-        kconsole<<" adding to list"<<endl;
         ranges.push_back(new_range);
     }
 
