@@ -48,9 +48,9 @@
 #  endif
 #endif
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
+// #include <stddef.h>
+// #include <stdlib.h>
+// #include <string.h>
 #include <assert.h>
 #ifndef __RESTRICT
 #  define __RESTRICT
@@ -443,8 +443,7 @@ __default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size,
         _S_start_free += __total_bytes;
         return(__result);
     } else {
-        size_t __bytes_to_get = 
-	  2 * __total_bytes + _S_round_up(_S_heap_size >> 4);
+        size_t __bytes_to_get = 2 * __total_bytes + _S_round_up(_S_heap_size >> 4);
         // Try to make use of the left-over piece.
         if (__bytes_left > 0) {
             _Obj* __STL_VOLATILE* __my_free_list =
@@ -453,11 +452,11 @@ __default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size,
             ((_Obj*)_S_start_free) -> _M_free_list_link = *__my_free_list;
             *__my_free_list = (_Obj*)_S_start_free;
         }
-        _S_start_free = (char*)malloc(__bytes_to_get);
+        _S_start_free = (char*)malloc_alloc::allocate(__bytes_to_get);
         if (0 == _S_start_free) {
             size_t __i;
             _Obj* __STL_VOLATILE* __my_free_list;
-	    _Obj* __p;
+            _Obj* __p;
             // Try to make do with what we have.  That can't
             // hurt.  We do not try smaller requests, since that tends
             // to result in disaster on multi-process machines.
@@ -475,7 +474,7 @@ __default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size,
                     // right free list.
                 }
             }
-	    _S_end_free = 0;	// In case of exception.
+            _S_end_free = 0;	// In case of exception.
             _S_start_free = (char*)malloc_alloc::allocate(__bytes_to_get);
             // This should either throw an
             // exception or remedy the situation.  Thus we assume it
@@ -537,7 +536,7 @@ __default_alloc_template<threads, inst>::reallocate(void* __p,
     if (_S_round_up(__old_sz) == _S_round_up(__new_sz)) return(__p);
     __result = allocate(__new_sz);
     __copy_sz = __new_sz > __old_sz? __old_sz : __new_sz;
-    memcpy(__result, __p, __copy_sz);
+    __builtin_memcpy(__result, __p, __copy_sz);
     deallocate(__p, __old_sz);
     return(__result);
 }
@@ -583,7 +582,7 @@ __default_alloc_template<__threads, __inst> ::_S_free_list[
 // to refer to a template member of a dependent type.
 
 #ifdef __STL_USE_STD_ALLOCATORS
-
+#error Hey, your class partial specialization hacks worked? Recheck the allocators, then!
 template <class _Tp>
 class allocator {
   typedef alloc _Alloc;          // The underlying allocator.
@@ -769,6 +768,7 @@ inline bool operator!=(const debug_alloc<_Alloc>&,
 }
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
 
+/*!
 // Another allocator adaptor: _Alloc_traits.  This serves two
 // purposes.  First, make it possible to write containers that can use
 // either SGI-style allocators or standard-conforming allocator.
@@ -796,7 +796,7 @@ inline bool operator!=(const debug_alloc<_Alloc>&,
 //    static void deallocate(_Tp*, size_t)
 
 // The fully general version.
-
+*/
 template <class _Tp, class _Allocator>
 struct _Alloc_traits
 {
