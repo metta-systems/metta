@@ -27,10 +27,16 @@ x86_frame_allocator_t::x86_frame_allocator_t()
 }
 
 /* Build memory-ranges and page stacks before paging is enabled, to avoid mapping frames. */
-void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, memory_range_t /*reserved_boot_range*/)
+void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, memory_range_t reserved_boot_range)
 {
+    range_list_t<address_t> free_ranges;
+
+    // Preserve the currently executing kickstart code in the memory allocator init.
+    // We will give up these frames later.
+    free_ranges.allocate(reinterpret_cast<address_t>(reserved_boot_range.virtual_address), reserved_boot_range.size);
+
 #if MEMORY_DEBUG
-    kconsole << GREEN << "x86_frame_allocator: init " << (address_t)mmap << endl;
+    kconsole << GREEN << "x86_frame_allocator: init " << (address_t)mmap << " reserved from " << reserved_boot_range.virtual_address << " for " << reserved_boot_range.size << " bytes" << endl;
 #endif
     ASSERT(mmap);
 

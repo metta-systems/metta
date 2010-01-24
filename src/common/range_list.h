@@ -14,6 +14,17 @@ template<typename type_t>
 class range_list_t
 {
 public:
+    class range_t
+    {
+        public:
+            inline range_t(type_t start_, type_t length_) : start(start_), length(length_) {}
+            type_t start, length;
+    };
+
+    typedef std::list<range_t*> list_type;
+    typedef typename list_type::iterator iterator;
+    typedef typename list_type::const_iterator const_iterator;
+
     inline range_list_t() : ranges() {}
 
     /*!
@@ -28,16 +39,9 @@ public:
     }
 
     /*! Destructor frees the list. */
-    ~range_list_t() {} /* FIXME: temporarily empty */
+    ~range_list_t() { clear(); }
 
     range_list_t(const range_list_t&);
-
-    class range_t
-    {
-    public:
-        inline range_t(type_t start_, type_t length_) : start(start_), length(length_) {}
-        type_t start, length;
-    };
 
     /*!
      * Allocate a range of a specific size.
@@ -53,7 +57,43 @@ public:
      * @param[in] address the beginning address
      * @return true, if successfully allocated, false otherwise
      */
-    bool allocate(type_t length, type_t address);
+    bool allocate(type_t length, type_t start)
+    {
+        iterator cur(ranges.begin());
+        const_iterator end(ranges.end());
+        for (; cur != end; ++cur)
+        {
+            // exact match
+            if ((*cur)->start == start && (*cur)->length == length)
+            {
+                delete *cur;
+                ranges.erase(cur);
+                return true;
+            }
+            // match at start
+            else if ((*cur)->start == start && (*cur)->length > length)
+            {
+                (*cur)->start += length;
+                (*cur)->length -= length;
+                return true;
+            }
+            // match at end
+            else if ((*cur)->start < start && ((*cur)->start + (*cur)->length) == (start + length))
+            {
+                (*cur)->length -= length;
+                return true;
+            }
+            // split
+            else if ((*cur)->start < start && ((*cur)->start + (*cur)->length) > (start + length))
+            {
+                range_t* new_range = new range_t(start + length, (*cur)->start + (*cur)->length - start - length);
+                ranges.push_back(new_range);
+                (*cur)->length = start - (*cur)->start;
+                return true;
+            }
+        }
+        return false;
+    }
 
     /*!
      * Allocate a range of specific size and beginning address, with overlapping allowed.
@@ -61,7 +101,7 @@ public:
      * @param[in] address the beginning address
      * @return true, if successfully allocated at least one part of the range, false otherwise
      */
-    void allocate_overlapping(type_t length, type_t address);
+    bool allocate_overlapping(type_t length, type_t address);
 
     /*!
      * Free a range.
@@ -70,7 +110,14 @@ public:
      */
     void free(type_t length, type_t address);
 
-    void clear();
+    void clear()
+    {
+        const_iterator cur(ranges.begin());
+        const_iterator end(ranges.end());
+        for (; cur != end; ++cur)
+            delete *cur;
+        ranges.clear();
+    }
 
     /*!
      * Get the number of ranges in the list.

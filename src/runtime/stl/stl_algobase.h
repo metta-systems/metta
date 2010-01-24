@@ -48,8 +48,8 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <new.h> //FIXME: stdlib dep!
+#include <stddef.h> //FIXME: stdlib dep!
+#include "new.h"
 
 #ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS 

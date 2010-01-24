@@ -29,7 +29,7 @@
 
 #include <stl_config.h>
 #include <stl_relops.h>
-#include <stddef.h>       
+#include <stddef.h>       //FIXME: stdlib dep!
 
 #ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS 

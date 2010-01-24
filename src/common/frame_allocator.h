@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "memory.h" // PAGE_SIZE/PAGE_MASK
 
 /*! Memory allocation resource record, per-domain. */
 struct memory_resrec_t

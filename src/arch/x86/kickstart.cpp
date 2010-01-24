@@ -25,6 +25,7 @@
 // #include "page_fault_handler.h"
 // -- new includes --
 #include "x86_frame_allocator.h"
+#include "new.h"
 
 // page_fault_handler_t page_fault_handler;
 // interrupt_descriptor_table_t interrupts_table;
@@ -53,37 +54,21 @@ uint32_t pagedir_area[1024] ALIGNED(4096);
  */
 void kickstart(multiboot_t::header_t* mbh)
 {
-    run_global_ctors();
-
+    // No dynamic memory allocation here yet, global objects not constructed either.
     multiboot_t mb(mbh);
 
     ASSERT(mb.module_count() > 0);
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
 
-//     uint32_t fake_mmap_entry_start = LINKSYM(KICKSTART_BASE);
-    // We've allocated memory from a contiguous region, mark it and modify
-    // boot info page to exclude this region as occupied.
-//     address_t fake_mmap_entry_end = (address_t)new frame_t;
-//     multiboot_t::mmap_entry_t fake_mmap_entry;
-
-//     fake_mmap_entry.set_region(fake_mmap_entry_start, fake_mmap_entry_end - fake_mmap_entry_start, fake_mmap_entry.bootinfo);
-//     bootinfo.append_mmap_entry(&fake_mmap_entry);
-
-    // We have created a dent in our memory map, so we need to sort it
-    // and build contiguous allocation regions.
-#if MEMORY_DEBUG
-//     kconsole << "Preprocessing mmap." << endl;
-#endif
-//     bootinfo.mmap_prepare(mb.memory_map());
-
     address_t alloc_start = page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end));
+    bootstrap_frame_allocator::instance().set_allocation_start(alloc_start);
+    // now we can allocate dynamic memory
 
-    // Preserve the currently executing kickstart code in the memory allocator init.
-    // We will give up these frames later.
-    frame_allocator_t::memory_range_t reserved_boot_range((void*)LINKSYM(KICKSTART_BASE), 0, alloc_start - LINKSYM(KICKSTART_BASE), "reserved during boot");
+    kconsole << "Run global ctors" << endl;
+    run_global_ctors();
 
-    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), reserved_boot_range);
+    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), bootstrap_frame_allocator::instance().reserved_range());
 
 //     frame_allocator.init(0, &pagedir);
 //     frame_allocator.set_start(alloc_start);
@@ -104,9 +89,7 @@ void kickstart(multiboot_t::header_t* mbh)
 
 //     address_t bootinfo_page = reinterpret_cast<address_t>(new frame_t);
 //     bootinfo_t bootinfo(bootinfo_page);
-// 
 //     bootinfo.init_from(mb);
-// 
 //     mb.set_header(bootinfo.multiboot_header());
 
     // Identity map currently executing code.
