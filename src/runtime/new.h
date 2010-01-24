@@ -10,7 +10,7 @@
 #include "frame_allocator.h"
 
 void* operator new(size_t size);
-void* operator new(size_t size, uint32_t place);
+void* operator new(size_t size, void* place); // placement new
 void* operator new(size_t size, bool page_align, address_t* phys_addr = NULL);
 void* operator new[](size_t size);
 void* operator new[](size_t size, bool page_align, address_t* phys_addr = NULL);

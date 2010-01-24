@@ -88,14 +88,9 @@ static inline void* small_alloc(size_t size)
     return (void*)tmp;
 }
 
-void* operator new(UNUSED_ARG size_t size, uint32_t place)
+void* operator new(UNUSED_ARG size_t size, void* place)
 {
-    return (void *)place;
-}
-
-void* operator new(size_t size, void* place)
-{
-    return operator new(size, (uint32_t)place);
+    return place;
 }
 
 void* operator new(size_t size, bool page_align, address_t* addr)
@@ -141,6 +136,7 @@ void operator delete[](void*)
 // Compliant functions for STL allocator (TODO: replace stl malloc_alloc with other default allocator)
 extern "C" void* malloc(size_t size)
 {
+    kconsole << RED << "malloc(" << size << ") -> ";
     return operator new(size, false, NULL);
 }
 
