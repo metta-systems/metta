@@ -4,50 +4,23 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Minimal operator new/delete implementation for use during bootstrap.
+// Minimal operator new/delete implementation.
 //
 #include "new.h"
 #include "macros.h"
 #include "memory.h"
 #include "frame.h"
-#include "linksyms.h"
+#include "frame_allocator.h"
 #include "default_console.h"
-
-bootstrap_frame_allocator& bootstrap_frame_allocator::instance()
-{
-    static bootstrap_frame_allocator allocator_instance;
-    return allocator_instance;
-}
-
-extern "C" address_t KICKSTART_BASE;
-
-bootstrap_frame_allocator::bootstrap_frame_allocator()
-    : reserved_area_start(LINKSYM(KICKSTART_BASE))
-    , allocation_address(0)
-{
-}
-
-void* bootstrap_frame_allocator::alloc_frame()
-{
-    allocation_address = page_align_up(allocation_address);
-    address_t tmp = allocation_address;
-    allocation_address += PAGE_SIZE;
-    return reinterpret_cast<void*>(tmp);
-}
-
-frame_allocator_t::memory_range_t bootstrap_frame_allocator::reserved_range()
-{
-    return frame_allocator_t::memory_range_t(reinterpret_cast<void*>(reserved_area_start), 0, allocation_address - reserved_area_start, "reserved during boot");
-}
 
 void* frame_t::operator new(size_t)
 {
-    return bootstrap_frame_allocator::instance().alloc_frame();
+    return reinterpret_cast<void*>(frame_allocator_t::instance().allocate_frame());
 }
 
 void* frame_t::operator new(size_t, address_t /*virt*/)
 {
-    return bootstrap_frame_allocator::instance().alloc_frame();
+    return reinterpret_cast<void*>(frame_allocator_t::instance().allocate_frame());
 //     return reinterpret_cast<void*>(frame_allocator->alloc_frame(virt));
 }
 
@@ -65,7 +38,7 @@ static inline void* placement_alloc(size_t size)
 {
     kconsole << " .normal frame alloc. ";
     UNUSED(size);
-    return bootstrap_frame_allocator::instance().alloc_frame();
+    return reinterpret_cast<void*>(frame_allocator_t::instance().allocate_frame());
 }
 
 // Allocate small non-page-aligned objects from a preallocated page,
@@ -95,7 +68,7 @@ void* operator new(UNUSED_ARG size_t size, void* place)
 
 void* operator new(size_t size, bool page_align, address_t* addr)
 {
-    kconsole << RED << "operator new(" << size << ", " << (int)page_align << ", " << (address_t)addr << ")";
+    kconsole << RED << "operator new(" << (int)size << ", " << (int)page_align << ", " << (address_t)addr << ")";
     void* tmp;
 
     if (!page_align && (size < PAGE_SIZE/4))

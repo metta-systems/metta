@@ -61,19 +61,14 @@ void kickstart(multiboot_t::header_t* mbh)
     multiboot_t::modinfo_t* bootimage = mb.module(0);
     ASSERT(bootimage);
 
-    address_t alloc_start = page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end));
-    bootstrap_frame_allocator::instance().set_allocation_start(alloc_start);
-    // now we can allocate dynamic memory
+    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
+    // now we can allocate memory frames
 
     kconsole << "Run global ctors" << endl;
     run_global_ctors();
 
-    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), bootstrap_frame_allocator::instance().reserved_range());
-
-//     frame_allocator.init(0, &pagedir);
-//     frame_allocator.set_start(alloc_start);
-//     frame_t::set_frame_allocator(&frame_allocator);
-    // now we can allocate memory frames
+    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
+    // now we can also free dynamic memory
 
 //     pagedir.init(pagedir_area);
     // now we can create page mappings
@@ -83,8 +78,7 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
     kconsole << WHITE << "We are loaded at " << LINKSYM(KICKSTART_BASE) << endl
-                      << "    bootimage at " << bootimage->mod_start << ", end " << bootimage->mod_end << endl
-                      << "Alloctn start at " << alloc_start << endl;
+                      << "    bootimage at " << bootimage->mod_start << ", end " << bootimage->mod_end << endl;
 #endif
 
 //     address_t bootinfo_page = reinterpret_cast<address_t>(new frame_t);
@@ -98,9 +92,9 @@ void kickstart(multiboot_t::header_t* mbh)
 
 //     kconsole << endl << "Mapped." << endl;
 // 
-//     global_descriptor_table_t gdt;
-//     kconsole << "Created gdt." << endl;
-// 
+    global_descriptor_table_t gdt;
+    kconsole << "Created gdt." << endl;
+
 //     interrupts_table.set_isr_handler(14, &page_fault_handler);
 //     interrupts_table.install();
 

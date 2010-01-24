@@ -17,19 +17,5 @@ void* operator new[](size_t size, bool page_align, address_t* phys_addr = NULL);
 void  operator delete(void* p);
 void  operator delete[](void* p);
 
-class bootstrap_frame_allocator
-{
-public:
-    static bootstrap_frame_allocator& instance();
-    void set_allocation_start(address_t start) { allocation_address = start; }
-    void* alloc_frame();
-    frame_allocator_t::memory_range_t reserved_range();
-
-private:
-    bootstrap_frame_allocator();
-    address_t reserved_area_start;
-    address_t allocation_address;
-};
-
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

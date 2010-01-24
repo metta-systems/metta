@@ -11,7 +11,7 @@ class protection_domain_t;
 class x86_frame_allocator_t : public frame_allocator_t, public lockable_t
 {
 public:
-    inline static x86_frame_allocator_t& instance() { return instance_; }
+    static x86_frame_allocator_t& instance();
 
     /*!
      * Build pages free-lists before paging is enabled, to avoid setting up mappings.
@@ -32,6 +32,10 @@ public:
                                 physical_address_t start = -1);
     virtual bool free_range(memory_range_t& range);
 
+    // Helpers for bootstrap initialisation.
+    inline static void set_allocation_start(address_t start) { allocation_address = start; }
+    frame_allocator_t::memory_range_t reserved_range();
+
 private:
     x86_frame_allocator_t();
 //     virtual void unmap_range(memory_range_t* range);
@@ -46,5 +50,9 @@ private:
     size_t             free_frames;
     size_t             reserved_frames;
 
-    static x86_frame_allocator_t instance_;
+    bool               stack_initialised;
+    address_t          reserved_area_start;
+
+    static x86_frame_allocator_t allocator_instance;
+    static physical_address_t    allocation_address;
 };

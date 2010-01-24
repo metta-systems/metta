@@ -9,27 +9,49 @@
 #include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
 #include "default_console.h"
+#include "linksyms.h"
 
 #define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
+extern "C" address_t KICKSTART_BASE;
 
-x86_frame_allocator_t x86_frame_allocator_t::instance_;
+x86_frame_allocator_t x86_frame_allocator_t::allocator_instance;
+physical_address_t x86_frame_allocator_t::allocation_address = 0;
+
+frame_allocator_t& frame_allocator_t::instance()
+{
+    return x86_frame_allocator_t::instance();
+}
+
+x86_frame_allocator_t& x86_frame_allocator_t::instance()
+{
+    return allocator_instance;
+}
 
 x86_frame_allocator_t::x86_frame_allocator_t()
     : lockable_t()
+    , qos_allocations()
+    , ram_ranges()
     , next_free_phys(0)
     , total_frames(0)
     , free_frames(0)
     , reserved_frames(0)
+    , stack_initialised(false)
+    , reserved_area_start(LINKSYM(KICKSTART_BASE))
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "x86_frame_allocator: ctor" << endl;
 #endif
 }
 
+frame_allocator_t::memory_range_t x86_frame_allocator_t::reserved_range()
+{
+    return frame_allocator_t::memory_range_t(reinterpret_cast<void*>(reserved_area_start), 0, allocation_address - reserved_area_start, "reserved during boot");
+}
+
 /* Build memory-ranges and page stacks before paging is enabled, to avoid mapping frames. */
 void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, memory_range_t reserved_boot_range)
 {
-    range_list_t<address_t> free_ranges;
+    range_list_t<physical_address_t> free_ranges, reserved_ranges;
 
     ASSERT(mmap);
     multiboot_t::mmap_entry_t* mmi = mmap->first_entry();
@@ -37,6 +59,8 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
     {
         if (mmi->is_free())
             free_ranges.free(mmi->address(), mmi->size());
+        else
+            reserved_ranges.free(mmi->address(), mmi->size());
         mmi = mmap->next_entry(mmi);
     }
 
@@ -71,7 +95,20 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
         }
     }
 
+    cur = reserved_ranges.begin();
+    end = reserved_ranges.end();
+    for (; cur != end; ++cur)
+    {
+        address_t start  = page_align_up((*cur)->start);
+        address_t finish = page_align_down(start + (*cur)->length);
+        size_t n_frames = (finish - start) / PAGE_SIZE;
+        total_frames += n_frames;
+        reserved_frames += n_frames;
+    }
+
     kconsole << "x86_frame_allocator_t: detected " << (int)total_frames << " frames (" << (int)(total_frames*PAGE_SIZE/1024) << "KB) of physical memory, " << (int)reserved_frames << " frames (" << (int)(reserved_frames*PAGE_SIZE/1024) << "KB) reserved, " << (int)free_frames << " frames (" << (int)(free_frames*PAGE_SIZE/1024) << "KB) free." << endl;
+
+    stack_initialised = true;
 }
 
 void x86_frame_allocator_t::initialisation_complete()
@@ -80,6 +117,14 @@ void x86_frame_allocator_t::initialisation_complete()
 
 physical_address_t x86_frame_allocator_t::allocate_frame()
 {
+    if (!stack_initialised)
+    {
+        allocation_address = page_align_up(allocation_address);
+        physical_address_t tmp = allocation_address;
+        allocation_address += PAGE_SIZE;
+        return tmp;
+    }
+
     lock();
     address_t next_frame = next_free_phys;
 //     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
