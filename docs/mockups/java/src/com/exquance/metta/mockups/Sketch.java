@@ -5,7 +5,7 @@ import processing.core.PFont;
 
 public class Sketch extends PApplet {
     
-    private PFont cur_font;
+    private PFont cur_font; 
     
     public Sketch() {
         
@@ -22,5 +22,14 @@ public class Sketch extends PApplet {
     public PFont get_cur_font() {
         return cur_font;        
     }
-
+    
+    public static int mcolor(String col_spec) {
+        return 0;
+    } 
+    
+    public static int mcolor(int color) {
+        return 0xff000000 | color;
+    }
+    
+    
 }

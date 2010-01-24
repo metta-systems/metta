@@ -16,7 +16,7 @@
     <property name="out.data.dir" value="${out.dir}/data"/>	
 	
     
-    <property name="sketch" value="test.MyProcessingSketch" />
+    <property name="sketch" value="menu.MenuSketch" />
     
 	<target name="init">
 		<path id="compile.classpath"> 

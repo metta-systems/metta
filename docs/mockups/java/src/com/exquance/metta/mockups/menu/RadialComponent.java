@@ -8,7 +8,8 @@ abstract class RadialComponent extends Component {
         super(p);
     }
 
-    float center_x, center_y = 0f;
+    protected float center_x = 0f;
+    protected float center_y = 0f;
 
     public void set_pos(float center_x, float center_y) {
         this.center_x = center_x;

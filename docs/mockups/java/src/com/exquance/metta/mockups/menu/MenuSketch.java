@@ -8,10 +8,10 @@ public class MenuSketch extends Sketch {
 	
 	boolean floatMenuShown = false;
 	
-	Menu left_menu;
-	Menu center_menu;
-	Menu right_menu;
-	Menu float_menu;
+	private Menu left_menu;
+	private Menu center_menu;
+	private Menu right_menu;
+	private Menu float_menu;
 	
 	public MenuSketch() {
 	    super();
@@ -29,7 +29,7 @@ public class MenuSketch extends Sketch {
 	    left_menu.add_item(new MenuItem(this,"reload"));
 
 	    left_menu.set_bounds(-HALF_PI, HALF_PI * 3 / 2);
-	    left_menu.set_colors(color(0x330000), color(0x660000));
+	    left_menu.set_colors(mcolor(0x330000), mcolor(0x660000));
 	    left_menu.set_radius(120);
 
 	    left_menu.set_pos(100, 200);
@@ -44,7 +44,7 @@ public class MenuSketch extends Sketch {
 	    center_menu.add_item(new MenuItem(this,"d"));
 
 	    center_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
-	    center_menu.set_colors(color(0x003333), color(0x006666));
+	    center_menu.set_colors(mcolor(0x003333), mcolor(0x006666));
 	    center_menu.set_radius(90);
 
 	    center_menu.set_pos(300, 200);	 
@@ -59,7 +59,7 @@ public class MenuSketch extends Sketch {
 	    right_menu.add_item(new MenuItem(this,"here"));
 
 	    right_menu.set_bounds(-(HALF_PI / 2), HALF_PI * 7 / 2);
-	    right_menu.set_colors(color(0x003300), color(0x006600));
+	    right_menu.set_colors(mcolor(0x003300), mcolor(0x006600));
 	    right_menu.set_radius(130);
 
 	    right_menu.set_pos(500, 200);	    
@@ -78,7 +78,7 @@ public class MenuSketch extends Sketch {
 	    float_menu.add_item(new MenuItem(this,"happy new year"));
 
 	    float_menu.set_bounds(HALF_PI * 6 / 5, HALF_PI * 7 / 2);
-	    float_menu.set_colors(color(0x000033), color(0x000066));
+	    float_menu.set_colors(mcolor(0x000033), mcolor(0x000066));
 	    float_menu.set_radius(120);
 	    
         //textBlock = loadImage("textBlock.png");
@@ -92,7 +92,7 @@ public class MenuSketch extends Sketch {
 	    smooth();
 	    frameRate(30);
 	    
-        // set_cur_font(loadFont("DejaVuSans-40.vlw"));
+        set_cur_font(loadFont("DejaVuSans-40.vlw"));
 	  
 	    left_menu.prepare();
 	    center_menu.prepare();

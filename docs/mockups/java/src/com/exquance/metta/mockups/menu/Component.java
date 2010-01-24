@@ -11,7 +11,7 @@ public abstract class Component implements PConstants {
     
     public static final float RADIUS_UNSET = Float.MIN_VALUE;
     public static final float ANGLE_UNSET = Float.MIN_VALUE;    
-    public static final int COLOR_UNSET = Integer.MAX_VALUE;    
+    public static final int COLOR_UNSET = Integer.MIN_VALUE;    
 
     public Sketch p;
     

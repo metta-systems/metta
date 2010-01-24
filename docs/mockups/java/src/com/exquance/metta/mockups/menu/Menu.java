@@ -7,13 +7,13 @@ import com.exquance.metta.mockups.Sketch;
 
 public class Menu extends RadialComponent {
 
-    int stroke_color;
-    int start_color;
-    int end_color;
+    private int stroke_color;
+    private int start_color;
+    private int end_color;
     
-    float menu_radius = 120;
-    float start_angle = -HALF_PI;
-    float end_angle = HALF_PI * 3 / 2;
+    private float menu_radius = 120;
+    private float start_angle = -HALF_PI;
+    private float end_angle = HALF_PI * 3 / 2;
     
     public static final int TEXT_SIZE = 40; 
 
@@ -32,9 +32,9 @@ public class Menu extends RadialComponent {
             this.items = new ArrayList<MenuItem>();
         }
         
-        stroke_color = p.color(0xeeeeee);
-        start_color = p.color(0x000033);
-        end_color = p.color(0x000066);        
+        stroke_color = p.mcolor(0xeeeeee);
+        start_color = p.mcolor(0x000033);
+        end_color = p.mcolor(0x000066);        
                 
     }
     
@@ -74,7 +74,7 @@ public class Menu extends RadialComponent {
         // called on processing setup()
         float angle_step = (end_angle - start_angle) / items.size();
         float start_radius = close_btn.btn_radius /*+ 1*/;
-        float lerp_amount = 1 / items.size();
+        float lerp_amount = 1f / items.size();
         
         int cur_color = start_color;
         float cur_start_angle = start_angle;
@@ -94,7 +94,7 @@ public class Menu extends RadialComponent {
             cur_start_angle += angle_step;
             cur_end_angle = cur_start_angle + angle_step;
             
-            cur_color = p.lerpColor(start_color, end_color, lerp_amount * (i + 1));
+            cur_color = p.lerpColor(start_color, end_color, (float)(lerp_amount * (i + 1)));
         }        
     }
 

@@ -4,11 +4,16 @@ import com.exquance.metta.mockups.Sketch;
 
 public class MenuItem  extends RadialComponent {
 
-    String item_name;
+    private String item_name;
 
-    int item_color, over_color = COLOR_UNSET;
-    float start_radius, end_radius = RADIUS_UNSET;
-    float start_angle, end_angle = ANGLE_UNSET;
+    private int item_color = COLOR_UNSET;
+    private int over_color = COLOR_UNSET;
+    
+    private float start_radius = RADIUS_UNSET; 
+    private float end_radius = RADIUS_UNSET;
+    
+    private float start_angle = ANGLE_UNSET;
+    private float end_angle = ANGLE_UNSET;
     
     int cur_color = COLOR_UNSET;
     
@@ -41,7 +46,7 @@ public class MenuItem  extends RadialComponent {
     
     public void set_color(int item_color) {
         this.item_color = item_color;
-        this.over_color = p.lerpColor(item_color, p.color(0x33333300), .5f);
+        this.over_color = p.lerpColor(item_color, p.mcolor(0x333333), .5f);
         this.cur_color = this.item_color;
     }
     
@@ -71,16 +76,16 @@ public class MenuItem  extends RadialComponent {
              center_y + end_radius * sin(end_angle)); */            
         
         p.pushMatrix();
-        p.fill(p.lerpColor(cur_color, p.color(0xffffff00), is_mouse_over ? .6f : .07f));   
+        p.fill(p.lerpColor(cur_color, p.mcolor(0xffffff), is_mouse_over ? .6f : .07f));   
         p.translate(center_x, center_y);
         /* // to show in the center of sector 
         rotate(start_angle + abs(end_angle - start_angle) / 2);
         float padding_x = ((end_radius - start_radius) - (item_name.length * 6)) / 2;
         text(item_name, start_radius + padding_x, -8); */
         // to show at the side of the sector
-        p.rotate(start_angle);
-        //p.textFont(p.get_cur_font());
-        //p.text(item_name, start_radius, -20);        
+        p.rotate(end_angle);
+        p.textFont(p.get_cur_font());
+        p.text(item_name, start_radius, 0f);        
         p.popMatrix();
     }
     
