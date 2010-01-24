@@ -36,13 +36,13 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
     while (mmi)
     {
         if (mmi->is_free())
-            free_ranges.free(mmi->size(), mmi->address());
+            free_ranges.free(mmi->address(), mmi->size());
         mmi = mmap->next_entry(mmi);
     }
 
     // Preserve the currently executing kickstart code in the memory allocator init.
     // We will give up these frames later.
-    free_ranges.allocate(reserved_boot_range.size, reinterpret_cast<address_t>(reserved_boot_range.virtual_address));
+    free_ranges.allocate(reinterpret_cast<address_t>(reserved_boot_range.virtual_address), reserved_boot_range.size);
 
 #if MEMORY_DEBUG
     kconsole << GREEN << "x86_frame_allocator: init " << (address_t)mmap << " reserved from " << reserved_boot_range.virtual_address << " for " << reserved_boot_range.size << " bytes" << endl;
@@ -53,12 +53,12 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
     auto end(free_ranges.end());
     for (; cur != end; ++cur)
     {
-        address_t start = page_align_up((*cur)->start);
-        address_t end   = page_align_down(start + (*cur)->length);
-        size_t n_frames = (end - start) / PAGE_SIZE;
+        address_t start  = page_align_up((*cur)->start);
+        address_t finish = page_align_down(start + (*cur)->length);
+        size_t n_frames = (finish - start) / PAGE_SIZE;
         total_frames += n_frames;
 
-        kconsole << "mmap entry: start " << start << ", end " << end << ", size " << (*cur)->length << endl;
+        kconsole << "mmap entry: start " << start << ", end " << finish << ", size " << (*cur)->length << " (" << n_frames << " frames)" << endl;
 
         // include pages into free stack
         for (size_t n = 0; n < n_frames; n++)
@@ -66,7 +66,7 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
             *reinterpret_cast<address_t*>(start) = next_free_phys; // store phys of previous free stack top
             next_free_phys = start; // remember phys as current free stack top
             free_frames++;
-            kconsole << "adding " << start << " to stack" << endl;
+//             kconsole << "adding " << start << " to stack" << endl;
             start += PAGE_SIZE;
         }
     }
