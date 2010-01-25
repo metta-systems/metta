@@ -3,6 +3,7 @@ package com.exquance.metta.mockups.menu;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.exquance.metta.mockups.M;
 import com.exquance.metta.mockups.Sketch;
 
 public class Menu extends RadialComponent {
@@ -20,9 +21,9 @@ public class Menu extends RadialComponent {
     List<MenuItem> items;
     MenuCloseButton close_btn;
     
-    public Menu(Sketch p, ArrayList<MenuItem> items) {
-        super(p);
-        close_btn = new MenuCloseButton(p);
+    public Menu(List<MenuItem> items) {
+        super();
+        close_btn = new MenuCloseButton();
         add_listener(close_btn); 
                
         if (items != null) {
@@ -32,9 +33,9 @@ public class Menu extends RadialComponent {
             this.items = new ArrayList<MenuItem>();
         }
         
-        stroke_color = p.mcolor(0xeeeeee);
-        start_color = p.mcolor(0x000033);
-        end_color = p.mcolor(0x000066);        
+        stroke_color = M.wcolor(0xeeeeee);
+        start_color = M.wcolor(0x000033);
+        end_color = M.wcolor(0x000066);        
                 
     }
     
@@ -47,8 +48,8 @@ public class Menu extends RadialComponent {
         }
     }  */
     
-    public Menu(Sketch p) {
-        this(p, null);
+    public Menu() {
+        this(null);
     }
     
     public void add_item(MenuItem item) {
@@ -70,7 +71,7 @@ public class Menu extends RadialComponent {
         this.end_color = end_color;
     }
     
-    public void prepare() {
+    public void prepare(Sketch p) {
         // called on processing setup()
         float angle_step = (end_angle - start_angle) / items.size();
         float start_radius = close_btn.btn_radius /*+ 1*/;
@@ -82,9 +83,9 @@ public class Menu extends RadialComponent {
         
         //p.textSize(TEXT_SIZE);        
         
-        for (int i = 0; i < items.size(); i++) {
+        int i = 0;
+        for (MenuItem item: items) {
             
-            MenuItem item = items.get(i);
             if (!item.is_color_set())  item.set_color(cur_color);            
             if (!item.is_radius_set()) item.set_radius(start_radius, 
                                                        menu_radius);
@@ -94,25 +95,26 @@ public class Menu extends RadialComponent {
             cur_start_angle += angle_step;
             cur_end_angle = cur_start_angle + angle_step;
             
-            cur_color = p.lerpColor(start_color, end_color, (float)(lerp_amount * (i + 1)));
+            cur_color = M.lerpColor(start_color, end_color, (float)(lerp_amount * (i + 1)));
+            i++;
         }        
     }
 
     @Override
-    public void update() {
+    public void update(Sketch p) {
         p.stroke(stroke_color);
-        for (int i = 0; i < items.size(); i++) {
-            items.get(i).update();
+        for (MenuItem item: items) {
+            item.update(p);
         }
-        close_btn.update();
+        close_btn.update(p);
     }
     
     @Override
     public void set_pos(float center_x, float center_y) {
         close_btn.set_pos(center_x, center_y);
-        for (int i = 0; i < items.size(); i++) {
-            items.get(i).set_pos(center_x, center_y);
+        for (MenuItem item: items) {
+            item.set_pos(center_x, center_y);
         }
     }
-
+    
 }

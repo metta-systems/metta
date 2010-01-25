@@ -1,5 +1,6 @@
 package com.exquance.metta.mockups.menu;
 
+import com.exquance.metta.mockups.M;
 import com.exquance.metta.mockups.Sketch;
 
 public class MenuItem  extends RadialComponent {
@@ -19,8 +20,8 @@ public class MenuItem  extends RadialComponent {
     
     boolean is_mouse_over = false;
     
-    public MenuItem(Sketch p, String item_name) {
-        super(p);
+    public MenuItem(String item_name) {
+        super();
         this.item_name = item_name;
     }
     
@@ -46,7 +47,7 @@ public class MenuItem  extends RadialComponent {
     
     public void set_color(int item_color) {
         this.item_color = item_color;
-        this.over_color = p.lerpColor(item_color, p.mcolor(0x333333), .5f);
+        this.over_color = M.lerpColor(item_color, M.wcolor(0x333333), .5f);
         this.cur_color = this.item_color;
     }
     
@@ -54,7 +55,7 @@ public class MenuItem  extends RadialComponent {
         return (item_color != COLOR_UNSET);
     }    
 
-    public void update() {        
+    public void update(Sketch p) {        
     
         p.fill(cur_color);
         p.arc(center_x, center_y, 
@@ -76,7 +77,7 @@ public class MenuItem  extends RadialComponent {
              center_y + end_radius * sin(end_angle)); */            
         
         p.pushMatrix();
-        p.fill(p.lerpColor(cur_color, p.mcolor(0xffffff), is_mouse_over ? .6f : .07f));   
+        p.fill(M.lerpColor(cur_color, M.wcolor(0xffffff), is_mouse_over ? .6f : .07f));   
         p.translate(center_x, center_y);
         /* // to show in the center of sector 
         rotate(start_angle + abs(end_angle - start_angle) / 2);
@@ -109,6 +110,9 @@ public class MenuItem  extends RadialComponent {
         is_mouse_over = false;    
         cur_color = item_color;
         return true;        
-    } 
+    }
+
+    @Override
+    public void prepare(Sketch p) { }
 
 };
