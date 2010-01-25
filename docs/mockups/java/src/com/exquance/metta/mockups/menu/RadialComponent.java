@@ -2,7 +2,6 @@ package com.exquance.metta.mockups.menu;
 
 import com.exquance.metta.mockups.Component;
 import com.exquance.metta.mockups.M;
-import com.exquance.metta.mockups.Sketch;
 
 abstract class RadialComponent extends Component {
 

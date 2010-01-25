@@ -8,15 +8,18 @@
     <property name="in.dir"      value="${project.dir}"/>		
     <property name="in.src.dir"  value="${in.dir}/src"/>
     <property name="in.lib.dir"  value="${in.dir}/lib"/>
-    <property name="in.data.dir" value="${in.dir}/fonts"/>	
+    <property name="in.data.dir" value="${in.dir}/fonts"/>
+	
+    <property name="opengl.lib.path" value="${in.lib.dir}/opengl" />	
 	
     <property name="out.dir"      value="${project.dir}/bin"/>	
     <property name="out.src.dir"  value="${out.dir}"/>
     <!-- <property name="out.lib.dir"  value="${out.dir}/lib"/> -->
     <property name="out.data.dir" value="${out.dir}/data"/>	
-	
     
     <property name="sketch" value="menu.MenuSketch" />
+    <property name="opengl.on" value="false" />
+    <property name="fonts.on" value="true" /> 	
     
 	<target name="init">
 		<path id="compile.classpath"> 
@@ -66,7 +69,10 @@
        <java jar="${jar.dir}/${jar.name}.jar"
              fork="true">
             <arg value="${sketch}" />
-            <jvmarg value="-Dfile.encoding=UTF-8" />        
+            <arg value="${opengl.on}" />
+            <arg value="${fonts.on}" /> 
+            <jvmarg value="-Dfile.encoding=UTF-8" />
+            <jvmarg value="-Djava.library.path=${opengl.lib.path}" />       	
             <classpath refid="compile.classpath" />
        </java>
     </target>

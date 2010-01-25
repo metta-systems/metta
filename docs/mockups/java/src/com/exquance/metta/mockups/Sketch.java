@@ -8,6 +8,9 @@ import processing.core.PFont;
 
 public class Sketch extends PApplet/*, Component*/ {
     
+    public static boolean OPENGL_ON = false;
+    public static boolean FONTS_ON = true;    
+    
     private PFont cur_font; 
     
     private List<Component> components;
@@ -21,7 +24,11 @@ public class Sketch extends PApplet/*, Component*/ {
     }
     
     public void stretch() {
-        size(screen.width - 100, screen.height - 100);        
+        if (OPENGL_ON) {
+            size(screen.width - 100, screen.height - 100, OPENGL);
+        } else {
+            size(screen.width - 100, screen.height - 100);
+        }
     }
     
     public void set_cur_font(PFont font) {
@@ -58,5 +65,19 @@ public class Sketch extends PApplet/*, Component*/ {
         }
     }    
     
+    // just the methods used in the sketches are turned off
     
+    @Override
+    public PFont loadFont(String filename) {
+        return FONTS_ON ? super.loadFont(filename) : null; 
+    }
+    
+    @Override
+    public void textFont(PFont which) { if (FONTS_ON) super.textFont(which); }    
+    
+    @Override
+    public void textFont(PFont which, float size) { if (FONTS_ON) super.textFont(which, size); }
+    
+    @Override
+    public void text(String str, float x, float y) { if (FONTS_ON) super.text(str, x, y); }
 }

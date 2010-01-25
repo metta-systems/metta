@@ -3,8 +3,6 @@ package com.exquance.metta.mockups.menu;
 import com.exquance.metta.mockups.M;
 import com.exquance.metta.mockups.Sketch;
 
-import processing.core.*;
-
 public class MenuSketch extends Sketch {
 	
 	boolean floatMenuShown = false;
