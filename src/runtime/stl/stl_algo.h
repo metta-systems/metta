@@ -91,6 +91,26 @@ _Function for_each(_InputIter __first, _InputIter __last, _Function __f) {
   return __f;
 }
 
+// Qt-like foreach define
+// Copyright 2010, Renārs Lediņš <renars@madfire.net>
+#if !defined(foreach) && !defined(__STL_NO_FOREACH_MACRO)
+
+template <class _InputIterator, class _Distance>
+inline _InputIterator advance_ex(const _InputIterator& it, _Distance i)
+{
+    _InputIterator b = it;
+    std::advance(b, static_cast<typename iterator_traits<_InputIterator>::difference_type>(i));
+    return b;
+}
+
+#define foreach(type,container) for(size_t __i=0, __stl_go = 1; __i < container.size(); ++__i, __stl_go = 1) \
+    for(type = *(advance_ex(container.begin(), __i)); __stl_go; --__stl_go)
+
+#define foreach_it(type,begin,end) for(size_t __i=0, __stl_go = 1; __i < std::distance(begin,end); ++__i, __stl_go = 1) \
+    for(type = *(begin + __i); __stl_go; --__stl_go)
+
+#endif
+
 // find and find_if.
 
 template <class _InputIter, class _Tp>

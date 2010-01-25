@@ -29,7 +29,6 @@
 
 // page_fault_handler_t page_fault_handler;
 // interrupt_descriptor_table_t interrupts_table;
-// kickstart_frame_allocator_t frame_allocator;
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;

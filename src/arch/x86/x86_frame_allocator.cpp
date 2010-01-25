@@ -10,6 +10,7 @@
 #include "x86_frame_allocator.h"
 #include "default_console.h"
 #include "linksyms.h"
+#include "stl/algorithm"
 
 #define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
 extern "C" address_t KICKSTART_BASE;
@@ -73,16 +74,14 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
 #endif
 
     next_free_phys = 0;
-    auto cur(free_ranges.begin());
-    auto end(free_ranges.end());
-    for (; cur != end; ++cur)
+    foreach(auto range, free_ranges)
     {
-        address_t start  = page_align_up((*cur)->start);
-        address_t finish = page_align_down(start + (*cur)->length);
+        address_t start  = page_align_up(range->start);
+        address_t finish = page_align_down(start + range->length);
         size_t n_frames = (finish - start) / PAGE_SIZE;
         total_frames += n_frames;
 
-        kconsole << "mmap entry: start " << start << ", end " << finish << ", size " << (*cur)->length << " (" << n_frames << " frames)" << endl;
+        kconsole << "mmap entry: start " << start << ", end " << finish << ", size " << range->length << " (" << n_frames << " frames)" << endl;
 
         // include pages into free stack
         for (size_t n = 0; n < n_frames; n++)
@@ -95,12 +94,10 @@ void x86_frame_allocator_t::initialise_before_paging(multiboot_t::mmap_t* mmap, 
         }
     }
 
-    cur = reserved_ranges.begin();
-    end = reserved_ranges.end();
-    for (; cur != end; ++cur)
+    foreach(auto range, reserved_ranges)
     {
-        address_t start  = page_align_up((*cur)->start);
-        address_t finish = page_align_down(start + (*cur)->length);
+        address_t start  = page_align_up(range->start);
+        address_t finish = page_align_down(start + range->length);
         size_t n_frames = (finish - start) / PAGE_SIZE;
         total_frames += n_frames;
         reserved_frames += n_frames;

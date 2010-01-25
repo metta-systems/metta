@@ -131,6 +131,7 @@
 //   standard-conforming iostreams (e.g. the <iosfwd> header).  If not
 //   defined, the STL will use old cfront-style iostreams (e.g. the
 //   <iostream.h> header).
+// * __STL_NO_FOREACH_MACRO: do not define Qt-like foreach() macros.
 
 // Other macros defined by this file:
 

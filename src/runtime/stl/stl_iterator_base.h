@@ -103,7 +103,8 @@ struct iterator {
 };
 #endif /* __STL_USE_NAMESPACES */
 
-#ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
+#if 1
+//was: #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
 
 template <class _Iterator>
 struct iterator_traits {
