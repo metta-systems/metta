@@ -95,7 +95,7 @@ public class MenuSketch extends Sketch {
 	
 	@Override
 	public void setup() {
-	    stretch();
+	    use_client_size();
 	    smooth();
 	    frameRate(30);
 	    

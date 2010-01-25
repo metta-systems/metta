@@ -8,13 +8,16 @@ or:    ant -Dsketch=<mockup-name> run
 
 there are additional parameters that can be passed to scripts:
 
-./run.sh <mockup-name> [<opengl.on>] [<fonts.on>]
-  ant -Dsketch=<mockup-name> [-Dopengl.on=<opengl.on>] [-Dfonts.on=<fonts.on>]
+./run.sh <mockup-name> [[[[<opengl.on>] <fonts.on>] <width>] <height>]
+  ant -Dsketch=<mockup-name> [-Dopengl.on=<opengl.on>] [-Dfonts.on=<fonts.on>] [-Dwidth=<width>] [-Dheight=<height>]
 
-these values can be set to 'true' or 'false', by default it is:
+'*.on' values can be set to 'true' or 'false', width and height are any number,
+by default they are:
 
-run.sh <mockup-name> false true
-ant -Dsketch=<mockup-name> -Dopengl.on=false -Dfonts.on=true
+./run.sh <mockup-name> false true -1 -1
+  ant -Dsketch=<mockup-name> -Dopengl.on=false -Dfonts.on=true -Dwidth=-1 -Dheight=-1
+
+if width or height value is -1, is it automatically fits to the user's desktop
 
 ================================================================================
 

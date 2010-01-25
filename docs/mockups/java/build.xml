@@ -19,7 +19,9 @@
     
     <property name="sketch" value="menu.MenuSketch" />
     <property name="opengl.on" value="false" />
-    <property name="fonts.on" value="true" /> 	
+    <property name="fonts.on" value="true" />
+    <property name="width" value="-1" />
+    <property name="height" value="-1" />	
     
 	<target name="init">
 		<path id="compile.classpath"> 
@@ -70,7 +72,9 @@
              fork="true">
             <arg value="${sketch}" />
             <arg value="${opengl.on}" />
-            <arg value="${fonts.on}" /> 
+            <arg value="${fonts.on}" />
+            <arg value="${width}" /> 
+            <arg value="${height}" />        	
             <jvmarg value="-Dfile.encoding=UTF-8" />
             <jvmarg value="-Djava.library.path=${opengl.lib.path}" />       	
             <classpath refid="compile.classpath" />

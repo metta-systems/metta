@@ -9,7 +9,10 @@ import processing.core.PFont;
 public class Sketch extends PApplet/*, Component*/ {
     
     public static boolean OPENGL_ON = false;
-    public static boolean FONTS_ON = true;    
+    public static boolean FONTS_ON = true;
+    
+    public static int WIDTH = -1;
+    public static int HEIGHT = -1;    
     
     private PFont cur_font; 
     
@@ -23,11 +26,13 @@ public class Sketch extends PApplet/*, Component*/ {
         components.add(component);
     }
     
-    public void stretch() {
+    public void use_client_size() {
+        int width = (WIDTH > 0) ? WIDTH : (screen.width - 100);
+        int height = (HEIGHT > 0) ? HEIGHT : (screen.height - 100);        
         if (OPENGL_ON) {
-            size(screen.width - 100, screen.height - 100, OPENGL);
+            size(width, height, OPENGL);
         } else {
-            size(screen.width - 100, screen.height - 100);
+            size(width, height);
         }
     }
     
