@@ -19,6 +19,7 @@ public:
     uint8_t  address_size;
 
     void decode(address_t from, size_t& offset);
+    void dump();
 };
 
 class form_reader_t;
@@ -56,6 +57,9 @@ public:
     {
         return abbrev_code == 0;
     }
+
+    // Retrieve a string attribute in either string or strp form.
+    const char* string_attr(uint32_t attr);
 
     die_t* find_address(address_t addr, address_t& low_pc, address_t& high_pc);
     die_t* find_compile_unit();

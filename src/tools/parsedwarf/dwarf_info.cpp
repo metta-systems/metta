@@ -1,8 +1,11 @@
+#include "config.h"
 #include "dwarf_info.h"
 #include "datarepr.h"
 #include "form_reader.h"
 #include "local_panic.h"
+#if DWARF_DEBUG
 #include <stdio.h>
+#endif
 
 void cuh_t::decode(address_t from, size_t& offset)
 {
@@ -16,6 +19,13 @@ void cuh_t::decode(address_t from, size_t& offset)
     offset += sizeof(uint32_t);
     address_size = *reinterpret_cast<uint8_t*>(from + offset);
     offset += sizeof(uint8_t);
+}
+
+void cuh_t::dump()
+{
+#if DWARF_DEBUG
+    printf("compilation unit header: unit-length %d bytes, version %04x, debug-abbrev-offset 0x%x, address_size %d\n", unit_length, version, debug_abbrev_offset, address_size);
+#endif
 }
 
 die_t& die_t::operator=(const die_t& d)
@@ -39,10 +49,12 @@ bool die_t::decode(address_t from, size_t& offset)
     abbrev_code = uleb128_t::decode(from, offset, -1);
     if (abbrev_code == 0)
     {
-//         printf("Last sibling node\n");
+#if DWARF_DEBUG
+        printf("Last sibling node\n");
+#endif
         return false;
     }
-    // find abbreviation for tag
+    // find abbreviation
     auto abbrev = parser.debug_info->find_abbrev(abbrev_code);
     if (abbrev)
     {
@@ -54,6 +66,9 @@ bool die_t::decode(address_t from, size_t& offset)
             node_attributes[name] = form_reader_t::create(parser, abbrev->attributes[i].form);
             node_attributes[name]->decode(from, offset);
         }
+#if DWARF_DEBUG
+        dump();
+#endif
         return true;
     }
     return false;
@@ -74,7 +89,9 @@ die_t* die_t::find_address(address_t addr, address_t& low_pc, address_t& high_pc
 
     if (is_subprogram() && low_pc <= addr && high_pc >= addr)
     {
-//         printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
+#if DWARF_DEBUG
+        printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
+#endif
         return this;
     }
 
@@ -115,8 +132,20 @@ die_t* die_t::find_compile_unit()
     return 0;
 }
 
+const char* die_t::string_attr(uint32_t attr)
+{
+    auto strp = dynamic_cast<strp_form_reader_t*>(node_attributes[attr]);
+    if (strp)
+        return strp->data;
+    auto str = dynamic_cast<string_form_reader_t*>(node_attributes[attr]);
+    if (str)
+        return str->data;
+    return 0;
+}
+
 void die_t::dump()
 {
+#if DWARF_DEBUG
     printf("*DIE: abbrev %d tag %08x %s (has_children %d)\n", abbrev_code, tag, tag2name(tag), has_children);
     auto abbrev = parser.debug_info->find_abbrev(abbrev_code);
     if (abbrev)
@@ -129,4 +158,5 @@ void die_t::dump()
             node_attributes[name]->print();
         }
     }
+#endif
 }
