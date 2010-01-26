@@ -101,7 +101,7 @@ public:
     bool execute(address_t from, size_t& offset);
     void dump();
 
-    inline int address_increment(uint8_t opcode)
+    inline address_t address_increment(uint8_t opcode)
     {
         return (opcode / header.line_range) * header.minimum_instruction_length;
     }
