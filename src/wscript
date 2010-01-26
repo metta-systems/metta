@@ -84,6 +84,7 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('DWARF_DEBUG', 0)
     conf.write_config_header('common/config.h')
 
     # Copy template env to specific ones

@@ -1,13 +1,18 @@
+#include "config.h"
 #include "dwarf_abbrev.h"
 #include "datarepr.h"
-// #include <stdio.h>
+#if DWARF_DEBUG
+#include <stdio.h>
+#endif
 
 void abbrev_declaration_t::decode(address_t from, size_t& offset)
 {
     abbreviation_code.decode(from, offset);
     if (abbreviation_code == 0)
     {
-//         printf("found last abbrev code in set\n");
+#if DWARF_DEBUG
+        printf("found last abbrev code in set\n");
+#endif
         return;
     }
     tag.decode(from, offset);
@@ -35,12 +40,16 @@ bool dwarf_debug_abbrev_t::load_abbrev_set(size_t& offset)
         abbrevs.push_back(abbrev);
         if (abbrev.abbreviation_code == 0)
             break;
-//         printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
+#if DWARF_DEBUG
+        printf("Loaded abbreviation: code %d, tag %s, has_children %d\n", (uint32_t)abbrev.abbreviation_code, tag2name(abbrev.tag), abbrev.has_children);
+#endif
         for (unsigned i = 0; i < abbrev.attributes.size()-1; ++i)
         {
             abbrev_attr_t a;
             a = abbrev.attributes[i];
-//             printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
+#if DWARF_DEBUG
+            printf(" attr %s, form %s\n", attr2name(a.name), form2name(a.form));
+#endif
         }
     }
     return true;
