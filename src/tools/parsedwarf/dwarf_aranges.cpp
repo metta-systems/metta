@@ -1,6 +1,15 @@
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "config.h"
 #include "dwarf_aranges.h"
 #include "local_panic.h"
-// #include <stdio.h>
+#if DWARF_DEBUG
+#include <stdio.h>
+#endif
 
 void aranges_set_header_t::decode(address_t from, size_t& offset)
 {
@@ -17,7 +26,15 @@ void aranges_set_header_t::decode(address_t from, size_t& offset)
     segment_size = *reinterpret_cast<uint8_t*>(from + offset);
     offset += sizeof(uint8_t);
 
-    offset += 4; // This field is not described in the DWARF3 specification!!!
+    unknown_data = *reinterpret_cast<uint32_t*>(from + offset);
+    offset += 4;
+}
+
+void aranges_set_header_t::dump()
+{
+#if DWARF_DEBUG
+    printf("aranges set header: unit-length %d bytes, version 0x%04x, debug-info-offset 0x%x, address size %d, segment size %d, unknown data %08x, entries count %d\n", unit_length, version, debug_info_offset, address_size, segment_size, unknown_data, (unit_length - 12)/8);
+#endif
 }
 
 void arange_desc_t::decode(address_t from, size_t& offset)
@@ -37,23 +54,40 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
     arange_desc_t ad;
 
     sh.decode(from, offset);
-//     printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
+#if DWARF_DEBUG
+    sh.dump();
+#endif
+//     ASSERT(sh.address_size == 4 && sh.segment_size == 0);
     while (offset < size)
     {
         ad.decode(from, offset);
-        if (ad.start == 0 && ad.length == 0 && offset < size)
+#if DWARF_DEBUG
+        printf("found range: 0x%08x - 0x%08x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
+#endif
+        if (ad.is_last())
         {
-            sh.decode(from, offset);
-//             printf("decoded set header: unit-length %d, version 0x%04x, debug-info-offset 0x%x\n", sh.unit_length, sh.version, sh.debug_info_offset);
+            if (offset < size)
+            {
+                sh.decode(from, offset);
+#if DWARF_DEBUG
+                sh.dump();
+#endif
+//                 ASSERT(sh.address_size == 4 && sh.segment_size == 0);
+            }
             continue;
         }
-//         printf("found range: 0x%x - 0x%x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
-        if (ad.start <= target_pc && (ad.start + ad.length) > target_pc)
+        if ((ad.start <= target_pc) && (ad.start + ad.length > target_pc))
         {
+#if DWARF_DEBUG
+            printf(" range contains requested 0x%x\n", target_pc);
+#endif
             info_offset = sh.debug_info_offset;
             return true;
         }
     }
 
+#if DWARF_DEBUG
+    printf(" requested 0x%x not contained in any range\n", target_pc);
+#endif
     return false;
 }
