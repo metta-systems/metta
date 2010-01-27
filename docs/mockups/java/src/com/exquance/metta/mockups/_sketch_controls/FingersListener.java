@@ -6,7 +6,8 @@ public interface FingersListener {
     public boolean accepts_fingers(byte left_hand, byte right_hand);    
     public boolean can_be_gragged(byte left_hand, byte right_hand);    
     
-    public boolean on_fingers_move(byte left_hand, byte right_hand);
+    public boolean on_fingers_over(byte left_hand, byte right_hand);
+    public boolean on_fingers_out();    
     public boolean on_fingers_tap(byte left_hand, byte right_hand);
     public boolean on_fingers_drag(byte left_hand, byte right_hand);
     public boolean on_firgers_drop();

@@ -75,7 +75,9 @@ public abstract class Component implements PConstants, MouseListener, MouseReact
     public void fingers_move(byte left_hand, byte right_hand, float x, float y) {
         for (FingersListener flistener: flisteners) {
             if (flistener.is_finger_in(x, y) && flistener.accepts_fingers(left_hand, right_hand)) {
-                if (!flistener.on_fingers_move(left_hand, right_hand)) return;
+                if (!flistener.on_fingers_over(left_hand, right_hand)) return;
+            } else {
+                if (!flistener.on_fingers_out()) return;
             }
         }
     }
@@ -112,7 +114,8 @@ public abstract class Component implements PConstants, MouseListener, MouseReact
     @Override
     public boolean accepts_fingers(byte leftHand, byte rightHand) { return false; }
     
-    public boolean on_fingers_move(byte leftHand, byte rightHand) { return false; }    
+    public boolean on_fingers_over(byte leftHand, byte rightHand) { return false; }
+    public boolean on_fingers_out() { return false; }    
     public boolean on_fingers_tap(byte leftHand, byte rightHand) { return false; }
     public boolean on_fingers_drag(byte leftHand, byte rightHand) { return false; }
     public boolean on_firgers_drop() { return false; }    

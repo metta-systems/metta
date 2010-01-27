@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.exquance.metta.mockups.M;
 import com.exquance.metta.mockups.Sketch;
+import com.exquance.metta.mockups._components_lib.RadialComponent;
 
 public class Menu extends RadialComponent {
 

@@ -1,9 +1,9 @@
-package com.exquance.metta.mockups.menu;
+package com.exquance.metta.mockups._components_lib;
 
 import com.exquance.metta.mockups.Component;
 import com.exquance.metta.mockups.M;
 
-abstract class RadialComponent extends Component {
+public abstract class RadialComponent extends Component {
 
     protected float center_x = 0f;
     protected float center_y = 0f;

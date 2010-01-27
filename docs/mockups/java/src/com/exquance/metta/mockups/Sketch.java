@@ -3,6 +3,9 @@ package com.exquance.metta.mockups;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.exquance.metta.mockups._sketch_controls.FingersEmulation;
+import com.exquance.metta.mockups._sketch_controls.FingersState;
+
 import processing.core.PApplet;
 import processing.core.PFont;
 
@@ -17,7 +20,7 @@ public class Sketch extends PApplet/*, Component*/ {
     
     private PFont cur_font; 
     
-    private List<Component> components;
+    protected List<Component> components;
     
     public Sketch() {
         components = new ArrayList<Component>();
@@ -57,19 +60,20 @@ public class Sketch extends PApplet/*, Component*/ {
         for (Component component: components) {
             if (component.shown()) {
                 component.mouse_move(mouseX, mouseY);
+                component.fingers_move(FingersState.LEFT_HAND, FingersState.RIGHT_HAND, mouseX, mouseY);
                 component.update(this);
             }
         }        
     }
     
     @Override
-    public void mousePressed() {
+    public void mousePressed() {  
         for (Component component: components) {
             if (component.shown()) {
                 component.mouse_click(mouseX, mouseY);            
             }
         }
-    }    
+    } 
     
     // just the methods used in the sketches are turned off
     
