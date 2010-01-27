@@ -6,6 +6,7 @@ import java.util.List;
 import processing.core.PApplet;
 import processing.core.PFont;
 
+@SuppressWarnings("serial")
 public class Sketch extends PApplet/*, Component*/ {
     
     public static boolean OPENGL_ON = false;

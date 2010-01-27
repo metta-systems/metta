@@ -24,11 +24,11 @@ public class Menu extends RadialComponent {
     public Menu(List<MenuItem> items) {
         super();
         close_btn = new MenuCloseButton();
-        add_listener(close_btn); 
+        add_mouse_listener(close_btn); 
                
         if (items != null) {
             this.items = items;
-            add_listeners(this.items);
+            add_mouse_listeners(this.items);
         } else {
             this.items = new ArrayList<MenuItem>();
         }
@@ -54,7 +54,7 @@ public class Menu extends RadialComponent {
     
     public void add_item(MenuItem item) {
         items.add(item);
-        add_listener(item);
+        add_mouse_listener(item);
     }
         
     public void set_bounds(float start_angle, float end_angle) {
