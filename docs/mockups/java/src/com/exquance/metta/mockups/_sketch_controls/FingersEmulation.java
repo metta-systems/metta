@@ -54,12 +54,12 @@ public class FingersEmulation {
     
     private static void releaseByMouse(int finger, int mouseBtn) {
         if (mouseBtn == PApplet.RIGHT) {
-            FingersState.RIGHT_HAND |= finger;
+            if ((FingersState.RIGHT_HAND & finger) > 0) FingersState.RIGHT_HAND ^= finger;
         } else if (mouseBtn == PApplet.LEFT) {
-            FingersState.LEFT_HAND |= finger;
+            if ((FingersState.LEFT_HAND  & finger) > 0) FingersState.LEFT_HAND  ^= finger;
         } else if (mouseBtn == PApplet.CENTER) {
-            FingersState.LEFT_HAND |= finger;
-            FingersState.RIGHT_HAND |= finger;
+            if ((FingersState.RIGHT_HAND & finger) > 0) FingersState.RIGHT_HAND ^= finger;
+            if ((FingersState.LEFT_HAND  & finger) > 0) FingersState.LEFT_HAND  ^= finger;
         }
     }    
 

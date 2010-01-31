@@ -30,7 +30,7 @@ public class FingersControlEmulatingSketch extends Sketch {
                 String.valueOf(FingersEmulation.INDEX_KEY), M.wcolor(0x666600)));
         leftHand.put(Fingers.THUMB, new FingerRepresenter(
                 Fingers.THUMB, FingerRepresenter.LEFT_HAND_ID, 
-                String.valueOf(FingersEmulation.THUMB_KEY), M.wcolor(0x006666)));  
+                String.valueOf("_"), M.wcolor(0x006666)));  
         
         rightHand.put(Fingers.LITTLE, new FingerRepresenter(
                 Fingers.LITTLE, FingerRepresenter.RIGHT_HAND_ID, 
@@ -46,7 +46,7 @@ public class FingersControlEmulatingSketch extends Sketch {
                 String.valueOf(FingersEmulation.INDEX_KEY), M.wcolor(0x666600)));
         rightHand.put(Fingers.THUMB, new FingerRepresenter(
                 Fingers.THUMB, FingerRepresenter.RIGHT_HAND_ID, 
-                String.valueOf(FingersEmulation.THUMB_KEY), M.wcolor(0x006666)));
+                String.valueOf("_"), M.wcolor(0x006666)));
         
         for (FingerRepresenter finger: leftHand.values()) {
             add_component(finger);
@@ -60,14 +60,16 @@ public class FingersControlEmulatingSketch extends Sketch {
     
     @Override
     public void setup() {
+        noCursor();
+        
         use_client_size();
         
-        move_fingers_to(center_x, center_y);        
+        move_fingers_to(center_x, center_y);
         
         smooth();
         frameRate(30);
         
-        //set_cur_font(loadFont("DejaVuSans-40.vlw"));
+        set_cur_font(loadFont("DejaVuSans-40.vlw"));
       
         super.setup();      
     }
