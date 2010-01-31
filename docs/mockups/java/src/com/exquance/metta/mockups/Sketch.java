@@ -3,9 +3,6 @@ package com.exquance.metta.mockups;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.exquance.metta.mockups._sketch_controls.FingersEmulation;
-import com.exquance.metta.mockups._sketch_controls.FingersState;
-
 import processing.core.PApplet;
 import processing.core.PFont;
 
@@ -16,7 +13,10 @@ public class Sketch extends PApplet/*, Component*/ {
     public static boolean FONTS_ON = true;
     
     public static int WIDTH = -1;
-    public static int HEIGHT = -1;    
+    public static int HEIGHT = -1;
+    
+    public float center_x = -1;
+    public float center_y = -1;
     
     private PFont cur_font; 
     
@@ -60,7 +60,6 @@ public class Sketch extends PApplet/*, Component*/ {
         for (Component component: components) {
             if (component.shown()) {
                 component.mouse_move(mouseX, mouseY);
-                component.fingers_move(FingersState.LEFT_HAND, FingersState.RIGHT_HAND, mouseX, mouseY);
                 component.update(this);
             }
         }        
@@ -76,6 +75,14 @@ public class Sketch extends PApplet/*, Component*/ {
     } 
     
     // just the methods used in the sketches are turned off
+    
+    @Override
+    public void size(final int iwidth, final int iheight,
+            String irenderer, String ipath) {
+        center_x = iwidth / 2;
+        center_y = iheight / 2;
+        super.size(iwidth, iheight, irenderer, ipath);
+    }
     
     @Override
     public PFont loadFont(String filename) {

@@ -15,7 +15,11 @@ public abstract class Component implements PConstants, MouseListener, MouseReact
     
     public static final float RADIUS_UNSET = Float.MIN_VALUE;
     public static final float ANGLE_UNSET = Float.MIN_VALUE;    
-    public static final int COLOR_UNSET = Integer.MIN_VALUE;    
+    public static final int COLOR_UNSET = Integer.MIN_VALUE;
+    
+    /* private static final int[] fingers = new int[] {Fingers.THUMB, Fingers.INDEX, 
+                                                       Fingers.MIDDLE, Fingers.RING, 
+                                                       Fingers.LITTLE}; */
 
     List<MouseListener> mlisteners;
     List<FingersListener> flisteners;    
@@ -24,6 +28,7 @@ public abstract class Component implements PConstants, MouseListener, MouseReact
     
     public Component() { 
         mlisteners = new ArrayList<MouseListener>();
+        flisteners = new ArrayList<FingersListener>();         
         this.show();
     }
     
@@ -117,8 +122,9 @@ public abstract class Component implements PConstants, MouseListener, MouseReact
     public boolean on_fingers_over(byte leftHand, byte rightHand) { return false; }
     public boolean on_fingers_out() { return false; }    
     public boolean on_fingers_tap(byte leftHand, byte rightHand) { return false; }
-    public boolean on_fingers_drag(byte leftHand, byte rightHand) { return false; }
-    public boolean on_firgers_drop() { return false; }    
+    // public boolean on_finger_release(int finger, int arm) { return false; }    
+    // public boolean on_fingers_drag(byte leftHand, byte rightHand) { return false; }
+    // public boolean on_firgers_drop() { return false; }    
     
     public abstract void prepare(Sketch p);    
     public abstract void update(Sketch p);    

@@ -9,7 +9,7 @@ public interface FingersListener {
     public boolean on_fingers_over(byte left_hand, byte right_hand);
     public boolean on_fingers_out();    
     public boolean on_fingers_tap(byte left_hand, byte right_hand);
-    public boolean on_fingers_drag(byte left_hand, byte right_hand);
-    public boolean on_firgers_drop();
+    // public boolean on_fingers_drag(byte left_hand, byte right_hand);
+    // public boolean on_firgers_drop();
 
 }
