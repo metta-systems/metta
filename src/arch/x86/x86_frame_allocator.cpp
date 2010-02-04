@@ -124,7 +124,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
         return tmp;
     }
 
-    lockable_scope_lock_t guard(this);
+    lockable_scope_lock_t guard(*this);
 
     address_t next_frame;
 
@@ -138,7 +138,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 //     else
 //     {
 //         next_frame = next_free_phys;
-//     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
+//     protection_domain_t* domain = cpu_t::current_cpu().current_protection_domain();
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(next_frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
@@ -157,18 +157,26 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 /* need not be concerned with removing possibly existing mappings to this physical, handled by higher level? */
 void x86_frame_allocator_t::free_frame(physical_address_t frame)
 {
-    lock();
+    lockable_scope_lock_t guard(*this);
+
+//     if (unlikely(!cpu_t::paging_enabled()))
+//     {
+        *reinterpret_cast<address_t*>(frame) = next_free_phys;
+        next_free_phys = frame; // remember phys as current free stack top
+//     }
+//     else
+//     {
 //     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
-    *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
-    next_free_phys = frame; // remember phys as current free stack top
+//     *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
+//     next_free_phys = frame; // remember phys as current free stack top
+//     domain->unmap(TEMP_MAPPING);
+//     }
+
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
-
-//     domain->unmap(TEMP_MAPPING);
-    unlock();
 }
 
 bool x86_frame_allocator_t::allocate_range(memory_range_t& /*range*/,
