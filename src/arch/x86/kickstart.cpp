@@ -4,6 +4,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "config.h"
+
 #include "memutils.h"
 #include "memory.h"
 #include "multiboot.h"
@@ -13,18 +15,15 @@
 #include "elf_parser.h"
 #include "registers.h"
 #include "initfs.h"
-#include "mmu.h"
 #include "c++ctors.h"
 // #include "bootinfo.h"
 #include "debugger.h"
 #include "linksyms.h"
 #include "frame.h"
-// #include "kickstart_frame_allocator.h"
-// #include "nucleus.h"
-#include "config.h"
 // #include "page_fault_handler.h"
 // -- new includes --
 #include "x86_frame_allocator.h"
+#include "x86_protection_domain.h"
 #include "new.h"
 
 // page_fault_handler_t page_fault_handler;
@@ -41,12 +40,8 @@ static void map_identity(const char* caption, address_t start, address_t end)
 #endif
     end = page_align_up<address_t>(end); // one past end
     for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
-        ;
-//         protection_domain_t::privileged().map(k * PAGE_SIZE, k * PAGE_SIZE, 0);
+        protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), 0);
 }
-
-// Scratch area for initial pagedir
-uint32_t pagedir_area[1024] ALIGNED(4096);
 
 /*!
  * Get the system going.
@@ -89,16 +84,13 @@ void kickstart(multiboot_t::header_t* mbh)
     // page 0 is not mapped to catch null pointers
     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
 
-//     kconsole << endl << "Mapped." << endl;
-// 
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
 //     interrupts_table.set_isr_handler(14, &page_fault_handler);
 //     interrupts_table.install();
 
-//     ia32_mmu_t::set_active_pagetable(pagedir.get_physical());
-//     ia32_mmu_t::enable_paged_mode();
+    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
     // now we have paging enabled.
 
 //     elf_loader_t kernel_loader;

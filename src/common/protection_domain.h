@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2009 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -26,7 +28,6 @@
  * Each stretch has a stretch driver. stretch_driver provides stretch with physical frames, page fault handling and
  * mapping setup. A default_stretch_driver provides default handling for applications.
  */
-// class virtual_address_space_t
 /*!
 The translation system deals with inserting, retrieving or deleting mappings between virtual and physical addresses.
 As such it may be considered an interface to a table of information held about these mappings; the actual mapping
@@ -58,9 +59,13 @@ application itself. it interfaces with frame allocator to provide backing RAM st
 frame allocation and ramtab maintenance handled by frame_allocator_t.
 
 */
+class stretch_driver_t;
+
 class stretch_t
 {
 public:
+    typedef uint32_t access_t;
+
     static stretch_t* create(address_t base, size_t size);
 
     /*!
@@ -79,13 +84,15 @@ private:
     const size_t    size;
     access_t        access_rights;
 };
-/*
-Privileged class (private) in kernel domain.
-*/
+/*!
+ * Privileged class (private) in kernel domain.
+ */
 class protection_domain_t
 {
 public:
-    /* Declare destructor virtual */
+    /*! The default constructor. */
+    inline protection_domain_t() {}
+    /*! Declare destructor virtual */
     inline virtual ~protection_domain_t() {}
 
     /*!
@@ -105,6 +112,9 @@ public:
      * used for mapping.
      */
     virtual bool is_valid(void* virtual_address) = 0;
+    /*!
+     * @returns true if virtual_address is mapped into one of current protection domain's stretches.
+     */
     virtual bool is_mapped(void* virtual_address) = 0;
     virtual bool map(physical_address_t physical_address,
                      void* virtual_address,
@@ -116,8 +126,6 @@ public:
     // -- /stretch driver --
 
 private:
-    /*! The default constructor. */
-    protection_domain_t();
     /*!
      * Disable the copy constructor.
      * @note NOT implemented

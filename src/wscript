@@ -144,7 +144,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = 'arch/x86/x86_frame_allocator.cpp'.split()
+    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp'.split())
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
