@@ -52,5 +52,25 @@ private:
     uint32_t lock_value; //!< The actual lock variable.
 };
 
+/*!
+ * Scoped lock for locking lockable objects.
+ */
+class lockable_scope_lock_t
+{
+    lockable_t* lockable;
+
+public:
+    lockable_scope_lock_t(lockable_t* obj, bool lock = true) : lockable(obj)
+    {
+//         ASSERT(lockable);
+        if (lock)
+            lockable->lock();
+    }
+    ~lockable_scope_lock_t()
+    {
+        lockable->unlock();
+    }
+};
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
