@@ -13,7 +13,10 @@
 #define PDE_MASK  0x3ff
 #define PTE_SHIFT 12
 #define PTE_MASK  0x3ff
+#define PDE_ENTRIES 1024
+#define PTE_ENTRIES 1024
 
+//! Get PDE index, 0 to 1023
 inline int pde_entry(address_t virt)
 {
     return (virt >> PDE_SHIFT) & PDE_MASK;
@@ -24,6 +27,7 @@ inline int pde_entry(void* virt)
     return pde_entry(reinterpret_cast<address_t>(virt));
 }
 
+//! Get PTE index, 0 to 1023
 inline int pte_entry(address_t virt)
 {
     return (virt >> PTE_SHIFT) & PTE_MASK;

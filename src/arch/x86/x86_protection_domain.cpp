@@ -118,27 +118,35 @@ bool x86_protection_domain_t::is_mapped(void* virtual_address)
         return false;
     if (pde.four_mb())
         return true;
-    return virtual_page_tables[pte_entry(virtual_address)].present();
+    return virtual_page_tables[pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address)].present();
 }
 
-bool x86_protection_domain_t::map(physical_address_t /*physical_address*/, void* virtual_address, flags_t /*flags*/)
+bool x86_protection_domain_t::map(physical_address_t physical_address, void* virtual_address, flags_t /*flags*/)
 {
     if (!virtual_page_directory[pde_entry(virtual_address)].present())
     {
         // Need to allocate a pagetable.
         page_t pde;
-//         new(0, &phys) page_table_t;
-//         pde.set_frame(phys);
+        physical_address_t pta = x86_frame_allocator_t::instance().allocate_frame();
+        pde.set_frame(pta);
         pde.set_present(true);
+        pde.set_writable(true);
         virtual_page_directory[pde_entry(virtual_address)] = pde;
     }
-    else
-    {
-/*        page_t pte = virtual_page_directory[pde_entry(virtual_address)];
-        pte[pte_entry(virtual_address)]->set_physical(physical_address);
-        ptr[pte_entry(virtual_address)]->set_flags(flags);*/
-    }
-    return false;
+
+    size_t pti = pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address);
+
+    if (virtual_page_tables[pti].present())
+        return false; // already mapped!
+
+    page_t pg;
+    pg.set_frame(physical_address);
+    pg.set_present(true);
+    pg.set_writable(true);
+    //TODO: set flags
+    virtual_page_tables[pti] = pg;
+
+    return true;
 }
 
 void x86_protection_domain_t::mapping(void* /*virtual_address*/, physical_address_t& /*physical_address*/, flags_t& /*flags*/)
