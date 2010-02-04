@@ -55,22 +55,27 @@ private:
 /*!
  * Scoped lock for locking lockable objects.
  */
-class lockable_scope_lock_t
+template <class type_t>
+class scope_lock_t
 {
-    lockable_t* lockable;
+    type_t& lockable;
+
+    scope_lock_t();
+    scope_lock_t(const scope_lock_t&);
+    scope_lock_t& operator =(const scope_lock_t&);
 
 public:
-    lockable_scope_lock_t(lockable_t* obj, bool lock = true) : lockable(obj)
+    scope_lock_t(type_t& obj) : lockable(obj)
     {
-//         ASSERT(lockable);
-        if (lock)
-            lockable->lock();
+        lockable.lock();
     }
-    ~lockable_scope_lock_t()
+    ~scope_lock_t()
     {
-        lockable->unlock();
+        lockable.unlock();
     }
 };
+
+typedef scope_lock_t<lockable_t> lockable_scope_lock_t;
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
