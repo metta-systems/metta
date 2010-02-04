@@ -33,6 +33,7 @@
 
 #include "types.h"
 #include "ia32.h"
+#include "x86_protection_domain.h"
 
 class ia32_mmu_t
 {
@@ -43,8 +44,9 @@ public:
     static void enable_global_pages();
     static void enable_paged_mode();
     static address_t get_pagefault_address(void);
-    static address_t get_active_pagetable(void);
-    static void set_active_pagetable(address_t page_dir_physical);
+    static physical_address_t get_active_pagetable(void);
+    static void set_active_pagetable(physical_address_t page_dir_physical);
+    static void set_active_pagetable(x86_protection_domain_t& pdom);
 };
 
 /*!
@@ -131,9 +133,9 @@ inline address_t ia32_mmu_t::get_pagefault_address()
  *
  * @returns the physical base address of the currently active page directory
  */
-inline address_t ia32_mmu_t::get_active_pagetable()
+inline physical_address_t ia32_mmu_t::get_active_pagetable()
 {
-    uint32_t ret;
+    physical_address_t ret;
     asm volatile ("movl %%cr3, %0\n" : "=a"(ret));
     return ret;
 }
@@ -143,11 +145,15 @@ inline address_t ia32_mmu_t::get_active_pagetable()
  *
  * @param page_dir_physical page directory physical base address
  */
-inline void ia32_mmu_t::set_active_pagetable(address_t page_dir_physical)
+inline void ia32_mmu_t::set_active_pagetable(physical_address_t page_dir_physical)
 {
     asm volatile ("movl %0, %%cr3\n" :: "r"(page_dir_physical));
 }
 
+inline void ia32_mmu_t::set_active_pagetable(x86_protection_domain_t& pdom)
+{
+    set_active_pagetable(pdom.physical_page_directory);
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
