@@ -39,8 +39,9 @@ public:
 
     void enable_paging();
     physical_address_t get_physical() { return physical_page_directory; }
+    void dump();
 
-protected:
+protected: friend class protection_domain_t;
     /*!
      * @note This constructor is only used to construct the kernel protection domain.
      */
@@ -59,9 +60,6 @@ private:
      * @note Not implemented
      */
     x86_protection_domain_t& operator =(const x86_protection_domain_t&);
-
-private: friend class protection_domain_t;
-    static x86_protection_domain_t privileged;
 
 private: friend class ia32_mmu_t;
     /** Physical address of the page directory */

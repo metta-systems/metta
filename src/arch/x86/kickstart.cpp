@@ -64,9 +64,6 @@ void kickstart(multiboot_t::header_t* mbh)
     x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory
 
-//     pagedir.init(pagedir_area);
-    // now we can create page mappings
-
 #if MEMORY_DEBUG
     kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
@@ -87,6 +84,7 @@ void kickstart(multiboot_t::header_t* mbh)
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
+    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).dump();
 //     interrupts_table.set_isr_handler(14, &page_fault_handler);
 //     interrupts_table.install();
 

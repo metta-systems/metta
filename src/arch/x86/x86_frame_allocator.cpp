@@ -124,22 +124,33 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
         return tmp;
     }
 
-    lock();
-    address_t next_frame = next_free_phys;
+    lockable_scope_lock_t guard(this);
+
+    address_t next_frame;
+
+//     if (unlikely(!cpu_t::paging_enabled()))
+//     {
+        next_frame = next_free_phys;
+        next_free_phys = *reinterpret_cast<address_t*>(next_frame);
+        // clear frame before use
+        memutils::fill_memory(reinterpret_cast<void*>(next_frame), 0, page_size());
+//     }
+//     else
+//     {
+//         next_frame = next_free_phys;
 //     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(next_frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
 
-    next_free_phys = *reinterpret_cast<address_t*>(TEMP_MAPPING);
+//         next_free_phys = *reinterpret_cast<address_t*>(TEMP_MAPPING);
+        // wipe it clean
+//         memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
+        //     domain->unmap(TEMP_MAPPING);
+//     }
+
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
 
-    // wipe it clean
-    memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
-
-    unlock();
-
-//     domain->unmap(TEMP_MAPPING);
     return next_frame;
 }
 

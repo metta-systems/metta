@@ -71,6 +71,8 @@ public:
     page_t& operator =(uint32_t v)  { raw = v; return *this; }
     operator uint32_t()             { return raw; }
 
+    void dump();
+
 private:
     union {
         struct {

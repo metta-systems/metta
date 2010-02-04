@@ -11,12 +11,12 @@
 #include "page_directory.h"
 #include "memutils.h"
 #include "mmu.h"
-
-x86_protection_domain_t x86_protection_domain_t::privileged(0);
+#include "default_console.h"
 
 protection_domain_t& protection_domain_t::privileged()
 {
-    return x86_protection_domain_t::privileged;
+    static x86_protection_domain_t privileged_domain(0);
+    return privileged_domain;
 }
 
 protection_domain_t* protection_domain_t::create()
@@ -31,6 +31,11 @@ x86_protection_domain_t::x86_protection_domain_t()
     // TODO: finish
 }
 
+void page_t::dump()
+{
+    kconsole << "page: frame " << frame() << " P:" << present() << " W:" << writable() << " U:" << user() << endl;
+}
+
 //! This is called before enabling paging.
 x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
 {
@@ -38,19 +43,52 @@ x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
     x86_frame_allocator_t& allocator = x86_frame_allocator_t::instance();
 
     physical_page_directory = allocator.allocate_frame();
+    kconsole << " got physical_page_directory from frame allocator: " << physical_page_directory << endl;
     memutils::fill_memory(reinterpret_cast<void*>(physical_page_directory), 0, allocator.page_size());
 
     virtual_page_directory = reinterpret_cast<page_t*>(physical_page_directory);
     virtual_page_tables = reinterpret_cast<page_t*>(allocator.allocate_frame());
+    kconsole << " got page_tables from frame allocator: " << virtual_page_tables << endl;
     memutils::fill_memory(reinterpret_cast<void*>(virtual_page_tables), 0, allocator.page_size());
     // we only use page table 0 before enabling paging so this trick works.
 
     page_t pde;
     pde.set_frame(reinterpret_cast<physical_address_t>(virtual_page_tables));
     pde.set_present(true);
+    pde.set_writable(true);
     virtual_page_directory[0] = pde;
 
+    pde.dump();
+
+    dump();
     // clear escrow pages for mapping
+}
+
+void x86_protection_domain_t::dump()
+{
+    kconsole << "== Dumping protection domain ==" << endl;
+    kconsole << " ** page directory:" << endl;
+    for (int i = 0; i < 1024; i++)
+    {
+        if (!virtual_page_directory[i].present())
+            continue;
+
+        page_t* pt = &virtual_page_tables[i * 1024];
+        ASSERT(pt);
+
+        kconsole << "  * page table " << i << endl;
+        for (int k = 0; k < 1024; k++)
+        {
+            page_t& page = pt[k];
+
+            if (page.present())
+                kconsole << "    " << (unsigned int)(i << PDE_SHIFT) + (k << PTE_SHIFT) << " => " << page.frame() << endl;
+        }
+
+        kconsole << "  * end of table " << i << endl;
+    }
+    kconsole << " ** end of page directory." << endl;
+    kconsole << "== End of protection domain dump ==" << endl;
 }
 
 void x86_protection_domain_t::enable_paging()
