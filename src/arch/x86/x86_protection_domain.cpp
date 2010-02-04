@@ -58,9 +58,6 @@ x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
     pde.set_writable(true);
     virtual_page_directory[0] = pde;
 
-    pde.dump();
-
-    dump();
     // clear escrow pages for mapping
 }
 
