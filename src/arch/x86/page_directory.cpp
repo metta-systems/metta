@@ -18,7 +18,7 @@ void page_directory_t::init()
     directory_virtual = new(&directory_physical) frame_t;
     for (int i = 0; i < 1023; i++)
         directory[i] = 0;
-    directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
+    directory[1023] = (address_t)directory_physical | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
 }
 
 void page_directory_t::init(uint32_t* placement_area)
@@ -127,7 +127,6 @@ void page_directory_t::set_page_table(address_t virt, address_t phys)
     ia32_mmu_t::flush_page_directory_entry(virt);
 }
 
-#include "memory/memory_manager.h" // for RPAGETAB_VBASE
 page_table_t* page_directory_t::page_table(address_t virt, bool make)
 {
     uint32_t pde = pde_entry(virt);
@@ -138,7 +137,7 @@ page_table_t* page_directory_t::page_table(address_t virt, bool make)
         if (directory_access == directory_physical)
             page_table = reinterpret_cast<page_table_t*>(directory[pde] & PAGE_MASK);
         else
-            page_table = (page_table_t*)(RPAGETAB_VBASE + (pde * PAGE_SIZE));
+            page_table = (page_table_t*)(VIRTUAL_PAGE_TABLES + (pde * PAGE_SIZE));
     }
     else if (make) // doesn't exist, so alloc a page and add into pdir
     {
