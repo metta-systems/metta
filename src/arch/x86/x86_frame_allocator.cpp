@@ -1,18 +1,20 @@
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "config.h"
-#include "memory.h" //common/
+#include "ia32.h"
 #include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
 #include "default_console.h"
 #include "linksyms.h"
 #include "stl/algorithm"
 
-#define TEMP_MAPPING (RPAGETAB_VBASE - PAGE_SIZE)
+#define TEMP_MAPPING (VIRTUAL_PAGE_TABLES - PAGE_SIZE)
 extern "C" address_t KICKSTART_BASE;
 
 x86_frame_allocator_t x86_frame_allocator_t::allocator_instance;
