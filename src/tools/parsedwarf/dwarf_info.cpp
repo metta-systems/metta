@@ -1,11 +1,16 @@
-#include "config.h"
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "dwarf_info.h"
 #include "datarepr.h"
 #include "form_reader.h"
 #include "local_panic.h"
-#if DWARF_DEBUG
-#include <stdio.h>
-#endif
+#include "dwarf_debug.h"
 
 void cuh_t::decode(address_t from, size_t& offset)
 {
@@ -23,9 +28,7 @@ void cuh_t::decode(address_t from, size_t& offset)
 
 void cuh_t::dump()
 {
-#if DWARF_DEBUG
-    printf("compilation unit header: unit-length %d bytes, version %04x, debug-abbrev-offset 0x%x, address_size %d\n", unit_length, version, debug_abbrev_offset, address_size);
-#endif
+    DPRINT("compilation unit header: unit-length %d bytes, version %04x, debug-abbrev-offset 0x%x, address_size %d\n", unit_length, version, debug_abbrev_offset, address_size);
 }
 
 die_t& die_t::operator=(const die_t& d)
@@ -49,9 +52,7 @@ bool die_t::decode(address_t from, size_t& offset)
     abbrev_code = uleb128_t::decode(from, offset, -1);
     if (abbrev_code == 0)
     {
-#if DWARF_DEBUG
-        printf("Last sibling node\n");
-#endif
+        DPRINT("Last sibling node\n");
         return false;
     }
     // find abbreviation
@@ -89,9 +90,7 @@ die_t* die_t::find_address(address_t addr, address_t& low_pc, address_t& high_pc
 
     if (is_subprogram() && low_pc <= addr && high_pc >= addr)
     {
-#if DWARF_DEBUG
-        printf("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
-#endif
+        DPRINT("FOUND TARGET SUBROUTINE FROM %x to %x\n", low_pc, high_pc);
         return this;
     }
 

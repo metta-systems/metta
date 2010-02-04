@@ -1,6 +1,11 @@
-/*!
- * Example code to parse DWARF2/3 debug info from an ELF format file.
- */
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include <stdlib.h>
 #include <stdexcept>
 #include "raiifile.h"
@@ -89,7 +94,6 @@ int main(int argc, char** argv)
             if (str.find("*** Backtrace ***") == 0)
             {
                 in_stack_dump = true;
-//                 cout << "Found stack dump at line " << line << endl;
             }
         }
     }

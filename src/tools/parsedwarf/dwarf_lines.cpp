@@ -1,12 +1,14 @@
-#include "config.h"
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "dwarf_lines.h"
 #include "local_panic.h"
-#if DWARF_DEBUG
-#include <stdio.h>
-#define DPRINT(...) printf(__VA_ARGS__)
-#else
-#define DPRINT(...)
-#endif
+#include "dwarf_debug.h"
 
 /*!
  * @returns true if program line is complete and can be added to matrix, false otherwise.

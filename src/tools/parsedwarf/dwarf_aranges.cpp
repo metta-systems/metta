@@ -1,15 +1,14 @@
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "config.h"
 #include "dwarf_aranges.h"
 #include "local_panic.h"
-#if DWARF_DEBUG
-#include <stdio.h>
-#endif
+#include "dwarf_debug.h"
 
 void aranges_set_header_t::decode(address_t from, size_t& offset)
 {
@@ -32,9 +31,7 @@ void aranges_set_header_t::decode(address_t from, size_t& offset)
 
 void aranges_set_header_t::dump()
 {
-#if DWARF_DEBUG
-    printf("aranges set header: unit-length %d bytes, version 0x%04x, debug-info-offset 0x%x, address size %d, segment size %d, unknown data %08x, entries count %d\n", unit_length, version, debug_info_offset, address_size, segment_size, unknown_data, (unit_length - 12)/8);
-#endif
+    DPRINT("aranges set header: unit-length %d bytes, version 0x%04x, debug-info-offset 0x%x, address size %d, segment size %d, unknown data %08x, entries count %d\n", unit_length, version, debug_info_offset, address_size, segment_size, unknown_data, (unit_length - 12)/8);
 }
 
 void arange_desc_t::decode(address_t from, size_t& offset)
@@ -61,9 +58,7 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
     while (offset < size)
     {
         ad.decode(from, offset);
-#if DWARF_DEBUG
-        printf("found range: 0x%08x - 0x%08x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
-#endif
+        DPRINT("found range: 0x%08x - 0x%08x (%d bytes)\n", ad.start, ad.start + ad.length - 1, ad.length);
         if (ad.is_last())
         {
             if (offset < size)
@@ -78,16 +73,12 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
         }
         if ((ad.start <= target_pc) && (ad.start + ad.length > target_pc))
         {
-#if DWARF_DEBUG
-            printf(" range contains requested 0x%x\n", target_pc);
-#endif
+            DPRINT(" range contains requested 0x%x\n", target_pc);
             info_offset = sh.debug_info_offset;
             return true;
         }
     }
 
-#if DWARF_DEBUG
-    printf(" requested 0x%x not contained in any range\n", target_pc);
-#endif
+    DPRINT(" requested 0x%x not contained in any range\n", target_pc);
     return false;
 }

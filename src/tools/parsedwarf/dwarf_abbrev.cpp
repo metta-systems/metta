@@ -1,9 +1,14 @@
-#include "config.h"
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "dwarf_abbrev.h"
 #include "datarepr.h"
-#if DWARF_DEBUG
-#include <stdio.h>
-#endif
+#include "dwarf_debug.h"
 
 void abbrev_declaration_t::decode(address_t from, size_t& offset)
 {

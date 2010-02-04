@@ -1,7 +1,17 @@
+//
+// Decoders for signed and unsigned LEB128 numbers.
+// According to DWARF3 Format Specification.
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "types.h"
-// #include <stdio.h> // for debug printfs, TODO: remove
 
 class sleb128_t
 {
@@ -20,7 +30,6 @@ public:
         {
             byte = *reinterpret_cast<uint8_t*>(from + offset);
             data |= ((byte & 0x7F) << shift);
-//             printf("encoded byte %x, decoded data %x\n", byte, data);
             shift += 7;
             ++offset;
             if (!(byte & 0x80))
@@ -30,7 +39,6 @@ public:
         if ((shift < size) && (byte & 0x40))
             /* sign extend */
             data |= -(1 << shift);
-//         printf("done decoding sleb128 number, final value %d\n", data);
     }
     static int32_t decode(address_t from, size_t& offset, int /*dummy*/)
     {
@@ -40,7 +48,6 @@ public:
     }
     operator int32_t() { return data; }
     sleb128_t operator =(int32_t d) { data = d; return *this; }
-//     friend bool operator==(sleb128_t left, sleb128_t right);
     bool operator<(sleb128_t other) const { return data < other.data; }
 };
 
@@ -72,16 +79,5 @@ public:
     }
     operator uint32_t() { return data; }
     uleb128_t operator =(uint32_t d) { data = d; return *this; }
-//     friend bool operator==(uleb128_t left, uleb128_t right);
     bool operator<(uleb128_t other) const { return data < other.data; }
 };
-
-// inline bool operator==(sleb128_t left, sleb128_t right)
-// {
-//     return left.data == right.data;
-// }
-// 
-// inline bool operator==(uleb128_t left, uleb128_t right)
-// {
-//     return left.data == right.data;
-// }
