@@ -144,7 +144,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp'.split())
+    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp'.split())
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -179,21 +179,13 @@ def build(bld):
     #mkinitfs.target = 'mkinitfs'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp'.split())
-    # page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp page_directory_kickstart.cpp c++boot.cpp merge_mmap.cpp kickstart.lds
+    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp idt.cpp interrupt.s'.split())
+    # page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.target = 'kickstart.sys'
     kickstart.uselib_local = 'platform common kernel runtime'
-
-    #nucleus = bld.new_task_gen('cxx', 'program')
-    #nucleus.source = map(lambda f: 'nucleus/' + f, 'nucleus.cpp pd.cpp page_directory_nucleus.cpp memory/new.cpp memory/memory_manager.cpp memory/stack_page_allocator.cpp memory/heap.cpp'.split())# nucleus/nucleus.lds
-    #nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
-    #nucleus.env.append_unique('LINKFLAGS', ['-T', '../vesper/arch-x86/nucleus/nucleus.lds', '-Wl,-Map,nucleus.map'])
-    #nucleus.includes = '. ../../lib ../../runtime lib nucleus'
-    #nucleus.target = 'nucleus.bin'
-    #nucleus.uselib_local = 'kernel_runtime'
 
     #bld.new_task_gen(
         #source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep
