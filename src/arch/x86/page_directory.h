@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -49,51 +51,42 @@ inline int pte_entry(void* virt)
 class page_t
 {
 public:
+    // CPU-agnostic page flags.
+    static const flags_t kernel_mode   = 0x01;
+    static const flags_t writable      = 0x02;
+    static const flags_t executable    = 0x04;
+    static const flags_t write_through = 0x08;
+    static const flags_t cache_disable = 0x10;
+    static const flags_t copy_on_write = 0x20;
+    static const flags_t swapped       = 0x40;
+
     page_t() {}
 
     // Predicates
-    bool present()    { return pg.present == 1; }
-    bool writable()   { return pg.writable == 1; }
-    bool user()       { return pg.user == 1; }
-    bool kernel()     { return pg.user == 0; }
-    bool accessed()   { return pg.accessed == 1; }
-    bool dirty()      { return pg.dirty == 1; }
-    bool four_mb()    { return pg.pat == 1; } // only valid in PDE
+    bool is_present()  { return (raw & IA32_PAGE_PRESENT) != 0; }
+    bool is_writable() { return (raw & IA32_PAGE_WRITABLE) != 0; }
+    bool is_user()     { return (raw & IA32_PAGE_USER) != 0; }
+    bool is_kernel()   { return (raw & IA32_PAGE_USER) == 0; }
+    bool is_4mb()      { return (raw & IA32_PAGE_4MB) != 0; } // only valid in PDE
 
     // Retrieval
-    address_t frame() { return pg.base << PTE_SHIFT; }
+    physical_address_t frame() { return raw & PAGE_MASK; }
+    flags_t            flags();
 
     // Modification
-    void set_present(bool b)    { pg.present   = b ? 1 : 0; }
-    void set_writable(bool b)   { pg.writable  = b ? 1 : 0; }
-    void set_user(bool b)       { pg.user      = b ? 1 : 0; }
-    void set_accessed(bool b)   { pg.accessed  = b ? 1 : 0; }
-    void set_dirty(bool b)      { pg.dirty     = b ? 1 : 0; }
-    void set_four_mb(bool b)    { pg.pat       = b ? 1 : 0; } // only valid in PDE
-    void set_frame(address_t f) { pg.base      = f >> PTE_SHIFT; }
+    void set_4mb(bool b); // only valid in PDE
+    void set_frame(physical_address_t f) { raw = (raw & ~PAGE_MASK) | (f & PAGE_MASK); }
+    void set_frame(void* p) { set_frame(reinterpret_cast<physical_address_t>(p)); }
+    void set_flags(flags_t flags);
 
     page_t& operator =(uint32_t v)  { raw = v; return *this; }
     operator uint32_t()             { return raw; }
 
     void dump();
+    void dump_flags();
 
 private:
-    union {
-        struct {
-            uint32_t present        :1;
-            uint32_t writable       :1;
-            uint32_t user           :1;
-            uint32_t write_through  :1;
-            uint32_t cache_disabled :1;
-            uint32_t accessed       :1;//in PDE:
-            uint32_t dirty          :1;//reserved
-            uint32_t pat            :1;//pagesize
-            uint32_t global         :1;
-            uint32_t avail          :3;
-            uint32_t base           :20;
-        } pg;
-        uint32_t raw;
-    };
+    uint32_t raw;
 };
 
 /*!
