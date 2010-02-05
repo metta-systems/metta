@@ -40,9 +40,10 @@ class ia32_mmu_t
 public:
     static void flush_page_directory(bool global = false);
     static void flush_page_directory_entry(address_t addr);
-    static void enable_super_pages();
+    static void enable_4mb_pages();
     static void enable_global_pages();
     static void enable_paged_mode();
+    static bool paged_mode_enabled();
     static address_t get_pagefault_address(void);
     static physical_address_t get_active_pagetable(void);
     static void set_active_pagetable(physical_address_t page_dir_physical);
@@ -83,7 +84,6 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t virt)
     asm volatile ("invlpg (%0)\n" :: "r"(virt));
 }
 
-// FIXME: ia32_cpu_t::cr4_enable()?
 inline void ia32_cr4_set(uint32_t flag)
 {
     uint32_t dummy;
@@ -91,13 +91,13 @@ inline void ia32_cr4_set(uint32_t flag)
                   "orl %1, %0\n"
                   "movl %0, %%cr4\n"
                   : "=r"(dummy)
-                  : "i"(flag));
+                  : "ir"(flag));
 }
 
 /*!
  * Enables extended page size (4M) support for IA32
  */
-inline void ia32_mmu_t::enable_super_pages()
+inline void ia32_mmu_t::enable_4mb_pages()
 {
     ia32_cr4_set(IA32_CR4_PSE);
 }
@@ -116,6 +116,13 @@ inline void ia32_mmu_t::enable_global_pages()
 inline void ia32_mmu_t::enable_paged_mode()
 {
     asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
+}
+
+inline bool ia32_mmu_t::paged_mode_enabled()
+{
+    uint32_t cr0;
+    asm volatile("movl %%cr0, %0\n" : "=r"(cr0));
+    return (cr0 & IA32_CR0_PG) != 0;
 }
 
 /*!
