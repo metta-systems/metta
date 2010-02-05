@@ -30,8 +30,11 @@ const address_t PAGE_MASK = 0xFFFFF000;
 #define IA32_PAGE_CACHE_DISABLE  (1<<4)
 #define IA32_PAGE_ACCESSED       (1<<5)
 #define IA32_PAGE_DIRTY          (1<<6)
-#define IA32_PAGE_SUPER          (1<<7)
+#define IA32_PAGE_4MB            (1<<7) // only in PDE
 #define IA32_PAGE_GLOBAL         (1<<8)
+// Custom types
+#define IA32_PAGE_SWAPPED        (1<<9)
+#define IA32_PAGE_COW            (1<<10)
 
 // CR0 register
 #define IA32_CR0_PE (1 <<  0)   /*!< enable protected mode    */
