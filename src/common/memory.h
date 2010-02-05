@@ -8,7 +8,6 @@
 
 #include "types.h"
 #include "ia32.h"
-// #include "page_directory.h"
 
 template <typename T>
 inline T page_align_up(T a)

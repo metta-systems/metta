@@ -82,7 +82,7 @@ private:
 
     const address_t address;
     const size_t    size;
-    access_t        access_rights;
+    access_t        access_rights; // read, write, meta
 };
 /*!
  * Privileged class (private) in kernel domain.
