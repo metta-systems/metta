@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "cpu_information.h"
 
 class x86_cpu_t
 {
@@ -73,6 +76,11 @@ public:
     {
         asm volatile ("cli");
     }
+
+    inline static cpu_information_t& current_cpu() { return cpu_information; }
+
+private:
+    static cpu_information_t cpu_information;
 };
 
 // kate: indent-width 4; replace-tabs on;
