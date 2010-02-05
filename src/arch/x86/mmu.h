@@ -40,6 +40,10 @@ class ia32_mmu_t
 public:
     static void flush_page_directory(bool global = false);
     static void flush_page_directory_entry(address_t addr);
+    inline static void flush_page_directory_entry(void* addr)
+    {
+        flush_page_directory_entry(reinterpret_cast<address_t>(addr));
+    }
     static void enable_4mb_pages();
     static void enable_global_pages();
     static void enable_paged_mode();

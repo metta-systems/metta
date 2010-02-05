@@ -119,10 +119,20 @@ public:
     virtual bool map(physical_address_t physical_address,
                      void* virtual_address,
                      flags_t flags) = 0;
+    inline bool map(physical_address_t physical_address,
+                    address_t virtual_address,
+                    flags_t flags)
+    {
+        return map(physical_address, reinterpret_cast<void*>(virtual_address), flags);
+    }
     virtual void mapping(void* virtual_address,
                          physical_address_t& physical_address,
                          flags_t& flags) = 0;
     virtual void unmap(void* virtual_address) = 0;
+    inline void unmap(address_t virtual_address)
+    {
+        unmap(reinterpret_cast<void*>(virtual_address));
+    }
     // -- /stretch driver --
 
 private:
