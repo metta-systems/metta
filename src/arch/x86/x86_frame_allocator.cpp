@@ -9,6 +9,8 @@
 #include "config.h"
 #include "mmu.h"
 #include "ia32.h"
+#include "cpu.h"
+#include "page_directory.h"
 #include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
 #include "default_console.h"
@@ -138,15 +140,17 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
     }
     else
     {
-//         next_frame = next_free_phys;
-//     protection_domain_t* domain = cpu_t::current_cpu().current_protection_domain();
-//     ASSERT(domain == protection_domain_t::privileged());
-//     domain->map(next_frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
+        protection_domain_t& domain = x86_cpu_t::current_cpu().current_protection_domain();
+//         ASSERT(domain == protection_domain_t::privileged());
 
-//         next_free_phys = *reinterpret_cast<address_t*>(TEMP_MAPPING);
+        next_frame = next_free_phys;
+        domain.map(next_frame, TEMP_MAPPING, page_t::kernel_mode | page_t::writable);
+
+        next_free_phys = *reinterpret_cast<address_t*>(TEMP_MAPPING);
         // wipe it clean
-//         memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
-        //     domain->unmap(TEMP_MAPPING);
+        memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
+
+        domain.unmap(TEMP_MAPPING);
     }
 
     free_frames--;
@@ -167,13 +171,15 @@ void x86_frame_allocator_t::free_frame(physical_address_t frame)
     }
     else
     {
-//     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
-//     ASSERT(domain == protection_domain_t::privileged());
-//     domain->map(frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
+        protection_domain_t& domain = x86_cpu_t::current_cpu().current_protection_domain();
+//         ASSERT(domain == protection_domain_t::privileged());
 
-//     *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
-//     next_free_phys = frame; // remember phys as current free stack top
-//     domain->unmap(TEMP_MAPPING);
+        domain.map(frame, TEMP_MAPPING, page_t::kernel_mode | page_t::writable);
+
+        *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
+        next_free_phys = frame; // remember phys as current free stack top
+
+        domain.unmap(TEMP_MAPPING);
     }
 
     free_frames++;
