@@ -31,11 +31,6 @@ x86_protection_domain_t::x86_protection_domain_t()
     // TODO: finish
 }
 
-void page_t::dump()
-{
-    kconsole << "page: frame " << frame() << " P:" << present() << " W:" << writable() << " U:" << user() << endl;
-}
-
 //! This is called before enabling paging.
 x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
 {
@@ -53,9 +48,8 @@ x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
     // we only use page table 0 before enabling paging so this trick works.
 
     page_t pde;
-    pde.set_frame(reinterpret_cast<physical_address_t>(virtual_page_tables));
-    pde.set_present(true);
-    pde.set_writable(true);
+    pde.set_frame(virtual_page_tables);
+    pde.set_flags(page_t::kernel_mode | page_t::writable);
     virtual_page_directory[0] = pde;
 
     // clear escrow pages for mapping
@@ -67,7 +61,7 @@ void x86_protection_domain_t::dump()
     kconsole << " ** page directory:" << endl;
     for (int i = 0; i < 1024; i++)
     {
-        if (!virtual_page_directory[i].present())
+        if (!virtual_page_directory[i].is_present())
             continue;
 
         page_t* pt = &virtual_page_tables[i * 1024];
@@ -78,8 +72,12 @@ void x86_protection_domain_t::dump()
         {
             page_t& page = pt[k];
 
-            if (page.present())
-                kconsole << "    " << (unsigned int)(i << PDE_SHIFT) + (k << PTE_SHIFT) << " => " << page.frame() << endl;
+            if (page.is_present())
+            {
+                kconsole << "    " << (unsigned int)(i << PDE_SHIFT) + (k << PTE_SHIFT) << " => " << page.frame() << " flags: ";
+                page.dump_flags();
+                kconsole << endl;
+            }
         }
 
         kconsole << "  * end of table " << i << endl;
@@ -93,54 +91,52 @@ void x86_protection_domain_t::enable_paging()
     // Set up RPD.
     page_t rpd;
     rpd.set_frame(physical_page_directory);
-    rpd.set_writable(true);
-    rpd.set_present(true);
+    rpd.set_flags(page_t::kernel_mode | page_t::writable);
     virtual_page_directory[1023] = rpd;
 
     virtual_page_directory = reinterpret_cast<page_t*>(VIRTUAL_PAGE_DIRECTORY);
     virtual_page_tables = reinterpret_cast<page_t*>(VIRTUAL_PAGE_TABLES);
     ia32_mmu_t::set_active_pagetable(*this);
+//     ia32_mmu_t::enable_4mb_pages();
+//     ia32_mmu_t::enable_global_pages();
     ia32_mmu_t::enable_paged_mode();
 }
 
 bool x86_protection_domain_t::is_valid(void* /*virtual_address*/)
 {
-    return false;
+    return true;
 }
 
 bool x86_protection_domain_t::is_mapped(void* virtual_address)
 {
     page_t pde = virtual_page_directory[pde_entry(virtual_address)];
-    if (!pde.present())
+    if (!pde.is_present())
         return false;
-    if (pde.four_mb())
+    if (pde.is_4mb())
         return true;
-    return virtual_page_tables[pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address)].present();
+    return virtual_page_tables[pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address)].is_present();
 }
 
-bool x86_protection_domain_t::map(physical_address_t physical_address, void* virtual_address, flags_t /*flags*/)
+bool x86_protection_domain_t::map(physical_address_t physical_address, void* virtual_address, flags_t flags)
 {
-    if (!virtual_page_directory[pde_entry(virtual_address)].present())
+    if (!virtual_page_directory[pde_entry(virtual_address)].is_present())
     {
         // Need to allocate a pagetable.
         page_t pde;
         physical_address_t pta = x86_frame_allocator_t::instance().allocate_frame();
         pde.set_frame(pta);
-        pde.set_present(true);
-        pde.set_writable(true);
+        pde.set_flags(page_t::kernel_mode | page_t::writable);
         virtual_page_directory[pde_entry(virtual_address)] = pde;
     }
 
     size_t pti = pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address);
 
-    if (virtual_page_tables[pti].present())
+    if (virtual_page_tables[pti].is_present())
         return false; // already mapped!
 
     page_t pg;
     pg.set_frame(physical_address);
-    pg.set_present(true);
-    pg.set_writable(true);
-    //TODO: set flags
+    pg.set_flags(flags);
     virtual_page_tables[pti] = pg;
 
     return true;

@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "config.h"
+#include "mmu.h"
 #include "ia32.h"
 #include "memutils.h" //runtime/
 #include "x86_frame_allocator.h"
@@ -128,15 +129,15 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
 
     address_t next_frame;
 
-//     if (unlikely(!cpu_t::paging_enabled()))
-//     {
+    if (unlikely(!ia32_mmu_t::paged_mode_enabled()))
+    {
         next_frame = next_free_phys;
         next_free_phys = *reinterpret_cast<address_t*>(next_frame);
         // clear frame before use
         memutils::fill_memory(reinterpret_cast<void*>(next_frame), 0, page_size());
-//     }
-//     else
-//     {
+    }
+    else
+    {
 //         next_frame = next_free_phys;
 //     protection_domain_t* domain = cpu_t::current_cpu().current_protection_domain();
 //     ASSERT(domain == protection_domain_t::privileged());
@@ -146,7 +147,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
         // wipe it clean
 //         memutils::fill_memory(reinterpret_cast<void*>(TEMP_MAPPING), 0, PAGE_SIZE);
         //     domain->unmap(TEMP_MAPPING);
-//     }
+    }
 
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
@@ -159,13 +160,13 @@ void x86_frame_allocator_t::free_frame(physical_address_t frame)
 {
     lockable_scope_lock_t guard(*this);
 
-//     if (unlikely(!cpu_t::paging_enabled()))
-//     {
+    if (unlikely(!ia32_mmu_t::paged_mode_enabled()))
+    {
         *reinterpret_cast<address_t*>(frame) = next_free_phys;
         next_free_phys = frame; // remember phys as current free stack top
-//     }
-//     else
-//     {
+    }
+    else
+    {
 //     protection_domain_t* domain = processor_t::current_cpu().current_protection_domain();
 //     ASSERT(domain == protection_domain_t::privileged());
 //     domain->map(frame, TEMP_MAPPING, frame_t::writable|frame_t::kernel);
@@ -173,7 +174,7 @@ void x86_frame_allocator_t::free_frame(physical_address_t frame)
 //     *reinterpret_cast<address_t*>(TEMP_MAPPING) = next_free_phys; // store phys of previous free stack top
 //     next_free_phys = frame; // remember phys as current free stack top
 //     domain->unmap(TEMP_MAPPING);
-//     }
+    }
 
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
