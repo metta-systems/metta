@@ -10,8 +10,11 @@
 #include "x86_frame_allocator.h"
 #include "page_directory.h"
 #include "memutils.h"
+#include "cpu.h"
 #include "mmu.h"
 #include "default_console.h"
+
+physical_address_t x86_protection_domain_t::escrow_pages[1] = { 0 };
 
 protection_domain_t& protection_domain_t::privileged()
 {
@@ -53,6 +56,7 @@ x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
     virtual_page_directory[0] = pde;
 
     // clear escrow pages for mapping
+    escrow_pages[0] = 0;
 }
 
 void x86_protection_domain_t::dump()
@@ -96,6 +100,12 @@ void x86_protection_domain_t::enable_paging()
     rpd.set_flags(page_t::kernel_mode | page_t::writable);
     virtual_page_directory[1023] = rpd;
 
+    // while we can, grab a page for kernel mappings
+    page_t kernel_mappings;
+    kernel_mappings.set_frame(frame_allocator_t::instance().allocate_frame());
+    kernel_mappings.set_flags(page_t::kernel_mode | page_t::writable);
+    virtual_page_directory[pde_entry(KERNEL_VIRTUAL_MAPPINGS)] = kernel_mappings;
+
     virtual_page_directory = reinterpret_cast<page_t*>(VIRTUAL_PAGE_DIRECTORY);
     virtual_page_tables = reinterpret_cast<page_t*>(VIRTUAL_PAGE_TABLES);
     ia32_mmu_t::set_active_pagetable(*this);
@@ -121,14 +131,30 @@ bool x86_protection_domain_t::is_mapped(void* virtual_address)
 
 bool x86_protection_domain_t::map(physical_address_t physical_address, void* virtual_address, flags_t flags)
 {
-    if (!virtual_page_directory[pde_entry(virtual_address)].is_present())
+    // Preallocate a frame for mapping needs.
+    if (escrow_pages[x86_cpu_t::id()] == 0)
+    {
+        escrow_pages[x86_cpu_t::id()] = x86_frame_allocator_t::instance().allocate_frame();
+        if (escrow_pages[x86_cpu_t::id()] == 0)
+            PANIC("Out of memory!");
+    }
+
+    lockable_scope_lock_t guard(*this);
+
+    if (likely(!virtual_page_directory[pde_entry(virtual_address)].is_present()))
     {
         // Need to allocate a pagetable.
         page_t pde;
-        physical_address_t pta = x86_frame_allocator_t::instance().allocate_frame();
+        physical_address_t pta = escrow_pages[x86_cpu_t::id()];
+        escrow_pages[x86_cpu_t::id()] = 0;
         pde.set_frame(pta);
         pde.set_flags(page_t::kernel_mode | page_t::writable);
         virtual_page_directory[pde_entry(virtual_address)] = pde;
+
+        if (flags & page_t::kernel_mode)
+        {
+            // TODO: Kernel mode page should be mapped in all other domains.
+        }
     }
 
     size_t pti = pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address);

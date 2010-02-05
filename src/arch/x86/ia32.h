@@ -16,8 +16,10 @@
 //======================================================================================================================
 
 // Last 4 megs of address space are for recursive page directory
-#define VIRTUAL_PAGE_TABLES    0xffc00000 // page tables addressable from this base
-#define VIRTUAL_PAGE_DIRECTORY 0xfffff000 // page directory addressable from this base //0xFFBFF000)
+#define VIRTUAL_PAGE_TABLES     0xffc00000 // page tables addressable from this base
+#define VIRTUAL_PAGE_DIRECTORY  0xfffff000 // page directory addressable from this base //0xFFBFF000)
+// Next to last 4 megs are for kernel temporary mappings.
+#define KERNEL_VIRTUAL_MAPPINGS 0xff800000
 
 const size_t    PAGE_SIZE = 0x1000;
 const address_t PAGE_MASK = 0xFFFFF000;

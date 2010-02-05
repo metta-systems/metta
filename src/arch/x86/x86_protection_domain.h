@@ -8,12 +8,13 @@
 //
 #pragma once
 
+#include "lockable.h"
 #include "protection_domain.h"
 #include "macros.h"
 
 class page_t;
 
-class x86_protection_domain_t : public protection_domain_t
+class x86_protection_domain_t : public protection_domain_t, public lockable_t
 {
 public:
     /* Declare destructor virtual */
@@ -68,5 +69,6 @@ private: friend class ia32_mmu_t;
     page_t* virtual_page_directory;
     /** Virtual address of the page tables */
     page_t* virtual_page_tables;
-};
 
+    static physical_address_t escrow_pages[1]; //TODO: use a pointer and allocate dynamically to nr_cpus
+};

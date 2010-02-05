@@ -77,6 +77,9 @@ public:
         asm volatile ("cli");
     }
 
+    //! id of current processor.
+    static inline cpu_id_t id() { return 0; }
+
     inline static cpu_information_t& current_cpu() { return cpu_information; }
 
 private:

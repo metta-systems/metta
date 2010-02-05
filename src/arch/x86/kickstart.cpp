@@ -138,9 +138,7 @@ void kickstart(multiboot_t::header_t* mbh)
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
     // TODO: run a predefined root_server_entry portal here
-    kconsole << "Allocating frame: ";
-    kconsole << frame_allocator_t::instance().allocate_frame();
-    kconsole << endl;
+    kconsole << "Allocating frame: " << frame_allocator_t::instance().allocate_frame() << endl;
 
     /* Never reached */
     PANIC("root_server returned!");
