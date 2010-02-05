@@ -67,7 +67,9 @@ void x86_protection_domain_t::dump()
         page_t* pt = &virtual_page_tables[i * 1024];
         ASSERT(pt);
 
-        kconsole << "  * page table " << i << endl;
+        kconsole << "  * page table " << i << " ";
+        virtual_page_directory[i].dump_flags();
+        kconsole << endl;
         for (int k = 0; k < 1024; k++)
         {
             page_t& page = pt[k];
@@ -142,10 +144,24 @@ bool x86_protection_domain_t::map(physical_address_t physical_address, void* vir
     return true;
 }
 
-void x86_protection_domain_t::mapping(void* /*virtual_address*/, physical_address_t& /*physical_address*/, flags_t& /*flags*/)
+void x86_protection_domain_t::mapping(void* virtual_address, physical_address_t& physical_address, flags_t& flags)
 {
+    if (!virtual_page_directory[pde_entry(virtual_address)].is_present())
+        return;
+    size_t pti = pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address);
+    if (!virtual_page_tables[pti].is_present())
+        return;
+    physical_address = virtual_page_tables[pti].frame();
+    flags = virtual_page_tables[pti].flags();
 }
 
-void x86_protection_domain_t::unmap(void* /*virtual_address*/)
+void x86_protection_domain_t::unmap(void* virtual_address)
 {
+    if (!virtual_page_directory[pde_entry(virtual_address)].is_present())
+        return;
+    size_t pti = pde_entry(virtual_address) * PTE_ENTRIES + pte_entry(virtual_address);
+    if (!virtual_page_tables[pti].is_present())
+        return;
+    ia32_mmu_t::flush_page_directory_entry(virtual_address);
+    virtual_page_tables[pti] = 0;
 }
