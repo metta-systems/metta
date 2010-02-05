@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,18 +18,17 @@
 #include "registers.h"
 #include "initfs.h"
 #include "c++ctors.h"
-// #include "bootinfo.h"
 #include "debugger.h"
 #include "linksyms.h"
 #include "frame.h"
-// #include "page_fault_handler.h"
-// -- new includes --
+#include "page_directory.h"
+#include "page_fault_handler.h"
 #include "x86_frame_allocator.h"
 #include "x86_protection_domain.h"
 #include "new.h"
 
-// page_fault_handler_t page_fault_handler;
-// interrupt_descriptor_table_t interrupts_table;
+page_fault_handler_t page_fault_handler;
+interrupt_descriptor_table_t interrupts_table;
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
@@ -40,7 +41,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
 #endif
     end = page_align_up<address_t>(end); // one past end
     for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
-        protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), 0);
+        protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), page_t::kernel_mode | page_t::writable);
 }
 
 /*!
@@ -84,9 +85,9 @@ void kickstart(multiboot_t::header_t* mbh)
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
-    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).dump();
-//     interrupts_table.set_isr_handler(14, &page_fault_handler);
-//     interrupts_table.install();
+//     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).dump();
+    interrupts_table.set_isr_handler(14, &page_fault_handler);
+    interrupts_table.install();
 
     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
     // now we have paging enabled.
