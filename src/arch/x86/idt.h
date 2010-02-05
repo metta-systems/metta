@@ -26,6 +26,7 @@ public:
     void set(uint16_t segsel, void (*handler_address)(), type_e type, int dpl);
 
 private:
+    // TODO: replace with normal flags defines
     union {
         uint32_t raw[2];
         struct {
