@@ -14,6 +14,7 @@
 #include "mmu.h"
 #include "default_console.h"
 
+range_list_t<address_t> x86_protection_domain_t::allocated_virtual_addresses;
 physical_address_t x86_protection_domain_t::escrow_pages[1] = { 0 };
 
 protection_domain_t& protection_domain_t::privileged()
@@ -54,6 +55,10 @@ x86_protection_domain_t::x86_protection_domain_t(int /*privileged*/)
     pde.set_frame(virtual_page_tables);
     pde.set_flags(page_t::kernel_mode | page_t::writable);
     virtual_page_directory[0] = pde;
+
+    // Reserve kernel address spaces.
+    allocated_virtual_addresses.allocate(KERNEL_VIRTUAL_MAPPINGS, 4*MB);
+    allocated_virtual_addresses.allocate(VIRTUAL_PAGE_TABLES, 4*MB);
 
     // clear escrow pages for mapping
     escrow_pages[0] = 0;
