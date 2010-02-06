@@ -48,9 +48,12 @@ private:
     x86_frame_allocator_t();
 //     virtual void unmap_range(memory_range_t* range);
 
+    void range_alloc(physical_address_t address, size_t size);
+    void range_free(physical_address_t address, size_t size);
+    
 private:
     std::map<protection_domain_t*, memory_resrec_t*> qos_allocations;
-    range_list_t<physical_address_t> ram_ranges;
+    range_list_t<physical_address_t> ranges_below_1mb, ranges_below_16mb, ranges_above_16mb; // 3 categories of RAM
 
     // Page Stack structures (TODO: move to subclass, like in Pedigree?)
     physical_address_t next_free_phys; //!< Top of the stack, this is where we get new frame from. This is physical address.

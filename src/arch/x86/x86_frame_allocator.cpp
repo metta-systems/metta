@@ -36,7 +36,9 @@ x86_frame_allocator_t& x86_frame_allocator_t::instance()
 x86_frame_allocator_t::x86_frame_allocator_t()
     : lockable_t()
     , qos_allocations()
-    , ram_ranges()
+    , ranges_below_1mb()
+    , ranges_below_16mb()
+    , ranges_above_16mb()
     , next_free_phys(0)
     , total_frames(0)
     , free_frames(0)
@@ -117,6 +119,30 @@ void x86_frame_allocator_t::initialisation_complete()
 {
 }
 
+void x86_frame_allocator_t::range_alloc(physical_address_t address, size_t size)
+{
+    if ((address < 1*MB) && (address+size <= 1*MB))
+        ranges_below_1mb.allocate(address, size);
+    else if ((address < 16*MB) && (address+size <= 16*MB))
+        ranges_below_16mb.allocate(address, size);
+    else if (address > 16*MB)
+        ranges_above_16mb.allocate(address, size);
+    else
+        PANIC("Range not entirely within 1Mb or 16Mb range.");
+}
+
+void x86_frame_allocator_t::range_free(physical_address_t address, size_t size)
+{
+    if ((address < 1*MB) && (address+size <= 1*MB))
+        ranges_below_1mb.free(address, size);
+    else if ((address < 16*MB) && (address+size <= 16*MB))
+        ranges_below_16mb.free(address, size);
+    else if (address > 16*MB)
+        ranges_above_16mb.free(address, size);
+    else
+        PANIC("Range not entirely within 1Mb or 16Mb range.");
+}
+
 physical_address_t x86_frame_allocator_t::allocate_frame()
 {
     if (!stack_initialised)
@@ -124,6 +150,7 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
         allocation_address = page_align_up(allocation_address);
         physical_address_t tmp = allocation_address;
         allocation_address += PAGE_SIZE;
+        range_alloc(tmp, PAGE_SIZE);
         return tmp;
     }
 
@@ -153,6 +180,8 @@ physical_address_t x86_frame_allocator_t::allocate_frame()
         domain.unmap(TEMP_MAPPING);
     }
 
+    range_alloc(next_frame, PAGE_SIZE);
+
     free_frames--;
     ASSERT(free_frames <= total_frames);// catch underflow
 
@@ -181,6 +210,8 @@ void x86_frame_allocator_t::free_frame(physical_address_t frame)
 
         domain.unmap(TEMP_MAPPING);
     }
+
+    range_free(frame, PAGE_SIZE);
 
     free_frames++;
     ASSERT(free_frames <= total_frames);// catch overflow
