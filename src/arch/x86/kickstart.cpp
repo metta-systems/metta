@@ -73,11 +73,6 @@ void kickstart(multiboot_t::header_t* mbh)
                       << "    bootimage at " << bootimage->mod_start << ", end " << bootimage->mod_end << endl;
 #endif
 
-//     address_t bootinfo_page = reinterpret_cast<address_t>(new frame_t);
-//     bootinfo_t bootinfo(bootinfo_page);
-//     bootinfo.init_from(mb);
-//     mb.set_header(bootinfo.multiboot_header());
-
     // Identity map currently executing code.
     // page 0 is not mapped to catch null pointers
     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
@@ -85,34 +80,18 @@ void kickstart(multiboot_t::header_t* mbh)
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
-//     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).dump();
     interrupts_table.set_isr_handler(14, &page_fault_handler);
     interrupts_table.install();
+    kconsole << "Created idt." << endl;
 
     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
     // now we have paging enabled.
+    kconsole << "Enabled paging." << endl;
 
-//     elf_loader_t kernel_loader;
-//     if (!kernel_loader.load_image(kernel->mod_start, kernel->mod_end - kernel->mod_start))
-//         kconsole << RED << "kernel NOT loaded (bad)" << endl;
-//     else
-//         kconsole << GREEN << "kernel loaded (ok)" << endl;
-// 
-//     typedef nucleus_n::nucleus_t* (*kernel_entry)(bootinfo_t bi_page);
-//     kernel_entry init_nucleus = reinterpret_cast<kernel_entry>(kernel_loader.get_entry_point());
-
-//     kconsole << RED << "going to init nucleus" << endl;
-//     nucleus_n::nucleus_t* nucleus = init_nucleus(bootinfo);
-//     kconsole << GREEN << "done, instantiating components" << endl;
-// 
-//     kconsole << GREEN << "getting allocator" << endl;
-//     frame_allocator_t* fa = &nucleus->mem_mgr().page_frame_allocator();
-//     kconsole << GREEN << "setting allocator " << fa << endl;
-//     frame_t::set_frame_allocator(fa);
-//     kconsole << "set allocator" << endl;
-
-//     kconsole << "pagedir @ " << nucleus->mem_mgr().get_current_directory() << endl;
-//     nucleus->mem_mgr().get_current_directory()->dump();
+    // Load the modules.
+    // Module "boot" depends on all modules that must be probed at startup.
+    // Dependency resolution will bring up modules in an appropriate order.
+//    load_modules("boot");
 
     // Load components from bootcp.
 //     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
@@ -134,6 +113,8 @@ void kickstart(multiboot_t::header_t* mbh)
 //         comp_entry init_component = (comp_entry)elf.get_entry_point();
 //         init_component(bootinfo);
 //     }
+
+    // TODO: instantiate kernel interfaces
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 

@@ -8,7 +8,7 @@
  *
  * @param[in] type_t integer type the range start and length are encoded with.
  */
-template<typename type_t>
+template <typename type_t>
 class range_list_t
 {
 public:

@@ -96,23 +96,6 @@ public:
 
     virtual bool free_range(memory_range_t& range) = 0;
 
-    // Questionable API items:
-    /*!
-     * Frees the previously allocated frame 'frame' and returns it to the pool.
-     * If @e virt is non-zero, remove mapping associated with address @e virt in frame allocator's pagedir.
-     */
-//     virtual void free_frame(address_t frame, address_t virt = 0) = 0;
-
-    /*!
-     * Finds a free frame (swaps out if necessary) and allocates it to p.
-     */
-//     void alloc_frame(page_t* p, bool is_kernel = true, bool is_writeable = true);
-
-    /*!
-     * Removes the frame under p's control and returns it to the pool.
-     */
-//     void free_frame(page_t* p);
-
 protected:
     /** The constructor */
     inline frame_allocator_t() {}
