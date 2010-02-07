@@ -10,6 +10,8 @@
 
 #include "types.h"
 #include "memory.h" // PAGE_SIZE/PAGE_MASK
+#include "protection_domain.h"
+#include "stl/map"
 
 /*! Memory allocation resource record, per-domain. */
 struct memory_resrec_t
@@ -25,13 +27,11 @@ struct memory_resrec_t
 class frame_allocator_t
 {
 public:
-    enum /*page_constraints*/ {
-        continuous = 1 << 0,
-        non_ram    = 1 << 1,
-
-        below_1Mb  = 1 << 8,
-        below_16Mb = 2 << 9,
-    };
+    /*page_constraints*/
+    static const flags_t continuous = 1 << 0;
+    static const flags_t non_ram    = 1 << 1;
+    static const flags_t below_1Mb  = 1 << 8;
+    static const flags_t below_16Mb = 2 << 8;
 
     static frame_allocator_t& instance();
 
@@ -97,6 +97,8 @@ public:
     virtual bool free_range(memory_range_t& range) = 0;
 
 protected:
+    std::map<protection_domain_t*, memory_resrec_t*> qos_allocations;
+
     /** The constructor */
     inline frame_allocator_t() {}
     /** The destructor */
