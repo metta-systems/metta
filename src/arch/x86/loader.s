@@ -53,5 +53,7 @@ loader:
     cli
     jmp short $                        ; halt machine should startup code return
 
+    mov eax, multiboot_header          ; reference section .multiboot_info so that ld retains it during link
+
 ; kate: indent-width 4; replace-tabs on;
 ; vim: set et sw=4 ts=4 sts=4 cino=(4 :
