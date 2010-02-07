@@ -1,10 +1,20 @@
 //
+// Implementation of memory manipulation utilities for case when there's no standard C library.
+//
 // Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "memutils.h"
+
+// Stupid GCC generates memmove() in some iterator assignments in advance_ex instead of inlining (doh)
+// #if __Metta__ && defined(__GNUC__)
+// void* memmove(void* dest, const void* src, size_t count)
+// {
+//     return memutils::move_memory(dest, src, count);
+// }
+// #endif
 
 namespace memutils
 {
@@ -62,6 +72,19 @@ bool is_memory_equal(const void* left, const void* right, size_t count)
     return true;
 }
 
+int memory_difference(const void* left, const void* right, size_t count)
+{
+    signed char __res;
+
+    const char* ltmp = reinterpret_cast<const char*>(left);
+    const char* rtmp = reinterpret_cast<const char*>(right);
+
+    while (count--)
+        if ((__res = *ltmp++ - *rtmp++) != 0)
+            return __res;
+
+    return 0;
+}
 
 bool is_string_equal(const char* s1, const char* s2)
 {

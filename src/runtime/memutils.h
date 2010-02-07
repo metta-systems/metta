@@ -57,6 +57,15 @@ void* move_memory(void* dest, const void* src, size_t count);
 bool is_memory_equal(const void* left, const void* right, size_t count);
 
 /*!
+ * Compare two regions of memory.
+ * @param[in]  left  First memory region.
+ * @param[in]  right Second memory region.
+ * @param[in]  count Number of bytes to compare.
+ * @return     result of lexicographical memory compare, -1 if left is less than right, 0 if they are equal or 1 if left is greater than right.
+ */
+int memory_difference(const void* left, const void* right, size_t count);
+
+/*!
  * Compare two null-terminated strings.
  * @param[in] s1 One string
  * @param[in] s2 Another string
@@ -72,6 +81,10 @@ bool is_string_equal(const char *s1, const char *s2);
 size_t string_length(const char *s);
 
 } // namespace memutils
+
+// #if __Metta__ && defined(__GNUC__)
+// extern "C" void* memmove(void* dest, const void* src, size_t count);
+// #endif
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
