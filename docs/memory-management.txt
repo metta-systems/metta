@@ -40,7 +40,50 @@ Memory protection operations are carried out by the application through the stre
 
 Any domain may request a stretch from a stretch allocator, specifying the desired size and (optionally) a starting address and attributes. Should the request be successful, a new stretch will be created and returned to the caller. The caller is now the owner of the stretch. The starting address and length of the returned stretch may then be queried; these will always be a multiple of the machine's page size3.
 
-Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid stretches to a subset of   read, write, execute, meta . A domain which holds the meta right is authorised to modify protections and mappings on the relevant stretch.
+Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid stretches to a subset of
+read, write, execute, meta . A domain which holds the meta right is authorised to modify protections and mappings on the relevant stretch.
+
+
+
+
+Virtual address space in Metta is single, shared between all processes. This means that virtual to physical
+mapping is equivalent in all domains. protection_domain_t describes only part of the whole address space
+available to a particular process.
+
+protection_domain_t encapsulates protection domain control.
+protection_domain_t also wraps around processor's paging mechanism and provides mapping/unmapping facilities
+for memory pages.
+
+The translation system deals with inserting, retrieving or deleting mappings between virtual and physical addresses.
+As such it may be considered an interface to a table of information held about these mappings; the actual mapping
+will typically be performed as necessary by whatever memory management hardware or software is present.
+
+The translation system is divided into two parts: a high-level management module, and the low-level trap handlers
+and system calls. The high-level part is private to the system domain, and handles the following:
+
+* Bootstrapping the `MMU' (in hardware or software), and setting up initial mappings. [check]
+* Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management.
+* Creating and deleting protection domains.
+* Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about the current use of frames of main memory.
+- ramtab is presumably rle-coded structure of [start,len,access,owner] entries for allocated RAM areas
+
+The high-level translation system is used by both the stretch allocator and the frames allocator.
+The stretch allocator uses it to setup initial entries in the page table for stretches it has created,
+or to remove such entries when a stretch is destroyed. These entries contain protection information but are
+by default invalid: i.e. addresses within the range will cause a page fault if accessed.
+The frames allocator, on the other hand, uses the RamTab to record the owner and logical frame width
+of allocated frames of main memory.
+
+The high-level part of the translation system is also in the system domain: this is machine-dependent code responsible for the construction of page tables, and the setting up of NULL mappings for freshly allocated virtual addresses. These mappings are used to hold the initial protection information, and by default are set up to cause a page fault on the first access. Placing this functionality within the system domain means that the low-level translation system does not need to be concerned with the allocation of page-table memory. It also allows protection faults, page faults and ``unallocated address'' faults to be distinguished and dispatched to the faulting application.
+
+
+high-level module is encapsulated by protection_domain_t, it uses a factory to create new protection domains.
+protection domain gives interface to the stretch allocator, which gives out stretches of virtual addresses belonging
+to the domain and manages them.
+stretch driver is located inside application space, provided by the shared library code or implemented by the
+application itself. it interfaces with frame allocator to provide backing RAM storage for stretches it manages.
+frame allocation and ramtab maintenance handled by frame_allocator_t.
+
 
 
 
