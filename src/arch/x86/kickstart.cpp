@@ -91,7 +91,7 @@ void kickstart(multiboot_t::header_t* mbh)
     // Load the modules.
     // Module "boot" depends on all modules that must be probed at startup.
     // Dependency resolution will bring up modules in an appropriate order.
-//    load_modules("boot");
+//    load_modules(bootimage, "boot");
 
     // Load components from bootcp.
 //     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
