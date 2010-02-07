@@ -14,14 +14,14 @@ blddir = '_build_'
 include_dirs = 'common runtime'.split()
 
 # Local SGI STL instance.
-stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC'.split()
+stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
 cflags = '-Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
 cxxflags = cflags + ['-std=gnu++0x']
-linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split() # -fno-builtin
-flags = '-fno-stack-protector -fno-leading-underscore'.split()
+linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
+flags = '-fno-builtin -fno-stack-protector -fno-leading-underscore -ffunction-sections -fdata-sections'.split()
 
 def set_options(opt):
     # platform spec "arch-vendor-os", vendor can be omitted.
@@ -59,9 +59,6 @@ def configure(conf):
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
-    metta_flag = "__Metta__"
-    conf.env.append_unique('CDEFINES', metta_flag)
-    conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build
@@ -99,19 +96,35 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
     conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
 
+    # Flag that we're building under/for Metta.
+    # Value is metta release number, monotonically increasing with each public release.
+    metta_flag = "__Metta__=1"
+    kernel_flags = '-ffreestanding -fno-strict-aliasing'.split() #-nostdinc
+    # --gc-sections ruins everything
+    kernel_linkflags = '-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
+
     # Config for building kernel
     conf.setenv('KERNEL_ENV')
+    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('CDEFINES', metta_flag)
+    conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXDEFINES', stl_defines)
+    conf.env.append_unique('CCFLAGS', kernel_flags)
+    conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
-    conf.env.append_unique('LINKFLAGS', ['--gc-sections'] + linkflags)
-    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # Config for building system apps
     conf.setenv('APP_ENV')
+    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('CDEFINES', metta_flag)
+    conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXDEFINES', stl_defines)
-    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('CCFLAGS', kernel_flags)
+    conf.env.append_unique('CXXFLAGS', kernel_flags)
+    conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
 
@@ -120,7 +133,7 @@ def build(bld):
 
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = 'runtime/g++support.cpp runtime/newdelete.cpp runtime/memutils.cpp runtime/cstring.cpp'.split()
+    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete memutils cstring stdlib'.split())
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
