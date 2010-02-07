@@ -31,6 +31,8 @@
 #ifndef __SGI_STL_INTERNAL_UNINITIALIZED_H
 #define __SGI_STL_INTERNAL_UNINITIALIZED_H
 
+#include "memutils.h"
+
 __STL_BEGIN_NAMESPACE
 
 // uninitialized_copy
@@ -82,7 +84,7 @@ inline _ForwardIter
 
 inline char* uninitialized_copy(const char* __first, const char* __last,
                                 char* __result) {
-  memmove(__result, __first, __last - __first);
+  memutils::move_memory(__result, __first, __last - __first);
   return __result + (__last - __first);
 }
 
@@ -90,7 +92,7 @@ inline wchar_t*
 uninitialized_copy(const wchar_t* __first, const wchar_t* __last,
                    wchar_t* __result)
 {
-  memmove(__result, __first, sizeof(wchar_t) * (__last - __first));
+  memutils::move_memory(__result, __first, sizeof(wchar_t) * (__last - __first));
   return __result + (__last - __first);
 }
 

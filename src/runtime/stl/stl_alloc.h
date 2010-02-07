@@ -30,6 +30,7 @@
 #  define __USE_MALLOC
 #endif
 
+#include "memutils.h"
 
 // This implements some standard node allocators.  These are
 // NOT the same as the allocators in the C++ draft standard or in
@@ -51,7 +52,7 @@
 // #include <stddef.h>
 // #include <stdlib.h>
 // #include <string.h>
-#include <assert.h>
+#include <assert.h> //FIXME: stdlib dep!
 #ifndef __RESTRICT
 #  define __RESTRICT
 #endif
@@ -536,7 +537,7 @@ __default_alloc_template<threads, inst>::reallocate(void* __p,
     if (_S_round_up(__old_sz) == _S_round_up(__new_sz)) return(__p);
     __result = allocate(__new_sz);
     __copy_sz = __new_sz > __old_sz? __old_sz : __new_sz;
-    __builtin_memcpy(__result, __p, __copy_sz);
+    memutils::copy_memory(__result, __p, __copy_sz);
     deallocate(__p, __old_sz);
     return(__result);
 }

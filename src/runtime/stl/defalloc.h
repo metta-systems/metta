@@ -26,9 +26,9 @@
 #ifndef DEFALLOC_H
 #define DEFALLOC_H
 
-#include <new.h>
-#include <stddef.h>
-#include <stdlib.h>
+#include "new.h"
+// #include <stddef.h>
+// #include <stdlib.h>
 #include <limits.h>
 #ifdef __STL_USE_IOSTREAMS
 #include <iostream.h>

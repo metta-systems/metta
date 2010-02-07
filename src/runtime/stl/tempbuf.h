@@ -31,8 +31,8 @@
 #include <pair.h>
 #endif
 #include <limits.h>      /* XXX should use <climits> */
-#include <stddef.h>      /* XXX should use <cstddef> */
-#include <stdlib.h>      /* XXX should use <cstdlib> */
+// #include <stddef.h>      /* XXX should use <cstddef> */
+// #include <stdlib.h>      /* XXX should use <cstdlib> */
 #ifndef __TYPE_TRAITS_H
 #include <type_traits.h>
 #endif

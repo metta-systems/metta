@@ -14,8 +14,9 @@
 #ifndef __SGI_STL_CHAR_TRAITS_H
 #define __SGI_STL_CHAR_TRAITS_H
 
-#include <string.h>
-#include <wchar.h>
+#include "memutils.h"
+// #include <string.h> //FIXME: stdlib dep!
+// #include <wchar.h>
 
 #ifdef __STL_USE_IOSTREAMS
 #if defined(__STL_USE_NEW_IOSTREAMS) && !defined(__SGI_STL_IOSFWD)
@@ -69,12 +70,12 @@ public:
   }
 
   static _CharT* move(_CharT* __s1, const _CharT* __s2, size_t __n) {
-    memmove(__s1, __s2, __n * sizeof(_CharT));
+    memutils::move_memory(__s1, __s2, __n * sizeof(_CharT));
     return __s1;
   }
-    
+
   static _CharT* copy(_CharT* __s1, const _CharT* __s2, size_t __n) {
-    memcpy(__s1, __s2, __n * sizeof(_CharT));
+    memutils::copy_memory(__s1, __s2, __n * sizeof(_CharT));
     return __s1;
   } 
 
@@ -129,14 +130,14 @@ public:
   }
 
   static int compare(const char* __s1, const char* __s2, size_t __n) 
-    { return memcmp(__s1, __s2, __n); }
-  
+    { return memutils::memory_difference(__s1, __s2, __n); }
+
   static size_t length(const char* __s) { return strlen(__s); }
 
   static void assign(char& __c1, const char& __c2) { __c1 = __c2; }
 
   static char* assign(char* __s, size_t __n, char __c)
-    { memset(__s, __c, __n); return __s; }
+    { memutils::fill_memory(__s, __c, __n); return __s; }
 };
 
 // Specialization for wchar_t.

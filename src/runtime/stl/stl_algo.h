@@ -31,6 +31,7 @@
 #ifndef __SGI_STL_INTERNAL_ALGO_H
 #define __SGI_STL_INTERNAL_ALGO_H
 
+#include "stdcrap.h" // for rand()
 #include <stl_heap.h>
 
 // See concept_checks.h for the concept-checking macros 
@@ -109,7 +110,7 @@ inline _InputIterator advance_ex(const _InputIterator& it, _Distance i)
 #define foreach_it(type,begin,end) for(size_t __i=0, __stl_go = 1; __i < std::distance(begin,end); ++__i, __stl_go = 1) \
     for(type = *(begin + __i); __stl_go; --__stl_go)
 
-#endif
+#endif // !defined(foreach) && !defined(__STL_NO_FOREACH_MACRO)
 
 // find and find_if.
 

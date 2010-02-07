@@ -45,10 +45,12 @@
 #include <type_traits.h>
 #endif
 
-#include <string.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <stddef.h> //FIXME: stdlib dep!
+#include "memutils.h"
+
+// #include <string.h>
+#include <climits>
+// #include <stdlib.h>
+// #include <stddef.h> //FIXME: stdlib dep!
 #include "new.h"
 
 #ifdef __STL_USE_IOSTREAMS
@@ -163,7 +165,7 @@ __copy(_RandomAccessIter __first, _RandomAccessIter __last,
 template <class _Tp>
 inline _Tp*
 __copy_trivial(const _Tp* __first, const _Tp* __last, _Tp* __result) {
-  memmove(__result, __first, sizeof(_Tp) * (__last - __first));
+  memutils::move_memory(__result, __first, sizeof(_Tp) * (__last - __first));
   return __result + (__last - __first);
 }
 
@@ -276,7 +278,7 @@ inline _OutputIter copy(_InputIter __first, _InputIter __last,
 
 #define __SGI_STL_DECLARE_COPY_TRIVIAL(_Tp)                                \
   inline _Tp* copy(const _Tp* __first, const _Tp* __last, _Tp* __result) { \
-    memmove(__result, __first, sizeof(_Tp) * (__last - __first));          \
+    memutils::move_memory(__result, __first, sizeof(_Tp) * (__last - __first));          \
     return __result + (__last - __first);                                  \
   }
 
@@ -359,7 +361,7 @@ struct __copy_backward_dispatch<_Tp*, _Tp*, __true_type>
 {
   static _Tp* copy(const _Tp* __first, const _Tp* __last, _Tp* __result) {
     const ptrdiff_t _Num = __last - __first;
-    memmove(__result - _Num, __first, sizeof(_Tp) * _Num);
+    memutils::move_memory(__result - _Num, __first, sizeof(_Tp) * _Num);
     return __result - _Num;
   }
 };
@@ -460,18 +462,18 @@ _OutputIter fill_n(_OutputIter __first, _Size __n, const _Tp& __value) {
 inline void fill(unsigned char* __first, unsigned char* __last,
                  const unsigned char& __c) {
   unsigned char __tmp = __c;
-  memset(__first, __tmp, __last - __first);
+  memutils::fill_memory(__first, __tmp, __last - __first);
 }
 
 inline void fill(signed char* __first, signed char* __last,
                  const signed char& __c) {
   signed char __tmp = __c;
-  memset(__first, static_cast<unsigned char>(__tmp), __last - __first);
+  memutils::fill_memory(__first, static_cast<unsigned char>(__tmp), __last - __first);
 }
 
 inline void fill(char* __first, char* __last, const char& __c) {
   char __tmp = __c;
-  memset(__first, static_cast<unsigned char>(__tmp), __last - __first);
+  memutils::fill_memory(__first, static_cast<unsigned char>(__tmp), __last - __first);
 }
 
 #ifdef __STL_FUNCTION_TMPL_PARTIAL_ORDER
@@ -605,7 +607,7 @@ lexicographical_compare(const unsigned char* __first1,
 {
   const size_t __len1 = __last1 - __first1;
   const size_t __len2 = __last2 - __first2;
-  const int __result = memcmp(__first1, __first2, min(__len1, __len2));
+  const int __result = memutils::memory_difference(__first1, __first2, min(__len1, __len2));
   return __result != 0 ? __result < 0 : __len1 < __len2;
 }
 
@@ -653,7 +655,7 @@ __lexicographical_compare_3way(const unsigned char* __first1,
 {
   const ptrdiff_t __len1 = __last1 - __first1;
   const ptrdiff_t __len2 = __last2 - __first2;
-  const int __result = memcmp(__first1, __first2, min(__len1, __len2));
+  const int __result = memutils::memory_difference(__first1, __first2, min(__len1, __len2));
   return __result != 0 ? __result 
                        : (__len1 == __len2 ? 0 : (__len1 < __len2 ? -1 : 1));
 }
