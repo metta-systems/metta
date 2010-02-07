@@ -54,12 +54,12 @@ def configure(conf):
     # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
 
-    conf.check_tool('gcc g++ nasm misc') # FIXME: gcc detection per-config for x-compile?
+    conf.check_tool('gcc g++ yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
-    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
+    conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build
 
