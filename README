@@ -1,0 +1,11 @@
+To build Metta execute the following commands:
+
+ $ cd src
+ $ ./waf
+
+You will need gcc 4.4.2 or above and nasm to build.
+
+After successful build run emulator software to try out Metta.
+src directory is preconfigured for using Bochs, so you can simply type:
+
+ $ bochs -q
