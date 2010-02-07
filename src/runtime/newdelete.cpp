@@ -117,5 +117,14 @@ extern "C" void free(void*)
 {
 }
 
+// we assume that stl uses realloc only to grow storage
+extern "C" void *realloc(void *ptr, size_t size)
+{
+    void* ptr2 = malloc(size);
+    memutils::copy_memory(ptr2, ptr, size); // may fail since new size is assumed to be larger than the old.
+    free(ptr);
+    return ptr2;
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

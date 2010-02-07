@@ -7,7 +7,6 @@
 #pragma once
 
 #include "types.h"
-#include "frame_allocator.h"
 
 void* operator new(size_t size);
 void* operator new(size_t size, void* place); // placement new
@@ -16,8 +15,10 @@ void* operator new[](size_t size);
 void* operator new[](size_t size, bool page_align, address_t* phys_addr = NULL);
 void  operator delete(void* p);
 void  operator delete[](void* p);
+// stdlib functions to get rid of:
 extern "C" void* malloc(size_t size);
 extern "C" void free(void*);
+extern "C" void *realloc(void *ptr, size_t size);
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
