@@ -14,9 +14,9 @@ class range_list_t
 public:
     class range_t
     {
-        public:
-            inline range_t(type_t start_, type_t length_) : start(start_), length(length_) {}
-            type_t start, length;
+    public:
+        inline range_t(type_t start_, type_t length_) : start(start_), length(length_) {}
+        type_t start, length;
     };
 
     typedef std::list<range_t*> list_type;
@@ -46,12 +46,29 @@ public:
         : ranges()
     {
         clear();
-        iterator it(other.ranges.begin());
+        const_iterator it(other.ranges.begin());
         for (; it != other.ranges.end(); ++it)
         {
             range_t* new_range = new range_t((*it)->start, (*it)->length);
             ranges.push_back(new_range);
         }
+/*        foreach(auto r, other.ranges)
+            ranges.push_back(new range_t(r->start, r->length));*/
+    }
+
+    /*! Deep-copy assignment operator. */
+    range_list_t& operator =(const range_list_t& other)
+    {
+        clear();
+        const_iterator it(other.ranges.begin());
+        for (; it != other.ranges.end(); ++it)
+        {
+            range_t* new_range = new range_t((*it)->start, (*it)->length);
+            ranges.push_back(new_range);
+        }
+/*        foreach(auto r, other.ranges)
+            ranges.push_back(new range_t(r->start, r->length));*/
+        return *this;
     }
 
     /*! Destructor frees the list. */
@@ -229,6 +246,5 @@ public:
     inline size_t size() const { return ranges.size(); }
 
 private:
-    std::list<range_t*> ranges;
-    range_list_t& operator =(const range_list_t& other);
+    list_type ranges;
 };
