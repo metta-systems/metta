@@ -12,9 +12,6 @@
 #include "frame_allocator.h"
 #include "range_list.h"
 #include "multiboot.h"
-#include "stl/map"
-
-class protection_domain_t;
 
 class x86_frame_allocator_t : public frame_allocator_t, public lockable_t /* TODO: use per-CPU locks! */
 {
@@ -46,21 +43,34 @@ public:
 
 private:
     x86_frame_allocator_t();
-//     virtual void unmap_range(memory_range_t* range);
 
-    void range_alloc(physical_address_t address, size_t size);
-    void range_free(physical_address_t address, size_t size);
-    
-private:
-    std::map<protection_domain_t*, memory_resrec_t*> qos_allocations;
-    range_list_t<physical_address_t> ranges_below_1mb, ranges_below_16mb, ranges_above_16mb; // 3 categories of RAM
+    class page_stack_t
+    {
+    public:
+        page_stack_t()
+            : next_free_phys(0)
+            , total_frames(0)
+            , free_frames(0)
+            , reserved_frames(0)
+//             , ranges()
+        {}
 
-    // Page Stack structures (TODO: move to subclass, like in Pedigree?)
-    physical_address_t next_free_phys; //!< Top of the stack, this is where we get new frame from. This is physical address.
-    size_t             total_frames;
-    size_t             free_frames;
-    size_t             reserved_frames;
+        physical_address_t next_free_phys; //!< Top of the stack, this is where we get new frame from. This is physical address.
+        size_t             total_frames;
+        size_t             free_frames;
+        size_t             reserved_frames;
+        range_list_t<physical_address_t> ranges;
+    };
 
+    page_stack_t& stack(physical_address_t address, size_t size);
+    page_stack_t& first_usable_stack();
+
+    static const uint32_t below_1mb  = 0;
+    static const uint32_t below_16mb = 1;
+    static const uint32_t above_16mb = 2;
+    static const uint32_t num_stacks = 3;
+
+    page_stack_t       page_stacks[num_stacks];
     bool               stack_initialised;
     address_t          reserved_area_start;
 
