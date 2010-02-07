@@ -15,6 +15,7 @@ SECTIONS
         *(.text*)
         *(.rodata*)
         /* global static initializers */
+        . = ALIGN(4);
         ctors_GLOBAL = .;
         *(.ctor*)
         QUAD(0)
