@@ -9,3 +9,14 @@ After successful build run emulator software to try out Metta.
 src directory is preconfigured for using Bochs, so you can simply type:
 
  $ bochs -q
+
+== Following is for developers only! ==
+
+For experimental building with clang first copy waftools/clang.py to
+.waf-..../wafadmin/Tools, then configure to use it:
+ 
+ $ ./waf configure --check-c-compiler=clang --check-cxx-compiler=clang
+
+Then you can try to build:
+
+ $ ./waf
