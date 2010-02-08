@@ -33,7 +33,7 @@ public:
     /*!
      * @note Creates stretch descriptor in the kernel space.
      */
-    static stretch_t* create(address_t base, size_t size, access_t access);
+    static stretch_t* create(size_t size, access_t access, address_t base = 0);
 
     /*!
      * Bind a stretch to userspace stretch driver, which will provide backing store
@@ -78,6 +78,7 @@ public:
      * @returns true if address is valid in current address space, that is, address is within the bounds of
      * available stretches. Addresses outside of available stretches are considered invalid and cannot be
      * used for mapping.
+     * @note This is currently O(N) operation, use wisely.
      */
     virtual bool is_valid(void* virtual_address) = 0;
     /*!
@@ -105,6 +106,7 @@ public:
 
 protected:
     std::list<stretch_t*> stretches; //! Stretches owned by this protection domain.
+    range_list_t<physical_address_t> owned_frames; //! Physical frames in possession of the domain.
 
 private:
     /*!
