@@ -1,51 +1,3 @@
-MMgmt in Nemesis:
-
-ramtab - list of allocated physical frame ranges and their ownership and status
-
-Either mapping or unmapping a virtual address va requires that the calling domain is executing in a protection domain
-which holds a meta right for the stretch containing va. A consequence of this is that it is not possible to map
-a virtual address which is not part of some stretch.
-
-** For Metta: domain attr: list_t<stretch_t*> stretches;
-
-It is also necessary that the frame which is being used for mapping (or which is being unmapped) is validated.
-This involves ensuring that the calling domain owns the frame, and that the frame is not currently mapped or nailed.
-These conditions are checked by using the RamTab, which is a simple enough structure to be used by low-level code.
-
-
-stretch_allocator [privileged]
-  - range lists of available virtual memory ranges
-  + allocate_stretch
-  + release_stretch
-
-frame_allocator [privileged]
-  - range lists of available physical memory ranges
-  + allocate_frame
-  + free_frame
-
-protection_domain (via stretch_allocator?) [kernel]
-  - stretches list
-  + get stretch for given va?
-
-stretch_driver (bound to stretch) [userspace]
-  1. map(va, pa, attr) : arrange that the virtual address va maps onto the physical address pa with the (machine-dependent) PTE attributes attr.
-  2. unmap(va) : remove the mapping of the virtual address va. Any further access to the address should cause some form of memory fault.
-  3. mapping(va) ->  (pa, attr) : retrieve the current mapping of the virtual address va, if any.
-  --> frame_allocator::allocate_region (uses constraints to allocate specific physmem for stretch)
-  --> routed to prot_dom mapping api? via syscalls
-
-
-Memory protection operations are carried out by the application through the stretch interface. This talks directly to the low-level translation system via simple system calls; it is not necessary to communicate with the system domain. Protection can be carried out in this way due to the protection model chosen which includes explicit rights for ``change permissions'' operations. A light-weight validation process checks if the caller is authorised to perform an operation.
-
-
-Any domain may request a stretch from a stretch allocator, specifying the desired size and (optionally) a starting address and attributes. Should the request be successful, a new stretch will be created and returned to the caller. The caller is now the owner of the stretch. The starting address and length of the returned stretch may then be queried; these will always be a multiple of the machine's page size3.
-
-Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid stretches to a subset of
-read, write, execute, meta . A domain which holds the meta right is authorised to modify protections and mappings on the relevant stretch.
-
-
-
-
 Virtual address space in Metta is single, shared between all processes. This means that virtual to physical
 mapping is equivalent in all domains. protection_domain_t describes only part of the whole address space
 available to a particular process.
@@ -53,6 +5,19 @@ available to a particular process.
 protection_domain_t encapsulates protection domain control.
 protection_domain_t also wraps around processor's paging mechanism and provides mapping/unmapping facilities
 for memory pages.
+
+Any domain may request a stretch from a stretch allocator, specifying the desired size and (optionally) a starting address and attributes. Should the request be successful, a new stretch will be created and returned to the caller. The caller is now the owner of the stretch. The starting address and length of the returned stretch may then be queried; these will always be a multiple of the machine's page size.
+
+Memory protection operations are carried out by the application through the stretch interface. This talks directly to the low-level translation system via simple system calls; it is not necessary to communicate with the system domain. Protection can be carried out in this way due to the protection model chosen which includes explicit rights for ``change permissions'' operations. A light-weight validation process checks if the caller is authorised to perform an operation.
+
+It is also necessary that the frame which is being used for mapping (or which is being unmapped) is validated.
+This involves ensuring that the calling domain owns the frame, and that the frame is not currently mapped or nailed.
+These conditions are checked by using the RamTab, which is a simple enough structure to be used by low-level code.
+
+Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid stretches to a subset of
+read, write, execute, meta . A domain which holds the meta right is authorised to modify protections and mappings on the relevant stretch.
+
+(Domain may grant read/write/execute to another domain, if needed.)
 
 The translation system deals with inserting, retrieving or deleting mappings between virtual and physical addresses.
 As such it may be considered an interface to a table of information held about these mappings; the actual mapping
@@ -62,28 +27,72 @@ The translation system is divided into two parts: a high-level management module
 and system calls. The high-level part is private to the system domain, and handles the following:
 
 * Bootstrapping the `MMU' (in hardware or software), and setting up initial mappings. [check]
-* Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management.
-* Creating and deleting protection domains.
-* Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about the current use of frames of main memory.
-- ramtab is presumably rle-coded structure of [start,len,access,owner] entries for allocated RAM areas
+* Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management. [check]
+* Creating and deleting protection domains. [check]
+* Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about
+  the current use of frames of main memory.
+  - ramtab - list of allocated physical frame ranges and their ownership and status
+  - ramtab is presumably rle-coded structure of [start,len,access,owner] entries for allocated RAM areas
 
 The high-level translation system is used by both the stretch allocator and the frames allocator.
 The stretch allocator uses it to setup initial entries in the page table for stretches it has created,
 or to remove such entries when a stretch is destroyed. These entries contain protection information but are
 by default invalid: i.e. addresses within the range will cause a page fault if accessed.
+
+The high-level part of the translation system is also in the system domain: this is machine-dependent code responsible
+for the construction of page tables, and the setting up of NULL mappings for freshly allocated virtual addresses.
+These mappings are used to hold the initial protection information, and by default are set up to cause a page fault
+on the first access. Placing this functionality within the system domain means that the low-level translation system
+does not need to be concerned with the allocation of page-table memory. It also allows protection faults,
+page faults and ``unallocated address'' faults to be distinguished and dispatched to the faulting application.
+
+==> initialize pagedir entries for allocated stretch
+
 The frames allocator, on the other hand, uses the RamTab to record the owner and logical frame width
 of allocated frames of main memory.
 
-The high-level part of the translation system is also in the system domain: this is machine-dependent code responsible for the construction of page tables, and the setting up of NULL mappings for freshly allocated virtual addresses. These mappings are used to hold the initial protection information, and by default are set up to cause a page fault on the first access. Placing this functionality within the system domain means that the low-level translation system does not need to be concerned with the allocation of page-table memory. It also allows protection faults, page faults and ``unallocated address'' faults to be distinguished and dispatched to the faulting application.
+==> assign owned frames to appropriate domain.
 
 
-high-level module is encapsulated by protection_domain_t, it uses a factory to create new protection domains.
-protection domain gives interface to the stretch allocator, which gives out stretches of virtual addresses belonging
-to the domain and manages them.
+
 stretch driver is located inside application space, provided by the shared library code or implemented by the
 application itself. it interfaces with frame allocator to provide backing RAM storage for stretches it manages.
-frame allocation and ramtab maintenance handled by frame_allocator_t.
+
+User domain calls map/unmap from the stretch driver. Either mapping or unmapping a virtual address "va" requires that
+the calling domain is executing in a protection domain which holds a meta right for the stretch containing "va".
+A consequence of this is that it is not possible to map a virtual address which is not part of some stretch.
 
 
 
+
+
+
+
+
+stretch_allocator [privileged]
+User API via: stretch_allocator_v1::allocate_stretch()/release_stretch()
+Kernel impl: protection_domain_t
+- range lists of available virtual memory ranges
++ allocate_stretch
++ release_stretch
+* there's a VA_quota implied on all stretches owned by a domain
+
+frame_allocator [privileged]
+User API via: frame_allocator_v1
+Kernel impl: frame_allocator_t
+- range lists of available physical memory ranges
++ allocate_frame
++ free_frame
+* There's a frame quota implied on a domain
+
+protection_domain (via stretch_allocator?) [kernel]
+- stretches list
++ get stretch for given va?
+
+stretch_driver (bound to stretch) [userspace]
+1. map(va, pa, attr) : arrange that the virtual address va maps onto the physical address pa with the (machine-dependent) PTE attributes attr.
+2. unmap(va) : remove the mapping of the virtual address va. Any further access to the address should cause some form of memory fault.
+3. mapping(va) ->  (pa, attr) : retrieve the current mapping of the virtual address va, if any.
+--> frame_allocator::allocate_region (uses constraints to allocate specific physmem for stretch)
+--> routed to prot_dom mapping api? via syscalls
 
