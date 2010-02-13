@@ -26,9 +26,7 @@
 #include "x86_frame_allocator.h"
 #include "x86_protection_domain.h"
 #include "new.h"
-
-page_fault_handler_t page_fault_handler;
-interrupt_descriptor_table_t interrupts_table;
+#include "stretch_driver.h"
 
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
@@ -80,8 +78,8 @@ void kickstart(multiboot_t::header_t* mbh)
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
-    interrupts_table.set_isr_handler(14, &page_fault_handler);
-    interrupts_table.install();
+    stretch_driver_t::default_driver().initialise();
+    interrupt_descriptor_table_t::instance().install();
     kconsole << "Created idt." << endl;
 
     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
