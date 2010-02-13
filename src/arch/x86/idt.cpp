@@ -88,6 +88,12 @@ static inline void reprogram_pic() // FIXME: move to ia32_pic_t
     x86_cpu_t::outb(PICSI, 0xff);//0?
 }
 
+interrupt_descriptor_table_t& interrupt_descriptor_table_t::instance()
+{
+    static interrupt_descriptor_table_t interrupts_table;
+    return interrupts_table;
+}
+
 void interrupt_descriptor_table_t::install()
 {
     limit = sizeof(idt_entries)-1;

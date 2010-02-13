@@ -29,7 +29,7 @@ void isr_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received interrupt: " << regs.int_no << endl;
 
-    interrupt_service_routine_t* isr = interrupts_table.get_isr(regs.int_no);
+    interrupt_service_routine_t* isr = interrupt_descriptor_table_t::instance().get_isr(regs.int_no);
     if (isr)
     {
         isr->run(&regs);
@@ -48,7 +48,7 @@ void irq_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received irq: " << regs.int_no-32 << endl;
 
-    interrupt_service_routine_t* isr = interrupts_table.get_isr(regs.int_no);
+    interrupt_service_routine_t* isr = interrupt_descriptor_table_t::instance().get_isr(regs.int_no);
     if (isr)
     {
         isr->run(&regs);

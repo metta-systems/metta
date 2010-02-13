@@ -72,6 +72,8 @@ class interrupt_service_routine_t;
 class interrupt_descriptor_table_t
 {
 public:
+    static interrupt_descriptor_table_t& instance();
+
     inline interrupt_descriptor_table_t()
     {
         memutils::fill_memory(interrupt_routines, 0, sizeof(interrupt_routines));
@@ -104,8 +106,6 @@ private:
     idt_entry_t                  idt_entries[48] ALIGNED(8);
     interrupt_service_routine_t* interrupt_routines[48];
 } PACKED;
-
-extern interrupt_descriptor_table_t interrupts_table;
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
