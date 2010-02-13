@@ -161,7 +161,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp'.split())
+    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp'.split()) + ['common/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -196,8 +196,8 @@ def build(bld):
     #mkinitfs.target = 'mkinitfs'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp page_fault_handler.cpp isr.cpp idt.cpp interrupt.s'.split())
-    # page_fault_handler.cpp isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
+    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp isr.cpp idt.cpp interrupt.s'.split())
+    # isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
