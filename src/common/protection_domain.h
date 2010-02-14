@@ -19,7 +19,7 @@ class stretch_driver_t;
  * Stretch provides frame allocation and page fault handling interface inside protection domain.
  *
  * Each stretch has a stretch driver. Stretch driver provides stretch with physical frames, page fault handling and
- * mapping setup. A default_stretch_driver provides default handling for all applications.
+ * mapping setup. A default stretch driver provides default handling for all applications.
  */
 class stretch_t
 {
