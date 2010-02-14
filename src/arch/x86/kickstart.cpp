@@ -22,12 +22,12 @@
 #include "linksyms.h"
 #include "frame.h"
 #include "page_directory.h"
-#include "page_fault_handler.h"
 #include "x86_frame_allocator.h"
 #include "x86_protection_domain.h"
 #include "new.h"
 #include "stretch_driver.h"
 
+// Declare C linkage.
 extern "C" void kickstart(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
 extern "C" address_t KICKSTART_BASE;
