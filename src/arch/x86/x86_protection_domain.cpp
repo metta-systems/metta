@@ -28,6 +28,27 @@ protection_domain_t* protection_domain_t::create()
     return new x86_protection_domain_t;
 }
 
+bool protection_domain_t::allocate_stretch(stretch_t* stretch, size_t size, stretch_t::access_t access, address_t base)
+{
+    if (stretch->address && stretch->size)
+        return false;
+
+    // If base is specified - verify this virtual address range is free
+    if (!base)
+    {
+        base = find_virtual_range_with_size(size);
+    }
+
+    if (!allocated_virtual_addresses.allocate(base, size))
+        return false;
+
+    stretch->address = base;
+    stretch->size = size;
+    stretch->access_rights = access;
+
+    return true;
+}
+
 x86_protection_domain_t::x86_protection_domain_t()
 {
     virtual_page_directory = reinterpret_cast<page_t*>(VIRTUAL_PAGE_DIRECTORY);

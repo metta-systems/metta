@@ -39,17 +39,21 @@ public:
      * Bind a stretch to userspace stretch driver, which will provide backing store
      * and handle page faults and other memory exceptions for this stretch.
      */
-    void bind(stretch_driver_t* driver);
-    void unbind();
-    access_t access();
+    void bind(stretch_driver_t* driver) { stretch_driver = driver; }
+    void unbind() { stretch_driver = 0; }
+    stretch_driver_t* driver() const { return stretch_driver; }
+
+    access_t access() const { return access_rights; }
     void set_access(access_t access);
 
-private:
-    stretch_t(address_t base, size_t size, access_t rights);
+private: friend class protection_domain_t;
+    stretch_t();
+    bool allocate(size_t size, access_t access, address_t base);
 
     address_t address;
     size_t    size;
     access_t  access_rights;
+    stretch_driver_t* stretch_driver;
 };
 
 /*!
@@ -102,11 +106,15 @@ public:
     {
         unmap(reinterpret_cast<void*>(virtual_address));
     }
+
+protected:
+    bool allocate_stretch(stretch_t* stretch, size_t size, stretch_t::access_t access, address_t base);
     // -- /stretch driver --
 
 protected:
     std::list<stretch_t*> stretches; //! Stretches owned by this protection domain.
     range_list_t<physical_address_t> owned_frames; //! Physical frames in possession of the domain.
+    static range_list_t<address_t> allocated_virtual_addresses; // A SAS list of allocated addresses.
 
 private:
     /*!
@@ -120,6 +128,3 @@ private:
      */
     protection_domain_t& operator =(const protection_domain_t&);
 };
-
-
-

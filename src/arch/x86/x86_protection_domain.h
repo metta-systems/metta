@@ -71,6 +71,5 @@ private: friend class ia32_mmu_t;
     /** Virtual address of the page tables */
     page_t* virtual_page_tables;
 
-    static range_list_t<address_t> allocated_virtual_addresses; // A SAS list of allocated addresses.
     static physical_address_t escrow_pages[1]; //TODO: use a pointer and allocate dynamically to nr_cpus
 };
