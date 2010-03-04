@@ -1,0 +1,32 @@
+-- Pervasives record
+Rec : TYPE = RECORD [
+
+   vp        : IREF VP,                 -- Virtual processor
+   heap      : IREF Heap,               -- Default heap
+   types     : IREF TypeSystem,         -- Runtime typing
+   root      : IREF Context,            -- Root name space
+   exns      : IREF ExnSupport,         -- Exception handling
+
+   time      : IREF Time,               -- Time
+   actf      : IREF ActivationF,        -- Event \& Timeout demux (XXX)
+   evs       : IREF Events,             -- Event counts and sequencers
+   thd       : IREF Thread,             -- Current thread
+   thds      : IREF Threads,            -- Thread Scheduler
+   srcth     : IREF SRCThread,          -- SRC Thread synchronisation
+
+   in        : IREF Rd,                 -- Standard input reader
+   out       : IREF Wr,                 -- Standard output writer
+   err       : IREF Wr,                 -- Standard error writer
+   console   : IREF Wr,                 -- Console output writer
+
+   bndr      : IREF Binder,             -- Binder
+   objs      : IREF ObjectTbl,          -- Object Table
+   salloc    : IREF StretchAllocator,   -- Stretch Allocator
+   sdriver   : IREF StretchDriver,      -- Default Stretch Driver
+   gkpr      : IREF Gatekeeper,         -- Gatekeeper
+   entry     : IREF Entry,              -- Default Entry
+
+   -- Library jumptables:
+   libc      : ADDRESS,                 -- Pointer to op table
+   pers      : ADDRESS                  -- used for personality vectors
+ ];

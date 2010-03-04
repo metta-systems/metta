@@ -1,0 +1,23 @@
+To construct portable kernel, at least 3 different architectures should be supported.
+
+ * x86
+ * arm
+ * hosted
+
+Pistachio has an excellent c++ implementation of the kernel - use it as reference.
+(e.g. OSdev/L4/l4ka-pistachio/kernel/src/generic)
+
+Kernel consists of minimal glue code, providing exception and interrupt handling.
+
+
+Answer these questions first:
+
+* Q: how do VCPUs get assigned between domains?
+
+A: "A privileged service called the Domain Manager creates DCBs and links them into the scheduler data structures."
+
+  NTSC contains scheduler (EDF) to schedule domains: "NTSC -> scheduler -> VCPU -> domain"
+
+NTSC (glue code) contains only: domain scheduler, a few system calls (6), interrupt dispatcher support, timer interrupt
+for scheduler, startup routines, minimal console for emergency output.
+

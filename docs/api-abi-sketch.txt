@@ -1,2 +1,0 @@
-* components bind together (@sa THINK/KORTEX)
-* access restrictions apply at bind time (fine grained interfaces)

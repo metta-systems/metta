@@ -7,7 +7,7 @@ struct arch_x86 {};
 template<typename arch_t>
 class virtual_address_space_t;
 
-template
+template <>
 class virtual_address_space_t<arch_x86>
 {
     // Specialized for x86
@@ -15,51 +15,15 @@ class virtual_address_space_t<arch_x86>
 
 ----------------------------------------------------------------------
 
-Kernel interface:
-
-Interface page available via kernel_interface_syscall.
-
-Unbuffered IPC - reduces memory copying.
-IPC types: Send, Receive, Wait, Call, Reply_and_Wait (+ idempotent versions?)
-
 Try and have separate ABI and APIs for the kernel, much better for portability and writing new software.
 
 ----------------------------------------------------------------------
 
 /*
-* The Pentium Pro and later support global PDE/PTE entries,
-* which are not removed from the TLB when we switch tasks.
-*/
+ * The Pentium Pro and later support global PDE/PTE entries,
+ * which are not removed from the TLB when we switch tasks.
+ */
 pmap_global_ext = (base_cpuid.feature_flags & CPUF_PAGE_GLOBAL_EXT) ? INTEL_PTE_GLOBAL : 0;
-
-----------------------------------------------------------------------
-
-Pistachio's directory structure:
-kernel
-+--config
-+--kdb
-+--src
-   +--generic
-   +--kdb
-   +--api
-      +--v4
-   +--arch
-      +--powerpc
-      +--powerpc64
-      +--x86
-   +--glue
-      +--v4-powerpc
-      +--v4-powerpc64
-      +--v4-x86
-   +--platform
-      +--efi
-      +--generic
-      +--ofg5
-      +--ofpower3
-      +--ofpower4
-      +--ofppc
-      +--pc99
-      +--simics
 
 ----------------------------------------------------------------------
 

@@ -27,15 +27,6 @@ Nemesis:
 
 domain startup: closure(methods: Go; state: everything new domain needs to get going)
 
-* LISP-like IDL? there were c++ and Modula like IDLs, why not parensparensparens?
-
-// cross-component interfaces
-class interface_closure
-{
-    ops_table_t* ops;
-    state_t* state;
-};
-
 
 All interfaces are strongly typed, and these types are defined in an interface definition language. It is clearly important, therefore, to start with a good type system, and [Evers 93] presents a good discussion of the issues of typing in a systems environment. As in many RPC systems, the type system used in Nemesis is a hybrid: it includes notions both of the abstract types of interfaces and of concrete data types. It represents a compromise between the conceptual elegance and software engineering benefits of purely abstract type systems such as that used in Emerald [Raj 91], and the requirements of efficiency and inter-operability: the goal is to implement an operating system with few restrictions on programming language.
 

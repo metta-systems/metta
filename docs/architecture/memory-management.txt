@@ -1,5 +1,24 @@
 Virtual address space in Metta is single, shared between all processes. This means that virtual to physical
-mapping is equivalent in all domains. protection_domain_t describes only part of the whole address space
+mapping is equivalent in all domains.
+
+One or more domains may be part of the same protection domain. This means they have the same access rights to the same
+set of virtual address ranges.
+
+Domain may be part of more than one protection domains. This allows easy sharing by specifying protection domains at the
+stretch level and by adding domains using the same stretch into the same protection domain.
+
+Implementation detail: on x86, for efficiency there is only one page directory and access rights for the memory frame
+correspond to global stretch access rights. Once the domain is activated and tries to perform operation not allowed
+by the global rights, it will fault and the fault handler will then check, if protection domain has more rights
+actually, in this case the page directory will be updated with new rights and the stretch these frames belong to will
+be added to a "altered stretches" list for the domain.
+
+
+
+
+
+
+protection_domain_t describes only part of the whole address space
 available to a particular process.
 
 protection_domain_t encapsulates protection domain control.
@@ -16,6 +35,8 @@ These conditions are checked by using the RamTab, which is a simple enough struc
 
 Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid stretches to a subset of
 read, write, execute, meta . A domain which holds the meta right is authorised to modify protections and mappings on the relevant stretch.
+
+The accessibility of a stretch is determined by a combination of two things: the permissions for the stretch in the current protection domain and the global permissions of the stretch. The global permissions specify a minimum level of access that all domains share.
 
 (Domain may grant read/write/execute to another domain, if needed.)
 
@@ -96,3 +117,5 @@ stretch_driver (bound to stretch) [userspace]
 --> frame_allocator::allocate_region (uses constraints to allocate specific physmem for stretch)
 --> routed to prot_dom mapping api? via syscalls
 
+
+DRM/GEM memory management details in Linux: http://lwn.net/Articles/283798/

@@ -1,3 +1,9 @@
+VCPUs indeed perform inheritance scheduling - activation handler usually calls a scheduler function, which chooses next
+thread to run, by giving it the rest of CPU tick.
+
+
+----------------
+
 CHANGE ME!
 
 First, there is glue code. Glue code is very limited - its task is to switch protection domains. This allows threads to
