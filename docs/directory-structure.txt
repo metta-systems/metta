@@ -1,0 +1,107 @@
+Metta's new directory structure:
+src
++--kernel (trusted code)
+   +--generic
+   +--$ARCH
++--if (module interfaces)
++--modules
+   +--system
++--devices
+   +--pci
++--tools
+   +--buildimage
+
+
+Metta's current directory structure:
+src
++--arch
+   +--arm
+   +--mips
+   +--x86
+   +--x86-64
++--common
++--components
+   +--assocfs
+   +--interrupt_dispatcher
+   +--portal_manager
+   +--scheduler
+   +--security_server
+   +--trader
+   +--vm_server
++--platform
+   +--pc99
++--runtime
+   +--stl
++--tools
+   +--buildimage
+   +--buildpcb
+
+
+Pistachio's directory structure:
+kernel
++--config
++--kdb
++--src
+   +--generic
+   +--kdb
+   +--api
+      +--v4
+   +--arch
+      +--powerpc
+      +--powerpc64
+      +--x86
+   +--glue
+      +--v4-powerpc
+      +--v4-powerpc64
+      +--v4-x86
+   +--platform
+      +--efi
+      +--generic
+      +--ofg5
+      +--ofpower3
+      +--ofpower4
+      +--ofppc
+      +--pc99
+      +--simics
+
+
+Everyman directory structure:
+build.hosted
+build.x86
+include
++--bsp
++--bsp.x86
++--kernel
+src
++--application
++--bsp.hosted
++--bsp.x86
++--kernel
++--tools
+   +--sdl
+
+
+Nemesis directory structure:
+nemesis
++--if
++--h
+   +--$MACHINE
+   +--$ARCH
++--ntsc
+   +--generic
+   +--$ARCH
++--lib
+   +--veneer
+   +--static
++--mod
+   +--nemesis
+   +--net
+   +--ws
+   +--venimpl
++--sys
++--dev
+   +--$BUS
++--app
++--boot
+   +--loader
+   +--images
