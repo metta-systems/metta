@@ -1,18 +1,64 @@
-Metta architecture consists of glue code, trusted computing base components, which together form kernel proper,
-application processes (components or tasks).
-Applications can be built from shared libraries and components, called modules, which may be located in different
-domains or colocated by portal manager into the same domain as application.
-Each application should notionally exist in an accounting domain and operating system QoS is provided to this entity.
+== Metta architecture description ==
+
+Metta is an exocortex OS: it is your external memory and social interaction agent. This is the primary task aside from
+the additional multimedia and mobile assistant abilities. As an exocortex, OS's task is to provide means and ends to
+sharing and gathering relevant information for you.
+
+As an information gathering assistant the OS must support receiving, filtering, classifying and presenting relevant
+information in a suitable form.
+
+As an information sharing assistant the OS must support specifying privacy levels, distributing the secure storage,
+publishing directly to your peers and to other media.
+
+To provide this level of service, the key implementation principles are:
+
+* It must be possible to distribute work and storage seamlessly between trusted nodes on the user's network.
+* It must be possible to easily add and remove nodes from the trusted network.
+* Information should be synchronized between nodes whenever possible.
+* It should not be possible to bring down the node by overwhelming it with work: QoS guarantees must be agreed upon.
+* Storage should be associative, not hierarchical. Cross-node links must be possible with full semantic relation data.
+* Your data must be redundant, highly available and securely stored. "Publish once, share everywhere".
+* Processing of multimedia and semantically meaningful data must be fast and lean.
+
+Principles lead to technical requirements for the OS:
+
+* QoS management on all levels in the system. Agents must be able to negotiate necessary resources and OS must maintain
+promised resource guarantees.
+* Highly componentised and sandboxed system. When executing agents on behalf of other users it is crucial to provide
+data security for your own and for their data.
+* Low system management overhead.
+
+
+== Implementation details ==
+
+Metta is implemented as a Single Address Space OS, for QoS management it uses technologies found in Nemesis OS,
+part of Pegasus project from the University of Cambridge.
+
+Implementation consists of kickstart, glue code, trusted computing base components, library components and applications.
+Applications are vertically integrated - they perform most of the management themselves, which gives them high adaptivity
+and provides QoS guarantees by removing contention in services usually done by the OS, which often become bottlenecks.
+
+Common functionality is implemented as library components, which give standard tested implementations of many functions
+needed by applications in Metta environment, and also save memory by sharing code and static data between applications.
+
+
+== Kickstart ==
+
+Kickstart does all preinitialization work needed to get system going - it creates a system privileged domain, initializes
+the MMU and boots processors, then gives control to the boot modules loader. Module loader will resolve module dependencies,
+determine load order and load the TCB modules — these are the most important system modules, always trusted by other
+components.
+
 
 == Glue code ==
 
-Glue code is privileged and is not preemptible. The task of glue code is to provide support for process scheduling by 
-allowing protection domains switch.
+Glue code performs only a minimally necessary subset of operations that require privileged CPU mode. This includes
+manipulating MMU tables and switching protection domains. This code is therefore not preemptible.
 
 Code exists in glue layer for a number of reasons:
- - code is privileged and therefore needs to execute with supervisor permissions,
- - code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
- - code is generally used and needs to run atomically/uninterruptible.
+- code is privileged and therefore needs to execute with supervisor permissions,
+- code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
+- code is generally used and needs to run atomically/uninterruptible.
 
 Interrupts are also implemented as stubs in glue code, due to their privileged nature.
 
@@ -20,67 +66,36 @@ Some glue code syscalls are privileged and can be used only by members of the TC
 processes to request work from other domains.
 
 
-== TCB ==
+== Trusted Computing Base ==
 
-The following components comprise TCB: virtual processor scheduler, security server, portal manager, virtual memory
-server, trader/binder, loader. What about interrupt dispatcher, do we need one? Perhaps, at least to allow drivers 
-to register for their interrupts.
+TCB components implement features absolutely necessary for application functioning and therefore define the OS kernel.
 
-
-Kernel components have almost no private data, on which contention could arise. Most of the data for kernel calls 
+Kernel components have almost no private data, on which contention could arise. Most of the data for kernel calls
 is provided by the process engaged in the syscall, therefore not affecting service of other processes.
-This also helps API atomicity?
+This also helps API atomicity.
 
-Architecture allows in theory to implement any virtual processor scheduler and, for example, implement regular
-kernel threads with thread scheduler instead of current VCPU implementation.
+Components export functionality through one or more strongly-typed interfaces. Kernel and userspace components are
+accessed via interfaces alike.
 
-Memory allocation is peformed from a global interdomain heap, which uses entire available address space plus some
-specific application or driver requests, like low memory for 16-bit DMA etc.
+An interface definition language is used to specify the types, exceptions and methods of an interface,
+and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure
+invocations.
+
+A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and a trader
+component from the TCB may be used to find component(s) exporting a particular interface type or instance.
+
+
+== IDC ==
+
+The only default mean of inter-domain communication is Event. Sending an event is a relatively lightweight operation,
+upon which many other syncronization and communication primitives may be built.
+
+
+--------8<--------imaginary cut line--------8<--------do not cross-------->8--------imaginary cut line-------->8--------
+
 
 Dynamic loader (Sjofn), similar to OMOS server, is used to perform component relocation and linking. Employed memory
 and loading models allow to share code and static data between all domains efficiently.
 
-
-== Tasks ==
-
-Tasks run as unprivileged, preemptible and according to negotiated QoS level.
-
-
-== Startup ==
-
-During startup system loads the TCB modules — these are the most important system modules, always trusted by other
-components.
-
-
-bootup phases:
- Phase 1: System bootstrap, performed by GRUB or any other system loader. It loads kickstart - a small startup code that
-performs initialization and brings system to a well-known consistent state, for example initializes paging and builds
-or loads device tree.
- Phase 2: TCB initialization, performed by kickstart, which loads glue code and TCB components and runs their startup
-initialization code. After this stage is over, the kernel proper is ready to start running userspace programs.
- Phase 3: Complete bootup. Control is transferred from kickstart to first userspace application — root_server or init.
-init will load remaining system components and device drivers and perform initialization. Then a specified set of 
-startup programs is loaded and added to scheduling queue, control is then transferred to scheduler and all systems go.
-
--------8<------------------------------------------------------------------------------------------------------>8-------
-
 meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
 
-
-== from Nemesis ==
-
-The user-space part of the operating system is comprised of a number of distinct /modules/, each of which exports one 
-or more strongly-typed /interfaces/.
-
-An interface definition language called MIDDL is used to specify the types, exceptions and procedures of an interface, 
-and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure 
-invocations.
-
-A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and applications 
-to pick and choose between them. This may be termed ``plug and play extensibility''; we note that it is implemented 
-above the protection boundary.
-
-== from Fluke ==
-
-Exportable state: kernel structures managed by user-level pager/allocator. (needed for snapshots/persistence)
-(also, atomic IPC)
