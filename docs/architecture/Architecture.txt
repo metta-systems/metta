@@ -74,8 +74,28 @@ Kernel components have almost no private data, on which contention could arise. 
 is provided by the process engaged in the syscall, therefore not affecting service of other processes.
 This also helps API atomicity.
 
-Components export functionality through one or more strongly-typed interfaces. Kernel and userspace components are
-accessed via interfaces alike.
+Components export functionality through one or more interfaces. Kernel and userspace components are accessed via
+interfaces alike.
+
+All interfaces are strongly typed, and these types are defined in an interface definition language. It is clearly
+important, therefore, to start with a good type system, and [Evers 93] presents a good discussion of the issues of
+typing in a systems environment. The type system used in Metta is a hybrid: it includes notions both of the abstract
+types of interfaces and of concrete data types. It represents a compromise between the conceptual elegance and
+software engineering benefits of purely abstract type systems such as that used in Emerald [Raj 91], and the
+requirements of efficiency and inter-operability: the goal is to implement an operating system with few restrictions
+on programming language.
+
+Concrete types are data types whose structure is explicit. They can be predefined (such as booleans, strings, and
+integers of various sizes) or constructed (as with records, arrays, etc). The space of concrete types also includes
+typed references to interfaces.
+
+Interfaces are instances of ADTs. Interfaces are rarely static: they can be dynamically created and references to them
+passed around freely. The type system includes a simple concept of subtyping. An interface type can be a subtype of
+another ADT, in which case it supports all the operations of the supertype, and an instance of the subtype can be used
+where an instance of the supertype is required.
+
+The operations supported by interfaces are like procedure calls: they take a number of arguments and normally return
+a number of results. They can also raise exceptions, which themselves can take arguments.
 
 An interface definition language is used to specify the types, exceptions and methods of an interface,
 and a run-time typesystem allows the narrowing of types and the marshaling of parameters for non-local procedure
@@ -84,6 +104,40 @@ invocations.
 A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and a trader
 component from the TCB may be used to find component(s) exporting a particular interface type or instance.
 
+There are few restrictions on how the name space is structured. The model followed is that of [Saltzer 79]:
+a name is a textual string, a binding is an association of a name with some value, and a context is a collection of
+bindings. Resolving a name is the process of locating the value bound to it. Name resolution requires that a context
+be specified.
+
+
+== Library Components ==
+
+Library components define the base substrate upon which the whole applications are built. Library components are
+real components and they export typed interfaces just like any other component does. Most library components are
+colocated into the same protection domain as the application using them.
+
+Dynamic loader (Sjofn), similar to OMOS server, is used to perform component relocation and linking. Employed memory
+and loading models allow to share code and static data between all domains efficiently.
+
+Meta-objects (in OMOS sense) are used to create generator interfaces which instantiate modules, used by application.
+
+
+== Applications ==
+
+Applications consist of standard and custom components, which provide most of the functionality and main driver code.
+Applications service themselves - i.e. they service their own page faults or CPU scheduling decisions, often using
+standard components that provide necessary functionality already.
+
+After startup application receives it's own domain, protection domain, initially not shared with any other domains
+and a set of pervasives - a naming context which it can use to find other necessary components, a virtual CPU interface
+which it can use to make scheduling decisions, a stretch and heap interfaces which it can use to allocate memory.
+
+
+== VCPU ==
+
+Virtual CPU interface allows domains to receive notifications when they are granted or revoked a CPU time slice or when
+a page fault or some other exception occurs.
+
 
 == IDC ==
 
@@ -91,11 +145,212 @@ The only default mean of inter-domain communication is Event. Sending an event i
 upon which many other syncronization and communication primitives may be built.
 
 
+== Kickstart: sequence ==
+
+This part starts in protected mode, linear addresses equal physical, paging is off.
+
+- set up 1:1 page mapping for the bottom 4Mb of RAM
+- map glue and boot components to their designated addresses (starting, say at 4Mb)
+- enter paged mode
+- init glue code
+  - initialize exception and interrupt handlers
+  - init syscalls interface page
+- init linker
+- find bootimage PCBs
+- run PCB initialization upcalls
+  - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
+- enter them into schedule
+- run scheduler
+
+bootloader
++---kickstart
+    +---setup initial page mappings
+    +---map/move glue and boot components to their designated addresses
+    +---enable paging
+    +---glue_init
+        +---initialize syscalls interface page
+    +---kernel_init
+        +---initialize exception and interrupt handlers
+        +---find bootimage PCBs
+        +---run PCB initialization upcalls
+        +---enter them into schedule
+        +---run scheduler
+
+
+
+ * glue code:
+ * - exception handlers/stubs
+ * - minimal privileged and uninterruptible code
+ * - syscalls interface page
+
+bootimage:
+
+kernel: kickstart
+module: initfs index | glue | boot TCBs
+
+for simplicity, prelink initial components at fixed addresses and put them into normal ELF files. store entry point
+address from ELF file to PCB using buildpcb tool.
+
+
+Physical memory layout during kickstart:
+
+          physical memory
+      |                      |
+      | .................... |
+ 1Mb  +----------------------+ 0x0010_0000 --------> 0x0010_0000 identity mapped
+      | kickstart code       |
+      +----------------------+ 0x0010_7000
+      | page directory       |
+      +----------------------+ 0x0010_8000
+      | kickstart data       |
+      +----------------------+ 0x0010_9000 --------> not mapped
+      |                      |
+      | kernel module        |
+      |                      |
+      +----------------------+ 0x0011_1000
+      |                      |
+      | bootcp module        |
+      |                      |
+      +----------------------+ 0x0011_f000 --------> placement alloc starts here
+      | bootinfo page        |
+      +----------------------+ 0x0012_0000
+      | pagetable            |
+      +----------------------+ 0x0012_1000 --------> 0xf000_0000 higher-half mapped
+      | nucleus code         |
+      +----------------------+ 0x0012_2000
+      | pagetable            |
+      +----------------------+ 0x0012_3000 --------> 0xf000_1000
+      | nucleus code         |
+      +----------------------+ 0x0012_4000 --------> 0xf000_2000
+      | nucleus code         |
+      +----------------------+ 0x0012_5000 --------> 0xf000_3000
+      | nucleus code         |
+      +----------------------+ 0x0012_6000 --------> 0xf000_4000
+      | nucleus data         |
+      +----------------------+ 0x0012_7000 --------> 0xf000_5000
+      | nucleus data         |
+      +----------------------+ 0x0012_8000
+      |                      |
+      | .................... |
+      |                      |
+
+
+== Glue code: syscalls ==
+
+Available Nemesis syscalls to glue code:
+
+  privileged:
+    ntsc_swpipl        // Change interrupt priority level.
+    ntsc_entkern       // Enter kernel mode.
+    ntsc_leavekern     // Leave kernel mode.
+    ntsc_kevent        // Send an event from an interrupt stub.
+    ntsc_rti           // Return from an interrupt stub.
+
+  unprivileged:
+    ntsc_rfa           // Return from activation.
+    ntsc_rfa_resume    // Return from activation and resume context.
+    ntsc_rfa_block     // Return from activation and block.
+    ntsc_block         // Block awaiting an event.
+    ntsc_yield         // Relinquish CPU allocation for this period.
+    ntsc_send          // Send an event.
+
+Syscalls for metta glue:
+
+  privileged:
+    ??sc_activate(vcpu_t*)  Activate a process
+
+  unprivileged:
+    sc_send(int n, uint64_t event)      Send an event.
+    sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
+    sc_return_resume(context_t*) Return from activation, resuming passed context.
+    sc_return_block()  Return from activation and block.
+    sc_block()         Block awaiting an event.
+    sc_yield()         Relinquish CPU allocation for this period.
+
+
+== Applications: startup ==
+
+From the starting application process viewpoint:
+
+- load application code and data
+- read library dependencies
+- for missing libraries, load them and their dependencies
+- link calls from app to used libraries
+
+
+Library viewpoint:
+- library implements a component interface
+- this means per-client data is allocated by calling constructors of the interface
+- libraries which do not have per-client data may implement interfaces directly, but i presume this is rare.
+
+A typical application:
+- load trader library
+- load memory library
+- instantiate trader interface
+- instantiate memory interface
+- allocate something
+- use trader to locate a peer
+- instantiate a peer interface
+- send something to peer via interface instance
+
+
 --------8<--------imaginary cut line--------8<--------do not cross-------->8--------imaginary cut line-------->8--------
 
+To construct portable kernel, at least 3 different architectures should be supported.
 
-Dynamic loader (Sjofn), similar to OMOS server, is used to perform component relocation and linking. Employed memory
-and loading models allow to share code and static data between all domains efficiently.
+* x86
+* arm
+* hosted
 
-meta-objects (in omos sense) are used to create generator interfaces which instantiate modules, used by application.
+Pistachio has an excellent c++ implementation of the kernel - use it as reference.
+(e.g. OSdev/L4/l4ka-pistachio/kernel/src/generic)
 
+Kernel consists of minimal glue code, providing exception and interrupt handling.
+
+
+Answer these questions first:
+
+* Q: how do VCPUs get assigned between domains?
+
+A: "A privileged service called the Domain Manager creates DCBs and links them into the scheduler data structures."
+
+Glue code contains scheduler (EDF) to schedule domains: "glue -> scheduler -> VCPU -> domain"
+
+Glue code contains only: domain scheduler, a few system calls (6), interrupt dispatcher support, timer interrupt
+for scheduler, startup routines, minimal console for emergency output.
+
+
+
+
+
+*The kernel's view of a domain is limited to a single data structure called the Domain Control Block*
+
+domain startup: closure(methods: Go; state: everything new domain needs to get going)
+
+
+
+Components are pieces of code and static data (which has no mutable state).
+(Clemens Szypersky defines a software component as a unit of composition with contractually specified
+interfaces and explicit context dependencies only.)
+
+Applications are built from interconnected components.
+
+Components link from several shared libraries. Libraries are shared across whole system and provide means to save
+code size by sharing common implementations across running applications. Components are designed to offer services
+through interfaces, which embed references to current (per-thread) component state and list of methods that could be
+called through this interface.
+
+in-component dependencies: symbols and objects needed to build together component object.
+inter-component dependencies: other interfaces that are needed for functioning of this component, can be fullfilled
+by building or finding other component objects which provide such interfaces.
+
+
+[Component1: file.c other.o library.so [exported interfaces: Interface1 Interface2] [required interfaces: FileIO]]
+
+here, library.so's code and static data can be shared between multiple components.
+
+Q: how to create proper component instance state if library.so needs to have some local data too?
+
+
+
+For efficient linking we use technique used by OMOS object/meta-object server.
