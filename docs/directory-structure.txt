@@ -1,40 +1,35 @@
 Metta's new directory structure:
 src
-+--kernel (trusted code)
-   +--generic
-   +--$ARCH
-+--if (module interfaces)
-+--modules
-   +--system
++--apps
 +--devices
    +--pci
-+--tools
-   +--buildimage
-
-
-Metta's current directory structure:
-src
-+--arch
-   +--arm
-   +--mips
-   +--x86
-   +--x86-64
-+--common
-+--components
-   +--assocfs
-   +--interrupt_dispatcher
-   +--portal_manager
-   +--scheduler
-   +--security_server
-   +--trader
-   +--vm_server
-+--platform
-   +--pc99
++--interfaces (module interfaces)
++--kernel (trusted code)
+   +--api
+   +--generic
+   +--arch
+      +--x86
+      +--armv7
+   +--platform
+      +--pc99
+      +--beagleboard
+      +--hosted
++--modules
+   +--system
+      +--assocfs
+      +--interrupt_dispatcher
+      +--portal_manager
+      +--scheduler
+      +--security_server
+      +--trader
+      +--vm_server
 +--runtime
    +--stl
++--tests
 +--tools
    +--buildimage
    +--buildpcb
++--waftools
 
 
 Pistachio's directory structure:
