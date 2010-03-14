@@ -50,3 +50,6 @@ public:
 
     bool lookup(address_t target_pc, size_t& info_offset);
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

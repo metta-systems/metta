@@ -1,4 +1,11 @@
-// Copyright (c) 2008 James Molloy, Jörg Pfähler, Matthew Iselin
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2008 James Molloy, Jörg Pfähler, Matthew Iselin
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "stl/list"
@@ -248,3 +255,6 @@ public:
 private:
     list_type ranges;
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -83,3 +85,6 @@ bool string_t<string_type_trait>::operator ==(string_t<string_type_trait>& other
 typedef string_t<string_ascii_trait> cstring_t;
 typedef string_t<string_utf8_trait>  utf8_string_t;
 typedef string_t<string_utf16_trait> utf16_string_t;
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

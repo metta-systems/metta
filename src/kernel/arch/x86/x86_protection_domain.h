@@ -73,3 +73,6 @@ private: friend class ia32_mmu_t;
 
     static physical_address_t escrow_pages[1]; //TODO: use a pointer and allocate dynamically to nr_cpus
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,3 +1,6 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
 /*********************************************************************
  *
  * Copyright (C) 2002-2003,  Karlsruhe University

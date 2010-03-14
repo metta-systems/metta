@@ -196,3 +196,6 @@ enum {
 extern const char* tag2name(uint32_t tag);
 extern const char* attr2name(uint32_t attr);
 extern const char* form2name(uint32_t form);
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -81,3 +81,6 @@ public:
     uleb128_t operator =(uint32_t d) { data = d; return *this; }
     bool operator<(uleb128_t other) const { return data < other.data; }
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

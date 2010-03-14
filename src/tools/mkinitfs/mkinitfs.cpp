@@ -1,22 +1,23 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+// Read list file with component_file:component_id pairs and create corresponding initfs image.
+// Run mkinitfs file.lst initfs.img
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-//
-// Read list file with component_file:component_id pairs and create corresponding initfs image.
-// Run mkinitfs file.lst initfs.img
-//
-#include "types.h"
-#include "initfs.h"
-#include "raiifile.h"
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include "types.h"
+#include "initfs.h"
+#include "raiifile.h"
 
 using namespace std;
 using namespace raii_wrapper;

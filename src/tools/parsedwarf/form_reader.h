@@ -244,3 +244,6 @@ public:
     virtual bool decode(address_t from, size_t& offset);
     virtual void print();
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -69,3 +69,6 @@ abbrev_declaration_t* dwarf_debug_abbrev_t::find_abbrev(uint32_t abbreviation_co
     }
     return 0;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -77,3 +77,6 @@ private:
     static x86_frame_allocator_t allocator_instance;
     static physical_address_t    allocation_address;
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

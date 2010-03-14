@@ -1,11 +1,12 @@
 ;
-; Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+; Provides functions to read/write registers on the X86 architecture.
+;
+; Part of Metta OS. Check http://metta.exquance.com for latest version.
+;
+; Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
-;
-;
-; registers.s -- provides functions to read/write registers on the X86 architecture.
 ;
 
 global read_instruction_pointer

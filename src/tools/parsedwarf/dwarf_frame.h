@@ -37,3 +37,6 @@ class fde_t
     uint32_t address_range;
     uint8_t* instructions;
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

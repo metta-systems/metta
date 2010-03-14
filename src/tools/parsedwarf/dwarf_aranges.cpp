@@ -82,3 +82,6 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
     DPRINT(" requested 0x%x not contained in any range\n", target_pc);
     return false;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,6 +1,7 @@
-//---------------------------------------------------------------------------------------
 //
 // ELF object files linker for Metta.
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
 // Copyright (C) 2001, 2009, Stanislav Karchebny <berkus@exquance.com>
 //
@@ -14,7 +15,6 @@
 // object files. Some special features for Odin:
 // + .text and .data are linked at zero
 //
-//---------------------------------------------------------------------------------------
 
 #define __sjofn_VERSION "1.0.4"
 
@@ -1507,3 +1507,6 @@ void warning( const char *mess, ... )
 };
 
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

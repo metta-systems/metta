@@ -189,3 +189,6 @@ die_t* dwarf_parser_t::find_named_node(die_t* node, size_t cuh_offset)
 
     return 0;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

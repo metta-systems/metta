@@ -217,3 +217,6 @@ void x86_protection_domain_t::unmap(void* virtual_address)
     ia32_mmu_t::flush_page_directory_entry(virtual_address);
     virtual_page_tables[pti] = 0;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

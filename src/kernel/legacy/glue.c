@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "vcpu.h"
 
 static vcpu_t* kernel_vcpu;
@@ -40,3 +48,6 @@ void sc_return() NORETURN
 void sc_return_resume(vcpu_context_t*) NORETURN
 {
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

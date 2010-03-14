@@ -36,3 +36,6 @@ private:
     cpu_id_t id;
     protection_domain_t* protection_domain;
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

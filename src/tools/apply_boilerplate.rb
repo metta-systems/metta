@@ -1,18 +1,19 @@
 #!/usr/bin/env ruby
 #
-# Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+# Apply license and modeline changes to text source files.
+# Run as tools/apply_boilerplate.rb
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 #
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-#
-# Apply license and modeline changes to text source files.
-# Run as tools/apply_boilerplate.rb
-#
 require 'find'
 
-exclude_dirs = ['./_build_']
-no_license_dirs = ['./runtime/mustl', './runtime/ml']
+exclude_dirs = ['./_build_', './runtime/stl']
+no_license = ['./runtime/MersenneTwister.h']
 
 class Array
     def do_not_has?(path)
@@ -28,7 +29,8 @@ exts = {
     '.h'=>[license, modelines],
     '.s'=>[license.gsub(/^\/\//,";"), modelines.gsub(/^\/\//,";")],
     '.rb'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")],
-    '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
+    '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")],
+    '.if'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
 }
 
 ok_count = 0
@@ -43,7 +45,7 @@ Find.find('./') do |f|
         mod = exts[ext][1]
         modified = false
         content = IO.readlines(f).join
-        if content.index(lic).nil? && no_license_dirs.do_not_has?(dir)
+        if content.index(lic).nil? && no_license.do_not_has?(dir) && no_license.do_not_has?(f)
             content = lic + content
             modified = true
         end

@@ -158,3 +158,6 @@ public:
     std::string file_name(address_t address, address_t low_pc, address_t high_pc);
     int line_number(address_t address, address_t low_pc, address_t high_pc);
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -274,3 +274,6 @@ The previous version of my OS used 1024 free page stacks (but the new version wi
 At 8 or 16 bytes per free page stack I could probably have millions of them without any problem; but at
 4104 bytes per free page stack it starts to get expensive... ;)
 */
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -43,3 +43,6 @@ public:
 private:
     void build_tree_recurse(die_t* thisnode, size_t& offset);
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

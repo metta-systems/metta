@@ -1,11 +1,13 @@
 ;
-; Copyright 2007 - 2009, Stanislav Karchebnyy <berkus@exquance.com>
+; x86 GRUB loader.
+; jump to kickstart() in kickstart.cpp to do all the dirty job.
+;
+; Part of Metta OS. Check http://metta.exquance.com for latest version.
+;
+; Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
-;
-; x86 GRUB loader.
-; jump to kickstart() in kickstart.cpp to do all the dirty job.
 ;
 global loader                          ; making entry point visible to linker
 extern kickstart
