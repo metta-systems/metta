@@ -1,0 +1,6 @@
+This nucleus has two ways of providing the syscall interface: one is by including arch-specific
+syscalls.h file and using *_syscall ABI family of functions. These are architecture specific and try to
+perform in the fastest way possible.
+Another way is to grab kernel interface page location using kernel_interface_syscall and then by calling code
+specified in special table in the interface page. This code tries to minimize amount of context switches and does
+as much as possible in userspace, calling specialized syscalls when needed.
