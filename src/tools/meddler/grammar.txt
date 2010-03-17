@@ -1,0 +1,73 @@
+// EBNF
+
+Const = HexNumber | OctNumber | DecNumber | BinNumber ;
+ID = [A-Za-z] { [A-Za-z0-9_] } ;
+qualifiedID = ID.ID ;
+IDs = ID | qualifiedID , { "," , ID | qualifiedID } ;
+IDorConst = ID | Const;
+IDlist = ID { "," , ID } ;
+builtinType = "int8" | "int16" | "int32" | "int64" | "octet" | "card16" | "card32" | "card64" | "float" | "double" ;
+typeID = ID | qualifiedID | builtinType ;
+module = intf+ ;
+intf = ["local"] "interface" ID ["extends" ID] "{" body "}" ;
+body = { needs | exception | typedef | method } ;
+needs = { "needs" IDs ";" } ;
+fields = typeID , ID , ";" ;
+exception = "exception" ID "{" {fields} "}" ;
+arrayType = typeID ID ("[" rangeType "]")+ ;
+recordType = "record" "{" fields+ "}" ID ;
+typedef =
+    "set" , "{" , IDlist , "}" , ID |
+    "range" , IDorConst , ".." , IDorConst , ID |
+    typeID , ID |
+    "sequence" , "<" , typeID , ">" , ID |
+    arrayType |
+    recordType ;
+arg_spec = typeID , ID , { "," , ID } ;
+args = arg_spec , { "," , arg_spec } ;
+return_spec = "returns" , "(" , {args} , ")" | "never" , "returns" ;
+method = ["idempotent"] , ID , "(" , {args} , ")" , return_spec , "raises" , IDs , ";" ;
+
+// Example code
+
+interface context_v1
+{
+    needs heap;
+    sequence<string> names;
+    list() returns (names nl) raises heap.no_memory;
+}
+
+local interface type_system_v1 extends context_v1
+{
+    needs type_v1, enum_v1, interface_v1, record_v1, choice_v1;
+
+    type_v1.code alias;
+
+    set { Boolean, ShortCardinal, Cardinal, LongCardinal,
+          ShortInteger, Integer, LongInteger,
+          Real, LongReal,
+          String,
+          Octet, Char,
+          Address, Word } predefined;
+    range 0..15 hexnibble;
+
+    cardinal array_index;
+    record { array_index n; alias tc; } array;
+
+    exception not_found { string name; }
+    exception bad_code { alias code; }
+    exception incompatible {}
+
+    info(alias tc, out type_v1.any rep) returns (interface_v1& scope) raises bad_code;
+
+    size(alias tc) returns (heap_v1.size s) raises bad_code;
+
+    name(alias tc) returns (type_v1.name name) raises bad_code;
+
+    is_type(alias sub, super) returns (boolean result) raises bad_code;
+
+    narrow(type_v1.any a, alias tc) returns (type_v1.val v) raises incompatible;
+
+    unalias(alias tc) returns (alias base) raises bad_code;
+}
+

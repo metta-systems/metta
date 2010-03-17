@@ -1,0 +1,14 @@
+
+interface type_v1
+{
+    string name;
+    card64 code;
+
+    card64 val;
+    record {
+        code type;
+        val  value;
+    } any;
+
+    sequence<any> any_seq;
+}

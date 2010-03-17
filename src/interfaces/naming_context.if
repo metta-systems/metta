@@ -8,7 +8,7 @@
 --
 local interface naming_context_v1
 {
-    needs heap, type, word_table;
+    needs heap_v1, type_v1, word_table_v1;
 
     exception not_found { string name; }
     exception not_context {}
@@ -18,17 +18,23 @@ local interface naming_context_v1
     sequence<string> names;
 
     -- List all available names in a current context.
-    list()=>(names nl) raises heap.no_memory;
+    list() returns (names nl)
+        raises heap.no_memory;
 
     -- "Get" maps pathnames to objects relative to the current context.
-    get(string name, out type.any obj)=>(bool present) raises not_context, denied;
+    get(string name, out type_v1.any obj) returns (bool present)
+        raises not_context, denied;
 
-    add(string name, in type.any obj)=>() raises exists, not_context, not_found, denied;
-    remove(string name)=>() raises not_context, not_found, denied;
+    add(string name, in type_v1.any obj) returns ()
+        raises exists, not_context, not_found, denied;
+    remove(string name) returns ()
+        raises not_context, not_found, denied;
 
-    duplicate(heap& h, word_table& xlat)=>(naming_context_v1& copy) raises heap.no_memory, denied;
+    duplicate(heap_v1& h, word_table_v1& xlat) returns (naming_context_v1& copy)
+        raises heap_v1.no_memory, denied;
 
-    destroy()=>() raises denied;
+    destroy() returns ()
+        raises denied;
 }
 
 local interface naming_context_v2 extends naming_context_v1
