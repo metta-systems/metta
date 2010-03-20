@@ -11,7 +11,7 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'common runtime'.split()
+include_dirs = 'kernel/generic runtime'.split()
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
@@ -58,7 +58,8 @@ def configure(conf):
 
     # TODO: try to use yasm, but allow fallback to NASM
     # Ditto for llvm
-    conf.check_tool('compiler_cc compiler_cxx yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+    #compiler_cc compiler_cxx 
+    conf.check_tool('clang yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
@@ -73,8 +74,8 @@ def configure(conf):
     conf.setenv('ENV') # Activate the environment
     conf.env.append_unique('INCLUDE_DIRS', include_dirs)
     # Set arch-specific include paths
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'arch/'.split()))
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'platform/'.split()))
+    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
+    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
 
     # Generate config.h
     conf.define('ARCH', arch)
@@ -86,7 +87,7 @@ def configure(conf):
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
     conf.define('DWARF_DEBUG', 0)
-    conf.write_config_header('common/config.h')
+    conf.write_config_header('config.h')
 
     # Copy template env to specific ones
     conf.set_env_name('KERNEL_ENV', conf.env.copy())
@@ -149,19 +150,19 @@ def build(bld):
     toolruntime.target = 'toolruntime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
-    commons.source = 'common/elf_parser.cpp common/elf_loader.cpp common/console.cpp'.split()
+    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/elf_loader.cpp kernel/generic/console.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'
 
     platform = bld.new_task_gen('cxx', 'staticlib')
-    platform.source = map(lambda d: "platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split()) + map(lambda d: "arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
+    platform.source = map(lambda d: "kernel/platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split()) + map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
     platform.env = bld.env_of_name('KERNEL_ENV').copy()
     platform.includes = platform.env['INCLUDE_DIRS']
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'arch/x86/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp'.split()) + ['common/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp'.split())# + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -196,10 +197,10 @@ def build(bld):
     #mkinitfs.target = 'mkinitfs'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'arch/' + arch + '/' + f, 'loader.s kickstart.cpp isr.cpp idt.cpp interrupt.s'.split())
+    kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'loader.s kickstart.cpp isr.cpp idt.cpp interrupt.s'.split())
     # isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    kickstart.env.append_unique('LINKFLAGS', ['-T', '../arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
+    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.target = 'kickstart.sys'
     kickstart.uselib_local = 'platform common kernel runtime'
