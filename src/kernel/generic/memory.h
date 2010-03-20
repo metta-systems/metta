@@ -11,15 +11,17 @@
 #include "types.h"
 #include "ia32.h"
 
+//! size must be power of 2
+template <typename T, typename U>
+inline T align_up(T addr, U size)
+{
+    return (addr + size - 1) & ~(size - 1);
+}
+
 template <typename T>
 inline T page_align_up(T a)
 {
-    if (a % PAGE_SIZE)
-    {
-        a &= PAGE_MASK;
-        a += PAGE_SIZE;
-    }
-    return a;
+    return align_up(a, PAGE_SIZE);
 }
 
 template <typename T>

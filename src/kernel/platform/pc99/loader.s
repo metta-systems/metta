@@ -1,6 +1,6 @@
 ;
-; x86 GRUB loader.
-; jump to kickstart() in kickstart.cpp to do all the dirty job.
+; x86 multiboot loader.
+; jump to loader() in loader.cpp to do all the dirty job.
 ;
 ; Part of Metta OS. Check http://metta.exquance.com for latest version.
 ;
@@ -9,8 +9,8 @@
 ; Distributed under the Boost Software License, Version 1.0.
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 ;
-global loader                          ; making entry point visible to linker
-extern kickstart
+global _start                          ; making entry point visible to linker
+extern loader
 extern KICKSTART_BASE
 extern data_end
 extern bss_end
@@ -32,6 +32,9 @@ initial_stack:                         ; reserve one page for startup stack
 
 section .multiboot_info                ; mboot header should fit in first 8KiB so we make a section for it
 align 4
+jmp _start
+db 'METTALDR',0
+align 16
 multiboot_header:
     dd MAGIC
     dd FLAGS
@@ -40,17 +43,19 @@ multiboot_header:
     dd KICKSTART_BASE
     dd data_end                        ; set load_end_addr == 0 to load whole bootloader
     dd bss_end
-    dd loader
+    dd _start
 
 section .text
-loader:
+_start:
     cli
+    cld
     mov esp, initial_stack
+    push eax                           ; pass Multiboot flags
     push ebx                           ; pass Multiboot info structure
 
     mov ebp, 0                         ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
-    call  kickstart                    ; call startup loader code
+    call loader                        ; call startup loader code
 
     cli
     jmp short $                        ; halt machine should startup code return

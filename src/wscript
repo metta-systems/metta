@@ -11,15 +11,14 @@ APPNAME = 'metta'
 srcdir = '.'
 blddir = '_build_'
 
-include_dirs = 'kernel/generic runtime'.split()
+include_dirs = 'kernel kernel/generic runtime'.split()
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
-cflags = '-Wall -Wextra -Werror'.split()
+cflags = '-pipe -Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
-cxxflags = cflags + ['-std=gnu++0x']
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
 flags = '-fno-builtin -fno-stack-protector -fno-leading-underscore -ffunction-sections -fdata-sections'.split()
 
@@ -41,6 +40,8 @@ def set_options(opt):
     # build type - release, debug, profile
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile)." + '[default: %default]')
 
+    # Use clang
+    opt.add_option("--clang", action="store", default="no", help="Use clang to build (default: %default)")
 
 def configure(conf):
     # Configure for given platform
@@ -48,6 +49,7 @@ def configure(conf):
     arch = Options.options.arch
     platform = Options.options.platform
     build = Options.options.build
+    clang = Options.options.clang == 'yes'
 
     # Define categories for building:
     # * Base template environment. (ENV)
@@ -58,8 +60,12 @@ def configure(conf):
 
     # TODO: try to use yasm, but allow fallback to NASM
     # Ditto for llvm
-    #compiler_cc compiler_cxx 
-    conf.check_tool('clang yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+    if clang:
+        conf.check_tool('clang yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+        cxxflags = cflags + ['-std=c++0x']
+    else:
+        conf.check_tool('compiler_cc compiler_cxx yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+        cxxflags = cflags + ['-std=gnu++0x']
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
@@ -87,7 +93,7 @@ def configure(conf):
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
     conf.define('DWARF_DEBUG', 0)
-    conf.write_config_header('config.h')
+    conf.write_config_header('kernel/config.h')
 
     # Copy template env to specific ones
     conf.set_env_name('KERNEL_ENV', conf.env.copy())
@@ -197,7 +203,7 @@ def build(bld):
     #mkinitfs.target = 'mkinitfs'
 
     kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'loader.s kickstart.cpp isr.cpp idt.cpp interrupt.s'.split())
+    kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
     # isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])

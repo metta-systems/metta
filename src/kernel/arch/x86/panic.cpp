@@ -15,7 +15,7 @@ void panic(const char* message, const char* file, uint32_t line)
     x86_cpu_t::disable_interrupts();
 
     kconsole.set_attr(RED, YELLOW);
-    kconsole.print("PANIC! %s at %s:%d\n", message, file, (int)line);
+    kconsole << "PANIC! " << message << " at " << file << ":" << (int)line << endl;
 
     halt();
 }
@@ -25,7 +25,7 @@ void panic_assert(const char* desc, const char* file, uint32_t line)
     x86_cpu_t::disable_interrupts();
 
     kconsole.set_attr(WHITE, RED);
-    kconsole.print("ASSERTION FAILED! %s at %s:%d\n", desc, file, (int)line);
+    kconsole << "ASSERTION FAILED! " << desc << " at " << file << ":" << (int)line << endl;
 
     halt();
 }

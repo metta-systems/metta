@@ -25,10 +25,10 @@
 #include "x86_frame_allocator.h"
 #include "x86_protection_domain.h"
 #include "new.h"
-#include "stretch_driver.h"
+// #include "stretch_driver.h"
 
 // Declare C linkage.
-extern "C" void kickstart(multiboot_t::header_t* mbh);
+extern "C" void loader(multiboot_t::header_t* mbh);
 extern "C" address_t placement_address;
 extern "C" address_t KICKSTART_BASE;
 
@@ -45,7 +45,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
 /*!
  * Get the system going.
  */
-void kickstart(multiboot_t::header_t* mbh)
+void loader(multiboot_t::header_t* mbh)
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     multiboot_t mb(mbh);
@@ -78,7 +78,7 @@ void kickstart(multiboot_t::header_t* mbh)
     global_descriptor_table_t gdt;
     kconsole << "Created gdt." << endl;
 
-    stretch_driver_t::default_driver().initialise();
+//     stretch_driver_t::default_driver().initialise();
     interrupt_descriptor_table_t::instance().install();
     kconsole << "Created idt." << endl;
 

@@ -48,7 +48,6 @@
 #include "memutils.h"
 
 // #include <string.h>
-#include <climits>
 // #include <stdlib.h>
 // #include <stddef.h> //FIXME: stdlib dep!
 #include "new.h"

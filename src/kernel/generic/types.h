@@ -9,6 +9,7 @@
 #pragma once
 
 #include <stdint.h> // Use C99-mandated types.
+#include "required_features.h"
 
 #ifdef NULL
 #undef NULL

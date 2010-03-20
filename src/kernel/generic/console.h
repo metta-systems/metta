@@ -63,8 +63,8 @@ public:
     inline void print(void *p) { print((unsigned int)p); }
     inline void print(unsigned long long n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
-    template<typename T, typename... Args>
-    void print(const char* str, T value, Args... args);
+    /*template<typename T, typename... Args>
+    void print(const char* str, T value, Args... args);*/
 
     virtual void wait_ack() = 0;
 
@@ -117,6 +117,8 @@ inline console_t& operator << (console_t& con, const void* data)
     return con;
 }
 
+/*doesn't work with clang
+
 template<typename T, typename... Args>
 void console_t::print(const char* str, T value, Args... args)
 {
@@ -131,7 +133,7 @@ void console_t::print(const char* str, T value, Args... args)
         print(*str++);
     }
     PANIC("console: extra arguments provided to print");
-}
+}*/
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

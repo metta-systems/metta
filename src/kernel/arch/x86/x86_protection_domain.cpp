@@ -14,7 +14,7 @@
 #include "mmu.h"
 #include "default_console.h"
 
-range_list_t<address_t> x86_protection_domain_t::allocated_virtual_addresses;
+range_list_t<address_t> protection_domain_t::allocated_virtual_addresses;
 physical_address_t x86_protection_domain_t::escrow_pages[1] = { 0 };
 
 protection_domain_t& protection_domain_t::privileged()
@@ -36,7 +36,7 @@ bool protection_domain_t::allocate_stretch(stretch_t* stretch, size_t size, stre
     // If base is specified - verify this virtual address range is free
     if (!base)
     {
-        base = find_virtual_range_with_size(size);
+        base = 0xdeadbeef;//find_virtual_range_with_size(size);
     }
 
     if (!allocated_virtual_addresses.allocate(base, size))

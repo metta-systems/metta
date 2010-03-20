@@ -64,7 +64,7 @@
 // its own MTRand object)
 
 // #include <iostream>
-#include <climits>
+//#include <climits>
 // #include <cstdio>
 // #include <ctime>
 // #include <cmath>
