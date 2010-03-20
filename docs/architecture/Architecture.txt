@@ -12,22 +12,19 @@ publishing directly to your peers and to other media.
 
 To provide this level of service, the key implementation principles are:
 
-* It must be possible to distribute work and storage seamlessly between trusted nodes on the user's network.
-* It must be possible to easily add and remove nodes from the trusted network.
-* Information should be synchronized between nodes whenever possible.
-* It should not be possible to bring down the node by overwhelming it with work: QoS guarantees must be agreed upon.
-* Storage should be associative, not hierarchical. Cross-node links must be possible with full semantic relation data.
-* Your data must be redundant, highly available and securely stored. Publish once, share everywhere.
-* Processing of multimedia and semantically meaningful data must be fast and lean.
+ * It must be possible to distribute work and storage seamlessly between trusted nodes on the user's network.
+ * It must be possible to easily add and remove nodes from the trusted network.
+ * Information should be synchronized between nodes whenever possible.
+ * It should not be possible to bring down the node by overwhelming it with work: QoS guarantees must be agreed upon.
+ * Storage should be associative, not hierarchical. Cross-node links must be possible with full semantic relation data.
+ * Your data must be redundant, highly available and securely stored. Publish once, share everywhere.
+ * Processing of multimedia and semantically meaningful data must be fast and lean.
 
 Principles lead to technical requirements for the OS:
 
-* QoS management on all levels in the system. Agents must be able to negotiate necessary resources and OS must maintain
-promised resource guarantees.
-* Highly componentised and sandboxed system. When executing agents on behalf of other users it is crucial to provide
-data security for your own and for their data.
-* Low system management overhead. Single address space provides ways to avoid expensive data copying and most operations
-are performed in userspace at maximum possible speed.
+ * QoS management on all levels in the system. Agents must be able to negotiate necessary resources and OS must maintain promised resource guarantees.
+ * Highly componentised and sandboxed system. When executing agents on behalf of other users it is crucial to provide data security for your own and for their data.
+ * Low system management overhead. Single address space provides ways to avoid expensive data copying and most operations are performed in userspace at maximum possible speed.
 
 
 == General architecture ==
@@ -68,7 +65,7 @@ queried; these will always be a multiple of the machine's page size. The stretch
 Memory protection operations are carried out by the application through the stretch interface. This talks directly to
 the low-level translation system via simple system calls; it is not necessary to communicate with the system domain.
 Protection can be carried out in this way due to the protection model chosen which includes explicit rights for
-``change permissions'' operations. A light-weight validation process checks if the caller is authorised to
+"change permissions" operations. A light-weight validation process checks if the caller is authorised to
 perform an operation.
 
 It is also necessary that the frame which is being used for mapping (or which is being unmapped) is validated.
@@ -90,10 +87,10 @@ will typically be performed as necessary by whatever memory management hardware 
 The translation system is divided into two parts: a high-level management module, and the low-level trap handlers
 and system calls. The high-level part is private to the system domain, and handles the following:
 
-* Bootstrapping the MMU (in hardware or software), and setting up initial mappings.
-* Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management.
-* Creating and deleting protection domains.
-* Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about
+ * Bootstrapping the MMU (in hardware or software), and setting up initial mappings.
+ * Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management.
+ * Creating and deleting protection domains.
+ * Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about
   the current use of frames of main memory.
 
 The high-level translation system is used by both the stretch allocator and the frames allocator.
@@ -129,9 +126,9 @@ Glue code performs only a minimally necessary subset of operations that require 
 manipulating MMU tables and switching protection domains. This code is therefore not preemptible.
 
 Code exists in glue layer for a number of reasons:
-* code is privileged and therefore needs to execute with supervisor permissions,
-* code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
-* code is generally used and needs to run atomically/uninterruptible.
+ * code is privileged and therefore needs to execute with supervisor permissions,
+ * code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
+ * code is generally used and needs to run atomically/uninterruptible.
 
 Interrupts and exception handlers are also implemented as stubs in glue code, due to their privileged nature.
 
