@@ -1,5 +1,5 @@
 
-interface type_v1
+final interface type
 {
     string name;
     card64 code;

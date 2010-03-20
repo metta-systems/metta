@@ -28,11 +28,11 @@
 -- record { type field = default; type field = default } id;
 --
 
-local interface type_system_v1 extends context_v1
+local interface type_system_v1 extends naming_context_v1
 {
-    needs type_v1, enum_v1, interface_v1, record_v1, choice_v1;
+    needs type, enum_v1, interface_v1, record_v1, choice_v1;
 
-    type_v1.code alias;
+    type.code alias;
 
     set { Boolean, ShortCardinal, Cardinal, LongCardinal,
           ShortInteger, Integer, LongInteger,
@@ -56,15 +56,15 @@ local interface type_system_v1 extends context_v1
     exception bad_code { alias code; }
     exception incompatible {}
 
-    info(alias tc, out type_v1.any rep)=>(interface_v1& scope) raises bad_code;
+    info(alias tc, out type.any rep)=>(interface_v1& scope) raises bad_code;
 
     size(alias tc)=>(heap_v1.size s) raises bad_code;
 
-    name(alias tc)=>(type_v1.name name) raises bad_code;
+    name(alias tc)=>(type.name name) raises bad_code;
 
     is_type(alias sub, super)=>(boolean result) raises bad_code;
 
-    narrow(type_v1.any a, alias tc)=>(type_v1.val v) raises incompatible;
+    narrow(type.any a, alias tc)=>(type.val v) raises incompatible;
 
     unalias(alias tc)=>(alias base) raises bad_code;
 }
