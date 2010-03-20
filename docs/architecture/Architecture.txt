@@ -17,7 +17,7 @@ To provide this level of service, the key implementation principles are:
 * Information should be synchronized between nodes whenever possible.
 * It should not be possible to bring down the node by overwhelming it with work: QoS guarantees must be agreed upon.
 * Storage should be associative, not hierarchical. Cross-node links must be possible with full semantic relation data.
-* Your data must be redundant, highly available and securely stored. "Publish once, share everywhere".
+* Your data must be redundant, highly available and securely stored. Publish once, share everywhere.
 * Processing of multimedia and semantically meaningful data must be fast and lean.
 
 Principles lead to technical requirements for the OS:
@@ -26,23 +26,24 @@ Principles lead to technical requirements for the OS:
 promised resource guarantees.
 * Highly componentised and sandboxed system. When executing agents on behalf of other users it is crucial to provide
 data security for your own and for their data.
-* Low system management overhead.
+* Low system management overhead. Single address space provides ways to avoid expensive data copying and most operations
+are performed in userspace at maximum possible speed.
 
 
-== Implementation details ==
+== General architecture ==
 
 Metta is implemented as a Single Address Space OS, for QoS management it uses technologies found in Nemesis OS,
 part of Pegasus project from the University of Cambridge.
 
 Implementation consists of kickstart, glue code, trusted computing base components, library components and applications.
-Applications are vertically integrated - they perform most of the management themselves, which gives them high adaptivity
-and provides QoS guarantees by removing contention in services usually done by the OS, which often become bottlenecks.
+Applications are vertically integrated - they perform most of the management themselves with high adaptivity
+and maintain QoS guarantees by removing contention in services usually done by the OS, which often become bottlenecks.
 
 Common functionality is implemented as library components, which give standard tested implementations of many functions
 needed by applications in Metta environment, and also save memory by sharing code and static data between applications.
 
 
-== Single Address Space ==
+=== Single Address Space ===
 
 Virtual address space in Metta is single, shared between all processes. This means that virtual to physical
 mapping is equivalent in all domains.
@@ -62,7 +63,7 @@ be added to a "altered stretches" list for the domain.
 Any domain may request a stretch from a stretch allocator, specifying the desired size and (optionally) a starting
 address and attributes. Should the request be successful, a new stretch will be created and returned to the caller.
 The caller is now the owner of the stretch. The starting address and length of the returned stretch may then be
-queried; these will always be a multiple of the machine's page size.
+queried; these will always be a multiple of the machine's page size. The stretch is a part of protection domain.
 
 Memory protection operations are carried out by the application through the stretch interface. This talks directly to
 the low-level translation system via simple system calls; it is not necessary to communicate with the system domain.
@@ -76,13 +77,11 @@ These conditions are checked by using the RamTab, which is a simple enough struc
 
 Protection is carried out at stretch granularity -- every protection domain provides a mapping from the set of valid
 stretches to a subset of read, write, execute, meta . A domain which holds the meta right is authorised to modify
-protections and mappings on the relevant stretch.
+protections and mappings on the relevant stretch. Domain may grant read/write/execute to another domain, if needed.
 
 The accessibility of a stretch is determined by a combination of two things: the permissions for the stretch in the
 current protection domain and the global permissions of the stretch. The global permissions specify a minimum level of
 access that all domains share.
-
-(Domain may grant read/write/execute to another domain, if needed.)
 
 The translation system deals with inserting, retrieving or deleting mappings between virtual and physical addresses.
 As such it may be considered an interface to a table of information held about these mappings; the actual mapping
@@ -91,24 +90,20 @@ will typically be performed as necessary by whatever memory management hardware 
 The translation system is divided into two parts: a high-level management module, and the low-level trap handlers
 and system calls. The high-level part is private to the system domain, and handles the following:
 
-* Bootstrapping the `MMU' (in hardware or software), and setting up initial mappings.
+* Bootstrapping the MMU (in hardware or software), and setting up initial mappings.
 * Adding, modifying or deleting ranges of virtual addresses, and performing the associated page table management.
 * Creating and deleting protection domains.
 * Initialising and partly maintaining the RamTab; this is a simple data structure maintaining information about
   the current use of frames of main memory.
-  - ramtab - list of allocated physical frame ranges and their ownership and status
 
 The high-level translation system is used by both the stretch allocator and the frames allocator.
 The stretch allocator uses it to setup initial entries in the page table for stretches it has created,
 or to remove such entries when a stretch is destroyed. These entries contain protection information but are
 by default invalid: i.e. addresses within the range will cause a page fault if accessed.
 
-The high-level part of the translation system is also in the system domain: this is machine-dependent code responsible
-for the construction of page tables, and the setting up of NULL mappings for freshly allocated virtual addresses.
-These mappings are used to hold the initial protection information, and by default are set up to cause a page fault
-on the first access. Placing this functionality within the system domain means that the low-level translation system
+Placing this functionality within the system domain means that the low-level translation system
 does not need to be concerned with the allocation of page-table memory. It also allows protection faults,
-page faults and ``unallocated address'' faults to be distinguished and dispatched to the faulting application.
+page faults and "unallocated address" faults to be distinguished and dispatched to the faulting application.
 The frames allocator, on the other hand, uses the RamTab to record the owner and logical frame width
 of allocated frames of main memory.
 
@@ -119,42 +114,8 @@ User domain calls map/unmap from the stretch driver. Either mapping or unmapping
 the calling domain is executing in a protection domain which holds a meta right for the stretch containing "va".
 A consequence of this is that it is not possible to map a virtual address which is not part of some stretch.
 
-== Stretch Allocator: implementation details ==
 
-stretch_allocator [privileged]
-User API via: stretch_allocator_v1::allocate_stretch()/release_stretch()
-Kernel impl: protection_domain_t
-- range lists of available virtual memory ranges
-+ allocate_stretch
-+ release_stretch
-* there's a VA_quota implied on all stretches owned by a domain
-
-frame_allocator [privileged]
-User API via: frame_allocator_v1
-Kernel impl: frame_allocator_t
-- range lists of available physical memory ranges
-+ allocate_frame
-+ free_frame
-* There's a frame quota implied on a domain
-
-protection_domain (via stretch_allocator?) [kernel]
-- stretches list
-+ get stretch for given va?
-
-stretch_driver (bound to stretch) [userspace]
-1. map(va, pa, attr) : arrange that the virtual address va maps onto the physical address pa with the
-(machine-dependent) PTE attributes attr.
-2. unmap(va) : remove the mapping of the virtual address va. Any further access to the address should cause
-some form of memory fault.
-3. mapping(va) ->  (pa, attr) : retrieve the current mapping of the virtual address va, if any.
---> frame_allocator::allocate_region (uses constraints to allocate specific physmem for stretch)
---> routed to prot_dom mapping api? via syscalls
-
-
-DRM/GEM memory management details in Linux: http://lwn.net/Articles/283798/
-
-
-== Kickstart ==
+=== Kickstart ===
 
 Kickstart does all preinitialization work needed to get system going - it creates a system privileged domain,
 initializes the MMU and boots processors, then gives control to the boot modules loader. Module loader will resolve
@@ -162,32 +123,23 @@ module dependencies, determine load order and load the TCB modules — these are
 always trusted by other components.
 
 
-== Glue code ==
+=== Glue code ===
 
 Glue code performs only a minimally necessary subset of operations that require privileged CPU mode. This includes
 manipulating MMU tables and switching protection domains. This code is therefore not preemptible.
 
 Code exists in glue layer for a number of reasons:
-- code is privileged and therefore needs to execute with supervisor permissions,
-- code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
-- code is generally used and needs to run atomically/uninterruptible.
+* code is privileged and therefore needs to execute with supervisor permissions,
+* code is executed because of exception or interrupt and therefore needs to be both privileged and uninterruptible,
+* code is generally used and needs to run atomically/uninterruptible.
 
 Interrupts and exception handlers are also implemented as stubs in glue code, due to their privileged nature.
 
 Some glue code syscalls are privileged and can be used only by members of the TCB, others are used by application
 processes to request work from other domains.
 
-To construct portable kernel, at least 3 different architectures should be supported.
 
-    * x86
-    * arm
-    * hosted
-
-Pistachio has an excellent c++ implementation of the kernel - use it as reference.
-(e.g. OSdev/L4/l4ka-pistachio/kernel/src/generic)
-
-
-== Trusted Computing Base ==
+=== Trusted Computing Base ===
 
 TCB components implement features absolutely necessary for application functioning and therefore define the OS kernel.
 
@@ -199,15 +151,15 @@ Components export functionality through one or more interfaces. Kernel and users
 interfaces alike.
 
 All interfaces are strongly typed, and these types are defined in an interface definition language. It is clearly
-important, therefore, to start with a good type system, and [Evers 93] presents a good discussion of the issues of
+important, therefore, to start with a good type system, and [Evers93] presents a good discussion of the issues of
 typing in a systems environment. The type system used in Metta is a hybrid: it includes notions both of the abstract
 types of interfaces and of concrete data types. It represents a compromise between the conceptual elegance and
-software engineering benefits of purely abstract type systems such as that used in Emerald [Raj 91], and the
+software engineering benefits of purely abstract type systems such as that used in Emerald [Raj91], and the
 requirements of efficiency and inter-operability: the goal is to implement an operating system with few restrictions
 on programming language.
 
 Concrete types are data types whose structure is explicit. They can be predefined (such as booleans, strings, and
-integers of various sizes) or constructed (as with records, arrays, etc). The space of concrete types also includes
+integers of various sizes) or constructed (as with records, sequences, etc). The space of concrete types also includes
 typed references to interfaces.
 
 Interfaces are instances of ADTs. Interfaces are rarely static: they can be dynamically created and references to them
@@ -225,13 +177,13 @@ invocations.
 A name-space scheme (based on Plan-9 contexts) allows implementations of interfaces to be published and a trader
 component from the TCB may be used to find component(s) exporting a particular interface type or instance.
 
-There are few restrictions on how the name space is structured. The model followed is that of [Saltzer 79]:
+There are few restrictions on how the name space is structured. The model followed is that of [Saltzer79]:
 a name is a textual string, a binding is an association of a name with some value, and a context is a collection of
 bindings. Resolving a name is the process of locating the value bound to it. Name resolution requires that a context
-be specified.
+be specified. Context can bind names to other contexts, therefore providing a recursive tree-like structure.
 
 
-== Library Components ==
+=== Library Components ===
 
 Library components define the base substrate upon which the whole applications are built. Library components are
 real components and they export typed interfaces just like any other component does. Most library components are
@@ -243,7 +195,7 @@ and loading models allow to share code and static data between all domains effic
 Meta-objects (in OMOS sense) are used to create generator interfaces which instantiate modules, used by application.
 
 
-== Applications ==
+=== Applications ===
 
 Components are pieces of code and static data (which has no mutable state).
 (Clemens Szypersky defines a software component as a unit of composition with contractually specified
@@ -261,18 +213,16 @@ CPU interface which it can use to make scheduling decisions (and also a scheduli
 a stretch and heap interfaces which it can use to allocate memory.
 
 Applications run in domains. The kernel's view of a domain is limited to a single data structure called
-the Domain Control Block.
-Domain startup: closure(methods: Go; state: everything new domain needs to get going)
+the Domain Control Block. Kernel uses DCBs to schedule domains' CPU time and other resources.
 
 
-== Interfaces ==
+=== Interfaces ===
 
 Interfaces are defined in an IDL language called Meddle, a compiler named meddler will generate proper stubs from these
-IDL declarations.
-Compiler is based on LLVM framework together with the rest of JIT system.
+IDL declarations. Interface compiler is based on LLVM framework together with the rest of JIT system.
 
 
-== VCPU ==
+=== VCPU ===
 
 Virtual CPU interface allows domains to receive notifications when they are granted or revoked a CPU time slice or when
 a page fault or some other exception occurs.
@@ -281,7 +231,7 @@ VCPUs indeed perform inheritance scheduling - activation handler usually calls a
 thread to run, by giving it the rest of CPU tick.
 
 
-== IDC ==
+=== IDC ===
 
 The only default mean of inter-domain communication is Event. Sending an event is a relatively lightweight operation,
 upon which many other syncronization and communication primitives may be built.
@@ -289,177 +239,23 @@ upon which many other syncronization and communication primitives may be built.
 A networked IDC is also possible, given that component interfaces are generated from the IDL files, and therefore
 can provide marshalling and unmarshalling information for instantiating component interface stubs.
 
-Portals - sections of JIT generated code, that performs argument marshalling and request PD switch. Portals are
-generated by portal manager, which retrieves portal specifications from Interface Definition files. Portal manager
-is free to perform some specific optimizations, like portal short-circuiting, which in some cases can save a network
-roundtrip.
 
+== High-level architecture ==
 
-== Kickstart: sequence ==
+High-level functionality is provided by standard components and applications comprising Metta backbone.
 
-<REFINE ME: old text>
+=== Exocortex ===
 
-This part starts in protected mode, linear addresses equal physical, paging is off.
+Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator
+of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate
+information from other sources into your exocortex and to publish your information to other media.
+This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you,
+in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data
+across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out,
+can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
+This way you do not have to go for the news, the news come to you.
+At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain
+your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is
+synced much like p2p networks share data.
 
-- set up 1:1 page mapping for the bottom 4Mb of RAM
-- map glue and boot components to their designated addresses (starting, say at 4Mb)
-- enable paged mode
-- initialize exception and interrupt handlers
-- init syscalls interface page
-- init linker
-- find bootimage PCBs
-- run PCB initialization upcalls
-  - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
-- enter them into schedule
-- run scheduler
-
-bootimage:
-
-kernel: kickstart
-module: initfs index | glue | boot TCBs
-
-for simplicity, prelink initial components at fixed addresses and put them into normal ELF files. store entry point
-address from ELF file to PCB using buildpcb tool.
-
-
-Physical memory layout during kickstart:
-
-          physical memory
-      |                      |
-      | .................... |
- 1Mb  +----------------------+ 0x0010_0000 --------> 0x0010_0000 identity mapped
-      | kickstart code       |
-      +----------------------+ 0x0010_7000
-      | page directory       |
-      +----------------------+ 0x0010_8000
-      | kickstart data       |
-      +----------------------+ 0x0010_9000 --------> not mapped
-      |                      |
-      | kernel module        |
-      |                      |
-      +----------------------+ 0x0011_1000
-      |                      |
-      | bootcp module        |
-      |                      |
-      +----------------------+ 0x0011_f000 --------> placement alloc starts here
-      | bootinfo page        |
-      +----------------------+ 0x0012_0000
-      | pagetable            |
-      +----------------------+ 0x0012_1000 --------> 0xf000_0000 higher-half mapped
-      | nucleus code         |
-      +----------------------+ 0x0012_2000
-      | pagetable            |
-      +----------------------+ 0x0012_3000 --------> 0xf000_1000
-      | nucleus code         |
-      +----------------------+ 0x0012_4000 --------> 0xf000_2000
-      | nucleus code         |
-      +----------------------+ 0x0012_5000 --------> 0xf000_3000
-      | nucleus code         |
-      +----------------------+ 0x0012_6000 --------> 0xf000_4000
-      | nucleus data         |
-      +----------------------+ 0x0012_7000 --------> 0xf000_5000
-      | nucleus data         |
-      +----------------------+ 0x0012_8000
-      |                      |
-      | .................... |
-      |                      |
-
-
-== Glue code: syscalls ==
-
-Available Nemesis syscalls to glue code:
-
-  privileged:
-    ntsc_swpipl        // Change interrupt priority level.
-    ntsc_entkern       // Enter kernel mode.
-    ntsc_leavekern     // Leave kernel mode.
-    ntsc_kevent        // Send an event from an interrupt stub.
-    ntsc_rti           // Return from an interrupt stub.
-
-Syscalls for metta glue:
-
-  privileged:
-    ??sc_activate(vcpu_t*)  Activate a process
-
-  unprivileged:
-    sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
-    sc_return_resume(context_t*) Return from activation, resuming passed context.
-    sc_return_block()  Return from activation and block.
-    sc_block()         Block awaiting an event.
-    sc_yield()         Relinquish CPU allocation for this period.
-    sc_send(int n, uint64_t event)      Send an event.
-
-
-== Applications: startup ==
-
-From the starting application process viewpoint:
-
-- load application code and data
-- read library dependencies
-- for missing libraries, load them and their dependencies
-- link calls from app to used libraries
-
-
-Library viewpoint:
-- library implements a component interface
-- this means per-client data is allocated by calling constructors of the interface
-- libraries which do not have per-client data may implement interfaces directly, but i presume this is rare.
-
-A typical application:
-- load trader library
-- load memory library
-- instantiate trader interface
-- instantiate memory interface
-- allocate something
-- use trader to locate a peer
-- instantiate a peer interface
-- send something to peer via interface instance
-
-
-
---------8<--------imaginary cut line--------8<--------do not cross-------->8--------imaginary cut line-------->8--------
-
-For efficient linking we use technique used by OMOS object/meta-object server.
-
-----
-All Oberon needs is Single Level Storage (SLS); another innovative feature of the System i5.
-There is a "Persistent Oberon" variant that offers an SLS-like framework for those people that want to explore that avenue.
-
-Oberon the language allows direct manipulation of the hardware registers, so Oberon the OS is written entirely
-in a high-level language, without the need for assembly code.
-----
-
-
-Device drivers usually run in userspace and are coupled with interrupt handlers - usually implemented inside the same
-driver and simply waiting on an interrupt semaphore. Drivers communicate using the same portals, generated from
-interface definition files. Usually there is a rich interface defined, not only get bytes/send bytes but much more
-semantic information about what is going on and why is being maintained by either a driver or an abstraction level above
-it. This allows drivers to make much more educated decisions about, for example, read-ahead strategy to use for
-particular clients. This makes things a bit more complicated to implement, but in reality there will be some sort of
-more abstract and user-task-oriented metadriver just above more dumb and hardware-oriented "executive drivers".
-There are some system components, like security server, that implement trusted computing base and maintain overall
-integrity of the system. In case of dynamic reconfiguration and continuous upgrades this is vital. Hotswapping of
-components would be highly desirable to have, although at this point this is not planned at all.
-
-Sort of coupled with the dynamic reconfiguration is Dynamic Object Loader - a flexible, JIT-enabled system for building
-components from available building blocks like static or dynamic library files, separate object files or source files.
-According to requirements it is able to make differently built versions of the same component at different times (or
-even at the same time, if this is required). It is similar to
-[url=http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.44.2856]OMOS object server[/url].
-
-Higher level components make the user interface part. Some handle input events and make them available as signals to gui
-components, some handle drawing in virtual clipped areas called windows, one component posesses exclusive access to the
-video hardware, the Compositor, it maintains the scene visibility graph of existing windows, composes them and outputs
-via graphics card. This is more complex behind the scenes.
-
-The applications run inside nested virtual machines. Level of nesting depends on level of control needed and amount of
-emulation required to be able to run application.
-
-
--- rephrase this for Contexts case --
-Requests for finding other interfaces go through
-security server, which decides what applications should see what. It is not uncommon for application to request, e.g. a
-memory_manager interface. Even if app receives it, in reality, all its memory requests go through
-logging_debugging_memory_manager and the application is actually being debugged without knowing about it. This can
-happen for all application interactions with its environment, which effectively puts every application into a highly
-controlled sandbox, if necessary. Which, for an internet-enabled mobile OS is quite a requirement.
+..TBD..
