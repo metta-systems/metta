@@ -17,14 +17,17 @@ def find_clang(conf):
     ccroot.get_cc_version(conf,clang)
     v['CXX_NAME']='clang'
     v['CXX']=clang
+    v['COMPILER_CXX']=clang
     v['CC_NAME']='clang'
     v['CC']=clang
+    v['COMPILER_CC']=clang
 def clang_common_flags(conf):
     v=conf.env
     v['CXX_SRC_F']=''
     v['CXX_TGT_F']=['-c','-o','']
     v['CPPPATH_ST']='-I%s'
     if not v['LINK_CXX']:v['LINK_CXX']=v['CXX']
+    if not v['LINK_CC']:v['LINK_CC']=v['CC']
     v['CXXLNK_SRC_F']=''
     v['CXXLNK_TGT_F']=['-o','']
     v['LIB_ST']='-l%s'
