@@ -43,7 +43,7 @@ private:
     default_console_t();
 
     volatile unsigned char* videoram;
-    volatile unsigned int*  cursor;
+    unsigned int            cursor;
     unsigned char           attr;
 };
 
