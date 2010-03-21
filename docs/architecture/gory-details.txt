@@ -88,36 +88,50 @@ NemesisPrimal similar to kickstart in metta.
 
 Structure of the boot process:
 
-This part starts in protected mode, linear addresses equal physical, paging is off.
-
-k_startup
-* inits PIC
-* chooses a loader (@sa pistachio's loader infrastructure.)
-* runs loader load() method
+First code loaded by the bootloader tries to figure out the bootloader type and prepare for further boot.
+During preparation the loader creates bootpage - it contains information about bootstrap in custom format.
+Preparations obtain entry point address, which is then called to perform bootstrap, address of bootpage is passed in.
 
 
+GRUB (or other bootloader)
++--loader
+   +--setup stack
+   +--find_loader
+   +--loader->prepare()
+      +--create bootpage
+      +--obtain entry point address
+   +--entry point(bootpage address)
+
+Next part starts in protected mode, linear addresses equal physical, paging is off.
+
+entry point
++--k_startup
+    +--init IDT
+    +--init FPU
+    +--init PIC
+    +--get nexus ident
+    +--parse_cmdline
+    +--cpuid
+    +--cpu_init_features
+       +--init_cache
+       +--init_pmctr
+    +--clear_infopage
+    +--Timer$Enable
+    +--init_mem
+    +--enable_fpu
+    +--k_presume(Primal)
+
+Next part, Primal, "materializes system domain out of thin air":
 
 
 
-- set up 1:1 page mapping for the bottom 4Mb of RAM
-- map glue and boot components to their designated addresses (starting, say at 4Mb)
-- enable paged mode
-- initialize exception and interrupt handlers
-- init syscalls interface page
-- init linker
-- find bootimage PCBs
-- run PCB initialization upcalls
-  - component constructors will run in kernel mode, have the ability to set up their system tables etcetc,
-- enter them into schedule
-- run scheduler
 
-bootimage:
 
-kernel: kickstart
-module: initfs index | glue | boot TCBs
 
-for simplicity, prelink initial components at fixed addresses and put them into normal ELF files. store entry point
-address from ELF file to PCB using buildpcb tool.
+
+
+
+
 
 
 Physical memory layout during kickstart:
