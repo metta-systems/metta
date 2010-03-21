@@ -11,6 +11,8 @@
 #include "types.h"
 #include "cpu_information.h"
 
+extern "C" bool processor_has_cpuid();
+
 class x86_cpu_t
 {
 public:
@@ -84,7 +86,6 @@ public:
 
     inline static bool has_cpuid()
     {
-        extern "C" bool processor_has_cpuid();
         return processor_has_cpuid();
     }
 
