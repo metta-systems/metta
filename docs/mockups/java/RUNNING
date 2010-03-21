@@ -1,0 +1,51 @@
+use: ./run.sh <mockup-name>
+or:    ant -Dsketch=<mockup-name> run
+
+<mockup-name> can be one of:
+	menu.MenuSketch
+	control.FingersControlEmulatingSketch
+
+================================================================================
+
+there are additional parameters that can be passed to scripts:
+
+./run.sh <mockup-name> [[[[<opengl.on>] <fonts.on>] <width>] <height>]
+  ant -Dsketch=<mockup-name> [-Dopengl.on=<opengl.on>] [-Dfonts.on=<fonts.on>] [-Dwidth=<width>] [-Dheight=<height>]
+
+'*.on' values can be set to 'true' or 'false', width and height are any number,
+by default they are:
+
+./run.sh <mockup-name> false true -1 -1
+  ant -Dsketch=<mockup-name> -Dopengl.on=false -Dfonts.on=true -Dwidth=-1 -Dheight=-1
+
+if width or height value is -1, is it automatically fits to the user's desktop
+
+================================================================================
+
+if you want to turn on opengl, you need to do some manipulations:
+
+($JAVA_HOME can be /usr/lib/jvm/java-6-sun/jre at Linux, 
+                or C:/Program Files/Java/JRE at Windows, for example)
+
+copy ./lib/opengl/gluegen-rt.jar to $JAVA_HOME/lib/ext
+copy ./lib/opengl/jogl.jar to $JAVA_HOME/lib/ext
+
+then, if you're on 32bit windows: 
+    copy ./lib/opengl/gluegen-rt.dll to $JAVA_HOME/bin
+    copy ./lib/opengl/jogl*.dll to $JAVA_HOME/bin
+else, if you're on 32bit linux:
+    copy ./lib/opengl/libgluegen-rt.so to $JAVA_HOME/bin
+    copy ./lib/opengl/libjogl*.so to $JAVA_HOME/bin
+else, if you're on standard macosx:
+    copy ./lib/opengl/libgluegen-rt.jnlib to $JAVA_HOME/bin
+    copy ./lib/opengl/jogl*.jnlib to $JAVA_HOME/bin    
+else, if you're on 64bit windows/64bit linux/i586 windows/i586 linux/
+    macosx ppc/macosx universal:
+    extract native libraries from jar 
+        (jar xvf ./jogl-natives-<your-platform>.jar,
+         jar xvf ./gluegen-rt-natives-<your-platform>.jar) 
+    and put them to $JAVA_HOME/bin
+
+if you're also developing with JDK/JOGL, then you also need to copy these files 
+to the respective folders of JDK
+    

@@ -14,3 +14,4 @@ debugger.log
 .waf-*
 .settings
 Debug
+./docs/mockups/java/bin/*

@@ -1,0 +1,83 @@
+<project default="build-jar">
+    
+    <property name="project.dir" value="${basedir}" />
+	
+    <property name="jar.dir"  value="${project.dir}/jar"/>	
+    <property name="jar.name" value="runner" />
+
+    <property name="in.dir"      value="${project.dir}"/>		
+    <property name="in.src.dir"  value="${in.dir}/src"/>
+    <property name="in.lib.dir"  value="${in.dir}/lib"/>
+    <property name="in.data.dir" value="${in.dir}/fonts"/>
+	
+    <property name="opengl.lib.path" value="${in.lib.dir}/opengl" />	
+	
+    <property name="out.dir"      value="${project.dir}/bin"/>	
+    <property name="out.src.dir"  value="${out.dir}"/>
+    <!-- <property name="out.lib.dir"  value="${out.dir}/lib"/> -->
+    <property name="out.data.dir" value="${out.dir}/data"/>	
+    
+    <property name="sketch" value="menu.MenuSketch" />
+    <property name="opengl.on" value="false" />
+    <property name="fonts.on" value="true" />
+    <property name="width" value="-1" />
+    <property name="height" value="-1" />	
+    
+	<target name="init">
+		<path id="compile.classpath"> 
+		    <fileset dir="${in.lib.dir}" includes="**/*.jar"/>
+		</path>	
+	</target>
+	
+    <target name="build-jar" depends="init,compile">
+        <manifestclasspath property="jar.classpath" jarfile="${jar.dir}/${jar.name}.jar">
+            <classpath refid="compile.classpath"/>
+        </manifestclasspath>    	
+        <jar destfile="${jar.dir}/${jar.name}.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.exquance.metta.mockups.SketchRunner"/>
+                <attribute name="Class-Path" value="${jar.classpath}"/>
+            </manifest>
+            <fileset dir="${out.dir}"/>         
+        </jar>
+    </target>
+    
+    <target name="compile" depends="init">
+        <delete dir="${out.dir}" />
+        <mkdir dir="${out.dir}" />
+        <mkdir dir="${out.src.dir}" />      
+        <!-- <mkdir dir="${out.lib.dir}" /> -->      
+        <mkdir dir="${out.data.dir}" />
+        
+        <!-- <copy todir="${out.lib.dir}">
+              <fileset dir="${in.lib.dir}">
+                 <include name="*.jar" />
+        	  </fileset>
+        </copy> -->
+        <copy todir="${out.data.dir}">
+            <fileset dir="${in.data.dir}">
+               <include name="*.vlw" />
+            </fileset>        	
+        </copy>
+        
+        <javac destdir="${out.src.dir}" srcdir="${in.src.dir}">
+            <classpath refid="compile.classpath" />
+        </javac>
+    </target>
+    
+    <target name="build-and-run" depends="init,compile,build-jar,run" />
+    
+    <target name="run" depends="init">
+       <java jar="${jar.dir}/${jar.name}.jar"
+             fork="true">
+            <arg value="${sketch}" />
+            <arg value="${opengl.on}" />
+            <arg value="${fonts.on}" />
+            <arg value="${width}" /> 
+            <arg value="${height}" />        	
+            <jvmarg value="-Dfile.encoding=UTF-8" />
+            <jvmarg value="-Djava.library.path=${opengl.lib.path}" />       	
+            <classpath refid="compile.classpath" />
+       </java>
+    </target>
+</project>
