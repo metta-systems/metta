@@ -82,6 +82,12 @@ public:
 
     inline static cpu_information_t& current_cpu() { return cpu_information; }
 
+    inline static bool has_cpuid()
+    {
+        extern "C" bool processor_has_cpuid();
+        return processor_has_cpuid();
+    }
+
 private:
     static cpu_information_t cpu_information;
 };

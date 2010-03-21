@@ -45,7 +45,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
 /*!
  * Get the system going.
  */
-void loader(multiboot_t::header_t* mbh)
+void loader(multiboot_t::header_t* mbh) /* old loader, to be replaced with loader_format_t-based one */
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     multiboot_t mb(mbh);
