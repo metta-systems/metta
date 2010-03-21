@@ -1,4 +1,5 @@
 #include "loader.h"
+#include "panic.h"
 
 /*!
  * Main kickstart loader function. Parses through all loader formats to find a valid one.

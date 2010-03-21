@@ -219,6 +219,8 @@ public:
     uint32_t  size();
     void      copy(address_t target);
 
+    static multiboot_t* prepare();
+
 private:
     header_t*                header;
     elf32::section_header_t* strtab;
