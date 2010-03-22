@@ -50,9 +50,6 @@ _start:
 
 section .multiboot_info                ; mboot header should fit in first 8KiB so we make a section for it
 align 4
-jmp _start
-db 'METTALDR',0
-align 16
 multiboot_header:
     dd MAGIC
     dd FLAGS

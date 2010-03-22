@@ -82,11 +82,7 @@ SDom - scheduling domain.
 Loading modules creates names in modules> context e.g. modules>Gatekeeper (GatekeeperMod in nemesis).
 
 
-== Kickstart: sequence == (called Primal in Nemesis)
-NemesisPrimal similar to kickstart in metta.
-
-
-Structure of the boot process:
+== Structure of the boot process ==
 
 Since the system is highly modular, explicit code does minimal necessary initialization to start BP and APs.
 Most of the initialization is done by components during bootup module loading (which includes dependencies resolution).
@@ -104,6 +100,7 @@ module /system-boot
 
 
 First stage loader:
+
 Starts in protected mode, linear addresses equal physical, paging is off.
 
 GRUB (or other bootloader)
@@ -117,9 +114,10 @@ GRUB (or other bootloader)
 
 First stage loader does not allocate any memory, except the bootpage, which can later be freed or put into memory map.
 
-
-
 Second stage loader:
+
+Second stage loader inits CPUs, memory system, paging, interrupts, publicly accessible information and boots
+the primary domain, which will be the privileged domain during runtime and will start up all other domains as necessary.
 
 entry point
 +--k_startup
@@ -138,13 +136,21 @@ entry point
     +--enable_fpu
     +--k_presume(Primal)
 
-Next part, Primal, "materializes system domain out of thin air":
+TODO: relate Pistachio SMP startup routines here.
 
 Third stage loader:
 
+Next part, primary domain, "materializes system domain out of thin air".
+It reads the list of system "applications" and components from the boot image and adds them to the domain list.
+It also holds the default pervasives list which system domains use during startup.
 
+Uses namespace lookups in nexus - TBD how this works.
 
-
+Primal
++--init_nexus   (finds load image size and startup heap size)
++--set up pervasives
++--create MMU component
++--init frames allocator module (bootpage still has memory map that is used by frames mod)
 
 
 

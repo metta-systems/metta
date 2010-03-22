@@ -12,60 +12,30 @@
 #include "memory.h"
 #include "memutils.h"
 
-class bootrec_t
-{
-    uint32_t type;
-    uint32_t version;
-    uint32_t size;
-};
-
-class bootrec_module_t : public bootrec_t
-{
-};
-
-class bootrec_efi_t : public bootrec_t
-{
-};
-
-// put whole multiboot header into the bootinfo page
-class bootrec_multiboot_t : public bootrec_t
-{
-};
-
-class bootrec_device_tree_t : public bootrec_t
-{
-};
+// Rather arbitrary location for the bootinfo page.
+#define BOOTINFO_PAGE ((void*)0x8000)
 
 /*!
  * Provides access to boot info page structures.
  *
- * boot info page layout
- * -------------------- START of page
- * 4 bytes magic
- * 4 bytes version
- * 4 bytes size
- * 4 bytes first entry offset
- * 4 bytes entry count
- * then a list of bootrec_t subtypes
- * (free space)
- * -------------------- END of page
+ * Common way of accessing it is to create an instance of bootinfo_t using placement new at the location
+ * of BOOTINFO_PAGE, e.g.:
+ * bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+ * Then you can add items or query items.
  */
 class bootinfo_t
 {
     uint32_t magic;
-    uint32_t version;
-    uint32_t size;
-    uint32_t first_entry;
-    uint32_t n_entries;
+    char*    free;
+
+    static const uint32_t BI_MAGIC = 0xbeefdea1;
 
 public:
-    bootinfo_t(bool existing = false);
-    bool valid() const { return magic == BI_MAGIC && version == BI_VERSION; }
-    inline size_t size() const { return this->size; }
-    bootrec_t* first_entry() const;
-    uint32_t num_entries() const { return n_entries; }
+    bootinfo_t(bool create_new = false);
+    inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
+    inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
-    bool append(bootrec_t* rec);
+    bool append(multiboot_t* mb);
 
 //     multiboot_t::header_t* multiboot_header();
 //     bool append_mmap_entry(multiboot_t::mmap_entry_t* entry);

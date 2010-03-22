@@ -2,6 +2,8 @@
  * Loader version that supports multiboot specification.
  */
 #include "multiboot.h"
+#include "bootinfo.h"
+#include "new.h"
 
 /*!
  * Check if a valid multiboot info structure is present.
@@ -14,8 +16,8 @@ bool mbi_probe()
         return false;
 
     // Make a safe copy of the MBI structure itself.
-//     memcopy (&mbi_copy, _mbi, sizeof (mbi_t));
-//     mbi = &mbi_copy;
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bi->append(_mbi);
 
     return true;
 }

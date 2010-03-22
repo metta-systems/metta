@@ -70,7 +70,7 @@ multiboot_t::mmap_t* multiboot_t::memory_map() const
 */
 uint32_t multiboot_t::size()
 {
-    uint32_t total = sizeof(uint32_t) + sizeof(multiboot_t::header_t);
+    uint32_t total = 0;
     uint32_t alignment_space, cmdline_len;
 
     cmdline_len = 1 + memutils::string_length(header->cmdline);
@@ -90,34 +90,25 @@ uint32_t multiboot_t::size()
     return total;
 }
 
-
 /*!
-* Copies the current multiboot info into a new location.
-*
-* Boot info page gathers some data from the bootloader and passes it into nucleus for memory regions and
-* pagetables initialization. Multiboot info is almost at the start of boot info page.
-*
-* Layout of boot info page:
-* uint32_t first_free_byte; // address of first free byte within this page (after all infos), size of useful data.
-* uint32_t flags;
-* multiboot_t::header_t mb_header;
-* char cmdline[]; // aligned
-* multiboot_t::modinfo_t  mod_infos[num_infos];
-* char mod_cmdlines[]; // aligned
-* mmap_entry_t mmap[];
-*
-* use elf loader to unpack modules and update markings in modinfos (need to extend modinfos to include mappping info?)
-* add fake mmap entry to cover newly allocated blocks and mark them as bootloader_specific memory type
-*
-* @param target The destination for the new copy. Must have enough
-*               space to store the copy. The space is calculated
-*               via the size() method.
-*/
-void multiboot_t::copy(address_t target)
+ * Copies the current multiboot info into a new location.
+ *
+ * Boot info page gathers some data from the bootloader and passes it into nucleus for memory regions and
+ * pagetables initialization.
+ *
+ * Layout of multiboot inside boot info page:
+ * multiboot_t::header_t mb_header;
+ * char cmdline[]; // aligned
+ * multiboot_t::modinfo_t  mod_infos[num_infos];
+ * char mod_cmdlines[]; // aligned
+ * mmap_entry_t mmap[];
+ *
+ * @param target The destination for the new copy. Must have enough
+ *               space to store the copy. The space is calculated
+ *               via the size() method.
+ */
+void multiboot_t::copy(char* target)
 {
-    size_t* size_ptr = reinterpret_cast<size_t*>(target);
-    target += sizeof(size_t) + sizeof(uint32_t);
-
     header_t* target_header = reinterpret_cast<header_t*>(target);
 
     // Copy the multiboot header structure.
@@ -162,12 +153,12 @@ void multiboot_t::copy(address_t target)
     }
 
     // This is where we put our memmap.
-    target = reinterpret_cast<address_t>(strings);
+    target = strings;
 
     mmap_t* memmap = memory_map();
     if (memmap)
     {
-        target_header->mmap.set_addr(target);
+        target_header->mmap.set_addr(reinterpret_cast<address_t>(target));
 
         uint32_t mmap_length = 0;
         multiboot_t::mmap_entry_t* mmi = memmap->first_entry();
@@ -181,8 +172,6 @@ void multiboot_t::copy(address_t target)
         }
         target_header->mmap.set_size(mmap_length);
     }
-
-    *size_ptr = target - reinterpret_cast<address_t>(size_ptr); // black muti magic
 }
 
 

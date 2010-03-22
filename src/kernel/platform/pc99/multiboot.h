@@ -217,7 +217,7 @@ public:
     mmap_t* memory_map() const;
 
     uint32_t  size();
-    void      copy(address_t target);
+    void      copy(char* target);
 
     static multiboot_t* prepare();
 
