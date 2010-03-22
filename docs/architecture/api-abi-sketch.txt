@@ -1,4 +1,6 @@
 Contexts allow apps to search for services.
+Contexts are syntactically just strings. A string like com.exquance.metta defines a context consisting of three subcontexts.
+
 
 
 Fractal is a modular, extensible and programming language agnostic component model that can be used to design, implement, deploy and reconfigure systems and applications, from operating systems to middleware platforms and to graphical user interfaces. The goal of Fractal is to reduce the development, deployment and maintenance costs of software systems in general, and of ObjectWeb projects in particular.
