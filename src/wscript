@@ -146,7 +146,7 @@ def build(bld):
 
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete memutils cstring stdlib'.split())
+    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete placement_new memutils cstring stdlib'.split())
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
@@ -206,7 +206,7 @@ def build(bld):
 
     kickstart = bld.new_task_gen('cxx', 'program')
     kickstart.target = 'kickstart.sys'
-    kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp']
+    kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']

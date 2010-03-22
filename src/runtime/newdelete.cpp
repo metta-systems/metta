@@ -63,11 +63,6 @@ static inline void* small_alloc(size_t size)
     return (void*)tmp;
 }
 
-void* operator new(UNUSED_ARG size_t size, void* place)
-{
-    return place;
-}
-
 void* operator new(size_t size, bool page_align, address_t* addr)
 {
     kconsole << RED << "operator new(" << (int)size << ", " << (int)page_align << ", " << (address_t)addr << ")";
