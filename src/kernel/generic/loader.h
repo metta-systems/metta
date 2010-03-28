@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 
 /*!
  * A particular type of loader format (e.g. multiboot-compliant loader).
@@ -29,10 +30,10 @@ public:
 #define NULL_LOADER { "null", NULL, NULL }
 
 /*!
- * NULL_LOADER terminated array of loader formats.
+ * NULL_LOADER-terminated array of loader formats.
  */
 extern loader_format_t loader_formats[];
 
 // Prototypes for architecture-specific functions
-void launch_kernel(address_t entry);
+void launch_kernel(address_t entry) NORETURN;
 void flush_cache();

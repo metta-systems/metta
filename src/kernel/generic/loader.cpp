@@ -7,6 +7,8 @@
  */
 extern "C" void loader()
 {
+//     run_global_ctors();
+
     bochs_console_print_str("loader()\n");
     loader_format_t* format = NULL;
 
@@ -24,7 +26,8 @@ extern "C" void loader()
         PANIC("No valid loader format found.");
     }
 
-    bochs_console_print_str("format->init()\n");
+    bochs_console_print_str(format->name);
+    bochs_console_print_str(" ->init()\n");
     address_t entry = format->init();
 
     if (!entry)
