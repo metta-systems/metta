@@ -4,11 +4,18 @@ SECTIONS
     .text ALIGN(4) : {
         _kickstart_begin = .;
         *(.multiboot_info)
-        *(.text)
+        *(.text*)
         *(.*data*)
+        /* global static initializers */
+        . = ALIGN(4);
+        ctors_GLOBAL = .;
+        *(.ctor*)
+        QUAD(0)
         _data_end = .;
+        *(COMMON*)
+        *(.bss*)
+        _bss_end = .;
     }
-    _bss_end = .;
     _end = .;
     _kickstart_end = .;
 
