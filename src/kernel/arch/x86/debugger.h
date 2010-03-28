@@ -70,7 +70,7 @@ inline void bochs_console_print_str(const char* str)
 inline void bochs_break()
 {
     x86_cpu_t::outw(0x8A00,0x8A00);
-    x86_cpu_t::outw(0x8A00,0x08AE0);
+    x86_cpu_t::outw(0x8A00,0x8AE0);
 }
 
 //traps into debug console (add "magic_break: enabled=1" to bochs config)
