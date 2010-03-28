@@ -27,6 +27,9 @@ extern "C" void loader()
     bochs_console_print_str("format->init()\n");
     address_t entry = format->init();
 
+    if (!entry)
+        PANIC("kernel not found!");
+
     // Flush caches (some archs don't like code in their D-cache).
     flush_cache();
 
