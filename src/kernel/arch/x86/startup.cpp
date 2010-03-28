@@ -1,4 +1,6 @@
 //
+// Kernel startup initialisation.
+//
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
 // Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
@@ -28,9 +30,9 @@
 // #include "stretch_driver.h"
 
 // Declare C linkage.
-extern "C" void loader(multiboot_t::header_t* mbh);
-extern "C" address_t placement_address;
-extern "C" address_t KICKSTART_BASE;
+extern "C" void kernel_startup();
+// extern "C" address_t placement_address;
+// extern "C" address_t KICKSTART_BASE;
 
 static void map_identity(const char* caption, address_t start, address_t end)
 {
@@ -44,15 +46,38 @@ static void map_identity(const char* caption, address_t start, address_t end)
 
 /*!
  * Get the system going.
- */
-void loader(multiboot_t::header_t* mbh) /* old loader, to be replaced with loader_format_t-based one */
+
+Second stage loader inits CPUs, memory system, paging, interrupts, publicly accessible information and boots
+the primary domain, which will be the privileged domain during runtime and will start up all other domains as necessary.
+
+entry point
++--kernel_startup
+    +--init IDT
+    +--init FPU
+    +--init PIC
+    +--get nexus ident
+    +--parse_cmdline
+    +--cpuid
+    +--cpu_init_features
+       +--init_cache
+       +--init_pmctr
+    +--clear_infopage
+    +--Timer$Enable
+    +--init_mem
+    +--enable_fpu
+    +--k_presume(Primal)
+
+TODO: relate Pistachio SMP startup routines here.
+
+*/
+void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-    multiboot_t mb(mbh);
+//     multiboot_t mb(mbh);
 
-    ASSERT(mb.module_count() > 0);
-    multiboot_t::modinfo_t* bootimage = mb.module(0);
-    ASSERT(bootimage);
+//     ASSERT(mb.module_count() > 0);
+//     multiboot_t::modinfo_t* bootimage = mb.module(0);
+//     ASSERT(bootimage);
 
     x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
