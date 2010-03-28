@@ -212,6 +212,14 @@ def build(bld):
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'platform common runtime'
 
+    startup = bld.new_task_gen('cxx', 'program')
+    startup.target = 'kernel-startup.sys'
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp'.split())
+    startup.env = bld.env_of_name('KERNEL_ENV').copy()
+    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
+    startup.includes = kickstart.env['INCLUDE_DIRS']
+    startup.uselib_local = 'platform common runtime'
+
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
     ## isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
@@ -241,8 +249,8 @@ def build(bld):
         dict = {'ROOT': 'fd0'}
     )
 
-    bld.new_task_gen(# arch/'+arch+'/nucleus.bin initfs.img
-        source = 'kickstart.sys tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
+    bld.new_task_gen(
+        source = 'kickstart.sys kernel-startup.sys initfs.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
         target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),

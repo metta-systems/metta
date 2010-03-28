@@ -96,7 +96,8 @@ binary blob containing all other components together with second stage loader as
 
 E.g.,
 kernel /kickstart
-module /system-boot
+module /kernel-startup
+module /system-bootimage
 
 
 First stage loader:
@@ -140,6 +141,7 @@ TODO: relate Pistachio SMP startup routines here.
 
 Third stage loader:
 
+Third stage loader is part of system-bootimage.
 Next part, primary domain, "materializes system domain out of thin air".
 It reads the list of system "applications" and components from the boot image and adds them to the domain list.
 It also holds the default pervasives list which system domains use during startup.

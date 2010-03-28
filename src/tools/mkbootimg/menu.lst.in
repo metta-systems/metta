@@ -3,19 +3,23 @@ timeout 1
 title Metta
     root (@ROOT@)
     kernel /kickstart
-    module /bootcomps
+    module /kernel-startup
+    module /system-bootimage
 
 title Metta [debug output]
     root (@ROOT@)
     kernel /kickstart debug
-    module /bootcomps
+    module /kernel-startup
+    module /system-bootimage
 
 title Metta 32-bit only
     root (@ROOT@)
     kernel /kickstart no64
-    module /bootcomps
+    module /kernel-startup
+    module /system-bootimage
 
 title Metta 32-bit only [debug output]
     root (@ROOT@)
     kernel /kickstart no64 debug
-    module /bootcomps
+    module /kernel-startup
+    module /system-bootimage
