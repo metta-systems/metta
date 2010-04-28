@@ -12,6 +12,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
+// first elf image indicates the bootstrap file, which is then rooted at start of pcb image.
+// subsequent images are relocated to their absolute address to allow running them during startup.
+
+
+// 
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

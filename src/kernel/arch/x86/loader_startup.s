@@ -13,13 +13,18 @@ extern kernel_startup
 
 bits 32                                ; 32 bit PM
 
-section .text
+[section .bss]
+align 0x1000
+resb 0x1000
+initial_stack:                         ; reserve one page for startup stack
+
+[section .text]
 _start:
     cli
     cld
 
-    call setup_gdt
-    call setup_idt
+;    call setup_gdt
+;    call setup_idt
 
     mov esp, initial_stack
     mov ebp, 0                         ; make base pointer NULL here so we know

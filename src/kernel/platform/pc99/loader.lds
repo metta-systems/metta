@@ -22,3 +22,13 @@ SECTIONS
     /* Strip unnecessary stuff */
     /DISCARD/ : { *(.comment .note* .eh_frame .dtors) }
 }
+
+/*
+TODO: use ld script to assemble and relink all the used modules to right addresses:
+should be possible with a bit of LD voodoo.
+*/
+
+/*
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
+*/

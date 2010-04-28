@@ -41,42 +41,36 @@
 
 #define SEARCH_DIRS_MAX 10
 
+using namespace elf32;
 
 //------------------------------------------------------------------------
 // Types Definition
 //------------------------------------------------------------------------
 
-typedef unsigned long  dword;
-typedef unsigned short word;
-typedef unsigned char  byte;
-
-struct local;
-struct section;
-
-typedef struct object    // ELF object
+class elf_object_t
 {
-   object     *next;     // next object in the list
-   char       *filename; // name of the object file
-   FILE       *fp;       // file pointer
-   local      *locals;   // list of object's locals
-   section    *sections; // list of object's sections
+    std::string filename; // name of the object file
+    FILE*       fp;
+    std::list<elf_local>   locals;
+    std::list<elf_section> sections;
 
-   int open( char *filename );
-   int add_section( char *name, Elf32_Shdr *header, Elf32_Word secndx, char *data );
-   int add_local( char *name, Elf32_Sym *sym );
+    int open(std::string filename);
+    int add_section(std::string name, section_header_t* header, word_t index, char *data);
+    int add_local(std::string name, symbol_t *sym);
 
-   section *get_section_by_type( Elf32_Word type );
+    elf_section_t *get_section_by_type(word_t type);
 };
 
-typedef struct section   // object section
+// section    *next;     // next section in the object's sections list
+// section    *ord_next; // next section in the ordered sections list
+
+class elf_section_t   // object file section
 {
-   section    *next;     // next section in the object's sections list
-   section    *ord_next; // next section in the ordered sections list
-   object     *parent;   // object owning this section
-   char       *name;     // name of the section (pointer into object's strtab)
-   Elf32_Shdr *header;   // section header      (pointer into object's shtab)
-   char       *contents; // section contents
-   Elf32_Word  offset;   // new section offset  (after rearrangement)
+    elf_object_t     *parent;   // object owning this section
+    char       *name;     // name of the section (pointer into object's strtab)
+    section_header_t *header;   // section header      (pointer into object's shtab)
+    char       *contents; // section contents
+    word_t  offset;   // new section offset  (after rearrangement)
 };
 
 typedef struct global

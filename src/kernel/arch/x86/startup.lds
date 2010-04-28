@@ -1,17 +1,11 @@
-/* This is x86 linker script. */
-/* Ensure everything goes in the right order. */
-ENTRY (_start)
-OUTPUT_FORMAT(elf32-i386)
-
 SECTIONS
 {
-    KICKSTART_BASE = 0x100000;
+    KICKSTART_BASE = 0x104000;
     PAGE_SIZE = 0x1000;
 
     . =  KICKSTART_BASE;
     .text ALIGN (4) :
     {
-        *(.multiboot_info)
         *(.text*)
         *(.rodata*)
         /* global static initializers */

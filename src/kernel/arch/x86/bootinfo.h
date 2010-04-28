@@ -35,17 +35,12 @@ public:
     inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
+    // Append parts of multiboot header in a format suitable for bootinfo page.
     bool append(multiboot_t* mb);
 
-//     multiboot_t::header_t* multiboot_header();
 //     bool append_mmap_entry(multiboot_t::mmap_entry_t* entry);
 //     void mmap_prepare(multiboot_t::mmap_t* mmap);
 };
-
-// inline multiboot_t::header_t* bootinfo_t::multiboot_header()
-// {
-//     return reinterpret_cast<multiboot_t::header_t*>(this + sizeof(size_t) + sizeof(uint32_t));
-// }
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

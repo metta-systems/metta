@@ -40,6 +40,7 @@ To construct portable kernel, at least 3 different architectures should be suppo
 * x86
 * arm
 * hosted
+* mips?
 
 Pistachio has an excellent c++ implementation of the kernel - use it as reference.
 (e.g. OSdev/L4/l4ka-pistachio/kernel/src/generic)
@@ -100,7 +101,7 @@ module /kernel-startup
 module /system-bootimage
 
 
-First stage loader:
+First stage loader: /kickstart
 
 Starts in protected mode, linear addresses equal physical, paging is off.
 
@@ -114,11 +115,13 @@ GRUB (or other bootloader)
    +--entry point(bootpage address)
 
 First stage loader does not allocate any memory, except the bootpage, which can later be freed or put into memory map.
+It relocates the second stage loader to be able to run and kicks it off.
 
-Second stage loader:
 
-Second stage loader inits CPUs, memory system, paging, interrupts, publicly accessible information and boots
-the primary domain, which will be the privileged domain during runtime and will start up all other domains as necessary.
+Second stage loader: /kernel-startup
+
+Second stage loader inits CPUs, memory system, paging, interrupts, publicly accessible information and boots the primary domain, which will be the privileged domain during runtime and will start up all other domains as necessary.
+Primary domain will be booted with paging enabled mapped to a virtual address already (whole /system-bootimage will be mapped).
 
 entry point
 +--k_startup
@@ -139,10 +142,9 @@ entry point
 
 TODO: relate Pistachio SMP startup routines here.
 
-Third stage loader:
+Third stage loader: in /system-bootimage
 
-Third stage loader is part of system-bootimage.
-Next part, primary domain, "materializes system domain out of thin air".
+Primary domain "materializes system domain out of thin air".
 It reads the list of system "applications" and components from the boot image and adds them to the domain list.
 It also holds the default pervasives list which system domains use during startup.
 
@@ -154,7 +156,7 @@ Primal
 +--create MMU component
 +--init frames allocator module (bootpage still has memory map that is used by frames mod)
 
-
+Primal runs only on BP.
 
 
 
@@ -162,42 +164,28 @@ Primal
 Physical memory layout during kickstart:
 
           physical memory
+   0  +----------------------+ 0x0000_0000
       |                      |
+      +----------------------+ 0x0000_8000
+      | bootinfo page        |
+      +----------------------+ 0x0000_9000
       | .................... |
  1Mb  +----------------------+ 0x0010_0000 --------> 0x0010_0000 identity mapped
       | kickstart code       |
-      +----------------------+ 0x0010_7000
-      | page directory       |
       +----------------------+ 0x0010_8000
       | kickstart data       |
-      +----------------------+ 0x0010_9000 --------> not mapped
+      +----------------------+ 0x0010_9000 --------> 
       |                      |
-      | kernel module        |
+      | /kernel-startup      |
+      |  module              |
       |                      |
-      +----------------------+ 0x0011_1000
+      +----------------------+ 0x0011_1000 --------> 0x0100_0000 mapped at 16mb
       |                      |
-      | bootcp module        |
+      | /system-bootimage    |
+      |  module              |
       |                      |
       +----------------------+ 0x0011_f000 --------> placement alloc starts here
-      | bootinfo page        |
-      +----------------------+ 0x0012_0000
-      | pagetable            |
-      +----------------------+ 0x0012_1000 --------> 0xf000_0000 higher-half mapped
-      | nucleus code         |
-      +----------------------+ 0x0012_2000
-      | pagetable            |
-      +----------------------+ 0x0012_3000 --------> 0xf000_1000
-      | nucleus code         |
-      +----------------------+ 0x0012_4000 --------> 0xf000_2000
-      | nucleus code         |
-      +----------------------+ 0x0012_5000 --------> 0xf000_3000
-      | nucleus code         |
-      +----------------------+ 0x0012_6000 --------> 0xf000_4000
-      | nucleus data         |
-      +----------------------+ 0x0012_7000 --------> 0xf000_5000
-      | nucleus data         |
-      +----------------------+ 0x0012_8000
-      |                      |
+      |                      |                       do we need it at all? try to avoid.
       | .................... |
       |                      |
 

@@ -35,5 +35,5 @@ public:
 extern loader_format_t loader_formats[];
 
 // Prototypes for architecture-specific functions
-void launch_kernel(address_t entry) NORETURN;
+void launch_kernel(address_t entry);// NORETURN;
 void flush_cache();

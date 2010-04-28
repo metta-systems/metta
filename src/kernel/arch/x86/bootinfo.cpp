@@ -12,8 +12,8 @@
 /*!
  * boot info page layout
  * -------------------- START of page
- * 4 bytes magic
- * 4 bytes address of first free byte
+ * 4 bytes magic (0xbeefdea1)
+ * 4 bytes offset of first free byte
  * then a list of bootrec_t subtypes
  * (free space)
  * -------------------- END of page
@@ -21,10 +21,12 @@
 
 enum bootrec_type_e
 {
-    bootrec_multiboot = 1,
+    bootrec_module = 1, // loadable module info
+    bootrec_memory_map, // memory map info
+    bootrec_command_line, // command line info
     bootrec_device_tree,
-    bootrec_command_line,
-    end
+    end,
+    bootrec_multiboot // FIXME: remove me
 };
 
 class bootrec_t
@@ -32,6 +34,20 @@ class bootrec_t
 public:
     uint16_t type;
     uint16_t size;
+};
+
+class bootrec_module_t : public bootrec_t
+{
+public:
+    uint32_t start;
+    uint32_t end;
+    char*    name;
+};
+
+union bootrec_info_t
+{
+    bootrec_t        rec;
+    bootrec_module_t module;
 };
 
 bootinfo_t::bootinfo_t(bool create_new)
@@ -43,8 +59,24 @@ bootinfo_t::bootinfo_t(bool create_new)
     }
 }
 
+//! Store module info, memmap and command line from multiboot header.
 bool bootinfo_t::append(multiboot_t* mb) // TODO: check remaining space
 {
+    // append modules
+    for (uint32_t i = 0; i < mb->module_count(); i++)
+    {
+        modinfo_t* mod = mb->module(i);
+
+        bootrec_t* bm = new(free) bootrec_t;
+        bm->type = bootrec_module;
+        bm->size = 8 + strlen(mod->name) + 1;
+        *reinterpret_cast<uint32_t*>(free + 4) = mod->mod_start;
+        *reinterpret_cast<uint32_t*>(free + 8) = mod->mod_end;
+        memcpy(free + 12, mod->name, strlen(mod->name) + 1);
+        free += bm->size;
+    }
+    // append command line
+    // append memory map
     bootrec_t* bm = new(free) bootrec_t;
     bm->type = bootrec_multiboot;
     bm->size = mb->size();

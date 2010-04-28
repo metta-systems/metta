@@ -90,17 +90,18 @@ section_header_t* elf_parser_t::section_header(cstring_t name) const
 
 bool elf_parser_t::is_valid() const
 {
-#define ERROR_RETURN_ON(x) \
+//     kconsole << RED << "elf file parsing @" << start << " failed: " << s <<endl;
+#define ERROR_RETURN_ON(x, s) \
 if (x) { \
     return false; \
 }
 
-    ERROR_RETURN_ON(!header);
-    ERROR_RETURN_ON(header->magic != ELF_MAGIC);
-    ERROR_RETURN_ON(header->elfclass != ELF_CLASS_32);
-    ERROR_RETURN_ON(header->data != ELF_DATA_2LSB);
-    ERROR_RETURN_ON(header->machine != EM_386);
-    ERROR_RETURN_ON(header->version != EV_CURRENT);
+    ERROR_RETURN_ON(!header, "no header");
+    ERROR_RETURN_ON(header->magic != ELF_MAGIC, "bad magic")
+    ERROR_RETURN_ON(header->elfclass != ELF_CLASS_32, "wrong class")
+    ERROR_RETURN_ON(header->data != ELF_DATA_2LSB, "wrong endianness")
+    ERROR_RETURN_ON(header->machine != EM_386, "wrong architecture")
+    ERROR_RETURN_ON(header->version != EV_CURRENT, "wrong version")
 
     return true;
 #undef ERROR_RETURN_ON
@@ -113,23 +114,13 @@ bool elf_parser_t::parse(address_t start)
 {
     header = reinterpret_cast<header_t*>(start);
 
-//     kconsole << RED << "elf file parsing @" << start << " failed: " << s <<endl;
-#define ERROR_RETURN_ON(x, s) \
-if (x) { \
-    return false; \
-}
-
-    ERROR_RETURN_ON(header->magic != ELF_MAGIC, "bad magic")
-    ERROR_RETURN_ON(header->elfclass != ELF_CLASS_32, "wrong class")
-    ERROR_RETURN_ON(header->data != ELF_DATA_2LSB, "wrong endianness")
-    ERROR_RETURN_ON(header->machine != EM_386, "wrong architecture")
-    ERROR_RETURN_ON(header->version != EV_CURRENT, "wrong version")
+    if (!is_valid())
+        return false;
 
     symbol_table = section_header_by_type(SHT_SYMTAB);
     string_table = section_header(".strtab");
 
     return true;
-#undef ERROR_RETURN_ON
 }
 
 // kate: indent-width 4; replace-tabs on;

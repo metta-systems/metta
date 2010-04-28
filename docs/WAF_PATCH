@@ -1,0 +1,1 @@
+Make waf work like cmake - output object files with "file.cpp.o" suffix, not just .o (e.g. file.s.o and file.cpp.o)

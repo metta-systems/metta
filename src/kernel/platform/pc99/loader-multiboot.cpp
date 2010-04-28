@@ -3,6 +3,7 @@
  */
 #include "multiboot.h"
 #include "bootinfo.h"
+#include "elf_parser.h"
 #include "new.h"
 
 /*!
@@ -109,6 +110,6 @@ address_t mbi_init()
 //                  L4_BootLoaderSpecificMemoryType,
 //                  kip_manager_t::desc_boot_module);
 // 
-
-    return _mbi->module(0)->reserved; //todo: elf_load the module to figure out the entry address?
+    elf_parser_t elf(mbi->module(1)->mod_start);
+    return elf.get_entry_point();
 }

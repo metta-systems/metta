@@ -14,6 +14,14 @@
 //TODO:
 //add kdebug as kconsole or null_console depending on boot flags
 
+// // kc_debug() << "Hello world"; will print only in debug mode
+// inline default_console_t& kc_debug()
+// {
+//     default_console_t& ref = default_console_t::self();
+//     ref.set_log_level(default_console_t::debug);
+//     return ref;
+// }
+
 class default_console_t : public console_t
 {
 public:

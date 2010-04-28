@@ -34,6 +34,7 @@ extern "C" void kernel_startup();
 // extern "C" address_t placement_address;
 // extern "C" address_t KICKSTART_BASE;
 
+#if 0
 static void map_identity(const char* caption, address_t start, address_t end)
 {
 #if MEMORY_DEBUG
@@ -43,6 +44,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
     for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
         protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), page_t::kernel_mode | page_t::writable);
 }
+#endif
 
 /*!
  * Get the system going.
@@ -79,23 +81,23 @@ void kernel_startup()
 //     multiboot_t::modinfo_t* bootimage = mb.module(0);
 //     ASSERT(bootimage);
 
-    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
+///    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
 
     kconsole << "Run global ctors" << endl;
     run_global_ctors();
 
-    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
+///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory
 
 #if MEMORY_DEBUG
-    kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
+/**    kconsole << GREEN << "lower mem = " << (int)mb.lower_mem() << "KB" << endl
                       << "upper mem = " << (int)mb.upper_mem() << "KB" << endl;
 
     kconsole << WHITE << "We are loaded at " << LINKSYM(KICKSTART_BASE) << endl
-                      << "    bootimage at " << bootimage->mod_start << ", end " << bootimage->mod_end << endl;
+                      << "    bootimage at " << bootimage->mod_start << ", end " << bootimage->mod_end << endl;*/
 #endif
-
+#if 0
     // Identity map currently executing code.
     // page 0 is not mapped to catch null pointers
     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
@@ -146,6 +148,7 @@ void kernel_startup()
 
     /* Never reached */
     PANIC("root_server returned!");
+#endif
 }
 
 // kate: indent-width 4; replace-tabs on;
