@@ -50,6 +50,7 @@ public:
 
     virtual void print_int(int n) = 0;
     virtual void print_char(char ch) = 0;
+    virtual void print_unprintable(char ch) = 0;
     virtual void print_byte(unsigned char n) = 0;
     virtual void print_hex(uint32_t n) = 0;
     virtual void print_hex8(uint64_t n) = 0;

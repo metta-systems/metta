@@ -221,6 +221,13 @@ void default_console_t::print_char(char ch)
 //     serial_print_char(ch);
 }
 
+void default_console_t::print_unprintable(char ch)
+{
+    if (ch == '\n' || ch == '\r' || ch == '\t')
+        ch = '.';
+    print_char(ch);
+}
+
 /*! Wait for Enter key press and release on keyboard */
 void default_console_t::wait_ack()
 {

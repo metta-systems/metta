@@ -38,6 +38,7 @@ public:
 
     virtual void print_int(int n);
     virtual void print_char(char ch);
+    virtual void print_unprintable(char ch);
     virtual void print_byte(unsigned char n);
     virtual void print_hex(uint32_t n);
     virtual void print_hex8(uint64_t n);

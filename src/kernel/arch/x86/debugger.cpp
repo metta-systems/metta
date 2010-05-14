@@ -40,9 +40,7 @@ void debugger_t::dump_memory(address_t start, size_t size)
         for(int i = 0; i < run; i++)
         {
             char c = *(ptr+i);
-            if (c == kconsole.eol)
-                c = ' ';
-            kconsole.print(c);
+            kconsole.print_unprintable(c);
         }
         kconsole.newline();
         ptr += run;
