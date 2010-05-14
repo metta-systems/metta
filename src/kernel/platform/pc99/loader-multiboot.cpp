@@ -1,6 +1,13 @@
-/*!
- * Loader version that supports multiboot specification.
- */
+//
+// Loader version that supports multiboot specification.
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "multiboot.h"
 #include "bootinfo.h"
 #include "elf_parser.h"
@@ -18,7 +25,9 @@ bool mbi_probe()
 
     // Make a safe copy of the MBI structure itself.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
-    bi->append(_mbi);
+
+    for (size_t i = 0; i < _mbi->module_count(); i++)
+        bi->append_module(_mbi->module(i));
 
     return true;
 }

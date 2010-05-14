@@ -17,6 +17,10 @@
  * then a list of bootrec_t subtypes
  * (free space)
  * -------------------- END of page
+ *
+ * bootrec subtypes:
+ * size is the size of the entire record, including bootrec_t header (so, cur + size will equal start of next record).
+ *
  */
 
 enum bootrec_type_e
@@ -55,34 +59,54 @@ bootinfo_t::bootinfo_t(bool create_new)
     if (create_new)
     {
         magic = BI_MAGIC;
-        free = reinterpret_cast<char*>(this) + 8;
+        free = reinterpret_cast<char*>(this) + sizeof(magic) + sizeof(free);
     }
 }
 
 //! Store module info, memmap and command line from multiboot header.
-bool bootinfo_t::append(multiboot_t* mb) // TODO: check remaining space
-{
-    // append modules
-    for (uint32_t i = 0; i < mb->module_count(); i++)
-    {
-        modinfo_t* mod = mb->module(i);
+// bool bootinfo_t::append(multiboot_t* mb) // TODO: check remaining space
+// {
+//     // append modules
+//     for (uint32_t i = 0; i < mb->module_count(); i++)
+//     {
+// /*        bootrec_module_t* mod = mb->module(i);
+// 
+//         bootrec_t* bm = new(free) bootrec_t;
+//         bm->type = bootrec_module;
+//         bm->size = 8 + strlen(mod->name) + 1;
+//         *reinterpret_cast<uint32_t*>(free + 4) = mod->mod_start;
+//         *reinterpret_cast<uint32_t*>(free + 8) = mod->mod_end;
+//         memcpy(free + 12, mod->name, strlen(mod->name) + 1);
+//         free += bm->size;*/
+//     }
+//     // append command line
+//     // append memory map
+//     bootrec_t* bm = new(free) bootrec_t;
+//     bm->type = bootrec_multiboot;
+//     bm->size = mb->size();
+//     free += sizeof(bm);
+//     mb->copy(free);
+//     free += bm->size;
+//     return true;
+// }
 
-        bootrec_t* bm = new(free) bootrec_t;
-        bm->type = bootrec_module;
-        bm->size = 8 + strlen(mod->name) + 1;
-        *reinterpret_cast<uint32_t*>(free + 4) = mod->mod_start;
-        *reinterpret_cast<uint32_t*>(free + 8) = mod->mod_end;
-        memcpy(free + 12, mod->name, strlen(mod->name) + 1);
-        free += bm->size;
-    }
-    // append command line
-    // append memory map
-    bootrec_t* bm = new(free) bootrec_t;
-    bm->type = bootrec_multiboot;
-    bm->size = mb->size();
-    free += sizeof(bm);
-    mb->copy(free);
-    free += bm->size;
+bool bootinfo_t::append_module(multiboot_t::modinfo_t* mod)
+{
+    if (!mod)
+        return false;
+
+    bootrec_module_t* bootmod = new(free) bootrec_module_t;
+    bootmod->type = bootrec_module;
+    bootmod->size = sizeof(bootrec_module_t) + memutils::string_length(mod->str) + 1;
+
+    bootmod->start = mod->mod_start;
+    bootmod->end = mod->mod_end;
+    char* name = reinterpret_cast<char*>(free + sizeof(bootrec_module_t));
+    bootmod->name = name;
+
+    memutils::copy_string(name, mod->str);
+
+    free += bootmod->size;
     return true;
 }
 
