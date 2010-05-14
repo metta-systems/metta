@@ -4,11 +4,13 @@ Metta is an exocortex OS: it is your external memory and social interaction agen
 the additional multimedia and mobile assistant abilities. As an exocortex, OS's task is to provide means and ends to
 sharing and gathering relevant information for you.
 
-As an information gathering assistant the OS must support receiving, filtering, classifying and presenting relevant
+As an information gathering assistant, the OS must support receiving, filtering, classifying and presenting relevant
 information in a suitable form.
 
-As an information sharing assistant the OS must support specifying privacy levels, distributing the secure storage,
+As an information sharing assistant, the OS must support specifying privacy levels, distributing the secure storage,
 publishing directly to your peers and to other media.
+
+As an evolving complex construct, the OS must be reflective, self-aware and extensible.
 
 To provide this level of service, the key implementation principles are:
 
@@ -19,6 +21,7 @@ To provide this level of service, the key implementation principles are:
  * Storage should be associative, not hierarchical. Cross-node links must be possible with full semantic relation data.
  * Your data must be redundant, highly available and securely stored. Publish once, share everywhere.
  * Processing of multimedia and semantically meaningful data must be fast and lean.
+ * System must be comprised of components, which can be composed and overridden in comprehensive ways.
 
 Principles lead to technical requirements for the OS:
 
@@ -190,6 +193,12 @@ Dynamic loader (Sjofn), similar to OMOS server, is used to perform component rel
 and loading models allow to share code and static data between all domains efficiently.
 
 Meta-objects (in OMOS sense) are used to create generator interfaces which instantiate modules, used by application.
+
+Runtime type system is a basis for reflectivity support and allows components to introspect their runtime environment,
+add new runtime types and resolve arising conflicts.
+
+Together with Sjofn, type system allows service-oriented component combination and relatively easy component adaptation,
+similar to Scala language.
 
 
 === Applications ===
