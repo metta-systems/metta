@@ -36,12 +36,9 @@ public:
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
     // Append parts of multiboot header in a format suitable for bootinfo page.
-//     bool append(multiboot_t* mb);
-
     bool append_module(multiboot_t::modinfo_t* mod);
-
-//     bool append_mmap_entry(multiboot_t::mmap_entry_t* entry);
-//     void mmap_prepare(multiboot_t::mmap_t* mmap);
+    bool append_mmap(multiboot_t::mmap_entry_t* entry);
+    bool append_cmdline(const char* cmdline);
 };
 
 // kate: indent-width 4; replace-tabs on;

@@ -26,8 +26,22 @@ bool mbi_probe()
     // Make a safe copy of the MBI structure itself.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
 
+    // We need info about memory map, modules and command line.
+    multiboot_t::mmap_t* memmap = _mbi->memory_map();
+    if (memmap)
+    {
+        multiboot_t::mmap_entry_t* mmi = memmap->first_entry();
+        while (mmi)
+        {
+            bi->append_mmap(mmi);
+            mmi = memmap->next_entry(mmi);
+        }
+    }
+
     for (size_t i = 0; i < _mbi->module_count(); i++)
         bi->append_module(_mbi->module(i));
+
+    bi->append_cmdline(_mbi->cmdline());
 
     return true;
 }
@@ -39,7 +53,6 @@ bool mbi_probe()
  * The procedure goes as follows:
  * - We have mbi inside the bootinfo page already.
  * - ELF-load the kernel module.
- * TODO: make bootinfo page independent of mbi structures (and then install memory map and modules list plus cmdline).
  * - Flush caches.
  * - Launch the kernel.
  *

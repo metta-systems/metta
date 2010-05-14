@@ -25,12 +25,11 @@
 
 enum bootrec_type_e
 {
-    bootrec_module = 1, // loadable module info
-    bootrec_memory_map, // memory map info
+    bootrec_module = 1,   // loadable module info
+    bootrec_memory_map,   // memory map info
     bootrec_command_line, // command line info
     bootrec_device_tree,
-    end,
-    bootrec_multiboot // FIXME: remove me
+    end
 };
 
 class bootrec_t
@@ -48,10 +47,27 @@ public:
     char*    name;
 };
 
+// Each memmap entry is separate.
+class bootrec_mmap_entry_t : public bootrec_t
+{
+public:
+    uint64_t start;
+    uint64_t length;
+    uint32_t type;
+};
+
+class bootrec_cmdline_t : public bootrec_t
+{
+public:
+    char* cmdline;
+};
+
 union bootrec_info_t
 {
-    bootrec_t        rec;
-    bootrec_module_t module;
+    bootrec_t            rec;
+    bootrec_module_t     module;
+    bootrec_mmap_entry_t memmap;
+    bootrec_cmdline_t    cmdline;
 };
 
 bootinfo_t::bootinfo_t(bool create_new)
@@ -63,33 +79,7 @@ bootinfo_t::bootinfo_t(bool create_new)
     }
 }
 
-//! Store module info, memmap and command line from multiboot header.
-// bool bootinfo_t::append(multiboot_t* mb) // TODO: check remaining space
-// {
-//     // append modules
-//     for (uint32_t i = 0; i < mb->module_count(); i++)
-//     {
-// /*        bootrec_module_t* mod = mb->module(i);
-// 
-//         bootrec_t* bm = new(free) bootrec_t;
-//         bm->type = bootrec_module;
-//         bm->size = 8 + strlen(mod->name) + 1;
-//         *reinterpret_cast<uint32_t*>(free + 4) = mod->mod_start;
-//         *reinterpret_cast<uint32_t*>(free + 8) = mod->mod_end;
-//         memcpy(free + 12, mod->name, strlen(mod->name) + 1);
-//         free += bm->size;*/
-//     }
-//     // append command line
-//     // append memory map
-//     bootrec_t* bm = new(free) bootrec_t;
-//     bm->type = bootrec_multiboot;
-//     bm->size = mb->size();
-//     free += sizeof(bm);
-//     mb->copy(free);
-//     free += bm->size;
-//     return true;
-// }
-
+// TODO: check remaining space
 bool bootinfo_t::append_module(multiboot_t::modinfo_t* mod)
 {
     if (!mod)
@@ -101,7 +91,7 @@ bool bootinfo_t::append_module(multiboot_t::modinfo_t* mod)
 
     bootmod->start = mod->mod_start;
     bootmod->end = mod->mod_end;
-    char* name = reinterpret_cast<char*>(free + sizeof(bootrec_module_t));
+    char* name = free + sizeof(bootrec_module_t);
     bootmod->name = name;
 
     memutils::copy_string(name, mod->str);
@@ -110,22 +100,42 @@ bool bootinfo_t::append_module(multiboot_t::modinfo_t* mod)
     return true;
 }
 
-// bool bootinfo_t::append_mmap_entry(multiboot_t::mmap_entry_t* entry)
-// {
-//     const size_t entry_size = sizeof(multiboot_t::mmap_entry_t);
-//     if (size() + entry_size > PAGE_SIZE - optional_fields_size())
-//         return false;
-// 
-//     multiboot_t::header_t* header = multiboot_header();
-//     uint32_t end = uint32_t(this) + size();
-// 
-//     memutils::copy_memory(reinterpret_cast<void*>(end), entry, entry_size);
-//     reinterpret_cast<multiboot_t::mmap_entry_t*>(end)->set_entry_size(entry_size); // ignore any extra fields
-//     header->mmap.set_size(header->mmap.size() + entry_size);
-//     increase_size(entry_size);
-// 
-//     return true;
-// }
+// TODO: check remaining space
+bool bootinfo_t::append_mmap(multiboot_t::mmap_entry_t* entry)
+{
+    if (!entry)
+        return false;
+
+    bootrec_mmap_entry_t* bootmmap = new(free) bootrec_mmap_entry_t;
+    bootmmap->type = bootrec_memory_map;
+    bootmmap->size = sizeof(bootrec_mmap_entry_t);
+
+    bootmmap->start = entry->address();
+    bootmmap->length = entry->size();
+    bootmmap->type = entry->type();
+
+    free += bootmmap->size;
+    return true;
+}
+
+// TODO: check remaining space
+bool bootinfo_t::append_cmdline(const char* cmdline)
+{
+    if (!cmdline)
+        return false;
+
+    bootrec_cmdline_t* bootcmd = new(free) bootrec_cmdline_t;
+    bootcmd->type = bootrec_command_line;
+    bootcmd->size = sizeof(bootrec_cmdline_t) + memutils::string_length(cmdline) + 1;
+
+    char* name = free + sizeof(bootrec_cmdline_t);
+    bootcmd->cmdline = name;
+
+    memutils::copy_string(name, cmdline);
+
+    free += bootcmd->size;
+    return true;
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

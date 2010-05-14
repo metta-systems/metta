@@ -64,21 +64,22 @@ public:
 
         uint64_t address() const { return base_addr; }
         uint64_t size() const    { return length; }
-        bool     is_free() const { return type == 1; }
+        uint32_t type() const    { return type_; }
+        bool     is_free() const { return type_ == 1; }
 
         void     set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
         void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
         {
             base_addr = new_addr;
             length = new_length;
-            type = new_type;
+            type_ = new_type;
         }
 
     private:
         uint32_t entry_size;//!< size of the mmap entry
         uint64_t base_addr; //!< base address of memory region (physical)
         uint64_t length;    //!< size of memory region
-        uint32_t type;      //!< type == 1 for free regions, anything else means occupied
+        uint32_t type_;     //!< type == 1 for free regions, anything else means occupied
 
         friend class multiboot_t::mmap_t;
     } PACKED;
@@ -216,10 +217,8 @@ public:
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
     mmap_t* memory_map() const;
 
-    uint32_t  size();
-    void      copy(char* target);
-
     static multiboot_t* prepare();
+    const char* cmdline() { return header->cmdline; }
 
 private:
     header_t*                header;
