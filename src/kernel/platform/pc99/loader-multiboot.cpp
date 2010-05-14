@@ -24,7 +24,7 @@ bool mbi_probe()
         return false;
 
     // Make a safe copy of the MBI structure itself.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(true);
 
     // We need info about memory map, modules and command line.
     multiboot_t::mmap_t* memmap = _mbi->memory_map();
@@ -39,7 +39,7 @@ bool mbi_probe()
     }
 
     for (size_t i = 0; i < _mbi->module_count(); i++)
-        bi->append_module(_mbi->module(i));
+        bi->append_module(i, _mbi->module(i));
 
     bi->append_cmdline(_mbi->cmdline());
 

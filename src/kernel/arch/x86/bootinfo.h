@@ -36,7 +36,7 @@ public:
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
     // Append parts of multiboot header in a format suitable for bootinfo page.
-    bool append_module(multiboot_t::modinfo_t* mod);
+    bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);
     bool append_mmap(multiboot_t::mmap_entry_t* entry);
     bool append_cmdline(const char* cmdline);
 };
