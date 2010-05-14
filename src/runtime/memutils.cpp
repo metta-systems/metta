@@ -114,6 +114,14 @@ size_t string_length(const char* s)
     return len;
 }
 
+char* copy_string(char* dest, const char* src)
+{
+    if (!src || !dest)
+        return 0;
+    copy_memory(dest, src, string_length(src) + 1);
+    return dest;
+}
+
 } // namespace memutils
 
 // kate: indent-width 4; replace-tabs on;
