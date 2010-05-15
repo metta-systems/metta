@@ -12,6 +12,7 @@
 #include "bootinfo.h"
 #include "elf_parser.h"
 #include "new.h"
+#include "default_console.h"
 
 /*!
  * Check if a valid multiboot info structure is present.
@@ -132,6 +133,7 @@ address_t mbi_init()
 //                  L4_BootLoaderSpecificMemoryType,
 //                  kip_manager_t::desc_boot_module);
 // 
-    elf_parser_t elf(mbi->module(1)->mod_start);
+    elf_parser_t elf(mbi->module(0)->mod_start);
+    kconsole << "kernel startup module at " << mbi->module(0)->mod_start << endl;
     return elf.get_entry_point();
 }
