@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "elf_parser.h"
-// #include "default_console.h"
+#include "default_console.h"
 #include "memutils.h"
 // #include "memory.h"
 // #include "minmax.h"
@@ -17,19 +17,11 @@ using namespace elf32;
 
 elf_parser_t::elf_parser_t()
     : header(NULL)
-    , symbol_table(NULL)
-    , string_table(NULL)
-    , got_table(NULL)
-    , rel_table(NULL)
 {
 }
 
 elf_parser_t::elf_parser_t(address_t image_base)
     : header(NULL)
-    , symbol_table(NULL)
-    , string_table(NULL)
-    , got_table(NULL)
-    , rel_table(NULL)
 {
     parse(image_base);
 }
@@ -72,6 +64,27 @@ section_header_t* elf_parser_t::section_string_table() const
     return section_header(header->shstrndx);
 }
 
+size_t elf_parser_t::string_entries_count() const
+{
+    section_header_t* strtab = section_string_table();
+    if (!strtab)
+        return 0;
+    return strtab->size / strtab->entsize;
+}
+
+section_header_t* elf_parser_t::section_symbol_table() const
+{
+    return section_header_by_type(SHT_SYMTAB);
+}
+
+size_t elf_parser_t::symbol_entries_count() const
+{
+    section_header_t* symtab = section_symbol_table();
+    if (!symtab)
+        return 0;
+    return symtab->size / symtab->entsize;
+}
+
 section_header_t* elf_parser_t::section_header(cstring_t name) const
 {
     section_header_t* strtab = section_string_table();
@@ -82,10 +95,18 @@ section_header_t* elf_parser_t::section_header(cstring_t name) const
     for (int i = 0; i < header->shnum; i++)
     {
         s = section_header(i);
-        if (cstring_t(reinterpret_cast<char*>(header) + strtab->offset + s->name) == name)
+        if (cstring_t(strtab_pointer(s->name)) == name)
             return s;
     }
     return 0;
+}
+
+const char* elf_parser_t::strtab_pointer(elf32::word_t name_offset) const
+{
+    section_header_t* strtab = section_string_table();
+    if (!strtab)
+        return 0;
+    return reinterpret_cast<char*>(header) + strtab->offset + name_offset;
 }
 
 bool elf_parser_t::is_valid() const
@@ -117,8 +138,75 @@ bool elf_parser_t::parse(address_t start)
     if (!is_valid())
         return false;
 
-    symbol_table = section_header_by_type(SHT_SYMTAB);
-    string_table = section_header(".strtab");
+    return true;
+}
+
+bool elf_parser_t::is_relocatable() const
+{
+    return header && header->type == ET_REL;
+}
+
+bool elf_parser_t::relocate(address_t offset)
+{
+    section_header_t* strtab = section_string_table();
+    if (!strtab)
+        return false;
+
+    kconsole << "relocate by " << offset << endl;
+
+    // Traverse all sections, find relocation sections and apply them.
+    section_header_t* s;
+    for (int i = 0; i < header->shnum; i++)
+    {
+        s = section_header(i);
+        if (s->type == SHT_REL)
+        {
+            kconsole << "Found rel section " << strtab_pointer(s->name) << " @" << s->offset << endl;
+            elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, s->offset));
+            size_t nrels = s->size / sizeof(rels[0]);
+            section_header_t* symtab = section_header(s->link);
+            symbol_t* symbols = symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, symtab->offset)) : 0;
+            section_header_t* apply_to_sect = section_header(s->info);
+            address_t apply_to = elf2loc(header, apply_to_sect->offset);
+            for (size_t j = 0; j < nrels; j++)
+            {
+                elf32::rel_t& rel = rels[j];
+                if (symbols)
+                {
+                    symbol_t& sym = symbols[ELF32_R_SYM(rel.info)];
+
+                    uint32_t result;
+                    address_t P = apply_to + rel.offset;
+                    uint32_t  A = *reinterpret_cast<uint32_t*>(P);
+                    address_t S = 0;
+
+                    if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
+                    {
+                        S = section_header(sym.shndx)->addr;
+                    }
+                    else
+                    {
+                        S = sym.value;
+                    }
+
+                    switch (ELF32_R_TYPE(rel.info))
+                    {
+                        case R_386_32:
+                            result = S + A;
+                            kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl;
+                            break;
+                        case R_386_PC32:
+                            result = S + A - P;
+                            kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
+                            break;
+                        default:
+                            kconsole << "Unknown relocation type found, skipped, expect crashes!" << endl;
+                    }
+                    *reinterpret_cast<uint32_t*>(apply_to + rel.offset) = result;
+                }
+            }
+        }
+    }
 
     return true;
 }
