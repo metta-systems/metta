@@ -13,6 +13,7 @@
 #include "elf_parser.h"
 #include "new.h"
 #include "default_console.h"
+#include "debugger.h"
 
 /*!
  * Check if a valid multiboot info structure is present.
@@ -133,7 +134,29 @@ address_t mbi_init()
 //                  L4_BootLoaderSpecificMemoryType,
 //                  kip_manager_t::desc_boot_module);
 // 
-    elf_parser_t elf(mbi->module(0)->mod_start);
-    kconsole << "kernel startup module at " << mbi->module(0)->mod_start << endl;
-    return elf.get_entry_point();
+
+//     relocate kernel-startup elf
+//     offset of .text section from load address and offset of entry point from .text will give relocation offsets
+
+    address_t start = mbi->module(0)->mod_start;
+    elf_parser_t elf(start);
+    elf32::section_header_t* text = elf.section_header(".text");
+    address_t entry = elf.get_entry_point();
+
+    address_t offset = start - text->addr + text->offset;
+
+    if (!elf.is_relocatable() && offset != 0)
+        PANIC("unrelocatable kernel-startup, cannot proceed.");
+
+    kconsole << "kernel startup module at " << start << endl
+             << "text section in mem at " << text->addr << endl
+             << "text section in file at " << text->offset << endl
+             << "entry point at " << entry << endl
+             << endl;
+
+    elf.relocate(offset);
+
+    debugger_t::dump_memory(entry + offset, 100);
+
+    return entry + offset;
 }

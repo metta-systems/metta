@@ -33,22 +33,27 @@ public:
     inline size_t section_header_count() const { return header->shnum; }
 
     elf32::section_header_t* section_string_table() const;
+    elf32::section_header_t* section_symbol_table() const;
 
     //! Returns the entry point of the executable.
     inline address_t get_entry_point() { return (address_t)header->entry; }
 
-    inline size_t symbol_entries_count() const { return symbol_table->size / symbol_table->entsize; }
-    inline size_t string_entries_count() const { return string_table->size / string_table->entsize; }
+    size_t symbol_entries_count() const;
+    size_t string_entries_count() const;
 
     //! Returns true if the parser loaded correctly.
     bool is_valid() const;
 
+    //! Returns true if elf file has relocations.
+    bool is_relocatable() const;
+
+    // Relocate an i386 elf file by adding offset to all R_386_32 and R_386_PC32 relocs.
+    bool relocate(address_t offset);
+
 protected:
+    const char* strtab_pointer(elf32::word_t name_offset) const;
+
     elf32::header_t*         header;          //!< ELF file header.
-    elf32::section_header_t* symbol_table;    //!< Pointer to ELF symbol table in section headers.
-    elf32::section_header_t* string_table;    //!< Pointer to ELF string table in section headers.
-    elf32::section_header_t* got_table;       //!< Global offset table.
-    elf32::section_header_t* rel_table;       //!< Relocations table.
 };
 
 // kate: indent-width 4; replace-tabs on;
