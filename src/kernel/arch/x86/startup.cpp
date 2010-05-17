@@ -84,6 +84,8 @@ void kernel_startup()
 ///    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
 
+    bochs_console_print_str("Entering kernel-startup");
+
     kconsole << "Run global ctors" << endl;
     run_global_ctors();
 
