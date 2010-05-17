@@ -189,12 +189,12 @@ def build(bld):
     slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
-    parsedwarf = bld.new_task_gen('cxx', 'program')
-    parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
-    parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
-    parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
-    parsedwarf.target = 'parsedwarf'
-    parsedwarf.uselib_local = 'toolruntime common'
+    #parsedwarf = bld.new_task_gen('cxx', 'program')
+    #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
+    #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
+    #parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
+    #parsedwarf.target = 'parsedwarf'
+    #parsedwarf.uselib_local = 'toolruntime common'
 
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
@@ -216,7 +216,7 @@ def build(bld):
     startup.target = 'kernel-startup.sys'
     startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'loader_startup.s startup.cpp'.split())
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
+    startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = kickstart.env['INCLUDE_DIRS']
     startup.uselib_local = 'platform common runtime'
 
