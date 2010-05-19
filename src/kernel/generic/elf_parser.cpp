@@ -156,53 +156,45 @@ bool elf_parser_t::relocateTo(address_t load_address)
     if (!shstrtab)
         return false;
 
-    elf32::section_header_t* text = section_header(".text");
-    address_t base_offset = text->offset;
-
-//     ptrdiff_t offset = load_address - text->addr + text->offset;
-//     kconsole << "relocate by " << offset << endl;
-
     // Traverse all sections, find relocation sections and apply them.
-    section_header_t* s;
+    section_header_t* rel_section;
     for (int i = 0; i < header->shnum; i++)
     {
-        s = section_header(i);
-        if (s->type == SHT_REL)
+        rel_section = section_header(i);
+        if (rel_section->type == SHT_REL)
         {
-            kconsole << "Found rel section " << strtab_pointer(shstrtab, s->name) << " @" << s->offset << endl;
-            elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, s->offset));
-            size_t nrels = s->size / sizeof(rels[0]);
-            section_header_t* symtab = section_header(s->link);
+//             kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl;
+            elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
+            size_t nrels = rel_section->size / sizeof(rels[0]);
+            section_header_t* symtab = section_header(rel_section->link);
             symbol_t* symbols = symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, symtab->offset)) : 0;
-            section_header_t* apply_to_sect = section_header(s->info);
-            address_t apply_to = elf2loc(header, apply_to_sect->offset);
-            for (size_t j = 0; j < nrels; j++)
+            section_header_t* target_sect = section_header(rel_section->info);
+            if (symbols)
             {
-                elf32::rel_t& rel = rels[j];
-                if (symbols)
+                for (size_t j = 0; j < nrels; j++)
                 {
+                    elf32::rel_t& rel = rels[j];
                     symbol_t& sym = symbols[ELF32_R_SYM(rel.info)];
 
                     uint32_t result;
-                    address_t P = apply_to_sect->offset + rel.offset - base_offset;
-                    uint32_t  A = *reinterpret_cast<uint32_t*>(apply_to + rel.offset);
+                    address_t P = target_sect->offset + rel.offset + load_address;
+                    uint32_t  A = *reinterpret_cast<uint32_t*>(P);
                     address_t S = 0;
 
                     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
                     {
-                        S = section_header(sym.shndx)->offset - base_offset;
+                        S = section_header(sym.shndx)->offset + load_address;
 //                         kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl;
                     }
                     else
                     {
-                        S = sym.value + section_header(sym.shndx)->offset - base_offset;
+                        S = section_header(sym.shndx)->offset + sym.value + load_address;
 //                         kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' for section " << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << endl;
                     }
 
                     switch (ELF32_R_TYPE(rel.info))
                     {
                         case R_386_32:
-                            S += load_address + base_offset;
                             result = S + A;
 //                             kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl;
                             break;
@@ -213,7 +205,7 @@ bool elf_parser_t::relocateTo(address_t load_address)
                         default:
                             kconsole << "Unknown relocation type found, skipped, expect crashes!" << endl;
                     }
-                    *reinterpret_cast<uint32_t*>(apply_to + rel.offset) = result;
+                    *reinterpret_cast<uint32_t*>(P) = result;
                 }
             }
         }
