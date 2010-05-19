@@ -57,11 +57,16 @@ section_header_t* elf_parser_t::section_header_by_type(word_t type) const
     return 0;
 }
 
-section_header_t* elf_parser_t::section_string_table() const
+section_header_t* elf_parser_t::section_shstring_table() const
 {
     if (header->shstrndx == SHN_UNDEF)
         return 0;
     return section_header(header->shstrndx);
+}
+
+section_header_t* elf_parser_t::section_string_table() const
+{
+    return section_header(".strtab");
 }
 
 size_t elf_parser_t::string_entries_count() const
@@ -87,23 +92,22 @@ size_t elf_parser_t::symbol_entries_count() const
 
 section_header_t* elf_parser_t::section_header(cstring_t name) const
 {
-    section_header_t* strtab = section_string_table();
-    if (!strtab)
+    section_header_t* shstrtab = section_shstring_table();
+    if (!shstrtab)
         return 0;
 
     section_header_t* s;
     for (int i = 0; i < header->shnum; i++)
     {
         s = section_header(i);
-        if (cstring_t(strtab_pointer(s->name)) == name)
+        if (cstring_t(strtab_pointer(shstrtab, s->name)) == name)
             return s;
     }
     return 0;
 }
 
-const char* elf_parser_t::strtab_pointer(elf32::word_t name_offset) const
+const char* elf_parser_t::strtab_pointer(section_header_t* strtab, elf32::word_t name_offset) const
 {
-    section_header_t* strtab = section_string_table();
     if (!strtab)
         return 0;
     return reinterpret_cast<char*>(header) + strtab->offset + name_offset;
@@ -146,13 +150,17 @@ bool elf_parser_t::is_relocatable() const
     return header && header->type == ET_REL;
 }
 
-bool elf_parser_t::relocate(address_t offset)
+bool elf_parser_t::relocateTo(address_t load_address)
 {
-    section_header_t* strtab = section_string_table();
-    if (!strtab)
+    section_header_t* shstrtab = section_shstring_table();
+    if (!shstrtab)
         return false;
 
-    kconsole << "relocate by " << offset << endl;
+    elf32::section_header_t* text = section_header(".text");
+    address_t base_offset = text->offset;
+
+//     ptrdiff_t offset = load_address - text->addr + text->offset;
+//     kconsole << "relocate by " << offset << endl;
 
     // Traverse all sections, find relocation sections and apply them.
     section_header_t* s;
@@ -161,7 +169,7 @@ bool elf_parser_t::relocate(address_t offset)
         s = section_header(i);
         if (s->type == SHT_REL)
         {
-            kconsole << "Found rel section " << strtab_pointer(s->name) << " @" << s->offset << endl;
+            kconsole << "Found rel section " << strtab_pointer(shstrtab, s->name) << " @" << s->offset << endl;
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, s->offset));
             size_t nrels = s->size / sizeof(rels[0]);
             section_header_t* symtab = section_header(s->link);
@@ -176,28 +184,31 @@ bool elf_parser_t::relocate(address_t offset)
                     symbol_t& sym = symbols[ELF32_R_SYM(rel.info)];
 
                     uint32_t result;
-                    address_t P = apply_to + rel.offset;
-                    uint32_t  A = *reinterpret_cast<uint32_t*>(P);
+                    address_t P = apply_to_sect->offset + rel.offset - base_offset;
+                    uint32_t  A = *reinterpret_cast<uint32_t*>(apply_to + rel.offset);
                     address_t S = 0;
 
                     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
                     {
-                        S = section_header(sym.shndx)->addr;
+                        S = section_header(sym.shndx)->offset - base_offset;
+//                         kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl;
                     }
                     else
                     {
-                        S = sym.value;
+                        S = sym.value + section_header(sym.shndx)->offset - base_offset;
+//                         kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' for section " << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << endl;
                     }
 
                     switch (ELF32_R_TYPE(rel.info))
                     {
                         case R_386_32:
+                            S += load_address + base_offset;
                             result = S + A;
-                            kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl;
+//                             kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl;
                             break;
                         case R_386_PC32:
                             result = S + A - P;
-                            kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
+//                             kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
                             break;
                         default:
                             kconsole << "Unknown relocation type found, skipped, expect crashes!" << endl;

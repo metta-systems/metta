@@ -143,7 +143,7 @@ address_t mbi_init()
     elf32::section_header_t* text = elf.section_header(".text");
     address_t entry = elf.get_entry_point();
 
-    address_t offset = start - text->addr + text->offset;
+    ptrdiff_t offset = start - text->addr + text->offset;
 
     if (!elf.is_relocatable() && offset != 0)
         PANIC("unrelocatable kernel-startup, cannot proceed.");
@@ -154,9 +154,9 @@ address_t mbi_init()
              << "entry point at " << entry << endl
              << endl;
 
-    elf.relocate(offset);
+    elf.relocateTo(start);
 
-    debugger_t::dump_memory(entry + offset, 100);
+    debugger_t::dump_memory(entry + offset, 96);
 
     return entry + offset;
 }
