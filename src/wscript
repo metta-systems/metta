@@ -218,12 +218,13 @@ def build(bld):
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'platform common runtime'
 
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp'.split())
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp'.split())
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-    startup.includes = kickstart.env['INCLUDE_DIRS']
+    startup.includes = startup.env['INCLUDE_DIRS']
     startup.uselib_local = 'platform common runtime'
 
     #kickstart = bld.new_task_gen('cxx', 'program')
