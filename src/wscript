@@ -189,12 +189,12 @@ def build(bld):
     slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
-    #parsedwarf = bld.new_task_gen('cxx', 'program')
-    #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
-    #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
-    #parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
-    #parsedwarf.target = 'parsedwarf'
-    #parsedwarf.uselib_local = 'toolruntime common'
+    parsedwarf = bld.new_task_gen('cxx', 'program')
+    parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
+    parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
+    parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
+    parsedwarf.target = 'parsedwarf'
+    parsedwarf.uselib_local = 'toolruntime common'
 
     #mkinitfs = bld.new_task_gen('cxx', 'program')
     #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
