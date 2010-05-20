@@ -10,6 +10,7 @@
 //
 #include "config.h"
 
+#include "bootinfo.h"
 #include "memutils.h"
 #include "memory.h"
 #include "multiboot.h"
@@ -75,11 +76,6 @@ TODO: relate Pistachio SMP startup routines here.
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-//     multiboot_t mb(mbh);
-
-//     ASSERT(mb.module_count() > 0);
-//     multiboot_t::modinfo_t* bootimage = mb.module(0);
-//     ASSERT(bootimage);
 
 ///    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
@@ -88,6 +84,21 @@ void kernel_startup()
 
     kconsole << "Run global ctors" << endl;
     run_global_ctors();
+
+//     setup_gdt();
+//     setup_idt();
+
+    kconsole << "Create bootinfo" << endl;
+    // Grab the BOOTPAGE and discover where is our nexus.
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+
+    kconsole << "Get boot module" << endl;
+    address_t start, end;
+    char* name;
+    if (bi->get_module(1, start, end, name))
+    {
+        kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
+    }
 
 ///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory

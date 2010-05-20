@@ -65,10 +65,11 @@ public:
 
 union bootrec_info_t
 {
-    bootrec_t            rec;
-    bootrec_module_t     module;
-    bootrec_mmap_entry_t memmap;
-    bootrec_cmdline_t    cmdline;
+    bootrec_t*            rec;
+    bootrec_module_t*     module;
+    bootrec_mmap_entry_t* memmap;
+    bootrec_cmdline_t*    cmdline;
+    char*                 generic;
 };
 
 bootinfo_t::bootinfo_t(bool create_new)
@@ -78,6 +79,27 @@ bootinfo_t::bootinfo_t(bool create_new)
         magic = BI_MAGIC;
         free = reinterpret_cast<char*>(this) + sizeof(magic) + sizeof(free);
     }
+}
+
+bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, char*& name)
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(this + 1);
+    while (info.generic < free)
+    {
+        if (info.rec->tag == bootrec_module)
+        {
+            if (info.module->number == number)
+            {
+                start = info.module->start;
+                end = info.module->end;
+                name = info.module->name;
+                return true;
+            }
+        }
+        info.generic  += info.rec->size;
+    }
+    return false;
 }
 
 // TODO: check remaining space
