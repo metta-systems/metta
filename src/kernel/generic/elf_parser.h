@@ -32,6 +32,7 @@ public:
     elf32::section_header_t* section_header_by_type(elf32::word_t type) const;
     inline size_t section_header_count() const { return header->shnum; }
 
+    elf32::section_header_t* section_shstring_table() const;
     elf32::section_header_t* section_string_table() const;
     elf32::section_header_t* section_symbol_table() const;
 
@@ -47,11 +48,10 @@ public:
     //! Returns true if elf file has relocations.
     bool is_relocatable() const;
 
-    // Relocate an i386 elf file by adding offset to all R_386_32 and R_386_PC32 relocs.
-    bool relocate(address_t offset);
+    bool relocateTo(address_t load_address);
 
 protected:
-    const char* strtab_pointer(elf32::word_t name_offset) const;
+    const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
 
     elf32::header_t*         header;          //!< ELF file header.
 };
