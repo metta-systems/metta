@@ -49,16 +49,13 @@ bool mbi_probe()
 }
 
 
-/**
+/*!
  * Init function that understands multiboot info structure.
  *
  * The procedure goes as follows:
  * - We have mbi inside the bootinfo page already.
  * - ELF-load the kernel module.
- * - Flush caches.
- * - Launch the kernel.
- *
- * @returns entry point for kernel
+ * @return entry point for the kernel.
  */
 address_t mbi_init()
 {
@@ -148,15 +145,7 @@ address_t mbi_init()
     if (!elf.is_relocatable() && offset != 0)
         PANIC("unrelocatable kernel-startup, cannot proceed.");
 
-    kconsole << "kernel startup module at " << start << endl
-             << "text section in mem at " << text->addr << endl
-             << "text section in file at " << text->offset << endl
-             << "entry point at " << entry << endl
-             << endl;
-
     elf.relocateTo(start);
-
-    debugger_t::dump_memory(entry + offset, 96);
 
     return entry + offset;
 }

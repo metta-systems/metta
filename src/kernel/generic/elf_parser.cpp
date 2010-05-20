@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "elf_parser.h"
-#include "default_console.h"
+// #include "default_console.h"
 #include "memutils.h"
 // #include "memory.h"
 // #include "minmax.h"
@@ -203,7 +203,8 @@ bool elf_parser_t::relocateTo(address_t load_address)
 //                             kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
                             break;
                         default:
-                            kconsole << "Unknown relocation type found, skipped, expect crashes!" << endl;
+//                             kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << " found, skipped, expect crashes!" << endl;
+                            break;
                     }
                     *reinterpret_cast<uint32_t*>(P) = result;
                 }

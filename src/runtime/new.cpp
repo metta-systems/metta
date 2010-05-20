@@ -15,7 +15,7 @@
 
 // Instead of creating complex allocation machinery for nucleus, we rely on the fact that we do not do any
 // allocations before memory manager is initialized.
-
+/*
 using nucleus_n::nucleus;
 
 void* frame_t::operator new(size_t)
@@ -71,6 +71,6 @@ void operator delete[](void* p)
 {
     nucleus.mem_mgr().free(p);
 }
-
+*/
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
