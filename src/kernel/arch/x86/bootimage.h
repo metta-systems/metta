@@ -9,24 +9,18 @@
 #pragma once
 
 #include "types.h"
-
-// FIXME: __BYTE_ORDER needs <endian.h> on Linux
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define FOURCC_MAGIC(w,o,r,d) (((unsigned long)d << 24) | ((unsigned long)r << 16) | \
-((unsigned long)o << 8)  |  (unsigned long)w)
-#else
-#define FOURCC_MAGIC(w,o,r,d) (((unsigned long)w << 24) | ((unsigned long)o << 16) | \
-((unsigned long)r << 8)  |  (unsigned long)d)
-#endif
+#include "fourcc.h"
 
 /*!
+Bootimage is similar to Nemesis' nexus - it contains information, modules, dependencies, namespaces etc.
+required for successful bootstrap.
 
-Initfs contains modules, with dependency info, used to boot up the system.
-Index information in initfs should allow quick and easy dependency calculation and module instantiation.
+Index information in bootimage should allow quick and easy dependency calculation and module instantiation.
 Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
 
-deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
+Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
 
+Root entry in bootimage is main startup code, the system privileged domain or root domain.
 
 <data blob>
 address
@@ -39,26 +33,17 @@ name ofs
 upcall record (PCB) location
 dependencies list (ndeps * name ofs entries)
 
+*/
 
+/*!
 
-
-
-* initfs file consists of four areas: the header, data area, names area and the metadata index.
- *
- * the header contains information about loadable areas - data, names and index.
-// Initfs file layout:
-// version 1: uses separate index structure, not in production.
-// version 2: previous format.
-//            * initfs::header
-//            * files data
-//            * aligned: names area
-//            * aligned: index of initfs::entry * count
 // version 3: current.
               * initfs::header
               * aligned: modules data
               * aligned: nexus with metadata index in tagged format.
  */
-class initfs_t
+
+class bootimage_t
 {
 public:
     explicit initfs_t(address_t start);
