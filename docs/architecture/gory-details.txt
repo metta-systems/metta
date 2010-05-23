@@ -93,7 +93,7 @@ During preparation the loader creates bootpage - it contains information about b
 Preparations obtain entry point address, which is then called to perform bootstrap, address of bootpage is passed in.
 
 Bootable images can be in different formats. Default GRUB image consists of first stage bootloader as kernel and the
-binary blob containing all other components together with second stage loader as a module.
+second stage loader with binary blob containing all other components together as modules.
 
 E.g.,
 kernel /kickstart
@@ -111,11 +111,12 @@ GRUB (or other bootloader)
    +--find_loader
    +--loader->prepare()
       +--create bootpage
+      +--relocate kernel-startup binary
       +--obtain entry point address
    +--entry point(bootpage address)
 
-First stage loader does not allocate any memory, except the bootpage, which can later be freed or put into memory map.
-It relocates the second stage loader to be able to run and kicks it off.
+First stage loader does not allocate any memory, except the bootpage at a fixed memory address, which can later
+be freed or put into memory map. It relocates the second stage loader to be able to run and kicks it off.
 
 
 Second stage loader: /kernel-startup
@@ -134,7 +135,7 @@ entry point
     +--cpu_init_features
        +--init_cache
        +--init_pmctr
-    +--clear_infopage
+    +--clear_infopage  <-- init domain info page
     +--Timer$Enable
     +--init_mem
     +--enable_fpu
