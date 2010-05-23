@@ -10,13 +10,15 @@
 //
 #include "config.h"
 
+#include "default_console.h"
 #include "bootinfo.h"
+#include "bootimage.h"
+
 #include "memutils.h"
 #include "memory.h"
 #include "multiboot.h"
 #include "gdt.h"
 #include "idt.h"
-#include "default_console.h"
 #include "elf_parser.h"
 #include "registers.h"
 #include "initfs.h"
@@ -49,30 +51,9 @@ static void map_identity(const char* caption, address_t start, address_t end)
 
 /*!
  * Get the system going.
-
-Second stage loader inits CPUs, memory system, paging, interrupts, publicly accessible information and boots
-the primary domain, which will be the privileged domain during runtime and will start up all other domains as necessary.
-
-entry point
-+--kernel_startup
-    +--init IDT
-    +--init FPU
-    +--init PIC
-    +--get nexus ident
-    +--parse_cmdline
-    +--cpuid
-    +--cpu_init_features
-       +--init_cache
-       +--init_pmctr
-    +--clear_infopage
-    +--Timer$Enable
-    +--init_mem
-    +--enable_fpu
-    +--k_presume(Primal)
-
-TODO: relate Pistachio SMP startup routines here.
-
-*/
+ *
+ * TODO: relate Pistachio SMP startup routines here.
+ */
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
@@ -87,6 +68,8 @@ void kernel_startup()
 
 //     setup_gdt();
 //     setup_idt();
+//     setup_fpu();
+//     setup_pic();
 
     kconsole << "Create bootinfo" << endl;
     // Grab the BOOTPAGE and discover where is our nexus.
@@ -94,11 +77,24 @@ void kernel_startup()
 
     kconsole << "Get boot module" << endl;
     address_t start, end;
-    char* name;
+    const char* name;
     if (bi->get_module(1, start, end, name))
     {
         kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
     }
+
+    bootimage_t nexus(name, start, end);
+
+    parse_cmdline();
+    get_cpuid();
+    init_cpu_features();
+        init_cache();
+        init_pmctr();
+    prepare_infopage();
+    Timer$Enable();
+    init_mem();
+    enable_fpu();
+    k_presume(RootDomain);
 
 ///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory
