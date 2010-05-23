@@ -35,7 +35,7 @@ public:
     inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
-    bool get_module(uint32_t number, address_t& start, address_t& end, char*& name);
+    bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);
 
     // Append parts of multiboot header in a format suitable for bootinfo page.
     bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);

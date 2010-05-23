@@ -81,7 +81,7 @@ bootinfo_t::bootinfo_t(bool create_new)
     }
 }
 
-bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, char*& name)
+bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, const char*& name)
 {
     bootrec_info_t info;
     info.generic = reinterpret_cast<char*>(this + 1);
