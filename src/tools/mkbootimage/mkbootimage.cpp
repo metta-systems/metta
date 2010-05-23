@@ -76,70 +76,68 @@ void align_output(file& out)
 int main(int argc, char** argv)
 {
     if (argc != 3)
-        throw runtime_error("usage: mkinitfs components.lst initfs.img");
+        throw runtime_error("usage: mkbootimage components.lst init.img");
 
     try {
+        file      in(argv[1], ios::in);
+        file      out(argv[2], ios::out | ios::binary);
+        filebinio io(out);
 
-    file      in(argv[1], ios::in);
-    file      out(argv[2], ios::out | ios::binary);
-    filebinio io(out);
+        uint32_t                   i;
+        std::string                str;
+        initfs_t::header_t         header;
+        vector<initfs_t::entry_t>  entry;
+        vector<char>               name_storage;
+        int                        name_offset = 0;
+        int                        data_offset = sizeof(header);
 
-    uint32_t                   i;
-    std::string                str;
-    initfs_t::header_t         header;
-    vector<initfs_t::entry_t>  entry;
-    vector<char>               name_storage;
-    int                        name_offset = 0;
-    int                        data_offset = sizeof(header);
+        io << header;
 
-    io << header;
+        while (in.getline(str))
+        {
+            vector<std::string> strs;
+            boost::split(strs, str, boost::is_any_of(":"));
 
-    while (in.getline(str))
-    {
-        vector<std::string> strs;
-        boost::split(strs, str, boost::is_any_of(":"));
+            if (strs.size() < 2)
+                continue;
 
-        if (strs.size() < 2)
-            continue;
+            std::string left = strs.front();
+            strs.erase(strs.begin());
+            std::string right = boost::join(strs, ":");
 
-        std::string left = strs.front();
-        strs.erase(strs.begin());
-        std::string right = boost::join(strs, ":");
-
-        file in_data(left, ios::in | ios::binary);
-        long in_size = in_data.size();
-        char buf[4096];
-        size_t bytes = in_data.read(buf, 4096);
-        while (bytes > 0) {
-            out.write(buf, bytes);
-            bytes = in_data.read(buf, 4096);
+            file in_data(left, ios::in | ios::binary);
+            long in_size = in_data.size();
+            char buf[4096];
+            size_t bytes = in_data.read(buf, 4096);
+            while (bytes > 0) {
+                out.write(buf, bytes);
+                bytes = in_data.read(buf, 4096);
+            }
+            entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
+            data_offset += in_size;
         }
-        entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
-        data_offset += in_size;
-    }
 
-    align_output(out);
+        align_output(out);
 
-    name_offset = out.write_pos();
-    header.names_offset = name_offset;
-    io << name_storage;
+        name_offset = out.write_pos();
+        header.names_offset = name_offset;
+        io << name_storage;
 
-    header.names_size = out.write_pos() - name_offset;
+        header.names_size = out.write_pos() - name_offset;
 
-    align_output(out);
+        align_output(out);
 
-    header.count = entry.size();
-    header.index_offset = out.write_pos();
-    for (i = 0; i < header.count; i++)
-    {
-        entry[i].name_offset += name_offset;
-        io << entry[i];
-    }
+        header.count = entry.size();
+        header.index_offset = out.write_pos();
+        for (i = 0; i < header.count; i++)
+        {
+            entry[i].name_offset += name_offset;
+            io << entry[i];
+        }
 
-    // rewrite file header
-    out.write_seek(0);
-    io << header;
-
+        // rewrite file header
+        out.write_seek(0);
+        io << header;
     } // try
     catch(file_error& e)
     {
