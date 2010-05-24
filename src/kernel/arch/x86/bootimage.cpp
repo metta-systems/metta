@@ -6,66 +6,87 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "initfs.h"
+#include "bootimage.h"
 #include "default_console.h"
+#include "fourcc.h"
 
-initfs_t::initfs_t(address_t s)
-/*    : start(reinterpret_cast<header_t*>(s))
-    , entries(reinterpret_cast<entry_t*>(s + start->index_offset))*/
+enum kind_e
 {
-    kconsole << "initfs_t::ctor " << s << endl;
-    start = reinterpret_cast<header_t*>(s);
+    kind_root_domain,
+    kind_glue_code,
+    kind_module
+};
 
-    kconsole << " magic        " << start->magic << endl
-             << " version      " << start->version << endl
-             << " index_offset " << start->index_offset << endl
-             << " names_offset " << start->names_offset << endl
-             << " names_size   " << start->names_size << endl
-             << " count        " << start->count << endl;
+struct bootimage_header_t
+{
+    uint32_t magic;        //!< contains header magic value 'BIMG'
+    uint32_t version;      //!< contains initfs format version, currently 1
 
-    entries = reinterpret_cast<entry_t*>(s + start->index_offset);
-    for (uint32_t k = 0; k < start->count; k++)
-    {
-        kconsole << "** entry " << k+1 << endl
-                 << " * magic " << entries[k].magic << endl
-                 << " * name_offset " << entries[k].name_offset << endl
-                 << " * location " << entries[k].location << endl
-                 << " * size " << entries[k].size << endl;
-    }
+    header_t()
+        : magic(FourCC<'B','I','M','G'>::value)
+        , version(1)
+    {}
+};
+
+struct bootimage_rec_t
+{
+    uint16_t tag;
+    uint16_t size;
+};
+
+struct bootimage_root_domain_t : public bootimage_rec_t
+{
+};
+
+struct bootimage_glue_code_t : public bootimage_rec_t
+{
+};
+
+struct bootimage_module_t : public bootimage_rec_t
+{
+};
+
+union bootimage_info_t
+{
+    bootimage_rec_t*         rec;
+    bootimage_root_domain_t* rootdom;
+    bootimage_glue_code_t*   glue;
+    bootimage_module_t*      module;
+    char*                    generic;
+};
+
+bool bootimage_t::valid()
+{
+    return false;//start->magic == FourCC<'B','I','M','G'>::value and start->version == 1;
 }
 
-bool initfs_t::valid()
-{
-    return start->magic == FOURCC_MAGIC('I','i','f','S') and start->version == 2;
-}
-
-address_t initfs_t::get_file(uint32_t num)
+address_t bootimage_t::get_file(uint32_t num)
 {
     if (num >= count())
         return 0;
 
-    return (address_t)start + entries[num].location;
+    return 0;//(address_t)start + entries[num].location;
 }
 
-const char* initfs_t::get_file_name(uint32_t num)
+const char* bootimage_t::get_file_name(uint32_t num)
 {
     if (num >= count())
         return 0;
 
-    return (const char*)start + entries[num].name_offset;
+    return 0;//(const char*)start + entries[num].name_offset;
 }
 
-uint32_t initfs_t::get_file_size(uint32_t num)
+uint32_t bootimage_t::get_file_size(uint32_t num)
 {
     if (num >= count())
         return 0;
 
-    return entries[num].size;
+    return 0;//entries[num].size;
 }
 
-uint32_t initfs_t::count()
+uint32_t bootimage_t::count()
 {
-    return start->count;
+    return 0;//start->count;
 }
 
 // kate: indent-width 4; replace-tabs on;

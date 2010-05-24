@@ -21,7 +21,6 @@
 #include "idt.h"
 #include "elf_parser.h"
 #include "registers.h"
-#include "initfs.h"
 #include "c++ctors.h"
 #include "debugger.h"
 #include "linksyms.h"
@@ -48,6 +47,74 @@ static void map_identity(const char* caption, address_t start, address_t end)
         protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), page_t::kernel_mode | page_t::writable);
 }
 #endif
+
+static void parse_cmdline(bootinfo_t* bi)
+{
+    const char* cmdline;
+
+    if (bi->get_cmdline(cmdline))
+    {
+        kconsole << "Command line is: " << cmdline << endl;
+//     char * p;
+//     COPY_STRING (mbi->cmdline);
+//
+/*#define PARSENUM(name, var, msg, massage...)            \
+        if ((p = strstr(mbi->cmdline, name"=")) != NULL)    \
+        {                           \
+            var = strtoul(p+strlen(name)+1, &p, 10);        \
+            if (*p == 'K') var*=1024;               \
+            if (*p == 'M') var*=1024*1024;          \
+            if (*p == 'G') var*=1024*1024*1024;         \
+            massage;                        \
+            printf(msg,                     \
+                   var >= 1<<30 ? var>>30 :         \
+                   var >= 1<<20 ? var>>20 :         \
+                   var >= 1<<10 ? var>>10 : var,        \
+                   var >= 1<<30 ? "G" :             \
+                   var >= 1<<20 ? "M" :             \
+                   var >= 1<<10 ? "K" : "");            \
+        }*/
+//
+/*#define PARSEBOOL(name, var, msg)               \
+    if ((p = strstr (mbi->cmdline, name"=")) != NULL)   \
+    {                           \
+        p = strchr (p, '=') + 1;                \
+        if (strncmp (p, "yes", 3) == 0 ||           \
+        strncmp (p, "on", 2) == 0 ||            \
+        strncmp (p, "enable", 6) == 0)          \
+        {                           \
+        if (! var) printf ("Enabling %s\n", msg);   \
+        var = true;                 \
+        }                           \
+        else if (strncmp (p, "no", 2) == 0 ||       \
+             strncmp (p, "off", 3) == 0 ||      \
+             strncmp (p, "disable", 7) == 0)        \
+        {                           \
+        if (var) printf ("Disabling %s\n", msg);    \
+        var = false;                    \
+        }                           \
+    }*/
+//
+//         PARSENUM("maxmem",
+//                  max_phys_mem,
+//                  "Limiting physical memory to %d%sB\n");
+//         PARSENUM("kmem",
+//                  additional_kmem_size,
+//                  "Reserving %d%sB for kernel memory\n",
+//                  additional_kmem_size &= ~(kip.get_min_pagesize()-1));
+//
+//     PARSEBOOL ("bootinfo", use_bootinfo, "generic bootinfo");
+//     PARSEBOOL ("mbi", use_mbi, "multiboot info");
+//     PARSEBOOL ("decode-all", decode_all_executables,
+//            "decoding of all executables");
+    }
+}
+
+//     // Protect all user-level modules.
+//     for (L4_Word_t i = 3; i < mbi->modcount; i++)
+//     kip.dedicate_memory (mbi->mods[i].start, mbi->mods[i].end - 1,
+//                  L4_BootLoaderSpecificMemoryType,
+//                  kip_manager_t::desc_boot_module);
 
 /*!
  * Get the system going.
@@ -83,18 +150,18 @@ void kernel_startup()
         kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
     }
 
-    bootimage_t nexus(name, start, end);
+    bootimage_t nexus(/*name,*/ start/*, end*/);
 
-    parse_cmdline();
-    get_cpuid();
-    init_cpu_features();
-        init_cache();
-        init_pmctr();
-    prepare_infopage();
-    Timer$Enable();
-    init_mem();
-    enable_fpu();
-    k_presume(RootDomain);
+    parse_cmdline(bi);
+//     get_cpuid();
+//     init_cpu_features();
+//         init_cache();
+//         init_pmctr();
+//     prepare_infopage();
+//     Timer$Enable();
+//     init_mem();
+//     enable_fpu();
+//     k_presume(RootDomain);
 
 ///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory
