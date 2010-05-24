@@ -16,12 +16,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include "types.h"
-#include "initfs.h"
+#include "fourcc.h"
+#include "bootimage.h"
 #include "raiifile.h"
 
 using namespace std;
 using namespace raii_wrapper;
 
+const uint32_t version = 1;
 const uint32_t ALIGN = 4;
 
 filebinio& operator << (filebinio& io, vector<char> stringtable)
@@ -30,29 +32,9 @@ filebinio& operator << (filebinio& io, vector<char> stringtable)
     return io;
 }
 
-filebinio& operator << (filebinio& io, initfs_t::header_t& header)
-{
-    io.write32le(header.magic);
-    io.write32le(header.version);
-    io.write32le(header.index_offset);
-    io.write32le(header.names_offset);
-    io.write32le(header.names_size);
-    io.write32le(header.count);
-    return io;
-}
-
-filebinio& operator << (filebinio& io, initfs_t::entry_t& entry)
-{
-    io.write32le(entry.magic);
-    io.write32le(entry.name_offset);
-    io.write32le(entry.location);
-    io.write32le(entry.size);
-    return io;
-}
-
 /*!
-* Append 0-terminated string to string table, return starting string offset in table.
-*/
+ * Append 0-terminated string to string table, return starting string offset in table.
+ */
 uint32_t stringtable_append(vector<char>& table, const std::string& addend)
 {
     uint32_t last_offset = table.size();
@@ -83,16 +65,18 @@ int main(int argc, char** argv)
         file      out(argv[2], ios::out | ios::binary);
         filebinio io(out);
 
-        uint32_t                   i;
+//         uint32_t                   i;
         std::string                str;
-        initfs_t::header_t         header;
-        vector<initfs_t::entry_t>  entry;
+//         initfs_t::header_t         header;
+//         vector<initfs_t::entry_t>  entry;
         vector<char>               name_storage;
         int                        name_offset = 0;
-        int                        data_offset = sizeof(header);
+        int                        data_offset = 0;//sizeof(header);
 
-        io << header;
+        io.write32le(FourCC<'B', 'I', 'M', 'G'>::value);
+        io.write32le(version);
 
+        // Parse the input file, should be somewhat more complex structure to accomodate different types of components.
         while (in.getline(str))
         {
             vector<std::string> strs;
@@ -113,31 +97,31 @@ int main(int argc, char** argv)
                 out.write(buf, bytes);
                 bytes = in_data.read(buf, 4096);
             }
-            entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
+//             entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
             data_offset += in_size;
         }
 
         align_output(out);
 
         name_offset = out.write_pos();
-        header.names_offset = name_offset;
+//         header.names_offset = name_offset;
         io << name_storage;
 
-        header.names_size = out.write_pos() - name_offset;
+//         header.names_size = out.write_pos() - name_offset;
 
         align_output(out);
 
-        header.count = entry.size();
-        header.index_offset = out.write_pos();
-        for (i = 0; i < header.count; i++)
-        {
-            entry[i].name_offset += name_offset;
-            io << entry[i];
-        }
+//         header.count = entry.size();
+//         header.index_offset = out.write_pos();
+//         for (i = 0; i < header.count; i++)
+//         {
+//             entry[i].name_offset += name_offset;
+//             io << entry[i];
+//         }
 
         // rewrite file header
-        out.write_seek(0);
-        io << header;
+//         out.write_seek(0);
+//         io << header;
     } // try
     catch(file_error& e)
     {
