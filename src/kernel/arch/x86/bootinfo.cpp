@@ -97,7 +97,23 @@ bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, c
                 return true;
             }
         }
-        info.generic  += info.rec->size;
+        info.generic += info.rec->size;
+    }
+    return false;
+}
+
+bool bootinfo_t::get_cmdline(const char*& cmdline)
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(this + 1);
+    while (info.generic < free)
+    {
+        if (info.rec->tag == bootrec_command_line)
+        {
+            cmdline = info.cmdline->cmdline;
+            return true;
+        }
+        info.generic += info.rec->size;
     }
     return false;
 }
