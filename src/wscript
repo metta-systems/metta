@@ -202,13 +202,14 @@ def build(bld):
     parsedwarf.target = 'parsedwarf'
     parsedwarf.uselib_local = 'toolruntime common'
 
-    #mkinitfs = bld.new_task_gen('cxx', 'program')
-    #mkinitfs.source = 'tools/mkinitfs/mkinitfs.cpp'
-    #mkinitfs.env = bld.env_of_name('TOOLS_ENV').copy()
-    #mkinitfs.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    #mkinitfs.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
-    #mkinitfs.includes = mkinitfs.env['INCLUDE_DIRS']
-    #mkinitfs.target = 'mkinitfs'
+    # Tool to build bootimage.
+    mkbootimage = bld.new_task_gen('cxx', 'program')
+    mkbootimage.target = 'mkbootimage'
+    mkbootimage.source = 'tools/mkbootimage/mkbootimage.cpp'
+    mkbootimage.env = bld.env_of_name('TOOLS_ENV').copy()
+    mkbootimage.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
 
     kickstart = bld.new_task_gen('cxx', 'program')
     kickstart.target = 'kickstart.sys'
@@ -227,6 +228,8 @@ def build(bld):
     startup.includes = startup.env['INCLUDE_DIRS']
     startup.uselib_local = 'platform common runtime'
 
+    # Make bootimage components.
+
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
     ## isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
@@ -236,13 +239,13 @@ def build(bld):
     #kickstart.target = 'kickstart.sys'
     #kickstart.uselib_local = 'platform common kernel runtime'
 
-    #bld.new_task_gen(
-        #source = 'mkinitfs vesper/arch-x86/kickstart/component.lst',#arch dep
-        #target = 'initfs.img',
-        #rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
-        #name = 'initfs.img',
-        #after = 'cxx_link'
-    #)
+    bld.new_task_gen(
+        source = 'mkbootimage kernel/arch/x86/bootimage.lst',#arch dep
+        target = 'init.img',
+        rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
+        name = 'init.img',
+        after = 'cxx_link'
+    )
 
     bld.new_task_gen('subst',
         source = 'tools/mkbootimg/menu.lst.in',
@@ -256,12 +259,12 @@ def build(bld):
         dict = {'ROOT': 'fd0'}
     )
 
-    bld.new_task_gen(# initfs.img
-        source = 'kickstart.sys kernel-startup.sys tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
+    bld.new_task_gen(
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
         target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-        after = 'cxx_link' #initfs.img
+        after = 'init.img'
     )
 
 # kate: indent-width 4; replace-tabs on;

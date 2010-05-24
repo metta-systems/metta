@@ -22,7 +22,7 @@ cp stage{1,2} fd/boot/grub
 cp $BUILDDIR/tools/mkbootimg/menu.lst.fd0  fd/boot/grub/menu.lst
 cp $BUILDDIR/kickstart.sys      fd/kickstart
 cp $BUILDDIR/kernel-startup.sys fd/kernel-startup
-cp $BUILDDIR/initfs.img         fd/system-bootimage
+cp $BUILDDIR/init.img           fd/system-bootimage
 sudo umount fd
 rm -rf fd
 
@@ -39,6 +39,6 @@ cp stage2_eltorito iso/boot/grub
 cp $BUILDDIR/tools/mkbootimg/menu.lst.cd   iso/boot/grub/menu.lst
 cp $BUILDDIR/kickstart.sys      iso/kickstart
 cp $BUILDDIR/kernel-startup.sys iso/kernel-startup
-cp $BUILDDIR/initfs.img         iso/system-bootimage
+cp $BUILDDIR/init.img           iso/system-bootimage
 mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -o $CDISO iso
 rm -rf iso
