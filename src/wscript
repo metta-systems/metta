@@ -240,7 +240,7 @@ def build(bld):
     #kickstart.uselib_local = 'platform common kernel runtime'
 
     bld.new_task_gen(
-        source = 'mkbootimage vesper/arch-x86/kickstart/component.lst',#arch dep
+        source = 'mkbootimage kernel/arch/x86/bootimage.lst',#arch dep
         target = 'init.img',
         rule = '${SRC[0].abspath(env)} ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
@@ -264,7 +264,7 @@ def build(bld):
         target = 'metta.fd0 metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-        after = 'initfs.img'
+        after = 'init.img'
     )
 
 # kate: indent-width 4; replace-tabs on;
