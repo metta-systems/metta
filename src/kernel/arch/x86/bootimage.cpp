@@ -36,14 +36,19 @@ struct bootimage_rec_t
 
 struct bootimage_root_domain_t : public bootimage_rec_t
 {
+    uintptr_t entry_point;
 };
 
 struct bootimage_glue_code_t : public bootimage_rec_t
 {
+    address_t text, data, bss;
+    size_t text_size, data_size, bss_size;
 };
 
 struct bootimage_module_t : public bootimage_rec_t
 {
+    address_t address;
+    size_t size;
 };
 
 union bootimage_info_t
@@ -54,6 +59,11 @@ union bootimage_info_t
     bootimage_module_t*      module;
     char*                    generic;
 };
+
+bootimage_t::bootimage_t(const char* UNUSED_ARG name, address_t start, address_t UNUSED_ARG end)
+    : location(start)
+{
+}
 
 bool bootimage_t::valid()
 {

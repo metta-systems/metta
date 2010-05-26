@@ -101,6 +101,11 @@ def configure(conf):
     conf.define('DWARF_DEBUG', 0)
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
+    conf.define('CONFIG_X86_PSE', 1)
+    conf.define('CONFIG_X86_PGE', 1)
+    conf.define('CONFIG_X86_FXSR', 1)
+    conf.define('CONFIG_X86_SYSENTER', 1)
+    conf.define('CONFIG_IOAPIC', 1)
     conf.write_config_header('kernel/config.h')
 
     # Copy template env to specific ones
