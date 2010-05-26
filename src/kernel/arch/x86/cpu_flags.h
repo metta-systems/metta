@@ -33,6 +33,12 @@
 #define X86_32_FEAT_MMX    (1 << 23)
 #define X86_32_FEAT_FXSR   (1 << 24)
 #define X86_32_FEAT_XMM    (1 << 25)
+#define X86_32_FEAT_XMM2   (1 << 26)
+#define X86_32_FEAT_SS     (1 << 27)
+#define X86_32_FEAT_HT     (1 << 28)
+#define X86_32_FEAT_TM     (1 << 29)
+#define X86_32_FEAT_IA64   (1 << 30)
+#define X86_32_FEAT_PBE    (1 << 31)
 
 /* CPUID.1 ECX */
 #define X86_32_FEAT2_VMX  (1 << 5)

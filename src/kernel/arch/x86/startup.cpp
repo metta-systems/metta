@@ -135,12 +135,12 @@ static void /*SECTION(".init.cpu")*/ check_cpu_features()
 #if CONFIG_IOAPIC
     req_features |= X86_32_FEAT_APIC;
 #endif
+
     uint32_t avail_features = x86_cpu_t::features();
 
     if ((req_features & avail_features) != req_features)
     {
-        kconsole << "CPU does not support all required features " << req_features << "(";
-#if defined(CONFIG_VERBOSE_INIT)
+        kconsole << "CPU does not support all required features " << req_features << " (";
         const char* x86_32_features[] = {
             "fpu",  "vme",    "de",   "pse",   "tsc",  "msr", "pae",  "mce",
             "cx8",  "apic",   "?",    "sep",   "mtrr", "pge", "mca",  "cmov",
@@ -150,8 +150,7 @@ static void /*SECTION(".init.cpu")*/ check_cpu_features()
         for (int i = 0; i < 32; i++)
             if ((req_features & 1 << i) && (!(avail_features & 1 << i)))
                 kconsole << x86_32_features[i] << " ";
-        kconsole << "missing" << endl;
-#endif
+        kconsole << "missing)" << endl;
         PANIC("unsupported CPU!");
     }
 }
@@ -192,10 +191,10 @@ void kernel_startup()
         kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
     }
 
-    bootimage_t nexus(name, start, end);
+//     bootimage_t nexus(name, start, end); // this fails because of relocations??
 
     parse_cmdline(bi);
-    check_cpu_features();
+    check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
 //     init_cpu_features();
 //         init_cache();
 //         init_pmctr();
