@@ -45,7 +45,7 @@ dependencies list (ndeps * name ofs entries)
 class bootimage_t
 {
 public:
-    explicit bootimage_t(address_t start) : location(start) {}
+    bootimage_t(const char* name, address_t start, address_t end);
 
     /*!
      * Silly iterator interface
