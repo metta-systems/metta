@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "mmu.h"
 #include "cpu_flags.h"
 #include "cpu_information.h"
 
@@ -60,6 +61,14 @@ public:
         uint64_t ret;
         asm volatile("rdtsc" : "=A"(ret));
         return ret;
+    }
+
+    /*!
+     * Write machine-specific register.
+     */
+    static inline void wrmsr(uint32_t index, uint64_t value)
+    {
+        asm volatile("wrmsr" :: "A" (value), "c" (index));
     }
 
     /*!
@@ -129,6 +138,39 @@ public:
         asm volatile ("cpuid"
                       : "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx)
                       : "a" (func));
+    }
+
+    /* Clear TS bit so we don't trap on FPU instructions. */
+    static inline void enable_fpu()
+    {
+        asm volatile ("clts");
+    }
+
+    static inline void init_cache()
+    {
+        asm volatile ("wbinvd\n"                    /* Flush cache */
+                      "movl    %cr0, %eax\n"
+                      "andl    $0x9fffffff, %eax\n" /* Clear cache disable bits */
+                      "movl    %eax, %cr0");
+    }
+
+    static inline void enable_alignment_checks()
+    {
+        ia32_cr0_set(IA32_CR0_AM);
+    }
+
+    /* setup to read DCstall cycles + inst retired */
+    static inline void init_pmctr()
+    {
+        wrmsr(X86_MSR_PMCTR0, 0);
+        wrmsr(X86_MSR_PMCTR1, 0);
+        wrmsr(X86_MSR_EVSEL1, 0x30048); // DCU wait cycles
+        wrmsr(X86_MSR_EVSEL0, 0x4300C0); // Insts retired + EN + OS + USR
+    }
+
+    static inline void enable_user_pmctr()
+    {
+        ia32_cr4_set(IA32_CR4_PCE); /* enable read from user land */
     }
 
 private:

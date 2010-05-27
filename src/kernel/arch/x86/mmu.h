@@ -91,6 +91,16 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t virt)
     asm volatile ("invlpg (%0)\n" :: "r"(virt));
 }
 
+inline void ia32_cr0_set(uint32_t flag)
+{
+    uint32_t dummy;
+    asm volatile ("movl %%cr0, %0\n"
+                  "orl %1, %0\n"
+                  "movl %0, %%cr0\n"
+                  : "=r"(dummy)
+                  : "ir"(flag));
+}
+
 inline void ia32_cr4_set(uint32_t flag)
 {
     uint32_t dummy;

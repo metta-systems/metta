@@ -56,9 +56,12 @@ static void parse_cmdline(bootinfo_t* bi)
     if (bi->get_cmdline(cmdline))
     {
         kconsole << "Command line is: " << cmdline << endl;
-//     char * p;
-//     COPY_STRING (mbi->cmdline);
-//
+
+        // supported cmdline params:
+        // "debug"
+        // "noapic"
+        // "maxmem="
+
 /*#define PARSENUM(name, var, msg, massage...)            \
         if ((p = strstr(mbi->cmdline, name"=")) != NULL)    \
         {                           \
@@ -75,7 +78,7 @@ static void parse_cmdline(bootinfo_t* bi)
                    var >= 1<<20 ? "M" :             \
                    var >= 1<<10 ? "K" : "");            \
         }*/
-//
+
 /*#define PARSEBOOL(name, var, msg)               \
     if ((p = strstr (mbi->cmdline, name"=")) != NULL)   \
     {                           \
@@ -95,7 +98,7 @@ static void parse_cmdline(bootinfo_t* bi)
         var = false;                    \
         }                           \
     }*/
-//
+
 //         PARSENUM("maxmem",
 //                  max_phys_mem,
 //                  "Limiting physical memory to %d%sB\n");
@@ -103,11 +106,6 @@ static void parse_cmdline(bootinfo_t* bi)
 //                  additional_kmem_size,
 //                  "Reserving %d%sB for kernel memory\n",
 //                  additional_kmem_size &= ~(kip.get_min_pagesize()-1));
-//
-//     PARSEBOOL ("bootinfo", use_bootinfo, "generic bootinfo");
-//     PARSEBOOL ("mbi", use_mbi, "multiboot info");
-//     PARSEBOOL ("decode-all", decode_all_executables,
-//            "decoding of all executables");
     }
 }
 
@@ -117,7 +115,7 @@ static void parse_cmdline(bootinfo_t* bi)
 //                  L4_BootLoaderSpecificMemoryType,
 //                  kip_manager_t::desc_boot_module);
 
-static void /*SECTION(".init.cpu")*/ check_cpu_features()
+static void SECTION(".init.cpu") check_cpu_features()
 {
     uint32_t req_features = X86_32_FEAT_FPU;
 #if CONFIG_X86_PSE
@@ -153,6 +151,77 @@ static void /*SECTION(".init.cpu")*/ check_cpu_features()
         kconsole << "missing)" << endl;
         PANIC("unsupported CPU!");
     }
+
+    uint32_t max_cpuid, family, dummy;
+
+    if (x86_cpu_t::has_cpuid())
+        x86_cpu_t::cpuid(0, &max_cpuid, &dummy, &dummy, &dummy);
+    else
+        max_cpuid = 0;
+
+    if (max_cpuid >= 1)
+    {
+        x86_cpu_t::cpuid(1, &family, &dummy, &dummy, &dummy);
+        family = (family >> 8) & 0xf;
+    }
+    else
+    {
+        family = 0;
+    }
+
+    if (avail_features & X86_32_FEAT_PSE)
+    {
+        kconsole << "Enabling page size extension" << endl;
+        ia32_mmu_t::enable_4mb_pages();
+    }
+
+    if (avail_features & X86_32_FEAT_PGE)
+    {
+        kconsole << "Enabling global pages" << endl;
+        ia32_mmu_t::enable_global_pages();
+    }
+
+    /* If we have a 486 or above enable alignment checking */
+    if (family >= 4)
+    {
+        kconsole << "Enabling alignment checking" << endl;
+        x86_cpu_t::enable_alignment_checks();
+    }
+
+    /* If we have a Pentium or above enable the cache */
+    if (family >= 5)
+    {
+        kconsole << "Enabling cache" << endl;
+        x86_cpu_t::init_cache();
+    }
+
+    /* If we have a PPro or above, enable user-level reading of PMCTRs */
+    if (family >= 6)
+    {
+        kconsole << "Enabling performance counters" << endl;
+        x86_cpu_t::init_pmctr();
+        x86_cpu_t::enable_user_pmctr();
+    }
+}
+
+//--infopage.h--
+struct information_page_t
+{
+    void* pervasives;
+    uint64_t scheduler_heartbeat, irqs_heartbeat, glue_heartbeat, faults_heartbeat;
+};
+
+#define INFO_PAGE (*((information_page_t*)0x1000))
+//--infopage.h--
+
+/* Clear out the information page */
+static void prepare_infopage()
+{
+    INFO_PAGE.pervasives = 0;
+    INFO_PAGE.scheduler_heartbeat = 0; // Scheduler passes
+    INFO_PAGE.irqs_heartbeat      = 0; // IRQ calls
+    INFO_PAGE.glue_heartbeat      = 0; // glue code calls
+    INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
 /*!
@@ -163,8 +232,7 @@ static void /*SECTION(".init.cpu")*/ check_cpu_features()
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-
-///    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
+//    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
 
     run_global_ctors();
@@ -173,7 +241,6 @@ void kernel_startup()
     kconsole << "Created gdt." << endl;
     interrupt_descriptor_table_t::instance().install();
     kconsole << "Created idt." << endl;
-//     setup_fpu();
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
@@ -189,14 +256,18 @@ void kernel_startup()
 
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
-//     init_cpu_features();
-//         init_cache();
-//         init_pmctr();
-//     prepare_infopage();  <-- init domain info page
-//     Timer$Enable();
+    prepare_infopage(); // <-- init domain info page
+    // create timer instance
+//     Timer$Enable(); // enable timer interrupts
 //     init_mem(); <-- setup gdt and page tables
-//     enable_fpu();
-//     k_presume(RootDomain);
+    x86_cpu_t::enable_fpu();
+    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+//     k_presume(RootDomain); // we have a liftoff!
+
+    /* Never reached */
+    PANIC("root domain returned!");
+
+    // legacy code pieces:
 
 ///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // now we can also free dynamic memory
@@ -239,15 +310,9 @@ void kernel_startup()
 //     }
 
     // TODO: instantiate kernel interfaces
-
-    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
-
     // TODO: run a predefined root_server_entry portal here
     kconsole << "Allocating frame: " << frame_allocator_t::instance().allocate_frame() << endl;
 #endif
-
-    /* Never reached */
-    PANIC("root domain returned!");
 }
 
 // kate: indent-width 4; replace-tabs on;
