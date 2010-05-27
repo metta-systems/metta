@@ -196,6 +196,7 @@ static void SECTION(".init.cpu") check_cpu_features()
     }
 
     /* If we have a PPro or above, enable user-level reading of PMCTRs */
+    /* Not supported in bochs. */
     if (family >= 6)
     {
         kconsole << "Enabling performance counters" << endl;
