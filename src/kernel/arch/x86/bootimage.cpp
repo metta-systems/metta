@@ -22,7 +22,7 @@ struct bootimage_header_t
     uint32_t magic;        //!< contains header magic value 'BIMG'
     uint32_t version;      //!< contains initfs format version, currently 1
 
-    header_t()
+    bootimage_header_t()
         : magic(FourCC<'B','I','M','G'>::value)
         , version(1)
     {}
@@ -60,7 +60,7 @@ union bootimage_info_t
     char*                    generic;
 };
 
-bootimage_t::bootimage_t(const char* UNUSED_ARG name, address_t start, address_t UNUSED_ARG end)
+bootimage_t::bootimage_t(UNUSED_ARG const char* name, address_t start, UNUSED_ARG address_t end)
     : location(start)
 {
 }

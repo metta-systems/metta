@@ -200,12 +200,12 @@ def build(bld):
     slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
-    parsedwarf = bld.new_task_gen('cxx', 'program')
-    parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
-    parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
-    parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
-    parsedwarf.target = 'parsedwarf'
-    parsedwarf.uselib_local = 'toolruntime common'
+    #parsedwarf = bld.new_task_gen('cxx', 'program')
+    #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
+    #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
+    #parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
+    #parsedwarf.target = 'parsedwarf'
+    #parsedwarf.uselib_local = 'toolruntime common'
 
     # Tool to build bootimage.
     mkbootimage = bld.new_task_gen('cxx', 'program')
@@ -227,7 +227,7 @@ def build(bld):
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp'.split())
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp bootimage.cpp'.split())
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = startup.env['INCLUDE_DIRS']

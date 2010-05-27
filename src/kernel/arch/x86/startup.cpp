@@ -167,9 +167,6 @@ void kernel_startup()
 ///    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
 
-    bochs_console_print_str("Entering kernel-startup\n");
-
-    kconsole << "Run global ctors" << endl;
     run_global_ctors();
 
 /*    global_descriptor_table_t gdt;
@@ -179,19 +176,18 @@ void kernel_startup()
 //     setup_fpu();
 //     setup_pic();
 
-    kconsole << "Create bootinfo" << endl;
     // Grab the BOOTPAGE and discover where is our nexus.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
 
-    kconsole << "Get boot module" << endl;
     address_t start, end;
     const char* name;
-    if (bi->get_module(1, start, end, name))
+    if (!bi->get_module(1, start, end, name))
     {
-        kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
+        PANIC("Bootimage not found!");
     }
 
-//     bootimage_t nexus(name, start, end); // this fails because of relocations??
+    kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
+    bootimage_t nexus(name, start, end);
 
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
