@@ -69,7 +69,8 @@ bootimage_t::bootimage_t(const char* name, address_t start, address_t end)
 
 bool bootimage_t::valid()
 {
-    return false;//start->magic == FourCC<'B','I','M','G'>::value and start->version == 1;
+    bootimage_header_t* header = reinterpret_cast<bootimage_header_t*>(location);
+    return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
 address_t bootimage_t::get_file(uint32_t num)
