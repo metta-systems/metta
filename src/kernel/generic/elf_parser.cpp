@@ -12,6 +12,7 @@
 // #include "memory.h"
 // #include "minmax.h"
 // #include "config.h"
+#include "panic.h"
 
 using namespace elf32;
 
@@ -181,6 +182,10 @@ bool elf_parser_t::relocateTo(address_t load_address)
                     uint32_t  A = *reinterpret_cast<uint32_t*>(P);
                     address_t S = 0;
 
+                    // Hmm, ld doesn't warn if there are undefined symbols in relocatable elf, pity.
+                    if (ELF32_ST_TYPE(sym.info) == 0 && sym.shndx == 0)
+                        PANIC("Invalid relocatable image: undefined symbols!");
+
                     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
                     {
                         S = section_header(sym.shndx)->offset + load_address;
@@ -189,7 +194,7 @@ bool elf_parser_t::relocateTo(address_t load_address)
                     else
                     {
                         S = section_header(sym.shndx)->offset + sym.value + load_address;
-//                         kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' for section " << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << endl;
+//                         kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl;
                     }
 
                     switch (ELF32_R_TYPE(rel.info))
