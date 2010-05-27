@@ -60,14 +60,17 @@ union bootimage_info_t
     char*                    generic;
 };
 
-bootimage_t::bootimage_t(UNUSED_ARG const char* name, address_t start, UNUSED_ARG address_t end)
+bootimage_t::bootimage_t(const char* name, address_t start, address_t end)
     : location(start)
 {
+    kconsole << "Bootimage at " << start << " till " << end << " named " << name << endl;
+    kconsole << "Bootimage is " << (valid() ? "valid" : "not valid") << endl;
 }
 
 bool bootimage_t::valid()
 {
-    return false;//start->magic == FourCC<'B','I','M','G'>::value and start->version == 1;
+    bootimage_header_t* header = reinterpret_cast<bootimage_header_t*>(location);
+    return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
 address_t bootimage_t::get_file(uint32_t num)
