@@ -169,14 +169,13 @@ void kernel_startup()
 
     run_global_ctors();
 
-/*    global_descriptor_table_t gdt;
-    kconsole << "Created gdt." << endl;*/
-/*    interrupt_descriptor_table_t::instance().install();
-    kconsole << "Created idt." << endl;*/
+    global_descriptor_table_t gdt;
+    kconsole << "Created gdt." << endl;
+    interrupt_descriptor_table_t::instance().install();
+    kconsole << "Created idt." << endl;
 //     setup_fpu();
-//     setup_pic();
 
-    // Grab the BOOTPAGE and discover where is our nexus.
+    // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
 
     address_t start, end;
@@ -186,8 +185,7 @@ void kernel_startup()
         PANIC("Bootimage not found!");
     }
 
-    kconsole << "Nexus at " << start << " till " << end << " named " << name << endl;
-    bootimage_t nexus(name, start, end);
+    bootimage_t bootimage(name, start, end);
 
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)

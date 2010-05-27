@@ -60,9 +60,11 @@ union bootimage_info_t
     char*                    generic;
 };
 
-bootimage_t::bootimage_t(UNUSED_ARG const char* name, address_t start, UNUSED_ARG address_t end)
+bootimage_t::bootimage_t(const char* name, address_t start, address_t end)
     : location(start)
 {
+    kconsole << "Bootimage at " << start << " till " << end << " named " << name << endl;
+    kconsole << "Bootimage is " << (valid() ? "valid" : "not valid") << endl;
 }
 
 bool bootimage_t::valid()
