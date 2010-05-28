@@ -1,9 +1,8 @@
 SECTIONS
 {
-    KICKSTART_BASE = 0x104000;
     PAGE_SIZE = 0x1000;
 
-    . =  KICKSTART_BASE;
+    . =  0; /* This is relocatable executable, it will be relocated to appropriate position in memory. */
     .text ALIGN (4) :
     {
         *(.text*)

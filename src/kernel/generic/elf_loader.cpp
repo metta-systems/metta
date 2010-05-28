@@ -17,6 +17,9 @@ cstring_t elf_loader_t::find_symbol(address_t addr, address_t* symbol_start)
 
     address_t max = 0;
     symbol_t* fallback_symbol = 0;
+    section_header_t* symbol_table = section_symbol_table();
+    if (!symbol_table)
+        return NULL;
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
@@ -24,7 +27,7 @@ cstring_t elf_loader_t::find_symbol(address_t addr, address_t* symbol_start)
 
         if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
         {
-            char* c = reinterpret_cast<char*>(symbol->name) + string_table->addr;
+            const char* c = strtab_pointer(section_string_table(), symbol->name);
 
             if (symbol_start)
                 *symbol_start = symbol->value;
@@ -42,7 +45,7 @@ cstring_t elf_loader_t::find_symbol(address_t addr, address_t* symbol_start)
     // Use a biggest symbol value less than addr (if found).
     if (fallback_symbol)
     {
-        char* c = reinterpret_cast<char*>(fallback_symbol->name) + string_table->addr;
+        const char* c = strtab_pointer(section_string_table(), fallback_symbol->name);
 
         if (symbol_start)
             *symbol_start = fallback_symbol->value;

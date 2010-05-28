@@ -94,6 +94,7 @@ inline void bochs_add_watch_region(address_t start, address_t end)
 
 #else
 #define bochs_console_print_char(c)
+#define bochs_console_print_str(s)
 #define bochs_break()
 #define bochs_magic_trap()
 #define bochs_add_watch_region(start,end)

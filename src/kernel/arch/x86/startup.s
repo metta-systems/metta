@@ -23,9 +23,6 @@ _start:
     cli
     cld
 
-;    call setup_gdt
-;    call setup_idt
-
     mov esp, initial_stack
     mov ebp, 0                         ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
