@@ -1,5 +1,24 @@
+#include <string.h>
 #include "token.h"
 #include "lexer.h"
+
+int lexer_t::get_next_char()
+{
+    char cur_char = *cur_ptr++;
+    switch (cur_char)
+    {
+        default: return (unsigned char)cur_char;
+        case 0:
+            // A nul character in the stream is either the end of the current buffer or
+            // a random nul in the file.  Disambiguate that here.
+            if (cur_ptr - 1 != cur_buf->getBufferEnd())
+                return 0;  // Just whitespace.
+
+            // Otherwise, return end of file.
+            --cur_ptr;  // Another call to lex will return EOF again.
+            return EOF;
+    }
+}
 
 token::kind lexer_t::get_token()
 {
@@ -39,7 +58,7 @@ token::kind lexer_t::get_identifier()
     }
 
     --start_ptr;
-    int len = cur_ptr - start_ptr;
+    unsigned int len = cur_ptr - start_ptr;
 
 #define KEYWORD(word) \
     if (len == strlen(#word) && !memcmp(start_ptr, #word, len)) \
