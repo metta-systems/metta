@@ -1,0 +1,12 @@
+// if (kind == kw_interface) parse_interface(false);
+// if (kind == kw_local) parse_interface(true);
+// if (kind == kw_needs) parse_imports();
+// if (kind == kw_range) parse_range_type_alias();
+// if (kind == kw_sequence) parse_sequence_type_alias();
+// if (kind == kw_set) parse_set_type_alias();
+// if (kind == kw_record) parse_record_type_alias();
+// if (kind == kw_exception) parse_exception();
+// if (kind == type_decl) parse_type_alias();
+// if (kind == kw_idempotent) parse_method();
+// if (kind == identifier) parse_method();
+// bool parse_interface(bool local);

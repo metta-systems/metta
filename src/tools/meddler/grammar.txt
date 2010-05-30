@@ -14,7 +14,7 @@ body = { needs | exception | typedef | method } ;
 needs = { "needs" IDs ";" } ;
 fields = typeID , ID , ";" ;
 exception = "exception" ID "{" {fields} "}" ;
-arrayType = typeID ID ("[" rangeType "]")+ ;
+arrayType = typeID ID ("[" rangeType "]")+ ; //fixme: hard to parse!
 recordType = "record" "{" fields+ "}" ID ;
 typedef =
     "set" , "{" , IDlist , "}" , ID |
@@ -23,7 +23,7 @@ typedef =
     "sequence" , "<" , typeID , ">" , ID |
     arrayType |
     recordType ;
-arg_spec = typeID , ID , { "," , ID } ;
+arg_spec = ["in"|"out"|"inout"] typeID , ID , { "," , ID } ;
 args = arg_spec , { "," , arg_spec } ;
 return_spec = "returns" , "(" , {args} , ")" | "never" , "returns" ;
 method = ["idempotent"] , ID , "(" , {args} , ")" , return_spec , "raises" , IDs , ";" ;
@@ -34,7 +34,7 @@ interface context_v1
 {
     needs heap;
     sequence<string> names;
-    list() returns (names nl) raises heap.no_memory;
+    list() returns (names name_list) raises heap.no_memory;
 }
 
 local interface type_system_v1 extends context_v1
