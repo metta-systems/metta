@@ -225,6 +225,56 @@ static void prepare_infopage()
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
+// setup gdt and page tables
+static void init_mem()
+{
+    // create physical frames allocator
+    // initialize physical memory
+///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
+    // create virtual memory allocator
+    // initialize virtual memory map
+    // create stretch allocator
+    // assign stretches to address ranges
+    // install page fault handler
+    // enable paging
+
+#if 0
+    // Identity map currently executing code.
+    // page 0 is not mapped to catch null pointers
+    map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
+//     stretch_driver_t::default_driver().initialise();
+    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
+    // now we have paging enabled.
+    kconsole << "Enabled paging." << endl;
+#endif
+//    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
+    // now we can allocate memory frames
+}
+
+static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
+{
+    // Load components from bootcp.
+//     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
+//     initfs_t initfs(bootcp->mod_start);
+//     typedef void (*comp_entry)(bootinfo_t bi_page);
+
+    // For now, boot components are all linked at different virtual addresses so they don't overlap.
+//     kconsole << "iterating components" << endl;
+//     for (uint32_t k = 0; k < initfs.count(); k++)
+//     {
+//         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
+//         // here loading an image should create a separate PD with its own pagedir
+// //         domain_t* d = nucleus->create_domain();
+//
+//         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
+//             kconsole << RED << "not an ELF file, load failed" << endl;
+//         else
+//             kconsole << GREEN << "ELF file loaded, entering component init" << endl;
+//         comp_entry init_component = (comp_entry)elf.get_entry_point();
+//         init_component(bootinfo);
+//     }
+}
+
 /*!
  * Get the system going.
  *
@@ -233,8 +283,6 @@ static void prepare_infopage()
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-//    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
-    // now we can allocate memory frames
 
     run_global_ctors();
 
@@ -258,62 +306,21 @@ void kernel_startup()
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
     prepare_infopage(); // <-- init domain info page
-    // create timer instance
+    //timer_mod_cl = TimerMod$New(); // create timer instance
 //     Timer$Enable(); // enable timer interrupts
-//     init_mem(); <-- setup gdt and page tables
+    init_mem();
     x86_cpu_t::enable_fpu();
+
+    // Load the modules.
+    // Module "boot" depends on all modules that must be probed at startup.
+    // Dependency resolution will bring up modules in an appropriate order.
+    load_modules(bootimage, "boot");
+
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 //     k_presume(RootDomain); // we have a liftoff!
 
     /* Never reached */
     PANIC("root domain returned!");
-
-    // legacy code pieces:
-
-///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
-    // now we can also free dynamic memory
-
-#if 0
-    // Identity map currently executing code.
-    // page 0 is not mapped to catch null pointers
-    map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
-
-//     stretch_driver_t::default_driver().initialise();
-
-    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
-    // now we have paging enabled.
-    kconsole << "Enabled paging." << endl;
-
-    // Load the modules.
-    // Module "boot" depends on all modules that must be probed at startup.
-    // Dependency resolution will bring up modules in an appropriate order.
-//    load_modules(bootimage, "boot");
-
-    // Load components from bootcp.
-//     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
-//     initfs_t initfs(bootcp->mod_start);
-//     typedef void (*comp_entry)(bootinfo_t bi_page);
-
-    // For now, boot components are all linked at different virtual addresses so they don't overlap.
-//     kconsole << "iterating components" << endl;
-//     for (uint32_t k = 0; k < initfs.count(); k++)
-//     {
-//         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
-//         // here loading an image should create a separate PD with its own pagedir
-// //         domain_t* d = nucleus->create_domain();
-// 
-//         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
-//             kconsole << RED << "not an ELF file, load failed" << endl;
-//         else
-//             kconsole << GREEN << "ELF file loaded, entering component init" << endl;
-//         comp_entry init_component = (comp_entry)elf.get_entry_point();
-//         init_component(bootinfo);
-//     }
-
-    // TODO: instantiate kernel interfaces
-    // TODO: run a predefined root_server_entry portal here
-    kconsole << "Allocating frame: " << frame_allocator_t::instance().allocate_frame() << endl;
-#endif
 }
 
 // kate: indent-width 4; replace-tabs on;
