@@ -29,6 +29,24 @@
 // http://en.wikipedia.org/wiki/Distributed_Objects_Everywhere
 // http://en.wikipedia.org/wiki/Portable_Distributed_Objects
 //
+// See http://developer.apple.com/mac/library/documentation/Cocoa/Conceptual/DistrObjects/Concepts/messaging.html for
+// information on (de)marshalling method invocations.
+//
+// http://en.wikipedia.org/wiki/Internet_Communications_Engine zeroc ice has marshalling and QoS in IceStorm
+//
+// SOM prevents fragile base class problem by providing only late binding, to allow the run-time linker to re-build
+// the table on the fly. This way, changes to the underlying libraries are resolved when they are loaded into programs,
+// although there is a performance cost.
+//
+// The SOM description for "types and classes" is essentially the same as that described in the OODBTG Reference Model
+// entry in this section (http://www.objs.com/x3h7/oodbtg.htm) in that a "type" defines a protocol shared by a group
+// of objects, called "instances" of the type and a class defines an implementation shared by a group of objects.
+//
+// In SOM all classes are real objects. SOM supports a class object which represents the metaclass for the creation
+// of all SOM classes. The SOM metaclass defines the behavior common to all class objects. Since it inherits from
+// the root SOM object it exists at run time and contains the methods for manufacturing object instances.
+// It also has the methods used to dynamically obtain information about a class and its methods at run time.
+//
 class component_t
 {
     portal_set_t* query_interface(symbol_t interface_spec);
