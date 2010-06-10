@@ -225,6 +225,62 @@ static void prepare_infopage()
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
+// A mixed influence of OSKit COM and Nemesis component interfaces.
+
+// retain = objc-ish for Ref
+// release = objc-ish for Unref
+
+// closure = ops + state
+// ops = typed fn ptrs array
+// state = opaque pointer for clients, specific pointer for owner/implementor
+
+// generic part
+template <class ops_type, class state_type>
+struct module_interface
+{
+    ops_type* methods;
+    state_type* state;
+};
+
+#define DECLARE_CLOSURE(name) struct name##_ops; struct name##_state; struct name##_closure : public module_interface<name##_ops, name##_state> {}
+
+// type-specific part
+DECLARE_CLOSURE(client_frame_allocator);
+DECLARE_CLOSURE(frame_allocator);
+DECLARE_CLOSURE(frames_module);
+
+struct client_frame_allocator_ops
+{
+    void (*allocate)();
+    void (*allocate_range)();
+    void (*query)();
+    void (*free)();
+    void (*destroy)();
+};
+
+// frame allocator is a privileged interface that can allocate memory for privileged domain and also create
+// client frame allocators for client (userspace) domains.
+
+struct frame_allocator_ops : public client_frame_allocator_ops
+{
+    client_frame_allocator_closure* (*new_client)(frame_allocator_closure* self);
+};
+
+#define frame_allocator$new_client(self) ((self)->methods->new_client((self)))
+
+// frames_module is a construction interface for frames module, it creates and returns an instance of (singleton)
+// frame_allocator type.
+// (metatype? metaclass? factory?)
+
+struct frames_module_ops
+{
+    void                     (*required)(frames_module_closure* self, int args);
+    frame_allocator_closure* (*create)(frames_module_closure* self, int args);
+    void                     (*done)(frames_module_closure* self);
+};
+
+#define frames_module$required(self, args) ((self)->methods->required((self), (args)))
+
 // setup gdt and page tables
 static void init_mem()
 {
