@@ -14,6 +14,8 @@
 #include "default_console.h"
 #include "bootinfo.h"
 #include "bootimage.h"
+#include "infopage.h"
+#include "frames_module_interface.h"
 
 #include "memutils.h"
 #include "memory.h"
@@ -205,16 +207,6 @@ static void SECTION(".init.cpu") check_cpu_features()
     }
 }
 
-//--infopage.h--
-struct information_page_t
-{
-    void* pervasives;
-    uint64_t scheduler_heartbeat, irqs_heartbeat, glue_heartbeat, faults_heartbeat;
-};
-
-#define INFO_PAGE (*((information_page_t*)0x1000))
-//--infopage.h--
-
 /* Clear out the information page */
 static void prepare_infopage()
 {
@@ -225,66 +217,12 @@ static void prepare_infopage()
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
-// A mixed influence of OSKit COM and Nemesis component interfaces.
-
-// retain = objc-ish for Ref
-// release = objc-ish for Unref
-
-// closure = ops + state
-// ops = typed fn ptrs array
-// state = opaque pointer for clients, specific pointer for owner/implementor
-
-// generic part
-template <class ops_type, class state_type>
-struct module_interface
-{
-    ops_type* methods;
-    state_type* state;
-};
-
-#define DECLARE_CLOSURE(name) struct name##_ops; struct name##_state; struct name##_closure : public module_interface<name##_ops, name##_state> {}
-
-// type-specific part
-DECLARE_CLOSURE(client_frame_allocator);
-DECLARE_CLOSURE(frame_allocator);
-DECLARE_CLOSURE(frames_module);
-
-struct client_frame_allocator_ops
-{
-    void (*allocate)();
-    void (*allocate_range)();
-    void (*query)();
-    void (*free)();
-    void (*destroy)();
-};
-
-// frame allocator is a privileged interface that can allocate memory for privileged domain and also create
-// client frame allocators for client (userspace) domains.
-
-struct frame_allocator_ops : public client_frame_allocator_ops
-{
-    client_frame_allocator_closure* (*new_client)(frame_allocator_closure* self);
-};
-
-#define frame_allocator$new_client(self) ((self)->methods->new_client((self)))
-
-// frames_module is a construction interface for frames module, it creates and returns an instance of (singleton)
-// frame_allocator type.
-// (metatype? metaclass? factory?)
-
-struct frames_module_ops
-{
-    void                     (*required)(frames_module_closure* self, int args);
-    frame_allocator_closure* (*create)(frames_module_closure* self, int args);
-    void                     (*done)(frames_module_closure* self);
-};
-
-#define frames_module$required(self, args) ((self)->methods->required((self), (args)))
-
 // setup gdt and page tables
 static void init_mem()
 {
     // create physical frames allocator
+    frames_module_closure* frames_mod;
+    frames_mod = 0;
     // initialize physical memory
 ///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
     // create virtual memory allocator
@@ -293,18 +231,17 @@ static void init_mem()
     // assign stretches to address ranges
     // install page fault handler
     // enable paging
+//     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
+//     kconsole << "Enabled paging." << endl;
 
 #if 0
     // Identity map currently executing code.
     // page 0 is not mapped to catch null pointers
     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
 //     stretch_driver_t::default_driver().initialise();
-    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
-    // now we have paging enabled.
-    kconsole << "Enabled paging." << endl;
-#endif
 //    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
     // now we can allocate memory frames
+#endif
 }
 
 static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
