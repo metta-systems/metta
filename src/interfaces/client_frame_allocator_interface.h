@@ -9,4 +9,4 @@ DECLARE_CLOSURE(client_frame_allocator)
     void query();
     void free();
     void destroy();
-}
+};
