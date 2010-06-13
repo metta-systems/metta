@@ -85,6 +85,7 @@ def configure(conf):
     conf.set_env_name('ENV', conf.env)
     conf.setenv('ENV') # Activate the environment
     conf.env.append_unique('INCLUDE_DIRS', include_dirs)
+    conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
     # Set arch-specific include paths
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
@@ -224,6 +225,12 @@ def build(bld):
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'platform common runtime'
 
+    interfaces = bld.new_task_gen('cxx', 'staticlib')
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator'.split())
+    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.target = 'interfaces'
+
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
@@ -231,7 +238,7 @@ def build(bld):
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = startup.env['INCLUDE_DIRS']
-    startup.uselib_local = 'platform common runtime'
+    startup.uselib_local = 'platform common runtime interfaces'
 
     # Make bootimage components.
 
