@@ -16,6 +16,7 @@
 #include "bootimage.h"
 #include "infopage.h"
 #include "frames_module_interface.h"
+#include "timer_interface.h"
 
 #include "memutils.h"
 #include "memory.h"
@@ -244,8 +245,23 @@ static void init_mem()
 #endif
 }
 
+// depgraph: boot -> frame_allocator
+// frame_allocator -> frames_module
+// client_frame_allocator -> frame_allocator
+
+// FIXME: load modules should happen in primal domain?
 static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
 {
+    // if bootpage contains devtree, we use it in building modules deps
+    // find modules corresponding to devtree entries and add them to deps list
+    // if no devtree present (on x86) we add "probe devices later" entry to bootpage to force
+    // module probing after initial startup.
+
+//     module_loader_t ml;
+//     ml.load_modules("boot");
+    // each module has .modinfo section with entry point and other meta info
+    // plus .modinfo.deps section with module dependencies graph data
+
     // Load components from bootcp.
 //     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
 //     initfs_t initfs(bootcp->mod_start);
@@ -268,8 +284,12 @@ static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root
 //     }
 }
 
+extern timer_closure* init_timer();
+
 /*!
  * Get the system going.
+ *
+ * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.
  *
  * TODO: relate Pistachio SMP startup routines here.
  */
@@ -299,18 +319,22 @@ void kernel_startup()
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
     prepare_infopage(); // <-- init domain info page
-    //timer_mod_cl = TimerMod$New(); // create timer instance
-//     Timer$Enable(); // enable timer interrupts
-    init_mem();
+    timer_closure* timer = init_timer();
+    timer->enable(); // enable timer interrupts
+    init_mem(); // not needed, since MMU mod will be inited from root domain and we have all info in bootpage anyway
     x86_cpu_t::enable_fpu();
 
+    // FIXME: do this from the root domain
     // Load the modules.
     // Module "boot" depends on all modules that must be probed at startup.
     // Dependency resolution will bring up modules in an appropriate order.
     load_modules(bootimage, "boot");
 
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
-//     k_presume(RootDomain); // we have a liftoff!
+
+//     RootDomain root_dom(bootimage);
+//     enter_domain(root_dom); // we have a liftoff!
+//     k_presume(RootDomain);
 
     /* Never reached */
     PANIC("root domain returned!");

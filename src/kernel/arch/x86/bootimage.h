@@ -19,7 +19,7 @@ Modules can be ELF executables or data blobs loaded and mapped at specified addr
 
 Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
 
-Root entry in bootimage is main startup code, the system privileged domain or root domain.
+Root entry in bootimage is main startup code, the system privileged domain or "root domain".
 
 <data blob>
 address
@@ -46,6 +46,9 @@ class bootimage_t
 {
 public:
     bootimage_t(const char* name, address_t start, address_t end);
+
+    //! Get elf-loaded root domain. ??
+//     elf_loader_t get_root_domain();
 
     /*!
      * Silly iterator interface
