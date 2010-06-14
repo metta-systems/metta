@@ -226,7 +226,7 @@ def build(bld):
     kickstart.uselib_local = 'platform common runtime'
 
     interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator'.split())
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator timer'.split())
     interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
     interfaces.target = 'interfaces'
@@ -234,7 +234,7 @@ def build(bld):
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp bootimage.cpp idt.cpp interrupt.s isr.cpp'.split())
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp bootimage.cpp idt.cpp interrupt.s isr.cpp pit.cpp'.split())
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = startup.env['INCLUDE_DIRS']
