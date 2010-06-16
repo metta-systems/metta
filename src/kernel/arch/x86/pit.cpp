@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "infopage.h"
 #include "timer_impl.h"
+#include "default_console.h"
 
 // Based on http://wiki.osdev.org/Programmable_Interval_Timer
 
@@ -40,9 +41,8 @@ static void init_pit(int hz)
     x86_cpu_t::outb(PIT_CH0, (divisor >> 8) & 0xff);
 }
 
-struct timer_state
+struct timer_state : information_page_t
 {
-    time_ns now, alarm;
 };
 
 // Timer ops.
@@ -63,6 +63,7 @@ static time_ns clear(timer_closure* /*self*/, time_ns* /*itime*/)
 
 static void enable(timer_closure* /*self*/)
 {
+    kconsole << "timer.enable()" << endl;
 //     interrupt_descriptor_table_t::instance().set_interrupt(?, ?);
 }
 
@@ -80,6 +81,7 @@ static timer_closure timer;// = { methods: &ops, state: INFO_PAGE_ADDR };
 
 timer_closure* init_timer()
 {
+    kconsole << "Initializing interrupt timer." << endl;
     init_pit(100);
     timer.methods = &ops;
     timer.state = reinterpret_cast<timer_state*>(INFO_PAGE_ADDR);

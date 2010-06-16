@@ -1,9 +1,20 @@
 #pragma once
 
+#include "timer_interface.h"
+
 struct information_page_t
 {
-    void* pervasives;
-    uint64_t scheduler_heartbeat, irqs_heartbeat, glue_heartbeat, faults_heartbeat;
+    volatile time_ns      now;       /* 00 Current system time              */
+    volatile time_ns      alarm;     /* 08 Alarm time                       */
+    volatile uint32_t     pcc;       /* 10 Cycle count at last tick         */
+    uint32_t              scale;     /* 14 Cycle count scale factor         */
+    uint32_t              cycle;     /* 18 Cycle time in picoseconds        */
+
+    void* pervasives;                /* Pervasives pointer for current thread */
+    uint64_t scheduler_heartbeat,
+             irqs_heartbeat,
+             glue_heartbeat,
+             faults_heartbeat;
 };
 
 #define INFO_PAGE_ADDR 0x1000
