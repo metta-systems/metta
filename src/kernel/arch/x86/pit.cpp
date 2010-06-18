@@ -1,8 +1,12 @@
 #include "cpu.h"
 #include "infopage.h"
 #include "timer_impl.h"
+#include "default_console.h"
 
 // Based on http://wiki.osdev.org/Programmable_Interval_Timer
+
+// Driver specification in Chorus OS:
+// http://docs.sun.com/app/docs/doc/806-3343/6jcgfleep?l=sv&a=view
 
 #define PIT_CH0 0x40
 #define PIT_CH1 0x41
@@ -10,10 +14,10 @@
 #define PIT_MCR 0x43
 
 // MCR bits 6-7
-#define MCR_CH0 (0 << 6)
-#define MCR_CH1 (1 << 6)
-#define MCR_CH2 (2 << 6)
-#define MCR_READ_BACK (3 << 6)
+#define MCR_CH0         (0 << 6)
+#define MCR_CH1         (1 << 6)
+#define MCR_CH2         (2 << 6)
+#define MCR_READ_BACK   (3 << 6)
 // MCR bits 4-5
 #define MCR_LATCH_COUNT (0 << 4)
 #define MCR_LOBYTE      (1 << 4)
@@ -40,9 +44,8 @@ static void init_pit(int hz)
     x86_cpu_t::outb(PIT_CH0, (divisor >> 8) & 0xff);
 }
 
-struct timer_state
+struct timer_state : information_page_t
 {
-    time_ns now, alarm;
 };
 
 // Timer ops.
@@ -63,6 +66,7 @@ static time_ns clear(timer_closure* /*self*/, time_ns* /*itime*/)
 
 static void enable(timer_closure* /*self*/)
 {
+    kconsole << "timer.enable()" << endl;
 //     interrupt_descriptor_table_t::instance().set_interrupt(?, ?);
 }
 
@@ -80,6 +84,7 @@ static timer_closure timer;// = { methods: &ops, state: INFO_PAGE_ADDR };
 
 timer_closure* init_timer()
 {
+    kconsole << "Initializing interrupt timer." << endl;
     init_pit(100);
     timer.methods = &ops;
     timer.state = reinterpret_cast<timer_state*>(INFO_PAGE_ADDR);

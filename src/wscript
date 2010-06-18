@@ -156,6 +156,8 @@ def configure(conf):
 def build(bld):
     arch = Options.options.arch
 
+    bld.add_subdirs("modules")
+
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
     runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete placement_new memutils cstring stdlib'.split())
@@ -237,7 +239,7 @@ def build(bld):
     startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp bootimage.cpp idt.cpp interrupt.s isr.cpp pit.cpp'.split())
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-    startup.includes = startup.env['INCLUDE_DIRS']
+    startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'platform common runtime interfaces'
 
     # Make bootimage components.

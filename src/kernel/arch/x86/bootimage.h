@@ -47,6 +47,7 @@ class bootimage_t
 public:
     bootimage_t(const char* name, address_t start, address_t end);
 
+    address_t find_root_domain(size_t* size);
     //! Get elf-loaded root domain. ??
 //     elf_loader_t get_root_domain();
 
