@@ -18,6 +18,7 @@
 #include "types.h"
 #include "fourcc.h"
 #include "bootimage.h"
+#include "bootimage_private.h"
 #include "raiifile.h"
 
 using namespace std;
@@ -55,14 +56,22 @@ void align_output(file& out)
     }
 }
 
+/*!
+ * Call like:
+ * mkbootimg _build_/x86-pc99-release/modules/ components.lst init.img
+ */
 int main(int argc, char** argv)
 {
-    if (argc != 3)
-        throw runtime_error("usage: mkbootimage components.lst init.img");
+    if (argc != 4)
+        throw runtime_error("usage: mkbootimage base-path components.lst init.img");
+
+    std::string prefix(argv[1]);
+    std::string input(argv[2]);
+    std::string output(argv[3]);
 
     try {
-        file      in(argv[1], ios::in);
-        file      out(argv[2], ios::out | ios::binary);
+        file      in(input, ios::in);
+        file      out(output, ios::out | ios::binary);
         filebinio io(out);
 
 //         uint32_t                   i;
@@ -89,8 +98,17 @@ int main(int argc, char** argv)
             strs.erase(strs.begin());
             std::string right = boost::join(strs, ":");
 
-            file in_data(left, ios::in | ios::binary);
+            printf("Adding %s...\n", (prefix + left).c_str());
+            file in_data(prefix + left, ios::in | ios::binary);
             long in_size = in_data.size();
+            // Write module header
+            bootimage_root_domain_t rdom;
+            rdom.tag = kind_root_domain;
+            rdom.size = sizeof(rdom) + in_size;
+            rdom.entry_point = 0;
+            rdom.namespace_data = 0;
+            out.write(&rdom, sizeof(rdom));
+            // Write module data
             char buf[4096];
             size_t bytes = in_data.read(buf, 4096);
             while (bytes > 0) {
@@ -126,7 +144,7 @@ int main(int argc, char** argv)
     catch(file_error& e)
     {
         printf("%s\n", e.message());
-        unlink(argv[2]); // remove invalid output
+        unlink(output.c_str()); // remove invalid output
     }
 
     return 0;
