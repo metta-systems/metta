@@ -3,10 +3,12 @@
 
 def build(bld):
     rdom = bld.new_task_gen('cxx', 'program')
-    rdom.source = 'entry.cpp root_domain.cpp ../module-crt0.s ../../kernel/platform/pc99/default_console.cpp'
+    rdom.source = 'entry.cpp root_domain.cpp ../module-crt0.s'
     rdom.env = bld.env_of_name('KERNEL_ENV').copy()
+    rdom.env.append_unique('LINKFLAGS', ['-r']); # Components are relocatable
     #rdom.env.append_unique('LINKFLAGS', ['-Wl,-defsym,U_CODE_START=0x220000','-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,scheduler.map'])
-    rdom.includes = '. ../../runtime ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
+    rdom.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
+    rdom.uselib_local = 'common platform runtime'
     rdom.target = 'root_domain.comp'
 
 # kate: indent-width 4; replace-tabs on;
