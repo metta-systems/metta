@@ -1,4 +1,8 @@
-#include "memutils.h"
+#include "default_console.h"
+#include "frames_module_interface.h"
+#include "macros.h"
+
+/*#include "memutils.h"
 #include "memory.h"
 #include "multiboot.h"
 #include "elf_parser.h"
@@ -10,7 +14,7 @@
 #include "page_directory.h"
 #include "x86_frame_allocator.h"
 #include "x86_protection_domain.h"
-#include "new.h"
+#include "new.h"*/
 // #include "stretch_driver.h"
 
 #if 0
@@ -57,9 +61,8 @@ static void init_mem()
 // frame_allocator -> frames_module
 // client_frame_allocator -> frame_allocator
 
-// FIXME: load modules should happen in primal domain?
-static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
-{
+//static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
+//{
     // if bootpage contains devtree, we use it in building modules deps
     // find modules corresponding to devtree entries and add them to deps list
     // if no devtree present (on x86) we add "probe devices later" entry to bootpage to force
@@ -90,16 +93,16 @@ static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root
 //         comp_entry init_component = (comp_entry)elf.get_entry_point();
 //         init_component(bootinfo);
 //     }
-}
+//}
 
-
-void entry()
+extern "C" void entry()
 {
+    kconsole << "root_domain entry!" << endl;
 
     init_mem(); // TODO: init mmu
 
     // Load the modules.
     // Module "boot" depends on all modules that must be probed at startup.
     // Dependency resolution will bring up modules in an appropriate order.
-    load_modules(bootimage, "boot");
+//    load_modules(bootimage, "boot");
 }

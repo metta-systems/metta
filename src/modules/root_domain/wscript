@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+def build(bld):
+    rdom = bld.new_task_gen('cxx', 'program')
+    rdom.source = 'entry.cpp root_domain.cpp ../module-crt0.s ../../kernel/platform/pc99/default_console.cpp'
+    rdom.env = bld.env_of_name('KERNEL_ENV').copy()
+    #rdom.env.append_unique('LINKFLAGS', ['-Wl,-defsym,U_CODE_START=0x220000','-T', '../vesper/arch-x86/boot_components/component.lds', '-Wl,-Map,scheduler.map'])
+    rdom.includes = '. ../../runtime ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
+    rdom.target = 'root_domain.comp'
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :
