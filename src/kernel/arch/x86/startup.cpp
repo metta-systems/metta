@@ -23,6 +23,7 @@
 #include "gdt.h"
 #include "idt.h"
 #include "root_domain.h"
+#include "registers.h"
 
 // Declare C linkage.
 extern "C" void kernel_startup();
@@ -241,9 +242,10 @@ void kernel_startup()
 
     // Create an execution context and activate it.
     continuation_t::gpregs_t gpregs;
+    gpregs.esp = read_stack_pointer();
     gpregs.eax = 0;
     gpregs.ebx = 0;
-    gpregs.eflags = 1;
+    gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
     new_context.set_gpregs(gpregs);
     new_context.set_entry(root_dom.entry());//FIXME: depends on gpregs being set before this call!
     new_context.activate(); // we have a liftoff!
