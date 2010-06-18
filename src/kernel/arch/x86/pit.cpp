@@ -5,16 +5,19 @@
 
 // Based on http://wiki.osdev.org/Programmable_Interval_Timer
 
+// Driver specification in Chorus OS:
+// http://docs.sun.com/app/docs/doc/806-3343/6jcgfleep?l=sv&a=view
+
 #define PIT_CH0 0x40
 #define PIT_CH1 0x41
 #define PIT_CH2 0x42
 #define PIT_MCR 0x43
 
 // MCR bits 6-7
-#define MCR_CH0 (0 << 6)
-#define MCR_CH1 (1 << 6)
-#define MCR_CH2 (2 << 6)
-#define MCR_READ_BACK (3 << 6)
+#define MCR_CH0         (0 << 6)
+#define MCR_CH1         (1 << 6)
+#define MCR_CH2         (2 << 6)
+#define MCR_READ_BACK   (3 << 6)
 // MCR bits 4-5
 #define MCR_LATCH_COUNT (0 << 4)
 #define MCR_LOBYTE      (1 << 4)
