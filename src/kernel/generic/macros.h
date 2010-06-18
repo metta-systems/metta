@@ -10,6 +10,7 @@
 
 #define UNUSED(x)           ((void)(x))
 #define UNUSED_ARG          __attribute__((unused))
+#define STDCALL             __attribute__((stdcall))
 #define NOINLINE            __attribute__((noinline))
 #define PACKED              __attribute__((__packed__))
 #define ALIGNED(poweroftwo) __attribute__((aligned (poweroftwo)))
