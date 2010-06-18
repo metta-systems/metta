@@ -11,37 +11,17 @@
 #include "types.h"
 
 /*!
-Bootimage is similar to Nemesis' nexus - it contains information, modules, dependencies, namespaces etc.
-required for successful bootstrap.
-
-Index information in bootimage should allow quick and easy dependency calculation and module instantiation.
-Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
-
-Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
-
-Root entry in bootimage is main startup code, the system privileged domain or "root domain".
-
-<data blob>
-address
-size
-name ofs
-<module>
-address
-size
-name ofs
-upcall record (PCB) location
-dependencies list (ndeps * name ofs entries)
-
-*/
-
-/*!
-
-// version 3: current.
-              * initfs::header
-              * aligned: modules data
-              * aligned: nexus with metadata index in tagged format.
+ * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces
+ * and everything else required for successful startup.
+ *
+ * Index information in bootimage should allow quick and easy dependency calculation and module instantiation.
+ * Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
+ *
+ * Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
+ *
+ * Root entry in bootimage is main startup code, called "root domain".
+ *
  */
-
 class bootimage_t
 {
 public:
