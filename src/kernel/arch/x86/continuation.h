@@ -40,7 +40,7 @@ private:
     uint32_t pad[23]; // use it for e.g. some words on stack too?
 };
 
-extern void asm_activate(continuation_t::gpregs_t* gpregs, uint32_t cs, uint32_t ds);
+extern "C" void asm_activate(continuation_t::gpregs_t* gpregs, uint32_t cs, uint32_t ds);
 
 // A privileged method to activate (throw) a continuation.
 // Ideally, the FPU stuff should be initialiazed only if process hits FPU exception by using FPU commands after
