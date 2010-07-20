@@ -44,6 +44,7 @@ public:
 
 private:
     address_t location;
+    address_t end;
 };
  
 // kate: indent-width 4; replace-tabs on;

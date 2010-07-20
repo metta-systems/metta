@@ -151,7 +151,7 @@ bool elf_parser_t::is_relocatable() const
     return header && header->type == ET_REL;
 }
 
-bool elf_parser_t::relocateTo(address_t load_address)
+bool elf_parser_t::relocate_to(address_t load_address)
 {
     section_header_t* shstrtab = section_shstring_table();
     if (!shstrtab)

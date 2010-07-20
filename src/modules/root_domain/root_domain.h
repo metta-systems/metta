@@ -1,5 +1,7 @@
 #pragma once
 
+#include "elf_parser.h"
+
 class component_t
 {
 };
@@ -13,4 +15,6 @@ public:
 private:
     address_t start;
     size_t size;
+    elf_parser_t elf;
+    address_t entry_point;
 };

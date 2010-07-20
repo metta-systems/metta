@@ -165,6 +165,12 @@ def build(bld):
     runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
 
+    minruntime = bld.new_task_gen('cxx', 'staticlib')
+    minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support placement_new dummy_delete memutils cstring'.split())
+    minruntime.env = bld.env_of_name('KERNEL_ENV').copy()
+    minruntime.includes = minruntime.env['INCLUDE_DIRS']
+    minruntime.target = 'minruntime'
+
     toolruntime = bld.new_task_gen('cxx', 'staticlib')
     toolruntime.source = 'runtime/memutils.cpp runtime/cstring.cpp'.split()
     toolruntime.env = bld.env_of_name('TOOLS_ENV').copy()
@@ -184,7 +190,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp'.split())# + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp bootinfo.cpp bootimage.cpp'.split())# + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -216,7 +222,7 @@ def build(bld):
     mkbootimage.source = 'tools/mkbootimage/mkbootimage.cpp'
     mkbootimage.env = bld.env_of_name('TOOLS_ENV').copy()
     mkbootimage.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    #mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
 
     kickstart = bld.new_task_gen('cxx', 'program')
@@ -225,7 +231,7 @@ def build(bld):
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    kickstart.uselib_local = 'platform common runtime'
+    kickstart.uselib_local = 'common runtime kernel platform'
 
     interfaces = bld.new_task_gen('cxx', 'staticlib')
     interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator timer'.split())
@@ -233,14 +239,16 @@ def build(bld):
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
     interfaces.target = 'interfaces'
 
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF TODO: post-process linked modules with symbol checker
+    # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp bootinfo.cpp bootimage.cpp idt.cpp interrupt.s isr.cpp pit.cpp'.split())
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-r', '-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
+    startup.env.append_unique('LINKFLAGS', ['-r']); # Kernel startup is relocatable.
+    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-    startup.uselib_local = 'platform common runtime interfaces'
+    startup.uselib_local = 'common platform interfaces kernel minruntime'
 
     # Make bootimage components.
 

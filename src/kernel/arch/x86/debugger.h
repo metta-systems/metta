@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 
 // The kernel debugger.
 class debugger_t
@@ -72,6 +73,8 @@ inline void bochs_break()
     x86_cpu_t::outw(0x8A00,0x8A00);
     x86_cpu_t::outw(0x8A00,0x8AE0);
 }
+
+void bochs_magic_trap()  ALWAYS_INLINE;
 
 //traps into debug console (add "magic_break: enabled=1" to bochs config)
 inline void bochs_magic_trap()

@@ -1,6 +1,7 @@
 #include "default_console.h"
 #include "frames_module_interface.h"
 #include "macros.h"
+#include "c++ctors.h"
 
 /*#include "memutils.h"
 #include "memory.h"
@@ -8,7 +9,6 @@
 #include "elf_parser.h"
 #include "registers.h"
 #include "c++ctors.h"
-#include "debugger.h"
 #include "linksyms.h"
 #include "frame.h"
 #include "page_directory.h"
@@ -97,6 +97,8 @@ static void init_mem()
 
 extern "C" void entry()
 {
+    run_global_ctors(); // don't forget, we don't have proper crt0 yet.
+
     kconsole << "root_domain entry!" << endl;
 
     init_mem(); // TODO: init mmu

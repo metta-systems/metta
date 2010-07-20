@@ -12,6 +12,7 @@
 #define UNUSED_ARG          __attribute__((unused))
 #define STDCALL             __attribute__((stdcall))
 #define NOINLINE            __attribute__((noinline))
+#define ALWAYS_INLINE       __attribute__((always_inline))
 #define PACKED              __attribute__((__packed__))
 #define ALIGNED(poweroftwo) __attribute__((aligned (poweroftwo)))
 #define SECTION(sect)       __attribute__((section(sect)))

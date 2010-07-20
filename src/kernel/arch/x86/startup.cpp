@@ -209,13 +209,12 @@ static continuation_t new_context;
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-
     run_global_ctors();
 
     global_descriptor_table_t gdt;
-    kconsole << "Created gdt." << endl;
+    kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
-    kconsole << "Created idt." << endl;
+    kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
@@ -239,6 +238,8 @@ void kernel_startup()
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
 
     root_domain_t root_dom(bootimage);
+
+    kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
 
     // Create an execution context and activate it.
     continuation_t::gpregs_t gpregs;
