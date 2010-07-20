@@ -26,8 +26,9 @@
 // upcall record (PCB) location
 // dependencies list (ndeps * name ofs entries)
 
-bootimage_t::bootimage_t(const char* name, address_t start, address_t end)
+bootimage_t::bootimage_t(const char* name, address_t start, address_t _end)
     : location(start)
+    , end(_end)
 {
     kconsole << "Bootimage at " << start << " till " << end << " named " << name << endl;
     kconsole << "Bootimage is " << (valid() ? "valid" : "not valid") << endl;
@@ -39,8 +40,20 @@ bool bootimage_t::valid()
     return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
-address_t bootimage_t::find_root_domain(size_t* /*size*/)
+address_t bootimage_t::find_root_domain(size_t* size)
 {
+    bootimage_info_t info;
+    info.generic = reinterpret_cast<char*>(location + sizeof(bootimage_header_t));
+    while (info.generic < (char*)end)
+    {
+        if (info.rec->tag == kind_root_domain)
+        {
+            if (size)
+                *size = info.rootdom->size - sizeof(bootimage_root_domain_t);
+            return reinterpret_cast<address_t>(info.generic + sizeof(bootimage_root_domain_t));
+        }
+        info.generic += info.rec->size;
+    }
     return 0;
 }
 
