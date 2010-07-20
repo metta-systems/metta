@@ -1,6 +1,6 @@
 /* This is x86 linker script. */
 /* Ensure everything goes in the right order. */
-ENTRY(init)
+ENTRY(_start)
 OUTPUT_FORMAT(elf32-i386)
 
 /*!
@@ -47,42 +47,42 @@ Components are linked with classical layout:
 */
 SECTIONS
 {
-/*     U_CODE_START = 1M; */
     PAGE_SIZE = 4K;
 
-    . = U_CODE_START;
-    .text ALIGN(PAGE_SIZE) : AT(ADDR(.text) - U_CODE_START)
+    . =  0; /* This is relocatable executable, it will be relocated to appropriate position in memory. */
+    .text ALIGN (4) :
     {
+        _kickstart_begin = .; /* FIXME: all this begin-end symbols stuff is fragile. */
         *(.text*)
         *(.rodata*)
         /* global static initializers */
+        . = ALIGN(4);
         ctors_GLOBAL = .;
         *(SORT(.ctor*))
         QUAD(0)
         dtors_GLOBAL = .;
         *(SORT(.dtor*))
         QUAD(0)
+        FILL(0x90)
     }
     text_end = .;
 
-    .data ALIGN(PAGE_SIZE) : AT(ADDR(.data) - U_CODE_START)
+    .data ALIGN (4) :
     {
-        *(.data)
+        *(.data*)
+        FILL(0x00)
     }
     data_end = .;
 
-    .bss ALIGN(4) :  AT(ADDR(.bss) - U_CODE_START)
+    .bss ALIGN (4) :
     {
         *(COMMON*)
         *(.bss*)
     }
     bss_end = .;
 
-    U_HEAP_START = ALIGN(PAGE_SIZE);
-    U_PROC_END = 0xC0000000;
-
     /* Strip unnecessary stuff */
-    /DISCARD/ : { *(.comment .note* .eh_frame) }
+    /DISCARD/ : { *(.comment .note* .eh_frame) } /* FIXME: eh_frame is needed for dwarf debug info! */
 }
 
 /*
