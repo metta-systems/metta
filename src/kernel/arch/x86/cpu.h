@@ -19,7 +19,7 @@ public:
     /*!
      * Write a byte out to the specified port.
      */
-    static inline void outb(uint16_t port, uint8_t value)
+    static inline void outb(uint16_t port, uint8_t value) ALWAYS_INLINE
     {
         //("a" puts value in eax, "dN" puts port in edx or uses 1-byte constant.)
         asm volatile ("outb %0, %1" :: "a" (value), "dN" (port));
@@ -74,7 +74,7 @@ public:
     /*!
      * Enable external interrupts.
      */
-    static inline void enable_interrupts()
+    static inline void enable_interrupts() ALWAYS_INLINE
     {
         asm volatile ("sti");
     }
@@ -82,7 +82,7 @@ public:
     /*!
      * Disable external interrupts.
      */
-    static inline void disable_interrupts()
+    static inline void disable_interrupts() ALWAYS_INLINE
     {
         asm volatile ("cli");
     }
