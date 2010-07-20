@@ -87,7 +87,7 @@ IRQ  13,    45
 IRQ  14,    46
 IRQ  15,    47
 
-%define KERNEL_DS 0x10
+%define KERNEL_DS 0x18 ; Keep in sync with segs.h!
 
 ; This is our common ISR stub. It saves the processor state, sets
 ; up kernel mode segments, calls the C-level fault handler,
