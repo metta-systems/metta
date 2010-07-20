@@ -73,6 +73,7 @@ public:
 
 protected:
     console_t();
+    virtual ~console_t();
 };
 
 // Define stream io on console.
