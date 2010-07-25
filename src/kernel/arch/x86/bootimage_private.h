@@ -22,8 +22,8 @@ struct bootimage_header_t
 
 struct bootimage_rec_t
 {
-    uint32_t tag;
-    uint32_t size;
+    uint32_t tag;    // entry tag
+    uint32_t length; // length of the whole entry
 };
 
 struct bootimage_root_domain_t : public bootimage_rec_t
@@ -42,6 +42,8 @@ struct bootimage_module_t : public bootimage_rec_t
 {
     address_t address;
     size_t size;
+    const char* name;
+    const char* local_namespace;
 };
 
 union bootimage_info_t

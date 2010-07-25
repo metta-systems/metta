@@ -28,17 +28,7 @@ public:
     bootimage_t(const char* name, address_t start, address_t end);
 
     address_t find_root_domain(size_t* size);
-    //! Get elf-loaded root domain. ??
-//     elf_loader_t get_root_domain();
-
-    /*!
-     * Silly iterator interface
-     * TODO: replace with normal iterator.
-     */
-    address_t   get_file(uint32_t num);
-    const char* get_file_name(uint32_t num);
-    uint32_t    get_file_size(uint32_t num);
-    uint32_t    count();
+    address_t find_module(size_t* size, const char* name);
 
     bool valid();
 
