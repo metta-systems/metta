@@ -1,0 +1,17 @@
+-- Protection Domains represent a mapping from the set of all virtual
+-- addresses to a set of protection rights (as specified in
+-- "stretch.if"). They are created and destroyed via the "MMU"
+-- interface.
+--
+-- Protection Domains at present have no methods, but they do define
+-- a type "ID", which is an opaque 'handle' on the protection domain.
+-- This handle is used for invocations on the NTSC, or other system services.
+
+local interface protection_domain_v1
+{
+   -- Every protection domain has a unique identifier of type "ID"
+   -- There is a distinguished value "NULL_PDID" defined in
+   -- "nemesis.h" which is guaranteed never to be a valid protection
+   -- domain identifier.
+   int32 id; -- opaque
+}

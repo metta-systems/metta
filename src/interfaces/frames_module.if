@@ -1,0 +1,16 @@
+local interface frames_module_v1
+{
+    needs system_frame_allocator_v1, ramtab_v1, memory_v1;
+
+    memory_v1.physmem physmem;
+    memory_v1.address address;
+
+    required_size(physmem mem)
+        returns (memory_v1.size);
+
+    create(physmem allmem, used, ramtab_v1.tab& rtab, address state)
+        returns (system_frame_allocator_v1);
+
+    finish_init(system_frames_allocator_v1& frames, heap_v1& heap)
+        returns ();
+}
