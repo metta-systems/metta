@@ -41,7 +41,7 @@
 #define X86_32_FEAT_PBE    (1 << 31)
 
 /* CPUID.1 ECX */
-#define X86_32_FEAT2_VMX  (1 << 5)
+#define X86_32_FEAT2_VMX   (1 << 5)
 
 /**********************************************************************
  *    FLAGS register
@@ -56,6 +56,7 @@
 #define X86_FLAGS_IF      (1 <<  9)       /* interrupt enable flag        */
 #define X86_FLAGS_DF      (1 << 10)       /* direction flag               */
 #define X86_FLAGS_OF      (1 << 11)       /* overflow flag                */
+#define X86_FLAGS_IOPL(x) ((x & 3) << 12) /* the IO privilege level field */
 #define X86_FLAGS_NT      (1 << 14)       /* nested task flag             */
 #define X86_FLAGS_RF      (1 << 16)       /* resume flag                  */
 #define X86_FLAGS_VM      (1 << 17)       /* virtual 8086 mode            */
@@ -63,4 +64,3 @@
 #define X86_FLAGS_VIF     (1 << 19)       /* virtual interrupt flag       */
 #define X86_FLAGS_VIP     (1 << 20)       /* virtual interrupt pending    */
 #define X86_FLAGS_ID      (1 << 21)       /* CPUID flag                   */
-#define X86_FLAGS_IOPL(x) ((x & 3) << 12) /* the IO privilege level field */

@@ -11,55 +11,30 @@
 #include "types.h"
 
 /*!
-Bootimage is similar to Nemesis' nexus - it contains information, modules, dependencies, namespaces etc.
-required for successful bootstrap.
-
-Index information in bootimage should allow quick and easy dependency calculation and module instantiation.
-Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
-
-Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
-
-Root entry in bootimage is main startup code, the system privileged domain or root domain.
-
-<data blob>
-address
-size
-name ofs
-<module>
-address
-size
-name ofs
-upcall record (PCB) location
-dependencies list (ndeps * name ofs entries)
-
-*/
-
-/*!
-
-// version 3: current.
-              * initfs::header
-              * aligned: modules data
-              * aligned: nexus with metadata index in tagged format.
+ * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces
+ * and everything else required for successful startup.
+ *
+ * Index information in bootimage should allow quick and easy dependency calculation and module instantiation.
+ * Modules can be ELF executables or data blobs loaded and mapped at specified address in memory.
+ *
+ * Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
+ *
+ * Root entry in bootimage is main startup code, called "root domain".
+ *
  */
-
 class bootimage_t
 {
 public:
     bootimage_t(const char* name, address_t start, address_t end);
 
-    /*!
-     * Silly iterator interface
-     * TODO: replace with normal iterator.
-     */
-    address_t   get_file(uint32_t num);
-    const char* get_file_name(uint32_t num);
-    uint32_t    get_file_size(uint32_t num);
-    uint32_t    count();
+    address_t find_root_domain(size_t* size);
+    address_t find_module(size_t* size, const char* name);
 
     bool valid();
 
 private:
     address_t location;
+    address_t end;
 };
  
 // kate: indent-width 4; replace-tabs on;

@@ -7,61 +7,29 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "bootimage.h"
+#include "bootimage_private.h"
 #include "default_console.h"
-#include "fourcc.h"
+#include "memutils.h"
 
-enum kind_e
-{
-    kind_root_domain,
-    kind_glue_code,
-    kind_module
-};
+/*!
+ * Internally bootimage has a tagged format with multiple entries one after another.
+ * Each entry has a tag, which specifies type of the entry, it's size and extra information depending on typ.
+ */
 
-struct bootimage_header_t
-{
-    uint32_t magic;        //!< contains header magic value 'BIMG'
-    uint32_t version;      //!< contains initfs format version, currently 1
+// <data blob>
+// address
+// size
+// name ofs
+// <module>
+// address
+// size
+// name ofs
+// upcall record (PCB) location
+// dependencies list (ndeps * name ofs entries)
 
-    bootimage_header_t()
-        : magic(FourCC<'B','I','M','G'>::value)
-        , version(1)
-    {}
-};
-
-struct bootimage_rec_t
-{
-    uint16_t tag;
-    uint16_t size;
-};
-
-struct bootimage_root_domain_t : public bootimage_rec_t
-{
-    uintptr_t entry_point;
-};
-
-struct bootimage_glue_code_t : public bootimage_rec_t
-{
-    address_t text, data, bss;
-    size_t text_size, data_size, bss_size;
-};
-
-struct bootimage_module_t : public bootimage_rec_t
-{
-    address_t address;
-    size_t size;
-};
-
-union bootimage_info_t
-{
-    bootimage_rec_t*         rec;
-    bootimage_root_domain_t* rootdom;
-    bootimage_glue_code_t*   glue;
-    bootimage_module_t*      module;
-    char*                    generic;
-};
-
-bootimage_t::bootimage_t(const char* name, address_t start, address_t end)
+bootimage_t::bootimage_t(const char* name, address_t start, address_t _end)
     : location(start)
+    , end(_end)
 {
     kconsole << "Bootimage at " << start << " till " << end << " named " << name << endl;
     kconsole << "Bootimage is " << (valid() ? "valid" : "not valid") << endl;
@@ -73,33 +41,41 @@ bool bootimage_t::valid()
     return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
-address_t bootimage_t::get_file(uint32_t num)
+address_t bootimage_t::find_root_domain(size_t* size)
 {
-    if (num >= count())
-        return 0;
-
-    return 0;//(address_t)start + entries[num].location;
+    bootimage_info_t info;
+    info.generic = reinterpret_cast<char*>(location + sizeof(bootimage_header_t));
+    while (info.generic < (char*)end)
+    {
+        if (info.rec->tag == kind_root_domain)
+        {
+            if (size)
+                *size = info.rootdom->length - sizeof(bootimage_root_domain_t);
+            return reinterpret_cast<address_t>(info.generic + sizeof(bootimage_root_domain_t));
+        }
+        info.generic += info.rec->size;
+    }
+    return 0;
 }
 
-const char* bootimage_t::get_file_name(uint32_t num)
+address_t bootimage_t::find_module(size_t* size, const char* name)
 {
-    if (num >= count())
-        return 0;
-
-    return 0;//(const char*)start + entries[num].name_offset;
-}
-
-uint32_t bootimage_t::get_file_size(uint32_t num)
-{
-    if (num >= count())
-        return 0;
-
-    return 0;//entries[num].size;
-}
-
-uint32_t bootimage_t::count()
-{
-    return 0;//start->count;
+    bootimage_info_t info;
+    info.generic = reinterpret_cast<char*>(location + sizeof(bootimage_header_t));
+    while (info.generic < (char*)end)
+    {
+        if (info.rec->tag == kind_module)
+        {
+            if (memutils::is_string_equal(info.module->name, name))
+            {
+                if (size)
+                    *size = info.module->size;
+                return info.module->address;
+            }
+        }
+        info.generic += info.rec->size;
+    }
+    return 0;
 }
 
 // kate: indent-width 4; replace-tabs on;

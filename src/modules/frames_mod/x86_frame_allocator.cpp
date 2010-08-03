@@ -18,7 +18,7 @@
 #include "stl/algorithm"
 
 #define TEMP_MAPPING (VIRTUAL_PAGE_TABLES - PAGE_SIZE)
-extern "C" address_t KICKSTART_BASE;
+extern "C" address_t _kickstart_begin;
 
 x86_frame_allocator_t x86_frame_allocator_t::allocator_instance;
 physical_address_t x86_frame_allocator_t::allocation_address = 0;
@@ -36,7 +36,7 @@ x86_frame_allocator_t& x86_frame_allocator_t::instance()
 x86_frame_allocator_t::x86_frame_allocator_t()
     : lockable_t()
     , stack_initialised(false)
-    , reserved_area_start(LINKSYM(KICKSTART_BASE))
+    , reserved_area_start(LINKSYM(_kickstart_begin))
 {
 #if MEMORY_DEBUG
     kconsole << GREEN << "x86_frame_allocator: ctor" << endl;

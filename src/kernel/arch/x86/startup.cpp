@@ -14,40 +14,21 @@
 #include "default_console.h"
 #include "bootinfo.h"
 #include "bootimage.h"
-
-#include "memutils.h"
-#include "memory.h"
-#include "multiboot.h"
+#include "infopage.h"
+#include "frames_module_interface.h"
+#include "timer_interface.h"
+#include "continuation.h"
+#include "cpu.h"
+#include "c++ctors.h"
 #include "gdt.h"
 #include "idt.h"
-#include "elf_parser.h"
+#include "root_domain.h"
 #include "registers.h"
-#include "c++ctors.h"
-#include "debugger.h"
-#include "linksyms.h"
-#include "frame.h"
-#include "page_directory.h"
-#include "x86_frame_allocator.h"
-#include "x86_protection_domain.h"
-#include "new.h"
-// #include "stretch_driver.h"
 
 // Declare C linkage.
 extern "C" void kernel_startup();
 // extern "C" address_t placement_address;
 // extern "C" address_t KICKSTART_BASE;
-
-#if 0
-static void map_identity(const char* caption, address_t start, address_t end)
-{
-#if MEMORY_DEBUG
-    kconsole << "Mapping " << caption << endl;
-#endif
-    end = page_align_up<address_t>(end); // one past end
-    for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
-        protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE), page_t::kernel_mode | page_t::writable);
-}
-#endif
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -205,16 +186,6 @@ static void SECTION(".init.cpu") check_cpu_features()
     }
 }
 
-//--infopage.h--
-struct information_page_t
-{
-    void* pervasives;
-    uint64_t scheduler_heartbeat, irqs_heartbeat, glue_heartbeat, faults_heartbeat;
-};
-
-#define INFO_PAGE (*((information_page_t*)0x1000))
-//--infopage.h--
-
 /* Clear out the information page */
 static void prepare_infopage()
 {
@@ -225,23 +196,25 @@ static void prepare_infopage()
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
+extern timer_closure* init_timer();
+static continuation_t new_context;
+
 /*!
  * Get the system going.
+ *
+ * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.
  *
  * TODO: relate Pistachio SMP startup routines here.
  */
 void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
-//    x86_frame_allocator_t::set_allocation_start(page_align_up<address_t>(std::max(LINKSYM(placement_address), bootimage->mod_end)));
-    // now we can allocate memory frames
-
     run_global_ctors();
 
     global_descriptor_table_t gdt;
-    kconsole << "Created gdt." << endl;
+    kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
-    kconsole << "Created idt." << endl;
+    kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
@@ -258,62 +231,28 @@ void kernel_startup()
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
     prepare_infopage(); // <-- init domain info page
-    // create timer instance
-//     Timer$Enable(); // enable timer interrupts
-//     init_mem(); <-- setup gdt and page tables
+    timer_closure* timer = init_timer();
+    timer->enable(); // enable timer interrupts
     x86_cpu_t::enable_fpu();
+
     kconsole << WHITE << "...in the living memory of V2_OS" << endl;
-//     k_presume(RootDomain); // we have a liftoff!
+
+    root_domain_t root_dom(bootimage);
+
+    kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
+
+    // Create an execution context and activate it.
+    continuation_t::gpregs_t gpregs;
+    gpregs.esp = read_stack_pointer();
+    gpregs.eax = 0;
+    gpregs.ebx = 0;
+    gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
+    new_context.set_gpregs(gpregs);
+    new_context.set_entry(root_dom.entry());//FIXME: depends on gpregs being set before this call!
+    new_context.activate(); // we have a liftoff!
 
     /* Never reached */
     PANIC("root domain returned!");
-
-    // legacy code pieces:
-
-///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
-    // now we can also free dynamic memory
-
-#if 0
-    // Identity map currently executing code.
-    // page 0 is not mapped to catch null pointers
-    map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
-
-//     stretch_driver_t::default_driver().initialise();
-
-    static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
-    // now we have paging enabled.
-    kconsole << "Enabled paging." << endl;
-
-    // Load the modules.
-    // Module "boot" depends on all modules that must be probed at startup.
-    // Dependency resolution will bring up modules in an appropriate order.
-//    load_modules(bootimage, "boot");
-
-    // Load components from bootcp.
-//     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
-//     initfs_t initfs(bootcp->mod_start);
-//     typedef void (*comp_entry)(bootinfo_t bi_page);
-
-    // For now, boot components are all linked at different virtual addresses so they don't overlap.
-//     kconsole << "iterating components" << endl;
-//     for (uint32_t k = 0; k < initfs.count(); k++)
-//     {
-//         kconsole << YELLOW << "boot component " << initfs.get_file_name(k) << " @ " << initfs.get_file(k) << endl;
-//         // here loading an image should create a separate PD with its own pagedir
-// //         domain_t* d = nucleus->create_domain();
-// 
-//         if (!elf.load_image(initfs.get_file(k), initfs.get_file_size(k)))
-//             kconsole << RED << "not an ELF file, load failed" << endl;
-//         else
-//             kconsole << GREEN << "ELF file loaded, entering component init" << endl;
-//         comp_entry init_component = (comp_entry)elf.get_entry_point();
-//         init_component(bootinfo);
-//     }
-
-    // TODO: instantiate kernel interfaces
-    // TODO: run a predefined root_server_entry portal here
-    kconsole << "Allocating frame: " << frame_allocator_t::instance().allocate_frame() << endl;
-#endif
 }
 
 // kate: indent-width 4; replace-tabs on;

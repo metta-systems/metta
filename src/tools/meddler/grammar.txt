@@ -1,4 +1,6 @@
 TODO: add oneway modifier for asynchronous exec? check zeroc notes for downsides if any.
+TODO: needs declaration might be not needed, since we will use fully-qualified module ids and its possible to derive
+needs module names from there...
 
 // EBNF
 
@@ -8,7 +10,7 @@ qualifiedID = ID.ID ;
 IDs = ID | qualifiedID , { "," , ID | qualifiedID } ;
 IDorConst = ID | Const;
 IDlist = ID { "," , ID } ;
-builtinType = "int8" | "int16" | "int32" | "int64" | "octet" | "card16" | "card32" | "card64" | "float" | "double" ;
+builtinType = "int8" | "int16" | "int32" | "int64" | "octet" | "card16" | "card32" | "card64" | "float" | "double" | "boolean";
 typeID = ID | qualifiedID | builtinType ;
 module = intf+ ;
 intf = ["local"] ["final"] "interface" ID ["extends" ID] "{" body "}" ;

@@ -74,7 +74,7 @@ address_t mbi_init()
     if (!elf.is_relocatable() && offset != 0)
         PANIC("unrelocatable kernel-startup, cannot proceed.");
 
-    elf.relocateTo(start);
+    elf.relocate_to(start);
 
     return entry + offset;
 }

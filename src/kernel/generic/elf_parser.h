@@ -48,7 +48,7 @@ public:
     //! Returns true if elf file has relocations.
     bool is_relocatable() const;
 
-    bool relocateTo(address_t load_address);
+    bool relocate_to(address_t load_address);
 
 protected:
     const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
