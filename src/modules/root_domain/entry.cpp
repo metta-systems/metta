@@ -3,6 +3,10 @@
 #include "macros.h"
 #include "c++ctors.h"
 
+/*
+ * Root domain starts executing without paging and with full ring0 rights.
+ */
+
 /*#include "memutils.h"
 #include "memory.h"
 #include "multiboot.h"
@@ -29,15 +33,41 @@ static void map_identity(const char* caption, address_t start, address_t end)
 }
 #endif
 
+// x86_frame_allocator_t would wrap around frames_mod instance (??)
+inline 
+
+// build dependency graph for "name" module and ensure all dependencies are loaded.
+void* load_module(const char* name)
+{
+    addr = bootimg.find_module(size, name);
+    elf_parser mod(addr, size);
+    elf32::section_header_t* modinfo = mod.section(".modinfo");
+    // load all dependencies
+    deplist_t* deps = module_info_t(modinfo).parse_deps();
+    foreach (dep, deps)
+    {
+        load_module(dep->module_name); // ugh, don't recurse!
+    }
+    // return module "name"
+    return addr; //? perhaps return modinfo location instead? sort of module control block
+}
 
 // setup gdt and page tables
 static void init_mem()
 {
     // create physical frames allocator
     frames_module_closure* frames_mod;
-    frames_mod = 0;
+    frames_mod = load_module("frames_mod");
+    mmu_module_closure* mmu_mod;
+    mmu_mod = load_module("mmu_mod");
+
+    mmu_mod->create(...);
+
+    frames_mod->create(mmu_mod...);
+
     // initialize physical memory
-///    x86_frame_allocator_t::instance().initialise_before_paging(mb.memory_map(), x86_frame_allocator_t::instance().reserved_range());
+    //FIXME: this is inside frames_mod or mmu_mod even!
+//     frames_mod->initialise_before_paging(mb.memory_map());//, x86_frame_allocator_t::instance().reserved_range()
     // create virtual memory allocator
     // initialize virtual memory map
     // create stretch allocator

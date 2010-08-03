@@ -1,0 +1,26 @@
+-- The "system_frame_allocator" interface provides -- in addition to the basic allocation & freeing of physical memory
+-- a mechanism whereby the system can create a new per-domain interface for physical memory allocation.
+-- It also allows for the extension of the set of physical regions managed by the frames allocator in the case that not
+-- all information was available at the time of its creation (i.e. at the time frames_mod.create was invoked).
+-- This typically occurs with the laying out of device address spaces.
+
+local interface system_frame_allocator_v1 extends frame_allocator_v1
+{
+    -- Create a new frames interface for the domain whose DCB
+    -- is at virtual address "dcbva", physical address "dcbpa".
+    -- The created interface should allow the client to allocate up
+    -- to "gtdf" frames with some certainty, and may allow allocation
+    -- of up to "xtraf" frames subject to later revocation.
+    -- An initial allocation of "nf" frames is requested.
+    new_client() returns (frame_allocator_v1& frames);
+    NewClient : PROC    [ dcbva  : ADDRESS,
+                         dcbpa  : CARDINAL,
+                         gtdf   : CARDINAL,
+                         xtraf  : CARDINAL,
+                         nf     : CARDINAL    ]
+               RETURNS [ frames : IREF Frames ];
+
+    -- Add the set of physical frames described by "region" to the
+    -- set of frames managed by the frames allocator.
+    add_frames(memory_v1.physmem_desc region) returns (boolean added);
+}

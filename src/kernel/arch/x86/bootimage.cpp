@@ -9,6 +9,7 @@
 #include "bootimage.h"
 #include "bootimage_private.h"
 #include "default_console.h"
+#include "memutils.h"
 
 /*!
  * Internally bootimage has a tagged format with multiple entries one after another.
@@ -49,7 +50,7 @@ address_t bootimage_t::find_root_domain(size_t* size)
         if (info.rec->tag == kind_root_domain)
         {
             if (size)
-                *size = info.rootdom->size - sizeof(bootimage_root_domain_t);
+                *size = info.rootdom->length - sizeof(bootimage_root_domain_t);
             return reinterpret_cast<address_t>(info.generic + sizeof(bootimage_root_domain_t));
         }
         info.generic += info.rec->size;
@@ -57,33 +58,24 @@ address_t bootimage_t::find_root_domain(size_t* size)
     return 0;
 }
 
-address_t bootimage_t::get_file(uint32_t num)
+address_t bootimage_t::find_module(size_t* size, const char* name)
 {
-    if (num >= count())
-        return 0;
-
-    return 0;//(address_t)start + entries[num].location;
-}
-
-const char* bootimage_t::get_file_name(uint32_t num)
-{
-    if (num >= count())
-        return 0;
-
-    return 0;//(const char*)start + entries[num].name_offset;
-}
-
-uint32_t bootimage_t::get_file_size(uint32_t num)
-{
-    if (num >= count())
-        return 0;
-
-    return 0;//entries[num].size;
-}
-
-uint32_t bootimage_t::count()
-{
-    return 0;//start->count;
+    bootimage_info_t info;
+    info.generic = reinterpret_cast<char*>(location + sizeof(bootimage_header_t));
+    while (info.generic < (char*)end)
+    {
+        if (info.rec->tag == kind_module)
+        {
+            if (memutils::is_string_equal(info.module->name, name))
+            {
+                if (size)
+                    *size = info.module->size;
+                return info.module->address;
+            }
+        }
+        info.generic += info.rec->size;
+    }
+    return 0;
 }
 
 // kate: indent-width 4; replace-tabs on;
