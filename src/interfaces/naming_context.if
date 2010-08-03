@@ -24,8 +24,8 @@
 -- syntax:
 --
 --|    Pathname  = ArcName { Separator ArcName }
---|    Separator = '>'
---|    ArcName   = [^>] { [^>] }
+--|    Separator = '.'
+--|    ArcName   = [^.] { [^.] }
 
 local interface naming_context_v1
 {
@@ -57,7 +57,7 @@ local interface naming_context_v1
     sequence<string> names;
 
     -- List all available names in a current context.
-    list() returns (names nl) raises heap.no_memory;
+    list() returns (names nl) raises (heap_v1.no_memory);
 
     -- "get" maps pathnames to objects relative to the current context.
     --
@@ -71,7 +71,7 @@ local interface naming_context_v1
     -- Otherwise, let "rest" be the result of removing the first arc-name
     -- and separator from "name", and return the result of invoking
     -- "get(rest, obj)" on "next_cx".
-    get(string name, out type.any obj) returns (bool present) raises not_context, denied;
+    get(string name, out type.any obj) returns (bool present) raises (not_context, denied);
 
     -- "Add" binds an object to a pathname relative to the current context.
     --
@@ -84,7 +84,7 @@ local interface naming_context_v1
     -- of "name" is bound to a "type.any" for a "naming_context", as for "get".
     -- If "arc" is not bound to anything, raise "not_found". If "arc" is
     -- bound but not to a context, raise "not_context".
-    add(string name, in type.any obj) returns () raises exists, not_context, not_found, denied;
+    add(string name, in type.any obj) returns () raises (exists, not_context, not_found, denied);
 
     -- "Remove" deletes the binding for a pathname relative to the current
     -- context.
@@ -100,7 +100,7 @@ local interface naming_context_v1
     -- in a naming graph, but raises the question of what happens when
     -- a name denoting such an internal context is presented to be
     -- resolved.
-    remove(string name) returns () raises not_context, not_found, denied;
+    remove(string name) returns () raises (not_context, not_found, denied);
 
     -- "Dup" duplicates the context graph rooted at the current context
     -- in the "Heap" "h", applying the translations "xl".
@@ -111,10 +111,10 @@ local interface naming_context_v1
     -- except that subcontexts are recursively duplicated and "STRING"s
     -- are copied to "h".  In the future, a different copying policy for large
     -- values may be employed.
-    duplicate(heap_v1& h, word_table_v1& xlat) returns (naming_context_v1& copy) raises heap_v1.no_memory, denied;
+    duplicate(heap_v1& h, word_table_v1& xlat) returns (naming_context_v1& copy) raises (heap_v1.no_memory, denied);
 
     -- Finally, "Destroy" disposes of the current context.
-    destroy() returns () raises denied;
+    destroy() returns () raises (denied);
 }
 
 -- kate: indent-width 4; replace-tabs on;
