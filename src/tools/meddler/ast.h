@@ -1,18 +1,23 @@
 #pragma once
 
+#include <vector>
+#include <string>
+
 namespace AST
 {
 
 // Variable or parameter declaration as "type-name" pair.
 class var_decl_t
 {
-    std::string type; // use known types!
+public:
+    std::string type; // use known types! check LLVM's Type/TypeBuilder
     std::string name;
 };
 
 // Represents both method arguments and returns.
 class parameter_t : public var_decl_t
 {
+public:
     enum { in, out, inout } direction;
 };
 
@@ -23,12 +28,14 @@ class alias_t : public var_decl_t
 
 class exception_t
 {
+public:
     std::string name;
     std::vector<var_decl_t*> fields;
 };
 
 class method_t
 {
+public:
     bool idempotent;
     std::string name;
     std::vector<parameter_t*> params;
@@ -39,6 +46,7 @@ class method_t
 
 class interface_t
 {
+public:
     bool local;
     bool final;
     std::string name;
