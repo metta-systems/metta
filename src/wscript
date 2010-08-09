@@ -192,11 +192,11 @@ def build(bld):
     platform.includes = platform.env['INCLUDE_DIRS']
     platform.target = 'platform'
 
-    #libkernel = bld.new_task_gen('cxx', 'staticlib')
-    #libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'cpu.cpp bootinfo.cpp bootimage.cpp'.split())# + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp
-    #libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
-    #libkernel.includes = libkernel.env['INCLUDE_DIRS']
-    #libkernel.target = 'kernel'
+    libkernel = bld.new_task_gen('cxx', 'staticlib')
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp
+    libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
+    libkernel.includes = libkernel.env['INCLUDE_DIRS']
+    libkernel.target = 'kernel'
 
     tests = bld.new_task_gen('cxx', 'program')
     tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
@@ -246,12 +246,12 @@ def build(bld):
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s bootimage.cpp bootinfo.cpp'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r']); # Kernel startup is relocatable.
     startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-    startup.uselib_local = 'common platform interfaces minruntime'# kernel
+    startup.uselib_local = 'common platform interfaces kernel minruntime'
 
     # Make bootimage components.
 
