@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace raii_wrapper;
+using namespace bootimage_n;
 
 const uint32_t version = 1;
 const uint32_t ALIGN = 4;
@@ -102,11 +103,11 @@ int main(int argc, char** argv)
             file in_data(prefix + left, ios::in | ios::binary);
             long in_size = in_data.size();
             // Write module header
-            bootimage_root_domain_t rdom;
-            rdom.tag = kind_root_domain;
+            bootimage_n::root_domain_t rdom;
+            rdom.tag = bootimage_n::kind_root_domain;
             rdom.size = sizeof(rdom) + in_size;
             rdom.entry_point = 0;
-            rdom.namespace_data = 0;
+            rdom.local_namespace_offset = 0;
             out.write(&rdom, sizeof(rdom));
             // Write module data
             char buf[4096];

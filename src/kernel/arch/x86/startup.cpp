@@ -24,6 +24,7 @@
 #include "idt.h"
 #include "root_domain.h"
 #include "registers.h"
+#include "new.h"
 
 // Declare C linkage.
 extern "C" void kernel_startup();
@@ -212,9 +213,9 @@ void kernel_startup()
     run_global_ctors();
 
     global_descriptor_table_t gdt;
-    kconsole << "Created GDT." << endl;
+//     kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
-    kconsole << "Created IDT." << endl;
+//     kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
@@ -239,7 +240,7 @@ void kernel_startup()
 
     root_domain_t root_dom(bootimage);
 
-    kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
+//     kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
 
     // Create an execution context and activate it.
     continuation_t::gpregs_t gpregs;
