@@ -9,7 +9,7 @@
 #pragma once
 
 #include "types.h"
-#include "protection_domain.h"
+// #include "protection_domain.h"
 
 typedef address_t cpu_id_t;
 typedef uint8_t  apic_id_t;
@@ -17,15 +17,15 @@ typedef uint8_t  apic_id_t;
 class cpu_information_t
 {
 public:
-    inline protection_domain_t& current_protection_domain() const
-    {
-        if (protection_domain)
-            return *protection_domain;
-        else
-            return protection_domain_t::privileged();
-    }
+//     inline protection_domain_t& current_protection_domain() const
+//     {
+//         if (protection_domain)
+//             return *protection_domain;
+//         else
+//             return protection_domain_t::privileged();
+//     }
 
-    cpu_information_t(cpu_id_t cpu_id) : id(cpu_id), protection_domain(&protection_domain_t::privileged()) {}
+    cpu_information_t(cpu_id_t cpu_id) : id(cpu_id)/*, protection_domain(&protection_domain_t::privileged())*/ {}
 
 private:
     cpu_information_t();
@@ -34,7 +34,7 @@ private:
 
 private:
     cpu_id_t id;
-    protection_domain_t* protection_domain;
+//     protection_domain_t* protection_domain;
 };
 
 // kate: indent-width 4; replace-tabs on;

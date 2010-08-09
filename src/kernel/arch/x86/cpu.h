@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 #include "mmu.h"
 #include "cpu_flags.h"
 #include "cpu_information.h"
