@@ -4,9 +4,10 @@
 #include "default_console.h"
 
 root_domain_t::root_domain_t(bootimage_t& img)
+    : ns(0, 0)
 {
-    start = img.find_root_domain(&size);
-    elf.parse(start);
+    bootimage_t::modinfo_t mi = img.find_root_domain(&ns);
+    elf.parse(mi.start);
     elf32::section_header_t* text = elf.section_header(".text");
     address_t entry = elf.get_entry_point();
     ptrdiff_t offset = start - text->addr + text->offset;

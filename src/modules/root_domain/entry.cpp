@@ -2,6 +2,14 @@
 #include "frames_module_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
+#include "root_domain.h"
+#include "bootinfo.h"
+#include "new.h"
+
+// bootimage contains modules and namespaces
+// each module has an associated namespace which defines some module attributes/parameters.
+// startup module from which root_domain starts also has a namespace called "default_namespace"
+// it defines general system attributes and startup configuration.
 
 /*
  * Root domain starts executing without paging and with full ring0 rights.
@@ -34,12 +42,14 @@ static void map_identity(const char* caption, address_t start, address_t end)
 #endif
 
 // x86_frame_allocator_t would wrap around frames_mod instance (??)
-inline 
+// inline 
 
 // build dependency graph for "name" module and ensure all dependencies are loaded.
-void* load_module(const char* name)
+void* load_module(const char* name, module_namespace_t* namesp)
 {
-    addr = bootimg.find_module(size, name);
+    UNUSED(name);
+    UNUSED(namesp);
+/*    addr = bootimg.find_module(size, name);
     elf_parser mod(addr, size);
     elf32::section_header_t* modinfo = mod.section(".modinfo");
     // load all dependencies
@@ -47,23 +57,32 @@ void* load_module(const char* name)
     foreach (dep, deps)
     {
         load_module(dep->module_name); // ugh, don't recurse!
-    }
+    }*/
     // return module "name"
-    return addr; //? perhaps return modinfo location instead? sort of module control block
+    return 0;//addr; //? perhaps return modinfo location instead? sort of module control block
+}
+
+template <class closure_type>
+closure_type* load_module(const char* name, module_namespace_t* namesp)
+{
+    return (closure_type*)load_module(name, namesp);
 }
 
 // setup gdt and page tables
-static void init_mem()
+static void init_mem(bootimage_t& bootimage)
 {
+    root_domain_t root_dom(bootimage);
+    module_namespace_t namesp = root_dom.get_namespace();
+
     // create physical frames allocator
     frames_module_closure* frames_mod;
-    frames_mod = load_module("frames_mod");
-    mmu_module_closure* mmu_mod;
-    mmu_mod = load_module("mmu_mod");
+    frames_mod = load_module<frames_module_closure>("frames_mod", &namesp);
+//     mmu_module_closure* mmu_mod;
+//     mmu_mod = load_module("mmu_mod", namesp);
 
-    mmu_mod->create(...);
+//     mmu_mod->create(...);
 
-    frames_mod->create(mmu_mod...);
+//     frames_mod->create(mmu_mod...);
 
     // initialize physical memory
     //FIXME: this is inside frames_mod or mmu_mod even!
@@ -131,7 +150,18 @@ extern "C" void entry()
 
     kconsole << "root_domain entry!" << endl;
 
-    init_mem(); // TODO: init mmu
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+
+    address_t start, end;
+    const char* name;
+    if (!bi->get_module(1, start, end, name))
+    {
+        PANIC("Bootimage not found! in root_domain");
+    }
+
+    bootimage_t bootimage(name, start, end);
+
+    init_mem(bootimage); // TODO: init mmu
 
     // Load the modules.
     // Module "boot" depends on all modules that must be probed at startup.

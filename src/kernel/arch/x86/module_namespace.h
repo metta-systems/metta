@@ -4,6 +4,11 @@
 // This parser 
 class module_namespace_t
 {
-    module_namespace_t(address_t namespace_data, const char* prefix); // a-la set_namespace()
-    closure* lookup(const char* name);
+public:
+    module_namespace_t(address_t namespace_data, const char* /*prefix*/) : location(namespace_data) {} // a-la set_namespace()
+    void set_location(address_t namespace_data) { location = namespace_data; }
+//     closure* lookup(const char* name);
+
+private:
+    address_t location;
 };

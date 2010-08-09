@@ -42,16 +42,15 @@ interface context_v1
 
 local interface type_system_v1 extends context_v1
 {
-    needs type_v1, enum_v1, interface_v1, record_v1, choice_v1;
+    type.code alias;
 
-    type_v1.code alias;
-
-    set { Boolean, ShortCardinal, Cardinal, LongCardinal,
+    enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
           ShortInteger, Integer, LongInteger,
           Real, LongReal,
           String,
           Octet, Char,
           Address, Word } predefined;
+    set<predefined> predef_flags;
     range 0..15 hexnibble;
 
     cardinal array_index;
