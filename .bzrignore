@@ -15,3 +15,4 @@ debugger.log
 .settings
 Debug
 ./docs/mockups/java/bin/*
+.kdev_include_paths
