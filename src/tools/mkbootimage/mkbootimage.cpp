@@ -85,6 +85,7 @@ int main(int argc, char** argv)
 
         io.write32le(FourCC<'B', 'I', 'M', 'G'>::value);
         io.write32le(version);
+        data_offset += 8; // sizeof(bootimage_n::header_t)
 
         // Parse the input file, should be somewhat more complex structure to accomodate different types of components.
         while (in.getline(str))
@@ -105,9 +106,13 @@ int main(int argc, char** argv)
             // Write module header
             bootimage_n::root_domain_t rdom;
             rdom.tag = bootimage_n::kind_root_domain;
-            rdom.size = sizeof(rdom) + in_size;
-            rdom.entry_point = 0;
+            rdom.length = sizeof(rdom) + in_size;
+            rdom.address = data_offset + sizeof(rdom);
+            rdom.size = in_size;
+            rdom.name = 0;
+//             rdom.name = name string offset;
             rdom.local_namespace_offset = 0;
+            rdom.entry_point = 0;
             out.write(&rdom, sizeof(rdom));
             // Write module data
             char buf[4096];

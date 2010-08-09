@@ -38,7 +38,7 @@ struct glue_code_t : public rec_t
 
 struct namespace_t : public rec_t
 {
-    address_t address;
+    address_t address; // file offset! (actually from start of bootimage)
     size_t size;
     const char* name;
 };

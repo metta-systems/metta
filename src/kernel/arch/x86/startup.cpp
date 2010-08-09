@@ -236,7 +236,7 @@ void kernel_startup()
     timer->enable(); // enable timer interrupts
     x86_cpu_t::enable_fpu();
 
-    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     root_domain_t root_dom(bootimage);
 

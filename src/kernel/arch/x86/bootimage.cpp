@@ -58,7 +58,7 @@ bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
         return modinfo_t(0,0);
     if (namesp)
         namesp->set_location(info.rootdom->local_namespace_offset);
-    return modinfo_t(info.rootdom->address, info.rootdom->size);
+    return modinfo_t(location + info.rootdom->address, info.rootdom->size);
 }
 
 bootimage_t::modinfo_t bootimage_t::find_module(const char* name)
@@ -66,7 +66,7 @@ bootimage_t::modinfo_t bootimage_t::find_module(const char* name)
     info_t info = find_entry(location, end, kind_module, name);
     if (!info.generic)
         return modinfo_t(0,0);
-    return modinfo_t(info.module->address, info.module->size);
+    return modinfo_t(location + info.module->address, info.module->size);
 }
 
 bootimage_t::modinfo_t bootimage_t::find_namespace(const char* name)
@@ -75,7 +75,7 @@ bootimage_t::modinfo_t bootimage_t::find_namespace(const char* name)
     if (!info.generic)
         return modinfo_t(0,0);
     info.generic = reinterpret_cast<char*>(location + info.module->local_namespace_offset);
-    return modinfo_t(info.module_namespace->address, info.module_namespace->size);
+    return modinfo_t(location + info.module_namespace->address, info.module_namespace->size);
 }
 
 // kate: indent-width 4; replace-tabs on;
