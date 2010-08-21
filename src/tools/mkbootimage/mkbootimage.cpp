@@ -1,6 +1,5 @@
 //
-// Read list file with component_file:component_id pairs and create corresponding initfs image.
-// Run mkinitfs file.lst initfs.img
+// Read file with image description and create corresponding initfs image.
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
