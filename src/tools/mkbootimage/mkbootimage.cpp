@@ -21,43 +21,13 @@
 #include "bootimage.h"
 #include "bootimage_private.h"
 #include "raiifile.h"
+#include "config.h"
 
-// first approach:
-// generate modules without namespaces
-// generate namespace for root_domain only
-
-
-// creating bootimage needs:
-// list of modules
-// name of glue code part
-// list of blobs (if any, can be skipped at start)
-// it should derive namespace automatically for root_domain, since it has access to all the modules
-// listing available namespace data for modules might be needed
-
-/*
-
-lst file:
-
-"glue:" glue_file_path
-module_name:module_path
-name.arcname.arcname>mapping
-another_module:etc
-
-mapping can be a module name or module symbol name, fully qualified, or an integer or string constant.
-
-
-example:
-glue: boot/glue.sys
-root_domain:build/root_domain/root_domain.comp
-# root domain namespace is calculated automagically (?)
-mmu_mod:build/mmu_mod/mmu_mod.comp
-modules.mmu_mod.option>this
-modules.mmu_mod.option2>that
-frames_mod:build/frames_mod/frames_mod.comp
-modules.frames_mod.max_memory>64Mb
-
-*/
-
+#if TOOLS_DEBUG
+#define D(...) __VA_ARGS__
+#else
+#define D(...)
+#endif
 
 using namespace std;
 using namespace raii_wrapper;
@@ -155,12 +125,6 @@ void module_info::dump()
     nm_map namespace_entries;*/
 }
 
-// oh, global!
-std::vector<module_info> modules;
-
-// getline() and putback() manipulate input file line buffer getting next input line or putting current one back for
-// retrieval by getline() on next call.
-
 class line_reader_t
 {
 public:
@@ -203,7 +167,6 @@ string line_reader_t::getline()
     {
         string str = lines.front();
         lines.pop_front();
-//         cerr << "line_reader_t: getline " << str << endl;
         return str;
     }
     return string();
@@ -212,7 +175,6 @@ string line_reader_t::getline()
 void line_reader_t::putback(string line)
 {
     lines.push_front(line);
-//     cerr << "line_reader_t: putback " << line << endl;
 }
 
 bool line_reader_t::end()
@@ -221,7 +183,7 @@ bool line_reader_t::end()
 }
 
 // get the line, parse module until the next module starts or end of file, then push current module to modules.
-static void parse_module_lines(line_reader_t& reader)
+static void parse_module_lines(std::vector<module_info>& modules, line_reader_t& reader, string& prefix)
 {
     module_info mod;
     std::string modline = reader.getline();
@@ -229,8 +191,8 @@ static void parse_module_lines(line_reader_t& reader)
     if ((pos = modline.find_first_of(":")) != string::npos)
     {
         string name = modline.substr(0, pos);
-        string file = modline.substr(pos+1);
-        cerr << "parse_module_lines: module " << name << " in " << file << endl;
+        string file = prefix + modline.substr(pos+1);
+        D(cerr << "parse_module_lines: module " << name << " in " << file << endl);
         mod.init(name, file);
     }
     else
@@ -246,7 +208,7 @@ static void parse_module_lines(line_reader_t& reader)
         }
         string key = nsline.substr(0, pos);
         string val = nsline.substr(pos+1);
-        cerr << "parse_module_lines: nsp " << key << " with " << val << endl;
+        D(cerr << "parse_module_lines: nsp " << key << " with " << val << endl);
         mod.override_ns_entry(key, val);
     }
     modules.push_back(mod);
@@ -288,6 +250,9 @@ void align_output(file& out)
  * Call like:
  * mkbootimg _build_/x86-pc99-release/modules/ components.lst init.img
  */
+/*
+!! namespace mapping can be a module name or module symbol name, fully qualified, or an integer or string constant.
+*/
 int main(int argc, char** argv)
 {
     if (argc != 4)
@@ -298,20 +263,20 @@ int main(int argc, char** argv)
     std::string output(argv[3]);
 
     try {
-//         file      in(input, ios::in);
-//         file      out(output, ios::out | ios::binary);
-//         filebinio io(out);
+        file      out(output, ios::out | ios::binary);
+        filebinio io(out);
 
-    ifstream in(input, ios::in);
-    line_reader_t reader(in);
+        ifstream in(input, ios::in);
+        line_reader_t reader(in);
+        std::vector<module_info> modules;
 
-    while (!reader.end())
-    {
-        parse_module_lines(reader);
-    }
+        while (!reader.end())
+        {
+            parse_module_lines(modules, reader, prefix);
+        }
 
-    // print all the modules now:
-    
+        // print all the modules now:
+
 /*
 //         uint32_t                   i;
         std::string                str;

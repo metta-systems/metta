@@ -1,8 +1,18 @@
+#
+# Bootimage construction script
+#
+# glue module specifies main module
+# module paths are relative to base path given to mkbootimage
+
 glue:kernel/glue
-# blablabla comment
+
+# root_domain performs startup construction
+# namespace for root_domain will be amended to include references to all the following modules too
+
 root_domain:root_domain/root_domain.comp
 name.sp>value
 name.sp2>value2
+
+# other modules 
 another_domain:another_path/other.comp
-            #comment2
 modules.values.sp>hey jude!

@@ -103,6 +103,7 @@ def configure(conf):
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
     conf.define('DWARF_DEBUG', 0)
+    conf.define('TOOLS_DEBUG', 0)
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
