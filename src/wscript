@@ -237,7 +237,7 @@ def build(bld):
     kickstart.uselib_local = 'common runtime platform'# kernel
 
     interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator timer'.split())
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
     interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
     interfaces.target = 'interfaces'
