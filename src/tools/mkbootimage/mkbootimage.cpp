@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -21,9 +22,235 @@
 #include "bootimage_private.h"
 #include "raiifile.h"
 
+// first approach:
+// generate modules without namespaces
+// generate namespace for root_domain only
+
+
+// creating bootimage needs:
+// list of modules
+// name of glue code part
+// list of blobs (if any, can be skipped at start)
+// it should derive namespace automatically for root_domain, since it has access to all the modules
+// listing available namespace data for modules might be needed
+
+/*
+
+lst file:
+
+"glue:" glue_file_path
+module_name:module_path
+name.arcname.arcname>mapping
+another_module:etc
+
+mapping can be a module name or module symbol name, fully qualified, or an integer or string constant.
+
+
+example:
+glue: boot/glue.sys
+root_domain:build/root_domain/root_domain.comp
+# root domain namespace is calculated automagically (?)
+mmu_mod:build/mmu_mod/mmu_mod.comp
+modules.mmu_mod.option>this
+modules.mmu_mod.option2>that
+frames_mod:build/frames_mod/frames_mod.comp
+modules.frames_mod.max_memory>64Mb
+
+*/
+
+
 using namespace std;
 using namespace raii_wrapper;
 using namespace bootimage_n;
+
+struct param
+{
+    int int_val;
+    std::string string_val;
+    void* sym_val;
+};
+
+class module_info
+{
+public:
+    module_info() {}
+    module_info(std::string name, std::string file) : name(name), file(file) {}
+
+    void init(std::string name, std::string file) { this->name = name; this->file = file; }
+
+    bool add_ns_entry(std::string key, int val);
+    bool add_ns_entry(std::string key, std::string val);
+    bool add_ns_entry(std::string key, void* val);
+    void override_ns_entry(std::string key, int val);
+    void override_ns_entry(std::string key, std::string val);
+    void override_ns_entry(std::string key, void* val);
+
+    void dump();
+
+private:
+    std::string name;
+    std::string file;
+    typedef std::map<std::string, param> nm_map;
+    nm_map namespace_entries;
+
+    bool add_ns_entry(std::string key, param val, bool override);
+};
+
+bool module_info::add_ns_entry(std::string key, param val, bool override)
+{
+    if (override || (namespace_entries.find(key) != namespace_entries.end()))
+    {
+        namespace_entries[key] = val;
+        return true;
+    }
+    return false;
+}
+
+bool module_info::add_ns_entry(std::string key, int val)
+{
+    param p;
+    p.int_val = val;
+    return add_ns_entry(key, p, false);
+}
+
+bool module_info::add_ns_entry(std::string key, std::string val)
+{
+    param p;
+    p.string_val = val;
+    return add_ns_entry(key, p, false);
+}
+
+bool module_info::add_ns_entry(std::string key, void* val)
+{
+    param p;
+    p.sym_val = val;
+    return add_ns_entry(key, p, false);
+}
+
+void module_info::override_ns_entry(std::string key, int val)
+{
+    param p;
+    p.int_val = val;
+    add_ns_entry(key, p, true);
+}
+
+void module_info::override_ns_entry(std::string key, std::string val)
+{
+    param p;
+    p.string_val = val;
+    add_ns_entry(key, p, true);
+}
+
+void module_info::override_ns_entry(std::string key, void* val)
+{
+    param p;
+    p.sym_val = val;
+    add_ns_entry(key, p, true);
+}
+
+void module_info::dump()
+{
+    std::cout << name << " in " << file << endl;
+/*    typedef std::map<std::string, param> nm_map;
+    nm_map namespace_entries;*/
+}
+
+// oh, global!
+std::vector<module_info> modules;
+
+// getline() and putback() manipulate input file line buffer getting next input line or putting current one back for
+// retrieval by getline() on next call.
+
+class line_reader_t
+{
+public:
+    line_reader_t(ifstream& in);
+    string getline();
+    void putback(string line);
+    bool end();
+
+private:
+    list<string> lines;
+};
+
+static bool starts_with(string str, char prefix)
+{
+    uint32_t i = 0;
+    while (isspace(str[i]) && i < str.length())
+        ++i;
+    if (i < str.length() && str[i] == prefix)
+       return true;
+    return false;
+}
+
+line_reader_t::line_reader_t(ifstream& in)
+    : lines()
+{
+    while (in)
+    {
+        string str;
+        std::getline(in, str);
+        if (!str.empty() && !(starts_with(str, '#')))
+        {
+            lines.push_back(str);
+        }
+    }
+}
+
+string line_reader_t::getline()
+{
+    if (!lines.empty())
+    {
+        string str = lines.front();
+        lines.pop_front();
+//         cerr << "line_reader_t: getline " << str << endl;
+        return str;
+    }
+    return string();
+}
+
+void line_reader_t::putback(string line)
+{
+    lines.push_front(line);
+//     cerr << "line_reader_t: putback " << line << endl;
+}
+
+bool line_reader_t::end()
+{
+    return lines.empty();
+}
+
+// get the line, parse module until the next module starts or end of file, then push current module to modules.
+static void parse_module_lines(line_reader_t& reader)
+{
+    module_info mod;
+    std::string modline = reader.getline();
+    size_t pos;
+    if ((pos = modline.find_first_of(":")) != string::npos)
+    {
+        string name = modline.substr(0, pos);
+        string file = modline.substr(pos+1);
+        cerr << "parse_module_lines: module " << name << " in " << file << endl;
+        mod.init(name, file);
+    }
+    else
+        return;
+
+    while (1)
+    {
+        string nsline = reader.getline();
+        if ((pos = nsline.find_first_of(">")) == string::npos)
+        {
+            reader.putback(nsline);
+            break;
+        }
+        string key = nsline.substr(0, pos);
+        string val = nsline.substr(pos+1);
+        cerr << "parse_module_lines: nsp " << key << " with " << val << endl;
+        mod.override_ns_entry(key, val);
+    }
+    modules.push_back(mod);
+}
 
 const uint32_t version = 1;
 const uint32_t ALIGN = 4;
@@ -71,10 +298,21 @@ int main(int argc, char** argv)
     std::string output(argv[3]);
 
     try {
-        file      in(input, ios::in);
-        file      out(output, ios::out | ios::binary);
-        filebinio io(out);
+//         file      in(input, ios::in);
+//         file      out(output, ios::out | ios::binary);
+//         filebinio io(out);
 
+    ifstream in(input, ios::in);
+    line_reader_t reader(in);
+
+    while (!reader.end())
+    {
+        parse_module_lines(reader);
+    }
+
+    // print all the modules now:
+    
+/*
 //         uint32_t                   i;
         std::string                str;
 //         initfs_t::header_t         header;
@@ -146,6 +384,7 @@ int main(int argc, char** argv)
         // rewrite file header
 //         out.write_seek(0);
 //         io << header;
+*/
     } // try
     catch(file_error& e)
     {

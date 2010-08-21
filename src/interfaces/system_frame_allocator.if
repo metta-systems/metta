@@ -17,5 +17,6 @@ local interface system_frame_allocator_v1 extends frame_allocator_v1
 
     -- Add the set of physical frames described by "region" to the
     -- set of frames managed by the frames allocator.
-    add_frames(memory_v1.physmem_desc region) returns (boolean added);
+    add_frames(memory_v1.physmem_desc region)
+        returns (boolean added);
 }
