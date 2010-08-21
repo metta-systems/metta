@@ -47,6 +47,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
 // build dependency graph for "name" module and ensure all dependencies are loaded.
 void* load_module(const char* name, module_namespace_t* namesp)
 {
+//    namesp->lookup(name);
     UNUSED(name);
     UNUSED(namesp);
 /*    addr = bootimg.find_module(size, name);
@@ -69,13 +70,14 @@ closure_type* load_module(const char* name, module_namespace_t* namesp)
 }
 
 // setup gdt and page tables
-static void init_mem(bootimage_t& bootimage)
+static void init_mem(bootimage_t& /*bootimage*/)
 {
-    root_domain_t root_dom(bootimage);
+/**    root_domain_t root_dom(bootimage);
     module_namespace_t namesp = root_dom.get_namespace();
 
     // create physical frames allocator
     frames_module_closure* frames_mod;
+    // find mod from given namesp and load it
     frames_mod = load_module<frames_module_closure>("frames_mod", &namesp);
 //     mmu_module_closure* mmu_mod;
 //     mmu_mod = load_module("mmu_mod", namesp);
@@ -83,7 +85,7 @@ static void init_mem(bootimage_t& bootimage)
 //     mmu_mod->create(...);
 
 //     frames_mod->create(mmu_mod...);
-
+*/
     // initialize physical memory
     //FIXME: this is inside frames_mod or mmu_mod even!
 //     frames_mod->initialise_before_paging(mb.memory_map());//, x86_frame_allocator_t::instance().reserved_range()
