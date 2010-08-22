@@ -160,8 +160,10 @@ def configure(conf):
 def build(bld):
     arch = Options.options.arch
 
+    # Make bootimage components.
     bld.add_subdirs("modules")
 
+    # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
     runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete placement_new memutils cstring stdlib'.split())
@@ -199,6 +201,13 @@ def build(bld):
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
+    interfaces = bld.new_task_gen('cxx', 'staticlib')
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
+    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.target = 'interfaces'
+
+    # Tests
     tests = bld.new_task_gen('cxx', 'program')
     tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
     tests.env = bld.env_of_name('TEST_ENV').copy()
@@ -229,6 +238,7 @@ def build(bld):
     #mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
 
+    # Initial loader
     kickstart = bld.new_task_gen('cxx', 'program')
     kickstart.target = 'kickstart.sys'
     kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
@@ -237,12 +247,7 @@ def build(bld):
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'common runtime platform'# kernel
 
-    interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
-    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    interfaces.includes = interfaces.env['INCLUDE_DIRS']
-    interfaces.target = 'interfaces'
-
+    # Launcher
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
@@ -254,7 +259,17 @@ def build(bld):
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'common platform interfaces kernel minruntime'
 
-    # Make bootimage components.
+    # Glue code
+    # Glue code is the only ring0 privileged part of the system.
+    # It includes interrupt handlers and some minimal syscall processing.
+    glue = bld.new_task_gen('cxx', 'program')
+    glue.target = 'glue.sys'
+    glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
+    glue.env = bld.env_of_name('KERNEL_ENV').copy()
+    glue.env.append_unique('LINKFLAGS', ['-r']); # glue is relocatable.
+    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])#
+    glue.includes = glue.env['INCLUDE_DIRS']
+    glue.uselib_local = 'common platform interfaces kernel minruntime'
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
@@ -268,14 +283,21 @@ def build(bld):
     bld.new_task_gen(
         source = 'kernel-startup.sys',
         rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check',
+        name = 'nm undef check (kernel-startup)',
+        after = 'cxx_link'
+    )
+
+    bld.new_task_gen(
+        source = 'glue.sys',
+        rule = 'nm -u ${SRC[0].abspath(env)}',
+        name = 'nm undef check (glue)',
         after = 'cxx_link'
     )
 
     bld.new_task_gen(
         source = 'mkbootimage kernel/arch/x86/bootimage.lst',#arch dep
         target = 'init.img',
-        rule = '${SRC[0].abspath(env)} x86-pc99-release/modules/ ${SRC[1].abspath(env)} ${TGT}',
+        rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
         after = 'cxx_link'
     )

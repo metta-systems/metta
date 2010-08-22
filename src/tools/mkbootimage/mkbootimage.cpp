@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/foreach.hpp>
 #include "types.h"
 #include "fourcc.h"
 #include "bootimage.h"
@@ -55,6 +56,8 @@ public:
     void override_ns_entry(std::string key, void* val);
 
     void dump();
+
+    string file_name() const { return file; }
 
 private:
     std::string name;
@@ -274,36 +277,17 @@ int main(int argc, char** argv)
             parse_module_lines(modules, reader, prefix);
         }
 
-        // print all the modules now:
-
-/*
-//         uint32_t                   i;
-        std::string                str;
-//         initfs_t::header_t         header;
-//         vector<initfs_t::entry_t>  entry;
-        vector<char>               name_storage;
-        int                        name_offset = 0;
-        int                        data_offset = 0;//sizeof(header);
+        int data_offset = 0;//sizeof(header);
 
         io.write32le(FourCC<'B', 'I', 'M', 'G'>::value);
         io.write32le(version);
         data_offset += 8; // sizeof(bootimage_n::header_t)
 
-        // Parse the input file, should be somewhat more complex structure to accomodate different types of components.
-        while (in.getline(str))
+        BOOST_FOREACH(module_info& mod, modules)
         {
-            vector<std::string> strs;
-            boost::split(strs, str, boost::is_any_of(":"));
-
-            if (strs.size() < 2)
-                continue;
-
-            std::string left = strs.front();
-            strs.erase(strs.begin());
-            std::string right = boost::join(strs, ":");
-
-            printf("Adding %s...\n", (prefix + left).c_str());
-            file in_data(prefix + left, ios::in | ios::binary);
+            printf("Adding...");
+            mod.dump();
+            file in_data(mod.file_name(), ios::in | ios::binary);
             long in_size = in_data.size();
             // Write module header
             bootimage_n::root_domain_t rdom;
@@ -312,7 +296,7 @@ int main(int argc, char** argv)
             rdom.address = data_offset + sizeof(rdom);
             rdom.size = in_size;
             rdom.name = 0;
-//             rdom.name = name string offset;
+            //         rdom.name = name string offset;
             rdom.local_namespace_offset = 0;
             rdom.entry_point = 0;
             out.write(&rdom, sizeof(rdom));
@@ -323,11 +307,19 @@ int main(int argc, char** argv)
                 out.write(buf, bytes);
                 bytes = in_data.read(buf, 4096);
             }
-//             entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
+            //         entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
             data_offset += in_size;
+
+            align_output(out);
         }
 
-        align_output(out);
+/*
+//         uint32_t                   i;
+        std::string                str;
+//         initfs_t::header_t         header;
+//         vector<initfs_t::entry_t>  entry;
+        vector<char>               name_storage;
+        int                        name_offset = 0;
 
         name_offset = out.write_pos();
 //         header.names_offset = name_offset;
