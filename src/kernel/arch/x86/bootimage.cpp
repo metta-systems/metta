@@ -51,6 +51,17 @@ static info_t find_entry(address_t location, address_t end, kind_e kind, const c
     return info;
 }
 
+static void dump_rootdom(root_domain_t* dom)
+{
+    kconsole << "tag          : " << dom->tag << endl
+             << "length       : " << dom->length << endl
+             << "address      : " << dom->address << endl
+             << "size         : " << dom->size << endl
+             << "name         : " << dom->name << endl
+             << "local ns ofs : " << dom->local_namespace_offset << endl
+             << "entry point  : " << dom->entry_point << endl;
+}
+
 bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
 {
     info_t info = find_entry(location, end, kind_root_domain, 0);
@@ -58,6 +69,9 @@ bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
         return modinfo_t(0,0);
     if (namesp)
         namesp->set_location(info.rootdom->local_namespace_offset);
+
+    dump_rootdom(info.rootdom);
+
     return modinfo_t(location + info.rootdom->address, info.rootdom->size);
 }
 
