@@ -33,8 +33,70 @@ using namespace std;
 using namespace raii_wrapper;
 using namespace bootimage_n;
 
+const uint32_t version = 1;
+const uint32_t ALIGN = 4;
+
+filebinio& operator << (filebinio& io, vector<char> stringtable)
+{
+    io.write(stringtable.data(), stringtable.size());
+    return io;
+}
+
+static int needed_align(size_t pos)
+{
+    if (pos % ALIGN)
+        return ALIGN - pos % ALIGN;
+    return 0;
+}
+
+static void align_output(file& out, int& data_offset)
+{
+    size_t pos = out.write_pos();
+    for (int i = 0; i < needed_align(pos); i++)
+        out.write("\0", 1);
+    data_offset += needed_align(pos);
+}
+
+class stringtable_t
+{
+public:
+    stringtable_t() {}
+
+    uint32_t append(const std::string& addend);
+    size_t size() const;
+    bool write(file& out, int& data_offset) const;
+
+private:
+    vector<char> table;
+};
+
+/*!
+ * Append 0-terminated string to string table, return starting string offset in table.
+ */
+uint32_t stringtable_t::append(const std::string& addend)
+{
+    uint32_t last_offset = table.size();
+    table.resize(table.size() + addend.size() + 1);
+    copy(addend.begin(), addend.end(), table.begin() + last_offset);
+    table.back() = 0;
+    return last_offset;
+}
+
+size_t stringtable_t::size() const
+{
+    return table.size();
+}
+
+bool stringtable_t::write(file& out, int& data_offset) const
+{
+    out.write(&table[0], table.size());
+    data_offset += table.size();
+    return true;
+}
+
 struct param
 {
+    enum { integer, string, sym } tag;
     int int_val;
     std::string string_val;
     void* sym_val;
@@ -43,10 +105,12 @@ struct param
 class module_info
 {
 public:
-    module_info() {}
-    module_info(std::string name, std::string file) : name(name), file(file) {}
+    typedef std::map<std::string, param> ns_map;
 
-    void init(std::string name, std::string file) { this->name = name; this->file = file; }
+    module_info() {}
+    module_info(std::string name, std::string file) : name(name), file_name(file) {}
+
+    void init(std::string name, std::string file) { this->name = name; this->file_name = file; }
 
     bool add_ns_entry(std::string key, int val);
     bool add_ns_entry(std::string key, std::string val);
@@ -57,16 +121,61 @@ public:
 
     void dump();
 
-    string file_name() const { return file; }
+    // Write out module information together with the namespace and file data.
+    bool write(file& out, int& data_offset);
 
 private:
     std::string name;
-    std::string file;
-    typedef std::map<std::string, param> nm_map;
-    nm_map namespace_entries;
+    std::string file_name;
+    ns_map namespace_entries;
 
     bool add_ns_entry(std::string key, param val, bool override);
 };
+
+class module_namespace1_t
+{
+public:
+    module_namespace1_t(module_info::ns_map namespace_entries);
+
+    bool write(file& out, int& data_offset);
+    size_t size() const;
+
+private:
+    std::vector<namespace_entry_t> entries;
+    stringtable_t string_table;
+};
+
+module_namespace1_t::module_namespace1_t(module_info::ns_map namespace_entries)
+{
+    BOOST_FOREACH(auto entry, namespace_entries)
+    {
+        namespace_entry_t e;
+        e.name_off = string_table.append(entry.first);
+        e.value = entry.second.sym_val;
+        entries.push_back(e);
+    }
+}
+
+size_t module_namespace1_t::size() const
+{
+    return entries.size() * 8/*sizeof(namespace_entry_t)*/ + string_table.size();
+}
+
+bool module_namespace1_t::write(file& out, int& data_offset)
+{
+    D(cout << "Writing " << entries.size() << " ns entries" << endl);
+    filebinio io(out);
+    data_offset += entries.size() * 8;//sizeof(namespace_entry_t);
+    BOOST_FOREACH(auto entry, entries)
+    {
+        io.write32le(entry.name_off + data_offset);
+//         io.write32le(entry.tag);
+        io.write32le(entry.value_int);
+    }
+    string_table.write(out, data_offset);
+    return true;
+}
+
 
 bool module_info::add_ns_entry(std::string key, param val, bool override)
 {
@@ -122,9 +231,56 @@ void module_info::override_ns_entry(std::string key, void* val)
 
 void module_info::dump()
 {
-    std::cout << name << " in " << file << endl;
+    D(cout << name << " in " << file_name << endl);
 /*    typedef std::map<std::string, param> nm_map;
     nm_map namespace_entries;*/
+}
+
+bool module_info::write(file& out, int& data_offset)
+{
+    bootimage_n::module_t mod;
+
+    file in_data(file_name, ios::in | ios::binary);
+    size_t in_size = in_data.size();
+
+    // Prepare namespace
+    module_namespace1_t namesp(namespace_entries);
+    long ns_size = namespace_entries.size() > 0 ? namesp.size() : 0;
+    long ns_size_a = ns_size + needed_align(data_offset + sizeof(mod) + ns_size);
+
+    // Write module header
+    mod.tag = bootimage_n::kind_module;
+    mod.length = sizeof(mod) + in_size + ns_size;
+    mod.address = data_offset + sizeof(mod) + ns_size_a;
+    mod.size = in_size;
+    mod.name = 0;
+//     rdom.name = name string offset;
+    mod.local_namespace_offset = ns_size ? data_offset + sizeof(mod) : 0;
+//     rdom.entry_point = 0;
+    out.write(&mod, sizeof(mod));
+    data_offset += sizeof(mod);
+    if (ns_size)
+        namesp.write(out, data_offset);
+    align_output(out, data_offset);
+
+    // Write module data
+    char buf[4096];
+    size_t out_size = 0;
+    size_t bytes = in_data.read(buf, 4096);
+    while (bytes > 0) {
+        out.write(buf, bytes);
+        out_size += bytes;
+        bytes = in_data.read(buf, 4096);
+    }
+    if (in_size != out_size)
+    {
+        throw file_error("File was not entirely copied.");
+    }
+    data_offset += in_size;
+
+    align_output(out, data_offset);
+
+    return true;
 }
 
 class line_reader_t
@@ -216,38 +372,6 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
     modules.push_back(mod);
 }
 
-const uint32_t version = 1;
-const uint32_t ALIGN = 4;
-
-filebinio& operator << (filebinio& io, vector<char> stringtable)
-{
-    io.write(stringtable.data(), stringtable.size());
-    return io;
-}
-
-/*!
- * Append 0-terminated string to string table, return starting string offset in table.
- */
-uint32_t stringtable_append(vector<char>& table, const std::string& addend)
-{
-    uint32_t last_offset = table.size();
-    table.resize(table.size() + addend.size() + 1);
-    copy(addend.begin(), addend.end(), table.begin() + last_offset);
-    table.back() = 0;
-    return last_offset;
-}
-
-void align_output(file& out)
-{
-    uint32_t i, padding;
-    if (out.write_pos() % ALIGN)
-    {
-        padding = ALIGN - out.write_pos() % ALIGN;
-        for (i = 0; i < padding; i++)
-            out.write("\0", 1);
-    }
-}
-
 /*!
  * Call like:
  * mkbootimg _build_/x86-pc99-release/modules/ components.lst init.img
@@ -287,30 +411,7 @@ int main(int argc, char** argv)
         {
             printf("Adding...");
             mod.dump();
-            file in_data(mod.file_name(), ios::in | ios::binary);
-            long in_size = in_data.size();
-            // Write module header
-            bootimage_n::root_domain_t rdom;
-            rdom.tag = bootimage_n::kind_root_domain;
-            rdom.length = sizeof(rdom) + in_size;
-            rdom.address = data_offset + sizeof(rdom);
-            rdom.size = in_size;
-            rdom.name = 0;
-            //         rdom.name = name string offset;
-            rdom.local_namespace_offset = 0;
-            rdom.entry_point = 0;
-            out.write(&rdom, sizeof(rdom));
-            // Write module data
-            char buf[4096];
-            size_t bytes = in_data.read(buf, 4096);
-            while (bytes > 0) {
-                out.write(buf, bytes);
-                bytes = in_data.read(buf, 4096);
-            }
-            //         entry.push_back(initfs_t::entry_t(stringtable_append(name_storage, right), data_offset, in_size));
-            data_offset += in_size;
-
-            align_output(out);
+            mod.write(out, data_offset);
         }
 
 /*

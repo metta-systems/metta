@@ -53,6 +53,18 @@ struct root_domain_t : public module_t
     uintptr_t entry_point;
 };
 
+struct namespace_entry_t
+{
+    union {
+        const char* name;
+        address_t name_off;
+    };
+    union {
+        void* value;
+        uintptr_t value_int;
+    };
+};
+
 union info_t
 {
     rec_t*         rec;
