@@ -130,6 +130,8 @@ private:
     ns_map namespace_entries;
 
     bool add_ns_entry(std::string key, param val, bool override);
+    bool write_root_domain_header(file& out, int& data_offset, int in_size, int ns_size);
+    bool write_module_header(file& out, int& data_offset, int in_size, int ns_size);
 };
 
 class module_namespace1_t
@@ -236,29 +238,61 @@ void module_info::dump()
     nm_map namespace_entries;*/
 }
 
-bool module_info::write(file& out, int& data_offset)
+bool module_info::write_module_header(file& out, int& data_offset, int in_size, int ns_size)
 {
     bootimage_n::module_t mod;
 
+    mod.tag = bootimage_n::kind_module;
+    mod.length = sizeof(mod) + in_size + ns_size;
+    mod.address = data_offset + sizeof(mod) + ns_size;
+    mod.size = in_size;
+    mod.name = 0;
+//     rdom.name = name string offset;
+    mod.local_namespace_offset = ns_size ? data_offset + sizeof(mod) : 0;
+
+    out.write(&mod, sizeof(mod));
+    data_offset += sizeof(mod);
+
+    return true;
+}
+
+bool module_info::write_root_domain_header(file& out, int& data_offset, int in_size, int ns_size)
+{
+    bootimage_n::root_domain_t rdom;
+
+    rdom.tag = bootimage_n::kind_root_domain;
+    rdom.length = sizeof(rdom) + in_size + ns_size;
+    rdom.address = data_offset + sizeof(rdom) + ns_size;
+    rdom.size = in_size;
+    rdom.name = 0;
+//     rdom.name = name string offset;
+    rdom.local_namespace_offset = ns_size ? data_offset + sizeof(rdom) : 0;
+    rdom.entry_point = 0xefbeadde;
+
+    out.write(&rdom, sizeof(rdom));
+    data_offset += sizeof(rdom);
+
+    return true;
+}
+
+bool module_info::write(file& out, int& data_offset)
+{
+    size_t header_size = name == "root_domain" ? sizeof(bootimage_n::root_domain_t) : sizeof(bootimage_n::module_t);
     file in_data(file_name, ios::in | ios::binary);
     size_t in_size = in_data.size();
 
     // Prepare namespace
     module_namespace1_t namesp(namespace_entries);
-    long ns_size = namespace_entries.size() > 0 ? namesp.size() : 0;
-    long ns_size_a = ns_size + needed_align(data_offset + sizeof(mod) + ns_size);
+    size_t ns_size = namespace_entries.size() > 0 ? namesp.size() : 0;
+    size_t ns_size_a = ns_size ? ns_size + needed_align(data_offset + header_size + ns_size) : 0;
 
-    // Write module header
-    mod.tag = bootimage_n::kind_module;
-    mod.length = sizeof(mod) + in_size + ns_size;
-    mod.address = data_offset + sizeof(mod) + ns_size_a;
-    mod.size = in_size;
-    mod.name = 0;
-//     rdom.name = name string offset;
-    mod.local_namespace_offset = ns_size ? data_offset + sizeof(mod) : 0;
-//     rdom.entry_point = 0;
-    out.write(&mod, sizeof(mod));
-    data_offset += sizeof(mod);
+    size_t in_size_a = in_size + needed_align(data_offset + header_size + ns_size + in_size);
+
+    if (name == "root_domain")
+        write_root_domain_header(out, data_offset, in_size_a, ns_size_a);
+    else
+        write_module_header(out, data_offset, in_size_a, ns_size_a);
+
     if (ns_size)
         namesp.write(out, data_offset);
     align_output(out, data_offset);
@@ -277,7 +311,6 @@ bool module_info::write(file& out, int& data_offset)
         throw file_error("File was not entirely copied.");
     }
     data_offset += in_size;
-
     align_output(out, data_offset);
 
     return true;
@@ -373,7 +406,7 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
 }
 
 /*!
- * Call like:
+ * Run like:
  * mkbootimg _build_/x86-pc99-release/modules/ components.lst init.img
  */
 /*
@@ -383,6 +416,9 @@ int main(int argc, char** argv)
 {
     if (argc != 4)
         throw runtime_error("usage: mkbootimage base-path components.lst init.img");
+
+    if (sizeof(bootimage_n::root_domain_t) != 28)
+        throw runtime_error("sizeof(root_domain) record is invalid!");
 
     std::string prefix(argv[1]);
     std::string input(argv[2]);
@@ -411,37 +447,9 @@ int main(int argc, char** argv)
         {
             printf("Adding...");
             mod.dump();
+
             mod.write(out, data_offset);
         }
-
-/*
-//         uint32_t                   i;
-        std::string                str;
-//         initfs_t::header_t         header;
-//         vector<initfs_t::entry_t>  entry;
-        vector<char>               name_storage;
-        int                        name_offset = 0;
-
-        name_offset = out.write_pos();
-//         header.names_offset = name_offset;
-        io << name_storage;
-
-//         header.names_size = out.write_pos() - name_offset;
-
-        align_output(out);
-
-//         header.count = entry.size();
-//         header.index_offset = out.write_pos();
-//         for (i = 0; i < header.count; i++)
-//         {
-//             entry[i].name_offset += name_offset;
-//             io << entry[i];
-//         }
-
-        // rewrite file header
-//         out.write_seek(0);
-//         io << header;
-*/
     } // try
     catch(file_error& e)
     {
