@@ -72,6 +72,46 @@ union bootrec_info_t
     char*                 generic;
 };
 
+bootinfo_t::mmap_iterator::mmap_iterator(void* entry, void* end)
+    : end(end)
+{
+    set(entry);
+}
+
+void bootinfo_t::mmap_iterator::set(void* entry)
+{
+    ptr = entry;
+    bootrec_mmap_entry_t* e = reinterpret_cast<bootrec_mmap_entry_t*>(entry);
+    start = e->start;
+    size = e->length;
+    type = e->type;
+}
+
+multiboot_t::mmap_entry_t bootinfo_t::mmap_iterator::operator *()
+{
+    multiboot_t::mmap_entry_t entry;
+    entry.set_region(start, size, (multiboot_t::mmap_entry_t::entry_type_e)type);
+    return entry;
+}
+
+void bootinfo_t::mmap_iterator::operator ++()
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(ptr);
+    info.generic += info.rec->size; // move ahead one entry
+    while (info.generic < end)
+    {
+        if (info.rec->tag == bootrec_memory_map)
+        {
+            set(info.generic);
+            return;
+        }
+        info.generic += info.rec->size;
+    }
+    set(0);
+    return;
+}
+
 bootinfo_t::bootinfo_t(bool create_new)
 {
     if (create_new)
@@ -116,6 +156,26 @@ bool bootinfo_t::get_cmdline(const char*& cmdline)
         info.generic += info.rec->size;
     }
     return false;
+}
+
+bootinfo_t::mmap_iterator bootinfo_t::mmap_begin()
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(this + 1);
+    while (info.generic < free)
+    {
+        if (info.rec->tag == bootrec_memory_map)
+        {
+            return mmap_iterator(info.memmap, free);
+        }
+        info.generic += info.rec->size;
+    }
+    return mmap_end();
+}
+
+bootinfo_t::mmap_iterator bootinfo_t::mmap_end()
+{
+    return mmap_iterator(0, 0);
 }
 
 // TODO: check remaining space
