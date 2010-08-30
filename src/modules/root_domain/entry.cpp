@@ -1,11 +1,11 @@
 #include "default_console.h"
 #include "frames_module_interface.h"
+#include "mmu_module_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
 #include "bootinfo.h"
 #include "new.h"
-#include "algorithm"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -74,29 +74,26 @@ closure_type* load_module(const char* name, module_namespace_t* namesp)
 static void init_mem(bootimage_t& /*bootimage*/)
 {
     kconsole << "init_mem" << endl;
-    // read the memory map from bootinfo page
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
-    struct print_mmap
-    {
-        void operator ()(multiboot_t::mmap_entry_t e)
-        {
-            kconsole << "mmap entry @ " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
-        }
-    };
-    std::for_each(bi->mmap_begin(), bi->mmap_end(), print_mmap());
+    // request necessary space for frames allocator
+    frames_module_v1_closure* frames_mod;
+    // find mod from given namesp and load it
+    frames_mod = load_module<frames_module_v1_closure>("frames_mod", 0);
+
+    int required = frames_mod->required_size();
+
+    int initial_heap_size = 64*1024;
+
+    mmu_module_v1_closure* mmu_mod;
+    mmu_mod = load_module<mmu_module_v1_closure>("mmu_mod", 0);
+
+    void *mmu = mmu_mod->create(required + initial_heap_size);
+    UNUSED(mmu);
 
 /**    root_domain_t root_dom(bootimage);
     module_namespace_t namesp = root_dom.get_namespace();
 
     // create physical frames allocator
-    frames_module_closure* frames_mod;
-    // find mod from given namesp and load it
-    frames_mod = load_module<frames_module_closure>("frames_mod", &namesp);
-//     mmu_module_closure* mmu_mod;
-//     mmu_mod = load_module("mmu_mod", namesp);
-
-//     mmu_mod->create(...);
 
 //     frames_mod->create(mmu_mod...);
 */
@@ -183,4 +180,5 @@ extern "C" void entry()
     // Module "boot" depends on all modules that must be probed at startup.
     // Dependency resolution will bring up modules in an appropriate order.
 //    load_modules(bootimage, "boot");
+    PANIC("root_domain entry returned!");
 }
