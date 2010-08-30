@@ -81,10 +81,13 @@ bootinfo_t::mmap_iterator::mmap_iterator(void* entry, void* end)
 void bootinfo_t::mmap_iterator::set(void* entry)
 {
     ptr = entry;
-    bootrec_mmap_entry_t* e = reinterpret_cast<bootrec_mmap_entry_t*>(entry);
-    start = e->start;
-    size = e->length;
-    type = e->type;
+    if (ptr)
+    {
+        bootrec_mmap_entry_t* e = reinterpret_cast<bootrec_mmap_entry_t*>(entry);
+        start = e->start;
+        size = e->length;
+        type = e->type;
+    }
 }
 
 multiboot_t::mmap_entry_t bootinfo_t::mmap_iterator::operator *()
@@ -109,6 +112,7 @@ void bootinfo_t::mmap_iterator::operator ++()
         info.generic += info.rec->size;
     }
     set(0);
+    end = 0; // iterator has exhausted!
     return;
 }
 
