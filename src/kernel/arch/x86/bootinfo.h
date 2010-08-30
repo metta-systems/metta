@@ -11,6 +11,7 @@
 #include "multiboot.h"
 #include "memory.h"
 #include "memutils.h"
+#include "iterator"
 
 // Rather arbitrary location for the bootinfo page.
 #define BOOTINFO_PAGE ((void*)0x8000)
@@ -31,12 +32,39 @@ class bootinfo_t
     static const uint32_t BI_MAGIC = 0xbeefdea1;
 
 public:
+    /* Iterator for going over available memory map entries. */
+    class mmap_iterator : public std::iterator<std::forward_iterator_tag, multiboot_t::mmap_entry_t>
+    {
+        address_t start;
+        size_t size;
+        int type;
+        void* ptr;
+        void* end;
+
+        void set(void* entry);
+
+    public:
+        mmap_iterator(void* entry, void* end);
+        multiboot_t::mmap_entry_t operator *();
+        void operator ++();
+        inline bool operator != (const mmap_iterator& other) { return ptr != other.ptr; }
+    };
+
+    /* Iterator for going over available modules. */
+/*    class module_iterator : public std::iterator<>
+    {
+    };*/
+
+public:
     bootinfo_t(bool create_new = false);
     inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
     bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);
     bool get_cmdline(const char*& cmdline);
+
+    mmap_iterator mmap_begin();
+    mmap_iterator mmap_end();
 
     // Append parts of multiboot header in a format suitable for bootinfo page.
     bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);

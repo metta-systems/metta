@@ -1,5 +1,6 @@
 #include "default_console.h"
 #include "frames_module_interface.h"
+#include "mmu_module_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -72,17 +73,27 @@ closure_type* load_module(const char* name, module_namespace_t* namesp)
 // setup gdt and page tables
 static void init_mem(bootimage_t& /*bootimage*/)
 {
+    kconsole << "init_mem" << endl;
+
+    // request necessary space for frames allocator
+    frames_module_v1_closure* frames_mod;
+    // find mod from given namesp and load it
+    frames_mod = load_module<frames_module_v1_closure>("frames_mod", 0);
+
+    int required = frames_mod->required_size();
+
+    int initial_heap_size = 64*1024;
+
+    mmu_module_v1_closure* mmu_mod;
+    mmu_mod = load_module<mmu_module_v1_closure>("mmu_mod", 0);
+
+    void *mmu = mmu_mod->create(required + initial_heap_size);
+    UNUSED(mmu);
+
 /**    root_domain_t root_dom(bootimage);
     module_namespace_t namesp = root_dom.get_namespace();
 
     // create physical frames allocator
-    frames_module_closure* frames_mod;
-    // find mod from given namesp and load it
-    frames_mod = load_module<frames_module_closure>("frames_mod", &namesp);
-//     mmu_module_closure* mmu_mod;
-//     mmu_mod = load_module("mmu_mod", namesp);
-
-//     mmu_mod->create(...);
 
 //     frames_mod->create(mmu_mod...);
 */
@@ -169,4 +180,5 @@ extern "C" void entry()
     // Module "boot" depends on all modules that must be probed at startup.
     // Dependency resolution will bring up modules in an appropriate order.
 //    load_modules(bootimage, "boot");
+    PANIC("root_domain entry returned!");
 }

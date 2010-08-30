@@ -3,16 +3,16 @@
 
 def build(bld):
     rdom = bld.new_task_gen('cxx', 'program')
-    rdom.source = 'entry.cpp root_domain.cpp ../../interfaces/frames_module_interface.cpp ../module-crt0.s'.split()
+    rdom.source = 'mmu_mod.cpp ../module-entry.cpp ../module-crt0.s'.split()
     rdom.env = bld.env_of_name('KERNEL_ENV').copy()
     rdom.env.append_unique('LINKFLAGS', ['-r']); # Components are relocatable
-    rdom.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,root_domain.map'])
+    rdom.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,mmu_mod.map'])
     rdom.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
     rdom.uselib_local = 'platform minruntime kernel common'
-    rdom.target = 'root_domain.comp'
+    rdom.target = 'mmu_mod.comp'
 
     bld.new_task_gen(
-        source = 'root_domain.comp',
+        source = 'mmu_mod.comp',
         rule = 'nm -u ${SRC[0].abspath(env)}',
         name = 'module nm undef check',
         after = 'cxx_link'

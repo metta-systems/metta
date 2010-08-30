@@ -10,7 +10,7 @@ struct system_frame_allocator_v1_closure;
 
 DECLARE_CLOSURE(frames_module_v1)
 {
-    void required(int args);
+    unsigned int required_size();
     system_frame_allocator_v1_closure* create(int args);
-    void done();
+    void finish_init();
 };

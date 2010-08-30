@@ -3,6 +3,8 @@
 
 def build(bld):
     bld.add_subdirs('root_domain')
+    bld.add_subdirs('frames_mod')
+    bld.add_subdirs('mmu_mod')
     #bld.add_subdirs('interrupt_dispatcher')
     #bld.add_subdirs('portal_manager')
     #bld.add_subdirs('scheduler')
