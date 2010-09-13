@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Helper function to create module builders.
 def module_task_gen(bld, name, sources):
     mod = bld.new_task_gen('cxx', 'program')
     mod.source = sources

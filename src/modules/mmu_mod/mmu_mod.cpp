@@ -11,6 +11,8 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
     UNUSED(self);
     UNUSED(initial_reservation);
 
+    kconsole << "MMU mod : create" << endl;
+
     // read the memory map from bootinfo page
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
@@ -23,10 +25,22 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
     };
     std::for_each(bi->mmap_begin(), bi->mmap_end(), print_mmap());
 
+//     frames_mod->initialise_before_paging(mb.memory_map());//, x86_frame_allocator_t::instance().reserved_range()
+
     return 0;
 }
 
-mmu_module_v1_ops ops = {
+static const mmu_module_v1_ops ops = {
     mmu_mod_create,
-    0
+    NULL
 };
+
+static const mmu_module_v1_closure clos = {
+    &ops,
+    NULL
+};
+
+#define EXPORT_CL_TO_ROOTDOM(_type, _name, _cl) \
+    extern "C" const _type##_closure* const exported_##_name##_rootdom = &_cl
+
+EXPORT_CL_TO_ROOTDOM(mmu_module_v1, mmu_module, clos);
