@@ -4,8 +4,12 @@
 
 struct mmu_v1_closure;
 
-DECLARE_CLOSURE(mmu_module_v1)
+struct mmu_module_v1_ops; struct mmu_module_v1_state; struct mmu_module_v1_closure
+// DECLARE_CLOSURE(mmu_module_v1)
 {
-    mmu_v1_closure* (*create)(int32_t size/*, ramtab& rt, address_t& free*/);
-    void (*finish_init)(/*mmu_v1& mmu, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc*/);
+    const mmu_module_v1_ops* methods;
+    mmu_module_v1_state* state;
+
+    mmu_v1_closure* create(int size);
+    void finish_init();
 };
