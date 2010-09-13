@@ -13,6 +13,10 @@
 
 using namespace bootimage_n;
 
+//======================================================================================================================
+// bootimage_t - TODO: use iterators
+//======================================================================================================================
+
 /*!
  * Internally bootimage has a tagged format with multiple entries one after another.
  * Each entry has a tag, which specifies type of the entry, it's size and extra information depending on type.
@@ -32,6 +36,22 @@ bool bootimage_t::valid()
     return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
+static void dump_module(module_t* mod, address_t location)
+{
+    kconsole << "tag          : " << mod->tag << endl
+             << "length       : " << mod->length << endl
+             << "address      : " << mod->address << endl
+             << "size         : " << mod->size << endl
+             << "name         : " << mod->name + location << endl
+             << "local ns ofs : " << mod->local_namespace_offset << endl;
+}
+
+static void dump_rootdom(root_domain_t* dom, address_t location)
+{
+    dump_module(dom, location);
+    kconsole << "entry point  : " << dom->entry_point << endl;
+}
+
 static info_t find_entry(address_t location, address_t end, kind_e kind, const char* name)
 {
     info_t info;
@@ -40,26 +60,21 @@ static info_t find_entry(address_t location, address_t end, kind_e kind, const c
     {
         if (info.rec->tag == kind)
         {
-            if (info.rec->tag == kind_root_domain || memutils::is_string_equal(info.module->name, name))
+            if (info.rec->tag == kind_module)
+            {
+                dump_module(info.module, location);
+            }
+
+            if (info.rec->tag == kind_root_domain || memutils::is_string_equal(info.module->name + location, name))
             {
                 return info;
             }
         }
+        kconsole << "location " << (address_t)info.generic << " moving by " << info.rec->length << endl;
         info.generic += info.rec->length;
     }
     info.generic = 0;
     return info;
-}
-
-static void dump_rootdom(root_domain_t* dom)
-{
-    kconsole << "tag          : " << dom->tag << endl
-             << "length       : " << dom->length << endl
-             << "address      : " << dom->address << endl
-             << "size         : " << dom->size << endl
-             << "name         : " << dom->name << endl
-             << "local ns ofs : " << dom->local_namespace_offset << endl
-             << "entry point  : " << dom->entry_point << endl;
 }
 
 bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
@@ -70,7 +85,7 @@ bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
     if (namesp)
         namesp->set_location(info.rootdom->local_namespace_offset);
 
-    dump_rootdom(info.rootdom);
+    dump_rootdom(info.rootdom, location);
 
     return modinfo_t(location + info.rootdom->address, info.rootdom->size);
 }
