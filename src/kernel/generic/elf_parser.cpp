@@ -219,7 +219,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
 
     // Zero-out BSS
     section_header_t* bss = section_header(".bss");
-    memutils::fill_memory(reinterpret_cast<void*>(load_address + bss->offset), 0, bss->size);
+    memutils::fill_memory(reinterpret_cast<void*>(load_address + bss->offset), 0, bss->size); // !!! FIXME !!! bad idea
 
     return true;
 }
