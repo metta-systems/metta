@@ -16,6 +16,7 @@ class elf_loader_t : public elf_parser_t
 public:
     //! Creates a blank ELF loader, prepared for a call to load_image.
     elf_loader_t();
+    elf_loader_t(address_t image_base);
 
     //! Loads the image file from specified memory location.
     /*!
