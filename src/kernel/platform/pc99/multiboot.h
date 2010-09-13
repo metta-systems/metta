@@ -39,6 +39,10 @@ public:
     class mmap_entry_t;
     struct modinfo_t;
 
+    //==================================================================================================================
+    // multiboot mmap_t
+    //==================================================================================================================
+
     class mmap_t
     {
     public:
@@ -53,6 +57,10 @@ public:
         uint32_t      length;
         mmap_entry_t* addr;
     } PACKED;
+
+    //==================================================================================================================
+    // multiboot mmap entry
+    //==================================================================================================================
 
     class mmap_entry_t
     {
@@ -83,6 +91,10 @@ public:
 
         friend class multiboot_t::mmap_t;
     } PACKED;
+
+    //==================================================================================================================
+    // multiboot header
+    //==================================================================================================================
 
     /*!
      * Boot information passed in by multiboot loader.
@@ -127,7 +139,13 @@ public:
         uint32_t vbe_interface_len;
     } PACKED;
 
-    /*! Information about a boot module. */
+    //==================================================================================================================
+    // multiboot module info
+    //==================================================================================================================
+
+    /*!
+     * Information about a boot module.
+     */
     struct modinfo_t
     {
         uint32_t mod_start; /*!< Module start address in memory. */
@@ -135,6 +153,10 @@ public:
         const char* str;    /*!< Pointer to module name as C string. */
         uint32_t reserved;
     } PACKED;
+
+    //==================================================================================================================
+    // multiboot_t public methods
+    //==================================================================================================================
 
     multiboot_t(header_t* h = NULL)
         : header(NULL)
@@ -217,7 +239,7 @@ public:
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
     mmap_t* memory_map() const;
 
-    static multiboot_t* prepare();
+    static multiboot_t* prepare(); // used by loader to retrieve multiboot header
     const char* cmdline() { return header->cmdline; }
 
 private:
