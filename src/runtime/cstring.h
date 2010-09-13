@@ -46,7 +46,8 @@ public:
 
     size_t length() { return size; }
 
-    bool operator ==(string_t<string_type_trait>& other) const;
+    bool operator ==(const string_t<string_type_trait>& other) const;
+    bool operator ==(const string_t<string_type_trait>::code_point* other) const;
 
 private:
     char*  data;
@@ -77,9 +78,16 @@ string_t<string_type_trait>::string_t(const char* data)
 }
 
 template<class string_type_trait>
-bool string_t<string_type_trait>::operator ==(string_t<string_type_trait>& other) const
+bool string_t<string_type_trait>::operator ==(const string_t<string_type_trait>& other) const
 {
     return (size == other.size) && memutils::is_memory_equal(data, other.data, size);
+}
+
+template<class string_type_trait>
+bool string_t<string_type_trait>::operator ==(const string_t<string_type_trait>::code_point* other) const
+{
+    // FIXME: use string_type_trait::str_length
+    return (size == memutils::string_length(other)) && memutils::is_memory_equal(data, other, size);
 }
 
 typedef string_t<string_ascii_trait> cstring_t;

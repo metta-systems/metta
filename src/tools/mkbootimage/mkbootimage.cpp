@@ -36,6 +36,10 @@ using namespace bootimage_n;
 const uint32_t version = 1;
 const uint32_t ALIGN = 4;
 
+//======================================================================================================================
+// helper functions
+//======================================================================================================================
+
 filebinio& operator << (filebinio& io, vector<char> stringtable)
 {
     io.write(stringtable.data(), stringtable.size());
@@ -56,6 +60,10 @@ static void align_output(file& out, int& data_offset)
         out.write("\0", 1);
     data_offset += needed_align(pos);
 }
+
+//======================================================================================================================
+// string table
+//======================================================================================================================
 
 class stringtable_t
 {
@@ -94,6 +102,10 @@ bool stringtable_t::write(file& out, int& data_offset) const
     return true;
 }
 
+//======================================================================================================================
+// namespace entry value
+//======================================================================================================================
+
 struct param
 {
     enum { integer, string, sym } tag;
@@ -101,6 +113,10 @@ struct param
     std::string string_val;
     void* sym_val;
 };
+
+//======================================================================================================================
+// module info
+//======================================================================================================================
 
 class module_info
 {
@@ -134,6 +150,10 @@ private:
     bool write_module_header(file& out, int& data_offset, int in_size, int ns_size);
 };
 
+//======================================================================================================================
+// module namespace
+//======================================================================================================================
+
 class module_namespace1_t
 {
 public:
@@ -165,7 +185,7 @@ size_t module_namespace1_t::size() const
 
 bool module_namespace1_t::write(file& out, int& data_offset)
 {
-    D(cout << "Writing " << entries.size() << " ns entries" << endl);
+    D(cout << "Writing " << entries.size() << " namespace entries" << endl);
     filebinio io(out);
     data_offset += entries.size() * 8;//sizeof(namespace_entry_t);
     BOOST_FOREACH(auto entry, entries)
@@ -178,6 +198,9 @@ bool module_namespace1_t::write(file& out, int& data_offset)
     return true;
 }
 
+//======================================================================================================================
+// module info
+//======================================================================================================================
 
 bool module_info::add_ns_entry(std::string key, param val, bool override)
 {
@@ -238,20 +261,31 @@ void module_info::dump()
     nm_map namespace_entries;*/
 }
 
+// module: header|name|namespace|<align>data<align>next header
+//                ^    ^                ^          ^
+//              --+    |                |          |
+//             --------+                |          |
+//            --------------------------+          |
+//           --------------------------------------+
 bool module_info::write_module_header(file& out, int& data_offset, int in_size, int ns_size)
 {
     bootimage_n::module_t mod;
 
+    int name_s_a = name.length() + 1;
+
+    data_offset += sizeof(mod);
+
     mod.tag = bootimage_n::kind_module;
-    mod.length = sizeof(mod) + in_size + ns_size;
-    mod.address = data_offset + sizeof(mod) + ns_size;
+    mod.length = sizeof(mod) + name_s_a + ns_size + in_size;
+    mod.address = data_offset + name_s_a + ns_size;
     mod.size = in_size;
-    mod.name = 0;
-//     rdom.name = name string offset;
-    mod.local_namespace_offset = ns_size ? data_offset + sizeof(mod) : 0;
+    mod.name = (const char*)data_offset;
+    mod.local_namespace_offset = ns_size ? data_offset + name_s_a : 0;
 
     out.write(&mod, sizeof(mod));
-    data_offset += sizeof(mod);
+    out.write(name.c_str(),  name.length() + 1);
+
+    data_offset += name.length() + 1;
 
     return true;
 }
@@ -260,17 +294,22 @@ bool module_info::write_root_domain_header(file& out, int& data_offset, int in_s
 {
     bootimage_n::root_domain_t rdom;
 
+    int name_s_a = name.length() + 1;
+
+    data_offset += sizeof(rdom);
+
     rdom.tag = bootimage_n::kind_root_domain;
-    rdom.length = sizeof(rdom) + in_size + ns_size;
-    rdom.address = data_offset + sizeof(rdom) + ns_size;
+    rdom.length = sizeof(rdom) + name_s_a + ns_size + in_size;
+    rdom.address = data_offset + name_s_a + ns_size;
     rdom.size = in_size;
-    rdom.name = 0;
-//     rdom.name = name string offset;
-    rdom.local_namespace_offset = ns_size ? data_offset + sizeof(rdom) : 0;
+    rdom.name = (const char*)data_offset;
+    rdom.local_namespace_offset = ns_size ? data_offset + name_s_a : 0;
     rdom.entry_point = 0xefbeadde;
 
     out.write(&rdom, sizeof(rdom));
-    data_offset += sizeof(rdom);
+    out.write(name.c_str(),  name.length() + 1);
+
+    data_offset += name.length() + 1;
 
     return true;
 }
@@ -283,10 +322,11 @@ bool module_info::write(file& out, int& data_offset)
 
     // Prepare namespace
     module_namespace1_t namesp(namespace_entries);
+    int name_s_a = name.length() + 1;
     size_t ns_size = namespace_entries.size() > 0 ? namesp.size() : 0;
-    size_t ns_size_a = ns_size ? ns_size + needed_align(data_offset + header_size + ns_size) : 0;
+    size_t ns_size_a = ns_size + needed_align(data_offset + header_size + name_s_a + ns_size);
 
-    size_t in_size_a = in_size + needed_align(data_offset + header_size + ns_size + in_size);
+    size_t in_size_a = in_size + needed_align(data_offset + header_size + name_s_a + ns_size_a + in_size);
 
     if (name == "root_domain")
         write_root_domain_header(out, data_offset, in_size_a, ns_size_a);
@@ -315,6 +355,10 @@ bool module_info::write(file& out, int& data_offset)
 
     return true;
 }
+
+//======================================================================================================================
+// lst file parser
+//======================================================================================================================
 
 class line_reader_t
 {
@@ -373,7 +417,12 @@ bool line_reader_t::end()
     return lines.empty();
 }
 
+//======================================================================================================================
+// main parser driver
+//
 // get the line, parse module until the next module starts or end of file, then push current module to modules.
+//======================================================================================================================
+
 static void parse_module_lines(std::vector<module_info>& modules, line_reader_t& reader, string& prefix)
 {
     module_info mod;
