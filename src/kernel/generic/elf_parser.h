@@ -12,6 +12,8 @@
 #include "types.h"
 #include "cstring.h"
 
+// elf.findAllSymbols().withPrefix("exported_").withSuffix("_rootdom")
+
 /*!
  * Provides interface to find loadable sections of the elf file
  * (and all other informative sections and lookup aids).
