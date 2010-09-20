@@ -24,3 +24,6 @@ struct module_interface
 
 #define DECLARE_CLOSURE(name) \
     struct name##_ops; struct name##_state; struct name##_closure : public module_interface<name##_ops, name##_state>
+
+#define EXPORT_CL_TO_ROOTDOM(_type, _name, _cl) \
+    extern "C" const _type##_closure* const exported_##_name##_rootdom = &_cl

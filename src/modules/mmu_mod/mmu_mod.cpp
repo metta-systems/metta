@@ -40,7 +40,4 @@ static const mmu_module_v1_closure clos = {
     NULL
 };
 
-#define EXPORT_CL_TO_ROOTDOM(_type, _name, _cl) \
-    extern "C" const _type##_closure* const exported_##_name##_rootdom = &_cl
-
 EXPORT_CL_TO_ROOTDOM(mmu_module_v1, mmu_module, clos);
