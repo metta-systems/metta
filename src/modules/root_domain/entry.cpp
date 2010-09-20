@@ -7,6 +7,7 @@
 #include "bootinfo.h"
 #include "new.h"
 #include "elf_loader.h"
+#include "debugger.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -30,13 +31,15 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     kconsole << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
     elf_loader_t loader(addr.start);
-    loader.relocate_to(addr.start);
+    if (!loader.relocate_to(addr.start))
+        PANIC("Module could not be relocated!");
 
     kconsole << "Module relocated." << endl;
 
     /* FIXME: Skip dependencies for now */
 
-    return (void*)(loader.start() + loader.find_symbol(clos));
+    // Symbol is a pointer to closure structure.
+    return *(void**)(loader.find_symbol(clos));
 }
 
 template <class closure_type>
@@ -92,8 +95,8 @@ static void init_mem(bootimage_t& bootimg)
 
         kconsole << "Create call @ " << (address_t)mmu_mod->methods->create << endl;
 
-        void *mmu = mmu_mod->methods->create(mmu_mod, required + initial_heap_size);
-        mmu = mmu_mod->create(required + initial_heap_size);
+//         void *mmu = mmu_mod->methods->create(mmu_mod, required + initial_heap_size);
+        void *mmu = mmu_mod->create(required + initial_heap_size);
         UNUSED(mmu);
     }
 #if 0

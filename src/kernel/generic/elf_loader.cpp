@@ -63,7 +63,7 @@ cstring_t elf_loader_t::find_symbol(address_t addr, address_t* symbol_start)
     return NULL;
 }
 
-// Find symbol str in symbol table and return its address.
+// Find symbol str in symbol table and return its absolute address.
 address_t elf_loader_t::find_symbol(cstring_t str)
 {
     section_header_t* symbol_table = section_symbol_table();
@@ -82,7 +82,14 @@ address_t elf_loader_t::find_symbol(cstring_t str)
         kconsole << "Looking at symbol " << c << " @ " << symbol << endl;
         if (str == c)
         {
-            return symbol->value;
+            if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
+            {
+                return section_header(symbol->shndx)->offset + start();
+            }
+            else
+            {
+                return section_header(symbol->shndx)->offset + symbol->value + start();
+            }
         }
     }
 
