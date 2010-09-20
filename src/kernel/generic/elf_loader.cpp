@@ -70,16 +70,16 @@ address_t elf_loader_t::find_symbol(cstring_t str)
     if (!symbol_table)
         return 0;
 
-    kconsole << symbol_entries_count() << " symbols to consider." << endl;
-    kconsole << "Symbol table @ " << start() + symbol_table->offset << endl;
-    kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl;
+//     kconsole << symbol_entries_count() << " symbols to consider." << endl;
+//     kconsole << "Symbol table @ " << start() + symbol_table->offset << endl;
+//     kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl;
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
         symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
 
         const char* c = strtab_pointer(section_string_table(), symbol->name);
-        kconsole << "Looking at symbol " << c << " @ " << symbol << endl;
+//         kconsole << "Looking at symbol " << c << " @ " << symbol << endl;
         if (str == c)
         {
             if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
