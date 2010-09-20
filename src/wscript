@@ -103,7 +103,7 @@ def configure(conf):
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
     conf.define('DWARF_DEBUG', 0)
-    conf.define('TOOLS_DEBUG', 0)
+    conf.define('TOOLS_DEBUG', 1)
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
@@ -294,8 +294,14 @@ def build(bld):
         after = 'cxx_link'
     )
 
+    nm = []
+    for tg in bld.all_task_gen:
+        if tg.target.endswith('.comp'):
+            tg.post()
+            nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
+
     bld.new_task_gen(
-        source = 'mkbootimage kernel/arch/x86/bootimage.lst',#arch dep
+        source = 'mkbootimage kernel/arch/x86/bootimage.lst'.split() + nm, # x86 arch dep
         target = 'init.img',
         rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
