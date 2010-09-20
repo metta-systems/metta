@@ -74,31 +74,21 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << "init_mem" << endl;
 
     // request necessary space for frames allocator
-//     frames_module_v1_closure* frames_mod;
-//     // find mod from given namesp and load it
-//     frames_mod = load_module<frames_module_v1_closure>("frames_mod", 0);
-
-    int required = 0;//frames_mod->required_size();
-
-    int initial_heap_size = 64*1024;
+    frames_module_v1_closure* frames_mod;
+    frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    ASSERT(frames_mod);
 
     mmu_module_v1_closure* mmu_mod;
     mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    ASSERT(mmu_mod);
 
-    kconsole << "Found mmu_mod closure @ " << mmu_mod << endl;
+    int required = frames_mod->required_size();
+    int initial_heap_size = 64*1024;
 
-    //ASSERT(mmu_mod);
-    if (mmu_mod)
-    {
-        kconsole << "Closure ops " << mmu_mod->methods << endl
-                 << "Closure st  " << mmu_mod->state << endl;
+    kconsole << "Init memory region size " << required + initial_heap_size << " bytes." << endl;
+    void *mmu = mmu_mod->create(required + initial_heap_size);
+    UNUSED(mmu);
 
-        kconsole << "Create call @ " << (address_t)mmu_mod->methods->create << endl;
-
-//         void *mmu = mmu_mod->methods->create(mmu_mod, required + initial_heap_size);
-        void *mmu = mmu_mod->create(required + initial_heap_size);
-        UNUSED(mmu);
-    }
 #if 0
     // create virtual memory allocator
     // initialize virtual memory map

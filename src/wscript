@@ -102,6 +102,7 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
     conf.define('TOOLS_DEBUG', 1)
     conf.define('CONFIG_COMPORT', 0)

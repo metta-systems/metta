@@ -36,6 +36,7 @@ bool bootimage_t::valid()
     return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
 }
 
+#if BOOTIMAGE_DEBUG
 static void dump_module(module_t* mod, address_t location)
 {
     kconsole << "tag          : " << mod->tag << endl
@@ -51,6 +52,7 @@ static void dump_rootdom(root_domain_t* dom, address_t location)
     dump_module(dom, location);
     kconsole << "entry point  : " << dom->entry_point << endl;
 }
+#endif
 
 static info_t find_entry(address_t location, address_t end, kind_e kind, const char* name)
 {
@@ -60,17 +62,21 @@ static info_t find_entry(address_t location, address_t end, kind_e kind, const c
     {
         if (info.rec->tag == kind)
         {
+#if BOOTIMAGE_DEBUG
             if (info.rec->tag == kind_module)
             {
                 dump_module(info.module, location);
             }
+#endif
 
             if (info.rec->tag == kind_root_domain || memutils::is_string_equal(info.module->name + location, name))
             {
                 return info;
             }
         }
+#if BOOTIMAGE_DEBUG
         kconsole << "location " << (address_t)info.generic << " moving by " << info.rec->length << endl;
+#endif
         info.generic += info.rec->length;
     }
     info.generic = 0;
@@ -85,7 +91,9 @@ bootimage_t::modinfo_t bootimage_t::find_root_domain(module_namespace_t* namesp)
     if (namesp)
         namesp->set_location(info.rootdom->local_namespace_offset);
 
+#if BOOTIMAGE_DEBUG
     dump_rootdom(info.rootdom, location);
+#endif
 
     return modinfo_t(location + info.rootdom->address, info.rootdom->size);
 }
