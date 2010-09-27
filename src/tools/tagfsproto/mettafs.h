@@ -7,7 +7,9 @@
  * - metadata (tags) tree
  *
  * file tree keeps object nodes, extents. simply oid -> extents mapping.
- * tag tree lists all tags and keeps corresponding objectids on a sub-tree.
+ * tag tree lists all tags and keeps corresponding objectids on a sub-tree. a mapping is from a tag name to list of all
+ * oids that have this tag. this makes exact tag matching easier for the prototype, also adding or removing tag is
+ * a simple btree(?) operation. oids list is radix sorted. union and intersection of several tags is also easy to do.
  *
  * All addressing is made using 64-bit byte offsets, so the FS is totally block-size agnostic. (?)
  */
