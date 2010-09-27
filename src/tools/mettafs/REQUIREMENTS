@@ -1,0 +1,9 @@
+* Instant or nearly-instant mount. No fsck needed on crash recovery.
+* No hierarchical folders.
+* Arbitrary indexed metadata per each file.
+* Copy-on-write for simple versioning/snapshotting.
+* Extensible media structures to reduce compatibility issues as time progresses.
+* Support for very large file-systems.
+* Data integrity checks, including high-level snapshot checksums.
+* Performance - lookups and arbitrary operations on tags might require a lot of processing and these lookups should be efficient.
+
