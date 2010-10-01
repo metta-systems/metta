@@ -56,13 +56,13 @@ class fs_superblock_t : public btree_header_common_t
 {
     uint64_t magic;             // [ 68] 'MeTTaFS1' in network (big-engian) order
     uint64_t generation;        // [ 76]
-    uint64_t root;              // [ 84]
+    uint64_t root;              // [ 84] location of "root of roots" tree
 
     uint64_t total_bytes;       // [ 92]
     uint64_t bytes_used;        // [100]
-    uint32_t sector_size;       // [108]
-    uint32_t node_size;         // [112] size of node block
-    uint32_t leaf_size;         // [116] size of leaf block
+    uint32_t sector_size;       // [108] size of hardware sector (minimal read/write unit)
+    uint32_t node_size;         // [112] size of node block (say 128kb)
+    uint32_t leaf_size;         // [116] size of leaf block (say 512kb, depends on avg size of tag infos, may be bigger?)
     uint16_t checksum_type;     // [120] how block checksumming is performed
     uint8_t  root_level;        // [122]
     dev_item_t dev_item;        // [123]
@@ -99,12 +99,12 @@ class btree_item : public btree_key
 
 /*!
  * A leaf block structure:
- * [block_header] [item0, item1....itemN] [free space] [dataN...data1, data0]
+ * [block_header] [item0, item1...itemN] [free space] [dataN...data1, data0]
  */
 struct btree_leaf
 {
     btree_block_header_t header;
-    btree_item items[0];
+    btree_item items[0]; // header.numItems items
 }; // sb.leaf_size bytes
 
 /*!
@@ -123,7 +123,7 @@ class btree_key_ptr : public btree_key
 struct btree_node
 {
     btree_block_header_t header;
-    btree_key_ptr ptrs[0];
+    btree_key_ptr ptrs[0]; // header.numItems keys
 }; // sb.node_size bytes
 
 // extent tree holds data blocks for the file
