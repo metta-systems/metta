@@ -30,7 +30,7 @@ public:
     /*!
      * Read and write functions operate on whole blocks of specific size.
      */
-    blocksize_t read_block(blockno_t block, char* buffer);
+    blocksize_t read_block(blockno_t block, char* buffer, size_t bufSize);
     void write_block(blockno_t block, const char* buffer, blocksize_t bytes);
 
 private:
