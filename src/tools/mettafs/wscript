@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+def build(bld):
+    mkfs = bld.new_task_gen('cxx', 'program')
+    mkfs.name = 'mkmettafs'
+    mkfs.source = 'mkfs.cpp block_device.cpp'
+    mkfs.env = bld.env_of_name('TOOLS_ENV').copy()
+    mkfs.includes = '. ../../kernel/generic ../../runtime ../../kernel/arch/x86' # only for fourcc.h
+    mkfs.uselib_local = 'toolruntime'
+    mkfs.uselib = 'UUID'
+    mkfs.target = 'mkmettafs'
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :
