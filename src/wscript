@@ -157,12 +157,15 @@ def configure(conf):
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
+    conf.setenv('TOOLS_ENV')
+    conf.env['LIB_UUID'] = 'uuid' # set uselib
 
 def build(bld):
     arch = Options.options.arch
 
     # Make bootimage components.
     bld.add_subdirs("modules")
+    bld.add_subdirs("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
