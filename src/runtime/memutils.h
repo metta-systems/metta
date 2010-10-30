@@ -86,9 +86,10 @@ size_t string_length(const char *s);
  * Copy one string to another location.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from
+ * @param[in]  max_length Maximum number of bytes to copy, unlimited if 0.
  * @return           Pointer to the start of the destination string.
  */
-char* copy_string(char* dest, const char* src);
+char* copy_string(char* dest, const char* src, size_t max_length = 0);
 
 } // namespace memutils
 

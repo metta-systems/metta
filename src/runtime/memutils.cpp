@@ -114,11 +114,15 @@ size_t string_length(const char* s)
     return len;
 }
 
-char* copy_string(char* dest, const char* src)
+char* copy_string(char* dest, const char* src, size_t max_length)
 {
     if (!src || !dest)
         return 0;
-    copy_memory(dest, src, string_length(src) + 1);
+    size_t length = max_length == 0 ? string_length(src) + 1
+                  : max_length < string_length(src) + 1 ?
+                  max_length
+                  : string_length(src) + 1;
+    copy_memory(dest, src, length);
     return dest;
 }
 
