@@ -10,6 +10,7 @@
 #include "root_domain.h"
 #include "panic.h"
 #include "default_console.h"
+#include "debugger.h"
 
 root_domain_t::root_domain_t(bootimage_t& img)
     : ns(0, 0)
@@ -24,9 +25,10 @@ root_domain_t::root_domain_t(bootimage_t& img)
     ptrdiff_t offset = mi.start - text->addr + text->offset;
     if (!elf.is_relocatable() && offset != 0)
         PANIC("non-relocatable root domain");
-    kconsole << "Root domain relocated by 0x" << (unsigned)offset << endl;
     elf.relocate_to(mi.start);
+    kconsole << "Root domain relocated by " << (unsigned)offset << endl;
     entry_point = entry + offset;
+    bochs_magic_trap();
 }
 
 address_t root_domain_t::entry()
