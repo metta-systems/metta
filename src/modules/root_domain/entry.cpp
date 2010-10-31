@@ -8,6 +8,7 @@
 #include "new.h"
 #include "elf_loader.h"
 #include "debugger.h"
+#include "module_loader.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -22,6 +23,10 @@
 
 /// tagged_t namesp.find(string key)
 
+static module_loader_t modload;
+
+// with module_loader_t loading any modules twice is safe, and if we track module dependencies then only what is needed
+// will be loaded.
 static void* load_module(bootimage_t& bootimg, const char* module_name, const char* clos)
 {
     bootimage_t::modinfo_t addr = bootimg.find_module(module_name);
@@ -31,15 +36,16 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     kconsole << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
     elf_loader_t loader(addr.start);
-    if (!loader.relocate_to(addr.start))
-        PANIC("Module could not be relocated!");
+    return modload.load_module(module_name, loader, clos);
+//     if (!loader.relocate_to(addr.start))
+//         PANIC("Module could not be relocated!");
 
-    kconsole << "Module relocated." << endl;
+//     kconsole << "Module relocated." << endl;
 
     /* FIXME: Skip dependencies for now */
 
     // Symbol is a pointer to closure structure.
-    return *(void**)(loader.find_symbol(clos));
+//     return *(void**)(loader.find_symbol(clos));
 }
 
 template <class closure_type>
@@ -76,11 +82,13 @@ static void init_mem(bootimage_t& bootimg)
     // request necessary space for frames allocator
     frames_module_v1_closure* frames_mod;
     frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
-    ASSERT(frames_mod);
+//     ASSERT(frames_mod);
 
     mmu_module_v1_closure* mmu_mod;
     mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
-    ASSERT(mmu_mod);
+//     ASSERT(mmu_mod);
+
+    bochs_magic_trap();
 
     int required = frames_mod->required_size();
     int initial_heap_size = 64*1024;
