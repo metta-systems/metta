@@ -41,6 +41,13 @@ void* copy_memory(void* dest, const void* src, size_t count)
 }
 
 
+// Wow, ugly!
+address_t copy_memory(address_t dest, address_t src, size_t count)
+{
+    return (address_t)copy_memory((void*)dest, (const void*)src, count);
+}
+
+
 void* move_memory(void* dest, const void* src, size_t count)
 {
     char *tmp;
