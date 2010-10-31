@@ -4,6 +4,8 @@ ENTRY(_start)
 OUTPUT_FORMAT(elf32-i386)
 
 /*!
+ * FIXME: This is incoherent, all processes are relocated to different start addresses in reality!
+ * 
 Components are linked with classical layout:
 
          4GB +-------------------------+ MEM_SPACE_END (Usually 4GB)
