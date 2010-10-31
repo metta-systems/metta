@@ -107,6 +107,26 @@ struct section_header_t
     word_t  info;          /*!< Additional section information */
     word_t  addralign;     /*!< Section alignment */
     word_t  entsize;       /*!< Entry size if section holds table */
+
+    /* section_header.flags */
+#define SHF_WRITE             0x00000001 /* Section contains writable data. */
+#define SHF_ALLOC             0x00000002 /* Section occupies memory. */
+#define SHF_EXECINSTR         0x00000004 /* Section contains instructions. */
+#define SHF_MERGE             0x00000010 /* Section may be merged. */
+#define SHF_STRINGS           0x00000020 /* Section contains strings. */
+#define SHF_INFO_LINK         0x00000040 /* sh_info holds section index. */
+#define SHF_LINK_ORDER        0x00000080 /* Special ordering requirements. */
+#define SHF_OS_NONCONFORMING  0x00000100 /* OS-specific processing required. */
+#define SHF_GROUP             0x00000200 /* Member of section group. */
+#define SHF_TLS               0x00000400 /* Section contains TLS data. */
+#define SHF_MASKOS            0x0ff00000 /* OS-specific semantics. */
+#define SHF_MASKPROC          0xf0000000 /* Processor-specific semantics. */
+
+    bool is_writable()    { return (flags & SHF_WRITE) != 0; }
+    bool is_allocatable() { return (flags & SHF_ALLOC) != 0; }
+    bool is_executable()  { return (flags & SHF_EXECINSTR) != 0; }
+
+    void dump();
 } PACKED;
 
 /* predefined section table indices */
@@ -139,12 +159,6 @@ struct section_header_t
 #define SHT_INIT      0x0000000e
 #define SHT_FINI      0x0000000f
 #define SHT_PREINIT   0x00000010
-
-/* section_header.flags */
-#define SHF_WRITE     0x00000001
-#define SHF_ALLOC     0x00000002
-#define SHF_EXECINSTR 0x00000004
-#define SHF_MASKPROC  0xf0000000
 
 
 /*!
@@ -234,6 +248,8 @@ struct program_header_t
     word_t  memsz;          /*!< Size in memory */
     word_t  flags;          /*!< Section flags */
     word_t  align;          /*!< Section alignment */
+
+    void dump();
 };
 
 /* program_header.type */

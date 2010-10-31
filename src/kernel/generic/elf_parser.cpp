@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "elf_parser.h"
-// #include "default_console.h"
+#include "default_console.h"
 #include "memutils.h"
 // #include "memory.h"
 // #include "minmax.h"
@@ -15,6 +15,46 @@
 #include "panic.h"
 
 using namespace elf32;
+
+elf_parser_t::program_iterator::program_iterator(program_header_t* entry, program_header_t* end, size_t entry_size)
+    : ptr(entry)
+    , end(end)
+    , entry_size(entry_size)
+{
+}
+
+program_header_t elf_parser_t::program_iterator::operator *()
+{
+    return *ptr; // FIXME: dereferencing end() will fault
+}
+
+void elf_parser_t::program_iterator::operator ++()
+{
+    ptr = reinterpret_cast<program_header_t*>(reinterpret_cast<char*>(ptr) + entry_size);
+    if (ptr > end)
+        ptr = 0;
+    return;
+}
+
+elf_parser_t::section_iterator::section_iterator(section_header_t* entry, section_header_t* end, size_t entry_size)
+    : ptr(entry)
+    , end(end)
+    , entry_size(entry_size)
+{
+}
+
+section_header_t elf_parser_t::section_iterator::operator *()
+{
+    return *ptr; // FIXME: dereferencing end() will fault
+}
+
+void elf_parser_t::section_iterator::operator ++()
+{
+    ptr = reinterpret_cast<section_header_t*>(reinterpret_cast<char*>(ptr) + entry_size);
+    if (ptr > end)
+        ptr = 0;
+    return;
+}
 
 elf_parser_t::elf_parser_t()
     : header(NULL)
@@ -32,11 +72,31 @@ static inline address_t elf2loc(header_t* base, size_t offset)
     return reinterpret_cast<address_t>(base) + offset;
 }
 
+elf_parser_t::program_iterator elf_parser_t::program_headers_begin()
+{
+    return program_iterator(program_header(0), program_header(header->phnum-1), header->phentsize);
+}
+
+elf_parser_t::program_iterator elf_parser_t::program_headers_end()
+{
+    return program_iterator(0, 0, 0);
+}
+
 program_header_t* elf_parser_t::program_header(int index) const
 {
     if (index < 0 || index >= header->phnum)
         return 0;
     return reinterpret_cast<program_header_t*>(elf2loc(header, header->phoff + index * header->phentsize));
+}
+
+elf_parser_t::section_iterator elf_parser_t::section_headers_begin()
+{
+    return section_iterator(section_header(0), section_header(header->shnum-1), header->shentsize);
+}
+
+elf_parser_t::section_iterator elf_parser_t::section_headers_end()
+{
+    return section_iterator(0, 0, 0);
 }
 
 section_header_t* elf_parser_t::section_header(int index) const
@@ -148,7 +208,10 @@ bool elf_parser_t::parse(address_t start)
 
 bool elf_parser_t::is_relocatable() const
 {
-    return header && header->type == ET_REL;
+    return header && (header->type == ET_REL
+        || section_header_by_type(SHT_REL) != 0);
+// we don't support RELA sections yet
+//         || section_header_by_type(SHT_RELA) != 0);
 }
 
 bool elf_parser_t::relocate_to(address_t load_address)
@@ -166,6 +229,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
         {
 //             kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl;
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
+            ASSERT(sizeof(rels[0]) == rel_section->entsize); // Standard says entsize should tell the actual entry size
             size_t nrels = rel_section->size / sizeof(rels[0]);
             section_header_t* symtab = section_header(rel_section->link);
             symbol_t* symbols = symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, symtab->offset)) : 0;
@@ -182,7 +246,6 @@ bool elf_parser_t::relocate_to(address_t load_address)
                     uint32_t  A = *reinterpret_cast<uint32_t*>(P);
                     address_t S = 0;
 
-                    // Hmm, ld doesn't warn if there are undefined symbols in relocatable elf, pity.
                     if (ELF32_ST_TYPE(sym.info) == 0 && sym.shndx == 0)
                         PANIC("Invalid relocatable image: undefined symbols!");
 
@@ -208,7 +271,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
 //                             kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
                             break;
                         default:
-//                             kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << " found, skipped, expect crashes!" << endl;
+                            kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << " found, skipped, expect crashes!" << endl;
                             break;
                     }
                     *reinterpret_cast<uint32_t*>(P) = result;
@@ -216,10 +279,6 @@ bool elf_parser_t::relocate_to(address_t load_address)
             }
         }
     }
-
-    // Zero-out BSS
-    section_header_t* bss = section_header(".bss");
-    memutils::fill_memory(reinterpret_cast<void*>(load_address + bss->offset), 0, bss->size); // !!! FIXME !!! bad idea
 
     return true;
 }

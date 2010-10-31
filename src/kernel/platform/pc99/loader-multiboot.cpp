@@ -49,6 +49,16 @@ bool mbi_probe()
 }
 
 
+//*****************************************************************************************************************
+// TODO:
+// relocate modules to 16MiB area, including kernel code.
+// record updated location info directly into bootinfo page entries.
+// this will copy only needed code and data (e.g. booting without "debug" will not copy debug infos)
+// and will also properly allocate space for .bss
+// use module_loader instance for this
+//*****************************************************************************************************************
+
+
 /*!
  * Init function that understands multiboot info structure.
  *
@@ -75,6 +85,8 @@ address_t mbi_init()
         PANIC("unrelocatable kernel-startup, cannot proceed.");
 
     elf.relocate_to(start);
+
+    kconsole << "Kernel relocated by " << offset << endl;
 
     return entry + offset;
 }

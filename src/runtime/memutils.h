@@ -37,6 +37,7 @@ void* fill_memory(void* dest, int value, size_t count);
  * or copy_memory_from_io() instead.
  */
 void* copy_memory(void* dest, const void* src, size_t count);
+address_t copy_memory(address_t dest, address_t src, size_t count);
 
 /*!
  * Copy one area of memory to another.

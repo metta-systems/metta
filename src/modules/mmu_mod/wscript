@@ -6,7 +6,7 @@ def build(bld):
     mmu_mod.name = 'mmu_mod.comp'
     mmu_mod.source = 'mmu_mod.cpp'
     mmu_mod.env = bld.env_of_name('KERNEL_ENV').copy()
-    mmu_mod.env.append_unique('LINKFLAGS', ['-r']); # Components are relocatable
+    mmu_mod.env.append_unique('LINKFLAGS', ['-Wl,--emit-relocs']); # Components are relocatable
     mmu_mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,mmu_mod.map'])
     mmu_mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
     mmu_mod.uselib_local = 'component_support platform minruntime kernel common'
