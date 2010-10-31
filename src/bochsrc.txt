@@ -9,4 +9,5 @@ display_library: x
 #, options="gui_debug"
 #config_interface: wx
 debugger_log: debugger.log
+#gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
 
