@@ -118,6 +118,9 @@ static void SECTION(".init.cpu") check_cpu_features()
 
     uint32_t avail_features = x86_cpu_t::features();
 
+//     bochs:
+//     CPU does not support all required features 0xffffffff (? psn ? ds acpi ss ht tm ia64 pbe missing)
+
     if ((req_features & avail_features) != req_features)
     {
         kconsole << "CPU does not support all required features " << req_features << " (";
