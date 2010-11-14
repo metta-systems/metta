@@ -6,7 +6,7 @@
 #include "root_domain.h"
 #include "bootinfo.h"
 #include "new.h"
-#include "elf_loader.h"
+#include "elf_parser.h"
 #include "debugger.h"
 #include "module_loader.h"
 
@@ -23,8 +23,6 @@
 
 /// tagged_t namesp.find(string key)
 
-static module_loader_t modload;
-
 // with module_loader_t loading any modules twice is safe, and if we track module dependencies then only what is needed
 // will be loaded.
 static void* load_module(bootimage_t& bootimg, const char* module_name, const char* clos)
@@ -35,8 +33,10 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     kconsole << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
-    elf_loader_t loader(addr.start);
-    return modload.load_module(module_name, loader, clos);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+
+    elf_parser_t loader(addr.start);
+    return bi->get_module_loader().load_module(module_name, loader, clos);
 //     if (!loader.relocate_to(addr.start))
 //         PANIC("Module could not be relocated!");
 

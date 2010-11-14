@@ -26,8 +26,8 @@
 #define EXPORT_SYMBOL(sym)  extern typeof(sym) sym
 
 // Startup code and data not needed during runtime.
-#define INIT_ONLY      SECTION(".init.text")
-#define INIT_ONLY_DATA SECTION(".init.data")
+#define INIT_ONLY      SECTION(".text.init")
+#define INIT_ONLY_DATA SECTION(".data.init")
 
 #if __GNUC__ > 2
 // Don't forget to -fprofile-arcs your code!
@@ -39,11 +39,11 @@
 #endif
 
 #define KB (1000)
-#define MB (1000*1000)
-#define GB (1000*1000*1000)
+#define MB (1000*KB)
+#define GB (1000*MB)
 #define KiB (1024)
-#define MiB (1024*1024)
-#define GiB (1024*1024*1024)
+#define MiB (1024*KiB)
+#define GiB (1024*MiB)
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

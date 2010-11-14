@@ -188,7 +188,7 @@ def build(bld):
     toolruntime.target = 'toolruntime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
-    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/elf_loader.cpp kernel/generic/console.cpp kernel/generic/module_loader.cpp'.split()
+    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/console.cpp kernel/generic/module_loader.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'

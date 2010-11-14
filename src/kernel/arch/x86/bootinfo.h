@@ -12,9 +12,12 @@
 #include "memory.h"
 #include "memutils.h"
 #include "iterator"
+#include "module_loader.h"
+#include "macros.h"
+#include "new.h"
 
 // Rather arbitrary location for the bootinfo page.
-#define BOOTINFO_PAGE ((void*)0x8000)
+static void* BOOTINFO_PAGE UNUSED_ARG = (void*)0x8000;
 
 /*!
  * Provides access to boot info page structures.
@@ -26,8 +29,9 @@
  */
 class bootinfo_t
 {
-    uint32_t magic;
-    char*    free;
+    uint32_t  magic;
+    char*     free;
+    address_t last_available_module_address;
 
     static const uint32_t BI_MAGIC = 0xbeefdea1;
 
@@ -79,7 +83,19 @@ public:
     inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
+    inline bool will_overflow(size_t add_size)
+    {
+        return size() + add_size > PAGE_SIZE; //((free & PAGE_MASK) != ((free + add_size) & PAGE_MASK));
+    }
+
+    // NB! Module loader received from this bootinfo will modify it, so do not try to use two modules loaders from
+    // two different bootinfos at once! (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
+    module_loader_t get_module_loader();
+
+    // Load module ELF file by number.
     bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);
+    // Load module by name.
+//     bool get_module(const char* name, module_info_t& mod);
     bool get_cmdline(const char*& cmdline);
 
     mmap_iterator mmap_begin();
@@ -90,6 +106,9 @@ public:
 
     // Append parts of multiboot header in a format suitable for bootinfo page.
     bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);
+    // Appends modules loaded from the multiboot modules (initrd etc)
+    bool append_module(const char* name, multiboot_t::modinfo_t* mod);
+
     bool append_mmap(multiboot_t::mmap_entry_t* entry);
     bool append_cmdline(const char* cmdline);
 };

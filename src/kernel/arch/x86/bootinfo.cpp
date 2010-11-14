@@ -134,13 +134,24 @@ void bootinfo_t::mmap_iterator::operator ++()
 // bootinfo_t
 //======================================================================================================================
 
+/*!
+ * FIXME: Fairly arbitrary location chosen to not mess around with memory maps atm.
+ */
+static const int MODULE_LOAD_START = 4*MiB;
+
 bootinfo_t::bootinfo_t(bool create_new)
 {
     if (create_new)
     {
         magic = BI_MAGIC;
-        free = reinterpret_cast<char*>(this) + sizeof(magic) + sizeof(free);
+        free = reinterpret_cast<char*>(this + 1);
+        last_available_module_address = MODULE_LOAD_START;
     }
+}
+
+module_loader_t bootinfo_t::get_module_loader()
+{
+    return module_loader_t(this, &last_available_module_address);
 }
 
 bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, const char*& name)
@@ -200,15 +211,19 @@ bootinfo_t::mmap_iterator bootinfo_t::mmap_end()
     return mmap_iterator(0, 0);
 }
 
-// TODO: check remaining space
 bool bootinfo_t::append_module(uint32_t number, multiboot_t::modinfo_t* mod)
 {
     if (!mod)
         return false;
 
+    size_t size = sizeof(bootrec_module_t) + memutils::string_length(mod->str) + 1;
+
+    if (will_overflow(size))
+        return false;
+
     bootrec_module_t* bootmod = new(free) bootrec_module_t;
     bootmod->tag = bootrec_module;
-    bootmod->size = sizeof(bootrec_module_t) + memutils::string_length(mod->str) + 1;
+    bootmod->size = size;
 
     bootmod->number = number;
     bootmod->start = mod->mod_start;
@@ -218,44 +233,52 @@ bool bootinfo_t::append_module(uint32_t number, multiboot_t::modinfo_t* mod)
 
     memutils::copy_string(name, mod->str);
 
-    free += bootmod->size;
+    free += size;
     return true;
 }
 
-// TODO: check remaining space
 bool bootinfo_t::append_mmap(multiboot_t::mmap_entry_t* entry)
 {
     if (!entry)
         return false;
 
+    size_t size = sizeof(bootrec_mmap_entry_t);
+
+    if (will_overflow(size))
+        return false;
+
     bootrec_mmap_entry_t* bootmmap = new(free) bootrec_mmap_entry_t;
     bootmmap->tag = bootrec_memory_map;
-    bootmmap->size = sizeof(bootrec_mmap_entry_t);
+    bootmmap->size = size;
 
     bootmmap->start = entry->address();
     bootmmap->length = entry->size();
     bootmmap->type = entry->type();
 
-    free += bootmmap->size;
+    free += size;
     return true;
 }
 
-// TODO: check remaining space
 bool bootinfo_t::append_cmdline(const char* cmdline)
 {
     if (!cmdline)
         return false;
 
+    size_t size = sizeof(bootrec_cmdline_t) + memutils::string_length(cmdline) + 1;
+
+    if (will_overflow(size))
+        return false;
+
     bootrec_cmdline_t* bootcmd = new(free) bootrec_cmdline_t;
     bootcmd->tag = bootrec_command_line;
-    bootcmd->size = sizeof(bootrec_cmdline_t) + memutils::string_length(cmdline) + 1;
+    bootcmd->size = size;
 
     char* name = free + sizeof(bootrec_cmdline_t);
     bootcmd->cmdline = name;
 
     memutils::copy_string(name, cmdline);
 
-    free += bootcmd->size;
+    free += size;
     return true;
 }
 

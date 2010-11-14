@@ -90,9 +90,40 @@ public:
     //! Returns true if elf file has relocations.
     bool is_relocatable() const;
 
-    bool relocate_to(address_t load_address);
+    bool relocate_to(address_t load_address, offset_t base_offs);
 
     const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
+
+    // ELF Loader part
+    //! Parse an ELF file, generate symbolic information and load code/data segments.
+
+    //! Loads the image file from specified memory location.
+    /*!
+     * 
+     */
+    bool load_image(address_t start, size_t size);
+
+    //! Returns the symbol name for an address.
+    /*!
+     *  Also returns the start address of that symbol in symbol_start if symbol_start is non-NULL.
+     */
+    cstring_t find_symbol(address_t addr, address_t* symbol_start = NULL);
+
+    //! Returns the address of a symbol with name str.
+    address_t find_symbol(cstring_t str);
+
+    //! Returns the address of the symbol with offset o in the relocation symbol table.
+    address_t find_dynamic_symbol_location(address_t o);
+
+    //! Returns a NULL terminated name of the symbol at given offset in the relocation symbol table.
+    cstring_t find_dynamic_symbol_name(address_t o);
+
+    //! Gets the address of the global offset table.
+    address_t get_global_offset_table();
+
+    //! Returns last location occupied by the elf image in memory.
+    address_t get_alloc_end();
+
 protected:
 
     elf32::header_t*         header;          //!< ELF file header.
