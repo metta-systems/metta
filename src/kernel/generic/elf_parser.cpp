@@ -74,6 +74,9 @@ static inline address_t elf2loc(header_t* base, size_t offset)
 
 elf_parser_t::program_iterator elf_parser_t::program_headers_begin()
 {
+    if (!header->phnum)
+        return program_headers_end();
+
     return program_iterator(program_header(0), program_header(header->phnum-1), header->phentsize);
 }
 
@@ -91,6 +94,9 @@ program_header_t* elf_parser_t::program_header(int index) const
 
 elf_parser_t::section_iterator elf_parser_t::section_headers_begin()
 {
+    if (!header->shnum)
+        return section_headers_end();
+
     return section_iterator(section_header(0), section_header(header->shnum-1), header->shentsize);
 }
 
@@ -214,7 +220,7 @@ bool elf_parser_t::is_relocatable() const
 //         || section_header_by_type(SHT_RELA) != 0);
 }
 
-bool elf_parser_t::relocate_to(address_t load_address)
+bool elf_parser_t::relocate_to(address_t load_address, offset_t base_offs)
 {
     section_header_t* shstrtab = section_shstring_table();
     if (!shstrtab)
@@ -242,7 +248,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
                     symbol_t& sym = symbols[ELF32_R_SYM(rel.info)];
 
                     uint32_t result;
-                    address_t P = target_sect->offset + rel.offset + load_address;
+                    address_t P = target_sect->offset - base_offs + rel.offset + load_address;
                     uint32_t  A = *reinterpret_cast<uint32_t*>(P);
                     address_t S = 0;
 
@@ -274,6 +280,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
                             kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << " found, skipped, expect crashes!" << endl;
                             break;
                     }
+                    kconsole << P << " = " << A << " -> " << result << endl;
                     *reinterpret_cast<uint32_t*>(P) = result;
                 }
             }
@@ -282,6 +289,91 @@ bool elf_parser_t::relocate_to(address_t load_address)
 
     return true;
 }
+
+// TODO: use debugging info if present
+cstring_t elf_parser_t::find_symbol(address_t addr, address_t* symbol_start)
+{
+//     section_header_t* debug_table = section_header(".debug_frame");
+
+    address_t max = 0;
+    symbol_t* fallback_symbol = 0;
+    section_header_t* symbol_table = section_symbol_table();
+    if (!symbol_table)
+        return NULL;
+
+    for (unsigned int i = 0; i < symbol_entries_count(); i++)
+    {
+        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->addr + i * symbol_table->entsize);//FIXME: base addr missing?
+
+        if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
+        {
+            const char* c = strtab_pointer(section_string_table(), symbol->name);
+
+            if (symbol_start)
+                *symbol_start = symbol->value;
+            return c;
+        }
+
+        if (symbol->value > max && symbol->value <= addr)
+        {
+            max = symbol->value;
+            fallback_symbol = symbol;
+        }
+    }
+
+    // Search for symbol with size failed, now take a wild guess.
+    // Use a biggest symbol value less than addr (if found).
+    if (fallback_symbol)
+    {
+        const char* c = strtab_pointer(section_string_table(), fallback_symbol->name);
+
+        if (symbol_start)
+            *symbol_start = fallback_symbol->value;
+        return c;
+    }
+
+    if (symbol_start)
+        *symbol_start = 0;
+    return NULL;
+}
+
+// Find symbol str in symbol table and return its absolute address.
+address_t elf_parser_t::find_symbol(cstring_t str)
+{
+    section_header_t* symbol_table = section_symbol_table();
+    if (!symbol_table)
+        return 0;
+
+//     kconsole << symbol_entries_count() << " symbols to consider." << endl;
+//     kconsole << "Symbol table @ " << start() + symbol_table->offset << endl;
+//     kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl;
+
+    for (unsigned int i = 0; i < symbol_entries_count(); i++)
+    {
+        symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
+
+        const char* c = strtab_pointer(section_string_table(), symbol->name);
+//         kconsole << "Looking at symbol " << c << " @ " << symbol << endl;
+        if (str == c)
+        {
+            if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
+            {
+                return section_header(symbol->shndx)->offset + start();
+            }
+            else
+            {
+                return section_header(symbol->shndx)->offset + symbol->value + start();
+            }
+        }
+    }
+
+    return 0;
+}
+
+//TODO:
+// symbol_table_t
+// iterator for searching the symbols by name
+// non-linear lookups
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
