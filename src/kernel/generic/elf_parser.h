@@ -31,7 +31,7 @@ public:
 
     public:
         program_iterator(elf32::program_header_t* entry, elf32::program_header_t* end, size_t entry_size);
-        elf32::program_header_t operator *();
+        elf32::program_header_t& operator *(); // return reference to allow in-place manipulation
         void operator ++();
         inline bool operator != (const program_iterator& other) { return ptr != other.ptr; }
     };
@@ -45,7 +45,7 @@ public:
 
     public:
         section_iterator(elf32::section_header_t* entry, elf32::section_header_t* end, size_t entry_size);
-        elf32::section_header_t operator *();
+        elf32::section_header_t& operator *(); // return reference to allow in-place manipulation
         void operator ++();
         inline bool operator != (const section_iterator& other) { return ptr != other.ptr; }
     };
@@ -92,7 +92,7 @@ public:
     //! Returns true if elf file has relocations.
     bool is_relocatable() const;
 
-    bool relocate_to(address_t load_address, offset_t base_offs);
+    bool relocate_to(address_t load_address);
 
     bool apply_relocation(elf32::rel_t& rel, elf32::symbol_t& sym, elf32::section_header_t* target_sect, address_t load_address);
 

@@ -29,7 +29,7 @@ elf_parser_t::program_iterator::program_iterator(program_header_t* entry, progra
 {
 }
 
-program_header_t elf_parser_t::program_iterator::operator *()
+program_header_t& elf_parser_t::program_iterator::operator *()
 {
     return *ptr; // FIXME: dereferencing end() will fault
 }
@@ -49,7 +49,7 @@ elf_parser_t::section_iterator::section_iterator(section_header_t* entry, sectio
 {
 }
 
-section_header_t elf_parser_t::section_iterator::operator *()
+section_header_t& elf_parser_t::section_iterator::operator *()
 {
     return *ptr; // FIXME: dereferencing end() will fault
 }
@@ -226,7 +226,7 @@ bool elf_parser_t::is_relocatable() const
 //         || section_header_by_type(SHT_RELA) != 0);
 }
 
-bool elf_parser_t::relocate_to(address_t load_address, UNUSED_ARG offset_t base_offs)
+bool elf_parser_t::relocate_to(address_t load_address)
 {
     section_header_t* shstrtab = section_shstring_table();
     if (!shstrtab)
@@ -270,7 +270,7 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
     D(section_header_t* shstrtab = section_shstring_table());
 
     uint32_t result;
-    address_t P = target_sect->vaddr + load_address + rel.offset;
+    address_t P = (target_sect ? target_sect->vaddr : load_address) + rel.offset;
     uint32_t  A = *reinterpret_cast<uint32_t*>(P);
     address_t S = 0;
 
@@ -279,12 +279,12 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
 
     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
     {
-        S = section_header(sym.shndx)->vaddr + load_address;
+        S = section_header(sym.shndx)->vaddr;// + load_address;
         D(kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
     }
     else
     {
-        S = section_header(sym.shndx)->vaddr + load_address + sym.value;
+        S = section_header(sym.shndx)->vaddr/* + load_address*/ + sym.value;
         D(kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
         D(section_header(sym.shndx)->dump(shstring_table()));
     }
