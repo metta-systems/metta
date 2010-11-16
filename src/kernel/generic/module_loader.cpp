@@ -163,12 +163,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     address_t section_base = *last_available_address;
 
-    if (module.program_header_count() > 0)
+/*    if (module.program_header_count() > 0)
     {
         // Load using program headers (usually simpler and faster).
         std::for_each(module.program_headers_begin(), module.program_headers_end(),
             [this, &module, &start, &size]
-            (elf32::program_header_t ph)
+            (elf32::program_header_t& ph)
             {
                 if (ph.type == PT_LOAD)
                 {
@@ -187,10 +187,11 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         std::for_each(module.program_headers_begin(), module.program_headers_end(),
             [this, &module, &start, &size, &section_base]
-            (elf32::program_header_t ph)
+            (elf32::program_header_t& ph)
             {
                 if (ph.type == PT_LOAD)
                 {
+                    ph.vaddr = ph.vaddr + section_base - start;
                     ph.dump();
                     address_t section_addr = ph.vaddr + section_base - start;
                     kconsole << "Allocating this section at " << section_addr << endl;
@@ -206,12 +207,13 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             }
         );
     }
-    else if (module.section_header_count() > 0)
+    else*/ if (module.section_header_count() > 0)
     {
+        start = 0;
         size_t section_offset = 0;
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
             [this, &module, &start, &size, &section_base, &section_offset]
-            (elf32::section_header_t sh)
+            (elf32::section_header_t& sh)
             {
                 if (sh.flags & SHF_ALLOC)
                 {
@@ -245,11 +247,10 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
             [this, &module, &start, &size, &section_base]
-            (elf32::section_header_t sh)
+            (elf32::section_header_t& sh)
             {
                 if (sh.flags & SHF_ALLOC)
                 {
-                    sh.dump(module.shstring_table());
                     if (sh.type == SHT_NOBITS)
                     {
                         kconsole << "Clearing " << sh.size << " bytes" << endl;
@@ -268,36 +269,20 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     else
         PANIC("Do not know how to load ELF file!");
 
-    bochs_magic_trap();
-
     // Relocate loaded data.
-    module.relocate_to(section_base, 0);
+    module.relocate_to(section_base);
 
-    // PH
-//        off_t   offset;         /*!< File offset */
-//        addr_t  vaddr;          /*!< Execution virtual address */
-//        addr_t  paddr;          /*!< Execution physical address */
-//        word_t  filesz;         /*!< Size in file */
-//        word_t  memsz;          /*!< Size in memory */
-//        word_t  align;          /*!< Section alignment */
-        // SH
-//        addr_t  vaddr;         /*!< Section virtual addr at execution */
-//        off_t   offset;        /*!< Section file offset */
-//        word_t  size;          /*!< Size of section in bytes */
-//        word_t  addralign;     /*!< Section alignment */
+    ++num_modules;
 
-    address_t entry = module.get_entry_point();
-    kconsole << "Entry point " << entry << endl;
-    bochs_magic_trap();
-
-//     if (ret)
+    if (!closure_name)
     {
-        // Enter module into the list
-        ++num_modules;
-        // Symbol is a pointer to closure structure.
-        UNUSED(closure_name);
-//         loaded_module->initialised = true;
-//         return *(void**)(module.find_symbol(closure_name));
+        address_t entry = module.get_entry_point();
+        return (void*)(entry + section_base - start);
     }
-    return (void*)(entry + section_base - start);
+    else
+    {
+        // Symbol is a pointer to closure structure.
+//         return *(void**)(loader.find_symbol(clos));
+        PANIC("Closure loading not implemented yet!");
+    }
 }
