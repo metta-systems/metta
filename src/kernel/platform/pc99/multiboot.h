@@ -222,7 +222,7 @@ public:
     }
     inline address_t symtab_end() const
     {
-        return symtab ? (address_t)symtab->addr + symtab->size : 0;
+        return symtab ? (address_t)symtab->vaddr + symtab->size : 0;
     }
     inline elf32::section_header_t* strtab_start() const
     {
@@ -230,7 +230,7 @@ public:
     }
     inline address_t strtab_end() const
     {
-        return strtab ? (address_t)strtab->addr + strtab->size : 0;
+        return strtab ? (address_t)strtab->vaddr + strtab->size : 0;
     }
 
     inline bool is_elf() const { return flags_set(FLAG_ELF); }

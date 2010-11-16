@@ -29,7 +29,7 @@ root_domain_t::root_domain_t(bootimage_t& img)
 
     elf32::section_header_t* text = elf.section_header(".text");
     address_t entry = elf.get_entry_point();
-    ptrdiff_t offset = mi.start - text->addr + text->offset;
+    ptrdiff_t offset = mi.start - text->vaddr + text->offset;
     if (!elf.is_relocatable() && offset != 0)
         PANIC("non-relocatable root domain");
     elf.relocate_to(mi.start, 0);
