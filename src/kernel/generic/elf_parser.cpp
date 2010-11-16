@@ -11,8 +11,14 @@
 #include "memutils.h"
 // #include "memory.h"
 // #include "minmax.h"
-// #include "config.h"
+#include "config.h"
 #include "panic.h"
+
+#if ELF_RELOC_DEBUG_V
+#define D(s) s
+#else
+#define D(s)
+#endif
 
 using namespace elf32;
 
@@ -220,7 +226,7 @@ bool elf_parser_t::is_relocatable() const
 //         || section_header_by_type(SHT_RELA) != 0);
 }
 
-bool elf_parser_t::relocate_to(address_t load_address, offset_t base_offs)
+bool elf_parser_t::relocate_to(address_t load_address, UNUSED_ARG offset_t base_offs)
 {
     section_header_t* shstrtab = section_shstring_table();
     if (!shstrtab)
@@ -233,13 +239,15 @@ bool elf_parser_t::relocate_to(address_t load_address, offset_t base_offs)
         rel_section = section_header(i);
         if (rel_section->type == SHT_REL)
         {
-//             kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl;
+            section_header_t* target_sect = section_header(rel_section->info);
+            if (!(target_sect->flags & SHF_ALLOC))
+                continue;
+            D(kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl);
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
             ASSERT(sizeof(rels[0]) == rel_section->entsize); // Standard says entsize should tell the actual entry size
             size_t nrels = rel_section->size / sizeof(rels[0]);
             section_header_t* symtab = section_header(rel_section->link);
             symbol_t* symbols = symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, symtab->offset)) : 0;
-            section_header_t* target_sect = section_header(rel_section->info);
             if (symbols)
             {
                 for (size_t j = 0; j < nrels; j++)
@@ -247,45 +255,59 @@ bool elf_parser_t::relocate_to(address_t load_address, offset_t base_offs)
                     elf32::rel_t& rel = rels[j];
                     symbol_t& sym = symbols[ELF32_R_SYM(rel.info)];
 
-                    uint32_t result;
-                    address_t P = target_sect->offset - base_offs + rel.offset + load_address;
-                    uint32_t  A = *reinterpret_cast<uint32_t*>(P);
-                    address_t S = 0;
-
-                    if (ELF32_ST_TYPE(sym.info) == 0 && sym.shndx == 0)
-                        PANIC("Invalid relocatable image: undefined symbols!");
-
-                    if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
-                    {
-                        S = section_header(sym.shndx)->offset + load_address;
-//                         kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl;
-                    }
-                    else
-                    {
-                        S = section_header(sym.shndx)->offset + sym.value + load_address;
-//                         kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl;
-                    }
-
-                    switch (ELF32_R_TYPE(rel.info))
-                    {
-                        case R_386_32:
-                            result = S + A;
-//                             kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl;
-                            break;
-                        case R_386_PC32:
-                            result = S + A - P;
-//                             kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl;
-                            break;
-                        default:
-                            kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << " found, skipped, expect crashes!" << endl;
-                            break;
-                    }
-                    kconsole << P << " = " << A << " -> " << result << endl;
-                    *reinterpret_cast<uint32_t*>(P) = result;
+                    // TODO: check return value
+                    apply_relocation(rel, sym, target_sect, load_address);
                 }
             }
         }
     }
+
+    return true;
+}
+
+bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_header_t* target_sect, address_t load_address)
+{
+    D(section_header_t* shstrtab = section_shstring_table());
+
+    uint32_t result;
+    address_t P = target_sect->vaddr + load_address + rel.offset;
+    uint32_t  A = *reinterpret_cast<uint32_t*>(P);
+    address_t S = 0;
+
+    if (ELF32_ST_TYPE(sym.info) == 0 && sym.shndx == 0)
+        PANIC("Invalid relocatable image: undefined symbols!");
+
+    if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
+    {
+        S = section_header(sym.shndx)->vaddr + load_address;
+        D(kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
+    }
+    else
+    {
+        S = section_header(sym.shndx)->vaddr + load_address + sym.value;
+        D(kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
+        D(section_header(sym.shndx)->dump(shstring_table()));
+    }
+
+    switch (ELF32_R_TYPE(rel.info))
+    {
+        case R_386_NONE:
+            result = A;
+            break;
+        case R_386_32:
+            result = S + A;
+            D(kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl);
+            break;
+        case R_386_PC32:
+            result = S + A - P;
+            D(kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl);
+            break;
+        default:
+            kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << ", skipped, expect crashes!" << endl;
+            break;
+    }
+    kconsole << P << " = " << A << " -> " << result << endl;
+    *reinterpret_cast<uint32_t*>(P) = result;
 
     return true;
 }
@@ -303,7 +325,7 @@ cstring_t elf_parser_t::find_symbol(address_t addr, address_t* symbol_start)
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
-        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->addr + i * symbol_table->entsize);//FIXME: base addr missing?
+        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->vaddr + i * symbol_table->entsize);//FIXME: base addr missing?
 
         if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
         {

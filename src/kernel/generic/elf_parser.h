@@ -75,7 +75,9 @@ public:
     inline size_t section_header_count() const { return header->shnum; }
 
     elf32::section_header_t* section_shstring_table() const;
+    inline const char* shstring_table() const { return strtab_pointer(section_shstring_table(), 0); }
     elf32::section_header_t* section_string_table() const;
+    inline const char* string_table() const { return strtab_pointer(section_string_table(), 0); }
     elf32::section_header_t* section_symbol_table() const;
 
     //! Returns the entry point of the executable.
@@ -91,6 +93,8 @@ public:
     bool is_relocatable() const;
 
     bool relocate_to(address_t load_address, offset_t base_offs);
+
+    bool apply_relocation(elf32::rel_t& rel, elf32::symbol_t& sym, elf32::section_header_t* target_sect, address_t load_address);
 
     const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
 
