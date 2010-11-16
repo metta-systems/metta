@@ -14,10 +14,16 @@
 #include "config.h"
 #include "panic.h"
 
-#if ELF_RELOC_DEBUG_V
+#if ELF_LOADER_DEBUG
 #define D(s) s
 #else
 #define D(s)
+#endif
+
+#if ELF_RELOC_DEBUG_V
+#define V(s) s
+#else
+#define V(s)
 #endif
 
 using namespace elf32;
@@ -242,7 +248,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
             section_header_t* target_sect = section_header(rel_section->info);
             if (!(target_sect->flags & SHF_ALLOC))
                 continue;
-            D(kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl);
+            V(kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl);
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
             ASSERT(sizeof(rels[0]) == rel_section->entsize); // Standard says entsize should tell the actual entry size
             size_t nrels = rel_section->size / sizeof(rels[0]);
@@ -267,7 +273,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
 
 bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_header_t* target_sect, address_t load_address)
 {
-    D(section_header_t* shstrtab = section_shstring_table());
+    V(section_header_t* shstrtab = section_shstring_table());
 
     uint32_t result;
     address_t P = (target_sect ? target_sect->vaddr : load_address) + rel.offset;
@@ -279,14 +285,14 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
 
     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
     {
-        S = section_header(sym.shndx)->vaddr;// + load_address;
-        D(kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
+        S = section_header(sym.shndx)->vaddr;
+        V(kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
     }
     else
     {
-        S = section_header(sym.shndx)->vaddr/* + load_address*/ + sym.value;
-        D(kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
-        D(section_header(sym.shndx)->dump(shstring_table()));
+        S = sym.value;
+        V(kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
+        V(section_header(sym.shndx)->dump(shstring_table()));
     }
 
     switch (ELF32_R_TYPE(rel.info))
@@ -296,17 +302,17 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
             break;
         case R_386_32:
             result = S + A;
-            D(kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl);
+            V(kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl);
             break;
         case R_386_PC32:
             result = S + A - P;
-            D(kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl);
+            V(kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl);
             break;
         default:
             kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << ", skipped, expect crashes!" << endl;
             break;
     }
-    kconsole << P << " = " << A << " -> " << result << endl;
+    V(kconsole << P << " = " << A << " -> " << result << endl);
     *reinterpret_cast<uint32_t*>(P) = result;
 
     return true;
@@ -325,7 +331,7 @@ cstring_t elf_parser_t::find_symbol(address_t addr, address_t* symbol_start)
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
-        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->vaddr + i * symbol_table->entsize);//FIXME: base addr missing?
+        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->vaddr + i * symbol_table->entsize);
 
         if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
         {
@@ -372,6 +378,8 @@ address_t elf_parser_t::find_symbol(cstring_t str)
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
+        // FIXME: we use symbol_table->offset here and ->vaddr above, unify both these to ->vaddr
+        // This would require copying elf file's symbol and string table somewhere in area allocated by module_loader.
         symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
 
         const char* c = strtab_pointer(section_string_table(), symbol->name);
@@ -380,11 +388,11 @@ address_t elf_parser_t::find_symbol(cstring_t str)
         {
             if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
             {
-                return section_header(symbol->shndx)->offset + start();
+                return section_header(symbol->shndx)->vaddr; //offset + start();
             }
             else
             {
-                return section_header(symbol->shndx)->offset + symbol->value + start();
+                return /*section_header(symbol->shndx)->offset +*/ symbol->value /*+ start()*/;
             }
         }
     }

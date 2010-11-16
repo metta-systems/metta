@@ -3,6 +3,13 @@
 #include "memory.h"
 #include "stl/algorithm"
 #include "debugger.h"
+#include "config.h"
+
+#if ELF_RELOC_DEBUG_V
+#define V(s) s
+#else
+#define V(s)
+#endif
 
 /*!
  * Load modules into last_load_address, allocate ST_ALLOC sections, copy only ST_LOAD sections
@@ -158,8 +165,8 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     address_t start = ~0;
 
     // Load either program OR sections, prefer program (faster loading ideally).
-    kconsole << "program headers: " << module.program_header_count() << endl
-             << "section headers: " << module.section_header_count() << endl;
+    V(kconsole << "program headers: " << module.program_header_count() << endl
+             << "section headers: " << module.section_header_count() << endl);
 
     address_t section_base = *last_available_address;
 
@@ -253,12 +260,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                 {
                     if (sh.type == SHT_NOBITS)
                     {
-                        kconsole << "Clearing " << sh.size << " bytes" << endl;
+                        V(kconsole << "Clearing " << sh.size << " bytes" << endl);
                         memutils::fill_memory((void*)sh.vaddr, 0, sh.size);
                     }
                     else
                     {
-                        kconsole << "Copying " << sh.size << " bytes" << endl;
+                        V(kconsole << "Copying " << sh.size << " bytes" << endl);
                         memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                     }
                 }
@@ -268,6 +275,22 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else
         PANIC("Do not know how to load ELF file!");
+
+    // Update symbols values.
+    elf32::section_header_t* symbol_table = module.section_symbol_table();
+    if (symbol_table)
+    {
+        for (unsigned int i = 0; i < module.symbol_entries_count(); i++)
+        {
+            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(module.start() + symbol_table->offset + i * symbol_table->entsize);
+            if (ELF32_ST_TYPE(symbol->info) < STT_SECTION)
+            {
+                V(kconsole << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value);
+                symbol->value += module.section_header(symbol->shndx)->vaddr;
+                V(kconsole << ", new value " << symbol->value << endl);
+            }
+        }
+    }
 
     // Relocate loaded data.
     module.relocate_to(section_base);
@@ -282,7 +305,6 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     else
     {
         // Symbol is a pointer to closure structure.
-//         return *(void**)(loader.find_symbol(clos));
-        PANIC("Closure loading not implemented yet!");
+        return *(void**)(module.find_symbol(closure_name));
     }
 }
