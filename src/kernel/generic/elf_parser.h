@@ -31,7 +31,7 @@ public:
 
     public:
         program_iterator(elf32::program_header_t* entry, elf32::program_header_t* end, size_t entry_size);
-        elf32::program_header_t operator *();
+        elf32::program_header_t& operator *(); // return reference to allow in-place manipulation
         void operator ++();
         inline bool operator != (const program_iterator& other) { return ptr != other.ptr; }
     };
@@ -45,7 +45,7 @@ public:
 
     public:
         section_iterator(elf32::section_header_t* entry, elf32::section_header_t* end, size_t entry_size);
-        elf32::section_header_t operator *();
+        elf32::section_header_t& operator *(); // return reference to allow in-place manipulation
         void operator ++();
         inline bool operator != (const section_iterator& other) { return ptr != other.ptr; }
     };
@@ -75,7 +75,9 @@ public:
     inline size_t section_header_count() const { return header->shnum; }
 
     elf32::section_header_t* section_shstring_table() const;
+    inline const char* shstring_table() const { return strtab_pointer(section_shstring_table(), 0); }
     elf32::section_header_t* section_string_table() const;
+    inline const char* string_table() const { return strtab_pointer(section_string_table(), 0); }
     elf32::section_header_t* section_symbol_table() const;
 
     //! Returns the entry point of the executable.
@@ -90,7 +92,9 @@ public:
     //! Returns true if elf file has relocations.
     bool is_relocatable() const;
 
-    bool relocate_to(address_t load_address, offset_t base_offs);
+    bool relocate_to(address_t load_address);
+
+    bool apply_relocation(elf32::rel_t& rel, elf32::symbol_t& sym, elf32::section_header_t* target_sect, address_t load_address);
 
     const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
 

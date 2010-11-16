@@ -24,7 +24,7 @@ _start:
     cld
 
     mov esp, initial_stack
-    mov ebp, 0                         ; make base pointer NULL here so we know
+    xor ebp, ebp                       ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
     call kernel_startup                ; call kernel startup code
                                        ; loader should not return
