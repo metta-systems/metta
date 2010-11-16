@@ -94,6 +94,7 @@ def configure(conf):
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
 
     # Generate config.h
+    # *_V options generate huge amount of output, beware.
     conf.define('ARCH', arch)
     conf.define('PLATFORM', platform)
     conf.define('BUILD', build)
@@ -102,6 +103,7 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('ELF_RELOC_DEBUG_V', 1)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
     conf.define('TOOLS_DEBUG', 1)
@@ -255,7 +257,7 @@ def build(bld):
     startup.target = 'kernel-startup.sys'
     startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-Wl,--emit-relocs']); # Kernel startup is relocatable.
+    startup.env.append_unique('LINKFLAGS', ['-Wl,-r']) # Kernel startup is relocatable.
     startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'common platform interfaces kernel minruntime'
@@ -267,7 +269,7 @@ def build(bld):
     glue.target = 'glue.sys'
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
     glue.env = bld.env_of_name('KERNEL_ENV').copy()
-    glue.env.append_unique('LINKFLAGS', ['-Wl,--emit-relocs']); # glue is relocatable.
+    glue.env.append_unique('LINKFLAGS', ['-Wl,-r']) # glue is relocatable.
     glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])#
     glue.includes = glue.env['INCLUDE_DIRS']
     glue.uselib_local = 'common platform interfaces kernel minruntime'
