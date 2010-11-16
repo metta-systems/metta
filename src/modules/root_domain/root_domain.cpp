@@ -18,25 +18,14 @@ root_domain_t::root_domain_t(bootimage_t& img)
     : ns(0, 0)
 {
     bootimage_t::modinfo_t mi = img.find_root_domain(&ns);
-    kconsole << "Root domain @ " << (unsigned)mi.start << ", size " << mi.size << " bytes." << endl;
+    kconsole << "Root domain at " << (unsigned)mi.start << ", size " << mi.size << " bytes." << endl;
+
     elf.parse(mi.start);
     if (!elf.is_valid())
-        PANIC("invalid root_domain elf image");
+        PANIC("Invalid root_domain ELF image!");
 
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
-    bi->get_module_loader().load_module("root_domain", elf, "entry");///******************************************
-    mi.start = 16*MiB;
-
-    elf32::section_header_t* text = elf.section_header(".text");
-    address_t entry = elf.get_entry_point();
-    ptrdiff_t offset = mi.start - text->vaddr + text->offset;
-    if (!elf.is_relocatable() && offset != 0)
-        PANIC("non-relocatable root domain");
-    elf.relocate_to(mi.start, 0);
-    kconsole << "Root domain relocated by " << (unsigned)offset << endl;
-    entry_point = entry + offset;
-
-    bochs_magic_trap();
+    entry_point = (address_t)bi->get_module_loader().load_module("root_domain", elf, NULL);
 }
 
 address_t root_domain_t::entry()

@@ -53,11 +53,8 @@ bool mbi_probe()
 
 //*****************************************************************************************************************
 // TODO:
-// relocate modules to 16MiB area, including kernel code.
-// record updated location info directly into bootinfo page entries.
+// record updated location info about relocated modules directly into bootinfo page entries.
 // this will copy only needed code and data (e.g. booting without "debug" will not copy debug infos)
-// and will also properly allocate space for .bss
-// use module_loader instance for this
 //*****************************************************************************************************************
 
 /*!
@@ -73,28 +70,9 @@ address_t mbi_init()
     kconsole << "mbi_init()" << endl;
     multiboot_t* mbi = multiboot_t::prepare();
 
-    // relocate kernel-startup elf
-    // offset of .text section from load address and offset of entry point from .text will give relocation offsets
+    // Load and relocate kernel-startup elf.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    elf_parser_t elf(mbi->module(0)->mod_start);
 
-    address_t start = mbi->module(0)->mod_start;
-    elf_parser_t elf(start);
-
-    // will move .text to 16MiB and the rest afterwards
-    // should also relocate and return entry point address...
-    void* entry = bi->get_module_loader().load_module("kernel-boot", elf, "entry");
-
-//     elf32::section_header_t* text = elf.section_header(".text");
-
-//     start = 16*MiB;
-//     ptrdiff_t offset = start - text->addr + text->offset;
-//     if (!elf.is_relocatable() && offset != 0)
-//         PANIC("unrelocatable kernel-startup, cannot proceed.");
-//     elf.relocate_to(start); // relocate in place, then copy over to new location:
-
-//     address_t entry = elf.get_entry_point();
-
-//     kconsole << "Kernel relocated by " << (address_t)offset << ", original entry at " << entry << endl;
-
-    return (address_t)entry;// + offset;
+    return (address_t)bi->get_module_loader().load_module("kernel_boot", elf, NULL);
 }

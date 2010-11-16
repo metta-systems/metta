@@ -34,18 +34,9 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     kconsole << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
-
     elf_parser_t loader(addr.start);
     return bi->get_module_loader().load_module(module_name, loader, clos);
-//     if (!loader.relocate_to(addr.start))
-//         PANIC("Module could not be relocated!");
-
-//     kconsole << "Module relocated." << endl;
-
     /* FIXME: Skip dependencies for now */
-
-    // Symbol is a pointer to closure structure.
-//     return *(void**)(loader.find_symbol(clos));
 }
 
 template <class closure_type>
@@ -82,11 +73,11 @@ static void init_mem(bootimage_t& bootimg)
     // request necessary space for frames allocator
     frames_module_v1_closure* frames_mod;
     frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
-//     ASSERT(frames_mod);
+    ASSERT(frames_mod);
 
     mmu_module_v1_closure* mmu_mod;
     mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
-//     ASSERT(mmu_mod);
+    ASSERT(mmu_mod);
 
     bochs_magic_trap();
 
