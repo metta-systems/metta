@@ -97,10 +97,10 @@ struct header_t
  */
 struct section_header_t
 {
-    word_t  name;          /*!< Section name, index in string table */
+    word_t  name;          /*!< Section name, index in section string table */
     word_t  type;          /*!< Type of section */
     word_t  flags;         /*!< Miscellaneous section attributes */
-    addr_t  addr;          /*!< Section virtual addr at execution */
+    addr_t  vaddr;         /*!< Section virtual addr at execution */
     off_t   offset;        /*!< Section file offset */
     word_t  size;          /*!< Size of section in bytes */
     word_t  link;          /*!< Index of another section */
@@ -109,15 +109,19 @@ struct section_header_t
     word_t  entsize;       /*!< Entry size if section holds table */
 
     /* section_header.flags */
-#define SHF_WRITE             0x00000001 /* Section contains writable data. */
-#define SHF_ALLOC             0x00000002 /* Section occupies memory. */
-#define SHF_EXECINSTR         0x00000004 /* Section contains instructions. */
+    /* http://www.sco.com/developers/gabi/2003-12-17/ch4.sheader.html */
+#define SHF_WRITE             0x00000001 /* The section contains data that should be writable during process execution. */
+#define SHF_ALLOC             0x00000002 /* The section occupies memory during process execution. */
+#define SHF_EXECINSTR         0x00000004 /* The section contains executable machine instructions. */
 #define SHF_MERGE             0x00000010 /* Section may be merged. */
 #define SHF_STRINGS           0x00000020 /* Section contains strings. */
-#define SHF_INFO_LINK         0x00000040 /* sh_info holds section index. */
+#define SHF_INFO_LINK         0x00000040 /* The sh_info field of this section header holds a section header table index. */
 #define SHF_LINK_ORDER        0x00000080 /* Special ordering requirements. */
 #define SHF_OS_NONCONFORMING  0x00000100 /* OS-specific processing required. */
-#define SHF_GROUP             0x00000200 /* Member of section group. */
+#define SHF_GROUP             0x00000200 /* This section is a member (perhaps the only one) of a section group.
+                                            The section must be referenced by a section of type SHT_GROUP.
+                                            The SHF_GROUP flag may be set only for sections contained in relocatable
+                                            objects (objects with the ELF header e_type member set to ET_REL). */
 #define SHF_TLS               0x00000400 /* Section contains TLS data. */
 #define SHF_MASKOS            0x0ff00000 /* OS-specific semantics. */
 #define SHF_MASKPROC          0xf0000000 /* Processor-specific semantics. */
@@ -126,7 +130,7 @@ struct section_header_t
     bool is_allocatable() { return (flags & SHF_ALLOC) != 0; }
     bool is_executable()  { return (flags & SHF_EXECINSTR) != 0; }
 
-    void dump();
+    void dump(const char* shstrtab);
 } PACKED;
 
 /* predefined section table indices */
@@ -151,15 +155,19 @@ struct section_header_t
 #define SHT_REL       0x00000009
 #define SHT_SHLIB     0x0000000a /*!< Reserved with unspecified semantics */
 #define SHT_DYNSYM    0x0000000b
+/* GNU extensions */
+#define SHT_INIT_ARRAY      0x0000000e
+#define SHT_FINI_ARRAY      0x0000000f
+#define SHT_PREINIT_ARRAY   0x00000010
+#define SHT_GROUP           0x00000011
+#define SHT_SYMTAB_SHNDX    0x00000012
+/* Limits */
+#define SHT_LOOS      0x60000000
+#define SHT_HIOS      0x6fffffff
 #define SHT_LOPROC    0x70000000
 #define SHT_HIPROC    0x7fffffff
 #define SHT_LOUSER    0x80000000
 #define SHT_HIUSER    0xffffffff
-/* GNU extensions */
-#define SHT_INIT      0x0000000e
-#define SHT_FINI      0x0000000f
-#define SHT_PREINIT   0x00000010
-
 
 /*!
  * Symbol Table entry.
