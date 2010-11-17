@@ -37,6 +37,7 @@ void* fill_memory(void* dest, int value, size_t count);
  * or copy_memory_from_io() instead.
  */
 void* copy_memory(void* dest, const void* src, size_t count);
+address_t copy_memory(address_t dest, address_t src, size_t count);
 
 /*!
  * Copy one area of memory to another.
@@ -86,9 +87,10 @@ size_t string_length(const char *s);
  * Copy one string to another location.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from
+ * @param[in]  max_length Maximum number of bytes to copy, unlimited if 0.
  * @return           Pointer to the start of the destination string.
  */
-char* copy_string(char* dest, const char* src);
+char* copy_string(char* dest, const char* src, size_t max_length = 0);
 
 } // namespace memutils
 

@@ -24,6 +24,7 @@
 #include "idt.h"
 #include "root_domain.h"
 #include "registers.h"
+#include "new.h"
 
 // Declare C linkage.
 extern "C" void kernel_startup();
@@ -116,6 +117,9 @@ static void SECTION(".init.cpu") check_cpu_features()
 #endif
 
     uint32_t avail_features = x86_cpu_t::features();
+
+//     bochs:
+//     CPU does not support all required features 0xffffffff (? psn ? ds acpi ss ht tm ia64 pbe missing)
 
     if ((req_features & avail_features) != req_features)
     {
@@ -212,9 +216,9 @@ void kernel_startup()
     run_global_ctors();
 
     global_descriptor_table_t gdt;
-    kconsole << "Created GDT." << endl;
+//     kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
-    kconsole << "Created IDT." << endl;
+//     kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
@@ -235,11 +239,11 @@ void kernel_startup()
     timer->enable(); // enable timer interrupts
     x86_cpu_t::enable_fpu();
 
-    kconsole << WHITE << "...in the living memory of V2_OS" << endl;
+    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     root_domain_t root_dom(bootimage);
 
-    kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
+//     kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
 
     // Create an execution context and activate it.
     continuation_t::gpregs_t gpregs;

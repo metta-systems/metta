@@ -2,7 +2,15 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
+    complib = bld.new_task_gen('cxx', 'staticlib')
+    complib.source = 'module-crt0.s module-entry.cpp'
+    complib.env = bld.env_of_name('KERNEL_ENV').copy()
+    complib.includes = '. ../runtime ../runtime/stl ../interfaces ../kernel/generic ../kernel/arch/x86 ../kernel/platform/pc99'
+    complib.target = 'component_support'
+
     bld.add_subdirs('root_domain')
+    bld.add_subdirs('frames_mod')
+    bld.add_subdirs('mmu_mod')
     #bld.add_subdirs('interrupt_dispatcher')
     #bld.add_subdirs('portal_manager')
     #bld.add_subdirs('scheduler')

@@ -1,56 +1,90 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "fourcc.h"
+
+//======================================================================================================================
+// bootimage internal structures
+//======================================================================================================================
+
+namespace bootimage_n
+{
 
 enum kind_e
 {
     kind_root_domain,
     kind_glue_code,
-    kind_module
+    kind_module,
+    kind_namespace
 };
 
-struct bootimage_header_t
+struct header_t
 {
     uint32_t magic;        //!< contains header magic value 'BIMG'
     uint32_t version;      //!< contains initfs format version, currently 1
 
-    bootimage_header_t()
+    header_t()
         : magic(FourCC<'B','I','M','G'>::value)
         , version(1)
     {}
 };
 
-struct bootimage_rec_t
+struct rec_t
 {
     uint32_t tag;    // entry tag
     uint32_t length; // length of the whole entry
 };
 
-struct bootimage_root_domain_t : public bootimage_rec_t
-{
-    uintptr_t entry_point;
-    uintptr_t namespace_data;
-};
-
-struct bootimage_glue_code_t : public bootimage_rec_t
+struct glue_code_t : public rec_t
 {
     address_t text, data, bss;
     size_t text_size, data_size, bss_size;
 };
 
-struct bootimage_module_t : public bootimage_rec_t
+struct namespace_t : public rec_t
 {
-    address_t address;
+    address_t address; // file offset! (actually from start of bootimage)
     size_t size;
     const char* name;
-    const char* local_namespace;
 };
 
-union bootimage_info_t
+struct module_t : public namespace_t
 {
-    bootimage_rec_t*         rec;
-    bootimage_root_domain_t* rootdom;
-    bootimage_glue_code_t*   glue;
-    bootimage_module_t*      module;
-    char*                    generic;
+    address_t local_namespace_offset;
 };
+
+struct root_domain_t : public module_t
+{
+    uintptr_t entry_point;
+};
+
+struct namespace_entry_t
+{
+    union {
+        const char* name;
+        address_t name_off;
+    };
+    union {
+        void* value;
+        uintptr_t value_int;
+    };
+};
+
+union info_t
+{
+    rec_t*         rec;
+    root_domain_t* rootdom;
+    glue_code_t*   glue;
+    module_t*      module;
+    namespace_t*   module_namespace;
+    char*          generic;
+};
+
+}

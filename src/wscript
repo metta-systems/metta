@@ -43,6 +43,9 @@ def set_options(opt):
     # board (vulcan, beagleboard) - a specific infrastructure
     opt.add_option("--platform", action="store", default="pc99", help="Select platform to build for." + '[default: %default]')
 
+    # board usually implies platform, cpu and arch.
+    # platform sometimes implies arch.
+
     # build type - release, debug, profile
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile)." + '[default: %default]')
 
@@ -91,6 +94,7 @@ def configure(conf):
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
 
     # Generate config.h
+    # *_V options generate huge amount of output, beware.
     conf.define('ARCH', arch)
     conf.define('PLATFORM', platform)
     conf.define('BUILD', build)
@@ -99,7 +103,10 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('ELF_RELOC_DEBUG_V', 0)
+    conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
+    conf.define('TOOLS_DEBUG', 1)
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
@@ -152,12 +159,17 @@ def configure(conf):
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
+    conf.setenv('TOOLS_ENV')
+    conf.env['LIB_UUID'] = 'uuid' # set uselib
 
 def build(bld):
     arch = Options.options.arch
 
+    # Make bootimage components.
     bld.add_subdirs("modules")
+    bld.add_subdirs("tools/mettafs")
 
+    # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
     runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete placement_new memutils cstring stdlib'.split())
@@ -178,7 +190,7 @@ def build(bld):
     toolruntime.target = 'toolruntime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
-    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/elf_loader.cpp kernel/generic/console.cpp'.split()
+    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/console.cpp kernel/generic/module_loader.cpp'.split()
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'
@@ -190,11 +202,18 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp cpu.cpp bootinfo.cpp bootimage.cpp'.split())# + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too.
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
+    interfaces = bld.new_task_gen('cxx', 'staticlib')
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
+    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.target = 'interfaces'
+
+    # Tests
     tests = bld.new_task_gen('cxx', 'program')
     tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
     tests.env = bld.env_of_name('TEST_ENV').copy()
@@ -233,32 +252,38 @@ def build(bld):
     meddler.env.append_unique('CXXDEFINES', ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'])
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
 
+    # Initial loader
     kickstart = bld.new_task_gen('cxx', 'program')
     kickstart.target = 'kickstart.sys'
     kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    kickstart.uselib_local = 'common runtime kernel platform'
+    kickstart.uselib_local = 'common runtime platform'# kernel
 
-    interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator client_frame_allocator timer'.split())
-    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    interfaces.includes = interfaces.env['INCLUDE_DIRS']
-    interfaces.target = 'interfaces'
-
+    # Launcher
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
     startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-r']); # Kernel startup is relocatable.
+    startup.env.append_unique('LINKFLAGS', ['-Wl,-r']) # Kernel startup is relocatable.
     startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'common platform interfaces kernel minruntime'
 
-    # Make bootimage components.
+    # Glue code
+    # Glue code is the only ring0 privileged part of the system.
+    # It includes interrupt handlers and some minimal syscall processing.
+    glue = bld.new_task_gen('cxx', 'program')
+    glue.target = 'glue.sys'
+    glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
+    glue.env = bld.env_of_name('KERNEL_ENV').copy()
+    glue.env.append_unique('LINKFLAGS', ['-Wl,-r']) # glue is relocatable.
+    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])#
+    glue.includes = glue.env['INCLUDE_DIRS']
+    glue.uselib_local = 'common platform interfaces kernel minruntime'
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
@@ -270,9 +295,29 @@ def build(bld):
     #kickstart.uselib_local = 'platform common kernel runtime'
 
     bld.new_task_gen(
-        source = 'mkbootimage kernel/arch/x86/bootimage.lst',#arch dep
+        source = 'kernel-startup.sys',
+        rule = 'nm -u ${SRC[0].abspath(env)}',
+        name = 'nm undef check (kernel-startup)',
+        after = 'cxx_link'
+    )
+
+    bld.new_task_gen(
+        source = 'glue.sys',
+        rule = 'nm -u ${SRC[0].abspath(env)}',
+        name = 'nm undef check (glue)',
+        after = 'cxx_link'
+    )
+
+    nm = []
+    for tg in bld.all_task_gen:
+        if tg.target.endswith('.comp'):
+            tg.post()
+            nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
+
+    bld.new_task_gen(
+        source = 'mkbootimage kernel/arch/x86/bootimage.lst'.split() + nm, # x86 arch dep
         target = 'init.img',
-        rule = '${SRC[0].abspath(env)} x86-pc99-release/modules/ ${SRC[1].abspath(env)} ${TGT}',
+        rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
         after = 'cxx_link'
     )

@@ -24,24 +24,18 @@
 -- was called client_frame_allocator before!
 local interface frame_allocator_v1
 {
-    needs memory_v1, heap_v1;
+    memory_v1.address address;
+    memory_v1.attrs   attrs;
 
     -- A Frame is the physical equivalent of a Page.
     -- A Frame is either allocated or free.
-    
-    Alloc : PROC    [ bytes  : CARDINAL,
-    fwidth : CARDINAL ]
-    RETURNS [ a      : ADDRESS  ];
-    -- If there are "k" contiguous free frames of physical memory
-    -- of width "fwidth" (which is $\geq$ FRAME\_WIDTH) which together
+
+    -- If there are k contiguous free frames of physical memory
+    -- of width "frame_width" (which is >= FRAME_WIDTH) which together
     -- contain at least "bytes" bytes, then mark them allocated and
     -- return the address of the first.
-    
-    AllocRange: PROC  [ bytes : CARDINAL,
-    fwidth : CARDINAL,
-    start : ADDRESS,
-    attr  : Mem.Attrs  ]
-    RETURNS [  a    : ADDRESS    ];
+    allocate(card32 bytes, card32 frame_width) returns (address addr);
+
     -- "AllocRange" is similar to "Alloc", but allows the
     -- specification of an (optional) starting address and requested
     -- attributes.
@@ -56,26 +50,25 @@ local interface frame_allocator_v1
     --
     -- The parameter "attr" can optionally specify a number of requested
     -- attributes.
-    
-    
-    Query : PROC    [ addr   : ADDRESS  ]
-    RETURNS [ fwidth : CARDINAL,
-    attr   : Mem.Attrs ];
-    -- The "Query" method is provided to allow clients to discover
+    allocate_range(card32 bytes, card32 frame_width, address start, attrs attr)
+        returns (address a);
+
+    -- The "query" method is provided to allow clients to discover
     -- something about the state of a particular frames. The result
-    -- "fwidth" gives the logical frame width of the region within
+    -- "frame_width" gives the logical frame width of the region within
     -- which "addr" falls (or, if the frame is allocated, the frame
     -- width with which is was effectively allocated), while the
     -- result "attr" is a set of properties of the memory at that address.
-    
-    Free  : PROC [ a: ADDRESS; bytes: CARDINAL ] RETURNS [];
+    query(address addr)
+        returns (card32 frame_width, attrs attr);
+
     -- Mark all frames containing addresses in the range "[a, a + bytes)"
     -- as free. This will actually free an exact number of logical
     -- frames starting at address "a"; i.e. may free more than "bytes"
     -- bytes in practice.
-    
-    Destroy : PROC [] RETURNS [];
-    -- Destory this "Frames" interface. This includes freeing all
-    -- frames which have been allocated via the interface.
-    
+    free(address addr, card32 bytes);
+
+    -- Destory this frame_allocator interface. This includes freeing all
+    -- frames which have been allocated via this interface.
+    destroy();
 }

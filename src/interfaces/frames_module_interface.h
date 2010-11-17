@@ -6,11 +6,15 @@
 // frame_allocator type.
 // (metatype? metaclass? factory?)
 
-struct frame_allocator_closure;
+struct system_frame_allocator_v1_closure;
 
-DECLARE_CLOSURE(frames_module)
+struct frames_module_v1_ops; struct frames_module_v1_state; struct frames_module_v1_closure
+// DECLARE_CLOSURE(frames_module_v1)
 {
-    void required(int args);
-    frame_allocator_closure* create(int args);
-    void done();
+    const frames_module_v1_ops* methods;
+    frames_module_v1_state* state;
+
+    unsigned int required_size();
+    system_frame_allocator_v1_closure* create(int args);
+    void finish_init();
 };

@@ -62,7 +62,7 @@ public:
     inline void print(unsigned char n) { print_byte(n); }
     inline void print(unsigned int n) { print_hex(n); }
     inline void print(void *p) { print((unsigned int)p); }
-    inline void print(unsigned long long n) { print_hex8(n); }
+    inline void print(uint64_t n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
     /*template<typename T, typename... Args>
     void print(const char* str, T value, Args... args);*/
@@ -98,6 +98,12 @@ inline console_t& operator << (console_t& con, int data)
 inline console_t& operator << (console_t& con, unsigned int data)
 {
     con.print_hex(data);
+    return con;
+}
+
+inline console_t& operator << (console_t& con, uint64_t data)
+{
+    con.print_hex8(data);
     return con;
 }
 

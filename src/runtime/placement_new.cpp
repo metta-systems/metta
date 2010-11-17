@@ -8,13 +8,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "new.h"
-#include "macros.h"
+//INLINED!
+// #include "new.h"
 
-void* operator new(UNUSED_ARG size_t size, void* place)
-{
-    return place;
-}
+// void* operator new(size_t, void* place) throw() { return place; }
+// void* operator new[](size_t, void* place) throw() { return place; }
+// void operator delete(void*, void*) throw() {}
+// void operator delete[](void*, void*) throw() {}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

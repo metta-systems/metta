@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "module_namespace.h"
 
 /*!
  * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces
@@ -20,15 +21,24 @@
  * Deps are lists of items from common stringtable. (ofs,len) pairs for ndeps count.
  *
  * Root entry in bootimage is main startup code, called "root domain".
- *
  */
 class bootimage_t
 {
 public:
+    class modinfo_t
+    {
+    public:
+        modinfo_t(address_t st, size_t sz) : start(st), size(sz) {}
+
+        address_t start;
+        size_t    size;
+    };
+
     bootimage_t(const char* name, address_t start, address_t end);
 
-    address_t find_root_domain(size_t* size);
-    address_t find_module(size_t* size, const char* name);
+    modinfo_t find_root_domain(module_namespace_t* namesp);
+    modinfo_t find_module(const char* name);
+    modinfo_t find_namespace(const char* name);
 
     bool valid();
 

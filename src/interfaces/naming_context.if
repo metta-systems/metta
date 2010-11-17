@@ -10,7 +10,7 @@
 -- Several parts of a Metta system need to associate string names
 -- with objects in some context.  Trading, file directory services,
 -- local name space management, and environments for machine booting
--- and domain initialisation are all examples.  The "Context" interface
+-- and domain initialisation are all examples.  The "naming_context" interface
 -- provides a general abstraction for this purpose.
 
 -- A "naming_context" is a partial map "map" from arc-names to "type.any"s
@@ -29,13 +29,11 @@
 
 local interface naming_context_v1
 {
-    needs heap_v1, type, word_table_v1;
-
     --
     -- Exceptions
     --
 
-    -- "Context" operations may raise various exceptions:
+    -- "naming_context" operations may raise various exceptions:
 
     exception not_found { string name; }
     -- May be raised when no binding for an arc-name exists.

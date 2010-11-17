@@ -11,8 +11,8 @@
 #include "new.h"
 #include "macros.h"
 #include "memory.h"
-#include "frame.h"
-#include "frame_allocator.h"
+#include "memutils.h"
+// #include "frame_allocator.h"
 #include "default_console.h"
 #include "debugger.h"
 
@@ -20,7 +20,8 @@ static inline void* placement_alloc(size_t size)
 {
     kconsole << " .normal frame alloc. ";
     UNUSED(size);
-    return reinterpret_cast<void*>(frame_allocator_t::instance().allocate_frame());
+    return (void*)0xc000;
+//     return reinterpret_cast<void*>(frame_allocator_t::instance().allocate_frame());
 }
 
 // Allocate small non-page-aligned objects from a preallocated page,

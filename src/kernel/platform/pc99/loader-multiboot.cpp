@@ -14,12 +14,14 @@
 #include "new.h"
 #include "default_console.h"
 #include "debugger.h"
+#include "module_loader.h"
 
 /*!
  * Check if a valid multiboot info structure is present.
  */
 bool mbi_probe()
 {
+    kconsole << "mbi_probe()" << endl;
     multiboot_t* _mbi = multiboot_t::prepare();
 
     if (_mbi == NULL)
@@ -49,6 +51,12 @@ bool mbi_probe()
 }
 
 
+//*****************************************************************************************************************
+// TODO:
+// record updated location info about relocated modules directly into bootinfo page entries.
+// this will copy only needed code and data (e.g. booting without "debug" will not copy debug infos)
+//*****************************************************************************************************************
+
 /*!
  * Init function that understands multiboot info structure.
  *
@@ -59,22 +67,12 @@ bool mbi_probe()
  */
 address_t mbi_init()
 {
+    kconsole << "mbi_init()" << endl;
     multiboot_t* mbi = multiboot_t::prepare();
 
-    // relocate kernel-startup elf
-    // offset of .text section from load address and offset of entry point from .text will give relocation offsets
+    // Load and relocate kernel-startup elf.
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    elf_parser_t elf(mbi->module(0)->mod_start);
 
-    address_t start = mbi->module(0)->mod_start;
-    elf_parser_t elf(start);
-    elf32::section_header_t* text = elf.section_header(".text");
-    address_t entry = elf.get_entry_point();
-
-    ptrdiff_t offset = start - text->addr + text->offset;
-
-    if (!elf.is_relocatable() && offset != 0)
-        PANIC("unrelocatable kernel-startup, cannot proceed.");
-
-    elf.relocate_to(start);
-
-    return entry + offset;
+    return (address_t)bi->get_module_loader().load_module("kernel_boot", elf, NULL);
 }
