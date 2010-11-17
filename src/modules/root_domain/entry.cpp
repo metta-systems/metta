@@ -79,8 +79,6 @@ static void init_mem(bootimage_t& bootimg)
     mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod);
 
-    bochs_magic_trap();
-
     int required = frames_mod->required_size();
     int initial_heap_size = 64*1024;
 
@@ -131,8 +129,8 @@ static void init_mem(bootimage_t& bootimg)
 //======================================================================================================================
 
 /*!
-* Root domain starts executing without paging and with full ring0 rights.
-*/
+ * Root domain starts executing without paging and with full ring0 rights.
+ */
 
 extern "C" void entry()
 {
