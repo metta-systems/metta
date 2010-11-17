@@ -37,11 +37,11 @@ _start:
     cli
     cld
 
-    mov [multiboot_info], ebx          ; pass Multiboot flags
-    mov [multiboot_flags], eax         ; pass Multiboot info structure
+    mov [multiboot_info], ebx          ; pass Multiboot info structure
+    mov [multiboot_flags], eax         ; pass Multiboot flags
 
     mov esp, initial_stack
-    mov ebp, 0                         ; make base pointer NULL here so we know
+    xor ebp, ebp                       ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
     call loader                        ; call startup loader code
                                        ; loader should not return
