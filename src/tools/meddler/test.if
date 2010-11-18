@@ -1,0 +1,10 @@
+local interface mmu_module_v1
+{
+    # Creates the initial "MMU".
+    create(int32 size)
+        returns (mmu_v1& mmu, ramtab_v1& ramtab, memory_v1.address free)
+        raises (memory_v1.failure);
+
+    # Finish the initialisation of the MMU.
+    finish_init(mmu_v1& mmu, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc);
+}
