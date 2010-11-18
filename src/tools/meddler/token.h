@@ -10,11 +10,12 @@ enum kind
 
     // Tokens with no info.
     equal, comma,      // =  ,
-    star,              // *
+    reference,         // &
     lsquare, rsquare,  // [  ]
     lbrace, rbrace,    // {  }
     less, greater,     // <  >
     lparen, rparen,    // (  )
+    semicolon,         // ;
     backslash,         // \    (not /)
     type,              // int, float, sequence etc
 

@@ -2,6 +2,12 @@
 #include "token.h"
 #include "lexer.h"
 
+lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf)
+    : cur_buf(StartBuf)
+{
+    cur_ptr = cur_buf->getBufferStart();
+}
+
 int lexer_t::get_next_char()
 {
     char cur_char = *cur_ptr++;
@@ -20,6 +26,15 @@ int lexer_t::get_next_char()
     }
 }
 
+void lexer_t::skip_line_comment()
+{
+    while (1)
+    {
+        if (*cur_ptr == '\n' || *cur_ptr == '\r' || get_next_char() == EOF)
+            return;
+    }
+}
+
 token::kind lexer_t::get_token()
 {
     token_start = cur_ptr;
@@ -28,9 +43,14 @@ token::kind lexer_t::get_token()
     switch (cur_char)
     {
         case EOF: return token::eof;
+        case 0: case ' ': case '\t': case '\n': case '\r': // Ignore whitespace.
+            return get_token();
+        case '#':
+            skip_line_comment();
+            return get_token();
         case '=': return token::equal;
         case ',': return token::comma;
-        case '*': return token::star;
+        case '&': return token::reference;
         case '[': return token::lsquare;
         case ']': return token::rsquare;
         case '{': return token::lbrace;
@@ -39,10 +59,17 @@ token::kind lexer_t::get_token()
         case '>': return token::greater;
         case '(': return token::lparen;
         case ')': return token::rparen;
+        case ';': return token::semicolon;
         case '\\': return token::backslash;
         default:
             return get_identifier();
     }
+}
+
+/// is_label_char - Return true for [a-zA-Z._0-9].
+static bool is_label_char(char c)
+{
+    return isalnum(c) || c == '.' || c == '_';
 }
 
 /// get_identifier: Handle several related productions:
@@ -53,7 +80,7 @@ token::kind lexer_t::get_identifier()
 {
     const char *start_ptr = cur_ptr;
 
-    for (; isalpha(*cur_ptr); ++cur_ptr)
+    for (; is_label_char(*cur_ptr); ++cur_ptr)
     {
     }
 
