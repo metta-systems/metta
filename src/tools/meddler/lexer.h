@@ -19,6 +19,11 @@ public:
         return (cur_kind = get_token());
     }
 
+    token::kind token_kind()
+    {
+        return cur_kind;
+    }
+
     std::string current_token()
     {
         return std::string(token_start, (int)(cur_ptr - token_start));
