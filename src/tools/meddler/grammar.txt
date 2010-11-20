@@ -31,6 +31,7 @@ arg_spec = ["in"|"out"|"inout"] typeID , ID , { "," , ID } ;
 args = arg_spec , { "," , arg_spec } ;
 return_spec = "returns" , "(" , {args} , ")" | "never" , "returns" ;
 method = ["idempotent"] , ID , "(" , {args} , ")" , return_spec , "raises" , IDs , ";" ;
+top_level = intf* ;
 
 // Example code
 
