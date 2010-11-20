@@ -56,11 +56,61 @@ std::string token_to_name(token::kind tok)
 
 bool parser_t::run()
 {
-    token::kind t = lex.lex();
-    while (t != token::kind::eof)
-    {
-        std::cout << token_to_name(t) << ": " << lex.current_token() << std::endl;
-        t = lex.lex();
+    lex.lex(); // prime the parser
+    return parse_top_level_entities();
+}
+
+bool parser_t::parse_top_level_entities()
+{
+    while (1) {
+        std::cout << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl;
+        switch (lex.token_kind())
+        {
+            default:         return false;//error("expected top-level entity");
+            case token::kind::eof: return false;
+            case token::kind::kw_local:
+            case token::kind::kw_final:
+            case token::kind::kw_interface:
+                if (parse_interface())
+                    return true;
+                break;
+        }
+//         token::kind t = lex.lex();
     }
+}
+
+// parse interface definition ([local] [final] interface ID...)
+bool parser_t::parse_interface()
+{
+    if (lex.token_kind() == token::kind::kw_local)
+    {
+        is_local = true;
+        lex.lex();
+        return parse_interface(); // expect final or interface
+    }
+    if (lex.token_kind() == token::kind::kw_final)
+    {
+        is_final = true;
+        lex.lex();
+        return parse_interface(); // expect local or interface
+    }
+    if (lex.token_kind() == token::kind::kw_interface)
+    {
+        lex.lex();
+        return parse_interface_body();
+    }
+    lex.lex();
     return false;
+}
+
+bool parser_t::parse_interface_body()
+{
+    if (lex.token_kind() != token::kind::identifier)
+        return false;
+
+    std::cout << "Found " << (is_local ? "local " : "networked ") << (is_final ? "final " : "") << "interface " << lex.current_token() << std::endl;
+
+    //lex.expect(lbrace);
+    //lex.expect(rbrace);
+    return true;
 }
