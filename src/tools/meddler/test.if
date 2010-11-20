@@ -1,0 +1,39 @@
+local interface mmu_module_v1
+{
+    # Creates the initial "MMU".
+    create(int32 size)
+        returns (mmu_v1& mmu, ramtab_v1& ramtab, memory_v1.address free)
+        raises (memory_v1.failure);
+
+    # Finish the initialisation of the MMU.
+    finish_init(mmu_v1& mmu, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc);
+}
+#
+# Should generate the following AST:
+#
+# interface_t("mmu_module_v1", local:true, final:false)
+# +-types
+#   [empty]
+# +-exceptions
+#   [empty]
+# +-methods
+#   +-method_t("create")
+#     +-params
+#       +-parameter_t("size", int32, reference:false, direction:in)
+#     +-returns
+#       +-parameter_t("mmu", mmu_v1, reference:true, direction:out)
+#       +-parameter_t("ramtab", ramtab_v1, reference:true, direction:out)
+#       +-parameter_t("free", memory_v1.address, reference:false, direction:out)
+#     +-raises
+#       +-exception_t("memory_v1.failure")
+#   +-method_t("finish_init")
+#     +-params
+#       +-parameter_t("mmu", mmu_v1, reference:true, direction:in)
+#       +-parameter_t("frames", frame_allocator_v1, reference:true, direction:in)
+#       +-parameter_t("heap", heap_v1, reference:true, direction:in)
+#       +-parameter_t("sysalloc", stretch_allocator_v1, reference:true, direction:in)
+#     +-returns
+#       [empty]
+#     +-raises
+#       [empty]
+#

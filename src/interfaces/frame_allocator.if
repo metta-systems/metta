@@ -24,6 +24,7 @@
 -- was called client_frame_allocator before!
 local interface frame_allocator_v1
 {
+    -- types.size, types.address, types.offset -- ?
     memory_v1.address address;
     memory_v1.attrs   attrs;
 
