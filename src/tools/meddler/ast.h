@@ -6,6 +6,10 @@
 namespace AST
 {
 
+class ast_node_t
+{
+};
+
 // Variable or parameter declaration as "type-name" pair.
 class var_decl_t
 {
@@ -36,7 +40,7 @@ public:
 class method_t
 {
 public:
-    bool idempotent;
+    bool idempotent; //..., async, oneway(==never_returns?)
     std::string name;
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
@@ -51,7 +55,7 @@ public:
     bool final;
     std::string name;
     std::string base;
-    std::vector<interface_t*> imports;
+    std::vector<interface_t*> imports;//implicitly derived from 'types' contents.
     std::vector<alias_t*>     types;
     std::vector<exception_t*> exceptions;
     std::vector<method_t*>    methods;
