@@ -29,6 +29,11 @@ public:
         return std::string(token_start, (int)(cur_ptr - token_start));
     }
 
+    bool expect(token::kind kind)
+    {
+        return (lex() == kind);
+    }
+
 private:
     token::kind get_token();
     token::kind get_identifier();
