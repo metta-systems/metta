@@ -6,12 +6,14 @@
 namespace AST
 {
 
-class ast_node_t
+class node_t
 {
+public:
+    virtual void dump() = 0;
 };
 
 // Variable or parameter declaration as "type-name" pair.
-class var_decl_t
+class var_decl_t : public node_t
 {
 public:
     std::string type; // use known types! check LLVM's Type/TypeBuilder
@@ -30,14 +32,14 @@ class alias_t : public var_decl_t
 };
 // subtree of alias defines concrete variants: set_alias, array_alias, record_alias
 
-class exception_t
+class exception_t : public node_t
 {
 public:
     std::string name;
     std::vector<var_decl_t*> fields;
 };
 
-class method_t
+class method_t : public node_t
 {
 public:
     bool idempotent; //..., async, oneway(==never_returns?)
@@ -48,9 +50,12 @@ public:
     bool never_returns;
 };
 
-class interface_t
+class interface_t : public node_t
 {
 public:
+    interface_t(std::string nm, bool is_local, bool is_final) : local(is_local), final(is_final), name(nm) {}
+    void dump();
+
     bool local;
     bool final;
     std::string name;
