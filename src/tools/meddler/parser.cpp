@@ -1,18 +1,6 @@
 #include <iostream>
 #include "parser.h"
-
-// if (kind == kw_interface) parse_interface(false);
-// if (kind == kw_local) parse_interface(true);
-// if (kind == kw_needs) parse_imports();
-// if (kind == kw_range) parse_range_type_alias();
-// if (kind == kw_sequence) parse_sequence_type_alias();
-// if (kind == kw_set) parse_set_type_alias();
-// if (kind == kw_record) parse_record_type_alias();
-// if (kind == kw_exception) parse_exception();
-// if (kind == type_decl) parse_type_alias();
-// if (kind == kw_idempotent) parse_method();
-// if (kind == identifier) parse_method();
-// bool parse_interface(bool local);
+#include "ast.h"
 
 std::string token_to_name(token::kind tok)
 {
@@ -20,6 +8,7 @@ std::string token_to_name(token::kind tok)
     case token::kind::tk: return #tk;
     switch (tok)
     {
+        TNAME(none)
         TNAME(eof)
         TNAME(error)
         TNAME(equal)
@@ -60,10 +49,14 @@ bool parser_t::run()
     return parse_top_level_entities();
 }
 
+#define D() std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl
+
 bool parser_t::parse_top_level_entities()
 {
+    is_local = false;
+    is_final = false;
     while (1) {
-        std::cout << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl;
+        D();
         switch (lex.token_kind())
         {
             default:         return false;//error("expected top-level entity");
@@ -73,15 +66,17 @@ bool parser_t::parse_top_level_entities()
             case token::kind::kw_interface:
                 if (parse_interface())
                     return true;
+                else
+                    return false;
                 break;
         }
-//         token::kind t = lex.lex();
     }
 }
 
 // parse interface definition ([local] [final] interface ID...)
 bool parser_t::parse_interface()
 {
+    D();
     if (lex.token_kind() == token::kind::kw_local)
     {
         is_local = true;
@@ -105,12 +100,140 @@ bool parser_t::parse_interface()
 
 bool parser_t::parse_interface_body()
 {
+    D();
     if (lex.token_kind() != token::kind::identifier)
         return false;
 
-    std::cout << "Found " << (is_local ? "local " : "networked ") << (is_final ? "final " : "") << "interface " << lex.current_token() << std::endl;
+    AST::interface_t* node = new AST::interface_t(lex.current_token(), is_local, is_final);
+    node->dump();
 
-    //lex.expect(lbrace);
-    //lex.expect(rbrace);
+    parse_tree = node;
+
+    if (!lex.expect(token::kind::lbrace))
+    {
+        std::cerr << "{ expected" << std::endl;
+        return false;
+    }
+
+    // Parse body here (should be a loop!)
+    //   body = { exception | typedef | method } ;
+    lex.lex();
+
+    switch (lex.token_kind())
+    {
+//         case token::kind::rbrace: leave
+        case token::kind::kw_exception:
+            parse_exception();
+            break;
+// if (kind == token::kind::kw_range) parse_range_type_alias();
+// if (kind == token::kind::kw_sequence) parse_sequence_type_alias();
+// if (kind == token::kind::kw_set) parse_set_type_alias();
+// if (kind == token::kind::kw_record) parse_record_type_alias();
+// if (kind == token::kind::type_decl) parse_type_alias();
+        case token::kind::kw_idempotent:
+        case token::kind::identifier:
+            parse_method();
+            break;
+        default:
+            std::cerr << "Invalid token....blabla" << std::endl;
+            return false;
+    }
+
+    if (!lex.expect(token::kind::rbrace))
+    {
+        std::cerr << "} expected" << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool parser_t::parse_exception()
+{
+    D();
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "exception ID expected" << std::endl;
+        return false;
+    }
+
+    AST::exception_t* node = new AST::exception_t(lex.current_token());
+    if (!lex.expect(token::kind::lbrace))
+    {
+        std::cerr << "{ expected" << std::endl;
+        return false;
+    }
+
+    parse_field_list(node);
+
+    if (!lex.expect(token::kind::rbrace))
+    {
+        std::cerr << "} expected" << std::endl;
+        return false;
+    }
+
+    parse_tree->add_exception_def(node);
+    node->dump();
+    return true;
+}
+
+bool parser_t::parse_method()
+{
+    D();
+    if (lex.token_kind() == token::kind::kw_idempotent)
+    {
+        is_idempotent = true;
+        lex.lex();
+        return parse_method(); // expect method name
+    }
+    if (lex.token_kind() == token::kind::identifier)
+    {
+        if (!lex.expect(token::kind::lparen))
+        {
+            std::cerr << "( expected" << std::endl;
+            return false;
+        }
+        return true;//parse_argument_list()
+    }
+    return false;
+}
+
+//! field_list ::= '{' (fieldtype fieldname ';')* '}'
+bool parser_t::parse_field_list(AST::node_t* parent)
+{
+    D();
+    while (lex.lex() != token::kind::rbrace)
+    {
+        lex.lexback();
+        if (!parse_field(parent))
+            return false;
+    }
+    lex.lexback();
+    return true;
+}
+
+// parse_field_list(node_t* node) would call node->add_field(parsed_field)
+bool parser_t::parse_field(AST::node_t* parent)
+{
+    D();
+    if (!lex.expect(token::kind::identifier)) //lex.maybe(reference);
+    {
+        std::cerr << "field type ID expected" << std::endl;
+        return false;
+    }
+    AST::var_decl_t* field = new AST::var_decl_t(lex.current_token());
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "field name expected" << std::endl;
+        return false;
+    }
+    field->name = lex.current_token();
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    parent->add_field(field);
     return true;
 }

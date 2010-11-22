@@ -6,6 +6,7 @@ lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf)
     : cur_buf(StartBuf)
 {
     cur_ptr = cur_buf->getBufferStart();
+    cur_kind = next_kind = token::none;
 }
 
 int lexer_t::get_next_char()
@@ -37,6 +38,13 @@ void lexer_t::skip_line_comment()
 
 token::kind lexer_t::get_token()
 {
+    if (next_kind != token::none)
+    {
+        token::kind t = next_kind;
+        next_kind = token::none;
+        return t;
+    }
+
     token_start = cur_ptr;
 
     int cur_char = get_next_char();
