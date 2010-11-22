@@ -5,6 +5,8 @@ namespace token
 
 enum kind
 {
+    none,
+
     // Markers
     eof, error,
 
