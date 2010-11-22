@@ -6,16 +6,24 @@
 namespace AST
 {
 
+class var_decl_t;
+class exception_t;
+
 class node_t
 {
 public:
     virtual void dump() = 0;
+    virtual bool add_field(var_decl_t*) { return false; }
+    virtual bool add_exception_def(exception_t*) { return false; }
 };
 
 // Variable or parameter declaration as "type-name" pair.
 class var_decl_t : public node_t
 {
 public:
+    var_decl_t(std::string tp) : type(tp) {}
+    virtual void dump();
+
     std::string type; // use known types! check LLVM's Type/TypeBuilder
     std::string name;
 };
@@ -37,11 +45,17 @@ class exception_t : public node_t
 public:
     std::string name;
     std::vector<var_decl_t*> fields;
+
+    exception_t(std::string nm) : name(nm) {}
+    virtual bool add_field(var_decl_t* field);
+    virtual void dump();
 };
 
 class method_t : public node_t
 {
 public:
+    virtual void dump();
+
     bool idempotent; //..., async, oneway(==never_returns?)
     std::string name;
     std::vector<parameter_t*> params;
@@ -54,7 +68,8 @@ class interface_t : public node_t
 {
 public:
     interface_t(std::string nm, bool is_local, bool is_final) : local(is_local), final(is_final), name(nm) {}
-    void dump();
+    virtual bool add_exception_def(exception_t* exc);
+    virtual void dump();
 
     bool local;
     bool final;
