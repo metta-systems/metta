@@ -12,6 +12,8 @@ class exception_t;
 class node_t
 {
 public:
+    //TODO: add detailed position information: source buffer, line, column
+
     virtual void dump() = 0;
     virtual bool add_field(var_decl_t*) { return false; }
     virtual bool add_exception_def(exception_t*) { return false; }
@@ -21,7 +23,7 @@ public:
 class var_decl_t : public node_t
 {
 public:
-    var_decl_t(std::string tp) : type(tp) {}
+    var_decl_t() {}
     virtual void dump();
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
@@ -55,6 +57,7 @@ class method_t : public node_t
 {
 public:
     virtual void dump();
+//     virtual bool add_exception_def(exception_t* exc); // would add to raises() ? rename to add_exception() though
 
     bool idempotent; //..., async, oneway(==never_returns?)
     std::string name;

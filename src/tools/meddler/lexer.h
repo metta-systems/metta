@@ -1,19 +1,21 @@
 #pragma once
 
 #include "token.h"
+#include "symbol_table.h"
 #include <llvm/Support/MemoryBuffer.h>
 
 class lexer_t
 {
     const char *cur_ptr;
     llvm::MemoryBuffer *cur_buf;
+    symbol_table_t *symbols;
     // Information about current token.
     const char *token_start;
     token::kind cur_kind;
     token::kind next_kind;
 
 public:
-    explicit lexer_t(llvm::MemoryBuffer *StartBuf);//, SourceMgr &SM
+    explicit lexer_t(llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);//, SourceMgr &SM
 
     token::kind lex()
     {

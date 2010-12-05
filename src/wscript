@@ -249,7 +249,7 @@ def build(bld):
     # Tool to parse interface files.
     meddler = bld.new_task_gen('cxx', 'program')
     meddler.target = 'meddler'
-    meddler.source = map(lambda f: 'tools/meddler/' + f, 'meddler.cpp parser.cpp lexer.cpp ast.cpp'.split())
+    meddler.source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table'.split())
     meddler.env = bld.env_of_name('TOOLS_ENV').copy()
     meddler.env.append_unique('CXXDEFINES', ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'])
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
