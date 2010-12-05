@@ -2,8 +2,9 @@
 #include "token.h"
 #include "lexer.h"
 
-lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf)
+lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
     : cur_buf(StartBuf)
+    , symbols(sym)
 {
     cur_ptr = cur_buf->getBufferStart();
     cur_kind = next_kind = token::none;
@@ -95,25 +96,9 @@ token::kind lexer_t::get_identifier()
     --start_ptr;
     unsigned int len = cur_ptr - start_ptr;
 
-#define KEYWORD(word) \
-    if (len == strlen(#word) && !memcmp(start_ptr, #word, len)) \
-        return token::kw_##word;
+    symbol_table_t::iterator idx = symbols->lookup(std::string(start_ptr, len));
+    if (idx == symbols->end())
+        idx = symbols->insert(std::string(start_ptr, len), token::identifier);
 
-    KEYWORD(local);
-    KEYWORD(final);
-    KEYWORD(interface);
-    KEYWORD(exception);
-    KEYWORD(in);
-    KEYWORD(inout);
-    KEYWORD(out);
-    KEYWORD(idempotent);
-    KEYWORD(raises);
-    KEYWORD(needs);
-    KEYWORD(extends);
-    KEYWORD(never);
-    KEYWORD(returns);
-
-    // TODO: handle types
-
-    return token::identifier;
+    return symbols->kind(idx);
 }

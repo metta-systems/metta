@@ -1,9 +1,11 @@
 local interface mmu_module_v1
 {
+    #type int32 address;
+
     exception failure
     {
         string name;
-        int value;
+        int32 value;
     }
 
     # Creates the initial "MMU".
