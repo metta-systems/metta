@@ -18,9 +18,14 @@ struct module_interface
     state_type* state;
 };
 
-// BUG: deriving from parent closure has wrong type for methods and or state
+/* #define DECLARE_CLOSURE_(name, parent) \
+    struct name##_ops; struct name##_state; template <class ops_type = name##_ops, class state_type = name##_state> struct name##_closure : public parent##_closure<name##_ops, name##_state>
+
+#define DECLARE_CLOSURE(name) \
+    struct name##_ops; struct name##_state; template <class ops_type = name##_ops, class state_type = name##_state> struct name##_closure : public module_interface<name##_ops, name##_state>*/
+
 #define DECLARE_CLOSURE_(name, parent) \
-    struct name##_ops; struct name##_state; struct name##_closure : public parent##_closure
+    struct name##_ops; struct name##_state; struct name##_closure : public parent##_closure<name##_ops, name##_state>
 
 #define DECLARE_CLOSURE(name) \
     struct name##_ops; struct name##_state; struct name##_closure : public module_interface<name##_ops, name##_state>
