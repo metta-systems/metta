@@ -23,11 +23,13 @@ public:
 class var_decl_t : public node_t
 {
 public:
-    var_decl_t() {}
+    var_decl_t() : type(), name(), reference(false) {}
+    void set_reference() { reference = true; }
     virtual void dump();
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
     std::string name;
+    bool reference;
 };
 
 // Represents both method arguments and returns.

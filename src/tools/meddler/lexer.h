@@ -11,7 +11,7 @@ class lexer_t
     symbol_table_t *symbols;
     // Information about current token.
     const char *token_start;
-    token::kind cur_kind;
+    token::kind cur_kind; // lookahead
     token::kind next_kind;
 
 public:
@@ -42,6 +42,14 @@ public:
     bool expect(token::kind kind)
     {
         return (lex() == kind);
+    }
+
+    bool maybe(token::kind kind)
+    {
+        if (lex() == kind)
+            return true;
+        lexback();
+        return false;
     }
 
 private:

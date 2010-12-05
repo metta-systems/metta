@@ -331,7 +331,8 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
         return false;
     }
     to_get.type = lex.current_token();
-    //lex.maybe(reference);
+    if (lex.maybe(token::kind::reference))
+        to_get.set_reference();
     if (!lex.expect(token::kind::identifier))
     {
         std::cerr << "field name expected" << std::endl;

@@ -7,6 +7,7 @@ namespace AST
 
 void var_decl_t::dump()
 {
+    std::cout << type << (reference ? "& " : " ") << name;
 }
 
 bool interface_t::add_exception_def(exception_t* exc)
@@ -37,7 +38,7 @@ void exception_t::dump()
         std::cout << "  [empty]" << std::endl;
     else
         std::for_each(fields.begin(), fields.end(), [](var_decl_t* var){
-            std::cout << "  " << var->type << " " << var->name << ";" << std::endl;
+            std::cout << "  "; var->dump(); std::cout << ";" << std::endl;
         });
 }
 
