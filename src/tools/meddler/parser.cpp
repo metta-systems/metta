@@ -97,6 +97,10 @@ bool parser_t::run()
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
     symbols.dump();
+    if (ret)
+        std::cout << "** PARSE SUCCESS" << std::endl;
+    else
+        std::cout << "** PARSE FAILURE" << std::endl;
     return ret;
 }
 
@@ -221,7 +225,11 @@ bool parser_t::parse_interface_body()
                 parse_set_type_alias();
                 break;
             case token::kind::kw_record:
-                parse_record_type_alias();
+                if (!parse_record_type_alias())
+                {
+                    std::cerr << "Record type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_type:
                 if (!parse_type_alias())
@@ -253,6 +261,9 @@ bool parser_t::parse_interface_body()
 bool parser_t::parse_exception()
 {
     D();
+    if (!lex.match(token::kind::kw_exception))
+        return false;
+
     if (!lex.expect(token::kind::identifier))
     {
         std::cerr << "exception ID expected" << std::endl;
@@ -302,8 +313,11 @@ bool parser_t::parse_method()
         m.idempotent = is_idempotent;
         is_idempotent = false;
 
-        if (!parse_argument_list(m, AST::parameter_t::in)) // TODO: return arglist here so we can stash it into right place
+        std::vector<AST::parameter_t*> params;
+        if (!parse_argument_list(params, AST::parameter_t::in))
             return false;
+
+        m.params = params;
 
         if (!lex.expect(token::kind::rparen))
         {
@@ -311,11 +325,11 @@ bool parser_t::parse_method()
             return false;
         }
 
-        if (lex.maybe(token::kind::kw_returns))
-            parse_method_returns();
+        if (lex.maybe(token::kind::kw_returns) || lex.maybe(token::kind::kw_never))
+            parse_method_returns(m);
 
         if (lex.maybe(token::kind::kw_raises))
-            parse_method_raises();
+            parse_method_raises(m);
 
         if (lex.expect(token::kind::semicolon))
         {
@@ -327,13 +341,13 @@ bool parser_t::parse_method()
 }
 
 // TODO: return arglist here so we can stash it into right place
-bool parser_t::parse_argument_list(AST::method_t& parent, AST::parameter_t::direction_e default_dir)
+bool parser_t::parse_argument_list(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
 {
     D();
     while (lex.lex() != token::kind::rparen)
     {
         lex.lexback();
-        if (!parse_argument(parent, default_dir))
+        if (!parse_argument(args, default_dir))
             return false;
     }
     lex.lexback();
@@ -351,6 +365,36 @@ bool parser_t::parse_field_list(AST::node_t* parent)
             return false;
     }
     lex.lexback();
+    return true;
+}
+
+bool parser_t::parse_id_list(std::vector<std::string>& ids)
+{
+    D();
+    while (lex.lex() != token::kind::rparen)
+    {
+        lex.lexback();
+        if (!lex.expect(token::kind::type))
+        {
+            if (!lex.match(token::kind::identifier))
+            {
+                std::cerr << "type ID expected" << std::endl;
+                return false;
+            }
+        }
+        ids.push_back(lex.current_token());
+        if (!lex.expect(token::kind::comma))
+        {
+            if (lex.match(token::rparen))
+            {
+                lex.lexback();
+                return true;
+            }
+            std::cerr << ", or ) expected" << std::endl;
+            return false;
+        }
+    }
+    lex.lexback();//??
     return true;
 }
 
@@ -397,7 +441,7 @@ bool parser_t::parse_field(AST::node_t* parent)
     return true;
 }
 
-bool parser_t::parse_argument(AST::method_t& parent, AST::parameter_t::direction_e default_dir)
+bool parser_t::parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
 {
     D();
     AST::parameter_t p;
@@ -418,7 +462,7 @@ bool parser_t::parse_argument(AST::method_t& parent, AST::parameter_t::direction
     {
         return false;
     }
-    parent.add_parameter(new AST::parameter_t(p));
+    args.push_back(new AST::parameter_t(p));
     if (!lex.expect(token::kind::comma))
     {
         if (lex.match(token::rparen))
@@ -487,19 +531,98 @@ bool parser_t::parse_set_type_alias()
 bool parser_t::parse_record_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_record))
+        return false;
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "record ID expected" << std::endl;
+        return false;
+    }
+
+    AST::record_alias_t* node = new AST::record_alias_t(lex.current_token());
+
+    if (!lex.expect(token::kind::lbrace))
+    {
+        std::cerr << "{ expected" << std::endl;
+        return false;
+    }
+
+    parse_field_list(node);
+
+    if (!lex.expect(token::kind::rbrace))
+    {
+        std::cerr << "} expected" << std::endl;
+        return false;
+    }
+
+    parse_tree->add_type(node);
+    return true;
 }
 
-bool parser_t::parse_method_returns()
+bool parser_t::parse_method_returns(AST::method_t& m)
 {
     D();
-//     if (!parse_argument_list(m, AST::parameter_t::out))
-//         return false;
-    return false;
+
+    if (lex.match(token::kind::kw_never))
+    {
+        if (!lex.expect(token::kind::kw_returns))
+        {
+            std::cerr << "'returns' expected after 'never'" << std::endl;
+            return false;
+        }
+        m.returns.clear();
+        m.never_returns = true;
+        return true;
+    }
+
+    if (!lex.match(token::kind::kw_returns))
+        return false;
+
+    if (!lex.expect(token::kind::lparen))
+    {
+        std::cerr << "( expected" << std::endl;
+        return false;
+    }
+
+    std::vector<AST::parameter_t*> returns;
+    if (!parse_argument_list(returns, AST::parameter_t::out))
+        return false;
+
+    m.returns = returns;
+
+    if (!lex.expect(token::kind::rparen))
+    {
+        std::cerr << ") expected" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-bool parser_t::parse_method_raises()
+bool parser_t::parse_method_raises(AST::method_t& m)
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_raises))
+        return false;
+
+    if (!lex.expect(token::kind::lparen))
+    {
+        std::cerr << "( expected" << std::endl;
+        return false;
+    }
+
+    std::vector<std::string> exc_ids;
+    if (!parse_id_list(exc_ids))
+        return false;
+
+    m.raises_ids = exc_ids;
+
+    if (!lex.expect(token::kind::rparen))
+    {
+        std::cerr << ") expected" << std::endl;
+        return false;
+    }
+
+    return true;
 }
