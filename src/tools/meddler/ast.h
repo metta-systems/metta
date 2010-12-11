@@ -52,6 +52,24 @@ public:
     type_alias_t() : alias_t() {}
 };
 
+class sequence_alias_t : public alias_t
+{
+public:
+    sequence_alias_t() : alias_t() {}
+    // type - base type
+    // name - sequence type name
+};
+
+class record_alias_t : public alias_t
+{
+public:
+    std::vector<var_decl_t*> fields;
+
+    record_alias_t(std::string nm) : alias_t() { name = nm; }
+    virtual bool add_field(var_decl_t* field);
+    virtual void dump(std::string indent_prefix);
+};
+
 // Represents both method arguments and returns.
 class parameter_t : public var_decl_t
 {
@@ -74,17 +92,20 @@ public:
 class method_t : public node_t
 {
 public:
+    method_t() : node_t(), idempotent(false), never_returns(false) {}
+
     virtual void dump(std::string indent_prefix);
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
     virtual bool add_exception(exception_t*);
 
-    bool idempotent; //..., async, oneway(==never_returns?)
     std::string name;
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
     std::vector<exception_t*> raises;
-    bool never_returns;
+    std::vector<std::string>  raises_ids;
+    bool idempotent;
+    bool never_returns; // oneway
 };
 
 class interface_t : public node_t

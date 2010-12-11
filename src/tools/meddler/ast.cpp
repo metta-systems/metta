@@ -33,6 +33,13 @@ bool exception_t::add_field(var_decl_t* field)
     return true;
 }
 
+bool record_alias_t::add_field(var_decl_t* field)
+{
+    std::cout << "record_alias_t::add_field()" << std::endl;
+    fields.push_back(field);
+    return true;
+}
+
 bool method_t::add_parameter(parameter_t* p)
 {
     std::cout << "method_t::add_parameter()" << std::endl;
@@ -105,6 +112,18 @@ void exception_t::dump(std::string indent_prefix)
         });
 }
 
+void record_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "record_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "+-fields" << std::endl;
+    if (fields.size() == 0)
+        std::cout << indent_prefix << "  [empty]" << std::endl;
+    else
+        std::for_each(fields.begin(), fields.end(), [indent_prefix](var_decl_t* var){
+            std::cout << indent_prefix << "  "; var->dump(""); std::cout << ";" << std::endl;
+        });
+}
+
 void method_t::dump(std::string indent_prefix)
 {
     std::cout << indent_prefix << "method_t(\"" << name << "\")" << (idempotent ? " idempotent" : "") << std::endl;
@@ -113,16 +132,30 @@ void method_t::dump(std::string indent_prefix)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
         std::for_each(params.begin(), params.end(), [indent_prefix](parameter_t* p) { p->dump(indent_prefix + "  "); });
-    std::cout << indent_prefix << "+-returns" << std::endl;
-    if (returns.size() == 0)
-        std::cout << indent_prefix << "  [empty]" << std::endl;
+    if (never_returns)
+        std::cout << indent_prefix << "+-never returns" << std::endl;
     else
-        std::for_each(returns.begin(), returns.end(), [indent_prefix](parameter_t* p) { p->dump(indent_prefix + "  "); });
+    {
+        std::cout << indent_prefix << "+-returns" << std::endl;
+        if (returns.size() == 0)
+            std::cout << indent_prefix << "  [empty]" << std::endl;
+        else
+            std::for_each(returns.begin(), returns.end(), [indent_prefix](parameter_t* p) { p->dump(indent_prefix + "  "); });
+    }
     std::cout << indent_prefix << "+-exceptions" << std::endl;
     if (raises.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
         std::for_each(raises.begin(), raises.end(), [indent_prefix](exception_t* e) { e->dump(indent_prefix + "  "); });
+
+    std::cout << indent_prefix << "+-unresolved exceptions ids" << std::endl;
+    if (raises_ids.size() == 0)
+        std::cout << indent_prefix << "  [empty]" << std::endl;
+    else
+        std::for_each(raises_ids.begin(), raises_ids.end(), [indent_prefix](std::string s)
+        {
+            std::cout << indent_prefix << "  " << s << std::endl;
+        });
 }
 
 }
