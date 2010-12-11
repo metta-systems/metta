@@ -51,6 +51,7 @@ std::string token_to_name(token::kind tok)
 parser_t::parser_t(llvm::MemoryBuffer *F)
     : is_local(false)
     , is_final(false)
+    , is_idempotent(false)
     , lex(F, &symbols)
     , parse_tree(0)
 {
@@ -99,8 +100,16 @@ bool parser_t::run()
     return ret;
 }
 
-#define D() std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl
+#define D() L(std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
 
+// static void error(const char *msg)
+// {
+//     std::cerr << msg << endl;
+//     exit(1);
+// }
+
+//! module ::= full_interface_decl
+//! full_interface_decl ::= local_interface_decl | final_interface_decl | interface_decl
 bool parser_t::parse_top_level_entities()
 {
     is_local = false;
@@ -123,30 +132,42 @@ bool parser_t::parse_top_level_entities()
     }
 }
 
-// parse interface definition ([local] [final] interface ID...)
+//! local_interface_decl ::= 'local' (final_interface_decl | interface_decl)
+//! final_interface_decl ::= 'final' (local_interface_decl | interface_decl)
+//! interface_decl ::= 'interface' id ['extends' id] '{' interface_body '}'
 bool parser_t::parse_interface()
 {
     D();
-    if (lex.token_kind() == token::kind::kw_local)
+    if (lex.match(token::kind::kw_local))
     {
         is_local = true;
         lex.lex();
         return parse_interface(); // expect final or interface
     }
-    if (lex.token_kind() == token::kind::kw_final)
+    if (lex.match(token::kind::kw_final))
     {
         is_final = true;
         lex.lex();
         return parse_interface(); // expect local or interface
     }
-    if (lex.token_kind() == token::kind::kw_interface)
+    if (lex.match(token::kind::kw_interface))
     {
-        lex.lex();
-        if (lex.token_kind() != token::kind::identifier)
+        if (!lex.expect(token::kind::identifier))
             return false;
 
         AST::interface_t* node = new AST::interface_t(lex.current_token(), is_local, is_final);
         parse_tree = node;
+
+        if (lex.maybe(token::kind::kw_extends))
+        {
+            lex.lex();
+            if (lex.token_kind() != token::kind::identifier)
+            {
+                std::cerr << "'extends' needs interface id" << std::endl;
+                return false;
+            }
+            node->set_parent(lex.current_token());
+        }
 
         if (!lex.expect(token::kind::lbrace))
         {
@@ -163,20 +184,17 @@ bool parser_t::parse_interface()
             return false;
         }
 
-        node->dump();
+        node->dump("");
         return true;
     }
     std::cerr << "unexpected" << std::endl;
     return false;
 }
 
-//! typeid ::= id | builtin_type
-//! body ::= ( exception | typealias | method )*
-//! typealias ::= rangedef | sequencedef | setdef | recorddef | typedef
+//! interface_body ::= (exception | typealias | full_method_decl)*
 bool parser_t::parse_interface_body()
 {
     D();
-
     while (lex.lex() != token::eof)
     {
         switch (lex.token_kind())
@@ -184,6 +202,7 @@ bool parser_t::parse_interface_body()
             case token::kind::rbrace: // end of interface declaration
                 lex.lexback();
                 return true;
+            // Exception
             case token::kind::kw_exception:
                 if (!parse_exception())
                 {
@@ -191,6 +210,7 @@ bool parser_t::parse_interface_body()
                     return false;
                 }
                 break;
+            // Typealiases
             case token::kind::kw_range:
                 parse_range_type_alias();
                 break;
@@ -204,8 +224,13 @@ bool parser_t::parse_interface_body()
                 parse_record_type_alias();
                 break;
             case token::kind::kw_type:
-                parse_type_alias();
+                if (!parse_type_alias())
+                {
+                    std::cerr << "Type alias parse failed." << std::endl;
+                    return false;
+                }
                 break;
+            // Method declaration
             case token::kind::kw_idempotent:
             case token::kind::identifier:
                 if (!parse_method())
@@ -223,7 +248,8 @@ bool parser_t::parse_interface_body()
     return false;
 }
 
-//! exception ::= 'exception' id '{' field_list '}'
+//! exception ::= 'exception' id '{' exception_body '}'
+//! exception_body ::= field_list
 bool parser_t::parse_exception()
 {
     D();
@@ -248,31 +274,35 @@ bool parser_t::parse_exception()
         return false;
     }
 
-    parse_tree->add_exception_def(node);
-    node->dump();
+    parse_tree->add_exception(node);
     return true;
 }
 
-//! method_decl ::= ['idempotent'] id argument_list ['returns' argument_list|'never' 'returns'] ['raises' id_list]
 bool parser_t::parse_method()
 {
     D();
-    if (lex.token_kind() == token::kind::kw_idempotent)
+    if (lex.match(token::kind::kw_idempotent))
     {
         is_idempotent = true;
         lex.lex();
         return parse_method(); // expect method name
     }
-    if (lex.token_kind() == token::kind::identifier)
+    if (lex.match(token::kind::identifier))
     {
+        std::string name = lex.current_token();
+
         if (!lex.expect(token::kind::lparen))
         {
             std::cerr << "( expected" << std::endl;
             return false;
         }
 
-        AST::node_t* method = 0;
-        if (!parse_argument_list(method))
+        AST::method_t m;
+        m.name = name;
+        m.idempotent = is_idempotent;
+        is_idempotent = false;
+
+        if (!parse_argument_list(m, AST::parameter_t::in)) // TODO: return arglist here so we can stash it into right place
             return false;
 
         if (!lex.expect(token::kind::rparen))
@@ -281,34 +311,36 @@ bool parser_t::parse_method()
             return false;
         }
 
-//         if (lex.maybe(token::kind::kw_returns))
-//             parse_method_returns();
-//         if (lex.maybe(token::kind::kw_raises))
-//             parse_method_raises();
+        if (lex.maybe(token::kind::kw_returns))
+            parse_method_returns();
+
+        if (lex.maybe(token::kind::kw_raises))
+            parse_method_raises();
 
         if (lex.expect(token::kind::semicolon))
+        {
+            parse_tree->add_method(new AST::method_t(m));
             return true;
-
-        return false;
+        }
     }
     return false;
 }
 
-//! argument_list ::= '(' [ var_decl (',' var_decl)* ] ')'
-bool parser_t::parse_argument_list(AST::node_t* parent)
+// TODO: return arglist here so we can stash it into right place
+bool parser_t::parse_argument_list(AST::method_t& parent, AST::parameter_t::direction_e default_dir)
 {
     D();
     while (lex.lex() != token::kind::rparen)
     {
         lex.lexback();
-        if (!parse_argument(parent))
+        if (!parse_argument(parent, default_dir))
             return false;
     }
     lex.lexback();
     return true;
 }
 
-//! field_list ::= '{' (var_decl ';')* '}'
+//! field_list ::= (var_decl ';')*
 bool parser_t::parse_field_list(AST::node_t* parent)
 {
     D();
@@ -325,13 +357,18 @@ bool parser_t::parse_field_list(AST::node_t* parent)
 //! var_decl ::= typeid [reference] id
 bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
 {
+    D();
     if (!lex.expect(token::kind::type))
     {
-        std::cerr << "field type ID expected" << std::endl;
-        return false;
+        if (!lex.match(token::kind::identifier))
+        {
+            std::cerr << "field type ID expected" << std::endl;
+            return false;
+        }
     }
     to_get.type = lex.current_token();
-    //lex.maybe(reference);
+    if (lex.maybe(token::kind::reference))
+        to_get.set_reference();
     if (!lex.expect(token::kind::identifier))
     {
         std::cerr << "field name expected" << std::endl;
@@ -341,7 +378,6 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
     return true;
 }
 
-//! field ::= var_decl ';'
 bool parser_t::parse_field(AST::node_t* parent)
 {
     D();
@@ -361,56 +397,109 @@ bool parser_t::parse_field(AST::node_t* parent)
     return true;
 }
 
-//! argument ::= var_decl [','|')']
-bool parser_t::parse_argument(AST::node_t* /*parent*/)
+bool parser_t::parse_argument(AST::method_t& parent, AST::parameter_t::direction_e default_dir)
 {
     D();
-    AST::var_decl_t* field = new AST::var_decl_t;
-    if (!parse_var_decl(*field))
+    AST::parameter_t p;
+    p.direction = default_dir;
+    if (lex.maybe(token::kind::kw_in))
     {
-        delete field;
+        p.direction = p.in;
+    }
+    else if (lex.maybe(token::kind::kw_out))
+    {
+        p.direction = p.out;
+    }
+    else if(lex.maybe(token::kind::kw_inout))
+    {
+        p.direction = p.inout;
+    }
+    if (!parse_var_decl(p))
+    {
         return false;
     }
-//     parent->add_field(field);
+    parent.add_parameter(new AST::parameter_t(p));
     if (!lex.expect(token::kind::comma))
     {
-        if (lex.token_kind() == token::rparen)
+        if (lex.match(token::rparen))
         {
             lex.lexback();
             return true;
         }
-        std::cerr << ", expected" << std::endl;
+        std::cerr << ", or ) expected" << std::endl;
         return false;
     }
     return true;
 }
 
-//! rangedef ::=
-bool parser_t::parse_range_type_alias()
-{
-    return false;
-}
-
-//! sequencedef ::=
-bool parser_t::parse_sequence_type_alias()
-{
-    return false;
-}
-
-//! setdef ::=
-bool parser_t::parse_set_type_alias()
-{
-    return false;
-}
-
-//! recorddef ::=
-bool parser_t::parse_record_type_alias()
-{
-    return false;
-}
-
-//! typedef ::=
+//! typedef ::= 'type' id id ';'
 bool parser_t::parse_type_alias()
 {
+    D();
+    if (!lex.match(token::kind::kw_type))
+        return false;
+    AST::type_alias_t t;
+    if (!lex.expect(token::kind::identifier))
+    {
+        if (!lex.match(token::kind::type))
+        {
+            std::cerr << "type ID expected" << std::endl;
+            return false;
+        }
+    }
+    t.type = lex.current_token();
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "type name expected" << std::endl;
+        return false;
+    }
+    t.name = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    parse_tree->add_type(new AST::type_alias_t(t));
+
+    return true;
+}
+
+bool parser_t::parse_range_type_alias()
+{
+    D();
+    return false;
+}
+
+bool parser_t::parse_sequence_type_alias()
+{
+    D();
+    return false;
+}
+
+bool parser_t::parse_set_type_alias()
+{
+    D();
+    return false;
+}
+
+bool parser_t::parse_record_type_alias()
+{
+    D();
+    return false;
+}
+
+bool parser_t::parse_method_returns()
+{
+    D();
+//     if (!parse_argument_list(m, AST::parameter_t::out))
+//         return false;
+    return false;
+}
+
+bool parser_t::parse_method_raises()
+{
+    D();
     return false;
 }

@@ -96,9 +96,10 @@ token::kind lexer_t::get_identifier()
     --start_ptr;
     unsigned int len = cur_ptr - start_ptr;
 
-    symbol_table_t::iterator idx = symbols->lookup(std::string(start_ptr, len));
+    std::string symbol(start_ptr, len);
+    symbol_table_t::iterator idx = symbols->lookup(symbol);
     if (idx == symbols->end())
-        idx = symbols->insert(std::string(start_ptr, len), token::identifier);
+        idx = symbols->insert(symbol, token::identifier); //FIXME: will put in types as identifiers too
 
     return symbols->kind(idx);
 }

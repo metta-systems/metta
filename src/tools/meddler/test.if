@@ -1,6 +1,6 @@
-local interface mmu_module_v1
+local interface mmu_module_v1 extends mmu_v1
 {
-    #type int32 address;
+    type card32 address;
 
     exception failure
     {
@@ -10,8 +10,11 @@ local interface mmu_module_v1
 
     # Creates the initial "MMU".
     create(int32 size)
-        returns (mmu_v1& mmu, ramtab_v1& ramtab, memory_v1.address free)
-        raises (memory_v1.failure);
+#         returns (mmu_v1& mmu, ramtab_v1& ramtab, memory_v1.address free)
+#         raises (memory_v1.failure);
+    ;
+
+    idempotent set_flag();
 
     # Finish the initialisation of the MMU.
     finish_init(mmu_v1& mmu, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc);
@@ -19,7 +22,7 @@ local interface mmu_module_v1
 #
 # Should generate the following AST:
 #
-# interface_t("mmu_module_v1", local:true, final:false)
+# interface_t("mmu_module_v1", local:true, final:false) extends mmu_v1
 # +-types
 #   [empty]
 # +-exceptions

@@ -18,6 +18,8 @@ symbol_table_t::iterator symbol_table_t::lookup(std::string key)
 
 token::kind symbol_table_t::kind(symbol_table_t::iterator idx)
 {
+    if (idx == end())
+        return token::kind::none;
     return (*idx).second;
 }
 
