@@ -1,7 +1,9 @@
-TODO: add oneway modifier for asynchronous exec? check zeroc notes for downsides if any.
-TODO: needs declaration might be not needed, since we will use fully-qualified module ids and its possible to derive
-needs module names from there...
+TODO: add oneway modifier for asynchronous exec? check zeroc notes for downsides if any. (should be equal to 'never returns')
 TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not bound to a closure
+ - what would be implemented semantics for such methods though?
+
+'extends' in a syntax sugar only - it allows to avoid repeating the whole interface declaration if two versions only
+extend one another. Interface versions v1 and v2 do not have to have extends relationship. The IS_A relation does not apply.
 
 /*!
  * BNF of the grammar.
@@ -25,7 +27,7 @@ TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not 
  * full_method_decl ::= idempotent_method_decl | method_decl
  * idempotent_method_decl ::= 'idempotent' method_decl
  * method_decl ::= id argument_list ['returns' argument_list|'never' 'returns'] ['raises' id_list] ';'
- * argument_list ::= '(' [ var_decl (',' var_decl)* ] ')'
+ * argument_list ::= '(' [ argument (',' argument)* ] ')'
  * argument ::= ['in'|'out'|'inout'] var_decl
  * id_list ::= '(' [ id (',' id)* ] ')'
  * var_decl ::= typeid [reference] id
@@ -34,9 +36,3 @@ TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not 
  * id ::= [A-Za-z]([A-Za-z0-9_.])*
  * builtin_type ::= 'int8' | 'int16' | 'int32' | 'int64' | 'octet' | 'card16' | 'card32' | 'card64' | 'float' | 'double' | 'boolean'
  */
-
-This syntax is supposed to support "type id, id, id" case, probably not use it for simplicity of parser?
-
-arg_spec = ["in"|"out"|"inout"] typeID , ID , { "," , ID } ;
-args = arg_spec , { "," , arg_spec } ;
-return_spec = "returns" , "(" , {args} , ")" | "never" , "returns" ;

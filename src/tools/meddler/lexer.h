@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+#include "logger.h"
 #include "token.h"
 #include "symbol_table.h"
 #include <llvm/Support/MemoryBuffer.h>
@@ -19,7 +21,9 @@ public:
 
     token::kind lex()
     {
-        return (cur_kind = get_token());
+        cur_kind = get_token();
+        L(std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
+        return cur_kind;
     }
 
     // Put lexed token back into the stream for next lex() to consume.
@@ -39,11 +43,19 @@ public:
         return std::string(token_start, (int)(cur_ptr - token_start));
     }
 
+    // Match current token to kind.
+    bool match(token::kind kind)
+    {
+        return token_kind() == kind;
+    }
+
+    // Read next token and expect it to be of type kind
     bool expect(token::kind kind)
     {
         return (lex() == kind);
     }
 
+    // Lookup next token and see if it matches kind
     bool maybe(token::kind kind)
     {
         if (lex() == kind)
