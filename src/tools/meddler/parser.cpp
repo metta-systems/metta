@@ -34,7 +34,6 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_out)
         TNAME(kw_idempotent)
         TNAME(kw_raises)
-        TNAME(kw_needs)
         TNAME(kw_extends)
         TNAME(kw_never)
         TNAME(kw_returns)
@@ -43,6 +42,8 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_set)
         TNAME(kw_range)
         TNAME(kw_record)
+        TNAME(kw_enum)
+        TNAME(kw_array)
         TNAME(identifier)
     }
     return "UNKNOWN";
@@ -78,6 +79,8 @@ void parser_t::populate_symbol_table()
     symbols.insert("set", token::kind::kw_set);
     symbols.insert("range", token::kind::kw_range);
     symbols.insert("record", token::kind::kw_record);
+    symbols.insert("enum", token::kind::kw_enum);
+    symbols.insert("array", token::kind::kw_array);
     symbols.insert("int8", token::kind::type/*, builtin_type*/);
     symbols.insert("int16", token::kind::type/*, builtin_type*/);
     symbols.insert("int32", token::kind::type/*, builtin_type*/);
@@ -215,14 +218,40 @@ bool parser_t::parse_interface_body()
                 }
                 break;
             // Typealiases
+            case token::kind::kw_enum:
+                if (!parse_enum_type_alias())
+                {
+                    std::cerr << "Enum type parse failed." << std::endl;
+                    return false;
+                }
+                break;
+            case token::kind::kw_array:
+                if (!parse_array_type_alias())
+                {
+                    std::cerr << "Array type parse failed." << std::endl;
+                    return false;
+                }
+                break;
             case token::kind::kw_range:
-                parse_range_type_alias();
+                if (!parse_range_type_alias())
+                {
+                    std::cerr << "Range type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_sequence:
-                parse_sequence_type_alias();
+                if (!parse_sequence_type_alias())
+                {
+                    std::cerr << "Sequence type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_set:
-                parse_set_type_alias();
+                if (!parse_set_type_alias())
+                {
+                    std::cerr << "Set type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_record:
                 if (!parse_record_type_alias())
@@ -558,6 +587,18 @@ bool parser_t::parse_record_type_alias()
 
     parse_tree->add_type(node);
     return true;
+}
+
+bool parser_t::parse_enum_type_alias()
+{
+    D();
+    return false;
+}
+
+bool parser_t::parse_array_type_alias()
+{
+    D();
+    return false;
 }
 
 bool parser_t::parse_method_returns(AST::method_t& m)

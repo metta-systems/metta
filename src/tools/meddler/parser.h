@@ -27,6 +27,8 @@ class parser_t
     bool parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_id_list(std::vector<std::string>& ids);
 
+    bool parse_enum_type_alias();
+    bool parse_array_type_alias();
     bool parse_range_type_alias();
     bool parse_sequence_type_alias();
     bool parse_set_type_alias();

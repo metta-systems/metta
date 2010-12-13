@@ -78,7 +78,7 @@ token::kind lexer_t::get_token()
 /// is_label_char - Return true for [a-zA-Z._0-9].
 static bool is_label_char(char c)
 {
-    return isalnum(c) || c == '.' || c == '_';
+    return isalnum(c) || c == '.' || c == '_';//TODO: add special handling for dotdot
 }
 
 /// get_identifier: Handle several related productions:
