@@ -24,7 +24,7 @@ std::string token_to_name(token::kind tok)
         TNAME(rparen)
         TNAME(semicolon)
         TNAME(backslash)
-        TNAME(type)
+//         TNAME(type) identifier
         TNAME(kw_local)
         TNAME(kw_final)
         TNAME(kw_interface)
