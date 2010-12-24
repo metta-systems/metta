@@ -25,7 +25,7 @@ class parser_t
     bool parse_field(AST::node_t* parent);
     bool parse_argument_list(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
-    bool parse_id_list(std::vector<std::string>& ids);
+    bool parse_id_list(std::vector<std::string>& ids, token::kind delim);
 
     bool parse_enum_type_alias();
     bool parse_array_type_alias();

@@ -70,6 +70,16 @@ public:
     virtual void dump(std::string indent_prefix);
 };
 
+class enum_alias_t : public alias_t
+{
+public:
+    std::vector<std::string> fields;
+
+    enum_alias_t() : alias_t() { }
+    virtual bool add_field(var_decl_t* field);
+    virtual void dump(std::string indent_prefix);
+};
+
 // Represents both method arguments and returns.
 class parameter_t : public var_decl_t
 {

@@ -40,6 +40,13 @@ bool record_alias_t::add_field(var_decl_t* field)
     return true;
 }
 
+bool enum_alias_t::add_field(var_decl_t* field)
+{
+    std::cout << "enum_alias_t::add_field()" << std::endl;
+    fields.push_back(field->name);
+    return true;
+}
+
 bool method_t::add_parameter(parameter_t* p)
 {
     std::cout << "method_t::add_parameter()" << std::endl;
@@ -121,6 +128,18 @@ void record_alias_t::dump(std::string indent_prefix)
     else
         std::for_each(fields.begin(), fields.end(), [indent_prefix](var_decl_t* var){
             std::cout << indent_prefix << "  "; var->dump(""); std::cout << ";" << std::endl;
+        });
+}
+
+void enum_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "enum_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "+-fields" << std::endl;
+    if (fields.size() == 0)
+        std::cout << indent_prefix << "  [empty]" << std::endl;
+    else
+        std::for_each(fields.begin(), fields.end(), [indent_prefix](std::string s){
+            std::cout << indent_prefix << "  " << s << ";" << std::endl;
         });
 }
 
