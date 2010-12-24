@@ -1,20 +1,20 @@
---
--- Part of Metta OS. Check http://metta.exquance.com for latest version.
---
--- Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
---
--- Distributed under the Boost Software License, Version 1.0.
--- (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
---
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 local interface frames_module_v1
 {
-    memory_v1.physmem physmem;
-    memory_v1.address address;
+    type memory_v1.physmem physmem;
+    type memory_v1.address address;
 
     required_size()
         returns (memory_v1.size);
 
-    create(physmem allmem, used, ramtab_v1.tab& rtab, address state)
+    create(physmem allmem, physmem used, ramtab_v1.tab& rtab, address state)
         returns (system_frame_allocator_v1);
 
     finish_init(system_frames_allocator_v1& frames, heap_v1& heap);
