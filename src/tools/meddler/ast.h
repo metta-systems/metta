@@ -29,6 +29,7 @@ class alias_t : public node_t
 {
 public:
     alias_t() : node_t(), type(), name() {}
+    alias_t(std::string nm) : node_t(), type(), name(nm) {}
     virtual void dump(std::string indent_prefix);
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
@@ -77,6 +78,15 @@ public:
 
     enum_alias_t() : alias_t() { }
     virtual bool add_field(var_decl_t* field);
+    virtual void dump(std::string indent_prefix);
+};
+
+class range_alias_t : public alias_t
+{
+public:
+    std::string start, end;
+
+    range_alias_t(std::string nm, std::string s, std::string e) : alias_t(nm), start(s), end(e) { }
     virtual void dump(std::string indent_prefix);
 };
 

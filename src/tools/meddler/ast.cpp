@@ -143,6 +143,13 @@ void enum_alias_t::dump(std::string indent_prefix)
         });
 }
 
+void range_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "range_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "+-start: " << start << std::endl;
+    std::cout << indent_prefix << "+-end:   " << end << std::endl;
+}
+
 void method_t::dump(std::string indent_prefix)
 {
     std::cout << indent_prefix << "method_t(\"" << name << "\")" << (idempotent ? " idempotent" : "") << std::endl;

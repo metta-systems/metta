@@ -544,7 +544,49 @@ bool parser_t::parse_type_alias()
 bool parser_t::parse_range_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_range))
+        return false;
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range start ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_start = lex.current_token();
+
+    if (!lex.expect(token::kind::dotdot))
+    {
+        std::cerr << ".. expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range end ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_end = lex.current_token();
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_id = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::range_alias_t* node = new AST::range_alias_t(range_id, range_start, range_end);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_sequence_type_alias()
