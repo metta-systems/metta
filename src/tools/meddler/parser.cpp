@@ -34,7 +34,6 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_out)
         TNAME(kw_idempotent)
         TNAME(kw_raises)
-        TNAME(kw_needs)
         TNAME(kw_extends)
         TNAME(kw_never)
         TNAME(kw_returns)
@@ -43,7 +42,11 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_set)
         TNAME(kw_range)
         TNAME(kw_record)
+        TNAME(kw_enum)
+        TNAME(kw_array)
         TNAME(identifier)
+        TNAME(dotdot)
+        TNAME(cardinal)
     }
     return "UNKNOWN";
 }
@@ -61,6 +64,7 @@ parser_t::parser_t(llvm::MemoryBuffer *F)
 // Store various id types in a symbol table.
 void parser_t::populate_symbol_table()
 {
+    symbols.insert("..", token::kind::dotdot);
     symbols.insert("local", token::kind::kw_local);
     symbols.insert("final", token::kind::kw_final);
     symbols.insert("interface", token::kind::kw_interface);
@@ -78,6 +82,8 @@ void parser_t::populate_symbol_table()
     symbols.insert("set", token::kind::kw_set);
     symbols.insert("range", token::kind::kw_range);
     symbols.insert("record", token::kind::kw_record);
+    symbols.insert("enum", token::kind::kw_enum);
+    symbols.insert("array", token::kind::kw_array);
     symbols.insert("int8", token::kind::type/*, builtin_type*/);
     symbols.insert("int16", token::kind::type/*, builtin_type*/);
     symbols.insert("int32", token::kind::type/*, builtin_type*/);
@@ -96,7 +102,7 @@ bool parser_t::run()
 {
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
-    symbols.dump();
+//     symbols.dump();
     if (ret)
         std::cout << "** PARSE SUCCESS" << std::endl;
     else
@@ -215,14 +221,40 @@ bool parser_t::parse_interface_body()
                 }
                 break;
             // Typealiases
+            case token::kind::kw_enum:
+                if (!parse_enum_type_alias())
+                {
+                    std::cerr << "Enum type parse failed." << std::endl;
+                    return false;
+                }
+                break;
+            case token::kind::kw_array:
+                if (!parse_array_type_alias())
+                {
+                    std::cerr << "Array type parse failed." << std::endl;
+                    return false;
+                }
+                break;
             case token::kind::kw_range:
-                parse_range_type_alias();
+                if (!parse_range_type_alias())
+                {
+                    std::cerr << "Range type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_sequence:
-                parse_sequence_type_alias();
+                if (!parse_sequence_type_alias())
+                {
+                    std::cerr << "Sequence type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_set:
-                parse_set_type_alias();
+                if (!parse_set_type_alias())
+                {
+                    std::cerr << "Set type parse failed." << std::endl;
+                    return false;
+                }
                 break;
             case token::kind::kw_record:
                 if (!parse_record_type_alias())
@@ -368,7 +400,7 @@ bool parser_t::parse_field_list(AST::node_t* parent)
     return true;
 }
 
-bool parser_t::parse_id_list(std::vector<std::string>& ids)
+bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
 {
     D();
     while (lex.lex() != token::kind::rparen)
@@ -385,12 +417,12 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids)
         ids.push_back(lex.current_token());
         if (!lex.expect(token::kind::comma))
         {
-            if (lex.match(token::rparen))
+            if (lex.match(delim))
             {
                 lex.lexback();
                 return true;
             }
-            std::cerr << ", or ) expected" << std::endl;
+            std::cerr << ", or delimiter expected" << std::endl;
             return false;
         }
     }
@@ -513,19 +545,141 @@ bool parser_t::parse_type_alias()
 bool parser_t::parse_range_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_range))
+        return false;
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range start ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_start = lex.current_token();
+
+    if (!lex.expect(token::kind::dotdot))
+    {
+        std::cerr << ".. expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range end ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_end = lex.current_token();
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "range type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string range_id = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::range_alias_t* node = new AST::range_alias_t(range_id, range_start, range_end);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_sequence_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_sequence))
+        return false;
+
+    if (!lex.expect(token::kind::less))
+    {
+        std::cerr << "< expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "sequence base type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string base_type = lex.current_token();
+
+    if (!lex.expect(token::kind::greater))
+    {
+        std::cerr << "> expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "sequence type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string type = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::sequence_alias_t* node = new AST::sequence_alias_t(type, base_type);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_set_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_set))
+        return false;
+
+    if (!lex.expect(token::kind::less))
+    {
+        std::cerr << "< expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "set base type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string base_type = lex.current_token();
+
+    if (!lex.expect(token::kind::greater))
+    {
+        std::cerr << "> expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "set type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string type = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::set_alias_t* node = new AST::set_alias_t(type, base_type);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_record_type_alias()
@@ -555,6 +709,107 @@ bool parser_t::parse_record_type_alias()
         std::cerr << "} expected" << std::endl;
         return false;
     }
+
+    parse_tree->add_type(node);
+    return true;
+}
+
+bool parser_t::parse_enum_type_alias()
+{
+    D();
+    if (!lex.match(token::kind::kw_enum))
+        return false;
+
+    AST::enum_alias_t* node = new AST::enum_alias_t;//memleaks on errors!
+
+    if (!lex.expect(token::kind::lbrace))
+    {
+        std::cerr << "{ expected" << std::endl;
+        return false;
+    }
+
+    std::vector<std::string> ids;
+    if (!parse_id_list(ids, token::rbrace))
+    {
+        std::cerr << "enum list parse failed" << std::endl;
+        return false;
+    }
+
+    node->fields = ids;
+
+    if (!lex.expect(token::kind::rbrace))
+    {
+        std::cerr << "} expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "enum ID expected" << std::endl;
+        return false;
+    }
+
+    node->name = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    parse_tree->add_type(node);
+    return true;
+}
+
+bool parser_t::parse_array_type_alias()
+{
+    D();
+    if (!lex.match(token::kind::kw_array))
+        return false;
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "array base type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string base_type = lex.current_token();
+
+    if (!lex.expect(token::kind::lsquare))
+    {
+        std::cerr << "[ expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::cardinal))
+    {
+        std::cerr << "number of repetitions expected" << std::endl;
+        return false;
+    }
+
+    int count = lex.current_value();
+
+    if (!lex.expect(token::kind::rsquare))
+    {
+        std::cerr << "] expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "array ID expected" << std::endl;
+        return false;
+    }
+
+    std::string type = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::array_alias_t* node = new AST::array_alias_t(type, base_type, count);
 
     parse_tree->add_type(node);
     return true;
@@ -613,7 +868,7 @@ bool parser_t::parse_method_raises(AST::method_t& m)
     }
 
     std::vector<std::string> exc_ids;
-    if (!parse_id_list(exc_ids))
+    if (!parse_id_list(exc_ids, token::rparen))
         return false;
 
     m.raises_ids = exc_ids;

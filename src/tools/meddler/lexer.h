@@ -15,6 +15,7 @@ class lexer_t
     const char *token_start;
     token::kind cur_kind; // lookahead
     token::kind next_kind;
+    unsigned token_val;
 
 public:
     explicit lexer_t(llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);//, SourceMgr &SM
@@ -43,6 +44,11 @@ public:
         return std::string(token_start, (int)(cur_ptr - token_start));
     }
 
+    unsigned current_value()
+    {
+        return token_val;
+    }
+
     // Match current token to kind.
     bool match(token::kind kind)
     {
@@ -67,6 +73,7 @@ public:
 private:
     token::kind get_token();
     token::kind get_identifier();
+    token::kind get_cardinal();
     int get_next_char();
     void skip_line_comment();
 };

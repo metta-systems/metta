@@ -40,6 +40,13 @@ bool record_alias_t::add_field(var_decl_t* field)
     return true;
 }
 
+bool enum_alias_t::add_field(var_decl_t* field)
+{
+    std::cout << "enum_alias_t::add_field()" << std::endl;
+    fields.push_back(field->name);
+    return true;
+}
+
 bool method_t::add_parameter(parameter_t* p)
 {
     std::cout << "method_t::add_parameter()" << std::endl;
@@ -122,6 +129,40 @@ void record_alias_t::dump(std::string indent_prefix)
         std::for_each(fields.begin(), fields.end(), [indent_prefix](var_decl_t* var){
             std::cout << indent_prefix << "  "; var->dump(""); std::cout << ";" << std::endl;
         });
+}
+
+void enum_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "enum_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "+-fields" << std::endl;
+    if (fields.size() == 0)
+        std::cout << indent_prefix << "  [empty]" << std::endl;
+    else
+        std::for_each(fields.begin(), fields.end(), [indent_prefix](std::string s){
+            std::cout << indent_prefix << "  " << s << ";" << std::endl;
+        });
+}
+
+void range_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "range_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "+-start: " << start << std::endl;
+    std::cout << indent_prefix << "+-end:   " << end << std::endl;
+}
+
+void sequence_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "sequence_t(\"" << name << "\") of " << type << std::endl;
+}
+
+void set_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "set_t(\"" << name << "\") of " << type << std::endl;
+}
+
+void array_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "array_t(\"" << name << "\") of " << count << " times " << type << std::endl;
 }
 
 void method_t::dump(std::string indent_prefix)

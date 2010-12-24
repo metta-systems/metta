@@ -29,6 +29,8 @@ class alias_t : public node_t
 {
 public:
     alias_t() : node_t(), type(), name() {}
+    alias_t(std::string nm) : node_t(), type(), name(nm) {}
+    alias_t(std::string tp, std::string nm) : node_t(), type(tp), name(nm) {}
     virtual void dump(std::string indent_prefix);
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
@@ -55,9 +57,30 @@ public:
 class sequence_alias_t : public alias_t
 {
 public:
-    sequence_alias_t() : alias_t() {}
     // type - base type
     // name - sequence type name
+    sequence_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    virtual void dump(std::string indent_prefix);
+};
+
+class array_alias_t : public alias_t
+{
+public:
+    // type - base type
+    // name - sequence type name
+    array_alias_t(std::string type, std::string base_type, int c) : alias_t(base_type, type), count(c) {}
+    virtual void dump(std::string indent_prefix);
+
+    int count;
+};
+
+class set_alias_t : public alias_t
+{
+public:
+    // type - base type
+    // name - set type name
+    set_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    virtual void dump(std::string indent_prefix);
 };
 
 class record_alias_t : public alias_t
@@ -67,6 +90,25 @@ public:
 
     record_alias_t(std::string nm) : alias_t() { name = nm; }
     virtual bool add_field(var_decl_t* field);
+    virtual void dump(std::string indent_prefix);
+};
+
+class enum_alias_t : public alias_t
+{
+public:
+    std::vector<std::string> fields;
+
+    enum_alias_t() : alias_t() { }
+    virtual bool add_field(var_decl_t* field);
+    virtual void dump(std::string indent_prefix);
+};
+
+class range_alias_t : public alias_t
+{
+public:
+    std::string start, end;
+
+    range_alias_t(std::string nm, std::string s, std::string e) : alias_t(nm), start(s), end(e) { }
     virtual void dump(std::string indent_prefix);
 };
 
