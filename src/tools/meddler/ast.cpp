@@ -150,6 +150,11 @@ void range_alias_t::dump(std::string indent_prefix)
     std::cout << indent_prefix << "+-end:   " << end << std::endl;
 }
 
+void sequence_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "sequence_t(\"" << name << "\") of " << type << std::endl;
+}
+
 void method_t::dump(std::string indent_prefix)
 {
     std::cout << indent_prefix << "method_t(\"" << name << "\")" << (idempotent ? " idempotent" : "") << std::endl;

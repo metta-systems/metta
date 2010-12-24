@@ -30,6 +30,7 @@ class alias_t : public node_t
 public:
     alias_t() : node_t(), type(), name() {}
     alias_t(std::string nm) : node_t(), type(), name(nm) {}
+    alias_t(std::string tp, std::string nm) : node_t(), type(tp), name(nm) {}
     virtual void dump(std::string indent_prefix);
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
@@ -56,9 +57,10 @@ public:
 class sequence_alias_t : public alias_t
 {
 public:
-    sequence_alias_t() : alias_t() {}
     // type - base type
     // name - sequence type name
+    sequence_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    virtual void dump(std::string indent_prefix);
 };
 
 class record_alias_t : public alias_t

@@ -592,7 +592,47 @@ bool parser_t::parse_range_type_alias()
 bool parser_t::parse_sequence_type_alias()
 {
     D();
-    return false;
+    if (!lex.match(token::kind::kw_sequence))
+        return false;
+
+    if (!lex.expect(token::kind::less))
+    {
+        std::cerr << "< expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "sequence base type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string base_type = lex.current_token();
+
+    if (!lex.expect(token::kind::greater))
+    {
+        std::cerr << "> expected" << std::endl;
+        return false;
+    }
+
+    if (!lex.expect(token::kind::identifier))
+    {
+        std::cerr << "sequence type ID expected" << std::endl;
+        return false;
+    }
+
+    std::string type = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::sequence_alias_t* node = new AST::sequence_alias_t(type, base_type);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_set_type_alias()

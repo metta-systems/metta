@@ -10,7 +10,7 @@ local interface test_module_v1 extends test_v1
 
     enum { A, B, C } alpha_beta;
 #     array dictent[10] ten_entries;
-#     sequence<dictent> entries;
+    sequence<dictent> entries;
 #     set<alpha_beta> alpha_flags;
     range A .. C alpha_range; # A limitation in lexer disallows writing A..C currently.
 
