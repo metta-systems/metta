@@ -46,6 +46,7 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_array)
         TNAME(identifier)
         TNAME(dotdot)
+        TNAME(cardinal)
     }
     return "UNKNOWN";
 }
@@ -101,7 +102,7 @@ bool parser_t::run()
 {
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
-    symbols.dump();
+//     symbols.dump();
     if (ret)
         std::cout << "** PARSE SUCCESS" << std::endl;
     else
@@ -766,13 +767,13 @@ bool parser_t::parse_array_type_alias()
     if (!lex.match(token::kind::kw_array))
         return false;
 
-//     AST::array_alias_t* node = new AST::array_alias_t(lex.current_token());
-
     if (!lex.expect(token::kind::identifier))
     {
         std::cerr << "array base type ID expected" << std::endl;
         return false;
     }
+
+    std::string base_type = lex.current_token();
 
     if (!lex.expect(token::kind::lsquare))
     {
@@ -780,8 +781,13 @@ bool parser_t::parse_array_type_alias()
         return false;
     }
 
-// lexer: expect NUMBER!
-//     parse_field_list(node);
+    if (!lex.expect(token::kind::cardinal))
+    {
+        std::cerr << "number of repetitions expected" << std::endl;
+        return false;
+    }
+
+    int count = lex.current_value();
 
     if (!lex.expect(token::kind::rsquare))
     {
@@ -795,9 +801,18 @@ bool parser_t::parse_array_type_alias()
         return false;
     }
 
-//     parse_tree->add_type(node);
-//     return true;
-    return false;
+    std::string type = lex.current_token();
+
+    if (!lex.expect(token::kind::semicolon))
+    {
+        std::cerr << "; expected" << std::endl;
+        return false;
+    }
+
+    AST::array_alias_t* node = new AST::array_alias_t(type, base_type, count);
+
+    parse_tree->add_type(node);
+    return true;
 }
 
 bool parser_t::parse_method_returns(AST::method_t& m)

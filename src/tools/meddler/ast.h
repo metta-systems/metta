@@ -63,6 +63,17 @@ public:
     virtual void dump(std::string indent_prefix);
 };
 
+class array_alias_t : public alias_t
+{
+public:
+    // type - base type
+    // name - sequence type name
+    array_alias_t(std::string type, std::string base_type, int c) : alias_t(base_type, type), count(c) {}
+    virtual void dump(std::string indent_prefix);
+
+    int count;
+};
+
 class set_alias_t : public alias_t
 {
 public:

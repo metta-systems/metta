@@ -20,6 +20,7 @@ enum kind
     lparen, rparen,    // (  )
     semicolon,         // ;
     backslash,         // \    (not /)
+    cardinal,          // a base 8, 10 or 16 positive number
     type,              // int, float, sequence etc
 
     kw_local, kw_final, kw_interface, kw_exception,

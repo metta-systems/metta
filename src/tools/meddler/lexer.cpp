@@ -5,6 +5,7 @@
 lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
     : cur_buf(StartBuf)
     , symbols(sym)
+    , token_val(0)
 {
     cur_ptr = cur_buf->getBufferStart();
     cur_kind = next_kind = token::none;
@@ -57,6 +58,9 @@ token::kind lexer_t::get_token()
         case '#':
             skip_line_comment();
             return get_token();
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+            return get_cardinal();
         case '=': return token::equal;
         case ',': return token::comma;
         case '&': return token::reference;
@@ -81,6 +85,12 @@ static bool is_label_char(char c)
     return isalnum(c) || c == '.' || c == '_';//TODO: add special handling for dotdot
 }
 
+/// is_number_char - Return true for [xX0-9].
+static bool is_number_char(char c)
+{
+    return isdigit(c) || c == 'x' || c == 'X';
+}
+
 /// get_identifier: Handle several related productions:
 ///    keyword         interface, idempotent, ...
 ///    integer         [0-9]+
@@ -102,4 +112,29 @@ token::kind lexer_t::get_identifier()
         idx = symbols->insert(symbol, token::identifier); //FIXME: will put in types as identifiers too
 
     return symbols->kind(idx);
+}
+
+token::kind lexer_t::get_cardinal()
+{
+    const char *start_ptr = cur_ptr;
+
+    for (; is_number_char(*cur_ptr) || isalnum(*cur_ptr) /* for other base numbers */; ++cur_ptr)
+    {
+    }
+
+    --start_ptr;
+    unsigned int len = cur_ptr - start_ptr;
+
+    if (is_label_char(*cur_ptr))
+        return token::error;
+
+    std::string symbol(start_ptr, len);
+
+    char* end;
+    token_val = strtol(symbol.c_str(), &end, 0);
+
+    if (*end == '\0')
+        return token::cardinal;
+    else
+        return token::error;
 }
