@@ -155,6 +155,11 @@ void sequence_alias_t::dump(std::string indent_prefix)
     std::cout << indent_prefix << "sequence_t(\"" << name << "\") of " << type << std::endl;
 }
 
+void set_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "set_t(\"" << name << "\") of " << type << std::endl;
+}
+
 void method_t::dump(std::string indent_prefix)
 {
     std::cout << indent_prefix << "method_t(\"" << name << "\")" << (idempotent ? " idempotent" : "") << std::endl;

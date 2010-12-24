@@ -63,6 +63,15 @@ public:
     virtual void dump(std::string indent_prefix);
 };
 
+class set_alias_t : public alias_t
+{
+public:
+    // type - base type
+    // name - set type name
+    set_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    virtual void dump(std::string indent_prefix);
+};
+
 class record_alias_t : public alias_t
 {
 public:
