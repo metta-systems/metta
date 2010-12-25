@@ -36,6 +36,8 @@ class parser_t
     bool parse_type_alias();
 
 public:
+    parser_t();
     parser_t(llvm::MemoryBuffer *F);
+    void init(const llvm::MemoryBuffer *F);
     bool run();
 };

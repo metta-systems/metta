@@ -27,5 +27,6 @@ public:
      */
     token::kind kind(iterator idx);
 
+    void clear() { symbols.clear(); }
     void dump();
 };

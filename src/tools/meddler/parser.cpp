@@ -51,6 +51,15 @@ std::string token_to_name(token::kind tok)
     return "UNKNOWN";
 }
 
+parser_t::parser_t()
+    : is_local(false)
+    , is_final(false)
+    , is_idempotent(false)
+    , lex()
+    , parse_tree(0)
+{
+}
+
 parser_t::parser_t(llvm::MemoryBuffer *F)
     : is_local(false)
     , is_final(false)
@@ -58,12 +67,21 @@ parser_t::parser_t(llvm::MemoryBuffer *F)
     , lex(F, &symbols)
     , parse_tree(0)
 {
+    init(F);
+}
+
+void parser_t::init(const llvm::MemoryBuffer *F)
+{
+    is_local = is_final = is_idempotent = false;
+    delete parse_tree; parse_tree = 0;
+    lex.init(F, &symbols);
     populate_symbol_table();
 }
 
 // Store various id types in a symbol table.
 void parser_t::populate_symbol_table()
 {
+    symbols.clear();
     symbols.insert("..", token::kind::dotdot);
     symbols.insert("local", token::kind::kw_local);
     symbols.insert("final", token::kind::kw_final);

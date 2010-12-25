@@ -2,13 +2,27 @@
 #include "token.h"
 #include "lexer.h"
 
-lexer_t::lexer_t(llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
-    : cur_buf(StartBuf)
-    , symbols(sym)
+lexer_t::lexer_t()
+    : cur_ptr(0)
+    , cur_buf(0)
+    , symbols(0)
+    , cur_kind(token::none)
     , token_val(0)
 {
+}
+
+lexer_t::lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
+{
+    init(StartBuf, sym);
+}
+
+void lexer_t::init(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
+{
+    cur_buf = StartBuf;
     cur_ptr = cur_buf->getBufferStart();
+    symbols = sym;
     cur_kind = next_kind = token::none;
+    token_val = 0;
 }
 
 int lexer_t::get_next_char()
