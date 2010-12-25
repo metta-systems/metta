@@ -1,6 +1,8 @@
 #include <iostream>
+#include <sstream>
 #include "parser.h"
 #include "ast.h"
+#include <llvm/ADT/Twine.h>
 
 std::string token_to_name(token::kind tok)
 {
@@ -51,23 +53,14 @@ std::string token_to_name(token::kind tok)
     return "UNKNOWN";
 }
 
-parser_t::parser_t()
+parser_t::parser_t(llvm::SourceMgr& sm)
     : is_local(false)
     , is_final(false)
     , is_idempotent(false)
     , lex()
     , parse_tree(0)
+    , source_mgr(sm)
 {
-}
-
-parser_t::parser_t(llvm::MemoryBuffer *F)
-    : is_local(false)
-    , is_final(false)
-    , is_idempotent(false)
-    , lex(F, &symbols)
-    , parse_tree(0)
-{
-    init(F);
 }
 
 void parser_t::init(const llvm::MemoryBuffer *F)
@@ -77,6 +70,17 @@ void parser_t::init(const llvm::MemoryBuffer *F)
     lex.init(F, &symbols);
     populate_symbol_table();
 }
+
+void parser_t::reportError(std::string msg)
+{
+    source_mgr.PrintMessage(lex.current_loc(), llvm::Twine(msg), "error", true);
+}
+
+#define PARSE_ERROR(x) do { \
+        std::stringstream _s; \
+        _s << x; \
+        reportError(_s.str()); \
+    } while (0);
 
 // Store various id types in a symbol table.
 void parser_t::populate_symbol_table()
@@ -129,12 +133,6 @@ bool parser_t::run()
 }
 
 #define D() L(std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
-
-// static void error(const char *msg)
-// {
-//     std::cerr << msg << endl;
-//     exit(1);
-// }
 
 //! module ::= full_interface_decl
 //! full_interface_decl ::= local_interface_decl | final_interface_decl | interface_decl
@@ -191,7 +189,7 @@ bool parser_t::parse_interface()
             lex.lex();
             if (lex.token_kind() != token::kind::identifier)
             {
-                std::cerr << "'extends' needs interface id" << std::endl;
+                PARSE_ERROR("'extends' needs interface id");
                 return false;
             }
             node->set_parent(lex.current_token());
@@ -199,7 +197,7 @@ bool parser_t::parse_interface()
 
         if (!lex.expect(token::kind::lbrace))
         {
-            std::cerr << "{ expected" << std::endl;
+            PARSE_ERROR("{ expected");
             return false;
         }
 
@@ -208,14 +206,14 @@ bool parser_t::parse_interface()
 
         if (!lex.expect(token::kind::rbrace))
         {
-            std::cerr << "} expected" << std::endl;
+            PARSE_ERROR("} expected");
             return false;
         }
 
         node->dump("");
         return true;
     }
-    std::cerr << "unexpected" << std::endl;
+    PARSE_ERROR("unexpected");
     return false;
 }
 
@@ -234,7 +232,7 @@ bool parser_t::parse_interface_body()
             case token::kind::kw_exception:
                 if (!parse_exception())
                 {
-                    std::cerr << "Exception parse failed." << std::endl;
+                    PARSE_ERROR("Exception parse failed.");
                     return false;
                 }
                 break;
@@ -242,49 +240,49 @@ bool parser_t::parse_interface_body()
             case token::kind::kw_enum:
                 if (!parse_enum_type_alias())
                 {
-                    std::cerr << "Enum type parse failed." << std::endl;
+                    PARSE_ERROR("Enum type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_array:
                 if (!parse_array_type_alias())
                 {
-                    std::cerr << "Array type parse failed." << std::endl;
+                    PARSE_ERROR("Array type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_range:
                 if (!parse_range_type_alias())
                 {
-                    std::cerr << "Range type parse failed." << std::endl;
+                    PARSE_ERROR("Range type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_sequence:
                 if (!parse_sequence_type_alias())
                 {
-                    std::cerr << "Sequence type parse failed." << std::endl;
+                    PARSE_ERROR("Sequence type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_set:
                 if (!parse_set_type_alias())
                 {
-                    std::cerr << "Set type parse failed." << std::endl;
+                    PARSE_ERROR("Set type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_record:
                 if (!parse_record_type_alias())
                 {
-                    std::cerr << "Record type parse failed." << std::endl;
+                    PARSE_ERROR("Record type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_type:
                 if (!parse_type_alias())
                 {
-                    std::cerr << "Type alias parse failed." << std::endl;
+                    PARSE_ERROR("Type alias parse failed.");
                     return false;
                 }
                 break;
@@ -293,12 +291,12 @@ bool parser_t::parse_interface_body()
             case token::kind::identifier:
                 if (!parse_method())
                 {
-                    std::cerr << "Method parse failed." << std::endl;
+                    PARSE_ERROR("Method parse failed.");
                     return false;
                 }
                 break;
             default:
-                std::cerr << "Invalid token....blabla" << std::endl;
+                PARSE_ERROR("Invalid token....blabla");
                 return false;
         }
     }
@@ -316,14 +314,14 @@ bool parser_t::parse_exception()
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "exception ID expected" << std::endl;
+        PARSE_ERROR("exception ID expected");
         return false;
     }
 
     AST::exception_t* node = new AST::exception_t(lex.current_token());
     if (!lex.expect(token::kind::lbrace))
     {
-        std::cerr << "{ expected" << std::endl;
+        PARSE_ERROR("{ expected");
         return false;
     }
 
@@ -331,7 +329,7 @@ bool parser_t::parse_exception()
 
     if (!lex.expect(token::kind::rbrace))
     {
-        std::cerr << "} expected" << std::endl;
+        PARSE_ERROR("} expected");
         return false;
     }
 
@@ -354,7 +352,7 @@ bool parser_t::parse_method()
 
         if (!lex.expect(token::kind::lparen))
         {
-            std::cerr << "( expected" << std::endl;
+            PARSE_ERROR("( expected");
             return false;
         }
 
@@ -371,7 +369,7 @@ bool parser_t::parse_method()
 
         if (!lex.expect(token::kind::rparen))
         {
-            std::cerr << ") expected" << std::endl;
+            PARSE_ERROR(") expected");
             return false;
         }
 
@@ -428,7 +426,7 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
         {
             if (!lex.match(token::kind::identifier))
             {
-                std::cerr << "type ID expected" << std::endl;
+                PARSE_ERROR("type ID expected");
                 return false;
             }
         }
@@ -440,7 +438,7 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
                 lex.lexback();
                 return true;
             }
-            std::cerr << ", or delimiter expected" << std::endl;
+            PARSE_ERROR(", or delimiter expected");
             return false;
         }
     }
@@ -456,7 +454,7 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
     {
         if (!lex.match(token::kind::identifier))
         {
-            std::cerr << "field type ID expected" << std::endl;
+            PARSE_ERROR("field type ID expected");
             return false;
         }
     }
@@ -465,7 +463,7 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
         to_get.set_reference();
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "field name expected" << std::endl;
+        PARSE_ERROR("field name expected");
         return false;
     }
     to_get.name = lex.current_token();
@@ -483,7 +481,7 @@ bool parser_t::parse_field(AST::node_t* parent)
     }
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -520,7 +518,7 @@ bool parser_t::parse_argument(std::vector<AST::parameter_t*>& args, AST::paramet
             lex.lexback();
             return true;
         }
-        std::cerr << ", or ) expected" << std::endl;
+        PARSE_ERROR(", or ) expected");
         return false;
     }
     return true;
@@ -537,21 +535,21 @@ bool parser_t::parse_type_alias()
     {
         if (!lex.match(token::kind::type))
         {
-            std::cerr << "type ID expected" << std::endl;
+            PARSE_ERROR("type ID expected");
             return false;
         }
     }
     t.type = lex.current_token();
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "type name expected" << std::endl;
+        PARSE_ERROR("type name expected");
         return false;
     }
     t.name = lex.current_token();
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -568,7 +566,7 @@ bool parser_t::parse_range_type_alias()
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "range start ID expected" << std::endl;
+        PARSE_ERROR("range start ID expected");
         return false;
     }
 
@@ -576,13 +574,13 @@ bool parser_t::parse_range_type_alias()
 
     if (!lex.expect(token::kind::dotdot))
     {
-        std::cerr << ".. expected" << std::endl;
+        PARSE_ERROR(".. expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "range end ID expected" << std::endl;
+        PARSE_ERROR("range end ID expected");
         return false;
     }
 
@@ -590,7 +588,7 @@ bool parser_t::parse_range_type_alias()
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "range type ID expected" << std::endl;
+        PARSE_ERROR("range type ID expected");
         return false;
     }
 
@@ -598,7 +596,7 @@ bool parser_t::parse_range_type_alias()
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -616,13 +614,13 @@ bool parser_t::parse_sequence_type_alias()
 
     if (!lex.expect(token::kind::less))
     {
-        std::cerr << "< expected" << std::endl;
+        PARSE_ERROR("< expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "sequence base type ID expected" << std::endl;
+        PARSE_ERROR("sequence base type ID expected");
         return false;
     }
 
@@ -630,13 +628,13 @@ bool parser_t::parse_sequence_type_alias()
 
     if (!lex.expect(token::kind::greater))
     {
-        std::cerr << "> expected" << std::endl;
+        PARSE_ERROR("> expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "sequence type ID expected" << std::endl;
+        PARSE_ERROR("sequence type ID expected");
         return false;
     }
 
@@ -644,7 +642,7 @@ bool parser_t::parse_sequence_type_alias()
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -662,13 +660,13 @@ bool parser_t::parse_set_type_alias()
 
     if (!lex.expect(token::kind::less))
     {
-        std::cerr << "< expected" << std::endl;
+        PARSE_ERROR("< expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "set base type ID expected" << std::endl;
+        PARSE_ERROR("set base type ID expected");
         return false;
     }
 
@@ -676,13 +674,13 @@ bool parser_t::parse_set_type_alias()
 
     if (!lex.expect(token::kind::greater))
     {
-        std::cerr << "> expected" << std::endl;
+        PARSE_ERROR("> expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "set type ID expected" << std::endl;
+        PARSE_ERROR("set type ID expected");
         return false;
     }
 
@@ -690,7 +688,7 @@ bool parser_t::parse_set_type_alias()
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -708,7 +706,7 @@ bool parser_t::parse_record_type_alias()
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "record ID expected" << std::endl;
+        PARSE_ERROR("record ID expected");
         return false;
     }
 
@@ -716,7 +714,7 @@ bool parser_t::parse_record_type_alias()
 
     if (!lex.expect(token::kind::lbrace))
     {
-        std::cerr << "{ expected" << std::endl;
+        PARSE_ERROR("{ expected");
         return false;
     }
 
@@ -724,7 +722,7 @@ bool parser_t::parse_record_type_alias()
 
     if (!lex.expect(token::kind::rbrace))
     {
-        std::cerr << "} expected" << std::endl;
+        PARSE_ERROR("} expected");
         return false;
     }
 
@@ -742,14 +740,14 @@ bool parser_t::parse_enum_type_alias()
 
     if (!lex.expect(token::kind::lbrace))
     {
-        std::cerr << "{ expected" << std::endl;
+        PARSE_ERROR("{ expected");
         return false;
     }
 
     std::vector<std::string> ids;
     if (!parse_id_list(ids, token::rbrace))
     {
-        std::cerr << "enum list parse failed" << std::endl;
+        PARSE_ERROR("enum list parse failed");
         return false;
     }
 
@@ -757,13 +755,13 @@ bool parser_t::parse_enum_type_alias()
 
     if (!lex.expect(token::kind::rbrace))
     {
-        std::cerr << "} expected" << std::endl;
+        PARSE_ERROR("} expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "enum ID expected" << std::endl;
+        PARSE_ERROR("enum ID expected");
         return false;
     }
 
@@ -771,7 +769,7 @@ bool parser_t::parse_enum_type_alias()
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -787,7 +785,7 @@ bool parser_t::parse_array_type_alias()
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "array base type ID expected" << std::endl;
+        PARSE_ERROR("array base type ID expected");
         return false;
     }
 
@@ -795,13 +793,13 @@ bool parser_t::parse_array_type_alias()
 
     if (!lex.expect(token::kind::lsquare))
     {
-        std::cerr << "[ expected" << std::endl;
+        PARSE_ERROR("[ expected");
         return false;
     }
 
     if (!lex.expect(token::kind::cardinal))
     {
-        std::cerr << "number of repetitions expected" << std::endl;
+        PARSE_ERROR("number of repetitions expected");
         return false;
     }
 
@@ -809,13 +807,13 @@ bool parser_t::parse_array_type_alias()
 
     if (!lex.expect(token::kind::rsquare))
     {
-        std::cerr << "] expected" << std::endl;
+        PARSE_ERROR("] expected");
         return false;
     }
 
     if (!lex.expect(token::kind::identifier))
     {
-        std::cerr << "array ID expected" << std::endl;
+        PARSE_ERROR("array ID expected");
         return false;
     }
 
@@ -823,7 +821,7 @@ bool parser_t::parse_array_type_alias()
 
     if (!lex.expect(token::kind::semicolon))
     {
-        std::cerr << "; expected" << std::endl;
+        PARSE_ERROR("; expected");
         return false;
     }
 
@@ -841,7 +839,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
     {
         if (!lex.expect(token::kind::kw_returns))
         {
-            std::cerr << "'returns' expected after 'never'" << std::endl;
+            PARSE_ERROR("'returns' expected after 'never'");
             return false;
         }
         m.returns.clear();
@@ -854,7 +852,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
 
     if (!lex.expect(token::kind::lparen))
     {
-        std::cerr << "( expected" << std::endl;
+        PARSE_ERROR("( expected");
         return false;
     }
 
@@ -866,7 +864,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
 
     if (!lex.expect(token::kind::rparen))
     {
-        std::cerr << ") expected" << std::endl;
+        PARSE_ERROR(") expected");
         return false;
     }
 
@@ -881,7 +879,7 @@ bool parser_t::parse_method_raises(AST::method_t& m)
 
     if (!lex.expect(token::kind::lparen))
     {
-        std::cerr << "( expected" << std::endl;
+        PARSE_ERROR("( expected");
         return false;
     }
 
@@ -893,7 +891,7 @@ bool parser_t::parse_method_raises(AST::method_t& m)
 
     if (!lex.expect(token::kind::rparen))
     {
-        std::cerr << ") expected" << std::endl;
+        PARSE_ERROR(") expected");
         return false;
     }
 

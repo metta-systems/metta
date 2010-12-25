@@ -5,6 +5,7 @@
 #include "token.h"
 #include "symbol_table.h"
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/SMLoc.h>
 
 class lexer_t
 {
@@ -49,6 +50,11 @@ public:
     unsigned current_value()
     {
         return token_val;
+    }
+
+    llvm::SMLoc current_loc()
+    {
+        return llvm::SMLoc::getFromPointer(token_start);
     }
 
     // Match current token to kind.

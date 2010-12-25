@@ -18,13 +18,15 @@ class Meddler
     std::vector<std::string> include_dirs;
 
 public:
+    Meddler() : sm(), parser(sm) {}
+
     void set_include_dirs(std::vector<std::string> dirs)
     {
         include_dirs = dirs;
         sm.setIncludeDirs(include_dirs);
     }
 
-    /* create a memory buffer, add it to sm, create corresponding parser and add to queue */
+    /* TODO: create corresponding parser and add to queue */
     bool add_source(std::string file)
     {
         unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc());
