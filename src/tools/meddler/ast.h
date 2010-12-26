@@ -190,6 +190,8 @@ public:
     std::vector<std::string>  raises_ids;
     bool idempotent;
     bool never_returns; // oneway
+    // generated properties
+    std::string parent_interface;
 };
 
 class interface_t : public node_t

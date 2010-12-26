@@ -29,7 +29,7 @@ void interface_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void method_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void method_t::emit_impl_h(std::ostringstream& s)
 {
     std::string return_value_type;
     if (never_returns || returns.size() == 0)
@@ -44,26 +44,20 @@ void method_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
     s << '\t' << return_value_type
       << " (*" << name << ")(";
 
-    bool first = true;
-    std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
-    {
-        if (!first)
-            s << ", ";
-        else
-            first = false;
+    s << parent_interface << "_closure* self";
 
+    std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
+    {
+        s << ", ";
         param->emit_impl_h(s);
     });
 
+    // TODO: add by-ptr for non-interface returns
     if (returns.size() > 1)
     {
-        std::for_each(returns.begin()+1, returns.end(), [&s, &first](parameter_t* param)
+        std::for_each(returns.begin()+1, returns.end(), [&s](parameter_t* param)
         {
-            if (!first)
-                s << ", ";
-            else
-                first = false;
-
+            s << ", ";
             param->emit_impl_h(s);
         });
     }
