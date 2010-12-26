@@ -357,7 +357,7 @@ bool parser_t::parse_method()
         }
 
         AST::method_t m;
-        m.name = name;
+        m.name_ = name;
         m.idempotent = is_idempotent;
         is_idempotent = false;
 
@@ -466,7 +466,7 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
         PARSE_ERROR("field name expected");
         return false;
     }
-    to_get.name = lex.current_token();
+    to_get.name_ = lex.current_token();
     return true;
 }
 
@@ -545,7 +545,7 @@ bool parser_t::parse_type_alias()
         PARSE_ERROR("type name expected");
         return false;
     }
-    t.name = lex.current_token();
+    t.name_ = lex.current_token();
 
     if (!lex.expect(token::kind::semicolon))
     {
@@ -765,7 +765,7 @@ bool parser_t::parse_enum_type_alias()
         return false;
     }
 
-    node->name = lex.current_token();
+    node->name_ = lex.current_token();
 
     if (!lex.expect(token::kind::semicolon))
     {

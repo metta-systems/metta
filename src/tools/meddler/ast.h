@@ -14,6 +14,8 @@ class method_t;
 class node_t
 {
 public:
+    virtual std::string name() = 0;
+
     virtual void emit_impl_h(std::ostringstream& s) = 0;
     virtual void emit_interface_h(std::ostringstream& s) = 0;
     virtual void emit_interface_cpp(std::ostringstream& s) = 0;
@@ -30,13 +32,14 @@ public:
 class alias_t : public node_t
 {
 public:
-    alias_t() : node_t(), type(), name() {}
-    alias_t(std::string nm) : node_t(), type(), name(nm) {}
-    alias_t(std::string tp, std::string nm) : node_t(), type(tp), name(nm) {}
+    alias_t() : node_t(), type(), name_() {}
+    alias_t(std::string nm) : node_t(), type(), name_(nm) {}
+    alias_t(std::string tp, std::string nm) : node_t(), type(tp), name_(nm) {}
+    virtual std::string name() { return name_; }
     virtual void dump(std::string indent_prefix);
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
-    std::string name;
+    std::string name_;
 };
 
 // Variable or parameter declaration as "type-name" pair.
@@ -110,7 +113,7 @@ class record_alias_t : public alias_t
 public:
     std::vector<var_decl_t*> fields;
 
-    record_alias_t(std::string nm) : alias_t() { name = nm; }
+    record_alias_t(std::string nm) : alias_t() { name_ = nm; }
     virtual bool add_field(var_decl_t* field);
     virtual void dump(std::string indent_prefix);
 
@@ -157,7 +160,8 @@ public:
 class exception_t : public node_t
 {
 public:
-    exception_t(std::string nm) : name(nm) {}
+    exception_t(std::string nm) : name_(nm) {}
+    virtual std::string name() { return name_; }
     virtual bool add_field(var_decl_t* field);
     virtual void dump(std::string indent_prefix);
 
@@ -165,7 +169,7 @@ public:
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
 
-    std::string name;
+    std::string name_;
     std::vector<var_decl_t*> fields;
 };
 
@@ -174,6 +178,7 @@ class method_t : public node_t
 public:
     method_t() : node_t(), idempotent(false), never_returns(false) {}
 
+    virtual std::string name() { return name_; }
     virtual void dump(std::string indent_prefix);
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
@@ -183,7 +188,7 @@ public:
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
 
-    std::string name;
+    std::string name_;
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
     std::vector<exception_t*> raises;
@@ -197,7 +202,8 @@ public:
 class interface_t : public node_t
 {
 public:
-    interface_t(std::string nm, bool is_local, bool is_final) : local(is_local), final(is_final), name(nm) {}
+    interface_t(std::string nm, bool is_local, bool is_final) : local(is_local), final(is_final), name_(nm) {}
+    virtual std::string name() { return name_; }
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
     virtual bool add_type(alias_t*);
@@ -210,7 +216,7 @@ public:
 
     bool local;
     bool final;
-    std::string name;
+    std::string name_;
     std::string base;
     std::vector<interface_t*> imports;//implicitly derived from 'types' contents.
     std::vector<alias_t*>     types;
