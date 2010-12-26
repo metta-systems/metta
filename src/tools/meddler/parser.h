@@ -4,13 +4,15 @@
 #include "ast.h"
 #include "symbol_table.h"
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/SourceMgr.h>
 
 class parser_t
 {
     bool is_local, is_final, is_idempotent; // TODO: move to private class parser_state_t
     lexer_t lex;
     symbol_table_t symbols;
-    AST::node_t* parse_tree;
+    AST::node_t* parse_tree; friend class Meddler;
+    llvm::SourceMgr& source_mgr;
 
     void populate_symbol_table();
     bool parse_top_level_entities();
@@ -35,7 +37,10 @@ class parser_t
     bool parse_record_type_alias();
     bool parse_type_alias();
 
+    void reportError(std::string msg);
+
 public:
-    parser_t(llvm::MemoryBuffer *F);
+    parser_t(llvm::SourceMgr& sm);
+    void init(const llvm::MemoryBuffer *F);
     bool run();
 };

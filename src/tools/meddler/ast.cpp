@@ -22,6 +22,7 @@ bool interface_t::add_type(alias_t* t)
 bool interface_t::add_method(method_t* m)
 {
     std::cout << "interface_t::add_method()" << std::endl;
+    m->parent_interface = name;
     methods.push_back(m);
     return true;
 }
