@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <sstream>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/CommandLine.h>
@@ -10,6 +11,9 @@ inputFilename(cl::Positional, cl::desc("<input .if file>"), cl::init("-"));
 
 static cl::list<std::string>
 includeDirectories("I", cl::desc("Include path"), cl::value_desc("directory"), cl::ZeroOrMore);
+
+static cl::opt<std::string>
+outputDirectory("o", cl::desc("Output path"), cl::value_desc("directory"), cl::init("."));
 
 class Meddler
 {
@@ -36,9 +40,17 @@ public:
         return true;
     }
 
-    int parse()
+    bool parse()
     {
         return parser.run();
+    }
+
+    bool emit(const std::string& /*output_dir*/)
+    {
+        std::ostringstream s;
+        parser.parse_tree->emit_impl_h(s);
+        std::cout << s.str();
+        return true;
     }
 };
 
@@ -55,5 +67,12 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    return m.parse();
+    if (m.parse())
+    {
+        m.emit(outputDirectory);
+    }
+    else
+        return -1;
+
+    return 0;
 }

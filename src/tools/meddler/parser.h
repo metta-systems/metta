@@ -11,7 +11,7 @@ class parser_t
     bool is_local, is_final, is_idempotent; // TODO: move to private class parser_state_t
     lexer_t lex;
     symbol_table_t symbols;
-    AST::node_t* parse_tree;
+    AST::node_t* parse_tree; friend class Meddler;
     llvm::SourceMgr& source_mgr;
 
     void populate_symbol_table();
