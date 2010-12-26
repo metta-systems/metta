@@ -47,9 +47,13 @@ public:
 
     bool emit(const std::string& /*output_dir*/)
     {
-        std::ostringstream s;
-        parser.parse_tree->emit_impl_h(s);
-        std::cout << s.str();
+        std::ostringstream impl_h, interface_h, interface_cpp;
+        parser.parse_tree->emit_impl_h(impl_h);
+        parser.parse_tree->emit_interface_h(interface_h);
+        parser.parse_tree->emit_interface_cpp(interface_cpp);
+        std::cout << impl_h.str() << std::endl << "*************************" << std::endl
+                  << interface_h.str() << std::endl << "*************************" << std::endl
+                  << interface_cpp.str();
         return true;
     }
 };

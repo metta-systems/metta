@@ -25,6 +25,9 @@ local interface test_module_v1 extends test_v1
         returns (test_v1& test, ramtab_v1& ramtab, memory_v1.address free)
         raises (memory_v1.failure);
 
+    test_returns()
+        returns (int simple, test_v1& ref, int simple2);
+
     idempotent set_flag();
 
     terminate() never returns;
