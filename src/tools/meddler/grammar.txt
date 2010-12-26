@@ -1,4 +1,3 @@
-TODO: add oneway modifier for asynchronous exec? check zeroc notes for downsides if any. (should be equal to 'never returns')
 TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not bound to a closure
  - what would be implemented semantics for such methods though?
 
