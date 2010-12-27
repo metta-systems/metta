@@ -6,12 +6,60 @@
 namespace AST
 {
 
+static std::vector<std::string> build_forwards(interface_t* intf)
+{
+    std::vector<std::string> forwards;
+
+    forwards.push_back(intf->name_);
+
+    std::for_each(intf->methods.begin(), intf->methods.end(), [&forwards](method_t* m)
+    {
+        std::for_each(m->params.begin(), m->params.end(), [&forwards](parameter_t* param)
+        {
+            size_t pos;
+            if ((pos = param->type.find_first_of('.')) != std::string::npos)
+            {
+                std::string decl = param->type.substr(0, pos);
+                if (std::find(forwards.begin(), forwards.end(), decl) == forwards.end())
+                {
+                    forwards.push_back(decl);
+                }
+            }
+        });
+
+        std::for_each(m->returns.begin(), m->returns.end(), [&forwards](parameter_t* param)
+        {
+            size_t pos;
+            if ((pos = param->type.find_first_of('.')) != std::string::npos)
+            {
+                std::string decl = param->type.substr(0, pos);
+                if (std::find(forwards.begin(), forwards.end(), decl) == forwards.end())
+                {
+                    forwards.push_back(decl);
+                }
+            }
+        });
+    });
+
+    return forwards;
+}
+
 void interface_t::emit_impl_h(std::ostringstream& s)
 {
     s << "#pragma once" << std::endl << std::endl;
-    // TODO: missing forward declarations for parameter types
+
+    std::vector<std::string> fwd = build_forwards(this);
+    if (fwd.size() > 0)
+    {
+        std::for_each(fwd.begin(), fwd.end(), [&s](std::string str)
+        {
+            s << "struct " << str << "_closure;" << std::endl;
+        });
+        s << std::endl;
+    }
+
     s << "// ops structure should be exposed to module implementors!" << std::endl;
-    s << "struct " << name << "_ops" << std::endl
+    s << "struct " << name_ << "_ops" << std::endl
       << "{" << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
@@ -27,12 +75,12 @@ void interface_t::emit_interface_h(std::ostringstream& s)
     s << "#pragma once" << std::endl << std::endl
       << "#include \"module_interface.h\"" << std::endl << std::endl
     // TODO: missing forward declarations for parameter types
-      << "struct " << name << "_ops;" << std::endl
-      << "struct " << name << "_state;" << std::endl << std::endl
-      << "struct " << name << "_closure" << std::endl
+      << "struct " << name_ << "_ops;" << std::endl
+      << "struct " << name_ << "_state;" << std::endl << std::endl
+      << "struct " << name_ << "_closure" << std::endl
       << "{" << std::endl
-      << '\t' << "const " << name << "_ops* methods;" << std::endl
-      << '\t' << name << "_state* state;" << std::endl << std::endl;
+      << '\t' << "const " << name_ << "_ops* methods;" << std::endl
+      << '\t' << name_ << "_state* state;" << std::endl << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
     {
@@ -44,8 +92,8 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 
 void interface_t::emit_interface_cpp(std::ostringstream& s)
 {
-    s << "#include \"" << name << "_interface.h\"" << std::endl
-      << "#include \"" << name << "_impl.h\"" << std::endl << std::endl;
+    s << "#include \"" << name_ << "_interface.h\"" << std::endl
+      << "#include \"" << name_ << "_impl.h\"" << std::endl << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
     {
@@ -66,7 +114,7 @@ void method_t::emit_impl_h(std::ostringstream& s)
     }
 
     s << '\t' << return_value_type
-      << " (*" << name << ")(";
+      << " (*" << name_ << ")(";
 
     s << parent_interface << "_closure* self";
 
@@ -102,7 +150,7 @@ void method_t::emit_interface_h(std::ostringstream& s)
     }
 
     s << '\t' << return_value_type
-      << " " << name << "(";
+      << " " << name_ << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
@@ -143,7 +191,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
     }
 
     s << return_value_type
-      << " " << parent_interface << "_closure::" << name << "(";
+      << " " << parent_interface << "_closure::" << name_ << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
@@ -173,12 +221,12 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
       << '\t';
     if (return_value_type != "void")
         s << "return ";
-    s << "methods->" << name << "(this";
+    s << "methods->" << name_ << "(this";
 
     std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
     {
         s << ", ";
-        s << param->name;
+        s << param->name_;
     });
 
     // TODO: add by-ptr for non-interface returns
@@ -187,7 +235,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
         std::for_each(returns.begin()+1, returns.end(), [&s](parameter_t* param)
         {
             s << ", ";
-            s << param->name;
+            s << param->name_;
         });
     }
 
@@ -212,7 +260,7 @@ void var_decl_t::emit_impl_h(std::ostringstream& s)
     s << type;
     if (reference)
         s << "&";
-    s << " " << name;
+    s << " " << name_;
 }
 
 void var_decl_t::emit_interface_h(std::ostringstream& s)
@@ -220,7 +268,7 @@ void var_decl_t::emit_interface_h(std::ostringstream& s)
     s << type;
     if (reference)
         s << "&";
-    s << " " << name;
+    s << " " << name_;
 }
 
 void var_decl_t::emit_interface_cpp(std::ostringstream& s)
@@ -228,7 +276,7 @@ void var_decl_t::emit_interface_cpp(std::ostringstream& s)
     s << type;
     if (reference)
         s << "&";
-    s << " " << name;
+    s << " " << name_;
 }
 
 void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)

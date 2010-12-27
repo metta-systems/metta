@@ -22,7 +22,7 @@ bool interface_t::add_type(alias_t* t)
 bool interface_t::add_method(method_t* m)
 {
     std::cout << "interface_t::add_method()" << std::endl;
-    m->parent_interface = name;
+    m->parent_interface = name_;
     methods.push_back(m);
     return true;
 }
@@ -44,7 +44,7 @@ bool record_alias_t::add_field(var_decl_t* field)
 bool enum_alias_t::add_field(var_decl_t* field)
 {
     std::cout << "enum_alias_t::add_field()" << std::endl;
-    fields.push_back(field->name);
+    fields.push_back(field->name_);
     return true;
 }
 
@@ -71,12 +71,12 @@ bool method_t::add_exception(exception_t* e)
 
 void alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << type << " " << name << std::endl;
+    std::cout << indent_prefix << type << " " << name_ << std::endl;
 }
 
 void var_decl_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << type << (reference ? "& " : " ") << name;
+    std::cout << indent_prefix << type << (reference ? "& " : " ") << name_;
 }
 
 void parameter_t::dump(std::string indent_prefix)
@@ -87,7 +87,7 @@ void parameter_t::dump(std::string indent_prefix)
 
 void interface_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "interface_t(\"" << name << "\", local:" << (local ? "true":"false") << ", final:" << (final ? "true":"false") << ")" << (!base.empty() ? std::string(" extends ") + base : "") << std::endl;
+    std::cout << indent_prefix << "interface_t(\"" << name_ << "\", local:" << (local ? "true":"false") << ", final:" << (final ? "true":"false") << ")" << (!base.empty() ? std::string(" extends ") + base : "") << std::endl;
 
     std::cout << indent_prefix << "+-types" << std::endl;
     if (types.size() == 0)
@@ -110,7 +110,7 @@ void interface_t::dump(std::string indent_prefix)
 
 void exception_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "exception_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "exception_t(\"" << name_ << "\")" << std::endl;
     std::cout << indent_prefix << "+-fields" << std::endl;
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
@@ -122,7 +122,7 @@ void exception_t::dump(std::string indent_prefix)
 
 void record_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "record_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "record_t(\"" << name_ << "\")" << std::endl;
     std::cout << indent_prefix << "+-fields" << std::endl;
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
@@ -134,7 +134,7 @@ void record_alias_t::dump(std::string indent_prefix)
 
 void enum_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "enum_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "enum_t(\"" << name_ << "\")" << std::endl;
     std::cout << indent_prefix << "+-fields" << std::endl;
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
@@ -146,29 +146,29 @@ void enum_alias_t::dump(std::string indent_prefix)
 
 void range_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "range_t(\"" << name << "\")" << std::endl;
+    std::cout << indent_prefix << "range_t(\"" << name_ << "\")" << std::endl;
     std::cout << indent_prefix << "+-start: " << start << std::endl;
     std::cout << indent_prefix << "+-end:   " << end << std::endl;
 }
 
 void sequence_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "sequence_t(\"" << name << "\") of " << type << std::endl;
+    std::cout << indent_prefix << "sequence_t(\"" << name_ << "\") of " << type << std::endl;
 }
 
 void set_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "set_t(\"" << name << "\") of " << type << std::endl;
+    std::cout << indent_prefix << "set_t(\"" << name_ << "\") of " << type << std::endl;
 }
 
 void array_alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "array_t(\"" << name << "\") of " << count << " times " << type << std::endl;
+    std::cout << indent_prefix << "array_t(\"" << name_ << "\") of " << count << " times " << type << std::endl;
 }
 
 void method_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << "method_t(\"" << name << "\")" << (idempotent ? " idempotent" : "") << std::endl;
+    std::cout << indent_prefix << "method_t(\"" << name_ << "\")" << (idempotent ? " idempotent" : "") << std::endl;
     std::cout << indent_prefix << "+-arguments" << std::endl;
     if (params.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
