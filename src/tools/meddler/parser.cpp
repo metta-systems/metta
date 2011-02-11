@@ -187,12 +187,14 @@ bool parser_t::parse_interface()
         AST::interface_t* node = new AST::interface_t(lex.current_token(), is_local, is_final);
         parse_tree = node;
 
+        local_scope_t new_scope(symbols, lex.current_token());
+
         if (!symbols.insert_checked(node->name(), token::kind::_interface_type))
         {
             PARSE_ERROR("duplicate symbol");
             return false;
         }
-        
+
         if (lex.maybe(token::kind::kw_extends))
         {
             lex.lex();
@@ -328,6 +330,7 @@ bool parser_t::parse_exception()
     }
 
     AST::exception_t* node = new AST::exception_t(lex.current_token());
+    local_scope_t new_scope(symbols, lex.current_token());
     if (!lex.expect(token::kind::lbrace))
     {
         PARSE_ERROR("{ expected");
@@ -479,7 +482,7 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
             return false;
         }
     }
-    to_get.type = lex.current_token();
+    to_get.type = symbols.qualify(lex.current_token());
     if (lex.maybe(token::kind::reference))
         to_get.set_reference();
     if (!lex.expect(token::kind::identifier))
@@ -746,6 +749,7 @@ bool parser_t::parse_record_type_alias()
     }
 
     AST::record_alias_t* node = new AST::record_alias_t(lex.current_token());
+    local_scope_t new_scope(symbols, lex.current_token());
 
     if (!lex.expect(token::kind::lbrace))
     {
@@ -771,6 +775,7 @@ bool parser_t::parse_record_type_alias()
     return true;
 }
 
+// FIXME: should enum create a scope?
 bool parser_t::parse_enum_type_alias()
 {
     D();
