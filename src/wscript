@@ -161,11 +161,25 @@ def configure(conf):
     # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
     conf.setenv('TOOLS_ENV')
     # set uselib
-    conf.env['LIB_UUID'] = 'uuid'
-#    conf.env['LIB_LLVMSUPPORT'] = '/home/berkus/Hobby/llvm/build/lib/libLLVMSupport.a'
+    conf.env.LIB_UUID = 'uuid'
+    conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
+    conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
+    conf.env.LIB_LLVM = 'pthread'
 
 def build(bld):
     arch = Options.options.arch
+
+    # Tool to parse interface files.
+    # Build it first so that we can transform interface defitions to code during build.
+    meddler = bld.new_task_gen('cxx', 'program')
+    meddler.target = 'meddler'
+    meddler.source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split())
+    meddler.env = bld.env_of_name('TOOLS_ENV').copy()
+    meddler.env.append_unique('CXXDEFINES', ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'])
+    meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
+    meddler.uselib = 'LLVM'
+
+    bld.add_group()
 
     # Make bootimage components.
     bld.add_subdirs("modules")
@@ -245,16 +259,6 @@ def build(bld):
     mkbootimage.env.append_unique('CXXFLAGS', ['-fexceptions'])
     #mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
-
-    # Tool to parse interface files.
-    meddler = bld.new_task_gen('cxx', 'program')
-    meddler.target = 'meddler'
-    meddler.source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split())
-    meddler.env = bld.env_of_name('TOOLS_ENV').copy()
-    meddler.env.append_unique('CXXDEFINES', ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'])
-    meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
-    meddler.env.append_unique('LINKFLAGS', ['-L/home/berkus/Hobby/llvm/build/lib/', '-lLLVMSupport', '-lLLVMSystem', '-lpthread'])
-    #meddler.uselib = 'LLVMSUPPORT'
 
     # Initial loader
     kickstart = bld.new_task_gen('cxx', 'program')

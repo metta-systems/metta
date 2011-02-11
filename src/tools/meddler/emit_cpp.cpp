@@ -6,6 +6,10 @@
 namespace AST
 {
 
+// static void type_emitter(std::string key, symbol_table_t& t, ostringstream& out)
+// {
+// }
+
 static std::vector<std::string> build_forwards(interface_t* intf)
 {
     std::vector<std::string> forwards;
@@ -104,7 +108,7 @@ void interface_t::emit_interface_cpp(std::ostringstream& s)
 void method_t::emit_impl_h(std::ostringstream& s)
 {
     std::string return_value_type;
-    if (never_returns || returns.size() == 0)
+    if (never_returns || (returns.size() == 0))
         return_value_type = "void";
     else
     {
