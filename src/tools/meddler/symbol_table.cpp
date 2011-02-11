@@ -2,19 +2,6 @@
 #include <algorithm>
 #include <iostream>
 
-// symbol_t::qualify()
-// if qualified return itself
-// else prepend current scope qualifier
-
-// void enter_scope(std::string name)
-// {
-//     scope.push_back(name);
-// }
-// void leave_scope()
-// {
-//     scope.pop_front();
-// }
-
 symbol_table_t::symbol_table_t()
 {
 }
@@ -58,6 +45,32 @@ bool symbol_table_t::is_exception_type(iterator idx)
     if (idx == end())
         return false;
     return (*idx).second == token::kind::_exception_type;
+}
+
+std::string symbol_table_t::qualify(std::string identifier)
+{
+    if (is_builtin_type(lookup(identifier)))
+        return identifier;
+
+    if (identifier.find_first_of('.') != std::string::npos)
+        return identifier;
+
+    std::string qualifier;
+    std::for_each(scope.begin(), scope.end(), [&qualifier](std::string s) {
+        qualifier += s;
+        qualifier += ".";
+    });
+    return qualifier + identifier;
+}
+
+void symbol_table_t::enter_scope(std::string name)
+{
+    scope.push_back(name);
+}
+
+void symbol_table_t::leave_scope()
+{
+    scope.pop_back();
 }
 
 extern std::string token_to_name(token::kind tok);
