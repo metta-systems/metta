@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "ast.h"
 #include "symbol_table.h"
+#include <llvm/TypeSymbolTable.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SourceMgr.h>
 
@@ -13,6 +14,7 @@ class parser_t
     symbol_table_t symbols;
     AST::node_t* parse_tree; friend class Meddler;
     llvm::SourceMgr& source_mgr;
+//     llvm::TypeSymbolTable types;
 
     void populate_symbol_table();
     bool parse_top_level_entities();

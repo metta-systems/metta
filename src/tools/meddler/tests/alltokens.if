@@ -36,7 +36,3 @@ local interface test_module_v1 extends test_v1
     finish_init(test_v1& test, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc)
         raises (failure);
 }
-#
-# Should generate the following AST:
-#
-#

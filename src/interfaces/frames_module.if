@@ -8,14 +8,14 @@
 #
 local interface frames_module_v1
 {
-    type memory_v1.physmem physmem;
-    type memory_v1.address address;
+#     type memory_v1.physmem physmem;
+#     type memory_v1.address address;
 
     required_size()
-        returns (memory_v1.size);
+        returns (uint32_t size); #memory_v1.size
 
-    create(physmem allmem, physmem used, ramtab_v1.tab& rtab, address state)
-        returns (system_frame_allocator_v1);
+#     create(physmem allmem, physmem used, ramtab_v1.tab& rtab, address state)
+#         returns (system_frame_allocator_v1 frames_sys_allocator);
 
-    finish_init(system_frames_allocator_v1& frames, heap_v1& heap);
+#     finish_init(system_frames_allocator_v1& frames, heap_v1& heap);
 }

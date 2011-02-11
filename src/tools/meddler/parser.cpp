@@ -26,7 +26,10 @@ std::string token_to_name(token::kind tok)
         TNAME(rparen)
         TNAME(semicolon)
         TNAME(backslash)
-//         TNAME(type) identifier
+        TNAME(type)
+        TNAME(_builtin_type)
+        TNAME(_interface_type)
+        TNAME(_exception_type)
         TNAME(kw_local)
         TNAME(kw_final)
         TNAME(kw_interface)
@@ -106,25 +109,25 @@ void parser_t::populate_symbol_table()
     symbols.insert("record", token::kind::kw_record);
     symbols.insert("enum", token::kind::kw_enum);
     symbols.insert("array", token::kind::kw_array);
-    symbols.insert("int8", token::kind::type/*, builtin_type*/);
-    symbols.insert("int16", token::kind::type/*, builtin_type*/);
-    symbols.insert("int32", token::kind::type/*, builtin_type*/);
-    symbols.insert("int64", token::kind::type/*, builtin_type*/);
-    symbols.insert("octet", token::kind::type/*, builtin_type*/);
-    symbols.insert("card16", token::kind::type/*, builtin_type*/);
-    symbols.insert("card32", token::kind::type/*, builtin_type*/);
-    symbols.insert("card64", token::kind::type/*, builtin_type*/);
-    symbols.insert("float", token::kind::type/*, builtin_type*/);
-    symbols.insert("double", token::kind::type/*, builtin_type*/);
-    symbols.insert("boolean", token::kind::type/*, builtin_type*/);
-    symbols.insert("string", token::kind::type/*, builtin_type*/);
+    symbols.insert("int8", token::kind::_builtin_type);
+    symbols.insert("int16", token::kind::_builtin_type);
+    symbols.insert("int32", token::kind::_builtin_type);
+    symbols.insert("int64", token::kind::_builtin_type);
+    symbols.insert("octet", token::kind::_builtin_type);
+    symbols.insert("card16", token::kind::_builtin_type);
+    symbols.insert("card32", token::kind::_builtin_type);
+    symbols.insert("card64", token::kind::_builtin_type);
+    symbols.insert("float", token::kind::_builtin_type);
+    symbols.insert("double", token::kind::_builtin_type);
+    symbols.insert("boolean", token::kind::_builtin_type);
+    symbols.insert("string", token::kind::_builtin_type);
 }
 
 bool parser_t::run()
 {
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
-//     symbols.dump();
+    symbols.dump();
     if (ret)
         std::cout << "** PARSE SUCCESS" << std::endl;
     else
@@ -184,6 +187,12 @@ bool parser_t::parse_interface()
         AST::interface_t* node = new AST::interface_t(lex.current_token(), is_local, is_final);
         parse_tree = node;
 
+        if (!symbols.insert_checked(node->name(), token::kind::_interface_type))
+        {
+            PARSE_ERROR("duplicate symbol");
+            return false;
+        }
+        
         if (lex.maybe(token::kind::kw_extends))
         {
             lex.lex();
@@ -232,7 +241,7 @@ bool parser_t::parse_interface_body()
             case token::kind::kw_exception:
                 if (!parse_exception())
                 {
-                    PARSE_ERROR("Exception parse failed.");
+//                     PARSE_ERROR("Exception parse failed.");
                     return false;
                 }
                 break;
@@ -240,49 +249,49 @@ bool parser_t::parse_interface_body()
             case token::kind::kw_enum:
                 if (!parse_enum_type_alias())
                 {
-                    PARSE_ERROR("Enum type parse failed.");
+//                     PARSE_ERROR("Enum type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_array:
                 if (!parse_array_type_alias())
                 {
-                    PARSE_ERROR("Array type parse failed.");
+//                     PARSE_ERROR("Array type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_range:
                 if (!parse_range_type_alias())
                 {
-                    PARSE_ERROR("Range type parse failed.");
+//                     PARSE_ERROR("Range type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_sequence:
                 if (!parse_sequence_type_alias())
                 {
-                    PARSE_ERROR("Sequence type parse failed.");
+//                     PARSE_ERROR("Sequence type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_set:
                 if (!parse_set_type_alias())
                 {
-                    PARSE_ERROR("Set type parse failed.");
+//                     PARSE_ERROR("Set type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_record:
                 if (!parse_record_type_alias())
                 {
-                    PARSE_ERROR("Record type parse failed.");
+//                     PARSE_ERROR("Record type parse failed.");
                     return false;
                 }
                 break;
             case token::kind::kw_type:
                 if (!parse_type_alias())
                 {
-                    PARSE_ERROR("Type alias parse failed.");
+//                     PARSE_ERROR("Type alias parse failed.");
                     return false;
                 }
                 break;
@@ -291,12 +300,12 @@ bool parser_t::parse_interface_body()
             case token::kind::identifier:
                 if (!parse_method())
                 {
-                    PARSE_ERROR("Method parse failed.");
+//                     PARSE_ERROR("Method parse failed.");
                     return false;
                 }
                 break;
             default:
-                PARSE_ERROR("Invalid token....blabla");
+                PARSE_ERROR("Invalid token encountered.");
                 return false;
         }
     }
@@ -334,6 +343,12 @@ bool parser_t::parse_exception()
     }
 
     parse_tree->add_exception(node);
+    if (!symbols.insert_checked(node->name(), token::kind::_exception_type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -374,10 +389,16 @@ bool parser_t::parse_method()
         }
 
         if (lex.maybe(token::kind::kw_returns) || lex.maybe(token::kind::kw_never))
-            parse_method_returns(m);
+        {
+            if (!parse_method_returns(m))
+                return false;
+        }
 
         if (lex.maybe(token::kind::kw_raises))
-            parse_method_raises(m);
+        {
+            if (!parse_method_raises(m))
+                return false;
+        }
 
         if (lex.expect(token::kind::semicolon))
         {
@@ -531,13 +552,10 @@ bool parser_t::parse_type_alias()
     if (!lex.match(token::kind::kw_type))
         return false;
     AST::type_alias_t t;
-    if (!lex.expect(token::kind::identifier))
+    if (!lex.expect(token::kind::type))
     {
-        if (!lex.match(token::kind::type))
-        {
-            PARSE_ERROR("type ID expected");
-            return false;
-        }
+        PARSE_ERROR("type ID expected");
+        return false;
     }
     t.type = lex.current_token();
     if (!lex.expect(token::kind::identifier))
@@ -603,6 +621,12 @@ bool parser_t::parse_range_type_alias()
     AST::range_alias_t* node = new AST::range_alias_t(range_id, range_start, range_end);
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -618,7 +642,7 @@ bool parser_t::parse_sequence_type_alias()
         return false;
     }
 
-    if (!lex.expect(token::kind::identifier))
+    if (!lex.expect(token::kind::type))
     {
         PARSE_ERROR("sequence base type ID expected");
         return false;
@@ -649,6 +673,12 @@ bool parser_t::parse_sequence_type_alias()
     AST::sequence_alias_t* node = new AST::sequence_alias_t(type, base_type);
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -664,7 +694,7 @@ bool parser_t::parse_set_type_alias()
         return false;
     }
 
-    if (!lex.expect(token::kind::identifier))
+    if (!lex.expect(token::kind::type))
     {
         PARSE_ERROR("set base type ID expected");
         return false;
@@ -695,6 +725,11 @@ bool parser_t::parse_set_type_alias()
     AST::set_alias_t* node = new AST::set_alias_t(type, base_type);
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
     return true;
 }
 
@@ -727,6 +762,12 @@ bool parser_t::parse_record_type_alias()
     }
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -774,6 +815,12 @@ bool parser_t::parse_enum_type_alias()
     }
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -783,7 +830,7 @@ bool parser_t::parse_array_type_alias()
     if (!lex.match(token::kind::kw_array))
         return false;
 
-    if (!lex.expect(token::kind::identifier))
+    if (!lex.expect(token::kind::type))
     {
         PARSE_ERROR("array base type ID expected");
         return false;
@@ -828,6 +875,12 @@ bool parser_t::parse_array_type_alias()
     AST::array_alias_t* node = new AST::array_alias_t(type, base_type, count);
 
     parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::kind::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
     return true;
 }
 
@@ -860,6 +913,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
     if (!parse_argument_list(returns, AST::parameter_t::out))
         return false;
 
+    // TODO: check that all ids are types
     m.returns = returns;
 
     if (!lex.expect(token::kind::rparen))
@@ -887,6 +941,7 @@ bool parser_t::parse_method_raises(AST::method_t& m)
     if (!parse_id_list(exc_ids, token::rparen))
         return false;
 
+    // TODO: check that all ids are _exception_types
     m.raises_ids = exc_ids;
 
     if (!lex.expect(token::kind::rparen))

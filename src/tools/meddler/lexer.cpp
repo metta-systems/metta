@@ -123,7 +123,9 @@ token::kind lexer_t::get_identifier()
     std::string symbol(start_ptr, len);
     symbol_table_t::iterator idx = symbols->lookup(symbol);
     if (idx == symbols->end())
-        idx = symbols->insert(symbol, token::identifier); //FIXME: will put in types as identifiers too
+        return token::identifier;
+        // Parser will do insertions, as it has more information about types.
+//         idx = symbols->insert(symbol, token::identifier); //FIXME: will put in types as identifiers too
 
     return symbols->kind(idx);
 }
