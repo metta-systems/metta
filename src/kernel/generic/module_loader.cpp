@@ -1,9 +1,9 @@
+#include "config.h"
+#include "stl/algorithm"
 #include "module_loader.h"
 #include "default_console.h"
 #include "memory.h"
-#include "stl/algorithm"
 #include "debugger.h"
-#include "config.h"
 
 #if ELF_RELOC_DEBUG_V
 #define V(s) s
