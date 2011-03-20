@@ -20,7 +20,7 @@ stl_include_dirs = ['runtime/stl']
 cflags = '-pipe -Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
 linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
-flags = '-fno-builtin -fno-stack-protector -fno-leading-underscore -ffunction-sections -fdata-sections'.split()
+flags = '-ffunction-sections -fdata-sections'.split()
 
 # Change default waf behaviour wrt extensions.
 def change_ext(self, ext):
@@ -50,9 +50,10 @@ def set_options(opt):
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile)." + '[default: %default]')
 
     # Use clang
-    opt.add_option("--clang", action="store", default="no", help="Use clang to build (default: %default)")
+    opt.add_option("--clang", action="store", default="yes", help="Use clang to build (default: %default)")
 
 def configure(conf):
+    global flags, cflags, cxxflags, include_dirs
     # Configure for given platform
     # Configuration name is composed of architecture, cpu, release
     arch = Options.options.arch
@@ -71,10 +72,15 @@ def configure(conf):
     # Ditto for llvm
     if clang:
         conf.check_tool('clang yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        cxxflags = cflags + ['-std=c++0x']
+        cflags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
+        cxxflags = cflags
+        extra_cross_cxxflags = ['-std=c++0x']
     else:
         conf.check_tool('compiler_cc compiler_cxx yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        cxxflags = cflags + ['-std=gnu++0x']
+        cxxflags = cflags
+        extra_cross_cxxflags = ['-std=gnu++0x']
+
+    extra_cross_flags = ['-fno-builtin', '-fno-stack-protector', '-fno-leading-underscore']
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
@@ -131,9 +137,9 @@ def configure(conf):
     # Flag that we're building under/for Metta.
     # Value is metta release number, monotonically increasing with each public release.
     metta_flag = "__Metta__=1"
-    kernel_flags = '-ffreestanding -fno-strict-aliasing'.split() #-nostdinc
+    kernel_flags = '-fno-strict-aliasing'.split() #-ffreestanding -nostdinc
     # --gc-sections ruins everything
-    kernel_linkflags = '-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
+    kernel_linkflags = [] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
 
     # Config for building kernel
     conf.setenv('KERNEL_ENV')
@@ -142,7 +148,8 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXDEFINES', stl_defines)
-    conf.env.append_unique('CCFLAGS', kernel_flags)
+    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
+    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
@@ -154,11 +161,20 @@ def configure(conf):
     conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('CXXDEFINES', stl_defines)
-    conf.env.append_unique('CCFLAGS', kernel_flags)
+    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
+    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
+    conf.setenv('TOOLS_ENV')
+    conf.env['CC'] = '/Developer/usr/bin/gcc'
+    conf.env['CXX'] = '/Developer/usr/bin/g++'
+    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    conf.env.append_unique('CCFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('LINKFLAGS', ['-m32'])
 
 def build(bld):
     arch = Options.options.arch
@@ -210,19 +226,21 @@ def build(bld):
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
     interfaces.target = 'interfaces'
 
-    # Tests
-    tests = bld.new_task_gen('cxx', 'program')
-    tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
-    tests.env = bld.env_of_name('TEST_ENV').copy()
-    tests.includes = tests.env['INCLUDE_DIRS']
-    tests.uselib = 'TEST'
-    tests.target = 'testrunner'
+# TODO: tools and tests should be running using hostcc, not crosscc!!
 
-    slebtest = bld.new_task_gen('cxx', 'program')
-    slebtest.source = 'tests/slebtest.cpp'
-    slebtest.env = bld.env_of_name('TEST_ENV').copy()
-    slebtest.includes = slebtest.env['INCLUDE_DIRS']
-    slebtest.target = 'slebtest'
+    # Tests
+#    tests = bld.new_task_gen('cxx', 'program')
+#    tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
+#    tests.env = bld.env_of_name('TEST_ENV').copy()
+#    tests.includes = tests.env['INCLUDE_DIRS']
+#    tests.uselib = 'TEST'
+#    tests.target = 'testrunner'
+
+#    slebtest = bld.new_task_gen('cxx', 'program')
+#    slebtest.source = 'tests/slebtest.cpp'
+#    slebtest.env = bld.env_of_name('TEST_ENV').copy()
+#    slebtest.includes = slebtest.env['INCLUDE_DIRS']
+#    slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
     #parsedwarf = bld.new_task_gen('cxx', 'program')
@@ -238,7 +256,7 @@ def build(bld):
     mkbootimage.source = 'tools/mkbootimage/mkbootimage.cpp'
     mkbootimage.env = bld.env_of_name('TOOLS_ENV').copy()
     mkbootimage.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    #mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
 
     # Initial loader
@@ -317,15 +335,15 @@ def build(bld):
         dict = {'ROOT': 'cd'}
     )
 
-    bld.new_task_gen('subst',
-        source = 'tools/mkbootimg/menu.lst.in',
-        target = 'tools/mkbootimg/menu.lst.fd0',
-        dict = {'ROOT': 'fd0'}
-    )
+#    bld.new_task_gen('subst',
+#        source = 'tools/mkbootimg/menu.lst.in',
+#        target = 'tools/mkbootimg/menu.lst.fd0',
+#        dict = {'ROOT': 'fd0'}
+#    )
 
     bld.new_task_gen(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd tools/mkbootimg/menu.lst.fd0',
-        target = 'metta.fd0 metta.iso',
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',# tools/mkbootimg/menu.lst.fd0
+        target = 'metta.iso', #metta.fd0
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
         after = 'init.img'
