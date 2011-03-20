@@ -51,7 +51,7 @@ inline T page_align_down(void* addr)
 template <typename T>
 inline bool is_page_aligned(T addr)
 {
-    return addr & (PAGE_SIZE - 1) == 0;
+    return (addr & (PAGE_SIZE - 1)) == 0;
 }
 
 // kate: indent-width 4; replace-tabs on;
