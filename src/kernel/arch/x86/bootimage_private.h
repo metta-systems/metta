@@ -31,7 +31,7 @@ struct header_t
     uint32_t version;      //!< contains initfs format version, currently 1
 
     header_t()
-        : magic(FourCC<'B','I','M','G'>::value)
+        : magic(four_cc<'B','I','M','G'>::value)
         , version(1)
     {}
 };
