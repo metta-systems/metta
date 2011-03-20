@@ -20,16 +20,28 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
     // read the memory map from bootinfo page
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
-    struct print_mmap
-    {
-        void operator ()(multiboot_t::mmap_entry_t e) const
-        {
-            kconsole << "mmap entry @ " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
-        }
-    };
-    std::for_each(bi->mmap_begin(), bi->mmap_end(), print_mmap());
+//    std::vector<multiboot_t::mmap_entry_t> physical_mem, initial_mappings;
 
-//     frames_mod->initialise_before_paging(mb.memory_map());//, x86_frame_allocator_t::instance().reserved_range()
+//[&physical_mem, &initial_mappings]
+    std::for_each(bi->mmap_begin(), bi->mmap_end(), [](const multiboot_t::mmap_entry_t e)
+    {
+        kconsole << "mmap entry @ " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
+/*        if (e.type() == Free)
+            physical_mem.push_back(e);
+        else
+            initial_mappings.push_back(e);*/
+    });
+
+    // Calculate how much space is needed for the MMU structures.
+//    mmu_state,
+//    pagetables
+//    and ramtab
+
+    // Find proper location to start "allocating" from.
+    // Skip memory below 1Mb on x86.
+//     if (first_available_range & initial_mapping)
+//         first_available_range -= initial_mapping;
+//     alloc_addr = page_round_up(initial_mapping.start);
 
     return 0;
 }
