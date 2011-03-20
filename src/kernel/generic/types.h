@@ -17,12 +17,19 @@
 
 #define NULL 0
 
+#if __Metta__
 typedef uint32_t size_t;
-typedef uint32_t addr_t;
 typedef int32_t  ptrdiff_t;
+typedef ptrdiff_t offset_t;
+#else
+#include <unistd.h>
+#endif
+
+//typedef uint32_t uintptr_t;
+
+typedef uint32_t addr_t;
 typedef uintptr_t address_t;          //!< Virtual address type.
 typedef uintptr_t physical_address_t; //!< Physical address type. Used in physical memory allocation.
-typedef ptrdiff_t offset_t;
 //typedef uint32_t hash_t;
 typedef uint32_t flags_t;
 
