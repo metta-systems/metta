@@ -4,7 +4,11 @@
 #include "mmu_module_impl.h"
 #include "algorithm"
 
-class mmu_v1_closure;
+struct mmu_v1_closure;
+
+// TODO: We need to abstract frames module from the format of bootinfo page,
+// so we create a local copy of memory map and pass it to frames_mod as a parameter.
+// For simplicity we do it here at the moment.
 
 static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_reservation/*, ramtab& ramtab, address_t& free*/)
 {
