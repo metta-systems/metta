@@ -48,9 +48,12 @@ public:
         void set(void* entry);
 
     public:
+        mmap_iterator() : ptr(0), end(0) {}
         mmap_iterator(void* entry, void* end);
         multiboot_t::mmap_entry_t operator *();
         void operator ++();
+        void operator ++(int);
+        inline bool operator == (const mmap_iterator& other) { return ptr == other.ptr; }
         inline bool operator != (const mmap_iterator& other) { return ptr != other.ptr; }
     };
 
