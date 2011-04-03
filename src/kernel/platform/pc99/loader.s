@@ -21,7 +21,7 @@ extern multiboot_flags
 MODULEALIGN equ  1<<0                  ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                  ; provide memory map
 KLUDGE      equ  1<<16                 ; we provide bootloader with layout of code and data in mb header
-FLAGS       equ  MODULEALIGN | MEMINFO | KLUDGE
+FLAGS       equ  MODULEALIGN | MEMINFO ;| KLUDGE
 MAGIC       equ  0x1BADB002            ; 'magic number' lets bootloader find the header
 CHECKSUM    equ -(MAGIC + FLAGS)       ; checksum required
 
