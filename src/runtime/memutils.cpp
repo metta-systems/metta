@@ -29,6 +29,8 @@ void* fill_memory(void* dest, int value, size_t count)
     return dest;
 }
 
+// stdlib compat for compiler
+extern "C" void* memcpy(void* dest, const void* src, size_t count) { return copy_memory(dest, src, count); }
 
 void* copy_memory(void* dest, const void* src, size_t count)
 {
