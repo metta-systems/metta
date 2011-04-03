@@ -44,9 +44,12 @@ public:
         size_t entry_size;
 
     public:
+        section_iterator() : ptr(0), end(0) {}
         section_iterator(elf32::section_header_t* entry, elf32::section_header_t* end, size_t entry_size);
         elf32::section_header_t& operator *(); // return reference to allow in-place manipulation
         void operator ++();
+        void operator ++(int);
+        inline bool operator == (const section_iterator& other) { return ptr == other.ptr; }
         inline bool operator != (const section_iterator& other) { return ptr != other.ptr; }
     };
 

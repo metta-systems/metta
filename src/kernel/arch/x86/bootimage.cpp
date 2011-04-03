@@ -33,7 +33,7 @@ bootimage_t::bootimage_t(const char* name, address_t start, address_t _end)
 bool bootimage_t::valid()
 {
     header_t* header = reinterpret_cast<header_t*>(location);
-    return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
+    return header->magic == four_cc<'B','I','M','G'>::value and header->version == 1;
 }
 
 #if BOOTIMAGE_DEBUG

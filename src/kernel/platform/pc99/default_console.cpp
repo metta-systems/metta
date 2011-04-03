@@ -113,7 +113,7 @@ void default_console_t::print_byte(unsigned char n)
 }
 
 /*! Print hexadecimal integer */
-void default_console_t::print_hex(unsigned int n)
+void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
     for(int i = 4; i > 0; i--)

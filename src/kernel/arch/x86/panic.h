@@ -19,9 +19,9 @@
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(#b, __FILE__, __LINE__))
 #endif
 
-extern "C" void panic(const char* message, const char* file, uint32_t line) NORETURN;
-extern "C" void panic_assert(const char* desc, const char* file, uint32_t line) NORETURN;
-extern "C" void halt() NORETURN;
+extern "C" void panic(const char* message, const char* file, uint32_t line) NEVER_RETURNS;
+extern "C" void panic_assert(const char* desc, const char* file, uint32_t line) NEVER_RETURNS;
+extern "C" void halt() NEVER_RETURNS;
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

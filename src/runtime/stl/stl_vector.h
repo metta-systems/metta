@@ -107,6 +107,13 @@ struct _Vector_base
           _Base;
   typedef typename _Base::allocator_type allocator_type;
 
+#ifdef __STL_HAS_NAMESPACES
+  using _Base::_M_allocate;
+  using _Base::_M_deallocate;
+  using _Base::_M_start;
+  using _Base::_M_finish;
+  using _Base::_M_end_of_storage;
+#endif /* __STL_HAS_NAMESPACES */
   _Vector_base(const allocator_type& __a) : _Base(__a) {}
   _Vector_base(size_t __n, const allocator_type& __a) : _Base(__a) {
     _M_start = _M_allocate(__n);

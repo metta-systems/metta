@@ -70,13 +70,15 @@ public:
             bootinfo = 111
         };
 
-        uint64_t address() const { return base_addr; }
-        uint64_t size() const    { return length; }
-        uint32_t type() const    { return type_; }
-        bool     is_free() const { return type_ == 1; }
+        inline uint64_t address() const { return base_addr; }
+        inline uint64_t start() const   { return base_addr; }
+        inline uint64_t end() const     { return base_addr + length - 1; }
+        inline uint64_t size() const    { return length; }
+        inline uint32_t type() const    { return type_; }
+        inline bool     is_free() const { return type_ == 1; }
 
-        void     set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
-        void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
+        inline void set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
+        inline void set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
         {
             base_addr = new_addr;
             length = new_length;

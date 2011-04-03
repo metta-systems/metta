@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
+#include <string>
 #include <map>
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
@@ -169,7 +170,8 @@ private:
 
 module_namespace1_t::module_namespace1_t(module_info::ns_map namespace_entries)
 {
-    BOOST_FOREACH(auto entry, namespace_entries)
+    typedef std::pair<std::string, param> entry_type;
+    BOOST_FOREACH(entry_type entry, namespace_entries) // host gcc can't do 'auto' on mac
     {
         namespace_entry_t e;
         e.name_off = string_table.append(entry.first);
@@ -188,7 +190,7 @@ bool module_namespace1_t::write(file& out, int& data_offset)
     D(cout << "Writing " << entries.size() << " namespace entries" << endl);
     filebinio io(out);
     data_offset += entries.size() * 8;//sizeof(namespace_entry_t);
-    BOOST_FOREACH(auto entry, entries)
+    BOOST_FOREACH(bootimage_n::namespace_entry_t entry, entries)
     {
         io.write32le(entry.name_off + data_offset);
 //         io.write32le(entry.tag);
@@ -271,7 +273,7 @@ bool module_info::write_module_header(file& out, int& data_offset, int in_size, 
 {
     bootimage_n::module_t mod;
 
-    int name_s_a = name.length() + 1;
+    int name_s_a = name.size() + 1;
 
     data_offset += sizeof(mod);
 
@@ -283,9 +285,9 @@ bool module_info::write_module_header(file& out, int& data_offset, int in_size, 
     mod.local_namespace_offset = ns_size ? data_offset + name_s_a : 0;
 
     out.write(&mod, sizeof(mod));
-    out.write(name.c_str(),  name.length() + 1);
+    out.write(name.c_str(),  name.size() + 1);
 
-    data_offset += name.length() + 1;
+    data_offset += name.size() + 1;
 
     return true;
 }
@@ -294,7 +296,7 @@ bool module_info::write_root_domain_header(file& out, int& data_offset, int in_s
 {
     bootimage_n::root_domain_t rdom;
 
-    int name_s_a = name.length() + 1;
+    int name_s_a = name.size() + 1;
 
     data_offset += sizeof(rdom);
 
@@ -307,9 +309,9 @@ bool module_info::write_root_domain_header(file& out, int& data_offset, int in_s
     rdom.entry_point = 0xefbeadde;
 
     out.write(&rdom, sizeof(rdom));
-    out.write(name.c_str(),  name.length() + 1);
+    out.write(name.c_str(),  name.size() + 1);
 
-    data_offset += name.length() + 1;
+    data_offset += name.size() + 1;
 
     return true;
 }
@@ -322,7 +324,7 @@ bool module_info::write(file& out, int& data_offset)
 
     // Prepare namespace
     module_namespace1_t namesp(namespace_entries);
-    int name_s_a = name.length() + 1;
+    int name_s_a = name.size() + 1;
     size_t ns_size = namespace_entries.size() > 0 ? namesp.size() : 0;
     size_t ns_size_a = ns_size + needed_align(data_offset + header_size + name_s_a + ns_size);
 
@@ -372,12 +374,12 @@ private:
     list<string> lines;
 };
 
-static bool starts_with(string str, char prefix)
+static bool starts_with(const std::string& str, char prefix)
 {
     uint32_t i = 0;
-    while (isspace(str[i]) && i < str.length())
+    while (isspace(str[i]) && i < str.size())
         ++i;
-    if (i < str.length() && str[i] == prefix)
+    if (i < str.size() && str[i] == prefix)
        return true;
     return false;
 }
@@ -387,7 +389,7 @@ line_reader_t::line_reader_t(ifstream& in)
 {
     while (in)
     {
-        string str;
+        std::string str;
         std::getline(in, str);
         if (!str.empty() && !(starts_with(str, '#')))
         {
@@ -477,7 +479,7 @@ int main(int argc, char** argv)
         file      out(output, ios::out | ios::binary);
         filebinio io(out);
 
-        ifstream in(input, ios::in);
+        ifstream in(input.c_str(), ios::in);
         line_reader_t reader(in);
         std::vector<module_info> modules;
 
@@ -488,7 +490,7 @@ int main(int argc, char** argv)
 
         int data_offset = 0;//sizeof(header);
 
-        io.write32le(FourCC<'B', 'I', 'M', 'G'>::value);
+        io.write32le(four_cc<'B', 'I', 'M', 'G'>::value);
         io.write32le(version);
         data_offset += 8; // sizeof(bootimage_n::header_t)
 

@@ -107,6 +107,13 @@ inline console_t& operator << (console_t& con, uint64_t data)
     return con;
 }
 
+// needs to depend on sizeof(ulong)
+inline console_t& operator << (console_t& con, unsigned long data)
+{
+    con.print_hex8(data);
+    return con;
+}
+
 inline console_t& operator << (console_t& con, char data)
 {
     con.print_char(data);

@@ -1,0 +1,4 @@
+System code uses c_system_convention for naming.
+Public code uses CamelCase convention.
+
+Therefore both are separate and visibly distinct.
