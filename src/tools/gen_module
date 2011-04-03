@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+mkdir modules/$name
+output = modules/$name/wscript
+output <<EOF
+from ../module_template import setup_module_build
+def build(bld):
+   $name = bld.gen('cpp', blah)
+   setup_module_build(bld)
+EOF
