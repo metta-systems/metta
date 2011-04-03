@@ -257,7 +257,7 @@
 
 # ifdef __GNUC__
 #   if __GNUC__ >= 3
-// #     define __STL_CLASS_PARTIAL_SPECIALIZATION TODO: doesn't work for some reason, investigate (due to concept checks?)
+#     define __STL_CLASS_PARTIAL_SPECIALIZATION
 #     define __STL_PARTIAL_SPECIALIZATION_SYNTAX
 #     define __STL_FUNCTION_TMPL_PARTIAL_ORDER
 #     define __STL_EXPLICIT_FUNCTION_TMPL_ARGS

@@ -63,7 +63,7 @@ void
 __destroy_aux(_ForwardIterator __first, _ForwardIterator __last, __false_type)
 {
   for ( ; __first != __last; ++__first)
-    destroy(&*__first);
+    _Destroy(&*__first);
 }
 
 template <class _ForwardIterator> 

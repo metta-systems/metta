@@ -583,7 +583,6 @@ __default_alloc_template<__threads, __inst> ::_S_free_list[
 // to refer to a template member of a dependent type.
 
 #ifdef __STL_USE_STD_ALLOCATORS
-#error Hey, your class partial specialization hacks worked? Recheck the allocators, then!
 template <class _Tp>
 class allocator {
   typedef alloc _Alloc;          // The underlying allocator.
@@ -661,7 +660,8 @@ inline bool operator!=(const allocator<_T1>&, const allocator<_T2>&)
 // __allocator<_Tp, alloc> is essentially the same thing as allocator<_Tp>.
 
 template <class _Tp, class _Alloc>
-struct __allocator {
+class __allocator {
+public:
   _Alloc __underlying_alloc;
 
   typedef size_t    size_type;

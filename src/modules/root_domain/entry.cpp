@@ -1,6 +1,7 @@
 #include "default_console.h"
-#include "frames_module_interface.h"
-#include "mmu_module_interface.h"
+#include "frames_module_v1_interface.h"
+#include "mmu_module_v1_interface.h"
+//#include "heap_module_v1_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -42,19 +43,23 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 template <class closure_type>
 static inline closure_type* load_module(bootimage_t& bootimg, const char* module_name, const char* clos)
 {
-    return (closure_type*)load_module(bootimg, module_name, clos);
+    return static_cast<closure_type*>(load_module(bootimg, module_name, clos));
 }
 
 //======================================================================================================================
-// setup page mapping - TODO: move to MMU
+// setup MMU and frame allocator
+//======================================================================================================================
+
+//======================================================================================================================
+// setup page mapping
 //======================================================================================================================
 
 #if 0
 static void map_identity(const char* caption, address_t start, address_t end)
 {
-#if MEMORY_DEBUG
+    #if MEMORY_DEBUG
     kconsole << "Mapping " << caption << endl;
-#endif
+    #endif
     end = page_align_up<address_t>(end); // one past end
     for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
         protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE),
@@ -134,7 +139,7 @@ static void init_mem(bootimage_t& bootimg)
 
 extern "C" void entry()
 {
-    run_global_ctors(); // don't forget, we don't have proper crt0 yet.
+    run_global_ctors(); // remember, we don't have proper crt0 yet.
 
     kconsole << "root_domain entry!" << endl;
 
