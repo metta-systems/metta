@@ -2,7 +2,7 @@ boot: cdrom
 #floppya: 1_44="_build_/x86-pc99-release/metta.fd0", status=inserted
 ata0-slave: type=cdrom, path=_build_/x86-pc99-release/metta.iso, status=inserted
 cpu: count=2, reset_on_triple_fault=0, ips=1000000
-megs: 8
+megs: 128
 mouse: enabled=0
 magic_break: enabled=1
 port_e9_hack: enabled=1
