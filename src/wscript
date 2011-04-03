@@ -19,7 +19,6 @@ stl_include_dirs = ['runtime/stl']
 
 cflags = '-pipe -Wall -Wextra -Werror'.split()
 cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
-linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
 flags = '-ffunction-sections -fdata-sections'.split()
 
 # Change default waf behaviour wrt extensions.
@@ -53,7 +52,7 @@ def set_options(opt):
     opt.add_option("--clang", action="store", default="yes", help="Use clang to build (default: %default)")
 
 def configure(conf):
-    global flags, cflags, cxxflags, include_dirs
+    global flags, cflags, cxxflags, include_dirs, linkflags
     # Configure for given platform
     # Configuration name is composed of architecture, cpu, release
     arch = Options.options.arch
@@ -68,19 +67,26 @@ def configure(conf):
     # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
 
+    extra_cross_flags = ['-fno-builtin', '-fno-stack-protector'] #, '-fno-leading-underscore']
+
+    conf.check_tool('yasm misc ar', tooldir='waftools')
+
+    conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+
     # TODO: try to use yasm, but allow fallback to NASM
     # Ditto for llvm
     if clang:
-        conf.check_tool('clang yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        cflags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
-        cxxflags = cflags
+        conf.check_tool('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+        extra_cross_flags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
+#        extra_cross_flags += ['-###']
         extra_cross_cxxflags = ['-std=c++0x']
+        linkflags = '-nostdlib'.split()
     else:
-        conf.check_tool('compiler_cc compiler_cxx yasm misc', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        cxxflags = cflags
+        conf.check_tool('compiler_cc compiler_cxx', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_cxxflags = ['-std=gnu++0x']
+        linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
 
-    extra_cross_flags = ['-fno-builtin', '-fno-stack-protector', '-fno-leading-underscore']
+    cxxflags = cflags
 
     # Set up common environment variables
     conf.env.append_unique('CCFLAGS', cflags + flags)
@@ -109,7 +115,7 @@ def configure(conf):
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
     conf.define('ELF_LOADER_DEBUG', 1)
-    conf.define('ELF_RELOC_DEBUG_V', 0)
+    conf.define('ELF_RELOC_DEBUG_V', 1)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
     conf.define('TOOLS_DEBUG', 1)
@@ -166,8 +172,17 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
-    # We cannot build target tools on the host system properly atm, since it mixes our local and system STL.
+    # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
+    conf.env['CC'] = '/Developer/usr/bin/gcc'
+    conf.env['CXX'] = '/Developer/usr/bin/g++'
+    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    conf.env.append_unique('CCFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('LINKFLAGS', ['-m32'])
+
+    conf.setenv('TEST_ENV')
     conf.env['CC'] = '/Developer/usr/bin/gcc'
     conf.env['CXX'] = '/Developer/usr/bin/g++'
     conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
@@ -226,8 +241,6 @@ def build(bld):
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
     interfaces.target = 'interfaces'
 
-# TODO: tools and tests should be running using hostcc, not crosscc!!
-
     # Tests
 #    tests = bld.new_task_gen('cxx', 'program')
 #    tests.source = 'tests/test_suite_main.cpp'.split()# tests/test_rbtree.cpp
@@ -236,11 +249,11 @@ def build(bld):
 #    tests.uselib = 'TEST'
 #    tests.target = 'testrunner'
 
-#    slebtest = bld.new_task_gen('cxx', 'program')
-#    slebtest.source = 'tests/slebtest.cpp'
-#    slebtest.env = bld.env_of_name('TEST_ENV').copy()
-#    slebtest.includes = slebtest.env['INCLUDE_DIRS']
-#    slebtest.target = 'slebtest'
+    slebtest = bld.new_task_gen('cxx', 'program')
+    slebtest.source = 'tests/slebtest.cpp'
+    slebtest.env = bld.env_of_name('TEST_ENV').copy()
+    slebtest.includes = slebtest.env['INCLUDE_DIRS']
+    slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
     #parsedwarf = bld.new_task_gen('cxx', 'program')
@@ -264,7 +277,7 @@ def build(bld):
     kickstart.target = 'kickstart.sys'
     kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
+    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Map', 'kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'common runtime platform'# kernel
 
@@ -275,8 +288,8 @@ def build(bld):
     startup.target = 'kernel-startup.sys'
     startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-Wl,-r']) # Kernel startup is relocatable.
-    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])#
+    startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
+    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds']) #, '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'common platform interfaces kernel minruntime'
 
@@ -287,8 +300,8 @@ def build(bld):
     glue.target = 'glue.sys'
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
     glue.env = bld.env_of_name('KERNEL_ENV').copy()
-    glue.env.append_unique('LINKFLAGS', ['-Wl,-r']) # glue is relocatable.
-    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])#
+    glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
+    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds'])#, '-Wl,-Map,glue.map'])#
     glue.includes = glue.env['INCLUDE_DIRS']
     glue.uselib_local = 'common platform interfaces kernel minruntime'
 

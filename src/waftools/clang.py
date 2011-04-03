@@ -37,14 +37,14 @@ def clang_common_flags(conf):
     v['RPATH_ST']='-Wl,-rpath,%s'
     v['CXXDEFINES_ST']='-D%s'
     v['SONAME_ST']='-Wl,-h,%s'
-    v['SHLIB_MARKER']='-Wl,-Bdynamic'
-    v['STATICLIB_MARKER']='-Wl,-Bstatic'
+    v['SHLIB_MARKER']=''
+    v['STATICLIB_MARKER']=''
     v['FULLSTATIC_MARKER']='-static'
     v['program_PATTERN']='%s'
     v['shlib_CXXFLAGS']=['-fPIC','-DPIC']
     v['shlib_LINKFLAGS']=['-shared']
     v['shlib_PATTERN']='lib%s.so'
-    v['staticlib_LINKFLAGS']=['-Wl,-Bstatic']
+    v['staticlib_LINKFLAGS']=['']
     v['staticlib_PATTERN']='lib%s.a'
     v['LINKFLAGS_MACBUNDLE']=['-bundle','-undefined','dynamic_lookup']
     v['CCFLAGS_MACBUNDLE']=['-fPIC']
