@@ -71,10 +71,10 @@ public:
         };
 
         inline uint64_t address() const { return base_addr; }
-        inline uint64_t start() const   { return base_addr; }
-        inline uint64_t end() const     { return base_addr + length - 1; }
-        inline uint64_t size() const    { return length; }
-        inline uint32_t type() const    { return type_; }
+        inline uint64_t start()   const { return base_addr; }
+        inline uint64_t end()     const { return base_addr + length - 1; }
+        inline uint64_t size()    const { return length; }
+        inline uint32_t type()    const { return type_; }
         inline bool     is_free() const { return type_ == 1; }
 
         inline void set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
