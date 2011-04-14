@@ -90,12 +90,12 @@ local interface mmu_v1
 
     -- Return the global rights currently associated with the
     -- stretch "str".
-    query_global_prot(stretch_v1& str)
+    query_global_rights(stretch_v1& str)
         returns (stretch_v1.rights access);
 
     -- Set the protections on stretch "str" to be the same as those
     -- of the stretch "tmpl" in all protection domains.
     -- This does *not* affect the global rights - these must be done
     -- manually via "QueryGlobal" and "[Add|AddMapped|Update]Range".
-    clone_prot(stretch_v1& tmpl, str);
+    clone_rights(stretch_v1& tmpl, str);
 }
