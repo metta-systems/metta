@@ -282,5 +282,55 @@ bool bootinfo_t::append_cmdline(const char* cmdline)
     return true;
 }
 
+address_t bootinfo_t::find_top_memory_address()
+{
+#ifdef CLANG_HAS_LAMBDAS
+    std::for_each(mmap_begin(), mmap_end(), [](const multiboot_t::mmap_entry_t& e)
+    {
+#else
+		for (auto ei = mmap_begin(); ei != mmap_end(); ++ei)
+		{
+			auto e = *ei;
+#endif
+		}
+#ifdef CLANG_HAS_LAMBDAS
+	);
+#endif
+	return 0;
+}
+
+address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
+{
+    // Skip memory below 1Mb on x86.
+	const address_t LOWER_BOUND = 1*MB;
+	address_t first_range = ~0;
+#ifdef CLANG_HAS_LAMBDAS
+    std::for_each(mmap_begin(), mmap_end(), [](const multiboot_t::mmap_entry_t& e)
+    {
+#else
+		for (auto ei = mmap_begin(); ei != mmap_end(); ++ei)
+		{
+			auto e = *ei;
+#endif
+			if (e.is_free() && (e.start() > LOWER_BOUND) && (first_range > e.start()) && (e.size() >= bytes))
+				first_range = e.start();
+			else if ((e.type() == multiboot_t::mmap_entry_t::bootinfo) && (first_range <= e.end()))
+				first_range = e.end() + 1;
+
+//            kconsole << "mmap entry - " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
+        }
+#ifdef CLANG_HAS_LAMBDAS
+    );
+#endif
+	return first_range;
+}
+
+// Use memory (start, start + size) from a given range, will cause a split of range into 2 or 3 regions, one or two of which will remain free,
+// and one will be marked occupied. Will perform various consistency checks and add new regions to bootinfo_t memory map.
+bool bootinfo_t::use_memory(address_t start, size_t size)
+{
+	return false;
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
