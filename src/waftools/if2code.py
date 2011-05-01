@@ -16,13 +16,12 @@ class if2code(Task.Task):
     color = 'PINK'
     before = 'cxx'
     def run(self):
-        for x in self.inputs:
-            print "inp "+x.__repr__()
-        print "parent "+self.inputs[0].parent.get_build(self.env).__repr__()
-        cwd = self.inputs[0].parent.get_bld().abspath()
-        print "Writing to "+cwd
-        cmd = '%s %s %s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
-        out = self.generator.bld.cmd_and_log(cmd, cwd=cwd, quiet=Context.STDOUT)
+        cwd = self.inputs[0].parent.bldpath(self.env)
+        # TODO: add include paths
+        cmd = '%s %s -o=%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
+        print "Running "+cmd
+        import Utils
+        return Utils.exec_command(cmd)
 
 @extension('.if')
 def compile_idl(self, node):
