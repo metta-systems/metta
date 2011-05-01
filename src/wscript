@@ -218,7 +218,7 @@ def build(bld):
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    bld(source = 'interfaces/frames_module_v1.if', name = 'frames_mod_idl')
+    #bld(source = 'interfaces/frames_module_v1.if', name = 'frames_mod_idl')
 
     # Make bootimage components.
     bld.add_subdirs("modules")
@@ -262,11 +262,11 @@ def build(bld):
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
-    interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
-    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    interfaces.includes = interfaces.env['INCLUDE_DIRS']
-    interfaces.target = 'interfaces'
+    #interfaces = bld.new_task_gen('cxx', 'staticlib')
+    #interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
+    #interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    #interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    #interfaces.target = 'interfaces'
 
     # Tests
 #    tests = bld.new_task_gen('cxx', 'program')
@@ -318,7 +318,7 @@ def build(bld):
     startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
     startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds']) #, '-Wl,-Map,startup.map'])#
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-    startup.uselib_local = 'common platform interfaces kernel minruntime'
+    startup.uselib_local = 'common platform kernel minruntime'# interfaces
 
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
@@ -330,7 +330,7 @@ def build(bld):
     glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
     glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds'])#, '-Wl,-Map,glue.map'])#
     glue.includes = glue.env['INCLUDE_DIRS']
-    glue.uselib_local = 'common platform interfaces kernel minruntime'
+    glue.uselib_local = 'common platform kernel minruntime'# interfaces
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']

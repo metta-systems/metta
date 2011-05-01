@@ -5,13 +5,12 @@
 #
 # Protection Domains at present have no methods, but they do define
 # a type "ID", which is an opaque 'handle' on the protection domain.
-# This handle is used for invocations on the NTSC, or other system services.
+# This handle is used for invocations on the glue, or other system services.
 
 local interface protection_domain_v1
 {
    # Every protection domain has a unique identifier of type "ID"
-   # There is a distinguished value "NULL_PDID" defined in
-   # "nemesis.h" which is guaranteed never to be a valid protection
-   # domain identifier.
+   # There is a distinguished value "NULL_PDID" which is guaranteed 
+   # never to be a valid protection domain identifier.
    type int32 id; # opaque
 }

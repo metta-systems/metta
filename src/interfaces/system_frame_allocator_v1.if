@@ -1,4 +1,4 @@
-# The "system_frame_allocator" interface provides # in addition to the basic allocation & freeing of physical memory
+# The "system_frame_allocator" interface provides in addition to the basic allocation & freeing of physical memory
 # a mechanism whereby the system can create a new per-domain interface for physical memory allocation.
 # It also allows for the extension of the set of physical regions managed by the frames allocator in the case that not
 # all information was available at the time of its creation (i.e. at the time frames_mod.create was invoked).
@@ -20,3 +20,4 @@ local interface system_frame_allocator_v1 extends frame_allocator_v1
     add_frames(memory_v1.physmem_desc region)
         returns (boolean added);
 }
+

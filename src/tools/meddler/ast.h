@@ -37,7 +37,9 @@ public:
     alias_t(std::string nm) : node_t(), type(), kind(token::type), name_(nm) {}
     alias_t(std::string tp, std::string nm) : node_t(), type(tp), kind(token::type), name_(nm) {}
     virtual std::string name() { return name_; }
+    virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
+    virtual bool is_builtin_type() { return true; }// FIXME
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
     token::kind kind;
@@ -50,12 +52,14 @@ class var_decl_t : public alias_t
 public:
     var_decl_t() : alias_t(), reference(false) {}
     void set_reference() { reference = true; }
+    bool is_reference() { return reference; }
     virtual void dump(std::string indent_prefix);
 
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
 
+private:
     bool reference;
 };
 

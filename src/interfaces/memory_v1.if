@@ -5,7 +5,7 @@ local interface memory_v1
     # Something went horribly wrong.
     exception failure {}
 
-    # for 32 bits?
+    # for 32 bits? this might need an introspection capability to adapt to different address sizes.
     type card32 address;
     type card32 size;
 

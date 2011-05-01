@@ -34,6 +34,16 @@ bool exception_t::add_field(var_decl_t* field)
     return true;
 }
 
+std::string alias_t::unqualified_name()
+{
+    size_t pos;
+    if ((pos = type.find_last_of('.')) != std::string::npos)
+    {
+        return type.substr(pos+1);
+    }
+    return type;
+}
+
 bool record_alias_t::add_field(var_decl_t* field)
 {
     std::cout << "record_alias_t::add_field()" << std::endl;
