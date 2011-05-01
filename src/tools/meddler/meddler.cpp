@@ -56,19 +56,19 @@ public:
         parser.parse_tree->emit_interface_cpp(interface_cpp);
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
-        ofstream of(filename.str(), ios::out|ios::trunc);
+        ofstream of(filename.str().c_str(), ios::out|ios::trunc);
         of << impl_h.str();
         of.close();
 
         filename.str("");
         filename << output_dir << "/" << parser.parse_tree->name() << "_interface.h";
-        of.open(filename.str(), ios::out|ios::trunc);
+        of.open(filename.str().c_str(), ios::out|ios::trunc);
         of << interface_h.str();
         of.close();
 
         filename.str("");
         filename << output_dir << "/" << parser.parse_tree->name() << "_interface.cpp";
-        of.open(filename.str(), ios::out|ios::trunc);
+        of.open(filename.str().c_str(), ios::out|ios::trunc);
         of << interface_cpp.str();
         of.close();
 

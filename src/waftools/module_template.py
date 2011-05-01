@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def build(bld):
-    name = 'root_domain'
+def setup_module_build(name, bld):
     mod = bld.new_task_gen('cxx', 'program')
     mod.env = bld.env_of_name('KERNEL_ENV').copy()
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
@@ -14,10 +13,4 @@ def build(bld):
         name = name+' module nm undef check',
         after = 'cxx_link'
     )
-    mod.source = 'entry.cpp root_domain.cpp'.split()
-    mod.add_source = 'frames_mod_idl'
-    mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    mod.uselib_local = 'component_support platform kernel minruntime common'
-
-# kate: indent-width 4; replace-tabs on;
-# vim: set et sw=4 ts=4 sts=4 cino=(4 :
+    return mod

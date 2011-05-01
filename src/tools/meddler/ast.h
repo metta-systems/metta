@@ -33,9 +33,9 @@ public:
 class alias_t : public node_t
 {
 public:
-    alias_t() : node_t(), type(), kind(token::kind::none), name_() {}
-    alias_t(std::string nm) : node_t(), type(), kind(token::kind::type), name_(nm) {}
-    alias_t(std::string tp, std::string nm) : node_t(), type(tp), kind(token::kind::type), name_(nm) {}
+    alias_t() : node_t(), type(), kind(token::none), name_() {}
+    alias_t(std::string nm) : node_t(), type(), kind(token::type), name_(nm) {}
+    alias_t(std::string tp, std::string nm) : node_t(), type(tp), kind(token::type), name_(nm) {}
     virtual std::string name() { return name_; }
     virtual void dump(std::string indent_prefix);
 
