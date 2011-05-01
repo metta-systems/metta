@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h" // include builtin types for generated interfaces
+
 // A mixed influence of OSKit COM and Nemesis component interfaces.
 
 // retain = objc-ish for Ref
