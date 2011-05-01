@@ -6,10 +6,6 @@
 namespace AST
 {
 
-// static void type_emitter(std::string key, symbol_table_t& t, ostringstream& out)
-// {
-// }
-
 static std::vector<std::string> build_forwards(interface_t* intf)
 {
     std::vector<std::string> forwards;
@@ -105,6 +101,21 @@ void interface_t::emit_interface_cpp(std::ostringstream& s)
     });
 }
 
+/**
+ * Generate a qualified name for a given var decl type.
+ */
+static std::string emit_type(var_decl_t& type)
+{
+    std::string result = type.type;
+    if (type.is_builtin_type())
+    {
+        result = type.unqualified_name();
+    }
+    if (type.is_reference())
+        result += "&";
+    return result;
+}
+
 void method_t::emit_impl_h(std::ostringstream& s)
 {
     std::string return_value_type;
@@ -112,9 +123,7 @@ void method_t::emit_impl_h(std::ostringstream& s)
         return_value_type = "void";
     else
     {
-        return_value_type = returns.front()->type;
-        if (returns.front()->reference)
-            return_value_type += "&";
+        return_value_type = emit_type(*returns.front());
     }
 
     s << '\t' << return_value_type
@@ -148,9 +157,7 @@ void method_t::emit_interface_h(std::ostringstream& s)
         return_value_type = "void";
     else
     {
-        return_value_type = returns.front()->type;
-        if (returns.front()->reference)
-            return_value_type += "&";
+        return_value_type = emit_type(*returns.front());
     }
 
     s << '\t' << return_value_type
@@ -189,9 +196,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
         return_value_type = "void";
     else
     {
-        return_value_type = returns.front()->type;
-        if (returns.front()->reference)
-            return_value_type += "&";
+        return_value_type = emit_type(*returns.front());
     }
 
     s << return_value_type
@@ -261,25 +266,19 @@ void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 
 void var_decl_t::emit_impl_h(std::ostringstream& s)
 {
-    s << type;
-    if (reference)
-        s << "&";
+    s << emit_type(*this);
     s << " " << name_;
 }
 
 void var_decl_t::emit_interface_h(std::ostringstream& s)
 {
-    s << type;
-    if (reference)
-        s << "&";
+    s << emit_type(*this);
     s << " " << name_;
 }
 
 void var_decl_t::emit_interface_cpp(std::ostringstream& s)
 {
-    s << type;
-    if (reference)
-        s << "&";
+    s << emit_type(*this);
     s << " " << name_;
 }
 
