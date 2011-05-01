@@ -1,14 +1,28 @@
+#!/usr/bin/env python
+# encoding: utf-8
 #
 # Convert interface file into set of header and implementation files.
-# name.if -> name_vX_interface.h
-#         -> name_vX_interface.cpp
-#         -> name_vX_impl.h
+# name_vX.if -> name_vX_interface.h
+#            -> name_vX_interface.cpp
+#            -> name_vX_impl.h
 #
 import Task, os
 from TaskGen import feature, before, extension
-Task.simple_task_type('if2code',
-                      '${MEDDLER} ${SRC} ${TGT}',
-                      color='PINK', before='cxx')
+#Task.simple_task_type('if2code',
+                      #rule=meddle_file, #'${MEDDLER} ${SRC} ${TGT}',
+                      #color='PINK', before='cxx')
+
+class if2code(Task.Task):
+    color = 'PINK'
+    before = 'cxx'
+    def run(self):
+        for x in self.inputs:
+            print "inp "+x.__repr__()
+        print "parent "+self.inputs[0].parent.get_build(self.env).__repr__()
+        cwd = self.inputs[0].parent.get_bld().abspath()
+        print "Writing to "+cwd
+        cmd = '%s %s %s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
+        out = self.generator.bld.cmd_and_log(cmd, cwd=cwd, quiet=Context.STDOUT)
 
 @extension('.if')
 def compile_idl(self, node):
