@@ -49,7 +49,7 @@ def set_options(opt):
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile/all)." + '[default: %default]')
 
     # Use clang
-    opt.add_option("--clang", action="store", default="yes", help="Use clang to build (default: %default)")
+    opt.add_option("--clang", action="store", default="no", help="Use clang to build (default: %default)")
 
 def configure(conf):
     global flags, cflags, cxxflags, include_dirs, linkflags
@@ -66,12 +66,13 @@ def configure(conf):
     # * Apps/servers running on target system, with possible kernel/boot deps. (APP_ENV)
     # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
+    # * Tests running on the target system (KERNEL_TEST_ENV)
 
     extra_cross_flags = ['-fno-builtin', '-fno-stack-protector'] #, '-fno-leading-underscore']
 
-    conf.check_tool('yasm misc ar', tooldir='waftools')
+    conf.check_tool('yasm misc ar if2code', tooldir='waftools')
 
-    conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+    #conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
 
     # TODO: try to use yasm, but allow fallback to NASM
     # Ditto for llvm
@@ -92,6 +93,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
+    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build
 
@@ -174,27 +176,28 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    conf.env['CC'] = '/Developer/usr/bin/gcc'
-    conf.env['CXX'] = '/Developer/usr/bin/g++'
-    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    conf.env.append_unique('CCFLAGS', ['-m32'])
-    conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env.append_unique('LINKFLAGS', ['-m32'])
+    #conf.env['CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['CXX'] = '/Developer/usr/bin/g++'
+    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    #conf.env.append_unique('CCFLAGS', ['-m32'])
+    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
+    #conf.env.append_unique('LINKFLAGS', ['-m32'])
     # set uselib
     conf.env.LIB_UUID = 'uuid'
     conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
-    conf.setenv('TEST_ENV')
-    conf.env['CC'] = '/Developer/usr/bin/gcc'
-    conf.env['CXX'] = '/Developer/usr/bin/g++'
-    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    conf.env.append_unique('CCFLAGS', ['-m32'])
-    conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env.append_unique('LINKFLAGS', ['-m32'])
+    #conf.setenv('TEST_ENV')
+    #conf.env['CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['CXX'] = '/Developer/usr/bin/g++'
+    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    #conf.env.append_unique('CCFLAGS', ['-m32'])
+    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    #conf.env.append_unique('LINKFLAGS', ['-m32'])
 
 def build(bld):
     arch = Options.options.arch
@@ -202,6 +205,7 @@ def build(bld):
     # Tool to parse interface files.
     # Build it first so that we can transform interface defitions to code during build.
     meddler = bld.new_task_gen('cxx', 'program')
+    meddler.name = 'meddler'
     meddler.target = 'meddler'
     meddler.source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split())
     meddler.env = bld.env_of_name('TOOLS_ENV').copy()
@@ -209,7 +213,12 @@ def build(bld):
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
     meddler.uselib = 'LLVM'
 
+    meddler.post()
     bld.add_group()
+
+    # Now generate interface files.
+    # Use name to reference sources. Could just reference by source file name?
+    bld(source = 'interfaces/frames_module_v1.if', name = 'frames_mod_idl')
 
     # Make bootimage components.
     bld.add_subdirs("modules")
@@ -346,6 +355,7 @@ def build(bld):
         after = 'cxx_link'
     )
 
+    #Check and add all output modules.
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
@@ -366,15 +376,9 @@ def build(bld):
         dict = {'ROOT': 'cd'}
     )
 
-#    bld.new_task_gen('subst',
-#        source = 'tools/mkbootimg/menu.lst.in',
-#        target = 'tools/mkbootimg/menu.lst.fd0',
-#        dict = {'ROOT': 'fd0'}
-#    )
-
     bld.new_task_gen(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',# tools/mkbootimg/menu.lst.fd0
-        target = 'metta.iso', #metta.fd0
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        target = 'metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
         after = 'init.img'
