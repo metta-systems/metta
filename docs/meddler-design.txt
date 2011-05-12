@@ -1,0 +1,12 @@
+First we parse the idl into some sort of AST.
+
+Type information should be entered into the global type table.
+
+Then we do lookups for types, checking if type is builtin.
+If it is not - it should be a fully qualified type within the same or another interface.
+In the same interface, no extra includes needed but the order of definitions should be maintained, so that types 
+are defined or declared before first use.
+For different interface an include of "<interface name>_interface.h" is required to bring in type declarations.
+
+Then the type mapping is adjusted - <interface name>.<type> is converted into <interface name>_<type> for C or maybe 
+to <interface name as namespace>::<type> for C++?
