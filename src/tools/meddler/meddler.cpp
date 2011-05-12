@@ -13,10 +13,13 @@ static cl::opt<string>
 inputFilename(cl::Positional, cl::desc("<input .if file>"), cl::init("-"));
 
 static cl::list<string>
-includeDirectories("I", cl::desc("Include path"), cl::value_desc("directory"), cl::ZeroOrMore);
+includeDirectories("I", cl::Prefix, cl::desc("Include path"), cl::value_desc("directory"), cl::ZeroOrMore);
+
+static cl::opt<bool>
+verbose("v", cl::desc("Increase verbosity level."), cl::ZeroOrMore);
 
 static cl::opt<string>
-outputDirectory("o", cl::desc("Output path"), cl::value_desc("directory"), cl::init("."));
+outputDirectory("o", cl::Prefix, cl::desc("Output path"), cl::value_desc("directory"), cl::init("."));
 
 class Meddler
 {

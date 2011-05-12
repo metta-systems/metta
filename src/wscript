@@ -218,7 +218,7 @@ def build(bld):
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    #bld(source = 'interfaces/frames_module_v1.if', name = 'frames_mod_idl')
+    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if', name = 'all_idl')
 
     # Make bootimage components.
     bld.add_subdirs("modules")
@@ -359,6 +359,7 @@ def build(bld):
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
+            print "posting "+tg.target
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 

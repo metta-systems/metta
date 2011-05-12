@@ -1,5 +1,6 @@
 #include "default_console.h"
 #include "frames_module_v1_interface.h"
+#include "mmu_v1_interface.h"
 #include "mmu_module_v1_interface.h"
 //#include "heap_module_v1_interface.h"
 #include "macros.h"

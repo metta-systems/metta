@@ -1,10 +1,57 @@
 #include "ast.h"
 #include "macros.h"
+#include <map>
 #include <sstream>
+#include <iostream>
 #include <algorithm>
+
+using namespace std;
 
 namespace AST
 {
+
+/*!
+ * If a given type needs include directive, return one, otherwise return empty string.
+ */
+static std::string needs_include(string type)
+{
+	if (map_type(type).empty())
+	{
+		return string("#include \"")+type+".h\"";
+	}
+	return string();
+}
+
+/*!
+ * Map IDL builtin types to C++ emitter types.
+ */
+static string map_type(string type)
+{
+    static bool type_map_built = false;
+    static map<string, string> type_map;
+
+    if (!type_map_built)
+    {
+        type_map["int8"] = "int8_t";
+        type_map["int16"] = "int16_t";
+        type_map["int32"] = "int32_t";
+        type_map["int64"] = "int64_t";
+        type_map["octet"] = "uint8_t";
+        type_map["card16"] = "uint16_t";
+        type_map["card32"] = "uint32_t";
+        type_map["card64"] = "uint64_t";
+        type_map["float"] = "float";
+        type_map["double"] = "double";
+        type_map["boolean"] = "bool";
+        type_map["string"] = "const char*";
+        type_map_built = true;
+    }
+
+    if (type_map.find(type) != type_map.end())
+        return type_map[type];
+    else
+        return string();
+}
 
 static std::vector<std::string> build_forwards(interface_t* intf)
 {
@@ -75,6 +122,7 @@ void interface_t::emit_interface_h(std::ostringstream& s)
     s << "#pragma once" << std::endl << std::endl
       << "#include \"module_interface.h\"" << std::endl << std::endl
     // TODO: missing forward declarations for parameter types
+	// TODO: missing declarations/definitions of interface types ("name_typename")
       << "struct " << name_ << "_ops;" << std::endl
       << "struct " << name_ << "_state;" << std::endl << std::endl
       << "struct " << name_ << "_closure" << std::endl
@@ -101,7 +149,7 @@ void interface_t::emit_interface_cpp(std::ostringstream& s)
     });
 }
 
-/**
+/*!
  * Generate a qualified name for a given var decl type.
  */
 static std::string emit_type(var_decl_t& type)
@@ -109,7 +157,12 @@ static std::string emit_type(var_decl_t& type)
     std::string result = type.type;
     if (type.is_builtin_type())
     {
-        result = type.unqualified_name();
+        result = map_type(type.unqualified_name());
+        if (result.empty())
+        {
+            result = type.unqualified_name();
+            cout << "Unknown builtin type! " << result << endl;
+        }
     }
     if (type.is_reference())
         result += "&";
