@@ -53,7 +53,10 @@ public:
     virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
     virtual bool is_builtin_type() { return true; }// FIXME
-    virtual void emit_include(std::ostringstream& s) = 0;
+	virtual void emit_include(std::ostringstream& s);
+	virtual void emit_impl_h(std::ostringstream&) {/*abort();*/}
+    virtual void emit_interface_h(std::ostringstream&) {/*abort();*/}
+    virtual void emit_interface_cpp(std::ostringstream&) {/*abort();*/}
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
     token::kind kind;
@@ -226,6 +229,7 @@ public:
     virtual std::string name() { return name_; }
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
+    virtual bool add_imported_type(alias_t*);
     virtual bool add_type(alias_t*);
     virtual void dump(std::string indent_prefix);
     void set_parent(std::string p) { base = p; }

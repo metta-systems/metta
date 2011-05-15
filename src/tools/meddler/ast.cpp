@@ -19,6 +19,13 @@ bool interface_t::add_type(alias_t* t)
     return true;
 }
 
+bool interface_t::add_imported_type(alias_t* t)
+{
+    //std::cout << "interface_t::add_imported_type()" << std::endl;
+    imported_types.push_back(t);
+    return true;
+}
+
 bool interface_t::add_method(method_t* m)
 {
     //std::cout << "interface_t::add_method()" << std::endl;

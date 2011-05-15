@@ -47,12 +47,19 @@ bool symbol_table_t::is_exception_type(iterator idx)
     return (*idx).second == token::kind::_exception_type;
 }
 
+bool symbol_table_t::is_qualified_type_name(std::string identifier)
+{
+    if (identifier.find_first_of('.') != std::string::npos)
+        return true;
+	return false;
+}
+
 std::string symbol_table_t::qualify(std::string identifier)
 {
-    if (is_builtin_type(lookup(identifier)))
+    if (is_qualified_type_name(identifier))
         return identifier;
 
-    if (identifier.find_first_of('.') != std::string::npos)
+    if (is_builtin_type(lookup(identifier)))
         return identifier;
 
     std::string qualifier;
