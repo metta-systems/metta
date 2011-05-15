@@ -56,13 +56,14 @@ std::string token_to_name(token::kind tok)
     return "UNKNOWN";
 }
 
-parser_t::parser_t(llvm::SourceMgr& sm)
+parser_t::parser_t(llvm::SourceMgr& sm, bool be_verbose)
     : is_local(false)
     , is_final(false)
     , is_idempotent(false)
-    , lex()
+    , lex(be_verbose)
     , parse_tree(0)
     , source_mgr(sm)
+	, verbose(be_verbose)
 {
 }
 
@@ -127,15 +128,18 @@ bool parser_t::run()
 {
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
-    symbols.dump();
-    if (ret)
-        std::cout << "** PARSE SUCCESS" << std::endl;
-    else
-        std::cout << "** PARSE FAILURE" << std::endl;
+	if (verbose)
+	{
+    	symbols.dump();
+    	if (ret)
+        	std::cout << "** PARSE SUCCESS" << std::endl;
+    	else
+        	std::cout << "** PARSE FAILURE" << std::endl;
+	}
     return ret;
 }
 
-#define D() L(std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
+#define D() L(if(verbose) std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
 
 //! module ::= full_interface_decl
 //! full_interface_decl ::= local_interface_decl | final_interface_decl | interface_decl
@@ -221,7 +225,9 @@ bool parser_t::parse_interface()
             return false;
         }
 
-        node->dump("");
+		if (verbose)
+        	node->dump("");
+
         return true;
     }
     PARSE_ERROR("unexpected");
@@ -329,7 +335,7 @@ bool parser_t::parse_exception()
         return false;
     }
 
-    AST::exception_t* node = new AST::exception_t(lex.current_token());
+    AST::exception_t* node = new AST::exception_t(parse_tree, lex.current_token());
     local_scope_t new_scope(symbols, lex.current_token());
     if (!lex.expect(token::lbrace))
     {
@@ -374,13 +380,13 @@ bool parser_t::parse_method()
             return false;
         }
 
-        AST::method_t m;
+        AST::method_t m(parse_tree);
         m.name_ = name;
         m.idempotent = is_idempotent;
         is_idempotent = false;
 
         std::vector<AST::parameter_t*> params;
-        if (!parse_argument_list(params, AST::parameter_t::in))
+        if (!parse_argument_list(&m, params, AST::parameter_t::in))
             return false;
 
         m.params = params;
@@ -413,13 +419,13 @@ bool parser_t::parse_method()
 }
 
 // TODO: return arglist here so we can stash it into right place
-bool parser_t::parse_argument_list(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
+bool parser_t::parse_argument_list(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
 {
     D();
     while (lex.lex() != token::rparen)
     {
         lex.lexback();
-        if (!parse_argument(args, default_dir))
+        if (!parse_argument(parent, args, default_dir))
             return false;
     }
     lex.lexback();
@@ -483,6 +489,8 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
         }
     }
     to_get.type = symbols.qualify(lex.current_token());
+//FIXME: check for builtin types here and don't qualify if builtin (saves un-qualifying them later).
+//FIXME: here should be able to add type into interface's imported_types list.
     if (lex.maybe(token::reference))
         to_get.set_reference();
     if (!lex.expect(token::identifier))
@@ -497,7 +505,7 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
 bool parser_t::parse_field(AST::node_t* parent)
 {
     D();
-    AST::var_decl_t* field = new AST::var_decl_t;
+    AST::var_decl_t* field = new AST::var_decl_t(parent);
     if (!parse_var_decl(*field))
     {
         delete field;
@@ -513,10 +521,10 @@ bool parser_t::parse_field(AST::node_t* parent)
     return true;
 }
 
-bool parser_t::parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
+bool parser_t::parse_argument(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir)
 {
     D();
-    AST::parameter_t p;
+    AST::parameter_t p(parent);
     p.direction = default_dir;
     if (lex.maybe(token::kw_in))
     {
@@ -554,7 +562,7 @@ bool parser_t::parse_type_alias()
     D();
     if (!lex.match(token::kw_type))
         return false;
-    AST::type_alias_t t;
+    AST::type_alias_t t(parse_tree);
     if (!lex.expect(token::type))
     {
         PARSE_ERROR("type ID expected");
@@ -621,7 +629,7 @@ bool parser_t::parse_range_type_alias()
         return false;
     }
 
-    AST::range_alias_t* node = new AST::range_alias_t(range_id, range_start, range_end);
+    AST::range_alias_t* node = new AST::range_alias_t(parse_tree, range_id, range_start, range_end);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -673,7 +681,7 @@ bool parser_t::parse_sequence_type_alias()
         return false;
     }
 
-    AST::sequence_alias_t* node = new AST::sequence_alias_t(type, base_type);
+    AST::sequence_alias_t* node = new AST::sequence_alias_t(parse_tree, type, base_type);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -725,7 +733,7 @@ bool parser_t::parse_set_type_alias()
         return false;
     }
 
-    AST::set_alias_t* node = new AST::set_alias_t(type, base_type);
+    AST::set_alias_t* node = new AST::set_alias_t(parse_tree, type, base_type);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -748,7 +756,7 @@ bool parser_t::parse_record_type_alias()
         return false;
     }
 
-    AST::record_alias_t* node = new AST::record_alias_t(lex.current_token());
+    AST::record_alias_t* node = new AST::record_alias_t(parse_tree, lex.current_token());
     local_scope_t new_scope(symbols, lex.current_token());
 
     if (!lex.expect(token::lbrace))
@@ -782,7 +790,7 @@ bool parser_t::parse_enum_type_alias()
     if (!lex.match(token::kw_enum))
         return false;
 
-    AST::enum_alias_t* node = new AST::enum_alias_t;//memleaks on errors!
+    AST::enum_alias_t* node = new AST::enum_alias_t(parse_tree);//memleaks on errors!
 
     if (!lex.expect(token::lbrace))
     {
@@ -877,7 +885,7 @@ bool parser_t::parse_array_type_alias()
         return false;
     }
 
-    AST::array_alias_t* node = new AST::array_alias_t(type, base_type, count);
+    AST::array_alias_t* node = new AST::array_alias_t(parse_tree, type, base_type, count);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -915,7 +923,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
     }
 
     std::vector<AST::parameter_t*> returns;
-    if (!parse_argument_list(returns, AST::parameter_t::out))
+    if (!parse_argument_list(&m, returns, AST::parameter_t::out))
         return false;
 
     // TODO: check that all ids are types
