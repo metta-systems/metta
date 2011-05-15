@@ -1,18 +1,16 @@
-#include "frames_module_interface.h"
-#include "frames_module_impl.h"
+#include "frames_module_v1_interface.h"
+#include "frames_module_v1_impl.h"
 #include "types.h"
 #include "macros.h"
 
-unsigned int required_size(frames_module_v1_closure* self)
+static unsigned int required_size(frames_module_v1_closure* self)
 {
     UNUSED(self);
     return 42;
 }
 
 static const frames_module_v1_ops ops = {
-    required_size,
-    0,
-    0
+    required_size
 };
 
 static const frames_module_v1_closure clos = {
