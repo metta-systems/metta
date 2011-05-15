@@ -7,21 +7,21 @@ namespace AST
 
 bool interface_t::add_exception(exception_t* exc)
 {
-    std::cout << "interface_t::add_exception()" << std::endl;
+    //std::cout << "interface_t::add_exception()" << std::endl;
     exceptions.push_back(exc);
     return true;
 }
 
 bool interface_t::add_type(alias_t* t)
 {
-    std::cout << "interface_t::add_type()" << std::endl;
+    //std::cout << "interface_t::add_type()" << std::endl;
     types.push_back(t);
     return true;
 }
 
 bool interface_t::add_method(method_t* m)
 {
-    std::cout << "interface_t::add_method()" << std::endl;
+    //std::cout << "interface_t::add_method()" << std::endl;
     m->parent_interface = name_;
     methods.push_back(m);
     return true;
@@ -29,7 +29,7 @@ bool interface_t::add_method(method_t* m)
 
 bool exception_t::add_field(var_decl_t* field)
 {
-    std::cout << "exception_t::add_field()" << std::endl;
+    //std::cout << "exception_t::add_field()" << std::endl;
     fields.push_back(field);
     return true;
 }
@@ -46,35 +46,35 @@ std::string alias_t::unqualified_name()
 
 bool record_alias_t::add_field(var_decl_t* field)
 {
-    std::cout << "record_alias_t::add_field()" << std::endl;
+    //std::cout << "record_alias_t::add_field()" << std::endl;
     fields.push_back(field);
     return true;
 }
 
 bool enum_alias_t::add_field(var_decl_t* field)
 {
-    std::cout << "enum_alias_t::add_field()" << std::endl;
+    //std::cout << "enum_alias_t::add_field()" << std::endl;
     fields.push_back(field->name_);
     return true;
 }
 
 bool method_t::add_parameter(parameter_t* p)
 {
-    std::cout << "method_t::add_parameter()" << std::endl;
+    //std::cout << "method_t::add_parameter()" << std::endl;
     params.push_back(p);
     return true;
 }
 
 bool method_t::add_return(parameter_t* r)
 {
-    std::cout << "method_t::add_return()" << std::endl;
+    //std::cout << "method_t::add_return()" << std::endl;
     returns.push_back(r);
     return true;
 }
 
 bool method_t::add_exception(exception_t* e)
 {
-    std::cout << "method_t::add_exception()" << std::endl;
+    //std::cout << "method_t::add_exception()" << std::endl;
     raises.push_back(e);
     return true;
 }
