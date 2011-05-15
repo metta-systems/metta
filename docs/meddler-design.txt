@@ -10,3 +10,5 @@ For different interface an include of "<interface name>_interface.h" is required
 
 Then the type mapping is adjusted - <interface name>.<type> is converted into <interface name>_<type> for C or maybe 
 to <interface name as namespace>::<type> for C++?
+
+*to change* C++ generator should not be concerned with C interface problems as long as interface is binary compatible.

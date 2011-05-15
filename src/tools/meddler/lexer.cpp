@@ -2,16 +2,18 @@
 #include "token.h"
 #include "lexer.h"
 
-lexer_t::lexer_t()
+lexer_t::lexer_t(bool be_verbose)
     : cur_ptr(0)
     , cur_buf(0)
     , symbols(0)
     , cur_kind(token::none)
     , token_val(0)
+	, verbose(be_verbose)
 {
 }
 
-lexer_t::lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym)
+lexer_t::lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym, bool be_verbose)
+	: verbose(be_verbose)
 {
     init(StartBuf, sym);
 }

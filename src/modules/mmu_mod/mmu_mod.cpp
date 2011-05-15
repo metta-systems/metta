@@ -1,7 +1,7 @@
 #include "default_console.h"
 #include "bootinfo.h"
-#include "mmu_module_interface.h"
-#include "mmu_module_impl.h"
+#include "mmu_module_v1_interface.h"
+#include "mmu_module_v1_impl.h"
 #include "algorithm"
 
 struct mmu_v1_closure;
@@ -47,8 +47,7 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
 }
 
 static const mmu_module_v1_ops ops = {
-    mmu_mod_create,
-    NULL
+    mmu_mod_create
 };
 
 static const mmu_module_v1_closure clos = {

@@ -14,7 +14,20 @@ class method_t;
 
 class node_t
 {
+	node_t* above;
 public:
+	node_t(node_t* parent) : above(parent) {}
+	node_t* get_root() // for the purpose of this excercise, root will be the interface
+	{
+		node_t* parent = above;
+		while (parent)
+		{
+			if (!parent->above)
+				return parent;
+			parent = parent->above;
+		}
+		return 0;
+	}
     virtual std::string name() = 0;
 
     virtual void emit_impl_h(std::ostringstream& s) = 0;
@@ -33,13 +46,14 @@ public:
 class alias_t : public node_t
 {
 public:
-    alias_t() : node_t(), type(), kind(token::none), name_() {}
-    alias_t(std::string nm) : node_t(), type(), kind(token::type), name_(nm) {}
-    alias_t(std::string tp, std::string nm) : node_t(), type(tp), kind(token::type), name_(nm) {}
+    alias_t(node_t* parent) : node_t(parent), type(), kind(token::none), name_() {}
+    alias_t(node_t* parent, std::string nm) : node_t(parent), type(), kind(token::type), name_(nm) {}
+    alias_t(node_t* parent, std::string tp, std::string nm) : node_t(parent), type(tp), kind(token::type), name_(nm) {}
     virtual std::string name() { return name_; }
     virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
     virtual bool is_builtin_type() { return true; }// FIXME
+    virtual void emit_include(std::ostringstream& s) = 0;
 
     std::string type; // use known types! check LLVM's Type/TypeBuilder
     token::kind kind;
@@ -50,11 +64,12 @@ public:
 class var_decl_t : public alias_t
 {
 public:
-    var_decl_t() : alias_t(), reference(false) {}
+    var_decl_t(node_t* parent) : alias_t(parent), reference(false) {}
     void set_reference() { reference = true; }
     bool is_reference() { return reference; }
     virtual void dump(std::string indent_prefix);
 
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -66,8 +81,8 @@ private:
 class type_alias_t : public alias_t
 {
 public:
-    type_alias_t() : alias_t() {}
-
+    type_alias_t(node_t* parent) : alias_t(parent) {}
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -78,9 +93,9 @@ class sequence_alias_t : public alias_t
 public:
     // type - base type
     // name - sequence type name
-    sequence_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    sequence_alias_t(node_t* parent, std::string type, std::string base_type) : alias_t(parent, base_type, type) {}
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -91,9 +106,9 @@ class array_alias_t : public alias_t
 public:
     // type - base type
     // name - sequence type name
-    array_alias_t(std::string type, std::string base_type, int c) : alias_t(base_type, type), count(c) {}
+    array_alias_t(node_t* parent, std::string type, std::string base_type, int c) : alias_t(parent, base_type, type), count(c) {}
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -106,9 +121,9 @@ class set_alias_t : public alias_t
 public:
     // type - base type
     // name - set type name
-    set_alias_t(std::string type, std::string base_type) : alias_t(base_type, type) {}
+    set_alias_t(node_t* parent, std::string type, std::string base_type) : alias_t(parent, base_type, type) {}
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -119,10 +134,10 @@ class record_alias_t : public alias_t
 public:
     std::vector<var_decl_t*> fields;
 
-    record_alias_t(std::string nm) : alias_t() { name_ = nm; }
+    record_alias_t(node_t* parent, std::string nm) : alias_t(parent) { name_ = nm; }
     virtual bool add_field(var_decl_t* field);
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -133,10 +148,10 @@ class enum_alias_t : public alias_t
 public:
     std::vector<std::string> fields;
 
-    enum_alias_t() : alias_t() { }
+    enum_alias_t(node_t* parent) : alias_t(parent) { }
     virtual bool add_field(var_decl_t* field);
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -147,9 +162,9 @@ class range_alias_t : public alias_t
 public:
     std::string start, end;
 
-    range_alias_t(std::string nm, std::string s, std::string e) : alias_t(nm), start(s), end(e) { }
+    range_alias_t(node_t* parent, std::string nm, std::string s, std::string e) : alias_t(parent, nm), start(s), end(e) { }
     virtual void dump(std::string indent_prefix);
-
+    virtual void emit_include(std::ostringstream&) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -160,17 +175,18 @@ class parameter_t : public var_decl_t
 {
 public:
     enum direction_e { in, out, inout } direction;
+	parameter_t(node_t* parent) : var_decl_t(parent), direction(inout) {}
     virtual void dump(std::string indent_prefix);
+    virtual void emit_include(std::ostringstream&) {}//FIXME
 };
 
 class exception_t : public node_t
 {
 public:
-    exception_t(std::string nm) : name_(nm) {}
+    exception_t(node_t* parent, std::string nm) : node_t(parent), name_(nm) {}
     virtual std::string name() { return name_; }
     virtual bool add_field(var_decl_t* field);
     virtual void dump(std::string indent_prefix);
-
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -182,14 +198,12 @@ public:
 class method_t : public node_t
 {
 public:
-    method_t() : node_t(), idempotent(false), never_returns(false) {}
-
+    method_t(node_t* parent) : node_t(parent), idempotent(false), never_returns(false) {}
     virtual std::string name() { return name_; }
     virtual void dump(std::string indent_prefix);
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
     virtual bool add_exception(exception_t*);
-
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
     virtual void emit_interface_cpp(std::ostringstream& s);
@@ -208,7 +222,7 @@ public:
 class interface_t : public node_t
 {
 public:
-    interface_t(std::string nm, bool is_local, bool is_final) : local(is_local), final(is_final), name_(nm) {}
+    interface_t(std::string nm, bool is_local, bool is_final) : node_t(0), local(is_local), final(is_final), name_(nm) {}
     virtual std::string name() { return name_; }
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
@@ -224,7 +238,9 @@ public:
     bool final;
     std::string name_;
     std::string base;
-    std::vector<interface_t*> imports;//implicitly derived from 'types' contents.
+    std::vector<alias_t*>     imported_types;//added to this list when we see an unknown fully qualified identifier in var_decls.
+	// builtin identifiers should resolve to known types in list.
+	// unqualified identifiers should resolve to the following list:
     std::vector<alias_t*>     types;
     std::vector<exception_t*> exceptions;
     std::vector<method_t*>    methods;

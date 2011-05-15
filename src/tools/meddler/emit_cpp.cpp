@@ -11,18 +11,6 @@ namespace AST
 {
 
 /*!
- * If a given type needs include directive, return one, otherwise return empty string.
- */
-static std::string needs_include(string type)
-{
-	if (map_type(type).empty())
-	{
-		return string("#include \"")+type+".h\"";
-	}
-	return string();
-}
-
-/*!
  * Map IDL builtin types to C++ emitter types.
  */
 static string map_type(string type)
@@ -51,6 +39,18 @@ static string map_type(string type)
         return type_map[type];
     else
         return string();
+}
+
+/*!
+ * If a given type needs include directive, return one, otherwise return empty string.
+ */
+static std::string needs_include(string type)
+{
+	if (map_type(type).empty())
+	{
+		return string("#include \"")+type+"_interface.h\"";
+	}
+	return string();
 }
 
 static std::vector<std::string> build_forwards(interface_t* intf)
@@ -120,10 +120,15 @@ void interface_t::emit_impl_h(std::ostringstream& s)
 void interface_t::emit_interface_h(std::ostringstream& s)
 {
     s << "#pragma once" << std::endl << std::endl
-      << "#include \"module_interface.h\"" << std::endl << std::endl
-    // TODO: missing forward declarations for parameter types
-	// TODO: missing declarations/definitions of interface types ("name_typename")
-      << "struct " << name_ << "_ops;" << std::endl
+	  << "#include \"module_interface.h\"" << std::endl << std::endl;
+	
+	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+	{
+		if (!needs_include(t->type).empty())
+			t->emit_include(s);
+	});
+
+    s << "struct " << name_ << "_ops;" << std::endl
       << "struct " << name_ << "_state;" << std::endl << std::endl
       << "struct " << name_ << "_closure" << std::endl
       << "{" << std::endl

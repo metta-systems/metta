@@ -14,6 +14,7 @@ class parser_t
     symbol_table_t symbols;
     AST::node_t* parse_tree; friend class Meddler;
     llvm::SourceMgr& source_mgr;
+	bool verbose;
 //     llvm::TypeSymbolTable types;
 
     void populate_symbol_table();
@@ -27,8 +28,8 @@ class parser_t
     bool parse_var_decl(AST::var_decl_t& to_get);
     bool parse_field_list(AST::node_t* parent);
     bool parse_field(AST::node_t* parent);
-    bool parse_argument_list(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
-    bool parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
+    bool parse_argument_list(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
+    bool parse_argument(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_id_list(std::vector<std::string>& ids, token::kind delim);
 
     bool parse_enum_type_alias();
@@ -42,7 +43,7 @@ class parser_t
     void reportError(std::string msg);
 
 public:
-    parser_t(llvm::SourceMgr& sm);
+    parser_t(llvm::SourceMgr& sm, bool be_verbose);
     void init(const llvm::MemoryBuffer *F);
     bool run();
 };

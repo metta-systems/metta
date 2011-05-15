@@ -17,16 +17,17 @@ class lexer_t
     token::kind cur_kind; // lookahead
     token::kind next_kind;
     unsigned token_val;
+	bool verbose;
 
 public:
-    lexer_t();//, SourceMgr &SM
-    explicit lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);//, SourceMgr &SM
+    lexer_t(bool be_verbose);//, SourceMgr &SM
+    explicit lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym, bool be_verbose);//, SourceMgr &SM
     void init(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);
 
     token::kind lex()
     {
         cur_kind = get_token();
-        L(std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
+        L(if(verbose) std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
         return cur_kind;
     }
 

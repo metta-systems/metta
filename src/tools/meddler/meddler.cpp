@@ -28,7 +28,7 @@ class Meddler
     vector<string> include_dirs;
 
 public:
-    Meddler() : sm(), parser(sm) {}
+    Meddler(bool verbose) : sm(), parser(sm, verbose) {}
 
     void set_include_dirs(vector<string> dirs)
     {
@@ -81,8 +81,8 @@ public:
 
 int main(int argc, char** argv)
 {
-    Meddler m;
     cl::ParseCommandLineOptions(argc, argv, "Meddler - Metta IDL parser.\n");
+    Meddler m(verbose);
 
     m.set_include_dirs(includeDirectories);
 
