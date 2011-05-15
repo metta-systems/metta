@@ -12,3 +12,8 @@ Then the type mapping is adjusted - <interface name>.<type> is converted into <i
 to <interface name as namespace>::<type> for C++?
 
 *to change* C++ generator should not be concerned with C interface problems as long as interface is binary compatible.
+
+
+We check the imported types while parsing field, parameter declarations - if a type is not builtin or fully qualified, it is considered local type, 
+subject to intra-interface resolution, otherwise if type is fully qualified it is regarded as type import and added to interface's 'imported_types' list.
+During code emission inclusion of other interfaces information is resolved (for C++ - by adding #include "importname_interface.h" lines).

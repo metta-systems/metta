@@ -45,6 +45,8 @@ public:
     bool is_interface_type(iterator idx);
     bool is_exception_type(iterator idx);
 
+	bool is_qualified_type_name(std::string identifier);
+
     /*!
      * Return a fully qualified name of identifier in current scope.
      */

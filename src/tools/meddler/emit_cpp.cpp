@@ -44,14 +44,14 @@ static string map_type(string type)
 /*!
  * If a given type needs include directive, return one, otherwise return empty string.
  */
-static std::string needs_include(string type)
+/*static std::string needs_include(string type)
 {
 	if (map_type(type).empty())
 	{
 		return string("#include \"")+type+"_interface.h\"";
 	}
 	return string();
-}
+}*/
 
 static std::vector<std::string> build_forwards(interface_t* intf)
 {
@@ -120,14 +120,15 @@ void interface_t::emit_impl_h(std::ostringstream& s)
 void interface_t::emit_interface_h(std::ostringstream& s)
 {
     s << "#pragma once" << std::endl << std::endl
-	  << "#include \"module_interface.h\"" << std::endl << std::endl;
+	  << "#include \"module_interface.h\"" << std::endl;
 	
-	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+	std::for_each(imported_types.begin(), imported_types.end(), [&s](alias_t* t)
 	{
-		if (!needs_include(t->type).empty())
-			t->emit_include(s);
+		t->emit_include(s);
+		s << std::endl;
 	});
 
+	s << std::endl;
     s << "struct " << name_ << "_ops;" << std::endl
       << "struct " << name_ << "_state;" << std::endl << std::endl
       << "struct " << name_ << "_closure" << std::endl
@@ -320,6 +321,12 @@ void exception_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
 
 void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
+}
+
+void alias_t::emit_include(std::ostringstream& s)
+{
+	std::string base = name_.substr(0, name_.find_first_of('.'));
+	s << "#include \"" << base << "_interface.h\"";
 }
 
 void var_decl_t::emit_impl_h(std::ostringstream& s)

@@ -12,7 +12,7 @@ local interface frames_module_v1
 #     type memory_v1.address address;
 
     required_size()
-        returns (card32 size); #memory_v1.size
+        returns (memory_v1.size size);
 
 #     create(physmem allmem, physmem used, ramtab_v1.tab& rtab, address state)
 #         returns (system_frame_allocator_v1 frames_sys_allocator);

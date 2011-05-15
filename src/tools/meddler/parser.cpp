@@ -488,10 +488,27 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
             return false;
         }
     }
-    to_get.type = symbols.qualify(lex.current_token());
-//FIXME: check for builtin types here and don't qualify if builtin (saves un-qualifying them later).
-//FIXME: here should be able to add type into interface's imported_types list.
-    if (lex.maybe(token::reference))
+	to_get.type = lex.current_token();
+	if (symbols.is_builtin_type(symbols.lookup(to_get.type)))
+	{
+		// just keep it
+	}
+	else
+	{
+		if (symbols.is_qualified_type_name(to_get.type))
+		{
+			// fully qualified type goes into the imported_types list
+			// TODO: handle duplicates!
+			static_cast<AST::interface_t*>(parse_tree)->add_imported_type(new AST::alias_t(parse_tree, to_get.type));
+		}
+		else
+		{
+			// must be an interface-local type that could be resolved later.
+			// TODO: could try to resolve right now?
+			to_get.type = symbols.qualify(to_get.type);
+		}
+	}
+	if (lex.maybe(token::reference))
         to_get.set_reference();
     if (!lex.expect(token::identifier))
     {
