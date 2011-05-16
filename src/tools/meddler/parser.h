@@ -25,7 +25,7 @@ class parser_t
     bool parse_method();
     bool parse_method_returns(AST::method_t& m);
     bool parse_method_raises(AST::method_t& m);
-    bool parse_var_decl(AST::var_decl_t& to_get);
+    bool parse_var_decl(AST::alias_t& to_get);
     bool parse_field_list(AST::node_t* parent);
     bool parse_field(AST::node_t* parent);
     bool parse_argument_list(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
