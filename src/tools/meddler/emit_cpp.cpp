@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "macros.h"
+#include "logger.h"
 #include <map>
 #include <sstream>
 #include <iostream>
@@ -57,16 +58,16 @@ static std::vector<std::string> build_forwards(interface_t* intf)
 {
     std::vector<std::string> forwards;
 
-    forwards.push_back(intf->name_);
+    forwards.push_back(intf->name());
 
     std::for_each(intf->methods.begin(), intf->methods.end(), [&forwards](method_t* m)
     {
         std::for_each(m->params.begin(), m->params.end(), [&forwards](parameter_t* param)
         {
             size_t pos;
-            if ((pos = param->type.find_first_of('.')) != std::string::npos)
+            if ((pos = param->type().find_first_of('.')) != std::string::npos) //FIXME: is_qualified_name()
             {
-                std::string decl = param->type.substr(0, pos);
+                std::string decl = param->type().substr(0, pos);
                 if (std::find(forwards.begin(), forwards.end(), decl) == forwards.end())
                 {
                     forwards.push_back(decl);
@@ -77,9 +78,9 @@ static std::vector<std::string> build_forwards(interface_t* intf)
         std::for_each(m->returns.begin(), m->returns.end(), [&forwards](parameter_t* param)
         {
             size_t pos;
-            if ((pos = param->type.find_first_of('.')) != std::string::npos)
+            if ((pos = param->type().find_first_of('.')) != std::string::npos) //FIXME: is_qualified_name()
             {
-                std::string decl = param->type.substr(0, pos);
+                std::string decl = param->type().substr(0, pos);
                 if (std::find(forwards.begin(), forwards.end(), decl) == forwards.end())
                 {
                     forwards.push_back(decl);
@@ -89,6 +90,37 @@ static std::vector<std::string> build_forwards(interface_t* intf)
     });
 
     return forwards;
+}
+
+/*!
+ * Generate a qualified name for a given var decl type.
+ */
+static std::string emit_type(alias_t& type)
+{
+    std::string result = type.type();
+    if (type.is_builtin_type())
+    {
+        result = map_type(type.unqualified_name());
+        if (result.empty())
+        {
+            result = type.unqualified_name();
+            cout << "Unknown builtin type! " << result << endl;
+        }
+    }
+    if (type.is_reference())
+        result += "&";
+    return result;
+}
+
+// Standard string is blergh!
+static std::string replace_dots(std::string input)
+{
+	size_t pos;
+	while ((pos = input.find(".")) != std::string::npos)
+	{
+		input.replace(input.begin()+pos, input.begin()+pos+1, "_");
+	}
+	return input;
 }
 
 void interface_t::emit_impl_h(std::ostringstream& s)
@@ -106,7 +138,7 @@ void interface_t::emit_impl_h(std::ostringstream& s)
     }
 
     s << "// ops structure should be exposed to module implementors!" << std::endl;
-    s << "struct " << name_ << "_ops" << std::endl
+    s << "struct " << name() << "_ops" << std::endl
       << "{" << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
@@ -129,12 +161,20 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 	});
 
 	s << std::endl;
-    s << "struct " << name_ << "_ops;" << std::endl
-      << "struct " << name_ << "_state;" << std::endl << std::endl
-      << "struct " << name_ << "_closure" << std::endl
+	
+	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+    {
+        t->emit_interface_h(s);
+		s << std::endl;
+    });
+    
+	s << std::endl;
+    s << "struct " << name() << "_ops;" << std::endl
+      << "struct " << name() << "_state;" << std::endl << std::endl
+      << "struct " << name() << "_closure" << std::endl
       << "{" << std::endl
-      << '\t' << "const " << name_ << "_ops* methods;" << std::endl
-      << '\t' << name_ << "_state* state;" << std::endl << std::endl;
+      << '\t' << "const " << name() << "_ops* methods;" << std::endl
+      << '\t' << name() << "_state* state;" << std::endl << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
     {
@@ -146,33 +186,13 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 
 void interface_t::emit_interface_cpp(std::ostringstream& s)
 {
-    s << "#include \"" << name_ << "_interface.h\"" << std::endl
-      << "#include \"" << name_ << "_impl.h\"" << std::endl << std::endl;
+    s << "#include \"" << name() << "_interface.h\"" << std::endl
+      << "#include \"" << name() << "_impl.h\"" << std::endl << std::endl;
 
     std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
     {
         m->emit_interface_cpp(s);
     });
-}
-
-/*!
- * Generate a qualified name for a given var decl type.
- */
-static std::string emit_type(var_decl_t& type)
-{
-    std::string result = type.type;
-    if (type.is_builtin_type())
-    {
-        result = map_type(type.unqualified_name());
-        if (result.empty())
-        {
-            result = type.unqualified_name();
-            cout << "Unknown builtin type! " << result << endl;
-        }
-    }
-    if (type.is_reference())
-        result += "&";
-    return result;
 }
 
 void method_t::emit_impl_h(std::ostringstream& s)
@@ -186,7 +206,7 @@ void method_t::emit_impl_h(std::ostringstream& s)
     }
 
     s << '\t' << return_value_type
-      << " (*" << name_ << ")(";
+      << " (*" << name() << ")(";
 
     s << parent_interface << "_closure* self";
 
@@ -220,7 +240,7 @@ void method_t::emit_interface_h(std::ostringstream& s)
     }
 
     s << '\t' << return_value_type
-      << " " << name_ << "(";
+      << " " << name() << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
@@ -259,7 +279,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
     }
 
     s << return_value_type
-      << " " << parent_interface << "_closure::" << name_ << "(";
+      << " " << parent_interface << "_closure::" << name() << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
@@ -289,12 +309,12 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
       << '\t';
     if (return_value_type != "void")
         s << "return ";
-    s << "methods->" << name_ << "(this";
+    s << "methods->" << name() << "(this";
 
     std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
     {
         s << ", ";
-        s << param->name_;
+		s << param->name();
     });
 
     // TODO: add by-ptr for non-interface returns
@@ -303,7 +323,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
         std::for_each(returns.begin()+1, returns.end(), [&s](parameter_t* param)
         {
             s << ", ";
-            s << param->name_;
+            s << param->name();
         });
     }
 
@@ -325,34 +345,35 @@ void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 
 void alias_t::emit_include(std::ostringstream& s)
 {
-	std::string base = name_.substr(0, name_.find_first_of('.'));
+	std::string base = name().substr(0, name().find_first_of('.'));
 	s << "#include \"" << base << "_interface.h\"";
 }
 
-void var_decl_t::emit_impl_h(std::ostringstream& s)
+void alias_t::emit_impl_h(std::ostringstream& s)
 {
     s << emit_type(*this);
-    s << " " << name_;
+    s << " " << name();
 }
 
-void var_decl_t::emit_interface_h(std::ostringstream& s)
+void alias_t::emit_interface_h(std::ostringstream& s)
 {
     s << emit_type(*this);
-    s << " " << name_;
+    s << " " << name();
 }
 
-void var_decl_t::emit_interface_cpp(std::ostringstream& s)
+void alias_t::emit_interface_cpp(std::ostringstream& s)
 {
     s << emit_type(*this);
-    s << " " << name_;
+    s << " " << name();
 }
 
 void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void type_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void type_alias_t::emit_interface_h(std::ostringstream& s)
 {
+	s << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
 }
 
 void type_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)

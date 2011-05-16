@@ -380,9 +380,7 @@ bool parser_t::parse_method()
             return false;
         }
 
-        AST::method_t m(parse_tree);
-        m.name_ = name;
-        m.idempotent = is_idempotent;
+        AST::method_t m(parse_tree, name, is_idempotent);
         is_idempotent = false;
 
         std::vector<AST::parameter_t*> params;
@@ -477,7 +475,7 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
 }
 
 //! var_decl ::= typeid [reference] id
-bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
+bool parser_t::parse_var_decl(AST::alias_t& to_get)
 {
     D();
     if (!lex.expect(token::type))
@@ -488,41 +486,44 @@ bool parser_t::parse_var_decl(AST::var_decl_t& to_get)
             return false;
         }
     }
-	to_get.type = lex.current_token();
-	if (symbols.is_builtin_type(symbols.lookup(to_get.type)))
+	to_get.set_type(lex.current_token());
+	if (symbols.is_builtin_type(symbols.lookup(to_get.type())))
 	{
 		// just keep it
+		L(std::cout << "Builtin type " << to_get.type() << " found." << std::endl);
 	}
 	else
 	{
-		if (symbols.is_qualified_type_name(to_get.type))
+		if (symbols.is_qualified_type_name(to_get.type()))
 		{
 			// fully qualified type goes into the imported_types list
+			L(std::cout << "Fully qualified import type " << to_get.type() << " found." << std::endl);
 			// TODO: handle duplicates!
-			static_cast<AST::interface_t*>(parse_tree)->add_imported_type(new AST::alias_t(parse_tree, to_get.type));
+			static_cast<AST::interface_t*>(parse_tree)->add_imported_type(new AST::alias_t(parse_tree, to_get.type()));
 		}
 		else
 		{
 			// must be an interface-local type that could be resolved later.
 			// TODO: could try to resolve right now?
-			to_get.type = symbols.qualify(to_get.type);
+//			to_get.set_type(symbols.qualify(to_get.type())); 
+			L(std::cout << "Interface local type " << to_get.type() << " found." << std::endl);
 		}
 	}
 	if (lex.maybe(token::reference))
-        to_get.set_reference();
+        to_get.set_reference(true);
     if (!lex.expect(token::identifier))
     {
         PARSE_ERROR("field name expected");
         return false;
     }
-    to_get.name_ = lex.current_token();
+    to_get.set_name(symbols.qualify(lex.current_token())); // generated names would become fully qualified anyway (at least for C++) FIXME: stupid?
     return true;
 }
 
 bool parser_t::parse_field(AST::node_t* parent)
 {
     D();
-    AST::var_decl_t* field = new AST::var_decl_t(parent);
+    AST::alias_t* field = new AST::alias_t(parent);
     if (!parse_var_decl(*field))
     {
         delete field;
@@ -531,6 +532,7 @@ bool parser_t::parse_field(AST::node_t* parent)
     if (!lex.expect(token::semicolon))
     {
         PARSE_ERROR("; expected");
+		delete field;
         return false;
     }
 
@@ -585,13 +587,13 @@ bool parser_t::parse_type_alias()
         PARSE_ERROR("type ID expected");
         return false;
     }
-    t.type = lex.current_token();
+    t.set_type(lex.current_token());
     if (!lex.expect(token::identifier))
     {
         PARSE_ERROR("type name expected");
         return false;
     }
-    t.name_ = lex.current_token();
+    t.set_name(symbols.qualify(lex.current_token()));
 
     if (!lex.expect(token::semicolon))
     {
@@ -836,7 +838,7 @@ bool parser_t::parse_enum_type_alias()
         return false;
     }
 
-    node->name_ = lex.current_token();
+    node->set_name(lex.current_token());
 
     if (!lex.expect(token::semicolon))
     {
