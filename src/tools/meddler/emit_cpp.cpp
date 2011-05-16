@@ -92,6 +92,17 @@ static std::vector<std::string> build_forwards(interface_t* intf)
     return forwards;
 }
 
+// Standard string is blergh!
+static std::string replace_dots(std::string input)
+{
+	size_t pos;
+	while ((pos = input.find(".")) != std::string::npos)
+	{
+		input.replace(input.begin()+pos, input.begin()+pos+1, "_");
+	}
+	return input;
+}
+
 /*!
  * Generate a qualified name for a given var decl type.
  */
@@ -103,24 +114,14 @@ static std::string emit_type(alias_t& type)
         result = map_type(type.unqualified_name());
         if (result.empty())
         {
-            result = type.unqualified_name();
-            cout << "Unknown builtin type! " << result << endl;
+            //result = type.unqualified_name();
+			result = replace_dots(type.type());
+            cout << "Unknown builtin type " << type.type() << ", using " << result << " instead!" << endl;
         }
     }
     if (type.is_reference())
         result += "&";
     return result;
-}
-
-// Standard string is blergh!
-static std::string replace_dots(std::string input)
-{
-	size_t pos;
-	while ((pos = input.find(".")) != std::string::npos)
-	{
-		input.replace(input.begin()+pos, input.begin()+pos+1, "_");
-	}
-	return input;
 }
 
 void interface_t::emit_impl_h(std::ostringstream& s)
