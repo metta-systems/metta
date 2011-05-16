@@ -17,7 +17,7 @@ class if2code(Task.Task):
         print "includes:"
         for i in self.env.IDL_INC:
             print "include "+i
-        cmd = '%s %s -o%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
+        cmd = '%s -v %s -o%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
         print "Running "+cmd
         return self.exec_command(cmd)
 
