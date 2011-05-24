@@ -108,19 +108,45 @@ static std::string replace_dots(std::string input)
  */
 static std::string emit_type(alias_t& type)
 {
+	cout << "** EMITTING TYPE ** "; type.dump("");
+
     std::string result = type.type();
     if (type.is_builtin_type())
     {
+		cout << "EMITTING BUILTIN TYPE " << result << endl;
         result = map_type(type.unqualified_name());
+		cout << " AS " << result << endl;
         if (result.empty())
         {
-            //result = type.unqualified_name();
-			result = replace_dots(type.type());
-            cout << "Unknown builtin type " << type.type() << ", using " << result << " instead!" << endl;
-        }
+			cout << "Error: Unknown mapping for builtin type " << type.type() << endl;
+			result = type.type();
+		}
+	}
+	else
+	if (type.is_interface_reference())
+	{
+		cout << "EMITTING INTERFACE REFERENCE " << result << endl;
+		result = type.unqualified_name(); // we need first part of the name?!?
+	}
+	else
+	if (type.is_local_type())
+	{
+		cout << "EMITTING LOCAL TYPE " << result << endl;
+		// TODO: fully qualify local type!
+		result = replace_dots(type.type());
+	}
+	else
+	{
+		cout << "EMITTING something else: " << result << endl;
+		result = replace_dots(type.type());
     }
-    if (type.is_reference())
-        result += "&";
+
+	if (type.is_interface_reference())
+		result += "_closure*";
+	else
+    	if (type.is_reference())
+        	result += "&";
+
     return result;
 }
 
@@ -374,7 +400,7 @@ void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 
 void type_alias_t::emit_interface_h(std::ostringstream& s)
 {
-	s << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
+	s << "typedef " << emit_type(*this) << " " << replace_dots(get_root()->name() + "." + name()) << ";";
 }
 
 void type_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)

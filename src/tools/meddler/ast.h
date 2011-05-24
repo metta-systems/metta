@@ -47,16 +47,23 @@ public:
 class alias_t : public node_t
 {
 public:
-    alias_t(node_t* parent) : node_t(parent, std::string()), type_(), kind(token::none), reference(false) {}
-    alias_t(node_t* parent, std::string nm) : node_t(parent, nm), type_(), kind(token::type), reference(false) {}
-    alias_t(node_t* parent, std::string tp, std::string nm) : node_t(parent, nm), type_(tp), kind(token::type), reference(false) {}
+    alias_t(node_t* parent) : node_t(parent, std::string()), type_(), kind(token::none), reference(false), interface(false), local(false), builtin(false) {}
+    alias_t(node_t* parent, std::string nm) : node_t(parent, nm), type_(), kind(token::type), reference(false), interface(false), local(false), builtin(false) {}
+    alias_t(node_t* parent, std::string tp, std::string nm) : node_t(parent, nm), type_(tp), kind(token::type), reference(false), interface(false), local(false), builtin(false) {}
 	std::string type() { return type_; }
 	void set_type(std::string tp) { type_ = tp; }
     virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
-    virtual bool is_builtin_type() { return true; }// FIXME
-    void set_reference(bool enable = true) { reference = enable; }
+
+	bool is_local_type() { return local; }
+    bool is_builtin_type() { return builtin; }
     bool is_reference() { return reference; }
+	bool is_interface_reference() { return interface; }
+	void set_local(bool enable = true) { local = enable; }
+	void set_builtin(bool enable = true) { builtin = enable; }
+    void set_reference(bool enable = true) { reference = enable; }
+	void set_interface_reference(bool enable = true) { interface = enable; }
+
 	virtual void emit_include(std::ostringstream& s);
 	virtual void emit_impl_h(std::ostringstream&);
 	virtual void emit_interface_h(std::ostringstream&);
@@ -66,7 +73,9 @@ private:
     std::string type_; // use known types! check LLVM's Type/TypeBuilder
     token::kind kind;
     bool reference; //! Is this type a reference?
-	//bool interface; //! Is this type an interface reference?
+	bool interface; //! Is this type an interface reference?
+	bool local;     //! Is this type an interface local type?
+	bool builtin;   //! Is this a builtin type?
 };
 
 class type_alias_t : public alias_t
@@ -216,6 +225,9 @@ public:
     virtual bool add_type(alias_t*);
     virtual void dump(std::string indent_prefix);
     void set_parent(std::string p) { base = p; }
+
+	bool types_lookup(alias_t& type);
+	bool imported_types_lookup(alias_t& type);
 
     virtual void emit_impl_h(std::ostringstream& s);
     virtual void emit_interface_h(std::ostringstream& s);
