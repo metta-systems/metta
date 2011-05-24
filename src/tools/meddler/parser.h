@@ -40,6 +40,7 @@ class parser_t
     bool parse_record_type_alias();
     bool parse_type_alias();
 
+	void configure_type(AST::alias_t& to_get);
     void reportError(std::string msg);
 
 public:

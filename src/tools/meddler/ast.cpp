@@ -5,6 +5,28 @@
 namespace AST
 {
 
+bool interface_t::types_lookup(alias_t& type)
+{
+	bool res = false;
+	std::string tp = type.type();
+	for_each(types.begin(), types.end(), [tp, &res](alias_t* t) {
+		if (t->name() == tp)
+			res = true;
+	});
+	return res;
+}
+
+bool interface_t::imported_types_lookup(alias_t& type)
+{
+	bool res = false;
+	std::string tp = type.type();
+	for_each(imported_types.begin(), imported_types.end(), [tp, &res](alias_t* t) {
+		if (t->name() == tp)
+			res = true;
+	});
+	return res;
+}
+
 bool interface_t::add_exception(exception_t* exc)
 {
     //std::cout << "interface_t::add_exception()" << std::endl;
@@ -88,7 +110,7 @@ bool method_t::add_exception(exception_t* e)
 
 void alias_t::dump(std::string indent_prefix)
 {
-    std::cout << indent_prefix << type() << (reference ? "& " : " ") << name() << std::endl;
+    std::cout << indent_prefix << type() << (reference ? "& " : " ") << name() << " [kind:" << kind << " intf:" << interface << " local:" << local << " builtin:" << builtin << "]" << std::endl;
 }
 
 void parameter_t::dump(std::string indent_prefix)

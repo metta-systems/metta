@@ -92,26 +92,6 @@ static std::vector<std::string> build_forwards(interface_t* intf)
     return forwards;
 }
 
-/*!
- * Generate a qualified name for a given var decl type.
- */
-static std::string emit_type(alias_t& type)
-{
-    std::string result = type.type();
-    if (type.is_builtin_type())
-    {
-        result = map_type(type.unqualified_name());
-        if (result.empty())
-        {
-            result = type.unqualified_name();
-            cout << "Unknown builtin type! " << result << endl;
-        }
-    }
-    if (type.is_reference())
-        result += "&";
-    return result;
-}
-
 // Standard string is blergh!
 static std::string replace_dots(std::string input)
 {
@@ -121,6 +101,53 @@ static std::string replace_dots(std::string input)
 		input.replace(input.begin()+pos, input.begin()+pos+1, "_");
 	}
 	return input;
+}
+
+/*!
+ * Generate a qualified name for a given var decl type.
+ */
+static std::string emit_type(alias_t& type)
+{
+	cout << "** EMITTING TYPE ** "; type.dump("");
+
+    std::string result = type.type();
+    if (type.is_builtin_type())
+    {
+		cout << "EMITTING BUILTIN TYPE " << result << endl;
+        result = map_type(type.unqualified_name());
+		cout << " AS " << result << endl;
+        if (result.empty())
+        {
+			cout << "Error: Unknown mapping for builtin type " << type.type() << endl;
+			result = type.type();
+		}
+	}
+	else
+	if (type.is_interface_reference())
+	{
+		cout << "EMITTING INTERFACE REFERENCE " << result << endl;
+		result = type.unqualified_name(); // we need first part of the name?!?
+	}
+	else
+	if (type.is_local_type())
+	{
+		cout << "EMITTING LOCAL TYPE " << result << endl;
+		// TODO: fully qualify local type!
+		result = replace_dots(type.type());
+	}
+	else
+	{
+		cout << "EMITTING something else: " << result << endl;
+		result = replace_dots(type.type());
+    }
+
+	if (type.is_interface_reference())
+		result += "_closure*";
+	else
+    	if (type.is_reference())
+        	result += "&";
+
+    return result;
 }
 
 void interface_t::emit_impl_h(std::ostringstream& s)
@@ -373,7 +400,7 @@ void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 
 void type_alias_t::emit_interface_h(std::ostringstream& s)
 {
-	s << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
+	s << "typedef " << emit_type(*this) << " " << replace_dots(get_root()->name() + "." + name()) << ";";
 }
 
 void type_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
