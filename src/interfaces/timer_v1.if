@@ -13,7 +13,7 @@
 local interface timer_v1
 {
     # Read the current tick count.
-    read() returns (time_v1.ns);
+    read() returns (time_v1.ns now);
 
     # Set the timer for some time in the future.
     arm(time_v1.ns time);
@@ -38,6 +38,6 @@ local interface timer_v1
     # Arranging for the initialisation of this code is likely to be
     # platform-specific.
 
-    enable(cardinal sirq);
+    enable(card32 sirq);
 }
 
