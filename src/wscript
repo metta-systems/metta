@@ -218,7 +218,7 @@ def build(bld):
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if', name = 'all_idl')
+    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if interfaces/time_v1.if interfaces/timer_v1.if', name = 'all_idl')
 
     # Make bootimage components.
     bld.add_subdirs("modules")
@@ -304,19 +304,20 @@ def build(bld):
     kickstart.target = 'kickstart.sys'
     kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Map', 'kickstart.map'])
+    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'common runtime platform'# kernel
 
     # Launcher
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF TODO: post-process linked modules with symbol checker
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+    # TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds']) #, '-Wl,-Map,startup.map'])#
+    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
     startup.uselib_local = 'common platform kernel minruntime'# interfaces
 
@@ -328,7 +329,7 @@ def build(bld):
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
     glue.env = bld.env_of_name('KERNEL_ENV').copy()
     glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
-    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds'])#, '-Wl,-Map,glue.map'])#
+    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
     glue.includes = glue.env['INCLUDE_DIRS']
     glue.uselib_local = 'common platform kernel minruntime'# interfaces
 
