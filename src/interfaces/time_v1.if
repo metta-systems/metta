@@ -8,6 +8,6 @@ local interface time_v1
 
     # The "now" method returns the current value of the system
     # clock. Clock resolution is unspecified.
-    now() returns (ns now);
+    now() returns (time_v1.ns now);
 }
 
