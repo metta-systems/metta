@@ -1,11 +1,11 @@
 #pragma once
 
-#include "timer_interface.h"
+#include "time_v1_interface.h"
 
 struct information_page_t
 {
-    volatile time_ns      now;       /* 00 Current system time              */
-    volatile time_ns      alarm;     /* 08 Alarm time                       */
+    volatile time_v1_ns   now;       /* 00 Current system time              */
+    volatile time_v1_ns   alarm;     /* 08 Alarm time                       */
     volatile uint32_t     pcc;       /* 10 Cycle count at last tick         */
     uint32_t              scale;     /* 14 Cycle count scale factor         */
     uint32_t              cycle;     /* 18 Cycle time in picoseconds        */
