@@ -2,9 +2,8 @@
 #include "bootinfo.h"
 #include "mmu_module_v1_interface.h"
 #include "mmu_module_v1_impl.h"
+#include "mmu_v1_interface.h"
 #include "algorithm"
-
-struct mmu_v1_closure;
 
 // TODO: We need to abstract frames module from the format of bootinfo page,
 // so we create a local copy of memory map and pass it to frames_mod as a parameter.

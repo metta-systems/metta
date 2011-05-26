@@ -105,6 +105,11 @@ multiboot_t::mmap_entry_t bootinfo_t::mmap_iterator::operator *()
     return entry;
 }
 
+void bootinfo_t::mmap_iterator::operator ++(int)
+{
+	operator++();
+}
+
 void bootinfo_t::mmap_iterator::operator ++()
 {
     bootrec_info_t info;
