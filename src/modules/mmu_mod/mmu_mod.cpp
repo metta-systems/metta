@@ -4,8 +4,7 @@
 #include "mmu_module_v1_impl.h"
 #include "mmu_v1_interface.h"
 #include "algorithm"
-#include "vector"
-//#include "mmu_v1_impl.h"
+#include "mmu_v1_impl.h"
 
 // TODO: We need to abstract frames module from the format of bootinfo page,
 // so we add a type for memory_map and make it hide the fact that it uses the bootinfo_page

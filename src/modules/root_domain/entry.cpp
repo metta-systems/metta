@@ -69,7 +69,7 @@ static void map_identity(const char* caption, address_t start, address_t end)
 #endif
 
 
-static system_frame_allocator_v1_closure* init_phys_mem(frames_module_v1_closure* frames_mod/*, ramtab_t& rtab, void* free*/)
+static /*system_frame_allocator_v1_closure*/void* init_phys_mem(frames_module_v1_closure* frames_mod/*, ramtab_t& rtab, void* free*/)
 {
 // allmem comes from BOOTINFO_PAGE
 // memmap is used memory - what needs to be mapped
@@ -87,8 +87,8 @@ static system_frame_allocator_v1_closure* init_phys_mem(frames_module_v1_closure
 //         memmap.push_back(PMemDesc(e.address(), e.size(), e.type()));
 //     });
 
-	system_frame_allocator_v1_closure* frames = frames_mod->create(0/*allmem, used, rtab, free*/);
-    return frames;
+	/*system_frame_allocator_v1_closure* frames =*/ frames_mod->create(0/*allmem, used, rtab, free*/);
+	return 0;//frames;
 }
 
 static void init_mem(bootimage_t& bootimg)
@@ -154,24 +154,25 @@ static void init_type_system(bootimage_t& bootimg)
 {
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
+#if 0
     exceptions_module_v1_closure* xcp_mod;
     xcp_mod = load_module<exceptions_module_v1_closure>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
     ASSERT(xcp_mod);
 
 	exceptions = xcp_mod->create();
 	Pervasives(xcp) = exceptions;
-
+#endif
     kconsole <<  " + Bringing up REAL type system" << endl;
     kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
-    lctmod = load_module<longcardtable_module_v1_closure>(bootimg, "longcardtable_mod", "exported_longcardtable_module_v1_rootdom");
+//    lctmod = load_module<longcardtable_module_v1_closure>(bootimg, "longcardtable_mod", "exported_longcardtable_module_v1_rootdom");
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-    strmod = load_module<stringtable_module_v1_closure>(bootimg, "stringtable_mod", "exported_stringtable_module_v1_rootdom");
+//    strmod = load_module<stringtable_module_v1_closure>(bootimg, "stringtable_mod", "exported_stringtable_module_v1_rootdom");
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    tsmod = load_module<typesystem_module_v1_closure>(bootimg, "typesystem_mod", "exported_typesystem_module_v1_rootdom");
+//    tsmod = load_module<typesystem_module_v1_closure>(bootimg, "typesystem_mod", "exported_typesystem_module_v1_rootdom");
     kconsole <<  " +-- creating a new type system..." << endl;
-    ts = tsmod->create(Pvs(heap), lctmod, strmod);
-    kconsole <<  " +-- done: ts is at " << ts << endl;
-    Pvs(types) = (TypeSystem_clp)ts;
+//    ts = tsmod->create(Pvs(heap), lctmod, strmod);
+//    kconsole <<  " +-- done: ts is at " << ts << endl;
+//    Pvs(types) = (TypeSystem_clp)ts;
 
     /* Preload any types in the boot image */
 /*    {
@@ -193,13 +194,13 @@ static void init_namespaces(bootimage_t& /*bm*/)
 
     /* Build root context */
     kconsole <<  "<root>, ";
-
+#if 0
     context_module_v1_closure* context_mod;
     context_mod = load_module<context_module_v1_closure>(bootimg, "context_mod", "exported_context_module_rootdom");
     ASSERT(context_mod);
 
 	root = context_mod->create_context(heap, Pvs(types));
-
+#endif
 /*    ContextMod = lookup("ContextModCl");
     root = ContextMod$NewContext(ContextMod, heap, Pvs(types) );
     Pvs(root)  = root;
