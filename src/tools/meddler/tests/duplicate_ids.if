@@ -1,0 +1,9 @@
+interface _somename
+{
+    exception somename
+    {
+        string somename;
+    }
+
+    somename(string somename); # Should trigger duplicate id error
+}

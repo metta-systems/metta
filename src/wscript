@@ -46,10 +46,10 @@ def set_options(opt):
     # platform sometimes implies arch.
 
     # build type - release, debug, profile
-    opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile)." + '[default: %default]')
+    opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile/all)." + '[default: %default]')
 
     # Use clang
-    opt.add_option("--clang", action="store", default="yes", help="Use clang to build (default: %default)")
+    opt.add_option("--clang", action="store", default="no", help="Use clang to build (default: %default)")
 
 def configure(conf):
     global flags, cflags, cxxflags, include_dirs, linkflags
@@ -66,12 +66,13 @@ def configure(conf):
     # * Apps/servers running on target system, with possible kernel/boot deps. (APP_ENV)
     # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
+    # * Tests running on the target system (KERNEL_TEST_ENV)
 
     extra_cross_flags = ['-fno-builtin', '-fno-stack-protector'] #, '-fno-leading-underscore']
 
-    conf.check_tool('yasm misc ar', tooldir='waftools')
+    conf.check_tool('yasm misc ar if2code', tooldir='waftools')
 
-    conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+    #conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
 
     # TODO: try to use yasm, but allow fallback to NASM
     # Ditto for llvm
@@ -92,6 +93,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
+    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     conf.env['variant'] = arch + '-' + platform + '-' + build
 
@@ -174,28 +176,53 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    conf.env['CC'] = '/Developer/usr/bin/gcc'
-    conf.env['CXX'] = '/Developer/usr/bin/g++'
-    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    conf.env.append_unique('CCFLAGS', ['-m32'])
-    conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env.append_unique('LINKFLAGS', ['-m32'])
+    #conf.env['CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['CXX'] = '/Developer/usr/bin/g++'
+    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    #conf.env.append_unique('CCFLAGS', ['-m32'])
+    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
+    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    # set uselib
+    conf.env.LIB_UUID = 'uuid'
+    conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
+    conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
+    conf.env.LIB_LLVM = 'pthread'
 
-    conf.setenv('TEST_ENV')
-    conf.env['CC'] = '/Developer/usr/bin/gcc'
-    conf.env['CXX'] = '/Developer/usr/bin/g++'
-    conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    conf.env.append_unique('CCFLAGS', ['-m32'])
-    conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env.append_unique('LINKFLAGS', ['-m32'])
+    #conf.setenv('TEST_ENV')
+    #conf.env['CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['CXX'] = '/Developer/usr/bin/g++'
+    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    #conf.env.append_unique('CCFLAGS', ['-m32'])
+    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    #conf.env.append_unique('LINKFLAGS', ['-m32'])
 
 def build(bld):
     arch = Options.options.arch
 
+    # Tool to parse interface files.
+    # Build it first so that we can transform interface defitions to code during build.
+    meddler = bld.new_task_gen('cxx', 'program')
+    meddler.name = 'meddler'
+    meddler.target = 'meddler'
+    meddler.source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split())
+    meddler.env = bld.env_of_name('TOOLS_ENV').copy()
+    meddler.env.append_unique('CXXDEFINES', ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS'])
+    meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
+    meddler.uselib = 'LLVM'
+
+    meddler.post()
+    bld.add_group()
+
+    # Now generate interface files.
+    # Use name to reference sources. Could just reference by source file name?
+    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if interfaces/time_v1.if interfaces/timer_v1.if', name = 'all_idl')
+
     # Make bootimage components.
     bld.add_subdirs("modules")
+    bld.add_subdirs("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
@@ -235,11 +262,11 @@ def build(bld):
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
-    interfaces = bld.new_task_gen('cxx', 'staticlib')
-    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
-    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    interfaces.includes = interfaces.env['INCLUDE_DIRS']
-    interfaces.target = 'interfaces'
+    #interfaces = bld.new_task_gen('cxx', 'staticlib')
+    #interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
+    #interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    #interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    #interfaces.target = 'interfaces'
 
     # Tests
 #    tests = bld.new_task_gen('cxx', 'program')
@@ -277,21 +304,22 @@ def build(bld):
     kickstart.target = 'kickstart.sys'
     kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/platform/pc99/loader.lds', '-Map', 'kickstart.map'])
+    kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
     kickstart.uselib_local = 'common runtime platform'# kernel
 
     # Launcher
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF TODO: post-process linked modules with symbol checker
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+    # TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
     startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp'])
+    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
     startup.env = bld.env_of_name('KERNEL_ENV').copy()
     startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-    startup.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds']) #, '-Wl,-Map,startup.map'])#
+    startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
     startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-    startup.uselib_local = 'common platform interfaces kernel minruntime'
+    startup.uselib_local = 'common platform kernel minruntime'# interfaces
 
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
@@ -301,9 +329,9 @@ def build(bld):
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
     glue.env = bld.env_of_name('KERNEL_ENV').copy()
     glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
-    glue.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/x86/startup.lds'])#, '-Wl,-Map,glue.map'])#
+    glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
     glue.includes = glue.env['INCLUDE_DIRS']
-    glue.uselib_local = 'common platform interfaces kernel minruntime'
+    glue.uselib_local = 'common platform kernel minruntime'# interfaces
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
@@ -328,9 +356,11 @@ def build(bld):
         after = 'cxx_link'
     )
 
+    #Check and add all output modules.
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
+            print "posting "+tg.target
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
@@ -348,15 +378,9 @@ def build(bld):
         dict = {'ROOT': 'cd'}
     )
 
-#    bld.new_task_gen('subst',
-#        source = 'tools/mkbootimg/menu.lst.in',
-#        target = 'tools/mkbootimg/menu.lst.fd0',
-#        dict = {'ROOT': 'fd0'}
-#    )
-
     bld.new_task_gen(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',# tools/mkbootimg/menu.lst.fd0
-        target = 'metta.iso', #metta.fd0
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        target = 'metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
         after = 'init.img'

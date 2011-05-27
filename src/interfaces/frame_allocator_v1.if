@@ -1,0 +1,76 @@
+# At the bottom level of the memory system is a physical page frame allocator which implements the "frame_allocator"
+# interface. The interface deals with byte addresses and sizes, but the amount of memory allocated will always be
+# frame-aligned and rounded up to a whole number of frames.
+#
+# Note that there is no rigorous notion of a "set" of frames. Unlike "heap.allocate", you can "allocate" a number
+# of frames in one go and "free" them piecemeal, or vice versa. However we do have the notion of two different
+# sorts of frames.
+#
+#    - physical frames
+#    - logical frames
+#
+# A physical frame is a piece of physical memory of size FRAME_SIZE [which is more or less guaranteed to be the same
+# as PAGE_SIZE]. Equivalently one may consider the size of a physical frame to be 2^FRAME_WIDTH.
+# In summary: a physical frame is the analog of a normal "page" in the virtual address space.
+#
+# A logical frame, on the other hand, is a naturally aligned piece of physical memory of size 2^(FRAME_WIDTH + k),
+# where k >= 0. Different regions of the physical address space may have different logical frame sizes. Additionally,
+# a client may request (via "allocate" or "allocate_range") a number of bytes with a given "frame width" # this is
+# used to constrain alignment and rounding ("bytes" will be rounded up). It also means that the allocated memory
+# will be accounted [internally] as a logical frame of the appropriate width. When freeing at a particular start
+# address, the "bytes" will be rounded up to the logical frame width with which they were allocated.
+# In summary: a logical frame is (roughly) the analog of a "superpage" in the virtual address space.
+
+# was called client_frame_allocator before!
+local interface frame_allocator_v1
+{
+    # types.size, types.address, types.offset # ?
+    type memory_v1.address address;
+    type memory_v1.attrs   attrs;
+
+    # A Frame is the physical equivalent of a Page.
+    # A Frame is either allocated or free.
+
+    # If there are k contiguous free frames of physical memory
+    # of width "frame_width" (which is >= FRAME_WIDTH) which together
+    # contain at least "bytes" bytes, then mark them allocated and
+    # return the address of the first.
+    allocate(card32 bytes, card32 frame_width)
+        returns (address addr);
+
+    # "AllocRange" is similar to "Alloc", but allows the
+    # specification of an (optional) starting address and requested
+    # attributes.
+    #
+    # The "start" parameter, if valid (i.e. aligned), specifies the
+    # requested first address of the memory to be allocated. If there
+    # are not "k" contiguous free frames of width "fwidth" available
+    # starting at this address, or if the address is not naturally
+    # aligned to "fwidth", then "NO_ADDRESS" is returned, which is
+    # guataranteed to be \emph{not} NULL (since NULL is often zero
+    #  which {\em may} be a valid return address in some cases).
+    #
+    # The parameter "attr" can optionally specify a number of requested
+    # attributes.
+    allocate_range(card32 bytes, card32 frame_width, address start, attrs attr)
+        returns (address addr);
+
+    # The "query" method is provided to allow clients to discover
+    # something about the state of a particular frames. The result
+    # "frame_width" gives the logical frame width of the region within
+    # which "addr" falls (or, if the frame is allocated, the frame
+    # width with which is was effectively allocated), while the
+    # result "attr" is a set of properties of the memory at that address.
+    query(address addr)
+        returns (card32 frame_width, attrs attr);
+
+    # Mark all frames containing addresses in the range "[a, a + bytes)"
+    # as free. This will actually free an exact number of logical
+    # frames starting at address "a"; i.e. may free more than "bytes"
+    # bytes in practice.
+    free(address addr, card32 bytes);
+
+    # Destory this frame_allocator interface. This includes freeing all
+    # frames which have been allocated via this interface.
+    destroy();
+}

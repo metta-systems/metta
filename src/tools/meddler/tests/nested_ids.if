@@ -1,0 +1,7 @@
+interface _somename
+{
+    exception somename
+    {
+        string somename;
+    }
+}

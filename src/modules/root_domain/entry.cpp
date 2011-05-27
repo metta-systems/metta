@@ -1,5 +1,6 @@
 #include "default_console.h"
 #include "frames_module_v1_interface.h"
+#include "mmu_v1_interface.h"
 #include "mmu_module_v1_interface.h"
 //#include "heap_module_v1_interface.h"
 #include "macros.h"
@@ -16,7 +17,7 @@
 // startup module from which root_domain starts also has a namespace called "default_namespace"
 // it defines general system attributes and startup configuration.
 
-#include "mmu_module_impl.h" // for debug
+#include "mmu_module_v1_impl.h" // for debug
 
 //======================================================================================================================
 // Look up in root_domain's namespace and load a module by given name, satisfying its dependencies, if possible.

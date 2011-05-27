@@ -1,0 +1,103 @@
+# The "MMU" interface is used for the creation and deletion of protection domains, and for the adding, freeing
+# or updating of ranges of virtual ranges to the translation structures.
+
+local interface mmu_v1
+{
+    # Engage the MMU; "pdid" is the identifier of the initial
+    # protection domain to use.
+#     start(protection_domain_v1.id root_domain);
+    start(card32 root_domain);
+
+    #
+    # Operations on virtual address ranges.
+    #
+
+    # Update the mapping structures to include the virtual addresses
+    # described by "range" (which should be the exact range held
+    # within the stretch "str") with the global permissions "gaxs". The
+    # range is not initially mapped - i.e. any access to any part of
+    # the stretch will cause a fault.
+#     add_range(stretch_v1& str, memory_v1.virtmem_desc mem_range, stretch_v1.rights access)
+#         raises (memory_v1.failure);
+
+    # Update the mapping structures to include the virtual addresses
+    # described by "range" (which should be the exact range held
+    # within the stretch "str") with the global permissions
+    # "gaxs";
+    # The range is mapped linearly onto the set of a physical
+    # addresses described by "pmem". If there is insufficient
+    # physical memory present, "Mem.Failure" is raised.
+#     add_mapped_range(stretch_v1& str, memory_v1.virtmem_desc mem_range, memory_v1.physmem_desc pmem, stretch_v1.rights access)
+#         raises (memory_v1.failure);
+
+    # Update the mapping structures for the virtual addresses
+    # described by "range" (which should be the exact range held
+    # within the stretch "str") with the new global permissions
+    # "gaxs".
+    # The range must already be present in the mapping structures;
+    # else "Mem.Failure" will be raised.
+#     update_range(stretch_v1& str, memory_v1.virtmem_desc mem_range, stretch_v1.rights access)
+#         raises (memory_v1.failure);
+
+    # Free the mapping structures for the virtual addresses
+    # described by "range". Any subsequent access to addresses
+    # within this range will cause a fault.
+#     free_range(memory_v1.virtmem_desc mem_range)
+#         raises (memory_v1.failure);
+
+    #
+    # Operations on Protection Domains (see also "ProtectionDomain.if")
+    #
+
+    # Create a new protection domain and return an identifier for
+    # it. Initially its reference count will be "zero", typically
+    # this will be incremented when it is first associated with an
+    # executable domain by the domain manager.
+#     new_domain()
+#         returns (protection_domain_v1.id new_dom_id)
+#         raises (memory_v1.failure);
+
+    # Increment the reference count for the given protection domain.
+#     retain_domain(protection_domain_v1.id dom_id);
+
+    # Decrement the reference count on the protection domain
+    # identified by "pdid", and, if it is <= zero, delete
+    # the protection domain.
+#     release_domain(protection_domain_v1.id dom_id);
+
+    # Set the protections on stretch "str" within the protection
+    # domain identified by "pdid" to be "axs".
+#     set_prot(protection_domain_v1.id dom_id, stretch_v1& str, stretch_v1.rights access);
+
+    # Query the protections on stretch "str" within the protection
+    # domain identified by "pdid".
+#     query_prot(protection_domain_v1.id dom_id, stretch_v1& str)
+#         returns (stretch_v1.rights access);
+
+    # Protection domains may also be associated with an "address
+    # space number" (ASN). This is an architecture specific value
+    # which may be used within the caches and/or TLBs of the machine.
+    # For architectures without such support, the value returned from
+    # "QueryASN" is undefined.
+
+    # Return the ASN (if any) which is associated with the protection
+    # domain identified by "pdid".
+#     query_asn(protection_domain_v1.id dom_id)
+#         returns (int32 asn);
+
+    #
+    # Miscellaneous Operations
+    #
+
+    # Return the global rights currently associated with the
+    # stretch "str".
+#    query_global_rights(stretch_v1& str)
+#        returns (stretch_v1.rights access);
+
+    # Set the protections on stretch "str" to be the same as those
+    # of the stretch "tmpl" in all protection domains.
+    # This does *not* affect the global rights - these must be done
+    # manually via "QueryGlobal" and "[Add|AddMapped|Update]Range".
+#    clone_rights(stretch_v1& tmpl, stretch_v1& str);
+}
+

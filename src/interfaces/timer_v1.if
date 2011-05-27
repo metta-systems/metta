@@ -1,0 +1,43 @@
+# Provides (nominally) nanosecond timer for scheduling.
+
+# Every implementation must provide a "timer" interface
+# for use as an interval timer by the domain scheduler within the
+# system. In theory the timer counts down from some value, but also
+# maintains a notion of absolute time. All times are specified to the
+# "timer" in absolute nanoseconds, i.e. time since the start of the
+# epoch. Since the time value is at least 64 bits long, there should
+# never be any need to reset the epoch. The actual timer resolution
+# is unlikely to be in nanoseconds, but it provides a useful common
+# baseline.
+
+local interface timer_v1
+{
+    # Read the current tick count.
+    read() returns (time_v1.ns now);
+
+    # Set the timer for some time in the future.
+    arm(time_v1.ns time);
+
+    # An atomic operation is provided to squash the timer, disable any
+    # interrupts, and return both the current absolute time and the
+    # value left in the interval timer. "itime" is the only parameter
+    # in the "timer" interface which is relative (in this case to the
+    # last call to "set").
+    clear() returns (time_v1.ns time, time_v1.ns itime);
+
+    # The action taken when the timer goes off is target-dependent.
+
+    # On Alphas, initialising the timer entails enabling a particular software
+    # interrupt to be posted when the timer goes off. The handler for
+    # this SWI will probably be the scheduler. It is currently
+    # identified by a "cardinal", though there is clearly scope for a
+    # better abstraction here.
+    # On MIPS, the kernel scheduler is entered directly.  No registration
+    # is required.
+
+    # Arranging for the initialisation of this code is likely to be
+    # platform-specific.
+
+    enable(card32 sirq);
+}
+

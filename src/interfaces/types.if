@@ -1,0 +1,18 @@
+# Type interface does not have a version, because it defines system-independent view of types.
+# You cannot derive from this interface (hence it's final).
+
+final interface types #extends builtin_types
+{
+    exception error {}
+
+    type string name;
+    type card64 code;
+
+    type card64 val;
+    record any {
+        code type_;
+        val  value;
+    }
+
+    sequence<any> any_seq;
+}

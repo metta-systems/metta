@@ -15,8 +15,8 @@
 #include "bootinfo.h"
 #include "bootimage.h"
 #include "infopage.h"
-#include "frames_module_interface.h"
-#include "timer_interface.h"
+#include "frames_module_v1_interface.h"
+#include "timer_v1_interface.h"
 #include "continuation.h"
 #include "cpu.h"
 #include "c++ctors.h"
@@ -200,7 +200,7 @@ static void prepare_infopage()
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
 }
 
-extern timer_closure* init_timer();
+extern timer_v1_closure* init_timer();
 static continuation_t new_context;
 
 /*!
@@ -235,8 +235,8 @@ void kernel_startup()
     parse_cmdline(bi);
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
     prepare_infopage(); // <-- init domain info page
-    timer_closure* timer = init_timer();
-    timer->enable(); // enable timer interrupts
+    timer_v1_closure* timer = init_timer();
+    timer->enable(0); // enable timer interrupts
     x86_cpu_t::enable_fpu();
 
     kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;

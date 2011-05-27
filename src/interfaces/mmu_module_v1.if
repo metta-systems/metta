@@ -1,0 +1,21 @@
+# MMU module creates and initializes MMU instance.
+
+local interface mmu_module_v1
+{
+    # Creates the initial "MMU". The "pmem" parameter describes the
+    # physical address space of the machine, while the "init"
+    # parameter specifies all existant virt-to-phys mappings.
+    # These may be modified.
+    # An allocation of "size" addressable bytes is requested.
+    # If successful, a "MMU" is returned along with the handle on a
+    # "RamTab" (for use by the "Frames" allocator) and an address
+    # where "size" addressable bytes have been allocated.
+#     create(int size)
+#         returns (mmu_v1& mmu) #, ramtab_v1& ramtab, memory_v1.address free)
+#         raises (memory_v1.failure);
+    create(int32 size)
+        returns (mmu_v1& mmu);
+
+    # Finish the initialisation of the MMU.
+#     finish_init(mmu_v1& mmu, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc);
+}
