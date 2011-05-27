@@ -10,8 +10,8 @@ def build(bld):
     mod.name = name+'.comp'
     mod.source = sources
     mod.env = bld.env_of_name('KERNEL_ENV').copy()
-    mod.env.append_unique('LINKFLAGS', ['-r']); # Components are relocatable
-    mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds'])#, '-Wl,-Map,'+name+'.map'])
+    mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
+    mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,'+name+'.map'])
     mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
     mod.uselib_local = 'component_support platform minruntime kernel common'
     mod.target = name+'.comp'

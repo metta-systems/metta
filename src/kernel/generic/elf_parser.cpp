@@ -60,6 +60,11 @@ section_header_t& elf_parser_t::section_iterator::operator *()
     return *ptr; // FIXME: dereferencing end() will fault
 }
 
+void elf_parser_t::section_iterator::operator ++(int)
+{
+	operator++();
+}
+
 void elf_parser_t::section_iterator::operator ++()
 {
     ptr = reinterpret_cast<section_header_t*>(reinterpret_cast<char*>(ptr) + entry_size);
@@ -237,6 +242,8 @@ bool elf_parser_t::relocate_to(address_t load_address)
     section_header_t* shstrtab = section_shstring_table();
     if (!shstrtab)
         return false;
+
+	kconsole << "Relocating module to " << load_address << endl;
 
     // Traverse all sections, find relocation sections and apply them.
     section_header_t* rel_section;

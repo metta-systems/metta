@@ -161,7 +161,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     memutils::copy_string(loaded_module->name, name, sizeof(loaded_module->name));
     loaded_module->initialised = false;
 
-//    size_t size = 0;
+    size_t size = 0;
     address_t start = ~0;
 
     // Load either program OR sections, prefer program (faster loading ideally).
@@ -216,18 +216,14 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
+        kconsole << "+-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
+
         start = 0;
         size_t section_offset = 0;
-#ifdef CLANG_HAS_LAMBDAS
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
             [this, &module, &start, &size, &section_base, &section_offset]
             (elf32::section_header_t& sh)
         {
-#else
-        for (auto shi = module.section_headers_begin(); shi != module.section_headers_end(); ++shi)
-        {
-				elf32::section_header_t& sh = *shi;
-#endif
                 if (sh.flags & SHF_ALLOC)
                 {
                     if (sh.vaddr == 0)
@@ -251,25 +247,17 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                     section_offset += sh.size;
                 }
             }
-#ifdef CLANG_HAS_LAMBDAS
         );
-#endif
 
         // Allocate space for this ELF file sections.
         *last_available_address += section_offset;
         // Page-align after last section, so that next module could be loaded onto separate page.
         *last_available_address = page_align_up(*last_available_address);
 
-#ifdef CLANG_HAS_LAMBDAS
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
             [this, &module, &start, &size, &section_base]
             (elf32::section_header_t& sh)
         {
-#else
-        for (auto shi = module.section_headers_begin(); shi != module.section_headers_end(); ++shi)
-        {
-				auto sh = *shi;
-#endif
                 if (sh.flags & SHF_ALLOC)
                 {
                     if (sh.type == SHT_NOBITS)
@@ -284,9 +272,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                     }
                 }
             }
-#ifdef CLANG_HAS_LAMBDAS
         );
-#endif
     }
     else
         PANIC("Do not know how to load ELF file!");
