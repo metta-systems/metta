@@ -34,6 +34,7 @@ class bootinfo_t
     address_t last_available_module_address;
 
     static const uint32_t BI_MAGIC = 0xbeefdea1;
+    multiboot_t::mmap_entry_t* find_matching_entry(address_t start, size_t size, int& n_way);
 
 public:
     /* Iterator for going over available memory map entries. */
@@ -50,7 +51,7 @@ public:
     public:
         mmap_iterator() : ptr(0), end(0) {}
         mmap_iterator(void* entry, void* end);
-        multiboot_t::mmap_entry_t operator *();
+        multiboot_t::mmap_entry_t* operator *(); // allows in-place modification of mmap entries
         void operator ++();
         void operator ++(int);
         inline bool operator == (const mmap_iterator& other) { return ptr == other.ptr; }
@@ -88,11 +89,12 @@ public:
 
     inline bool will_overflow(size_t add_size)
     {
-        return size() + add_size > PAGE_SIZE; //((free & PAGE_MASK) != ((free + add_size) & PAGE_MASK));
+        return (size() + add_size) > PAGE_SIZE; //((free & PAGE_MASK) != ((free + add_size) & PAGE_MASK));
     }
 
     // NB! Module loader received from this bootinfo will modify it, so do not try to use two modules loaders from
-    // two different bootinfos at once! (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
+    // two different bootinfos at once! 
+    // (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
     module_loader_t get_module_loader();
 
     // Load module ELF file by number.

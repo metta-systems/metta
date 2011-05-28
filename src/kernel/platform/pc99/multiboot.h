@@ -67,6 +67,7 @@ public:
     public:
         enum entry_type_e {
             free = 1,
+            non_free = 99, //something arbitrary for now.
             bootinfo = 111
         };
 
@@ -83,6 +84,13 @@ public:
             base_addr = new_addr;
             length = new_length;
             type_ = new_type;
+        }
+        inline void set_free(bool free)
+        {
+            if (free)
+                type_ = entry_type_e::free;
+            else
+                type_ = entry_type_e::non_free;
         }
 
     private:
