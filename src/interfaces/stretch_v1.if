@@ -1,0 +1,54 @@
+# A stretch is a contiguous area of the virtual address space, with the same accessibility throughout the range.
+#
+# Stretches are always a whole number of clicks in size; in other words they correspond to a set of contiguous pages.
+# They are disjoint: they cannot overlap. One consequence is that stretches cannot be refined: if you have a stretch
+# it doesn't make sense to talk to the VM system about a subset of the stretch.
+#
+# A stretch is represented by an instance of the "Stretch" interface.
+
+local interface stretch_v1
+{
+    # A stretch with address "a" and size "s" contains addresses in the range: [ a, a + s )
+    type card32 size; # FIXME: use memory_v1.size?
+    
+    # Return the range of addresses occupied by the stretch.
+    # XXX Do some other stuff too.... (maybe add mapping?)
+    # XXX SMH: need to consider interaction between
+    # StretchDriver$Bind and Stretch$Range. 
+    # Do we require *both* before we can access a stretch? 
+    # If so, why?
+    info() returns(memory_v1.address a, size s);
+
+    #===================================================================================================================
+    # Access control
+    #===================================================================================================================
+
+    # Access rights are a combination of "Read", "Write" and "Execute"
+    # and "Meta" permissions, modified by the "Global" right. The 
+    # protection model looks like an ACL for each stretch, with the 
+    # addition of global access permissions which override any ACL entries.
+
+    # When a stretch is allocated by default its global access rights
+    # are null, the only ACL entry is "Read" / "Write" / "Meta" for the
+    # protection domain which created it.
+
+    enum { read, write, execute, meta, global } right;
+    set<right> rights;
+
+    # Client does not have permission to manipulate the stretch.
+    exception denied {}
+
+    # The below suite of methods are used mainly to manipulate properties of Stretches. 
+
+    # Add a protection domain to the ACL with the specified access rights.
+    set_rights(protection_domain_v1.id dom_id, rights access) returns() raises (denied);
+
+    # Remove a protection domain from the ACL.
+    remove_rights(protection_domain_v1.id dom_id) returns() raises (denied);
+
+    # Set the global access rights.
+    set_global_rights(rights access) returns() raises (denied);
+
+    # Find out what the permissions are on a stretch.
+    query_rights(protection_domain_v1.id dom_id) returns (rights access);
+}

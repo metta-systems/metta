@@ -10,15 +10,15 @@ static unsigned int required_size(frames_module_v1_closure* self)
     return 42;
 }
 
-/*static system_frame_allocator_v1_closure* create(frames_module_v1_closure * self, int args)
+static /*system_frame_allocator_v1_closure* */ void create(frames_module_v1_closure * self, uint32_t size)
 {
-	kconsole << "frames_mod create " << args << endl;
-	return 0;
-}*/
+	kconsole << "frames_mod create " << size << endl;
+	return ;
+}
 
 static const frames_module_v1_ops ops = {
-    required_size
-//    create
+    required_size,
+    create
 };
 
 static const frames_module_v1_closure clos = {

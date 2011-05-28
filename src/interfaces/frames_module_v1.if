@@ -14,6 +14,8 @@ local interface frames_module_v1
     required_size()
         returns (memory_v1.size size);
 
+    create(card32 size);
+    # returns (system_frame_allocator_v1 sys_frame_alloc);
 #     create(physmem allmem, physmem used, ramtab_v1.tab& rtab, address state)
 #         returns (system_frame_allocator_v1 frames_sys_allocator);
 
