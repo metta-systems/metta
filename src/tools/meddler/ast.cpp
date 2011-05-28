@@ -5,6 +5,9 @@
 namespace AST
 {
 
+/*!
+ * Search for type name in local types list.
+ */
 bool interface_t::types_lookup(alias_t& type)
 {
 	bool res = false;
@@ -16,6 +19,9 @@ bool interface_t::types_lookup(alias_t& type)
 	return res;
 }
 
+/*!
+ * Search for type name in imported types list.
+ */
 bool interface_t::imported_types_lookup(alias_t& type)
 {
 	bool res = false;
@@ -34,6 +40,9 @@ bool interface_t::add_exception(exception_t* exc)
     return true;
 }
 
+/*!
+ * Add locally defined type to the list.
+ */
 bool interface_t::add_type(alias_t* t)
 {
     //std::cout << "interface_t::add_type()" << std::endl;
@@ -41,6 +50,9 @@ bool interface_t::add_type(alias_t* t)
     return true;
 }
 
+/*!
+ * Add imported type to the list.
+ */
 bool interface_t::add_imported_type(alias_t* t)
 {
     //std::cout << "interface_t::add_imported_type()" << std::endl;

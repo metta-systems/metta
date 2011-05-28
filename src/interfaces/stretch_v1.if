@@ -9,7 +9,6 @@
 local interface stretch_v1
 {
     # A stretch with address "a" and size "s" contains addresses in the range: [ a, a + s )
-    type card32 size; # FIXME: use memory_v1.size?
     
     # Return the range of addresses occupied by the stretch.
     # XXX Do some other stuff too.... (maybe add mapping?)
@@ -17,7 +16,7 @@ local interface stretch_v1
     # StretchDriver$Bind and Stretch$Range. 
     # Do we require *both* before we can access a stretch? 
     # If so, why?
-    info() returns(memory_v1.address a, size s);
+    info() returns(memory_v1.address a, memory_v1.size s);
 
     #===================================================================================================================
     # Access control

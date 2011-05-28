@@ -55,19 +55,19 @@ public:
     virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
 
-	bool is_local_type() { return local; }
+    bool is_local_type() { return local; }
     bool is_builtin_type() { return builtin; }
     bool is_reference() { return reference; }
-	bool is_interface_reference() { return interface; }
-	void set_local(bool enable = true) { local = enable; }
-	void set_builtin(bool enable = true) { builtin = enable; }
+    bool is_interface_reference() { return interface; }
+    void set_local(bool enable = true) { local = enable; }
+    void set_builtin(bool enable = true) { builtin = enable; }
     void set_reference(bool enable = true) { reference = enable; }
-	void set_interface_reference(bool enable = true) { interface = enable; }
+    void set_interface_reference(bool enable = true) { interface = enable; }
 
-	virtual void emit_include(std::ostringstream& s);
-	virtual void emit_impl_h(std::ostringstream&);
-	virtual void emit_interface_h(std::ostringstream&);
-	virtual void emit_interface_cpp(std::ostringstream&);
+    virtual void emit_include(std::ostringstream& s);
+    virtual void emit_impl_h(std::ostringstream&);
+    virtual void emit_interface_h(std::ostringstream&);
+    virtual void emit_interface_cpp(std::ostringstream&);
 
 private:
     std::string type_; // use known types! check LLVM's Type/TypeBuilder

@@ -125,20 +125,19 @@ static std::string emit_type(alias_t& type)
 	else
 	if (type.is_interface_reference())
 	{
-		cout << "EMITTING INTERFACE REFERENCE " << result << endl;
 		result = type.unqualified_name(); // we need first part of the name?!?
+		cout << "EMITTING INTERFACE REFERENCE " << result << endl;
 	}
 	else
 	if (type.is_local_type())
 	{
+		result = replace_dots(type.get_root()->name() + "." + type.type());
 		cout << "EMITTING LOCAL TYPE " << result << endl;
-		// TODO: fully qualify local type!
-		result = replace_dots(type.type());
 	}
 	else
 	{
-		cout << "EMITTING something else: " << result << endl;
 		result = replace_dots(type.type());
+		cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl;
     }
 
 	if (type.is_interface_reference())
