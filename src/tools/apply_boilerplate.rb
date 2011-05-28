@@ -12,7 +12,7 @@
 #
 require 'find'
 
-exclude_dirs = ['./_build_', './runtime/stl']
+exclude_dirs = ['./_build_', './runtime/stl', './tools/meddler/llvm']
 no_license = ['./runtime/MersenneTwister.h']
 
 class Array
@@ -30,7 +30,7 @@ exts = {
     '.s'=>[license.gsub(/^\/\//,";"), modelines.gsub(/^\/\//,";")],
     '.rb'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")],
     '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")],
-    '.if'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
+    '.if'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")]
 }
 
 ok_count = 0
