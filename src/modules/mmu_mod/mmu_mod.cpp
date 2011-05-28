@@ -49,9 +49,9 @@ public:
 	iterator rend() const;
 };*/
 
-//
-// mmu methods
-//
+//======================================================================================================================
+// mmu_v1 methods
+//======================================================================================================================
 
 static const mmu_v1_ops mmu_v1_method_table = {
     NULL
@@ -74,9 +74,9 @@ struct mmu_v1_state
 	size_t ramtab_size;*/
 };
 
-//
-// mmu_mod methods
-//
+//======================================================================================================================
+// mmu_module_v1 methods
+//======================================================================================================================
 
 /* 
 ** Compute how much space is required initially for page tables: 
@@ -88,7 +88,7 @@ struct mmu_v1_state
 */
 static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 {
-	#if 0
+#if 0
     word_t bitmap[32];
     word_t curva, res, nptabs; 
     int i, j;
@@ -130,7 +130,7 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 }
 
 struct ramtab_entry_t
-	{};
+{};
 	
 /* 
 ** Compute how much space is required for the ram table; this is a 
@@ -145,9 +145,6 @@ static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 
 static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_reservation/*, ramtab& ramtab, address_t& free*/)
 {
-    UNUSED(self);
-    UNUSED(initial_reservation);
-
     kconsole << "MMU mod : create" << endl;
 
     // read the memory map from bootinfo page
@@ -172,7 +169,7 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
 	first_range = page_align_up(first_range);
 	kconsole << "mmu_mod: state allocated at " << first_range << endl;
 
-	if (!bi->use_memory(first_range, first_range + mmu_memory_needed_bytes))
+	if (!bi->use_memory(first_range, mmu_memory_needed_bytes))
 	{
 		
 	}
