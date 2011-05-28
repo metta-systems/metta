@@ -67,14 +67,15 @@ public:
     public:
         enum entry_type_e {
             free = 1,
+            non_free = 99, //something arbitrary for now.
             bootinfo = 111
         };
 
         inline uint64_t address() const { return base_addr; }
-        inline uint64_t start() const   { return base_addr; }
-        inline uint64_t end() const     { return base_addr + length - 1; }
-        inline uint64_t size() const    { return length; }
-        inline uint32_t type() const    { return type_; }
+        inline uint64_t start()   const { return base_addr; }
+        inline uint64_t end()     const { return base_addr + length - 1; }
+        inline uint64_t size()    const { return length; }
+        inline uint32_t type()    const { return type_; }
         inline bool     is_free() const { return type_ == 1; }
 
         inline void set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
@@ -83,6 +84,13 @@ public:
             base_addr = new_addr;
             length = new_length;
             type_ = new_type;
+        }
+        inline void set_free(bool free)
+        {
+            if (free)
+                type_ = entry_type_e::free;
+            else
+                type_ = entry_type_e::non_free;
         }
 
     private:

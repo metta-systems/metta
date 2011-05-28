@@ -17,9 +17,9 @@ include_dirs = 'kernel kernel/generic runtime'.split()
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
-cflags = '-pipe -Wall -Wextra -Werror'.split()
-cflags += ['-O0', '-g']#'-Os'] #FIXME: builddep
-flags = '-ffunction-sections -fdata-sections'.split()
+cflags = []
+flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
 
 # Change default waf behaviour wrt extensions.
 def change_ext(self, ext):

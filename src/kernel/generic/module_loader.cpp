@@ -216,8 +216,8 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
-		kconsole << "+-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
-	
+        kconsole << "+-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
+
         start = 0;
         size_t section_offset = 0;
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
@@ -262,12 +262,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                 {
                     if (sh.type == SHT_NOBITS)
                     {
-                        V(kconsole << "Clearing " << sh.size << " bytes" << endl);
+                        V(kconsole << "Clearing " << sh.size << " bytes at " << sh.vaddr << endl);
                         memutils::fill_memory((void*)sh.vaddr, 0, sh.size);
                     }
                     else
                     {
-                        V(kconsole << "Copying " << sh.size << " bytes" << endl);
+                        V(kconsole << "Copying " << sh.size << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr << endl);
                         memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                     }
                 }
@@ -301,6 +301,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (!closure_name)
     {
         address_t entry = module.get_entry_point();
+		V(kconsole << "entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *last_available_address << endl);
         return (void*)(entry + section_base - start);
     }
     else

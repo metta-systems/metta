@@ -1,13 +1,15 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "bootinfo.h"
 #include "new.h"
+#include "algorithm"
+#include "default_console.h"
 
 //======================================================================================================================
 // internal structures
@@ -98,11 +100,12 @@ void bootinfo_t::mmap_iterator::set(void* entry)
     }
 }
 
-multiboot_t::mmap_entry_t bootinfo_t::mmap_iterator::operator *()
+multiboot_t::mmap_entry_t* bootinfo_t::mmap_iterator::operator *()
 {
-    multiboot_t::mmap_entry_t entry;
+    return static_cast<multiboot_t::mmap_entry_t*>(ptr);
+/*    multiboot_t::mmap_entry_t entry;
     entry.set_region(start, size, (multiboot_t::mmap_entry_t::entry_type_e)type);
-    return entry;
+    return entry;*/
 }
 
 void bootinfo_t::mmap_iterator::operator ++(int)
@@ -285,6 +288,128 @@ bool bootinfo_t::append_cmdline(const char* cmdline)
 
     free += size;
     return true;
+}
+
+address_t bootinfo_t::find_top_memory_address()
+{
+    std::for_each(mmap_begin(), mmap_end(), [](const multiboot_t::mmap_entry_t* e)
+    {
+	});
+	return 0;
+}
+
+/*!
+ * Find usable memory range of given size above the low memory (which means 1Mb mark on x86).
+ */
+address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
+{
+	const address_t LOWER_BOUND = 1*MB;
+	address_t first_range = ~0;
+    std::for_each(mmap_begin(), mmap_end(), [&first_range, bytes](const multiboot_t::mmap_entry_t* e)
+    {
+			if (e->is_free() && (e->start() > LOWER_BOUND) && (first_range > e->start()) && (e->size() >= bytes))
+				first_range = e->start();
+			else if ((e->type() == multiboot_t::mmap_entry_t::bootinfo) && (first_range <= e->end()))
+				first_range = e->end() + 1;
+
+            kconsole << "memory at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
+    });
+	kconsole << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range << endl;
+	return first_range;
+}
+
+/*!
+ * Find an entry containing given address range (start, start + size).
+ *
+ * Four variants:
+ * - start addresses match,
+ * - end addresses match,
+ * - both start and end match, which means we need to REMOVE entry,
+ * - new entry is entirely within the old entry, which means 3-way split,
+ * - other possibilities (overlapping ranges) are not supported.
+ *
+ * @returns n_way == -1 if no entry is found.
+ * @returns n_way == 0 if entry needs to be removed.
+ * ?? @returns n_way == 1 if entry is split in two parts, beginning is used
+ * @returns n_way == 2 if entry is split in two parts, end is used
+ * @returns n_way == 3 if entry is split in three parts
+ * FIXME: magic numbers.
+ */
+multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size_t size, int& n_way)
+{
+    multiboot_t::mmap_entry_t* ret = 0;
+    n_way = -1;
+    std::for_each(mmap_begin(), mmap_end(), [&ret,&n_way,start,size](const multiboot_t::mmap_entry_t* e)
+    {
+		if (start >= e->start() && e->size() >= size + (start - e->start()))
+		{
+		    if (start == e->start() && size == e->size())
+                n_way = 0;
+            else if (start == e->start())
+                n_way = 1;
+            else if (start + size == e->end() + 1)
+                n_way = 2;
+            else
+                n_way = 3;
+
+            ret = const_cast<multiboot_t::mmap_entry_t*>(e);
+		}
+	});
+    return ret;
+}
+
+/*!
+ * Use memory (start, start + size) from a given range, this will cause a split of found range into 2 or 3 regions, 
+ * one or two of which will remain free, and one will be marked occupied. Will perform various consistency checks 
+ * and add new regions to bootinfo_t memory map.
+ *
+ * @returns false if memory could not be used.
+ * @returns true if memory map is updated successfully.
+ */
+bool bootinfo_t::use_memory(address_t start, size_t size)
+{
+	multiboot_t::mmap_entry_t temp_entry;
+	multiboot_t::mmap_entry_t* orig_entry;
+    int n_way;
+
+    orig_entry = find_matching_entry(start, size, n_way);
+    kconsole << __FUNCTION__ << " found matching entry " << orig_entry << " at " << orig_entry->address() << " of " << orig_entry->size() << " bytes of type " << orig_entry->type() << ", n_way is " << n_way << endl;
+    if (!orig_entry || n_way == -1 || !orig_entry->is_free())
+        return false;
+
+    if (n_way == 0)
+        orig_entry->set_free(false);
+    else
+    {
+        if (n_way == 1)
+        {
+            // add free entry at the end
+            temp_entry.set_region(start + size, orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
+            if (!append_mmap(&temp_entry))
+                return false;
+            orig_entry->set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+        }
+        else if (n_way == 2)
+        {
+            // add free entry at the start
+            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+            if (!append_mmap(&temp_entry))
+                return false;
+            orig_entry->set_region(orig_entry->start(), orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
+        }
+        else if (n_way == 3)
+        {
+            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+            if (!append_mmap(&temp_entry))
+                return false;
+            temp_entry.set_region(start + size, orig_entry->size() - (start - orig_entry->start()) - size, multiboot_t::mmap_entry_t::free);
+            if (!append_mmap(&temp_entry))
+                return false;
+            orig_entry->set_region(orig_entry->start(), start - orig_entry->start(), multiboot_t::mmap_entry_t::free);
+        }
+    }
+
+	return true;
 }
 
 // kate: indent-width 4; replace-tabs on;
