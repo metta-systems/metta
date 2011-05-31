@@ -188,6 +188,8 @@ static void SECTION(".init.cpu") check_cpu_features()
         x86_cpu_t::init_pmctr();
         x86_cpu_t::enable_user_pmctr();
     }
+
+    INFO_PAGE.cpu_features = avail_features;
 }
 
 /* Clear out the information page */
@@ -198,6 +200,7 @@ static void prepare_infopage()
     INFO_PAGE.irqs_heartbeat      = 0; // IRQ calls
     INFO_PAGE.glue_heartbeat      = 0; // glue code calls
     INFO_PAGE.faults_heartbeat    = 0; // protection faults
+    INFO_PAGE.cpu_features        = 0;
 }
 
 extern timer_v1_closure* init_timer();
@@ -233,8 +236,14 @@ void kernel_startup()
     bootimage_t bootimage(name, start, end);
 
     parse_cmdline(bi);
-    check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
     prepare_infopage(); // <-- init domain info page
+    check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
+    
+    // TODO: CREATE INITIAL MEMORY MAPPINGS PROPERLY HERE
+    // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
+//    int ramtop = 16*MiB;
+    bi->append_vmap(0, 0, 16*MiB);//min(16*MiB, ramtop));
+    
     timer_v1_closure* timer = init_timer();
     timer->enable(0); // enable timer interrupts
     x86_cpu_t::enable_fpu();
