@@ -163,16 +163,19 @@ void interface_t::emit_impl_h(std::ostringstream& s)
         s << std::endl;
     }
 
-    s << "// ops structure should be exposed to module implementors!" << std::endl;
-    s << "struct " << name() << "_ops" << std::endl
-      << "{" << std::endl;
-
-    std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+    if (methods.size() > 0)
     {
-        m->emit_impl_h(s);
-    });
+        s << "// ops structure should be exposed to module implementors!" << std::endl;
+        s << "struct " << name() << "_ops" << std::endl
+          << "{" << std::endl;
 
-    s << "};" << std::endl;
+        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+        {
+            m->emit_impl_h(s);
+        });
+
+        s << "};" << std::endl;
+    }
 }
 
 void interface_t::emit_interface_h(std::ostringstream& s)
@@ -195,30 +198,37 @@ void interface_t::emit_interface_h(std::ostringstream& s)
     });
     
 	s << std::endl;
-    s << "struct " << name() << "_ops;" << std::endl
-      << "struct " << name() << "_state;" << std::endl << std::endl
-      << "struct " << name() << "_closure" << std::endl
-      << "{" << std::endl
-      << '\t' << "const " << name() << "_ops* methods;" << std::endl
-      << '\t' << name() << "_state* state;" << std::endl << std::endl;
+	if (methods.size() > 0)
+	{
+        s << "struct " << name() << "_ops;" << std::endl
+          << "struct " << name() << "_state;" << std::endl << std::endl
+          << "struct " << name() << "_closure" << std::endl
+          << "{" << std::endl
+          << '\t' << "const " << name() << "_ops* methods;" << std::endl
+          << '\t' << name() << "_state* state;" << std::endl << std::endl;
 
-    std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
-    {
-        m->emit_interface_h(s);
-    });
+        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+        {
+            m->emit_interface_h(s);
+        });
 
-    s << "};" << std::endl;
+        s << "};" << std::endl;
+    }
 }
 
+// Currently no need to generate interface.cpp if there are no methods.
 void interface_t::emit_interface_cpp(std::ostringstream& s)
 {
-    s << "#include \"" << name() << "_interface.h\"" << std::endl
-      << "#include \"" << name() << "_impl.h\"" << std::endl << std::endl;
+	if (methods.size() > 0)
+	{
+        s << "#include \"" << name() << "_interface.h\"" << std::endl
+          << "#include \"" << name() << "_impl.h\"" << std::endl << std::endl;
 
-    std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
-    {
-        m->emit_interface_cpp(s);
-    });
+        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+        {
+            m->emit_interface_cpp(s);
+        });
+    }
 }
 
 void method_t::emit_impl_h(std::ostringstream& s)
@@ -393,6 +403,30 @@ void alias_t::emit_interface_cpp(std::ostringstream& s)
     s << " " << name();
 }
 
+void parameter_t::emit_impl_h(std::ostringstream& s)
+{
+    s << emit_type(*this);
+    if (direction != in)
+        s << "*";
+    s << " " << name();
+}
+
+void parameter_t::emit_interface_h(std::ostringstream& s)
+{
+    s << emit_type(*this);
+    if (direction != in)
+        s << "*";
+    s << " " << name();
+}
+
+void parameter_t::emit_interface_cpp(std::ostringstream& s)
+{
+    s << emit_type(*this);
+    if (direction != in)
+        s << "*";
+    s << " " << name();
+}
+
 void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
@@ -434,8 +468,9 @@ void set_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void set_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void set_alias_t::emit_interface_h(std::ostringstream& s)
 {
+    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void set_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
@@ -446,8 +481,17 @@ void record_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void record_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void record_alias_t::emit_interface_h(std::ostringstream& s)
 {
+	s << "struct " << replace_dots(get_root()->name() + "." + name()) << endl
+	  << "{" << endl;
+    std::for_each(fields.begin(), fields.end(), [&s](alias_t* field)
+    {
+        s << '\t';
+        field->emit_interface_h(s);
+        s << ";" << endl;
+    });
+    s << "};" << endl;
 }
 
 void record_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
@@ -458,8 +502,9 @@ void enum_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void enum_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void enum_alias_t::emit_interface_h(std::ostringstream& s)
 {
+    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void enum_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)

@@ -178,6 +178,9 @@ public:
 	parameter_t(node_t* parent) : alias_t(parent), direction(inout) {}
     virtual void dump(std::string indent_prefix);
     virtual void emit_include(std::ostringstream&) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s);
+    virtual void emit_interface_h(std::ostringstream& s);
+    virtual void emit_interface_cpp(std::ostringstream& s);
 };
 
 class exception_t : public node_t
