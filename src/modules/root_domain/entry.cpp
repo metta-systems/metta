@@ -107,8 +107,11 @@ static void init_mem(bootimage_t& bootimg)
     int required = frames_mod->required_size();
     int initial_heap_size = 64*1024;
 
+    ramtab_v1_closure* rtab;
+    memory_v1_address next_free;
+
     kconsole << "Init memory region size " << required + initial_heap_size << " bytes." << endl;
-    mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size/*, &rtab, &free*/);
+    mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
     UNUSED(mmu);
 
     //BREAK();
