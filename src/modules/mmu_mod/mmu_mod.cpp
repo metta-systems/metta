@@ -1,59 +1,32 @@
+#include "algorithm"
 #include "default_console.h"
 #include "bootinfo.h"
+#include "infopage.h"
 #include "mmu_module_v1_interface.h"
 #include "mmu_module_v1_impl.h"
 #include "mmu_v1_interface.h"
-#include "algorithm"
 #include "mmu_v1_impl.h"
-
-// TODO: We need to abstract frames module from the format of bootinfo page,
-// so we add a type for memory_map and make it hide the fact that it uses the bootinfo_page
-// we pass the memory_map type to frames_mod.
-
-/// use bootinfo_t::mmap_begin/end for now, but probably bootinfo_t should return memory_map_t in request for memmap?
-
-/*class memory_map_t
-{
-public:
-	memory_map_t();
-	memory_map_t(bootinfo_t* bi); // this hides bootinfo behind mmap type
-
-	// memory item returned by the iterator
-	class entry_t
-	{
-	public:
-		bool is_free();
-		physical_address_t start();
-		size_t size();
-	};
-
-	class memory_map_iterator_t : public std::iterator<std::forward_iterator_tag, memory_map_t::memory_map_entry_t>
-	{
-	public:
-		memory_map_iterator_t();
-		memory_map_t::entry_t operator *();
-    	void operator ++();
-    	void operator ++(int);
-		inline bool operator == (const memory_map_iterator_t& other) { return ptr == other.ptr; }
-    	inline bool operator != (const memory_map_iterator_t& other) { return ptr != other.ptr; }
-	};
-
-	typedef memory_map_iterator_t iterator;
-	iterator begin(); // see bootinfo_t::mmap_begin()
-	iterator begin() const;
-	iterator end();
-	iterator end() const;
-	iterator rbegin();
-	iterator rbegin() const;
-	iterator rend();
-	iterator rend() const;
-};*/
+#include "ramtab_v1_interface.h"
+#include "cpu.h"
+#include "page_directory.h"
 
 //======================================================================================================================
 // mmu_v1 methods
 //======================================================================================================================
 
 static const mmu_v1_ops mmu_v1_method_table = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     NULL
 };
 
@@ -61,17 +34,39 @@ static const size_t N_L1_TABLES = 1024;
 
 struct mmu_v1_state
 {
-/*	page_t l1_mapping[N_L1_TABLES];
-*/
-	mmu_v1_closure mmu_closure;
-/*	ramtab_v1_closure ramtab_closure;
+    page_t                l1_mapping[N_L1_TABLES]; /*!< Level 1 page directory      */
+//    swpte_t               stab[N_L1ENTS];          /*!< Level 1 shadows (4Mb pages) */
+    page_t                l1_virt[N_L1_TABLES];    /*!< Virtual addresses of L2s    */
 
-	system_frames_allocator_v1_closure* frames_allocator;
-	heap_v1_closure* heap;
-	stretch_allocator_v1_closure* stretch_allocator;
+    mmu_v1_closure        mmu_closure;
+	ramtab_v1_closure     ramtab_closure;
 
-	ramtab_t* ramtab;
-	size_t ramtab_size;*/
+    uint32_t              next_pdidx;          /* Next free pdom idx (hint) */
+//    pdom_t               *pdom_tbl[PDIDX_MAX]; /* Map pdom idx to pdom_t's  */
+//    pdom_st               pdominfo[PDIDX_MAX]; /* Map pdom idx to pdom_st's */
+
+    bool                  use_global_pages;    /* Set iff we can use PGE    */
+
+//	system_frames_allocator_v1_closure* frames_allocator;
+//	heap_v1_closure*                    heap;
+//	stretch_allocator_v1_closure*       stretch_allocator;
+
+    uint32_t              nframes;
+
+    address_t             l1_mapping_virt; /* virtual  address of l1 page table */
+    address_t             l1_mapping_phys; /* physical address of l1 page table */
+
+    address_t             va_l2;   /* virtual  address of l2 array base */
+    address_t             pa_l2;   /* physical address of l2 array base */
+
+    address_t             vtab_va; /* virtual address of l2 PtoV table  */
+
+//	ramtab_t*             ramtab;      /* base of ram table            */
+	size_t                ramtab_size; /* size of ram table            */
+
+    uint32_t              maxl2;   /* index of the last available chunk   */
+    uint32_t              nextl2;  /* index of first potential free chunk */
+//    l2_info               info[1]; /* free/used l2 info; actually maxl2   */
 };
 
 //======================================================================================================================
@@ -86,47 +81,53 @@ struct mmu_v1_state
 ** We then add a fixed number to this to allow for L2 allocation 
 ** before we get frames and stretch allocators. 
 */
+static int bitmap_bit(address_t va)
+{
+    return (va >> 22) & 0x1f; // Each bit in each word represents 4Mb => 5 bits at 22 bit offset.
+}
+
+static int bitmap_index(address_t va)
+{
+    return va >> 27; // Each array word represents 32*4Mb = 128Mb => 27 bits.
+}
+
+#define L2SIZE          (8*KiB)                // 4K for L2 pagetable + 4K for shadow(?)
+#define N_EXTRA_L2S     32                     /* We require an additional margin of L2 ptabs */
+
 static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 {
-#if 0
-    word_t bitmap[32];
-    word_t curva, res, nptabs; 
-    int i, j;
+    uint32_t bitmap[32] = { 0 };
+    size_t nptabs = 0;
 
-    res = sizeof(MMU_st);   /* state includes the level 1 page table */
-    for(i = 0; i < 32; i++) 
-	bitmap[i] = 0;
+    size_t res = sizeof(mmu_v1_state);   /* state includes the level 1 page table */
 
-    for(i = 0; mmap[i].nframes; i++) {
-		MTRC(eprintf("mem_reqd: got memmap [%p,%p) -> [%p,%p), %d frames\n", 
-			mmap[i].vaddr, 
-			mmap[0].vaddr + (mmap[0].nframes << FRAME_WIDTH),//[0]oops?
-			mmap[i].paddr, 
-			mmap[0].paddr + (mmap[0].nframes << FRAME_WIDTH),//[0]oops?
-			mmap[i].nframes));
-		for(j=0; j < mmap[i].nframes; j++) {
-	    	curva = (word_t)(mmap[i].vaddr + (j << FRAME_WIDTH));
-	    	bitmap[BITMAP_IDX(curva)] |= 1 << BITMAP_BIT(curva);
+    std::for_each(bi->vmap_begin(), bi->vmap_end(), [&bitmap](const memory_v1_mapping* e)
+    {
+        kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
+        for (size_t j = 0; j < e->nframes; ++j) 
+        {
+	    	address_t va = e->virt + (j << FRAME_WIDTH);
+	    	bitmap[bitmap_index(va)] |= 1 << bitmap_bit(va);
 		}
-    }
+    });
 
     /* Now scan through the bitmap to determine the number of L2s reqd */
-    nptabs = 0;
-    for(i=0; i < 32; i++) {
-		while(bitmap[i]) {
-	    	if(bitmap[i] & 1) 
+    for (int i = 0; i < 32; ++i)
+    {
+		while (bitmap[i])
+		{
+	    	if (bitmap[i] & 1) 
 				nptabs++;
 	    	bitmap[i] >>= 1; 
 		}
     }
 
-    MTRC(eprintf("Got ntpabs=%d, extra=%d => total is %d\n", 
-	    nptabs, N_EXTRA_L2S, nptabs + N_EXTRA_L2S));
     nptabs += N_EXTRA_L2S;
-    *nl2tables = nptabs; 
-    return (res + (nptabs * L2SIZE));
-#endif
-	return 0;
+    n_l2_tables = nptabs; 
+
+    kconsole << " +--Got nptabs " << nptabs << endl;
+
+    return res + (nptabs * L2SIZE);
 }
 
 struct ramtab_entry_t
@@ -143,9 +144,9 @@ static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 	return max_ramtab_entries * sizeof(ramtab_entry_t);
 }
 
-static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_reservation/*, ramtab& ramtab, address_t& free*/)
+static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_t initial_reservation, ramtab_v1_closure** ramtab, memory_v1_address* free)
 {
-    kconsole << "MMU mod : create" << endl;
+    kconsole << " +-mmu_module_v1.create" << endl;
 
     // read the memory map from bootinfo page
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
@@ -167,27 +168,38 @@ static mmu_v1_closure* mmu_mod_create(mmu_module_v1_closure* self, int initial_r
 
     // Find proper location to start "allocating" from.
 	first_range = page_align_up(first_range);
-	kconsole << "mmu_mod: state allocated at " << first_range << endl;
 
 	if (!bi->use_memory(first_range, mmu_memory_needed_bytes))
 	{
-		
+        PANIC("Unable to use memory for initial MMU setup!");
 	}
 
+	kconsole << " +-mmu_module_v1: state allocated at " << first_range << endl;
+
+    // Recursion Unleashed!
 	mmu_v1_state *state = reinterpret_cast<mmu_v1_state*>(first_range);
 	mmu_v1_closure *cl = &state->mmu_closure;
 	cl->methods = &mmu_v1_method_table;
 	cl->state = state;
+	
+    state->l1_mapping_virt = state->l1_mapping_phys = first_range;
+    
+    state->ramtab_size = maxpfn;
+//    state->ramtab_closure.methods = &ramtab_v1_method_table;
+    state->ramtab_closure.state = reinterpret_cast<ramtab_v1_state*>(first_range);
+    *ramtab = &state->ramtab_closure;
+
+    state->use_global_pages = (INFO_PAGE.cpu_features & X86_32_FEAT_PGE) != 0;
 
     return cl;
 }
 
-static const mmu_module_v1_ops ops = {
-    mmu_mod_create
+static const mmu_module_v1_ops mmu_module_v1_method_table = {
+    mmu_module_v1_create,
 };
 
 static const mmu_module_v1_closure clos = {
-    &ops,
+    &mmu_module_v1_method_table,
     NULL
 };
 
