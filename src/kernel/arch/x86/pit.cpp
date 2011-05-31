@@ -60,7 +60,7 @@ static void set(timer_v1_closure* self, time_v1_ns time)
     self->state->alarm = time;
 }
 
-static time_v1_ns clear(timer_v1_closure* /*self*/, time_v1_ns /*itime*/)
+static time_v1_ns clear(timer_v1_closure* /*self*/, time_v1_ns* /*itime*/)
 {
     return 0;
 }

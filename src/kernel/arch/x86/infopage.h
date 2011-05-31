@@ -15,6 +15,8 @@ struct information_page_t
              irqs_heartbeat,
              glue_heartbeat,
              faults_heartbeat;
+
+    uint32_t cpu_features;
 };
 
 #define INFO_PAGE_ADDR 0x1000
