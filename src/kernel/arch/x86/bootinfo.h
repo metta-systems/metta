@@ -15,9 +15,53 @@
 #include "module_loader.h"
 #include "macros.h"
 #include "new.h"
+#include "memory_v1_interface.h"
 
 // Rather arbitrary location for the bootinfo page.
 static void* BOOTINFO_PAGE UNUSED_ARG = (void*)0x8000;
+
+// TODO: We need to abstract frames module from the format of bootinfo page,
+// so we add a type for memory_map and make it hide the fact that it uses the bootinfo_page
+// we pass the memory_map type to frames_mod.
+
+/// use bootinfo_t::mmap_begin/end for now, but probably bootinfo_t should return memory_map_t in request for memmap?
+
+/*class memory_map_t
+{
+public:
+	memory_map_t();
+	memory_map_t(bootinfo_t* bi); // this hides bootinfo behind mmap type
+
+	// memory item returned by the iterator
+	class entry_t
+	{
+	public:
+		bool is_free();
+		physical_address_t start();
+		size_t size();
+	};
+
+	class memory_map_iterator_t : public std::iterator<std::forward_iterator_tag, memory_map_t::memory_map_entry_t>
+	{
+	public:
+		memory_map_iterator_t();
+		memory_map_t::entry_t operator *();
+    	void operator ++();
+    	void operator ++(int);
+		inline bool operator == (const memory_map_iterator_t& other) { return ptr == other.ptr; }
+    	inline bool operator != (const memory_map_iterator_t& other) { return ptr != other.ptr; }
+	};
+
+	typedef memory_map_iterator_t iterator;
+	iterator begin(); // see bootinfo_t::mmap_begin()
+	iterator begin() const;
+	iterator end();
+	iterator end() const;
+	iterator rbegin();
+	iterator rbegin() const;
+	iterator rend();
+	iterator rend() const;
+};*/
 
 /*!
  * Provides access to boot info page structures.
@@ -37,7 +81,7 @@ class bootinfo_t
     multiboot_t::mmap_entry_t* find_matching_entry(address_t start, size_t size, int& n_way);
 
 public:
-    /* Iterator for going over available memory map entries. */
+    /* Iterator for going over available physical memory map entries. */
     class mmap_iterator : public std::iterator<std::forward_iterator_tag, multiboot_t::mmap_entry_t>
     {
         address_t start;
@@ -56,6 +100,27 @@ public:
         void operator ++(int);
         inline bool operator == (const mmap_iterator& other) { return ptr == other.ptr; }
         inline bool operator != (const mmap_iterator& other) { return ptr != other.ptr; }
+    };
+
+    /* Iterator for going over available virtual memory mapping entries. */
+    class vmap_iterator : public std::iterator<std::forward_iterator_tag, memory_v1_mapping>
+    {
+//        address_t start;
+//        size_t size;
+//        int type;
+        void* ptr;
+        void* end;
+
+        void set(void* entry);
+
+    public:
+        vmap_iterator() : ptr(0), end(0) {}
+        vmap_iterator(void* entry, void* end);
+        memory_v1_mapping* operator *(); // we don't need to in-place modify memory mappings, but lets keep it this way for simplicity at the moment.
+        void operator ++();
+        void operator ++(int);
+        inline bool operator == (const vmap_iterator& other) { return ptr == other.ptr; }
+        inline bool operator != (const vmap_iterator& other) { return ptr != other.ptr; }
     };
 
     struct module_entry
@@ -105,6 +170,9 @@ public:
 
     mmap_iterator mmap_begin();
     mmap_iterator mmap_end();
+    
+    vmap_iterator vmap_begin();
+    vmap_iterator vmap_end();
 
     module_iterator module_begin();
     module_iterator module_end();
@@ -115,6 +183,7 @@ public:
     bool append_module(const char* name, multiboot_t::modinfo_t* mod);
 
     bool append_mmap(multiboot_t::mmap_entry_t* entry);
+    bool append_vmap(address_t vstart, address_t pstart, size_t size);
     bool append_cmdline(const char* cmdline);
 
 	address_t find_top_memory_address();
