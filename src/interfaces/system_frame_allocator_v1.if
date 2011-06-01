@@ -4,15 +4,24 @@
 # all information was available at the time of its creation (i.e. at the time frames_mod.create was invoked).
 # This typically occurs with the laying out of device address spaces.
 
-local interface system_frame_allocator_v1 extends frame_allocator_v1
+local interface system_frame_allocator_v1 #extends frame_allocator_v1
 {
+    # CHEAT: Copy of frame_allocator_v1 until i fix inheritance in meddler
+    allocate(memory_v1.size bytes, card32 frame_width) returns (memory_v1.address addr);
+    allocate_range(memory_v1.size bytes, card32 frame_width, memory_v1.address start, memory_v1.attrs attr) returns (memory_v1.address addr);
+    query(memory_v1.address addr) returns (card32 frame_width, memory_v1.attrs attr);
+    free(memory_v1.address addr, memory_v1.size bytes);
+    destroy();
+
+    # Original system_frame_allocator_v1 follows:
+    
     # Create a new frames interface for the domain whose DCB
     # is at virtual address "dcb_va", physical address "dcb_pa".
     # The created interface should allow the client to allocate up
     # to "granted_frames" with some certainty, and may allow allocation
     # of up to "extra_frames" subject to later revocation.
     # An initial allocation of "init_alloc_frames" frames is requested.
-    new_client(address dcb_va, address dcb_pa, card32 granted_frames, card32 extra_frames, card32 init_alloc_frames)
+    new_client(memory_v1.address dcb_va, memory_v1.address dcb_pa, card32 granted_frames, card32 extra_frames, card32 init_alloc_frames)
         returns (frame_allocator_v1 frames);
 
     # Add the set of physical frames described by "region" to the

@@ -208,6 +208,10 @@ bool parser_t::parse_interface()
                 return false;
             }
             node->set_parent(lex.current_token());
+            // Now, we need to stop parsing current file, find the parent interface and parse it first, to populate all necessary tables before continuing with this one.
+            // So, push current parsing context into a stack, get a fresh new one and repeat, recursively if necessary
+            // then merge whatever types, exceptions and methods from parent interfaces into this one and continue.
+            // FIXME: need to only add methods to the list?
         }
 
         if (!lex.expect(token::lbrace))
