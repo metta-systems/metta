@@ -198,7 +198,7 @@ void interface_t::emit_interface_h(std::ostringstream& s)
     });
     
 	s << std::endl;
-	if (methods.size() > 0)
+//	if (methods.size() > 0)
 	{
         s << "struct " << name() << "_ops;" << std::endl
           << "struct " << name() << "_state;" << std::endl << std::endl
