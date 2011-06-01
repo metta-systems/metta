@@ -218,7 +218,7 @@ def build(bld):
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if interfaces/time_v1.if interfaces/timer_v1.if interfaces/protection_domain_v1.if interfaces/stretch_v1.if interfaces/ramtab_v1.if', name = 'all_idl')
+    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if interfaces/time_v1.if interfaces/timer_v1.if interfaces/protection_domain_v1.if interfaces/stretch_v1.if interfaces/ramtab_v1.if interfaces/frame_allocator_v1.if interfaces/system_frame_allocator_v1.if interfaces/heap_v1.if', name = 'all_idl')
 
     # Make bootimage components.
     bld.add_subdirs("modules")
