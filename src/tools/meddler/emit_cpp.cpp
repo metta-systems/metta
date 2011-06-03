@@ -504,7 +504,13 @@ void enum_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 
 void enum_alias_t::emit_interface_h(std::ostringstream& s)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << "enum " << replace_dots(get_root()->name() + "." + name()) << " {" << endl;
+    std::for_each(fields.begin(), fields.end(), [&s, this](std::string field)
+    {
+        s << '\t';
+        s << replace_dots(this->get_root()->name() + "." + this->name() + "." + field) << "," << endl;
+    });
+    s << "};" << endl;
 }
 
 void enum_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
