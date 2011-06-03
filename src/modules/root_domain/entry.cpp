@@ -48,10 +48,6 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 }
 
 //======================================================================================================================
-// setup MMU and frame allocator
-//======================================================================================================================
-
-//======================================================================================================================
 // setup page mapping
 //======================================================================================================================
 
@@ -68,34 +64,9 @@ static void map_identity(const char* caption, address_t start, address_t end)
 }
 #endif
 
-
-static system_frame_allocator_v1_closure* init_phys_mem(frames_module_v1_closure* frames_mod, ramtab_v1_closure* rtab, memory_v1_address next_free)
-{
-// allmem comes from BOOTINFO_PAGE
-// memmap is used memory - what needs to be mapped
-
-    kconsole << " +- init_phys_mem" << endl;
-
-    // We need to abstract frames module from the format of bootinfo page, so we create a local copy of
-    // memory map and pass it to frames_mod as a parameter.
-//     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
-//     std::vector<PMemDesc, stack_allocator(32)> memmap;
-// 
-//     std::for_each(bi->mmap_begin(), bi->mmap_end(), [](const multiboot_t::mmap_entry_t e)
-//     {
-//         kconsole << "mmap entry @ " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
-//         allmem.push_back(PMemDesc(e.address(), e.size(), e.type()));
-//     });
-
-//     std::for_each(bi->vmap_begin(), bi->vmap_end(), [](const memory_v1_mapping* e)
-//     {
-//         kconsole << "vmap entry @ " << e.address() << " is " << e.size() << " bytes of type " << e.type() << endl;
-//         memmap.push_back(PMemDesc(e.address(), e.size(), e.type()));
-//     });
-
-
-	return frames_mod->create(rtab, next_free);
-}
+//======================================================================================================================
+// setup MMU and frame allocator
+//======================================================================================================================
 
 static void init_mem(bootimage_t& bootimg)
 {
@@ -110,8 +81,9 @@ static void init_mem(bootimage_t& bootimg)
     mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod);
 
-    int required = frames_mod->required_size();
-    int initial_heap_size = 64*1024;
+// FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
+    int required = page_align_up(frames_mod->required_size());
+    int initial_heap_size = 64*KiB;
 
     ramtab_v1_closure* rtab;
     memory_v1_address next_free;
@@ -121,15 +93,14 @@ static void init_mem(bootimage_t& bootimg)
     UNUSED(mmu);
 
     kconsole << " + Obtained ramtab @ " << rtab << ", next free " << next_free << endl;
-    //BREAK();
 
     kconsole << " + Creating frame allocator" << endl;
-    auto frames = init_phys_mem(frames_mod, rtab, next_free);
+    auto frames = frames_mod->create(rtab, next_free);
 
     kconsole << " + Creating heap" << endl;
 //    auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
 //    ASSERT(heap_mod);
-//    heap = heap_mod->create_raw(free + required, initial_heap_size);
+//    heap = heap_mod->create_raw(next_free + required, initial_heap_size);
 
 //    frames_mod->finish_init(frames, heap);
 
