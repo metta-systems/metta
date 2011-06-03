@@ -12,13 +12,14 @@ local interface memory_v1
     # Memory may have various attributes; some of which apply only to either physical memory or virtual memory,
     # some may apply to both.
     # The currently defined set is:
+    #   regular    - regular RAM
     #   nailed     - a region of the virtual address space which is not pageable.
     #   non_memory - a region of the physical address space which has non-memory-like properties (e.g. IO space)
     #   no_cache   - a region of the physical address space which is not cached.
     #   dma        - a region of the physical address space to which or from where DMA may take place.
     #   read_only  - a piece of virt/phys memory which is now and always shall be read-only. E.g. ROM, NTSC stuff.
 
-    enum { nailed, non_memory, no_cache, dma, read_only } attrs;
+    enum { regular, nailed, non_memory, no_cache, dma, read_only } attrs;
     set<attrs> attr_flags;
 
     # A region of physical memory is described by a physmem_desc
