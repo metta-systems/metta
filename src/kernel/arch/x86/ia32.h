@@ -25,6 +25,7 @@
 
 const size_t    PAGE_SIZE = 0x1000;
 const address_t PAGE_MASK = 0xFFFFF000;
+const size_t    FRAME_WIDTH = 12;
 
 // Page attributes
 #define IA32_PAGE_PRESENT        (1<<0)

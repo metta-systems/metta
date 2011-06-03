@@ -10,6 +10,7 @@
 #include "new.h"
 #include "algorithm"
 #include "default_console.h"
+#include "memory_v1_interface.h"
 
 //======================================================================================================================
 // internal structures
@@ -31,9 +32,10 @@
 
 enum bootrec_tag_e
 {
-    bootrec_module = 1,   // loadable module info
-    bootrec_memory_map,   // memory map info
-    bootrec_command_line, // command line info
+    bootrec_module = 1,      // loadable module info
+    bootrec_memory_map,      // memory map info
+    bootrec_virtual_mapping, // initial virtual-to-physical mapping
+    bootrec_command_line,    // command line info
     bootrec_device_tree,
     end
 };
@@ -63,6 +65,13 @@ public:
     uint32_t type;
 };
 
+// Initial virtual mappings.
+class bootrec_vmap_entry_t : public bootrec_t
+{
+public:
+    memory_v1_mapping mapping;  
+};
+
 class bootrec_cmdline_t : public bootrec_t
 {
 public:
@@ -74,6 +83,7 @@ union bootrec_info_t
     bootrec_t*            rec;
     bootrec_module_t*     module;
     bootrec_mmap_entry_t* memmap;
+    bootrec_vmap_entry_t* vmemmap;
     bootrec_cmdline_t*    cmdline;
     char*                 generic;
 };
@@ -121,6 +131,53 @@ void bootinfo_t::mmap_iterator::operator ++()
     while (info.generic < end)
     {
         if (info.rec->tag == bootrec_memory_map)
+        {
+            set(info.generic);
+            return;
+        }
+        info.generic += info.rec->size;
+    }
+    set(0);
+    end = 0; // iterator has exhausted!
+    return;
+}
+
+//======================================================================================================================
+// vmap_iterator
+//======================================================================================================================
+
+bootinfo_t::vmap_iterator::vmap_iterator(void* entry, void* end)
+    : end(end)
+{
+    set(entry);
+}
+
+void bootinfo_t::vmap_iterator::set(void* entry)
+{
+    ptr = entry;
+}
+
+memory_v1_mapping* bootinfo_t::vmap_iterator::operator *()
+{
+    if (!ptr)
+        return 0;
+
+    return &(reinterpret_cast<bootrec_vmap_entry_t*>(ptr)->mapping);
+}
+
+void bootinfo_t::vmap_iterator::operator ++(int)
+{
+	operator++();
+}
+
+void bootinfo_t::vmap_iterator::operator ++()
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(ptr);
+    info.generic += info.rec->size; // move ahead one entry
+    while (info.generic < end)
+    {
+        if (info.rec->tag == bootrec_virtual_mapping)
         {
             set(info.generic);
             return;
@@ -219,6 +276,26 @@ bootinfo_t::mmap_iterator bootinfo_t::mmap_end()
     return mmap_iterator(0, 0);
 }
 
+bootinfo_t::vmap_iterator bootinfo_t::vmap_begin()
+{
+    bootrec_info_t info;
+    info.generic = reinterpret_cast<char*>(this + 1);
+    while (info.generic < free)
+    {
+        if (info.rec->tag == bootrec_virtual_mapping)
+        {
+            return vmap_iterator(info.vmemmap, free);
+        }
+        info.generic += info.rec->size;
+    }
+    return vmap_end();
+}
+
+bootinfo_t::vmap_iterator bootinfo_t::vmap_end()
+{
+    return vmap_iterator(0, 0);
+}
+
 bool bootinfo_t::append_module(uint32_t number, multiboot_t::modinfo_t* mod)
 {
     if (!mod)
@@ -267,6 +344,27 @@ bool bootinfo_t::append_mmap(multiboot_t::mmap_entry_t* entry)
     return true;
 }
 
+bool bootinfo_t::append_vmap(address_t vstart, address_t pstart, size_t size)
+{
+    size_t entry_size = sizeof(bootrec_vmap_entry_t);
+    
+    if (will_overflow(entry_size))
+        return false;
+        
+    bootrec_vmap_entry_t* vmap = new(free) bootrec_vmap_entry_t;
+    vmap->tag = bootrec_virtual_mapping;
+    vmap->size = entry_size;
+
+    vmap->mapping.virt = vstart;
+    vmap->mapping.phys = pstart;
+    vmap->mapping.nframes = size >> FRAME_WIDTH;
+    vmap->mapping.frame_width = FRAME_WIDTH;
+    vmap->mapping.mode = 0;
+
+    free += entry_size;
+    return true;    
+}
+
 bool bootinfo_t::append_cmdline(const char* cmdline)
 {
     if (!cmdline)
@@ -290,12 +388,21 @@ bool bootinfo_t::append_cmdline(const char* cmdline)
     return true;
 }
 
-address_t bootinfo_t::find_top_memory_address()
+address_t bootinfo_t::find_usable_physical_memory_top()
 {
-    std::for_each(mmap_begin(), mmap_end(), [](const multiboot_t::mmap_entry_t* e)
+    address_t top = 0;
+    std::for_each(mmap_begin(), mmap_end(), [&top](const multiboot_t::mmap_entry_t* e)
     {
+// temp defines
+#define RAM_FREE 1
+#define ACPI_RECLAIMABLE 3
+        if ((e->type() == RAM_FREE) || (e->type() == ACPI_RECLAIMABLE))
+        {
+            if (e->start() + e->size() > top)
+                top = e->start() + e->size();
+        }
 	});
-	return 0;
+	return top;
 }
 
 /*!
@@ -366,6 +473,7 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
  * @returns false if memory could not be used.
  * @returns true if memory map is updated successfully.
  */
+// TODO: also add used memory to VMAP?
 bool bootinfo_t::use_memory(address_t start, size_t size)
 {
 	multiboot_t::mmap_entry_t temp_entry;

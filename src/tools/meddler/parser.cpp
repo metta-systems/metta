@@ -208,6 +208,10 @@ bool parser_t::parse_interface()
                 return false;
             }
             node->set_parent(lex.current_token());
+            // Now, we need to stop parsing current file, find the parent interface and parse it first, to populate all necessary tables before continuing with this one.
+            // So, push current parsing context into a stack, get a fresh new one and repeat, recursively if necessary
+            // then merge whatever types, exceptions and methods from parent interfaces into this one and continue.
+            // FIXME: need to only add methods to the list?
         }
 
         if (!lex.expect(token::lbrace))
@@ -340,6 +344,7 @@ bool parser_t::parse_exception()
     if (!lex.expect(token::lbrace))
     {
         PARSE_ERROR("{ expected");
+        delete node;
         return false;
     }
 
@@ -348,6 +353,7 @@ bool parser_t::parse_exception()
     if (!lex.expect(token::rbrace))
     {
         PARSE_ERROR("} expected");
+        delete node;
         return false;
     }
 
@@ -380,38 +386,50 @@ bool parser_t::parse_method()
             return false;
         }
 
-        AST::method_t m(parse_tree, name, is_idempotent);
+        AST::method_t* m = new AST::method_t(parse_tree, name, is_idempotent);
         is_idempotent = false;
 
         std::vector<AST::parameter_t*> params;
-        if (!parse_argument_list(&m, params, AST::parameter_t::in))
+        if (!parse_argument_list(m, params, AST::parameter_t::in))
+        {
+            delete m;
             return false;
+        }
 
-        m.params = params;
+        m->params = params;
 
         if (!lex.expect(token::rparen))
         {
             PARSE_ERROR(") expected");
+            delete m;
             return false;
         }
 
         if (lex.maybe(token::kw_returns) || lex.maybe(token::kw_never))
         {
             if (!parse_method_returns(m))
+            {
+                delete m;
                 return false;
+            }
         }
 
         if (lex.maybe(token::kw_raises))
         {
             if (!parse_method_raises(m))
+            {
+                delete m;
                 return false;
+            }
         }
 
         if (lex.expect(token::semicolon))
         {
-            parse_tree->add_method(new AST::method_t(m));
+            parse_tree->add_method(m);
             return true;
         }
+
+        delete m;
     }
     return false;
 }
@@ -546,7 +564,7 @@ bool parser_t::parse_var_decl(AST::alias_t& to_get)
 bool parser_t::parse_field(AST::node_t* parent)
 {
     D();
-    AST::alias_t* field = new AST::alias_t(parent);//AST::alias_t field(parent);
+    AST::alias_t* field = new AST::alias_t(parent);
     if (!parse_var_decl(*field))
     {
         delete field;
@@ -627,6 +645,11 @@ bool parser_t::parse_type_alias()
 	configure_type(t);
 
     parse_tree->add_type(new AST::type_alias_t(t));
+    if (!symbols.insert_checked(t.name(), token::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
 
     return true;
 }
@@ -945,7 +968,7 @@ bool parser_t::parse_array_type_alias()
     return true;
 }
 
-bool parser_t::parse_method_returns(AST::method_t& m)
+bool parser_t::parse_method_returns(AST::method_t* m)
 {
     D();
 
@@ -956,8 +979,8 @@ bool parser_t::parse_method_returns(AST::method_t& m)
             PARSE_ERROR("'returns' expected after 'never'");
             return false;
         }
-        m.returns.clear();
-        m.never_returns = true;
+        m->returns.clear();
+        m->never_returns = true;
         return true;
     }
 
@@ -971,11 +994,11 @@ bool parser_t::parse_method_returns(AST::method_t& m)
     }
 
     std::vector<AST::parameter_t*> returns;
-    if (!parse_argument_list(&m, returns, AST::parameter_t::out))
+    if (!parse_argument_list(m, returns, AST::parameter_t::out))
         return false;
 
     // TODO: check that all ids are types
-    m.returns = returns;
+    m->returns = returns;
 
     if (!lex.expect(token::rparen))
     {
@@ -986,7 +1009,7 @@ bool parser_t::parse_method_returns(AST::method_t& m)
     return true;
 }
 
-bool parser_t::parse_method_raises(AST::method_t& m)
+bool parser_t::parse_method_raises(AST::method_t* m)
 {
     D();
     if (!lex.match(token::kw_raises))
@@ -1003,7 +1026,7 @@ bool parser_t::parse_method_raises(AST::method_t& m)
         return false;
 
     // TODO: check that all ids are _exception_types
-    m.raises_ids = exc_ids;
+    m->raises_ids = exc_ids;
 
     if (!lex.expect(token::rparen))
     {
