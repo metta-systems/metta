@@ -59,6 +59,7 @@ public:
     static const flags_t cache_disable = 0x10;
     static const flags_t copy_on_write = 0x20;
     static const flags_t swapped       = 0x40;
+    static const flags_t global        = 0x80;
 
     page_t() {}
 
