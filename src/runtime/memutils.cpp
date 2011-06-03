@@ -21,6 +21,11 @@ extern "C" void* memmove(void* dest, const void* src, size_t count)
 namespace memutils
 {
 
+void* clear_memory(void* dest, size_t count)
+{
+    return fill_memory(dest, 0, count);
+}
+
 void* fill_memory(void* dest, int value, size_t count)
 {
     char *xs = reinterpret_cast<char*>(dest);

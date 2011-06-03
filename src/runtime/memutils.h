@@ -27,6 +27,17 @@ namespace memutils {
 void* fill_memory(void* dest, int value, size_t count);
 
 /*!
+ * Clear a region of memory. Usually sets given area to zero, but a debug implementation might want to clear with
+ * a known pattern or do something else.
+ * @param[out] dest  Pointer to the start of the area.
+ * @param[in]  count The size of the area.
+ * @return           Pointer to the start of the area.
+ *
+ * @warning Do not use clear_memory() to access IO space, use fill_io_memory() with a value of 0 instead.
+ */
+void* clear_memory(void* dest, size_t count);
+
+/*!
  * Copy one area of memory to another.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from

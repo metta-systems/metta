@@ -6,7 +6,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "config.h"
 #include "default_console.h"
 #include "page_directory.h"
 
@@ -50,6 +49,8 @@ flags_t page_t::flags()
         flags |= swapped;
     if (raw & IA32_PAGE_COW)
         flags |= copy_on_write;
+    if (raw & IA32_PAGE_GLOBAL)
+        flags |= global;
     return flags;
 }
 
@@ -72,6 +73,8 @@ void page_t::set_flags(flags_t flags)
         value |= IA32_PAGE_PRESENT;
     if (flags & copy_on_write)
         value |= IA32_PAGE_COW;
+    if (flags & global)
+        value |= IA32_PAGE_GLOBAL;
     raw = (raw & PAGE_MASK) | value;
 }
 

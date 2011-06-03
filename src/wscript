@@ -257,7 +257,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp page_directory.cpp
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
