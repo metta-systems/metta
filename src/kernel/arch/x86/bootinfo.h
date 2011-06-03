@@ -186,7 +186,7 @@ public:
     bool append_vmap(address_t vstart, address_t pstart, size_t size);
     bool append_cmdline(const char* cmdline);
 
-	address_t find_top_memory_address();
+	address_t find_usable_physical_memory_top();
 	address_t find_highmem_range_of_at_least(size_t bytes);
 	bool use_memory(address_t start, size_t size);
 };

@@ -388,12 +388,21 @@ bool bootinfo_t::append_cmdline(const char* cmdline)
     return true;
 }
 
-address_t bootinfo_t::find_top_memory_address()
+address_t bootinfo_t::find_usable_physical_memory_top()
 {
-    std::for_each(mmap_begin(), mmap_end(), [](const multiboot_t::mmap_entry_t* e)
+    address_t top = 0;
+    std::for_each(mmap_begin(), mmap_end(), [&top](const multiboot_t::mmap_entry_t* e)
     {
+// temp defines
+#define RAM_FREE 1
+#define ACPI_RECLAIMABLE 3
+        if ((e->type() == RAM_FREE) || (e->type() == ACPI_RECLAIMABLE))
+        {
+            if (e->start() + e->size() > top)
+                top = e->start() + e->size();
+        }
 	});
-	return 0;
+	return top;
 }
 
 /*!
@@ -464,6 +473,7 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
  * @returns false if memory could not be used.
  * @returns true if memory map is updated successfully.
  */
+// TODO: also add used memory to VMAP?
 bool bootinfo_t::use_memory(address_t start, size_t size)
 {
 	multiboot_t::mmap_entry_t temp_entry;
