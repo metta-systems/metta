@@ -1,5 +1,7 @@
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,16 +12,17 @@
 #include "page_directory.h"
 #include "nucleus.h"
 #include "linksyms.h"
+#include "debugger.h"
 #include "config.h" // for HEAP_DEBUG
 
 using nucleus_n::nucleus;
 
 /*!
-* @class heap_t
-* XXX be careful not to use memory-allocating kconsole calls inside heap_t
-* as heap methods run with heap locked and asking to malloc from inside heap_t
-* will deadlock.
-*/
+ * @class heap_t
+ * XXX be careful not to use memory-allocating kconsole calls inside heap_t
+ * as heap methods run with heap locked and asking to malloc from inside heap_t
+ * will deadlock.
+ */
 
 #define HEAP_MAGIC        0xbeefbead
 #define HEAP_MIN_SIZE     0x70000
@@ -392,7 +395,7 @@ void heap_t::free(void *p)
 
 void* heap_t::realloc(void *ptr, size_t size)
 {
-    kconsole.checkpoint("heap_t::realloc");
+    debugger_t::checkpoint("heap_t::realloc");
     (void)size;
     return ptr;
 }
