@@ -1,4 +1,6 @@
 local interface heap_v1
 {
-    # nothing yet
+    allocate(memory_v1.size size)
+        returns (memory_v1.address ptr);
+    free(memory_v1.address ptr);
 }

@@ -8,10 +8,12 @@
 //
 #pragma once
 
-#include "ordered_array.h"
+#include "memory_v1_interface.h"
+#include "heap_v1_interface.h"
 #include "lockable.h"
 
-#define HEAP_INDEX_SIZE   0x20000 // 131072
+//At least sizeof(heap_t)+3*sizeof(heap_t::heap_rec_t)
+#define HEAP_MIN_SIZE (256)
 
 /*!
 * Implements a heap. The algorithm is based on dlmalloc and uses tagged
@@ -26,46 +28,43 @@ public:
     inline heap_t() : lockable_t() {}
 
     /*!
-    * Create a new Heap, with start address @a start, initial size @a end minus @a start,
-    * and expanding up to a maximum address of @a max.
-    */
-    inline heap_t(address_t start, address_t end, address_t max, bool is_kernel)
+     * Create a new Heap, with start address @a start, initial size @a end minus @a start,
+     * and expanding up to a maximum address of @a max.
+     */
+    inline heap_t(address_t start, address_t end)//, heap_v1_closure* heap_closure)
         : lockable_t()
     {
-        init(start, end, max, is_kernel);
+        init(start, end);//, heap_closure);
     }
 
-    void init(address_t start, address_t end, address_t max, bool is_kernel);
+    void init(address_t start, address_t end);//, heap_v1_closure* heap_closure);
 
     /*!
-    * Allocates a contiguous region of memory @a size in size. If @a page_align is @a true,
-    * it creates that block starting on a page boundary.
-    * @return start address of the allocated memory block.
-    */
-    void* allocate(size_t size, bool page_align);
+     * Allocates a contiguous region of memory @a size in size.
+     * @return start address of the allocated memory block.
+     */
+    void* allocate(size_t size);
 
     /*!
-    * Releases a block allocated with @a allocate.
-    * Releasing a NULL pointer is safe and has no effect.
-    */
+     * Releases a block allocated with @a allocate.
+     * Releasing a NULL pointer is safe and has no effect.
+     */
     void free(void* p);
 
     /*!
-    * Reallocate memory block starting at @a ptr to be of size @a size.
-    * For general characteristics of the algorithm see memory_manager::realloc.
-    * Will inherit page_align property from the previously allocated block.
-    * @return start address of the memory block.
-    */
+     * Reallocate memory block starting at @a ptr to be of size @a size.
+     * @return start address of the memory block.
+     */
     void* realloc(void* ptr, size_t size);
 
     /*!
-    * Tries to detect buffer overruns by walking the heap and checking magic numbers.
-    */
+     * Tries to detect buffer overruns by walking the heap and checking magic numbers.
+     */
     void check_integrity();
 
     /*!
-    * @return the current heap size. For analysis purposes.
-    */
+     * @return the current heap size. For analysis purposes.
+     */
     inline size_t size()
     {
         return end_address - start_address;
@@ -73,66 +72,54 @@ public:
 
 private:
     /*!
-    * Increase the size of the heap, by requesting pages to be allocated.
-    * Heap size increases from @a size to the nearest page boundary above @a new_size.
-    */
+     * Increase the size of the heap, by requesting pages to be allocated.
+     * Heap size increases from @a size to the nearest page boundary above @a new_size.
+     */
     void expand(size_t new_size);
 
     /*!
-    * Decrease the size of the heap, by requesting pages to be deallocated.
-    * Heap size decreases from @a size to the nearest page boundary above @a new_size.
-    * @returns the new size (end_address minus start_address) which is not guaranteed to be the
-    * same as @a new_size.
-    */
+     * Decrease the size of the heap, by requesting pages to be deallocated.
+     * Heap size decreases from @a size to the nearest page boundary above @a new_size.
+     * @returns the new size (end_address minus start_address) which is not guaranteed to be the
+     * same as @a new_size.
+     */
     size_t contract(size_t new_size);
 
-    /*!
-    * Find smallest place suitable for allocation.
-    */
-    int32_t find_smallest_hole(size_t size, bool page_align);
+    int find_index(size_t size);
 
 private:
-    /*!
-    * Size information for a hole/block
-    */
-    struct header_t
+    struct heap_rec_t
     {
-        uint32_t magic;   ///< Magic number, used for error checking and identification.
-        bool     is_hole; ///< @a true if this is a hole. @a false if this is a block.
-        size_t   size;    ///< Size of the block, including the end footer.
-
-        inline int operator < (const header_t& b)
-        {
-            return size < b.size;
-        }
+        memory_v1_size prev;  // either a magic or size of previous block (backlink).
+        memory_v1_size size;  // size of allocated block, including the end footer.
+        uint32_t       index; // allocation table index.
+        union {
+            heap_t/*v1_closure*/* heap; // when busy
+            heap_rec_t*      next; // when free
+        };
     };
 
-    struct footer_t
-    {
-        uint32_t   magic;  ///< Magic number, same as in header.
-        header_t*  header; ///< Pointer to the block header.
-    };
+    static heap_rec_t* prev_block(heap_rec_t* rec);
+    static heap_rec_t* next_block(heap_rec_t* rec);
+    heap_rec_t* get_new_block(size_t size, int index);
+    heap_rec_t* get_new_block_internal(size_t size, int index);
+
+    static const int SMALL_BLOCKS = 16;
+    static const int LARGE_BLOCKS = 24;
+    static const int COUNT = (SMALL_BLOCKS + LARGE_BLOCKS + 1);
+    static const memory_v1_size all_sizes[COUNT];
+
+    heap_rec_t* blocks[COUNT];
+    heap_rec_t* null_malloc;
 
     /*!
-    * The index table - lists all available holes.
-    */
-    ordered_array_t<header_t, HEAP_INDEX_SIZE>* index;
-    /*!
-    * The start of our allocated space. Includes index table.
-    */
+     * The start of our allocated space.
+     */
     address_t start_address;
     /*!
-    * The end of our currently allocated space. May be expanded up to max_address.
-    */
+     * The end of our currently allocated space. May be expanded if heap type supports it.
+     */
     address_t end_address;
-    /*!
-    * The maximum possible address our heap can be expanded to.
-    */
-    address_t max_address;
-    /*!
-    * If any pages requested by us should be marked as supervisor-only.
-    */
-    bool is_kernel;
 };
 
 // kate: indent-width 4; replace-tabs on;
