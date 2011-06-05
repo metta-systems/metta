@@ -19,7 +19,7 @@
 
 static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e st)
 {
-    kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
+    //kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
 }
 
 static const ramtab_v1_ops ramtab_v1_method_table = {
