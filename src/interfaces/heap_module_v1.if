@@ -1,0 +1,16 @@
+local interface heap_module_v1
+{
+    # At start-of-day, it may be convenient to create a heap which runs
+    # directly in a provided addressable region. "NewRaw" creates such
+    # a heap. The caller must ensure at least "size" bytes are
+    # available, starting at "where".
+    create_raw(memory_v1.address where, memory_v1.size size) 
+        returns (heap_v1& heap)
+        raises (heap_v1.no_memory);
+
+    # "Where" returns the start address and size of the given heap. It
+    # is particularly useful for raw heaps which we hope to upgrade 
+    # to 'real' heaps via Realize.
+    where(heap_v1& heap)
+        returns(memory_v1.address address, memory_v1.size size);
+}

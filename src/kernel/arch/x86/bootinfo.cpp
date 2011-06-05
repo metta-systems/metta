@@ -474,6 +474,8 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
  * @returns true if memory map is updated successfully.
  */
 // TODO: also add used memory to VMAP?
+// FIXME: use_memory should not augment original entries, should just put used regions on top as an overlay
+// this would help frames mod initialisation to build proper physical frame regions.
 bool bootinfo_t::use_memory(address_t start, size_t size)
 {
 	multiboot_t::mmap_entry_t temp_entry;
@@ -481,41 +483,12 @@ bool bootinfo_t::use_memory(address_t start, size_t size)
     int n_way;
 
     orig_entry = find_matching_entry(start, size, n_way);
-    kconsole << __FUNCTION__ << " found matching entry " << orig_entry << " at " << orig_entry->address() << " of " << orig_entry->size() << " bytes of type " << orig_entry->type() << ", n_way is " << n_way << endl;
-    if (!orig_entry || n_way == -1 || !orig_entry->is_free())
+    if (!orig_entry || !orig_entry->is_free())
         return false;
 
-    if (n_way == 0)
-        orig_entry->set_free(false);
-    else
-    {
-        if (n_way == 1)
-        {
-            // add free entry at the end
-            temp_entry.set_region(start + size, orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-        }
-        else if (n_way == 2)
-        {
-            // add free entry at the start
-            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(orig_entry->start(), orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
-        }
-        else if (n_way == 3)
-        {
-            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            temp_entry.set_region(start + size, orig_entry->size() - (start - orig_entry->start()) - size, multiboot_t::mmap_entry_t::free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(orig_entry->start(), start - orig_entry->start(), multiboot_t::mmap_entry_t::free);
-        }
-    }
+    temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+    if (!append_mmap(&temp_entry))
+        return false;
 
 	return true;
 }

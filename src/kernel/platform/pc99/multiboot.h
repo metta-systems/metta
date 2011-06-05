@@ -66,7 +66,13 @@ public:
     {
     public:
         enum entry_type_e {
+            // standard BIOS memory types
             free = 1,
+            reserved = 2,
+            acpi_reclaimable = 3,
+            acpi_nvs = 4,
+            bad_memory = 5,
+            // end of standard memory types
             non_free = 99, //something arbitrary for now.
             bootinfo = 111
         };
