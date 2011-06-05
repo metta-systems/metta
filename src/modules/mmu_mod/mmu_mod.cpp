@@ -104,7 +104,7 @@ struct mmu_v1_state
     page_t                l1_virt[N_L1_TABLES];    /*!< Virtual addresses of L2s    */
 
     mmu_v1_closure        mmu_closure;
-	ramtab_v1_closure     ramtab_closure;
+    ramtab_v1_closure     ramtab_closure;
 
     uint32_t              next_pdidx;          /* Next free pdom idx (hint) */
     pdom_t*               pdom_tbl[PDIDX_MAX]; /* Map pdom idx to pdom_t's  */
@@ -112,9 +112,9 @@ struct mmu_v1_state
 
     bool                  use_global_pages;    /* Set iff we can use PGE    */
 
-	system_frame_allocator_v1_closure*  system_frame_allocator;
-	heap_v1_closure*                    heap;
-//	stretch_allocator_v1_closure*       stretch_allocator;
+    system_frame_allocator_v1_closure*  system_frame_allocator;
+    heap_v1_closure*                    heap;
+//  stretch_allocator_v1_closure*       stretch_allocator;
 
     uint32_t              n_frames;
 
@@ -126,8 +126,8 @@ struct mmu_v1_state
 
     address_t             l1_virt_virt; /* virtual address of l2 PtoV table  */
 
-	ramtab_entry_t*       ramtab;      /* base of ram table            */
-	size_t                ramtab_size; /* size of ram table            */
+    ramtab_entry_t*       ramtab;      /* base of ram table            */
+    size_t                ramtab_size; /* size of ram table            */
 
     uint32_t              l2_max;   /* index of the last available chunk   */
     uint32_t              l2_next;  /* index of first potential free chunk */
