@@ -19,7 +19,7 @@
 
 static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e st)
 {
-//    kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
+    kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
 }
 
 static const ramtab_v1_ops ramtab_v1_method_table = {
@@ -164,8 +164,6 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
     uint32_t bitmap[32] = { 0 };
     size_t nptabs = 0;
 
-    size_t res = sizeof(mmu_v1_state);   /* state includes the level 1 page table */
-
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [&bitmap](const memory_v1_mapping* e)
     {
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
@@ -189,13 +187,15 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 
     nptabs += N_EXTRA_L2S;
     n_l2_tables = nptabs;
-    
+
+    size_t res = sizeof(mmu_v1_state);   /* state includes the level 1 page table */
+
     // Account for L2 infos
     res += n_l2_tables * sizeof(l2_info);
 
     kconsole << " +--Got nptabs " << nptabs << endl;
 
-    return res + (nptabs * L2SIZE);
+    return res;// + (n_l2_tables * L2SIZE);
 }
 
 /* 
@@ -300,10 +300,9 @@ static void enter_mappings(mmu_v1_state* state)
     	    */
     	    std::for_each(bi->mmap_begin(), bi->mmap_end(), [phys, virt, &flags](const multiboot_t::mmap_entry_t* e)
     	    {
-#define RAM_FREE 1
-    	        if ((e->type() != RAM_FREE) && (e->address() <= phys) && (e->address() + e->size() > phys))
+    	        if ((e->type() != multiboot_t::mmap_entry_t::free) && (e->address() <= phys) && (e->address() + e->size() > phys))
     		    {
-    		        kconsole << "Disabling cache for va=" << virt << endl;
+    		        //kconsole << "Disabling cache for va=" << virt << endl;
     		        flags |= page_t::cache_disable;
     		    }
             });
@@ -354,6 +353,8 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 	
     address_t l2_tables_offset = mmu_memory_needed_bytes;
+
+    mmu_memory_needed_bytes += n_l2_tables * L2SIZE; // page-aligned by definition
 
 	mmu_memory_needed_bytes += initial_reservation;
 	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
@@ -439,6 +440,7 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 //	    st->va_l1, st->pa_l1));
     ia32_mmu_t::set_active_pagetable(state->l1_mapping_phys);
 //    ntsc_wptbr(st->va_l1, st->pa_l1, st->vtab_va); //PDBR syscall
+// nucleus_write_pdbr(); <<-- proposed syscalls format
 //    MTRC(eprintf("+++ done new ptbr.\n"));
 
     // And store some useful pointers in the PIP for user-level translation.
