@@ -19,3 +19,5 @@ frames_mod:modules/frames_mod/frames_mod.comp
 #modules.values.sp>hey jude!
 
 mmu_mod:modules/mmu_mod/mmu_mod.comp
+heap_mod:modules/heap_mod/heap_mod.comp
+

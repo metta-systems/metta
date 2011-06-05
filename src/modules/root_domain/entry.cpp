@@ -2,7 +2,7 @@
 #include "frames_module_v1_interface.h"
 #include "mmu_v1_interface.h"
 #include "mmu_module_v1_interface.h"
-//#include "heap_module_v1_interface.h"
+#include "heap_module_v1_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -72,42 +72,44 @@ static void init_mem(bootimage_t& bootimg)
 {
     kconsole << " + init_mem" << endl;
 
-    // request necessary space for frames allocator
-    frames_module_v1_closure* frames_mod;
-    frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    // Load modules used for booting before we overwrite them.
+    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_mod);
 
-    mmu_module_v1_closure* mmu_mod;
-    mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    auto mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod);
 
+    auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
+    ASSERT(heap_mod);
+
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
-    int required = page_align_up(frames_mod->required_size());
+    // request necessary space for frames allocator
+    int required = frames_mod->required_size();
     int initial_heap_size = 64*KiB;
 
     ramtab_v1_closure* rtab;
     memory_v1_address next_free;
 
-    kconsole << " + Init memory region size " << required + initial_heap_size << " bytes." << endl;
+    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
     mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
     UNUSED(mmu);
 
-    kconsole << " + Obtained ramtab @ " << rtab << ", next free " << next_free << endl;
+//FIXME: we've just overwritten our bootimage, congratulations, gentlemen! Finding heap module will be fun.
+
+    kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
     kconsole << " + Creating frame allocator" << endl;
     auto frames = frames_mod->create(rtab, next_free);
 
     kconsole << " + Creating heap" << endl;
-//    auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
-//    ASSERT(heap_mod);
-//    heap = heap_mod->create_raw(next_free + required, initial_heap_size);
+    auto heap = heap_mod->create_raw(next_free + required, initial_heap_size);
 
-//    frames_mod->finish_init(frames, heap);
+    frames_mod->finish_init(frames, heap);
 
     // create virtual memory allocator
     // create stretch allocator
     // assign stretches to address ranges
-    kconsole << " + Creating stretch allocator" << endl;
+//    kconsole << " + Creating stretch allocator" << endl;
 //    salloc_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretchalloc_mod", "exported_stretch_allocator_module_rootdom");
 //    ASSERT(salloc_mod);
 /*
@@ -115,6 +117,7 @@ static void init_mem(bootimage_t& bootimg)
     Pervasives(strech_allocator) = salloc;
 
     sysalloc = salloc->create_nailed(frames, heap);
+    
     mmu_mod->finished(mmu, frames, heap, sysalloc);
 
     StretchTblMod = lookup("StretchTblModCl");
@@ -126,7 +129,7 @@ static void init_mem(bootimage_t& bootimg)
 //     stretch_driver_t::default_driver().initialise();
 
     /* Create the initial address space; returns a pdom for Nemesis domain */
-    kconsole << " + creating addr space." << endl;
+//    kconsole << " + creating addr space." << endl;
 //    nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
 //    MapInitialHeap(HeapMod, heap, iheap_size*sizeof(word_t), nemesis_pdid);
 }
