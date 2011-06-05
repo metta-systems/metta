@@ -4,7 +4,7 @@
 def build(bld):
     heap_mod = bld.new_task_gen('cxx', 'program')
     heap_mod.name = 'heap_mod.comp'
-    heap_mod.source = 'heap_mod.cpp'
+    heap_mod.source = 'heap_mod.cpp heap.cpp'
     heap_mod.env = bld.env_of_name('KERNEL_ENV').copy()
     heap_mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     heap_mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,heap_mod.map'])

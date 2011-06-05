@@ -14,7 +14,7 @@ def build(bld):
         name = name+' module nm undef check',
         after = 'cxx_link'
     )
-    mod.source = 'entry.cpp root_domain.cpp'.split() + ['../../interfaces/frames_module_v1_interface.cpp', '../../interfaces/mmu_module_v1_interface.cpp']
+    mod.source = 'entry.cpp root_domain.cpp'.split() + ['../../interfaces/frames_module_v1_interface.cpp', '../../interfaces/mmu_module_v1_interface.cpp', '../../interfaces/heap_v1_interface.cpp']
     mod.idl_source = 'all_idl'
     mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
     mod.uselib_local = 'component_support platform kernel minruntime common'

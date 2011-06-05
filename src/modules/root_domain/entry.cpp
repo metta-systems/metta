@@ -85,7 +85,7 @@ static void init_mem(bootimage_t& bootimg)
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
     int required = frames_mod->required_size();
-    int initial_heap_size = 64*KiB;
+    int initial_heap_size = 128*KiB;
 
     ramtab_v1_closure* rtab;
     memory_v1_address next_free;
@@ -105,6 +105,14 @@ static void init_mem(bootimage_t& bootimg)
     auto heap = heap_mod->create_raw(next_free + required, initial_heap_size);
 
     frames_mod->finish_init(frames, heap);
+
+    kconsole << " Being heapy:";
+    for (size_t counter = 0; counter < 100000; ++counter)
+    {
+        address_t p = heap->allocate(counter);
+        heap->free(p);
+    }
+    kconsole << " done." << endl;
 
     // create virtual memory allocator
     // create stretch allocator
