@@ -51,10 +51,6 @@ static const mmu_v1_ops mmu_v1_method_table = {
 
 static const size_t N_L1_TABLES = 1024;
 
-/* definitions for owner field of ramtab */
-#define OWNER_NONE    0x0     /* pfn is unused by anyone        */
-#define OWNER_SYSTEM  0x1     /* pfn is owned by us (mmgmt etc) */
-
 struct ramtab_entry_t
 {
     address_t owner;        /* PHYSICAL address of owning domain's DCB   */
