@@ -11,6 +11,13 @@
 #include "types.h"
 #include "ia32.h"
 
+/* Roundup a value "size" to an intergral number of frames of width "frame_width" */
+template <typename S, typename W>
+inline S align_to_frame_width(S size, W frame_width)
+{
+    return (size + ((1 << frame_width) - 1)) & ~((1UL << frame_width) - 1);
+}
+
 //! Return bytes needed to align @c addr to next @c size boundary. Size must be power of 2.
 template <typename T, typename U>
 inline T align_bytes(T addr, U size)
@@ -45,6 +52,18 @@ inline T page_align_down(void* addr)
 {
     const T b = reinterpret_cast<T>(addr);
     return b - b % PAGE_SIZE;
+}
+
+template <typename S>
+inline bool unaligned(S addr)
+{
+    return (addr & 1) != 0;
+}
+
+template <typename S, typename W>
+inline bool is_aligned_to_frame_width(S size, W frame_width)
+{
+    return (size & ((1UL << frame_width) - 1)) == 0;
 }
 
 //! Check that @c addr is aligned to page boundary.
