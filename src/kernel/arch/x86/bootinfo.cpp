@@ -404,7 +404,24 @@ address_t bootinfo_t::find_usable_physical_memory_top()
 	});
 	return top;
 }
-
+/*
+// Build a list of memory ranges from the current mmap.
+build_free_memory_ranges(range_list_t& range)
+{
+    // Add free RAM, subtract used RAM.
+    std::for_each(mmap_begin(), mmap_end(), [&first_range, bytes](const multiboot_t::mmap_entry_t* e)
+    {
+        if (e->type() == multiboot_t::mmap_entry_t::non_free)
+        {
+            range.subtract(e->address(), e->size());
+        }
+        else
+        {
+            range.add(e->address(), e->size());
+        }
+    });
+}
+*/
 /*!
  * Find usable memory range of given size above the low memory (which means 1Mb mark on x86).
  */
