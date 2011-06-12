@@ -5,7 +5,7 @@
 #def module_task_gen(bld, name, sources):
 def build(bld):
     name = 'frames_mod'
-    sources = ['frames_mod.cpp'] + ['../../interfaces/ramtab_v1_interface.cpp']
+    sources = ['frames_mod.cpp'] + ['../../interfaces/ramtab_v1_interface.cpp', '../../interfaces/heap_v1_interface.cpp']
     mod = bld.new_task_gen('cxx', 'program')
     mod.name = name+'.comp'
     mod.source = sources
