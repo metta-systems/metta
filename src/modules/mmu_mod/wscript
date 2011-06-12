@@ -4,12 +4,12 @@
 def build(bld):
     mmu_mod = bld.new_task_gen('cxx', 'program')
     mmu_mod.name = 'mmu_mod.comp'
-    mmu_mod.source = 'mmu_mod.cpp page_directory.cpp'.split() + ['../../interfaces/ramtab_v1_interface.cpp']
+    mmu_mod.source = 'mmu_mod.cpp page_directory.cpp'
     mmu_mod.env = bld.env_of_name('KERNEL_ENV').copy()
     mmu_mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     mmu_mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,mmu_mod.map'])
     mmu_mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    mmu_mod.uselib_local = 'component_support platform kernel minruntime common'
+    mmu_mod.uselib_local = 'component_support platform kernel minruntime common interfaces'
     mmu_mod.target = 'mmu_mod.comp'
 
     bld.new_task_gen(

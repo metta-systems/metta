@@ -5,7 +5,7 @@
 #def module_task_gen(bld, name, sources):
 def build(bld):
     name = 'frames_mod'
-    sources = ['frames_mod.cpp'] + ['../../interfaces/ramtab_v1_interface.cpp', '../../interfaces/heap_v1_interface.cpp']
+    sources = ['frames_mod.cpp']
     mod = bld.new_task_gen('cxx', 'program')
     mod.name = name+'.comp'
     mod.source = sources
@@ -13,7 +13,7 @@ def build(bld):
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,'+name+'.map'])
     mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    mod.uselib_local = 'component_support platform minruntime kernel common'
+    mod.uselib_local = 'component_support platform minruntime kernel common interfaces'
     mod.target = name+'.comp'
 
     bld.new_task_gen(
