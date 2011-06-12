@@ -575,6 +575,7 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_f
 
 static bool system_frame_allocator_v1_add_frames(system_frame_allocator_v1_closure* self, memory_v1_physmem_desc region)
 {
+    PANIC("Unimplemented!");
     return false;
 }
 
