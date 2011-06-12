@@ -3,6 +3,7 @@
 #include "mmu_v1_interface.h"
 #include "mmu_module_v1_interface.h"
 #include "heap_module_v1_interface.h"
+#include "pervasives_v1_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -11,6 +12,7 @@
 #include "elf_parser.h"
 #include "debugger.h"
 #include "module_loader.h"
+#include "infopage.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -18,6 +20,8 @@
 // it defines general system attributes and startup configuration.
 
 #include "mmu_module_v1_impl.h" // for debug
+
+static pervasives_v1_rec pervasives;
 
 //======================================================================================================================
 // Look up in root_domain's namespace and load a module by given name, satisfying its dependencies, if possible.
@@ -82,6 +86,9 @@ static void init_mem(bootimage_t& bootimg)
     auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
     ASSERT(heap_mod);
 
+//    auto stretch_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretchalloc_mod", "exported_stretch_allocator_module_rootdom");
+//    ASSERT(stretch_mod);
+
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
     int required = frames_mod->required_size();
@@ -103,10 +110,11 @@ static void init_mem(bootimage_t& bootimg)
 
     kconsole << " + Creating heap" << endl;
     auto heap = heap_mod->create_raw(next_free + required, initial_heap_size);
+    PVS(heap) = heap;
 
     frames_mod->finish_init(frames, heap);
 
-    kconsole << " Being heapy:";
+    kconsole << " + Heap alloc test:";
     for (size_t counter = 0; counter < 100000; ++counter)
     {
         address_t p = heap->allocate(counter);
@@ -114,29 +122,35 @@ static void init_mem(bootimage_t& bootimg)
     }
     kconsole << " done." << endl;
 
-    // create virtual memory allocator
+    kconsole << " + Frames new_client test" << endl;
+    frames->new_client(0, 0, 20, 20, 20);
+
     // create stretch allocator
+    kconsole << " + Creating stretch allocator" << endl;
     // assign stretches to address ranges
-//    kconsole << " + Creating stretch allocator" << endl;
-//    salloc_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretchalloc_mod", "exported_stretch_allocator_module_rootdom");
-//    ASSERT(salloc_mod);
-/*
-    salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
-    Pervasives(strech_allocator) = salloc;
+//    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
+//    PVS(strech_allocator) = salloc;
 
-    sysalloc = salloc->create_nailed(frames, heap);
-    
-    mmu_mod->finished(mmu, frames, heap, sysalloc);
+    /*
+    ** We create a 'special' stretch allocator which produces stretches 
+    ** for page tables, protection domains, DCBs, and so forth. 
+    ** What 'special' means will vary from architecture to architecture, 
+    ** but it will typcially imply at least that the stretches will 
+    ** be backed by phyiscal memory on creation. 
+    */
+//    auto sysalloc = salloc->create_nailed(frames, heap);
 
-    StretchTblMod = lookup("StretchTblModCl");
-    strtab        = StretchTblMod->New(StretchTblMod, Pvs(heap));
-*/
-    /* XXX SMH: create an initial default stretch driver */
+//    mmu_mod->finished(mmu, frames, heap, sysalloc);
+
+//    StretchTblMod = lookup("StretchTblModCl");
+//    strtab        = StretchTblMod->New(StretchTblMod, Pvs(heap));
+
+    // XXX SMH: create an initial default stretch driver.
 //    SDriverMod    = lookup("SDriverModCl");
-//    Pvs(sdriver)  = SDriverMod->NewNULL(SDriverMod, heap, strtab);
+//    PVS(stretch_driver)  = SDriverMod->NewNULL(SDriverMod, heap, strtab);
 //     stretch_driver_t::default_driver().initialise();
 
-    /* Create the initial address space; returns a pdom for Nemesis domain */
+    // Create the initial address space; returns a pdom for Nemesis domain.
 //    kconsole << " + creating addr space." << endl;
 //    nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
 //    MapInitialHeap(HeapMod, heap, iheap_size*sizeof(word_t), nemesis_pdid);
@@ -660,12 +674,14 @@ extern "C" void entry()
 
     bootimage_t bootimage(name, start, end);
 
+    INFO_PAGE.pervasives = &pervasives;
+
     init_mem(bootimage);
     init_type_system(bootimage);
     init_namespaces(bootimage);
+    start_root_domain(bootimage);
+}
 // Load the modules.
 // Module "boot" depends on all modules that must be probed at startup.
 // Dependency resolution will bring up modules in an appropriate order.
 //    load_modules(bootimage, "boot");
-    start_root_domain(bootimage);
-}

@@ -33,7 +33,7 @@ public:
 
 private:
     gpregs_t regs;
-    uint32_t pervasives;
+    pervasives_v1_rec* pervasives;
     uint32_t flags;
     uint32_t cs, ds;
     uint32_t fpregs[27]; // FPU registers
@@ -50,7 +50,7 @@ void continuation_t::activate()
     // restore pervasives pointer
     if (flags & F_PERV_VALID)
     {
-        INFO_PAGE.pervasives = (void*)pervasives;
+        INFO_PAGE.pervasives = pervasives;
     }
     // restore FPU registers
     if (flags & F_FPU_VALID)
