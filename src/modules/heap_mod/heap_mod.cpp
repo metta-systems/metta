@@ -77,4 +77,4 @@ static const heap_module_v1_closure clos = {
     NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(heap_module_v1, heap_module, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(heap_module, v1, clos);
