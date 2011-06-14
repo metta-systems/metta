@@ -4,6 +4,9 @@
 #include "mmu_module_v1_interface.h"
 #include "heap_module_v1_interface.h"
 #include "pervasives_v1_interface.h"
+#include "system_stretch_allocator_v1_interface.h"
+#include "stretch_driver_module_v1_interface.h"
+#include "stretch_table_module_v1_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -52,23 +55,6 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 }
 
 //======================================================================================================================
-// setup page mapping
-//======================================================================================================================
-
-#if 0
-static void map_identity(const char* caption, address_t start, address_t end)
-{
-    #if MEMORY_DEBUG
-    kconsole << "Mapping " << caption << endl;
-    #endif
-    end = page_align_up<address_t>(end); // one past end
-    for (uint32_t k = start/PAGE_SIZE; k < end/PAGE_SIZE; k++)
-        protection_domain_t::privileged().map(k * PAGE_SIZE, reinterpret_cast<void*>(k * PAGE_SIZE),
-        page_t::kernel_mode | page_t::writable);
-}
-#endif
-
-//======================================================================================================================
 // setup MMU and frame allocator
 //======================================================================================================================
 
@@ -77,7 +63,7 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + init_mem" << endl;
 
     // Load modules used for booting before we overwrite them.
-    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom")
     ASSERT(frames_mod);
 
     auto mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
@@ -86,8 +72,14 @@ static void init_mem(bootimage_t& bootimg)
     auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
     ASSERT(heap_mod);
 
-//    auto stretch_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretchalloc_mod", "exported_stretch_allocator_module_rootdom");
-//    ASSERT(stretch_mod);
+    auto stretch_allocator = load_module<system_stretch_allocator_v1_closure>(bootimg, "stretch_allocator_mod", "exported_system_stretch_allocator_rootdom");
+    ASSERT(stretch_mod);
+    
+    auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretchtbl_module_rootdom");
+    ASSERT(stretch_table_mod);
+
+    auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom");
+    ASSERT(stretch_driver_mod);
 
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
@@ -123,51 +115,369 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " done." << endl;
 
     kconsole << " + Frames new_client test" << endl;
-    frames->new_client(0, 0, 20, 20, 20);
-
+    frames->create_client(0, 0, 20, 20, 20);
+}
+#if 0
     // create stretch allocator
     kconsole << " + Creating stretch allocator" << endl;
     // assign stretches to address ranges
-//    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
-//    PVS(strech_allocator) = salloc;
+    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
+    PVS(strech_allocator) = salloc;
 
     /*
-    ** We create a 'special' stretch allocator which produces stretches 
-    ** for page tables, protection domains, DCBs, and so forth. 
-    ** What 'special' means will vary from architecture to architecture, 
-    ** but it will typcially imply at least that the stretches will 
-    ** be backed by phyiscal memory on creation. 
-    */
-//    auto sysalloc = salloc->create_nailed(frames, heap);
+     * We create a 'special' stretch allocator which produces stretches
+     * for page tables, protection domains, DCBs, and so forth.
+     * What 'special' means will vary from architecture to architecture,
+     * but it will typcially imply at least that the stretches will
+     * be backed by phyiscal memory on creation.
+     */
+    auto sysalloc = salloc->create_nailed(frames, heap);
 
-//    mmu_mod->finished(mmu, frames, heap, sysalloc);
+    mmu_mod->finished(mmu, frames, heap, sysalloc);
 
-//    StretchTblMod = lookup("StretchTblModCl");
-//    strtab        = StretchTblMod->New(StretchTblMod, Pvs(heap));
-
-    // XXX SMH: create an initial default stretch driver.
-//    SDriverMod    = lookup("SDriverModCl");
-//    PVS(stretch_driver)  = SDriverMod->NewNULL(SDriverMod, heap, strtab);
-//     stretch_driver_t::default_driver().initialise();
+    auto strtab = stretch_table_mod->create(heap);
+    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for Nemesis domain.
-//    kconsole << " + creating addr space." << endl;
-//    nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
-//    MapInitialHeap(HeapMod, heap, iheap_size*sizeof(word_t), nemesis_pdid);
+    kconsole << " + Creating initial address space." << endl;
+    nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
+    MapInitialHeap(heap_mod, heap, initial_heap_size, nemesis_pdid);
 }
 
-static void init_type_system(bootimage_t& bootimg)
+//init_virt_mem
+StretchAllocatorF_cl *InitVMem(SAllocMod_cl *smod, Mem_Map memmap, 
+			       Heap_cl *h, MMU_cl *mmu)
 {
+    StretchAllocatorF_cl *salloc;
+    Mem_VMemDesc allvm[2];
+    Mem_VMemDesc used[32];
+    int i;
+
+    allvm[0].start_addr = 0;
+    allvm[0].npages     = VA_SIZE >> PAGE_WIDTH;
+    allvm[0].page_width = PAGE_WIDTH;
+    allvm[0].attr       = 0;
+
+    allvm[1].npages     = 0;  /* end of array marker */
+
+    /* Determine the used vm from the mapping info */
+    for(i=0; memmap[i].nframes; i++) {
+	
+	used[i].start_addr  = memmap[i].vaddr;
+	used[i].npages      = memmap[i].nframes;
+	used[i].page_width  = memmap[i].frame_width; 
+	used[i].attr        = 0;
+
+    }
+
+    /* now terminate the array */
+    used[i].npages = 0;
+
+    salloc = SAllocMod$NewF(smod, h, mmu, allvm, used);
+    return salloc;
+}
+
+ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu, 
+					StretchAllocatorF_clp sallocF, 
+					nexus_ptr_t nexus_ptr)
+{
+    nexus_ptr_t          nexus_end;
+    struct nexus_ntsc   *ntsc  = NULL;
+    struct nexus_module *mod;
+    struct nexus_blob   *blob;
+    struct nexus_prog   *prog;
+    struct nexus_primal *primal;
+    struct nexus_nexus  *nexus;
+    struct nexus_name   *name;
+    struct nexus_EOI    *EOI;
+    ProtectionDomain_ID  pdom;
+    Stretch_clp          str;
+    int                  map_index;
+
+    primal    = nexus_ptr.nu_primal;
+    nexus_end = nexus_ptr.generic;
+    nexus_end.nu_primal++;	/* At least one primal */
+    nexus_end.nu_ntsc++;	/* At least one ntsc */
+    nexus_end.nu_nexus++;	/* At least one nexus */
+    nexus_end.nu_EOI++;		/* At least one EOI */
+
+    ETRC(eprintf("Creating new protection domain (mmu at %p)\n", mmu));
+    pdom = MMU$NewDomain(mmu);
+
+    /* Intialise the pdom map to zero */
+    for (map_index=0; map_index < MAP_SIZE; map_index++) {
+        addr_map[map_index].address= NULL;
+        addr_map[map_index].str    = (Stretch_cl *)NULL;
+    }
+    map_index= 0;
+
+    /* 
+    ** Sort out memory before the boot address (platform specific)
+    ** In MEMSYS_EXPT, this memory has already been marked as used 
+    ** (both in virtual and physical address allocators) by the 
+    ** initialisation code, so all we wish to do is to map some 
+    ** stretches over certain parts of it. 
+    ** Most of the relevant information is provided in the nexus, 
+    ** although even before this we have the PIP. 
+    */
+
+    /* First we need to map the PIP globally read-only */
+    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR, 
+				    (addr_t)INFO_PAGE_ADDRESS, 
+				    0, PAGE_WIDTH, NULL);
+    ASSERT_ADDRESS(str, INFO_PAGE_ADDRESS);
+
+    /* Map stretches over the boot image */
+    TRC_MEM(eprintf("CreateAddressSpace (EXPT): Parsing NEXUS at %p\n", 
+		nexus_ptr.generic));
+
+    while(nexus_ptr.generic < nexus_end.generic)  {
+	
+	switch(*nexus_ptr.tag) {
+	    
+	  case nexus_primal:
+	    primal = nexus_ptr.nu_primal++;
+	    TRC_MEM(eprintf("PRIM: %lx\n", primal->lastaddr));
+	    break;
+	    
+	  case nexus_ntsc:
+	    ntsc = nexus_ptr.nu_ntsc++;
+	    TRC_MEM(eprintf("NTSC: T=%06lx:%06lx D=%06lx:%06lx "
+			    "B=%06lx:%06lx\n",
+			    ntsc->taddr, ntsc->tsize,
+			    ntsc->daddr, ntsc->dsize,
+			    ntsc->baddr, ntsc->bsize));
+
+        /* Listen up, dudes: here's the drill:
+         *
+         *   |    bss     |  read/write perms
+         *   |------------|
+         *   |   data     |-------------
+         *   |------------|  read/write & execute perms  (hack page)
+         *   |   text     |-------------   <- page boundary
+         *   |            |
+         *   |            |  read/execute perms
+	     *
+	     * Now, the text and data boundary of the NTSC is not
+	     * necessarily page aligned, so there may or may not be a
+	     * hack page overlapping it.
+	     * The next few bits of code work out whether we need a
+	     * hack page, and creates it.
+	     */
+	    if ((ntsc->daddr - ntsc->taddr) & (FRAME_SIZE-1))
+	    {
+		/* If NTSC text is over 1 page, need some text pages */
+		if (ALIGN(ntsc->daddr - ntsc->taddr) - FRAME_SIZE != 0)
+		{
+		    str = StretchAllocatorF$NewOver(
+			sallocF, ALIGN(ntsc->daddr - ntsc->taddr)-FRAME_SIZE, 
+			AXS_GE, (addr_t)ntsc->taddr, 0, PAGE_WIDTH, NULL);
+		    ASSERT_ADDRESS(str, ntsc->taddr);
+		}
+
+		/* create hack page */
+		str = StretchAllocatorF$NewOver(
+		    sallocF, FRAME_SIZE, AXS_NONE, 
+		    (addr_t)(ALIGN(ntsc->daddr) - FRAME_SIZE), 0, 
+		    PAGE_WIDTH, NULL);
+		TRC_MEM(eprintf("       -- hack page at %06lx\n",
+				ALIGN(ntsc->daddr) - FRAME_SIZE));
+		ASSERT_ADDRESS(str, ALIGN(ntsc->daddr) - FRAME_SIZE);
+		SALLOC_SETPROT(salloc, str, pdom,
+					 SET_ELEM(Stretch_Right_Read) |
+					 SET_ELEM(Stretch_Right_Write) |
+					 SET_ELEM(Stretch_Right_Execute));
+	    }
+	    else
+	    {
+		/* no hack page needed */
+		str = StretchAllocatorF$NewOver(sallocF, ntsc->tsize, AXS_GE,
+						(addr_t)ntsc->taddr, 0, 
+						PAGE_WIDTH, NULL);
+		ASSERT_ADDRESS(str, ntsc->taddr);
+	    }
+	    break;
+	    
+	  case nexus_nexus:
+	    nexus = nexus_ptr.nu_nexus++;
+	    TRC_MEM(eprintf("NEX:  N=%06lx,%06lx IGNORING\n", 
+			    nexus->addr, nexus->size));
+	    nexus_end.generic = (addr_t)(nexus->addr + nexus->size);
+
+	    /* XXX Subtlety - NEXUS tacked on the end of NTSC BSS */
+	    /* 
+	    ** XXX More subtlety; the NEXUS is always a page and `a bit', where
+	    ** the bit is whatever's left from the end of the ntsc's bss upto
+	    ** a page boundary, and the page is the one following that.
+	    ** This is regardless of whether or not the nexus requires this 
+	    ** space, and as such nexus->size can be misleading. Simplest 
+            ** way to ensure we alloc enough mem for now is to simply 
+	    ** use 1 page as a lower bound for the nexus size.
+	    */
+	    if ((ntsc->dsize + ntsc->bsize + MAX(nexus->size, FRAME_SIZE) -
+		(ALIGN(ntsc->daddr) - ntsc->daddr)) > 0)
+	    {
+		str = StretchAllocatorF$NewOver(
+		    sallocF, ntsc->dsize + ntsc->bsize + 
+		    MAX(nexus->size, FRAME_SIZE) -
+		    (ALIGN(ntsc->daddr) - ntsc->daddr) /* size */, 
+		    AXS_NONE, (addr_t)ALIGN(ntsc->daddr), 0, PAGE_WIDTH, NULL);
+		ASSERT_ADDRESS(str, ALIGN(ntsc->daddr));
+		TRC_MEM(eprintf("Setting pdom prot on ntsc data (%p)\n",
+				ALIGN(ntsc->daddr)));
+		SALLOC_SETPROT(salloc, str, pdom, 
+					 SET_ELEM(Stretch_Right_Read));
+	    }
+
+	    break;
+	    
+	  case nexus_module:
+	    mod = nexus_ptr.nu_mod++;
+	    TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
+			    mod->addr, mod->size));
+	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
+					    (addr_t)mod->addr, 
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, mod->addr);
+	    break;
+	    
+	  case nexus_namespace:
+	    name = nexus_ptr.nu_name++;
+	    nexus_ptr.generic = (char *)nexus_ptr.generic + 
+		name->nmods * sizeof(addr_t);
+	    TRC_MEM(eprintf("NAME: N=%06lx:%06lx\n", 
+			    name->naddr, name->nsize));
+	    if (name->nsize == 0){
+
+		/* XXX If we put an empty namespace in the nemesis.nbf
+		   file, nembuild still reserves a page for it in the
+		   nexus, so we need to make sure that at least a page is
+		   requested from the stretch allocator, otherwise the
+		   _next_ entry in the nexus will cause the ASSERT_ADDRESS
+		   to fail. This probably needs to be fixed in
+		   nembuild.
+		   */
+
+		TRC_MEM(eprintf(
+		    "NAME: Allocating pad page for empty namespace\n"));
+
+		name ->nsize = 1;
+	    }
+	    
+
+	    str = StretchAllocatorF$NewOver(sallocF, name->nsize, 
+					    AXS_GR, (addr_t)name->naddr, 
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, name->naddr);
+	    break;
+	    
+	  case nexus_program:
+	    prog= nexus_ptr.nu_prog++;
+	    TRC_MEM(eprintf("PROG: T=%06lx:%06lx D=%06lx:%06lx "
+			    "B=%06lx:%06lx  \"%s\"\n",
+			    prog->taddr, prog->tsize,
+			    prog->daddr, prog->dsize,
+			    prog->baddr, prog->bsize,
+			    prog->program_name));
+
+	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize, 
+					    AXS_NONE, (addr_t)prog->taddr, 
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, prog->taddr);
+
+	    /* Keep record of the stretch for later mapping into pdom */
+	    addr_map[map_index].address= (addr_t)prog->taddr;
+	    addr_map[map_index++].str  = str;
+
+	    if (prog->dsize + prog->bsize) {
+		str = StretchAllocatorF$NewOver(
+		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH), 
+		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, NULL);
+		ASSERT_ADDRESS(str, prog->daddr);
+		/* Keep record of the stretch for later mapping into pdom */
+		addr_map[map_index].address= (addr_t)prog->daddr;
+		addr_map[map_index++].str  = str;
+	    }
+	    
+	    break;
+
+	case nexus_blob:
+	    blob = nexus_ptr.nu_blob++;
+	    TRC_MEM(eprintf("BLOB: B=%06lx:%06lx\n",
+			    blob->base, blob->len));
+
+	    /* slap a stretch over it */
+	    str = StretchAllocatorF$NewOver(sallocF, blob->len, 
+					    AXS_GR, (addr_t)blob->base, 
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, blob->base);
+	    break;
+
+	  case nexus_EOI:
+	    EOI = nexus_ptr.nu_EOI++;
+	    TRC_MEM(eprintf("EOI:  %lx\n", EOI->lastaddr));
+	    break;
+	    
+	  default:
+	    TRC_MEM(eprintf("Bogus NEXUS entry: %x\n", *nexus_ptr.tag));
+	    ntsc_halt();
+	    break;
+	}
+    }
+    TRC_MEM(eprintf("CreateAddressSpace: Done\n"));
+    return pdom;
+
+}
+
+
+/*
+** At startup we create a physical heap; while this is fine, the idea
+** of protection is closely tied to that of stretches. Hence this function
+** maps a stretch over the existing heap.
+** This allows us to map it read/write for us, and read-only to everyone else.
+*/
+void MapInitialHeap(HeapMod_clp hmod, Heap_clp heap, 
+		    word_t heap_size, ProtectionDomain_ID pdom)
+{
+    Stretch_clp str;
+    Heap_clp realheap; 
+    addr_t a = (addr_t)((size_t)heap & ~(PAGE_SIZE-1));
+
+    TRC(eprintf(" + Mapping stretch over heap: 0x%x bytes at %p\n", 
+	    heap_size, a));
+    str = StretchAllocatorF$NewOver((StretchAllocatorF_cl *)Pvs(salloc), 
+				    heap_size, AXS_R, a, 0, 
+				    PAGE_WIDTH, NULL);
+    ASSERT_ADDRESS(str, a);
+    TRC(eprintf(" + Done!\n"));
+
+    realheap = HeapMod$Realize(hmod, heap, str);
+
+    if(realheap != heap) 
+	eprintf("WARNING: HeapMod$Realize(%p) => %p\n", 
+		heap, realheap);
+
+
+    /* Map our heap as local read/write */
+    STR_SETPROT(str, pdom, (SET_ELEM(Stretch_Right_Read)|
+			    SET_ELEM(Stretch_Right_Write)));
+}
+
+#endif
+
+
+
+static void init_type_system(bootimage_t& /*bootimg*/)
+{
+#if 0
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
-#if 0
     exceptions_module_v1_closure* xcp_mod;
     xcp_mod = load_module<exceptions_module_v1_closure>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
     ASSERT(xcp_mod);
 
 	exceptions = xcp_mod->create();
 	Pervasives(xcp) = exceptions;
-#endif
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
 //    lctmod = load_module<longcardtable_module_v1_closure>(bootimg, "longcardtable_mod", "exported_longcardtable_module_v1_rootdom");
@@ -191,22 +501,22 @@ static void init_type_system(bootimage_t& bootimg)
             info++;
         }
     }*/
+#endif
 }
 
 static void init_namespaces(bootimage_t& /*bm*/)
 {
+#if 0
     /* Build initial name space */
     kconsole <<  " + Building initial name space: ";
 
     /* Build root context */
     kconsole <<  "<root>, ";
-#if 0
     context_module_v1_closure* context_mod;
     context_mod = load_module<context_module_v1_closure>(bootimg, "context_mod", "exported_context_module_rootdom");
     ASSERT(context_mod);
 
 	root = context_mod->create_context(heap, Pvs(types));
-#endif
 /*    ContextMod = lookup("ContextModCl");
     root = ContextMod$NewContext(ContextMod, heap, Pvs(types) );
     Pvs(root)  = root;
@@ -437,7 +747,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
 /*                TRC_PRG(eprintf("Creating program's environment context.\n"));
                 cur_info->priv_root = ContextMod$NewContext(ContextMod, heap, Pvs(types));
 
-                // XXX what are the other fields of cur_prog->name _for_ ?? 
+                // XXX what are the other fields of cur_prog->name _for_ ??
                 set_namespace((namespace_entry *)cur_prog->name->naddr, NULL);
                 while((name=lookup_next((addr_t *)&any))!=(char *)NULL)
                 {
@@ -476,13 +786,13 @@ static void init_namespaces(bootimage_t& /*bm*/)
                         added= True;
                     } CATCH_Context$NotFound(UNUSED name) {
                         TRC_PRG(eprintf(" notfound %s (need new cx)\n", name));
-                        // do nothing; added is False 
+                        // do nothing; added is False
                     } CATCH_ALL {
                         TRC_PRG(eprintf("     (caught exception!)\n"));
-                        // ff 
+                        // ff
                     } ENDTRY;
 
-                    if(!added) { // need a subcontext 
+                    if(!added) { // need a subcontext
                         Context_clp new_cx;
                         char *first, *rest;
 
@@ -501,7 +811,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
                 }
                 else
                 {
-                    // Not a boot domain, so just dump the info in a context 
+                    // Not a boot domain, so just dump the info in a context
                     mk_prog_cx(progs, cur_info);
                 }
             }
@@ -509,6 +819,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
         kconsole << " + Adding boot domain sequence to progs context...\n"));
         Context$Add(progs, "BootDomains", &boot_seq_any);
     }*/
+#endif
 }
 
 static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
@@ -588,8 +899,8 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
     RW(vp)->pvs      = &NemesisPVS;
     INFO_PAGE.pvsptr = &(RW(vp)->pvs);
 #endif
-*/
     kconsole << " + did NewDomain." << endl;
+*/
 
     /* register our vp and pdom with the stretch allocators */
 /*    SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
