@@ -14,40 +14,8 @@
 #include "heap_v1_interface.h"
 
 //======================================================================================================================
-// ramtab_v1 methods
-//======================================================================================================================
-
-static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e st)
-{
-    //kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
-}
-
-static const ramtab_v1_ops ramtab_v1_method_table = {
-    NULL,
-    NULL,
-    ramtab_v1_put,
-    NULL
-};
-
-//======================================================================================================================
 // mmu_v1 methods
 //======================================================================================================================
-
-static const mmu_v1_ops mmu_v1_method_table = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
 
 static const size_t N_L1_TABLES = 1024;
 
@@ -128,6 +96,55 @@ struct mmu_v1_state
     uint32_t              l2_max;   /* index of the last available chunk   */
     uint32_t              l2_next;  /* index of first potential free chunk */
     l2_info               info[0];  /* free/used L2 info; actually l2_max entries   */
+};
+
+static const mmu_v1_ops mmu_v1_method_table = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+//======================================================================================================================
+// ramtab_v1 methods
+//======================================================================================================================
+
+static memory_v1_size ramtab_v1_size(ramtab_v1_closure* self)
+{
+    mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
+    return st->n_frames;
+}
+
+static memory_v1_address ramtab_v1_base(ramtab_v1_closure* self)
+{
+    mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
+    return reinterpret_cast<memory_v1_address>(st->ramtab);
+}
+
+static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e st)
+{
+    //kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
+}
+
+static uint32_t ramtab_v1_get(ramtab_v1_closure* self, uint32_t pfn, uint32_t* fwidth, ramtab_v1_state_e* st)
+{
+    return 0;
+}
+
+static const ramtab_v1_ops ramtab_v1_method_table = {
+    ramtab_v1_size,
+    ramtab_v1_base,
+    ramtab_v1_put,
+    ramtab_v1_get
 };
 
 //======================================================================================================================
