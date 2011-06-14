@@ -55,8 +55,9 @@ static heap_v1_closure* heap_module_v1_create_raw(heap_module_v1_closure* self, 
     ret->methods = &heap_v1_methods;
     ret->state = state;
 
+    address_t end = where + size;
     address_t start = where + sizeof(heap_v1_state) + sizeof(heap_t);
-    state->heap = new(reinterpret_cast<void*>(where + sizeof(heap_v1_state))) heap_t(start, start + size);
+    state->heap = new(reinterpret_cast<void*>(where + sizeof(heap_v1_state))) heap_t(start, end);
 
     return ret;
 }
