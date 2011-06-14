@@ -132,6 +132,22 @@ static void alloc_update_free_predecessors(frames_module_v1_state* cur_state, ad
     }
 }
 
+static bool add_range_element(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
+{
+    // FIXME: These reinterpret casts suck, do something about it!
+    region_list_t* new_entry = reinterpret_cast<region_list_t*>(client_state->heap->allocate(sizeof(*new_entry)));
+    if (new_entry == NULL)
+        return false;
+
+    new_entry->start = start;
+    new_entry->n_phys_frames = n_phys_frames;
+    new_entry->frame_width = frame_width;
+
+    client_state->region_list->insert_after(new_entry);
+
+    return true;
+}
+
 static bool add_range(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
     if (!client_state->heap || !client_state->region_list || !n_phys_frames)
@@ -144,26 +160,41 @@ static bool add_range(frame_allocator_v1_state* client_state, address_t start, s
     {
         kconsole << __FUNCTION__ << ": region list is empty, allocating new entry" << endl;
 
-        // FIXME: These reinterpret casts suck, do something about it!
-        region_list_t* new_entry = reinterpret_cast<region_list_t*>(client_state->heap->allocate(sizeof(*new_entry)));
-        if (new_entry == NULL)
-            return false;
-
-        new_entry->start = start;
-        new_entry->n_phys_frames = n_phys_frames;
-        new_entry->frame_width = frame_width;
-
-        client_state->region_list->insert_after(new_entry);
-
-        return true;
+        return add_range_element(client_state, start, n_phys_frames, frame_width);
     }
     else
     {
         // Try to find the correct place to insert it.
-        for (dl_link_t *link = client_state->region_list->next; link != client_state->region_list; link = link->next)
+        region_list_t *link;
+        address_t current_start, current_end, next_start;
+        for (link = client_state->region_list->next; link != client_state->region_list; link = link->next)
         {
-
+            current_start = link->start;
+            current_end = current_start + (link->n_phys_frames << FRAME_WIDTH);
+            next_start = link->next->start;
+            if ((start >= current_end) && (end <= next_start))
+                break;
         }
+        
+        // We wrapped, no any elements before this one.
+        if (link == client_state->region_list)
+        {
+            // Check if we can merge on rhs
+            // FIXME: doesn't check frame_width??
+            if (end == next_start)
+            {
+                kconsole << __FUNCTION__ << ": no prior elements, merging on rhs." << endl;
+                link->next->n_phys_frames += n_phys_frames;
+                link->next->start = start;
+                return true;
+            }
+            else
+            {
+                kconsole << __FUNCTION__ << ": no prior elements, allocating new entry." << endl;
+                return add_range_element(client_state, start, n_phys_frames, frame_width);
+            }
+        }
+        PANIC("Unimplemented!");
     }
     return false;
 }
@@ -759,4 +790,4 @@ static const frames_module_v1_closure clos = {
     NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(frames_module_v1, frames_module, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(frames_module, v1, clos);
