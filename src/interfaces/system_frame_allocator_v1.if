@@ -21,7 +21,7 @@ local interface system_frame_allocator_v1 #extends frame_allocator_v1
     # to "granted_frames" with some certainty, and may allow allocation
     # of up to "extra_frames" subject to later revocation.
     # An initial allocation of "init_alloc_frames" frames is requested.
-    new_client(memory_v1.address dcb_va, memory_v1.address dcb_pa, card32 granted_frames, card32 extra_frames, card32 init_alloc_frames)
+    create_client(memory_v1.address dcb_va, memory_v1.address dcb_pa, card32 granted_frames, card32 extra_frames, card32 init_alloc_frames)
         returns (frame_allocator_v1 frames);
 
     # Add the set of physical frames described by "region" to the
