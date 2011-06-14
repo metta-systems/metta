@@ -534,11 +534,9 @@ void parser_t::configure_type(AST::alias_t& to_get)
 	}
 }
 
-//! var_decl ::= typeid [reference] id
-bool parser_t::parse_var_decl(AST::alias_t& to_get)
+bool parser_t::parse_type_decl(AST::alias_t& to_get)
 {
     D();
-	// Scan all components:
     if (!lex.expect(token::type))
     {
         if (!lex.match(token::identifier))
@@ -547,17 +545,27 @@ bool parser_t::parse_var_decl(AST::alias_t& to_get)
             return false;
         }
     }
-	to_get.set_type(lex.current_token());
-	if (lex.maybe(token::reference))
+    to_get.set_type(lex.current_token());
+    if (lex.maybe(token::reference))
         to_get.set_reference(true);
+    // Scanned, now parse:
+    configure_type(to_get);
+    return true;
+}
+
+//! var_decl ::= typeid [reference] id
+bool parser_t::parse_var_decl(AST::alias_t& to_get)
+{
+    D();
+    // Scan all components:
+    if (!parse_type_decl(to_get))
+        return false;
     if (!lex.expect(token::identifier))
     {
         PARSE_ERROR("field name expected");
         return false;
     }
     to_get.set_name(lex.current_token());
-	// Scanned, now parse:
-	configure_type(to_get);
     return true;
 }
 
@@ -721,13 +729,13 @@ bool parser_t::parse_sequence_type_alias()
         return false;
     }
 
-    if (!lex.expect(token::type))
+    AST::sequence_alias_t node(parse_tree, /*type will be set by parse_type_decl*/"", "<unset>");
+
+    if (!parse_type_decl(node))
     {
-        PARSE_ERROR("sequence base type ID expected");
+        PARSE_ERROR("invalid sequence base type ID");
         return false;
     }
-
-    std::string base_type = lex.current_token();
 
     if (!lex.expect(token::greater))
     {
@@ -741,7 +749,7 @@ bool parser_t::parse_sequence_type_alias()
         return false;
     }
 
-    std::string type = lex.current_token();
+    node.set_name(lex.current_token());
 
     if (!lex.expect(token::semicolon))
     {
@@ -749,11 +757,10 @@ bool parser_t::parse_sequence_type_alias()
         return false;
     }
 
-    AST::sequence_alias_t* node = new AST::sequence_alias_t(parse_tree, type, base_type);
-	configure_type(*node);
+//	configure_type(node); //not needed due to parse_type_decl?
 
-    parse_tree->add_type(node);
-    if (!symbols.insert_checked(node->name(), token::type))
+    parse_tree->add_type(new AST::sequence_alias_t(node));
+    if (!symbols.insert_checked(node.name(), token::type))
     {
         PARSE_ERROR("duplicate symbol");
         return false;

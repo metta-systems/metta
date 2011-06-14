@@ -25,6 +25,7 @@ class parser_t
     bool parse_method();
     bool parse_method_returns(AST::method_t* m);
     bool parse_method_raises(AST::method_t* m);
+    bool parse_type_decl(AST::alias_t& to_get);
     bool parse_var_decl(AST::alias_t& to_get);
     bool parse_field_list(AST::node_t* parent);
     bool parse_field(AST::node_t* parent);
