@@ -476,4 +476,4 @@ static const mmu_module_v1_closure clos = {
     NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(mmu_module_v1, mmu_module, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(mmu_module, v1, clos);
