@@ -1,0 +1,4 @@
+local interface stretch_table_module_v1
+{
+    create();
+}
