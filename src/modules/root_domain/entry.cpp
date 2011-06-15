@@ -63,7 +63,7 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + init_mem" << endl;
 
     // Load modules used for booting before we overwrite them.
-    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom")
+    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_mod);
 
     auto mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
@@ -73,7 +73,7 @@ static void init_mem(bootimage_t& bootimg)
     ASSERT(heap_mod);
 
     auto stretch_allocator = load_module<system_stretch_allocator_v1_closure>(bootimg, "stretch_allocator_mod", "exported_system_stretch_allocator_rootdom");
-    ASSERT(stretch_mod);
+    ASSERT(stretch_allocator);
     
     auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretchtbl_module_rootdom");
     ASSERT(stretch_table_mod);
