@@ -17,7 +17,7 @@ struct frame_allocator_v1_state
     frame_allocator_v1_closure closure;
 
     dcb_ro_t* domain; //<! Virtual address of client's RO DCB.
-    flink_t* region_list; //<! List of frame regions allocated for this client.
+    dl_link_t* region_list; //<! List of frame regions allocated for this client.
 
     uint32_t n_allocated_phys_frames; //<! Number of already allocated RAM frames.
 
@@ -132,11 +132,71 @@ static void alloc_update_free_predecessors(frames_module_v1_state* cur_state, ad
     }
 }
 
-static bool add_range(frame_allocator_v1_state* client_state, address_t base, size_t n_phys_frames, size_t frame_width)
+static bool add_range_element(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
-    if (!client_state->heap /*|| !client_state->headp*/ || !n_phys_frames)
+    // FIXME: These reinterpret casts suck, do something about it!
+    region_list_t* new_entry = reinterpret_cast<region_list_t*>(client_state->heap->allocate(sizeof(*new_entry)));
+    if (new_entry == NULL)
+        return false;
+
+    new_entry->start = start;
+    new_entry->n_phys_frames = n_phys_frames;
+    new_entry->frame_width = frame_width;
+
+    client_state->region_list->insert_after(new_entry);
+
+    return true;
+}
+
+static bool add_range(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
+{
+    if (!client_state->heap || !client_state->region_list || !n_phys_frames)
         return true;
 
+    kconsole << __FUNCTION__ << ": " << n_phys_frames << " frames at " << start << " frame width " << frame_width << endl;
+    address_t end = start + (n_phys_frames << FRAME_WIDTH);
+
+    if (client_state->region_list->is_empty())
+    {
+        kconsole << __FUNCTION__ << ": region list is empty, allocating new entry" << endl;
+
+        return add_range_element(client_state, start, n_phys_frames, frame_width);
+    }
+    else
+    {
+        // Try to find the correct place to insert it.
+        dl_link_t *link;
+        address_t current_start, current_end, next_start;
+        for (link = client_state->region_list->next; link != client_state->region_list; link = link->next)
+        {
+            region_list_t* cur = reinterpret_cast<region_list_t*>(link);
+            current_start = cur->start;
+            current_end = current_start + (cur->n_phys_frames << FRAME_WIDTH);
+            next_start = reinterpret_cast<region_list_t*>(link->next)->start;
+            if ((start >= current_end) && (end <= next_start))
+                break;
+        }
+        
+        // We wrapped, no any elements before this one.
+        if (link == client_state->region_list)
+        {
+            // Check if we can merge on rhs
+            // FIXME: doesn't check frame_width??
+            if (end == next_start)
+            {
+                kconsole << __FUNCTION__ << ": no prior elements, merging on rhs." << endl;
+                reinterpret_cast<region_list_t*>(link->next)->n_phys_frames += n_phys_frames;
+                reinterpret_cast<region_list_t*>(link->next)->start = start;
+                return true;
+            }
+            else
+            {
+                kconsole << __FUNCTION__ << ": no prior elements, allocating new entry." << endl;
+                return add_range_element(client_state, start, n_phys_frames, frame_width);
+            }
+        }
+        PANIC("Unimplemented!");
+    }
     return false;
 }
 
@@ -495,7 +555,7 @@ static void system_frame_allocator_v1_destroy(system_frame_allocator_v1_closure*
     PANIC("frames_mod: destroy is not implemented!");
 }
 
-static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_frame_allocator_v1_closure* self, memory_v1_address owner_dcb_virt, memory_v1_address owner_dcb_phys, uint32_t granted_frames, uint32_t extra_frames, uint32_t init_alloc_frames)
+static frame_allocator_v1_closure* system_frame_allocator_v1_create_client(system_frame_allocator_v1_closure* self, memory_v1_address owner_dcb_virt, memory_v1_address owner_dcb_phys, uint32_t granted_frames, uint32_t extra_frames, uint32_t init_alloc_frames)
 {
     frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(self->state);
     frames_module_v1_state* state = client_state->module_state;
@@ -512,6 +572,7 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_f
         extra_frames = granted_frames;
 
     // Invariant: extra_frames >= granted_frames >= init_alloc_frames
+    kconsole << __FUNCTION__ << ": allocating new client state" << endl;
 
     frame_allocator_v1_state* new_client_state = reinterpret_cast<frame_allocator_v1_state*>(client_state->heap->allocate(sizeof(*new_client_state)));
     if (!new_client_state)
@@ -522,11 +583,14 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_f
 
     dcb_ro_t *domain = reinterpret_cast<dcb_ro_t*>(owner_dcb_virt);
 
+    kconsole << __FUNCTION__ << ": initialising domain record" << endl;
+
     domain->min_phys_frame_count = 0;
     domain->max_phys_frame_count = state->ramtab->size();
     domain->ramtab = reinterpret_cast<ramtab_entry_t*>(state->ramtab->base());
-    domain->memory_region_list.next = domain->memory_region_list.prev = &domain->memory_region_list; //FIXME: dllist init
+    domain->memory_region_list.init();
 
+    kconsole << __FUNCTION__ << ": initialising new client record" << endl;
     new_client_state->domain = domain;
     new_client_state->region_list = &domain->memory_region_list;
     new_client_state->n_allocated_phys_frames = init_alloc_frames;
@@ -540,6 +604,8 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_f
     address_t first_frame;
     size_t n_frames;
     frames_module_v1_state* cur_state;
+
+    kconsole << __FUNCTION__ << ": allocating " << init_alloc_frames << " init frames" << endl;
 
     cur_state = alloc_any(self, init_alloc_frames, FRAME_WIDTH, &first_frame, &n_frames);
     if (cur_state == NULL)
@@ -575,6 +641,7 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_new_client(system_f
 
 static bool system_frame_allocator_v1_add_frames(system_frame_allocator_v1_closure* self, memory_v1_physmem_desc region)
 {
+    PANIC("Unimplemented!");
     return false;
 }
 
@@ -585,7 +652,7 @@ static const system_frame_allocator_v1_ops system_frame_allocator_v1_methods =
     system_frame_allocator_v1_query,
     system_frame_allocator_v1_free,
     system_frame_allocator_v1_destroy,
-    system_frame_allocator_v1_new_client,
+    system_frame_allocator_v1_create_client,
     system_frame_allocator_v1_add_frames,
 };
 
@@ -724,4 +791,4 @@ static const frames_module_v1_closure clos = {
     NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(frames_module_v1, frames_module, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(frames_module, v1, clos);

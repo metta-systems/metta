@@ -1,32 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Helper function to create module builders.
-#def module_task_gen(bld, name, sources):
 def build(bld):
-    name = 'frames_mod'
-    sources = ['frames_mod.cpp'] + ['../../interfaces/ramtab_v1_interface.cpp', '../../interfaces/heap_v1_interface.cpp']
-    mod = bld.new_task_gen('cxx', 'program')
-    mod.name = name+'.comp'
-    mod.source = sources
-    mod.env = bld.env_of_name('KERNEL_ENV').copy()
-    mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
-    mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    mod.uselib_local = 'component_support platform minruntime kernel common'
-    mod.target = name+'.comp'
-
-    bld.new_task_gen(
-        source = name+'.comp',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'module nm undef check',
-        after = 'cxx_link'
-    )
-
-    #bld.env['MODULES'].append(mod.target) #bld.path.find_or_declare(mod.target))
-
-#def build(bld):
-    #module_task_gen(bld, 'frames_mod', 'frames_mod.cpp ../module-entry.cpp ../module-crt0.s'.split())
+    mod = bld.setup_module_build(bld, 'frames_mod')
+    mod.source = ['frames_mod.cpp']
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

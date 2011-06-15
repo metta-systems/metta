@@ -2,22 +2,8 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    heap_mod = bld.new_task_gen('cxx', 'program')
-    heap_mod.name = 'heap_mod.comp'
-    heap_mod.source = 'heap_mod.cpp heap.cpp'
-    heap_mod.env = bld.env_of_name('KERNEL_ENV').copy()
-    heap_mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
-    heap_mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,heap_mod.map'])
-    heap_mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    heap_mod.uselib_local = 'component_support platform kernel minruntime common'
-    heap_mod.target = 'heap_mod.comp'
-
-    bld.new_task_gen(
-        source = 'heap_mod.comp',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'heap_mod module nm undef check',
-        after = 'cxx_link'
-    )
+    mod = bld.setup_module_build(bld, 'heap_mod')
+    mod.source = 'heap_mod.cpp heap.cpp'
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

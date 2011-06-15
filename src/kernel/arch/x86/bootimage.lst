@@ -15,9 +15,9 @@ name.sp2>value2
 
 # other modules
 frames_mod:modules/frames_mod/frames_mod.comp
-#another_domain:another_path/other.comp
-#modules.values.sp>hey jude!
-
 mmu_mod:modules/mmu_mod/mmu_mod.comp
 heap_mod:modules/heap_mod/heap_mod.comp
+stretch_allocator_mod:modules/stretch_allocator_mod/stretch_allocator_mod.comp
+stretch_table_mod:modules/stretch_table_mod/stretch_table_mod.comp
+stretch_driver_mod:modules/stretch_driver_mod/stretch_driver_mod.comp
 

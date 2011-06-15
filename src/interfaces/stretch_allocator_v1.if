@@ -1,0 +1,14 @@
+local interface stretch_allocator_v1
+{
+    exception failure {}
+    
+    sequence<memory_v1.size> size_seq;
+    sequence<stretch_v1&> stretch_seq;
+    
+    create(memory_v1.size size, stretch_v1.rights access) returns (stretch_v1& stretch) raises (failure);
+    create_list(size_seq sizes, stretch_v1.rights access) returns (stretch_seq stretches) raises (failure);
+    create_at(memory_v1.size size, stretch_v1.rights access, memory_v1.address start, memory_v1.attrs attr, memory_v1.physmem_desc region) returns (stretch_v1& stretch) raises (memory_v1.failure);
+    clone(stretch_v1& template_stretch, memory_v1.size size) returns (stretch_v1& stretch) raises (failure);
+    destroy_stretch(stretch_v1& stretch) raises (stretch_v1.denied);
+    destroy();
+}

@@ -631,12 +631,11 @@ bool parser_t::parse_type_alias()
     if (!lex.match(token::kw_type))
         return false;
     AST::type_alias_t t(parse_tree);
-    if (!lex.expect(token::type))
+    if (!parse_type_decl(t))
     {
         PARSE_ERROR("type ID expected");
         return false;
     }
-    t.set_type(lex.current_token());
     if (!lex.expect(token::identifier))
     {
         PARSE_ERROR("type name expected");
@@ -649,8 +648,6 @@ bool parser_t::parse_type_alias()
         PARSE_ERROR("; expected");
         return false;
     }
-
-	configure_type(t);
 
     parse_tree->add_type(new AST::type_alias_t(t));
     if (!symbols.insert_checked(t.name(), token::type))
@@ -756,8 +753,6 @@ bool parser_t::parse_sequence_type_alias()
         PARSE_ERROR("; expected");
         return false;
     }
-
-//	configure_type(node); //not needed due to parse_type_decl?
 
     parse_tree->add_type(new AST::sequence_alias_t(node));
     if (!symbols.insert_checked(node.name(), token::type))

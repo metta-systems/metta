@@ -3,7 +3,7 @@ local interface ramtab_v1
     enum { unused, mapped, nailed } state_e; # problem: state clashes with state field in closure
     
     # "Size" returns the total number of frames handled by this interface.
-    size() returns (card32 maxpfn);
+    size() returns (memory_v1.size maxpfn);
     # "Base" returns the base address of the ramtab. 
     base() returns (memory_v1.address base);
 

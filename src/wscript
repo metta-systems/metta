@@ -32,6 +32,8 @@ def set_options(opt):
     # i686-exquance-metta
     # arm-metta
 
+    opt.tool_options('module_template', tooldir='waftools')
+
     opt.tool_options('compiler_cc compiler_cxx')
 
     # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
@@ -216,11 +218,15 @@ def build(bld):
     meddler.post()
     bld.add_group()
 
+    # List interfaces sorted alphabetically.
+    interface_files = ['closure', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']
+
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    bld(source = 'interfaces/frames_module_v1.if interfaces/mmu_module_v1.if interfaces/mmu_v1.if interfaces/memory_v1.if interfaces/time_v1.if interfaces/timer_v1.if interfaces/protection_domain_v1.if interfaces/stretch_v1.if interfaces/ramtab_v1.if interfaces/frame_allocator_v1.if interfaces/system_frame_allocator_v1.if interfaces/heap_v1.if interfaces/heap_module_v1.if', name = 'all_idl')
+    bld(source = map(lambda d: 'interfaces/'+d+'.if', interface_files), name = 'all_idl')
 
     # Make bootimage components.
+    bld.setup_module_build = setup_module_build
     bld.add_subdirs("modules")
     bld.add_subdirs("tools/mettafs")
 
@@ -262,11 +268,11 @@ def build(bld):
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
 
-    #interfaces = bld.new_task_gen('cxx', 'staticlib')
-    #interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', 'frames_module frame_allocator system_frame_allocator timer'.split())
-    #interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    #interfaces.includes = interfaces.env['INCLUDE_DIRS']
-    #interfaces.target = 'interfaces'
+    interfaces = bld.new_task_gen('cxx', 'staticlib')
+    interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', interface_files)
+    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
+    interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.target = 'interfaces'
 
     # Tests
 #    tests = bld.new_task_gen('cxx', 'program')
