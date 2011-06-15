@@ -49,7 +49,7 @@ local interface stretch_driver_module_v1
     # given page is mapped.
 
     create_nailed(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab, 
-                  memory_v1.physmem_desc pmem, type.any pmalloc)
+                  memory_v1.physmem_desc pmem, types.any pmalloc)
         returns (stretch_driver_v1& driver);
 
     # "create_physical" creates a stretch driver which will use
@@ -68,7 +68,7 @@ local interface stretch_driver_module_v1
     # will map some physical memory underneath this on demand. 
     
     create_physical(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab, 
-                  memory_v1.physmem_desc pmem, type.any pmalloc)
+                  memory_v1.physmem_desc pmem, types.any pmalloc)
         returns (stretch_driver_v1& driver);
 
     # "create_paged" creates a stretch driver which uses the resources
@@ -107,6 +107,6 @@ local interface stretch_driver_module_v1
 
     create_paged(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab,
                  time_v1& time, memory_v1.physmem_desc pmem,
-                 stretch_v1& iostr, type.any swap)
+                 stretch_v1& iostr, types.any swap)
         returns (stretch_driver_v1& driver);
 }
