@@ -165,13 +165,14 @@ static bool add_range(frame_allocator_v1_state* client_state, address_t start, s
     else
     {
         // Try to find the correct place to insert it.
-        region_list_t *link;
+        dl_link_t *link;
         address_t current_start, current_end, next_start;
         for (link = client_state->region_list->next; link != client_state->region_list; link = link->next)
         {
-            current_start = link->start;
-            current_end = current_start + (link->n_phys_frames << FRAME_WIDTH);
-            next_start = link->next->start;
+            region_list_t* cur = reinterpret_cast<region_list_t*>(link);
+            current_start = cur->start;
+            current_end = current_start + (cur->n_phys_frames << FRAME_WIDTH);
+            next_start = reinterpret_cast<region_list_t*>(link->next)->start;
             if ((start >= current_end) && (end <= next_start))
                 break;
         }
@@ -184,8 +185,8 @@ static bool add_range(frame_allocator_v1_state* client_state, address_t start, s
             if (end == next_start)
             {
                 kconsole << __FUNCTION__ << ": no prior elements, merging on rhs." << endl;
-                link->next->n_phys_frames += n_phys_frames;
-                link->next->start = start;
+                reinterpret_cast<region_list_t*>(link->next)->n_phys_frames += n_phys_frames;
+                reinterpret_cast<region_list_t*>(link->next)->start = start;
                 return true;
             }
             else
