@@ -371,8 +371,9 @@ void exception_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void exception_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void exception_t::emit_interface_h(std::ostringstream& s)
 {
+    s << "typedef int xcp_" << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
@@ -444,16 +445,18 @@ void sequence_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void sequence_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void sequence_alias_t::emit_interface_h(std::ostringstream& s)
 {
+    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void sequence_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void array_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void array_alias_t::emit_impl_h(std::ostringstream& s)
 {
+    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void array_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
@@ -521,8 +524,9 @@ void range_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
-void range_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
+void range_alias_t::emit_interface_h(std::ostringstream& s)
 {
+    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
 void range_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
