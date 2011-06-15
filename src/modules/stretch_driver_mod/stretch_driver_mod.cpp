@@ -1,3 +1,4 @@
+#include "stretch_driver_module_v1_interface.h"
 #include "stretch_driver_module_v1_impl.h"
 
 static const stretch_driver_module_v1_closure clos = {

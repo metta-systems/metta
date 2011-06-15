@@ -1,3 +1,4 @@
+#include "system_stretch_allocator_v1_interface.h"
 #include "system_stretch_allocator_v1_impl.h"
 
 static const system_stretch_allocator_v1_closure clos = {
