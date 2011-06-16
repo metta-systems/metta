@@ -1,12 +1,4 @@
 #include "default_console.h"
-#include "frames_module_v1_interface.h"
-#include "mmu_v1_interface.h"
-#include "mmu_module_v1_interface.h"
-#include "heap_module_v1_interface.h"
-#include "pervasives_v1_interface.h"
-#include "system_stretch_allocator_v1_interface.h"
-#include "stretch_driver_module_v1_interface.h"
-#include "stretch_table_module_v1_interface.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -16,13 +8,22 @@
 #include "debugger.h"
 #include "module_loader.h"
 #include "infopage.h"
+#include "frames_module_v1_interface.h"
+#include "mmu_v1_interface.h"
+#include "mmu_module_v1_interface.h"
+#include "mmu_module_v1_impl.h" // for debug
+#include "heap_v1_interface.h"
+#include "heap_module_v1_interface.h"
+#include "pervasives_v1_interface.h"
+#include "system_frame_allocator_v1_interface.h"
+#include "system_stretch_allocator_v1_interface.h"
+#include "stretch_driver_module_v1_interface.h"
+#include "stretch_table_module_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
 // startup module from which root_domain starts also has a namespace called "default_namespace"
 // it defines general system attributes and startup configuration.
-
-#include "mmu_module_v1_impl.h" // for debug
 
 static pervasives_v1_rec pervasives;
 

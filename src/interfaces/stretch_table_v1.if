@@ -1,4 +1,28 @@
+# A "stretch table" is a partial map from "stretch"es to page width information (for mapping) and "stretch_drivers".
+# A typical implementation might use a hash table.
+
 local interface stretch_table_v1
 {
-}
+    # There is no internal concurrency control in a "stretch_table_v1".
+    # Clients must ensure that conflicting operations are never
+    # executed concurrently. "get" is a reader, while "put" and 
+    # "remove" are writers.
 
+    # If "str" $\in$ "dom(self)" then set "pwidth := pw[str]" and 
+    # "sdriver := sdriver[str]" and return "True";
+    # otherwise return "False", leaving OUT params unchanged.
+    get(stretch_v1& stretch, out card32 page_width, out stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # Return "str" $\in$ "dom(self)" and set "pw[str] := pwidth" and 
+    # "sdriver[str] := sdriver".
+    put(stretch_v1& stretch, card32 page_width, stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # If "str" $\in$ "dom(self)" then set "pwidth := pw[str]", 
+    # "sdriver := self[str]", remove "str" from "dom(self)" and 
+    # return "True"; otherwise return "False", leaving OUT params
+    # unchanged. 
+    remove(stretch_v1& stretch, out card32 page_width, out stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # Free the current "stretch_table".
+    destroy();
+}

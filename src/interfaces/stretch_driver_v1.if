@@ -1,4 +1,105 @@
+# A "stretch_driver" is a thing which is responsible for dealing with faults on a stretch.
+# In general, every "stretch" is associated with some "stretch_driver".
+# Note that the StretchAllocator and/or Stretch interfaces are enough for most people;
+# they should never need to access this interface directly.
+
 local interface stretch_driver_v1
 {
+    # A StretchDriver can be one of a number of \emph{kinds}. The
+    # exact number and meanings of these will be documented soon,
+    # but essentially the type "User" is for those who feel confident
+    # enough to have a bash at implementing some weirdo-type stretch
+    # driver of their own. Hehe.
+    enum { user, null, nailed, physical, paged, remote } kind;
 
+    # The result of a StretchDriver's attempt to map or otherwise
+    # deal with a fault on a page may be any of the following:
+    enum {
+        success, # everything went ok
+        failure, # doomed to failure
+        retry    # this attempt failed, but can retry.
+    } result;
+
+    # Note; the reason for the odd third result type above is to
+    # cope with StretchDrivers who require certain conditions
+    # (such as activations being on) to perform their duties. If
+    # such drivers are invoked to map while these conditions do
+    # not hold, they may need to 'fail', although they may succeed
+    # if invoked again at a later stage.
+
+    # Before a StretchDriver will deal with a faults on a given
+    # stretch, the stretch must first be "Bound"ed to it.
+    # The "pwidth" specifies the desired page width for any
+    # mapping operations the stretch driver performs on this
+    # stretch; it will be rounded up to natural page width of
+    # the machine if necessary.
+    # A "pwidth" greater than the natural page width is used
+    # to specify contiguity contraints on mapping.
+    bind(stretch_v1& stretch, card32 page_width);
+
+    # If a StretchDriver should no longer deal with faults on a
+    # given stretch, then that Stretch may be deregistered.
+    # This will normally cause any frames which the StretchDriver
+    # mapped under this stretch to be released/unmapped.
+    unbind(stretch_v1& stretch);
+
+    # Sometimes one may wish to interrogate a StretchDriver in order
+    # to determine which "Kind" it is.
+    get_kind() returns (kind k);
+
+    # Generally all stretch drivers within an application will share
+    # one "StretchTbl". The "GetTable" operation is provided to allow
+    # 'the' "StretchTbl" to be obtained by the interrogation of
+    # an existing stretch driver.
+    get_table() returns (stretch_table_v1& stretch_table);
+
+    # The "Map" operation is the most important part of the
+    # StretchDriver. It is this which resolves page faults on a particular
+    # address within a particular stretch according to a particular
+    # method. Any strategy or policy (e.g. page replacement, etc) may
+    # be encapsulated within this.
+    # In general, "Map" is called by a Domain when a page fault has
+    # occurred, though it may also be called explicitly if required
+    # in order to ensure that something won't fault in the near future.
+    map(stretch_v1& stretch, memory_v1.address virt)
+        returns (result res);
+
+    # The "Fault" operation is called when some type of fault
+    # occurs on a virtual address within a stretch managed by
+    # this driver; these faults should be recoverable (at least
+    # potentially). Generally the "reason" for the fault will not
+    # be "PAGE", though this is not ruled out.
+    fault(stretch_v1& stretch, memory_v1.address virt, memory_v1.fault reason)
+        returns (result res);
+
+    # The "AddHandler" operation allows applications which care about
+    # specific faults to handle them outside the stretch driver.
+    # It is only applicable for the specified type of memory fault
+    # "reason", and for stretches within this stretch driver.
+    add_handler(memory_v1.fault reason, fault_handler_v1& handler)
+        returns (fault_handler_v1& old);
+
+    # The "Lock" operation is a `hint' to the stretch driver that
+    # the relevant virtual address should be preferentially treated.
+    # In particular it ensures that the address is mapped, and that
+    # it will not unmapped if there are other, unlocked addresses
+    # available. It is purely a \emph{local} concept.
+    lock(stretch_v1& stretch, memory_v1.address virt)
+        returns (result res);
+
+    # The "Unlock" operation marks a previously locked virtual address
+    # as no longer locked. Note that it does not necessarily unmap it.
+    unlock(stretch_v1& stretch, memory_v1.address virt)
+        returns (result res);
+
+    # When the domain receives a revocation request, it invokes the
+    # below operation on one or more stretch drivers. The "maxf"
+    # parameter gives the total number of frames which need to be
+    # reclaimed; the returned "nf" specifies the number of frames
+    # which actually were reclaimed ("nf" $\geq$ 0).
+
+    # Arrange to free up to "maxf" physical frames, placing their
+    # PFNs on the top of the frame stack.
+    revoke_frames(memory_v1.size max_frames)
+        returns (memory_v1.size n_frames);
 }

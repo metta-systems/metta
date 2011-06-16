@@ -5,6 +5,7 @@ local interface time_v1
     # Times and durations are represented by "ns" values, which
     # give numbers of nanoseconds since some unspecified epoch.
     type int64 ns;
+    type ns time;
 
     # The "now" method returns the current value of the system
     # clock. Clock resolution is unspecified.

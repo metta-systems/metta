@@ -1,4 +1,229 @@
+#
+# User-level Virtual Processor management; for use by user-level schedulers.
+# The kernel scheduler communicates with a domain's user-level scheduler via state
+# and operations on the domain's Virtual Processor (VP).
+#
+# The procedures in the "VP" interface are implemented by a user-level
+# shared library and a few system calls.  There is no internal
+# concurrency control over the state which may be written at the
+# user level: user-level schedulers are expected to call conflicting
+# procedures within their own critical sections.
+#
+
 local interface vcpu_v1
 {
-}
+    #===================================================================================================================
+    # Context slots
+    #===================================================================================================================
 
+    # A virtual processor has "NumContexts" slots in which context
+    # is stored when the VP loses the real processor.  These slots
+    # are identified by a "ContextSlot" in the range "0..NumContexts-1".
+
+    type card32 context_slot_t;
+
+    num_contexts() returns (context_slot_t slots);
+
+    # Context slots are reserved and freed with "AllocContext" and "FreeContext".
+
+    # Raised when no free context slots are available
+    exception no_context_slots {}
+
+    # Raised when "cs" is out of range or its contents are invalid.
+    exception invalid_context { context_slot_t slot; }
+
+    allocate_context() returns (context_slot_t slot) raises (no_context_slots);
+    
+    release_context(context_slot_t slot) raises (invalid_context);
+
+    # The user-level scheduler obtains the address of the "jmp_buf"
+    # associated with a context slot with "Context".  The result
+    # can be passed to "setjmp" and "longjmp" to switch between
+    # threads.
+
+    # Return the address of the context save area identified by "cs".
+    context(context_slot_t slot) returns (memory_v1.address address);
+
+    #===================================================================================================================
+    # Activations
+    #===================================================================================================================
+
+    # A domain is activated via its activation vector.
+
+    # Set this VP's activation vector to "avec".
+    # "SetActivationVector" is not atomic with respect to activations;
+    # it must be called with activations disabled.  This may change
+    # in the future.
+    set_activation_vector(activation_v1& activation_vector);
+
+    # Activations are initially disabled.
+
+    # Set "vp.activationsOn := True".
+    # "ActivationsOn" is a simple write to a user-level flag,
+    # not a system call; it will not cause this domain to be re-activated
+    # because of pending events accumulated while activations are disabled.
+    enable_activations();
+
+    # Set "vp.activationsOn := False".
+    disable_activations();
+
+    # Return "vp.activationsOn".
+    are_activations_on() returns (boolean on);
+
+    # If this VP loses the processor and activations are enabled,
+    # context is stored in the VP's ``save slot''.  When the VP
+    # is next given the real processor, it will be activated via
+    # its activation vector with activations disabled.  The initial
+    # save slot is indeterminate and possibly invalid.
+
+    get_save_slot() returns (context_slot_t slot);
+    # "SetSaveSlot" returns "Context(cs)".
+    set_save_slot(context_slot_t slot) returns (memory_v1.address addres) raises (invalid_context);
+
+    # If this VP loses the processor and activations are disabled,
+    # context is stored in the VP's ``resume slot''.  When the VP
+    # is next given the real processor, context will be restored
+    # from the resume slot.  The initial resume slot is valid and
+    # allocated.
+
+    get_resume_slot() returns (context_slot_t slot);
+    set_resume_slot(context_slot_t slot) raises (invalid_context);
+
+    #===================================================================================================================
+    # Event channels
+    #===================================================================================================================
+
+    # A virtual processor sends and receives events over event channels.
+
+    # Return the number of slots for channel endpoints at this VCPU.
+    num_channels() returns (card32 n);
+
+    # The "QueryChannel" procedure returns the "state" and "type" of the endpoint "ep".
+    # If "ep"'s "type" is "RX", "rxval" gives its current received value.
+
+    query_channel(channel_v1.endpoint ep) returns (channel_v1.state_e state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack) raises (channel_v1.invalid);
+
+    # Channel endpoints are allocated by the domain. The following operations are provided 
+    # to allocate and free them; note that there is no concurrency control at this level.
+
+    # Find an end-point in the "Free" state, set its state to "Allocated" and return it.
+    allocate_channel() returns (channel_v1.endpoint ep) raises (channel_v1.no_slots);
+
+    # Take an end-point not in the "Connected" state, and set its state to "Free".
+    release_channel(channel_v1.endpoint ep) raises (channel_v1.invalid, channel_v1.bad_state);
+
+    # User-level schedulers inform the kernel when they wish events
+    # to be transmitted to other domains by calling "Send".
+
+    # Request that the received value of the RX endpoint associated with "tx" be set to "val".
+    send(channel_v1.tx tx, event_v1.val val) raises (channel_v1.invalid, channel_v1.bad_state);
+
+    # Return the current received value of the endpoint "ep".
+    poll(channel_v1.endpoint ep) returns (event_v1.val val) raises (channel_v1.invalid);
+
+    # Write "ack" into the acknowledged value for the endpoint
+    # "ep". Return the current received value (not the ack value).
+    ack(channel_v1.endpoint ep, event_v1.val ack) 
+        returns (event_v1.val val) 
+        raises (channel_v1.invalid, channel_v1.bad_state);
+
+    # A "Channel.Endpoint" "ep" has \emph{pending} events iff its value is different from its acknowledged count.
+
+    # The system maintains a list of end-points which require
+    # attention. A "Channel.Endpoint" is added to this list if its
+    # state becomes "Dead", or if it has no prior events pending and an
+    # event for it arrives (in other words, its state changes from `not
+    # pending' to `pending'). An end-point is removed from this list by
+    # the "NextEvent" operation (below).
+
+    are_events_pending() returns (boolean pending);
+
+    # If "EventsPending" returns false, there is no endpoint in the
+    # list of those requiring attention. If it returns true, there is
+    # at least one end-point which the system believes is worthy of
+    # attention (though this end-point is not guaranteed to have pending events).
+
+    # If "NextEvent" returns false, there is no endpoint in the list of
+    # those requiring attention.  Otherwise, the other results are the
+    # identifier, type, current received value (for "RX"s) and state of
+    # an endpoint which may have pending events or have been closed down.
+
+    # The intended pattern of use is (in an activation handler):
+    #
+    #    while (vcpu->get_next_event(&ep, &type, &val, &state))
+    #      ProcessEvent (ep, type, val, state);
+    #    if (`nothing to do`)
+    #      vcpu->rfa_block()
+
+    get_next_event() 
+        returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.val val, channel_v1.state_e state);
+
+    #===================================================================================================================
+    # Scheduling functions
+    #===================================================================================================================
+
+    # Return From Activation
+
+    # "RFA" enables activations, then if there are no
+    # pending events, it returns to the caller; otherwise, it
+    # saves the return context in the save slot and reactivates.
+    # It is atomic with respect to arrival of events.
+
+    rfa();
+
+    # Return From Activation and Resume
+
+    # "RFAResume" enables activations, then if there are no pending
+    # events, restores context from "cs"; otherwise it reactivates.
+    # "RFAResume" is atomic with respect to losing the processor.
+    # To see why this is necessary, consider the sequence
+    #
+    #    RFA(); Resume(cs)
+    #
+    # If this VP loses the processor at the semi-colon, the context
+    # "cs" will be clobbered in the common case where "cs" is the
+    # current save slot.
+
+    rfa_resume(context_slot_t slot) never returns raises (invalid_context);
+
+    # A domain releases the real processor voluntarily with "RFABlock",
+    # "Block" or "Yield".  These give differing hints to the kernel
+    # scheduler as to when the domain should next be activated or resumed.
+    # They are only hints; a domain must be prepared to be given the
+    # processor at any time, whether or not it has pending events or timeouts.
+
+    # Return From Activation and Block
+
+    # "RFABlock" enables activations, then if there are no pending
+    # events, blocks this VP until an event arrives or "Time.Now() >= until";
+    # otherwise, it reactivates immediately.  It is atomic with respect to
+    # arrival of events.
+    
+    rfa_block(time_v1.time until) never returns;
+
+    # Block on incoming events
+
+    # If there are no pending events, "Block" saves the return context in
+    # the save or resume slot and yields the processor until an event
+    # arrives or "Time.Now() >= until"; otherwise it returns immediately.
+    # It is atomic with respect to arrival of events.
+
+    block(time_v1.time until);
+
+    # "Yield" saves the return context in the save or resume slot
+    # and yields the processor until the next resource allocation.
+
+    yield();
+
+    #===================================================================================================================
+    # Domain information
+    #===================================================================================================================
+
+    # Return the domain associated with this virtual processor.
+    domain_id() returns (domain_v1.id id);
+
+    # Return the protection domain identifier associated with this virtual processor.
+    protection_domain_id() returns (protection_domain_v1.id id);
+
+#    binder_offer() returns (idc_offer_v1& offer);
+}
