@@ -53,10 +53,12 @@ bool interface_t::add_type(alias_t* t)
 /*!
  * Add imported type to the list.
  */
-bool interface_t::add_imported_type(alias_t* t)
+bool interface_t::add_imported_type(alias_t t)
 {
     //std::cout << "interface_t::add_imported_type()" << std::endl;
-    imported_types.push_back(t);
+    alias_t* copy = new alias_t(t);
+    copy->set_name(copy->type()); // YURGH! to fix this, emit_cpp should use type()/base_type() on imports instead of name()/base_name() - fix it there first! then fix imported_types_lookup() above, too!
+    imported_types.push_back(copy);
     return true;
 }
 

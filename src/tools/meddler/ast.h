@@ -30,6 +30,10 @@ public:
 	}
     inline std::string name() { return name_; }
 	void set_name(std::string nm) { name_ = nm; }
+	inline std::string base_name()
+	{
+	    return name().substr(0, name().find_first_of('.'));
+	}
 
     virtual void emit_impl_h(std::ostringstream& s) = 0;
     virtual void emit_interface_h(std::ostringstream& s) = 0;
@@ -224,7 +228,7 @@ public:
     interface_t(std::string nm, bool is_local, bool is_final) : node_t(0, nm), local(is_local), final(is_final) {}
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
-    virtual bool add_imported_type(alias_t*);
+    virtual bool add_imported_type(alias_t);
     virtual bool add_type(alias_t*);
     virtual void dump(std::string indent_prefix);
     void set_parent(std::string p) { base = p; }

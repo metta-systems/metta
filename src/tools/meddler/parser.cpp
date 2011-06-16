@@ -513,7 +513,7 @@ void parser_t::configure_type(AST::alias_t& to_get)
 			// fully qualified type goes into the imported_types list
 			L(std::cout << "Fully qualified import type " << to_get.type() << " found." << std::endl);
 			if (!parent->imported_types_lookup(to_get))
-				parent->add_imported_type(new AST::alias_t(parse_tree, to_get.type()));
+                parent->add_imported_type(to_get);
 		}
 		else
 		{
@@ -523,7 +523,7 @@ void parser_t::configure_type(AST::alias_t& to_get)
 				L(std::cout << "Interface reference " << to_get.type() << " found." << std::endl);
 				to_get.set_interface_reference(true); // must be ext interface ref
 				if (!parent->imported_types_lookup(to_get))
-					parent->add_imported_type(new AST::alias_t(parse_tree, to_get.type()));
+                    parent->add_imported_type(to_get);
 			}
 			else
 			{
