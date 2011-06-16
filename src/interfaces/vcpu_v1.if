@@ -101,7 +101,7 @@ local interface vcpu_v1
     # The "QueryChannel" procedure returns the "state" and "type" of the endpoint "ep".
     # If "ep"'s "type" is "RX", "rxval" gives its current received value.
 
-    query_channel(channel_v1.endpoint ep) returns (channel_v1.state state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack) raises (channel_v1.invalid);
+    query_channel(channel_v1.endpoint ep) returns (channel_v1.state_e state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack) raises (channel_v1.invalid);
 
     # Channel endpoints are allocated by the domain. The following operations are provided 
     # to allocate and free them; note that there is no concurrency control at this level.
@@ -156,7 +156,7 @@ local interface vcpu_v1
     #      vcpu->rfa_block()
 
     get_next_event() 
-        returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.val val, channel_v1.state state);
+        returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.val val, channel_v1.state_e state);
 
     #===================================================================================================================
     # Scheduling functions
