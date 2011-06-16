@@ -181,16 +181,36 @@ void interface_t::emit_impl_h(std::ostringstream& s)
 void interface_t::emit_interface_h(std::ostringstream& s)
 {
     s << "#pragma once" << std::endl << std::endl
-	  << "#include \"module_interface.h\"" << std::endl;
-	
-	std::for_each(imported_types.begin(), imported_types.end(), [&s](alias_t* t)
+      << "#include \"module_interface.h\"" << std::endl;
+
+    // Includes.
+    // Do not include interface-only references, as it creates cyclic dependencies.
+    // Instead, make a forward declaration down below..
+    std::vector<std::string> interface_included;
+
+    std::for_each(imported_types.begin(), imported_types.end(), [&s, &interface_included](alias_t* t)
 	{
-		t->emit_include(s);
-		s << std::endl;
+	    if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
+	    {
+            t->emit_include(s);
+            s << std::endl;
+            interface_included.push_back(t->base_name());
+        }
 	});
 
 	s << std::endl;
 	
+	// Forward declarations.
+	std::for_each(imported_types.begin(), imported_types.end(), [&s, &interface_included](alias_t* t)
+    {
+        if (t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
+        {
+            s << "struct " << t->base_name() << "_closure;" << endl;
+        }
+    });
+	s << std::endl;
+
+	// Type declarations.
 	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
     {
         t->emit_interface_h(s);
@@ -198,6 +218,7 @@ void interface_t::emit_interface_h(std::ostringstream& s)
     });
     
 	s << std::endl;
+	// Closure.
 //	if (methods.size() > 0)
 	{
         s << "struct " << name() << "_ops;" << std::endl
@@ -382,8 +403,7 @@ void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 
 void alias_t::emit_include(std::ostringstream& s)
 {
-	std::string base = name().substr(0, name().find_first_of('.'));
-	s << "#include \"" << base << "_interface.h\"";
+	s << "#include \"" << base_name() << "_interface.h\"";
 }
 
 void alias_t::emit_impl_h(std::ostringstream& s)
