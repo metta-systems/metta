@@ -1,0 +1,32 @@
+# Vector via which the real processor is given to a VP.
+#
+# A domain differs from the normal concept of a user process
+# in the way in which the processor is presented to it.
+# The domain's user-level scheduler can be explicitly informed
+# when the processor is given to the domain by invocations on
+# its \emph{activation vector}, an "IREF Activation" associated
+# with the domain's \emph{virtual processor} (VP).
+
+local interface activation_v1
+{
+    # A domain may be activated because
+    #
+    # * it was preempted and has now been rescheduled,
+    # * it yielded or ran out of contracted CPU time and has now been given a fresh allocation,
+    # * it ran out of contracted CPU time and has now been allocated some extra time, or
+    # * events have been delivered to it.
+    # * it has been reactivated by itself.
+    #
+    # In the future, other activation reasons such as page faults
+    # and other asynchronous events may be added.  The trade-offs
+    # between this mechanism and the use of well-known "Channel.RX"s
+    # will be investigated.
+    #
+    enum { preempted, allocated, extra, event, reactivated } reason;
+
+    # A domain is activated by disabling activations, then invoking
+    # "Go" on its VP's activation vector with the appropriate value
+    # of "ar".  "Go" executes on a small, permanently resident activation
+    # stack associated with the VP.
+    go(vcpu_v1& vcpu, reason activation_reason) never returns;
+}

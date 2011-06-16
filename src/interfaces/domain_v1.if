@@ -1,0 +1,15 @@
+# Nemesis has a single virtual address space shared by all system
+# components.  A Nemesis system consists of a number of distinct
+# entities called \emph{domains}.  A domain comprises
+# a set of access rights to portions of the single address space
+# (a \emph{protection domain}) and some number of threads.  Threads
+# are multiplexed by a user-level thread scheduler over the domain's
+# \emph{virtual processor}, the kernel-schedulable entity associated
+# with the domain.
+
+local interface domain_v1
+{
+    # A domain is identified by an "ID".  The domain id "0" is reserved
+    # to mean a non-existant or invalid domain id.
+    type card64 id;
+}
