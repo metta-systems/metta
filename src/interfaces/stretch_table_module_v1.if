@@ -1,4 +1,5 @@
 local interface stretch_table_module_v1
 {
-    create();
+    # Return a "table" allocated in "heap"
+    create(heap_v1& heap) returns (stretch_table_v1& table) raises (heap_v1.no_memory);
 }
