@@ -29,9 +29,16 @@ static void heap_v1_free(heap_v1_closure* self, memory_v1_address ptr)
     self->state->heap->free(reinterpret_cast<void*>(ptr));
 }
 
+static void heap_v1_check(heap_v1_closure* self, bool /*check_free_blocks*/)
+{
+    lockable_scope_lock_t lock(*self->state->heap);
+    self->state->heap->check_integrity();
+}
+
 static const heap_v1_ops heap_v1_methods = {
     heap_v1_allocate,
-    heap_v1_free
+    heap_v1_free,
+    heap_v1_check
 };
 
 //======================================================================================================================

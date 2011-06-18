@@ -3,4 +3,13 @@ local interface heap_v1
     allocate(memory_v1.size size)
         returns (memory_v1.address ptr);
     free(memory_v1.address ptr);
+
+    # "Check" causes sanity checks to be performed on the heap block
+    # headers. Additionally, if "checkFreeBlocks" is "True", it will
+    # scan the free areas in the heap and ensure that they have not
+    # been overwritten. Either or both of these actions may be no-ops
+    # if the heap does not record sufficient information to perform
+    # the check. The action to be taken in the event of a check
+    # failing is implementation defined.
+    check(boolean check_free_blocks);
 }
