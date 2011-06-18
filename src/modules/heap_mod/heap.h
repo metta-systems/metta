@@ -92,7 +92,7 @@ private:
     {
         memory_v1_size prev;  // either a magic or size of previous block (backlink).
         memory_v1_size size;  // size of allocated block, including the end footer.
-        uint32_t       index; // allocation table index.
+        int32_t        index; // allocation table index.
         union {
             heap_t/*v1_closure*/* heap; // when busy
             heap_rec_t*      next; // when free
@@ -103,6 +103,10 @@ private:
     static heap_rec_t* next_block(heap_rec_t* rec);
     heap_rec_t* get_new_block(size_t size, int index);
     heap_rec_t* get_new_block_internal(size_t size, int index);
+
+    void coalesce();
+    void coalesce_merge_blocks(int32_t index);
+    void coalesce_move_blocks(int32_t index);
 
     static const int SMALL_BLOCKS = 16;
     static const int LARGE_BLOCKS = 24;
