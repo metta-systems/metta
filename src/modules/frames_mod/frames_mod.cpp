@@ -1,10 +1,15 @@
 #include "frames_module_v1_interface.h"
 #include "frames_module_v1_impl.h"
-#include "system_frame_allocator_v1_impl.h"
+#include "ramtab_v1_interface.h"
+#include "heap_v1_interface.h"
+#include "frame_allocator_v1_interface.h"
 #include "frame_allocator_v1_impl.h"
+#include "system_frame_allocator_v1_interface.h"
+#include "system_frame_allocator_v1_impl.h"
 #include "types.h"
 #include "macros.h"
 #include "default_console.h"
+#include "heap_new.h"
 #include "bootinfo.h"
 #include "domain.h"
 #include "algorithm"
@@ -132,10 +137,11 @@ static void alloc_update_free_predecessors(frames_module_v1_state* cur_state, ad
     }
 }
 
+// FIXME: Lots of reinterpret casts suck, do something about it!
+
 static bool add_range_element(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
-    // FIXME: These reinterpret casts suck, do something about it!
-    region_list_t* new_entry = reinterpret_cast<region_list_t*>(client_state->heap->allocate(sizeof(*new_entry)));
+    region_list_t* new_entry = new(client_state->heap) region_list_t;
     if (new_entry == NULL)
         return false;
 
