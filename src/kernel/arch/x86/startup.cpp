@@ -26,11 +26,6 @@
 #include "registers.h"
 #include "new.h"
 
-// Declare C linkage.
-extern "C" void kernel_startup();
-// extern "C" address_t placement_address;
-// extern "C" address_t KICKSTART_BASE;
-
 static void parse_cmdline(bootinfo_t* bi)
 {
     const char* cmdline;
@@ -213,7 +208,7 @@ static continuation_t new_context;
  *
  * TODO: relate Pistachio SMP startup routines here.
  */
-void kernel_startup()
+extern "C" void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
@@ -224,7 +219,7 @@ void kernel_startup()
 //     kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
     address_t start, end;
     const char* name;
@@ -248,7 +243,7 @@ void kernel_startup()
     timer->enable(0); // enable timer interrupts
     x86_cpu_t::enable_fpu();
 
-    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
+//    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     root_domain_t root_dom(bootimage);
 

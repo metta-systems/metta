@@ -44,7 +44,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     kconsole << " + Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
     elf_parser_t loader(addr.start);
     return bi->get_module_loader().load_module(module_name, loader, clos);
     /* FIXME: Skip dependencies for now */
@@ -984,7 +984,7 @@ extern "C" void _start()
 
     kconsole << " + image bootup entry!" << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
     address_t start, end;
     const char* name;
     if (!bi->get_module(1, start, end, name))
