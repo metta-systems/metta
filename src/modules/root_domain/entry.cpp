@@ -19,6 +19,7 @@
 #include "system_stretch_allocator_v1_interface.h"
 #include "stretch_driver_module_v1_interface.h"
 #include "stretch_table_module_v1_interface.h"
+#include "stretch_allocator_module_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -73,8 +74,8 @@ static void init_mem(bootimage_t& bootimg)
     auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
     ASSERT(heap_mod);
 
-    auto stretch_allocator = load_module<system_stretch_allocator_v1_closure>(bootimg, "stretch_allocator_mod", "exported_system_stretch_allocator_rootdom");
-    ASSERT(stretch_allocator);
+    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom");
+    ASSERT(stretch_allocator_mod);
     
     auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretchtbl_module_rootdom");
     ASSERT(stretch_table_mod);
@@ -121,15 +122,16 @@ static void init_mem(bootimage_t& bootimg)
     heap->check(true);
     kconsole << " done." << endl;
 
-    kconsole << " + Frames create_client test" << endl;
-    frames->create_client(0x2000, 0x2000, 20, 20, 20);
-}
-#if 0
     // create stretch allocator
     kconsole << " + Creating stretch allocator" << endl;
     // assign stretches to address ranges
-    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
-    PVS(strech_allocator) = salloc;
+    auto stretch_allocator = stretch_allocator_mod->create(heap, mmu, 0, 0);
+//    salloc = SAllocMod$NewF(smod, h, mmu, allvm, used);
+
+//    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
+    PVS(stretch_allocator) = stretch_allocator;
+}
+#if 0
 
     /*
      * We create a 'special' stretch allocator which produces stretches

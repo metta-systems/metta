@@ -3,7 +3,7 @@ local interface pervasives_v1
     record rec
     {
         heap_v1& heap;
-#        stretch_allocator_v1& stretch_allocator;
-#        stretch_driver_v1& stretch_driver;
+        system_stretch_allocator_v1& stretch_allocator; # FIXME: don't expose system_ part though!
+        stretch_driver_v1& stretch_driver;
     }
 }
