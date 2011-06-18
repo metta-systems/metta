@@ -12,7 +12,7 @@
 #include "default_console.h"
 //#include "config.h" // for HEAP_DEBUG
 
-#define HEAP_DEBUG 0
+#define HEAP_DEBUG 1
 
 /*!
  * @class heap_t
@@ -21,14 +21,17 @@
  * will deadlock.
  */
 
-#define HEAP_MAGIC        0xdeadd00d
+#define HEAP_MAGIC        0xfa11dead
 #define MIN_HEAP_OVERHEAD (sizeof(heap_rec_t)*3)
 
 #define OTHER_INDEX (COUNT-1)
 
 #define WORD_SIZE (sizeof(uint64_t))
-#define BLOCK_ALIGN(_x) (((_x)+WORD_SIZE-1) & ~(WORD_SIZE))
+static inline size_t BLOCK_ALIGN(size_t _x) { return ((_x)+WORD_SIZE) & -(WORD_SIZE); }
 #define _S(_x) (_x * WORD_SIZE)
+
+/* Size of minimum fragment: this should be heaprec + all_sizes[0] */
+#define MIN_FRAG (sizeof(heap_rec_t) + _S(1))
 
 #define SMALL_LIMIT _S(16)
 #define LARGE_LIMIT _S(1296)
@@ -135,8 +138,66 @@ int heap_t::find_index(size_t size)
     return OTHER_INDEX;
 }
 
-/* Size of minimum fragment: this should be heaprec + all_sizes[0] */
-#define MIN_FRAG (sizeof(heap_rec_t) + _S(1))
+void heap_t::coalesce()
+{
+    int32_t index;
+
+    for (index = 0; index <= OTHER_INDEX; ++index)
+        coalesce_merge_blocks(index);
+
+    for (index = 0; index <= OTHER_INDEX; ++index)
+        coalesce_move_blocks(index);
+}
+
+void heap_t::coalesce_merge_blocks(int32_t index)
+{
+    heap_rec_t* before_block;
+    heap_rec_t* after_block;
+    heap_rec_t* free_block;
+    heap_rec_t** ptr;
+
+    for (ptr = &blocks[index]; (free_block = *ptr); )
+    {
+        if (free_block->prev != HEAP_MAGIC) // previous block is unallocated indeed!
+        {
+            before_block = prev_block(free_block);
+            if (next_block(before_block) != free_block)
+                PANIC("Out of sanity!");
+                
+            before_block->size += free_block->size + sizeof(heap_rec_t);
+            after_block = next_block(free_block);
+            after_block->prev = before_block->size;
+            
+            *ptr = free_block->next;
+        }
+        else
+        {
+            ptr = &(free_block->next);
+        }
+    }
+}
+
+void heap_t::coalesce_move_blocks(int32_t index)
+{
+    heap_rec_t* free_block;
+    heap_rec_t** ptr;
+
+    for (ptr = &blocks[index]; (free_block = *ptr); )
+    {
+        int new_index = find_index(free_block->size);
+        if (new_index != free_block->index)
+        {
+            *ptr = free_block->next;
+            free_block->next = blocks[new_index];
+            blocks[new_index] = free_block;
+            free_block->index = new_index;
+        }
+        else
+        {
+            ptr = &(free_block->next);
+        }
+    }
+}
 
 heap_t::heap_rec_t* heap_t::get_new_block_internal(size_t size, int index)
 {
@@ -182,6 +243,12 @@ heap_t::heap_rec_t* heap_t::get_new_block(size_t size, int index)
     if ((new_free_block = get_new_block_internal(size, index)))
         return new_free_block;
 
+    // coalesce some blocks to free up unfragmented space.
+    coalesce();
+
+    if ((new_free_block = get_new_block_internal(size, index)))
+        return new_free_block;
+
     return 0;
 }
 
@@ -189,7 +256,8 @@ void *heap_t::allocate(size_t size)
 {
     ASSERT(has_lock());
 #if HEAP_DEBUG
-    check_integrity();
+//    kconsole << "Heap check before allocate(" << size << ")" << endl;
+//    check_integrity();
 #endif
     int index;
     heap_rec_t* free_block;
@@ -216,7 +284,8 @@ void *heap_t::allocate(size_t size)
     next_block(free_block)->prev = HEAP_MAGIC;
 
 #if HEAP_DEBUG
-    check_integrity();
+//    kconsole << "Heap check after allocate(" << size << ")" << endl;
+//    check_integrity();
 #endif
 
     return free_block + 1;
@@ -226,7 +295,8 @@ void heap_t::free(void *p)
 {
     ASSERT(has_lock());
 #if HEAP_DEBUG
-    check_integrity();
+//    kconsole << "Heap check before free(" << p << ")" << endl;
+//    check_integrity();
 #endif
     heap_rec_t* to_free;
     heap_rec_t* nextblock;
@@ -246,7 +316,8 @@ void heap_t::free(void *p)
     nextblock->prev = to_free->size;
     
 #if HEAP_DEBUG
-    check_integrity();
+//    kconsole << "Heap check after free(" << p << ")" << endl;
+//    check_integrity();
 #endif
 }
 
@@ -336,45 +407,62 @@ size_t heap_t::contract(size_t new_size)
 void heap_t::check_integrity()
 {
 #if HEAP_DEBUG
-    // We should, by starting at start_address, be able to walk through all blocks/
-    // holes and check their magic numbers.
-    header_t *last_header = NULL;
-    header_t *this_header = (header_t*)start_address;
-    header_t *next_header = (header_t*)((address_t)this_header + this_header->size);
-    if ((address_t)next_header >= end_address)
+    // We should, by starting at start_address be able to walk through all blocks/holes and check their magic numbers.
+    heap_rec_t* last_header = NULL;
+    heap_rec_t* this_header = reinterpret_cast<heap_rec_t*>(start_address);
+    heap_rec_t* next_header = next_block(this_header);
+
+    void *end = reinterpret_cast<void*>(end_address);
+
+    if (next_header >= end)
         next_header = NULL;
+
+    kconsole << ">= Heap: starting heap check" << endl;
 
     while (this_header)
     {
-        // header_t overwritten.
-        if (this_header->magic != HEAP_MAGIC)
+        kconsole << "Heap: checking block " << this_header << endl;
+        if (this_header->index > OTHER_INDEX)
         {
-            kconsole.set_color(LIGHTRED);
-            kconsole << endl << "Previous block:" << endl << "  Address: " << last_header << endl << "  Size: " << int(last_header->size) << endl << "  Hole: " << last_header->is_hole << endl
-                << "This block:" << endl << "  Address: " << this_header << endl << "  Size: " << int(this_header->size) << endl << "  Hole: " << this_header->is_hole << endl;
-            PANIC("Heap header_t overwritten!");
+            kconsole << LIGHTRED << "Heap integrity check: free list index " << this_header->index << " in block " << this_header << " is invalid." << endl;
+            PANIC("Heap corruption!");
+        }
+        if (start_address + this_header->size >= end_address)
+        {
+            kconsole << LIGHTRED << "Heap integrity check: block " << this_header << " size " << int(this_header->size) << " is invalid." << endl;
+            PANIC("Heap corruption!");
         }
 
         if (!next_header)
             break;
 
-        footer_t *this_footer = (footer_t*)((address_t)next_header - sizeof(footer_t));
-        // footer_t overwritten.
-        if (this_footer->magic != HEAP_MAGIC)
+        if (next_header->prev == HEAP_MAGIC)
         {
-            kconsole.set_color(LIGHTRED);
-            kconsole << endl << "Previous block:" << endl << "  Address: " << last_header << endl << "  Size: " << int(last_header->size) << endl << "  Hole: " << last_header->is_hole << endl
-                << "This block:" << endl << "  Address: " << this_header << endl << "  Size: " << int(this_header->size) << endl << "  Hole: " << this_header->is_hole << endl
-            << "Next block:" << endl << "  Address: " << next_header << endl << "  Size: " << int(next_header->size) << endl << "  Hole: " << next_header->is_hole << endl;
-            PANIC("Heap footer_t overwritten!");
+            // this_block is allocated.
+            kconsole << "Heap: block is ALLOCATED!" << endl
+                     << "  prev: " << int(this_header->prev) << endl
+                     << "  size: " << int(this_header->size) << endl
+                     << "  index: " << this_header->index << endl
+                     << "  heap: " << this_header->heap << endl;
         }
-
+        else
+        {
+            // this block is free and should be in the free list.
+            kconsole << "Heap: block is FREE!" << endl
+                     << "  prev: " << int(this_header->prev) << endl
+                     << "  size: " << int(this_header->size) << endl
+                     << "  index: " << this_header->index << endl
+                     << "  next: " << this_header->next << endl;
+        }
+        
         last_header = this_header;
         this_header = next_header;
-        next_header = (header_t*)((address_t)this_header + this_header->size);
-        if ((uint32_t)next_header >= end_address)
+        next_header = next_block(this_header);
+        if (next_header >= end)
             next_header = NULL;
     }
+    //TODO: check free-lists
+    kconsole << "<= Heap: completed heap check." << endl;
 #endif
 }
 

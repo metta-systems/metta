@@ -3,7 +3,7 @@
 
 def build(bld):
     complib = bld.new_task_gen('cxx', 'staticlib')
-    complib.source = 'module-crt0.s module-entry.cpp'
+    complib.source = 'module-entry.cpp heap_new.cpp'
     complib.env = bld.env_of_name('KERNEL_ENV').copy()
     complib.includes = '. ../runtime ../runtime/stl ../interfaces ../kernel/generic ../kernel/arch/x86 ../kernel/platform/pc99'
     complib.target = 'component_support'

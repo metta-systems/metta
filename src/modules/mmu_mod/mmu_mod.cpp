@@ -28,9 +28,9 @@ struct ramtab_entry_t
 
 struct pdom_st 
 {
-    uint16_t      refcnt;  /* reference count on this pdom    */
-    uint16_t      gen;     /* current generation of this pdom */
-    stretch_v1_closure*   stretch; /* handle on stretch (for destroy) */ 
+    uint16_t            refcnt;  /* reference count on this pdom    */
+    uint16_t            gen;     /* current generation of this pdom */
+    stretch_v1_closure* stretch; /* handle on stretch (for destroy) */ 
 };
 
 /*
@@ -80,7 +80,7 @@ struct mmu_v1_state
     heap_v1_closure*                    heap;
 //  stretch_allocator_v1_closure*       stretch_allocator;
 
-    uint32_t              n_frames;
+//    uint32_t              n_frames;//FIXME: UNUSED!!?!
 
     address_t             l1_mapping_virt; /* virtual  address of l1 page table */
     address_t             l1_mapping_phys; /* physical address of l1 page table */
@@ -121,12 +121,14 @@ static const mmu_v1_ops mmu_v1_method_table = {
 static memory_v1_size ramtab_v1_size(ramtab_v1_closure* self)
 {
     mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
-    return st->n_frames;
+    kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning size " << st->ramtab_size << endl;
+    return st->ramtab_size;
 }
 
 static memory_v1_address ramtab_v1_base(ramtab_v1_closure* self)
 {
     mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
+    kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning base " << st->ramtab << endl;
     return reinterpret_cast<memory_v1_address>(st->ramtab);
 }
 

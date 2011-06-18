@@ -108,15 +108,21 @@ static void init_mem(bootimage_t& bootimg)
     frames_mod->finish_init(frames, heap);
 
     kconsole << " + Heap alloc test:";
-    for (size_t counter = 0; counter < 100000; ++counter)
+    for (size_t counter = 0; counter < 127*KiB; ++counter)
     {
         address_t p = heap->allocate(counter);
+        if (!p)
+        {
+            kconsole << "Allocation of " << counter << " bytes failed! Dumping heap state:" << endl;
+            heap->check(true);
+        }
         heap->free(p);
     }
+    heap->check(true);
     kconsole << " done." << endl;
 
-    kconsole << " + Frames new_client test" << endl;
-    frames->create_client(0, 0, 20, 20, 20);
+    kconsole << " + Frames create_client test" << endl;
+    frames->create_client(0x2000, 0x2000, 20, 20, 20);
 }
 #if 0
     // create stretch allocator
@@ -970,7 +976,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
  * Image bootup starts executing without paging and with full ring0 rights.
  */
 
-extern "C" void entry()
+extern "C" void _start()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 
