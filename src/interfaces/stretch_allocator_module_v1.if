@@ -8,8 +8,7 @@ local interface stretch_allocator_module_v1
     # Subsidiary storage (e.g. for closures and state) is taken from the
     # separately instantiated "Heap".
 
-    # inout here are a hack to make meddler generate pointers (since these are arrays), fix it properly by using seq<>
-    create(heap_v1& heap, mmu_v1& mmu, inout memory_v1.virtmem_desc allvm, inout memory_v1.virtmem_desc used)
+    create(heap_v1& heap, mmu_v1& mmu)
         returns (system_stretch_allocator_v1& stretch_allocator)
         raises (heap_v1.no_memory, memory_v1.failure);
 
