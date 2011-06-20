@@ -35,6 +35,7 @@
 // The internal file stl_iterator.h contains predefined iterators, 
 // such as front_insert_iterator and istream_iterator.
 
+#include "types.h" // for ptrdiff_t
 #include <concept_checks.h>
 
 __STL_BEGIN_NAMESPACE
