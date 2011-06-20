@@ -122,13 +122,9 @@ static void init_mem(bootimage_t& bootimg)
     heap->check(true);
     kconsole << " done." << endl;
 
-    // create stretch allocator
+    // create stretch allocator, assign stretches to address ranges
     kconsole << " + Creating stretch allocator" << endl;
-    // assign stretches to address ranges
-    auto stretch_allocator = stretch_allocator_mod->create(heap, mmu, 0, 0);
-//    salloc = SAllocMod$NewF(smod, h, mmu, allvm, used);
-
-//    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
+    auto stretch_allocator = stretch_allocator_mod->create(heap, mmu);
     PVS(stretch_allocator) = stretch_allocator;
 }
 #if 0
@@ -928,19 +924,8 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
     kconsole << "      + vp closure     = %p\n", (addr_t)vp));
     kconsole << "      + rop            = %p\n", (addr_t)RO(vp)));
 
-#if defined(__i386__) || defined(__x86_64)
     kconsole << "*************** ENGAGING PROTECTION ******************\n"));
     MMU$Engage(mmu, VP$ProtDomID(vp));
-#else
-    // install page fault handler
-    // Identity map currently executing code.
-    // page 0 is not mapped to catch null pointers
-    //     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
-    // enable paging
-    //     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
-    //     kconsole << "Enabled paging." << endl;
-    #warning Need some protection for your architecture.
-#endif
 
     kconsole << "NemesisPrimal: Activating Nemesis domain" << endl;
     ntsc_actdom(RO(vp), Activation_Reason_Allocated);
