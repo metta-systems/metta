@@ -8,10 +8,11 @@
 #include "mmu_v1_impl.h"
 #include "ramtab_v1_interface.h"
 #include "ramtab_v1_impl.h"
-#include "cpu.h"
 #include "page_directory.h"
 #include "system_frame_allocator_v1_interface.h"
 #include "heap_v1_interface.h"
+#include "nucleus.h"
+#include "cpu.h"
 
 //======================================================================================================================
 // mmu_v1 methods
@@ -445,18 +446,15 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 
     state->l2_next = 0;
     for(i = 0; i < state->l2_max; i++)
-	    state->info[i] = L2FREE;
+        state->info[i] = L2FREE;
 
     // Enter mappings for all the existing translations.
     enter_mappings(state); // this call uses mappings in bootinfo_page, so we need to set them up sooner or call enter_mappings() later, maybe in Done or Engage?
 
     // Swap over to our new page table!
-//    MTRC(eprintf("MMUMod: setting new ptbr to va=%p, pa=%p\n", 
-//	    st->va_l1, st->pa_l1));
-    ia32_mmu_t::set_active_pagetable(state->l1_mapping_phys);
-//    ntsc_wptbr(st->va_l1, st->pa_l1, st->vtab_va); //PDBR syscall
-// nucleus_write_pdbr(); <<-- proposed syscalls format
-//    MTRC(eprintf("+++ done new ptbr.\n"));
+    kconsole << " +-mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys << endl;
+    nucleus::write_pdbr(state->l1_mapping_virt, state->l1_mapping_phys);
+    kconsole << " +-mmu_module_v1: wrote new pdbr using syscall!" << endl;
 
     // And store some useful pointers in the PIP for user-level translation.
 //    INFO_PAGE.l1_va  = st->va_l1; 

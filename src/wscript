@@ -330,6 +330,8 @@ def build(bld):
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
     # It includes interrupt handlers and some minimal syscall processing.
+    
+    # TODO: add nucleus_* code here, initialize glue before kernel startup??
     glue = bld.new_task_gen('cxx', 'program')
     glue.target = 'glue.sys'
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
