@@ -30,6 +30,7 @@
 #  define __USE_MALLOC
 #endif
 
+#include "debugger.h"//TEMP: for allocator debugging
 #include "memutils.h"
 
 // This implements some standard node allocators.  These are
@@ -89,6 +90,8 @@
 #endif
 
 __STL_BEGIN_NAMESPACE
+
+extern void do_checkpoint(const char* chk);
 
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
@@ -592,15 +595,28 @@ public:
 
   virtual void* allocate(size_type n, void* hint = 0) = 0;
   virtual void deallocate(void* p) = 0;
-  virtual ~allocator_implementation();
+  virtual ~allocator_implementation() {}
 };
 
 class newdelete_allocator_implementation : public allocator_implementation {
 public: 
-  static newdelete_allocator_implementation* singleton();
+  static newdelete_allocator_implementation* singleton()
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      static newdelete_allocator_implementation self;
+      return &self;
+  }
 
-  void* allocate(size_type n, void* hint = 0);
-  void deallocate(void* p);
+  void* allocate(size_type n, void* hint = 0)
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      return new char[n];
+  }
+  void deallocate(void* p)
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      delete static_cast<char*>(p);
+  }
 };
 
 template <class _Tp>
@@ -620,15 +636,18 @@ public:
     typedef allocator<_Tp1> other;
   };
 
-  allocator(allocator_implementation* i = 0) __STL_NOTHROW {
+  allocator(allocator_implementation* i/* = 0*/) __STL_NOTHROW {
+      do_checkpoint(__PRETTY_FUNCTION__);
     if (i)
       imp = i;
     else
       imp = newdelete_allocator_implementation::singleton();
+  kconsole << "IMP: " <<imp << endl;
+  kconsole << "this "<<this<<", IMP at " << &imp << endl;
   }
-  allocator(const allocator&) __STL_NOTHROW {}
-  template <class _Tp1> allocator(const allocator<_Tp1>&) __STL_NOTHROW {}
-  ~allocator() __STL_NOTHROW {}
+  allocator(const allocator& __a) __STL_NOTHROW : imp(__a.get_implementation()) {do_checkpoint(__PRETTY_FUNCTION__);}
+  template <class _Tp1> allocator(const allocator<_Tp1>& __a) __STL_NOTHROW : imp(__a.get_implementation()) {do_checkpoint(__PRETTY_FUNCTION__);}
+  ~allocator() __STL_NOTHROW {do_checkpoint(__PRETTY_FUNCTION__);}
 
   allocator_implementation* get_implementation() const { return imp; }
   void swap(allocator& other) __STL_NOTHROW {
@@ -641,13 +660,20 @@ public:
   // __n is permitted to be 0.  The C++ standard says nothing about what
   // the return value is when __n == 0.
   _Tp* allocate(size_type __n, const void* = 0) {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      kconsole << "IMP: " <<imp << endl;
+      kconsole << "this "<<this<<", IMP at " << &imp << endl;
+      bochs_magic_trap();
+      
     return __n != 0 ? static_cast<_Tp*>(imp->allocate(__n * sizeof(_Tp))) 
                     : 0;
   }
 
   // __p is not permitted to be a null pointer.
   void deallocate(pointer __p, size_type __n)
-    { imp->deallocate(__p, __n * sizeof(_Tp)); }
+    { 
+        do_checkpoint(__PRETTY_FUNCTION__);
+        imp->deallocate(__p/*, __n * sizeof(_Tp)*/); }
 
   size_type max_size() const __STL_NOTHROW 
     { return size_t(-1) / sizeof(_Tp); }
@@ -696,6 +722,15 @@ inline bool operator!=(const debug_alloc<_Alloc>&,
 }
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
 
+template <typename _Alloc>
+struct is_lakos_allocator : __false_type {};
+
+template <typename _Alloc>
+struct uses_lakos_allocator : __false_type {};
+
+template <typename _Type>
+struct is_lakos_allocator<allocator<_Type>> : __true_type {};
+
 /*!
 // Another allocator adaptor: _Alloc_traits.  This serves two
 // purposes.  First, make it possible to write containers that can use
@@ -741,7 +776,7 @@ const bool _Alloc_traits<_Tp, _Allocator>::_S_instanceless;
 template <class _Tp, class _Tp1>
 struct _Alloc_traits<_Tp, allocator<_Tp1> >
 {
-  static const bool _S_instanceless = true;//make false!
+  static const bool _S_instanceless = false;
   typedef simple_alloc<_Tp, alloc> _Alloc_type;
   typedef allocator<_Tp> allocator_type;
 };

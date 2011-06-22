@@ -15,32 +15,19 @@
 #include "default_console.h"
 #include "debugger.h"
 
-// Compliant functions for STL allocator (TODO: replace stl malloc_alloc with other default allocator)
-extern "C" void* malloc(size_t size)
+void* operator new[](size_t size)
 {
-    kconsole << RED << "malloc(" << size << ") -> ";
-    debugger_t::print_backtrace();
-    halt();
-    return operator new(size, false, NULL);
+    return operator new(size);
 }
 
-extern "C" void free(void*p)
+void* operator new(size_t size)
 {
-    kconsole << RED << "free(" << p << ") -> ";
-    debugger_t::print_backtrace();
-    halt();
+    PANIC("Default new called!");
 }
 
-// we assume that stl uses realloc only to grow storage
-extern "C" void *realloc(void *ptr, size_t size)
+void operator delete(void*)
 {
-    kconsole << RED << "realloc(" << ptr << ", " << size << ") -> ";
-    debugger_t::print_backtrace();
-    halt();
-    void* ptr2 = malloc(size);
-    memutils::copy_memory(ptr2, ptr, size); // may fail since new size is assumed to be larger than the old.
-    free(ptr);
-    return ptr2;
+    PANIC("Default delete called!");
 }
 
 // kate: indent-width 4; replace-tabs on;

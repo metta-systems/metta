@@ -1,5 +1,7 @@
 #include "stretch_table_module_v1_interface.h"
 #include "stretch_table_module_v1_impl.h"
+#include "default_console.h"
+#include "heap_new.h"
 
 //======================================================================================================================
 // stretch_table_v1 implementation
@@ -14,29 +16,32 @@
 #include "memory"
 #include "functional"
 
-template <class _Tp>
-class heap_allocator
+namespace std {
+void do_checkpoint(const char* chk)
+{
+    kconsole << chk << endl;
+}
+}
+
+class heap_allocator_implementation : public std::allocator_implementation
 {
     heap_v1_closure* heap;
 public:
     typedef size_t size_type;
-    typedef _Tp* pointer;
 
-    template <class _U>
-    struct rebind { typedef heap_allocator<_U> other; };
-
-    heap_allocator(heap_v1_closure* h) : heap(h) {}
-
-    // __n is permitted to be 0.
-    _Tp* allocate(size_type __n, const void* = 0)
+    heap_allocator_implementation(heap_v1_closure* h) : heap(h) 
     {
-        return __n != 0 
-            ? reinterpret_cast<_Tp*>(heap->allocate(__n * sizeof(_Tp))) 
-            : 0;
+        kconsole << "** heap_allocator_impl: ctor this " << this << ", heap " << h << endl;
     }
 
-    void deallocate(pointer __p, size_type __n)
+    void* allocate(size_type __n, void* = 0)
+    {
+        kconsole << "** heap_allocator_impl: allocate " << __n << endl;
+        return reinterpret_cast<void*>(heap->allocate(__n));
+    }
+    void deallocate(void* __p)
     { 
+        kconsole << "** heap_allocator_impl: deallocate " << __p << endl;
         heap->free(reinterpret_cast<memory_v1_address>(__p));
     }
 };
@@ -66,7 +71,7 @@ struct driver_rec
     size_t page_width;
 };
 
-typedef heap_allocator<std::pair<stretch_v1_closure*, driver_rec> > stretch_heap_allocator;
+typedef std::allocator<std::pair<stretch_v1_closure*, driver_rec>> stretch_heap_allocator;
 typedef std::hash_map<stretch_v1_closure*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
 
 struct stretch_table_v1_state
@@ -117,10 +122,22 @@ static const stretch_table_v1_ops stretch_table_v1_methods =
 
 static stretch_table_v1_closure* create(stretch_table_module_v1_closure* self, heap_v1_closure* heap)
 {
+    kconsole << "WHOO"<<endl;
     stretch_table_v1_state* new_state = new(heap) stretch_table_v1_state;
+    kconsole << "CHOO"<<endl;
+    auto heap_alloc = new(heap) heap_allocator_implementation(heap);
+    kconsole << "WHEE"<<endl;
+
     new_state->heap = heap;
-    new_state->stretches = new(heap) stretch_map;//(heap);
-    return 0;
+    new_state->stretches = new(heap) stretch_map(heap_alloc); // kaboom.
+    kconsole << "TIHII" << endl;
+
+    stretch_table_v1_closure* cl = new(heap) stretch_table_v1_closure;
+    kconsole << "BUP!" << endl;
+    cl->state = new_state;
+    cl->methods = 0;
+
+    return cl;
 }
 
 static const stretch_table_module_v1_ops stretch_table_module_v1_methods =

@@ -366,13 +366,6 @@ __STL_TEMPLATE_NULL struct _Is_integer<unsigned long long> {
 
 #endif /* __STL_LONG_LONG */
 
-template <typename Alloc> struct is_lakos_allocator : __false_type;
-template <typename Alloc> struct uses_lakos_allocator : __false_type;
-
-template <typename Type> struct is_lakos_allocator<allocator<Type>> : __true_type {};
-template <typename Type, typename Alloc> struct uses_lakos_allocator<vector<Type,Alloc> > : is_lakos_allocator<Alloc> {};
-// Specialize more types here!
-
 #endif /* __TYPE_TRAITS_H */
 
 // Local Variables:

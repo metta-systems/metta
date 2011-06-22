@@ -10,9 +10,17 @@
 //
 #include "new.h"
 #include "macros.h"
+#include "panic.h"
+
+void* operator new(size_t size) throw()
+{
+    PANIC("Default new called!");
+    return 0;
+}
 
 void operator delete(void*)
 {
+    PANIC("Default delete called!");
 }
 
 // kate: indent-width 4; replace-tabs on;
