@@ -17,6 +17,7 @@ include_dirs = 'kernel kernel/generic runtime'.split()
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
+#-fvisibility-inlines-hidden -fvisibility=hidden
 cflags = []
 flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
@@ -88,6 +89,7 @@ def configure(conf):
         conf.check_tool('compiler_cc compiler_cxx', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_cxxflags = ['-std=gnu++0x']
         linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
+        linkflags += ['--gc-sections', '--print-gc-sections']
 
     cxxflags = cflags
 
@@ -219,7 +221,7 @@ def build(bld):
     bld.add_group()
 
     # List interfaces sorted alphabetically.
-    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']
+    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
@@ -233,13 +235,13 @@ def build(bld):
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support newdelete placement_new memutils cstring stdlib'.split())
+    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support memutils cstring stdlib newdelete'.split())
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
 
     minruntime = bld.new_task_gen('cxx', 'staticlib')
-    minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support placement_new dummy_delete memutils cstring'.split())
+    minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support dummy_delete memutils cstring'.split())
     minruntime.env = bld.env_of_name('KERNEL_ENV').copy()
     minruntime.includes = minruntime.env['INCLUDE_DIRS']
     minruntime.target = 'minruntime'
@@ -251,7 +253,7 @@ def build(bld):
     toolruntime.target = 'toolruntime'
 
     commons = bld.new_task_gen('cxx', 'staticlib')
-    commons.source = 'kernel/generic/elf_parser.cpp kernel/generic/console.cpp kernel/generic/module_loader.cpp'.split()
+    commons.source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser console module_loader'.split())
     commons.env = bld.env_of_name('KERNEL_ENV').copy()
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'
@@ -312,7 +314,7 @@ def build(bld):
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    kickstart.uselib_local = 'common runtime platform'# kernel
+    kickstart.uselib_local = 'common minruntime platform'# kernel
 
     # Launcher
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
@@ -330,6 +332,8 @@ def build(bld):
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
     # It includes interrupt handlers and some minimal syscall processing.
+    
+    # TODO: add nucleus_* code here, initialize glue before kernel startup??
     glue = bld.new_task_gen('cxx', 'program')
     glue.target = 'glue.sys'
     glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
@@ -337,7 +341,7 @@ def build(bld):
     glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
     glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
     glue.includes = glue.env['INCLUDE_DIRS']
-    glue.uselib_local = 'common platform kernel minruntime'# interfaces
+    glue.uselib_local = 'common kernel minruntime platform'
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']

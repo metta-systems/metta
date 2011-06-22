@@ -45,6 +45,8 @@ bool mbi_probe()
     for (size_t i = 0; i < _mbi->module_count(); i++)
         bi->append_module(i, _mbi->module(i));
 
+    //TODO: mark loaded modules memory as used in the bootinfo (so we don't overwrite them later on)
+
     bi->append_cmdline(_mbi->cmdline());
 
     return true;

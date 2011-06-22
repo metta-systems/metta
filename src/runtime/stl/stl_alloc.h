@@ -30,6 +30,7 @@
 #  define __USE_MALLOC
 #endif
 
+#include "debugger.h"//TEMP: for allocator debugging
 #include "memutils.h"
 
 // This implements some standard node allocators.  These are
@@ -89,6 +90,8 @@
 #endif
 
 __STL_BEGIN_NAMESPACE
+
+extern void do_checkpoint(const char* chk);
 
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma set woff 1174
@@ -583,9 +586,43 @@ __default_alloc_template<__threads, __inst> ::_S_free_list[
 // to refer to a template member of a dependent type.
 
 #ifdef __STL_USE_STD_ALLOCATORS
+// BDE allocators
+// see http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1850.pdf
+
+class allocator_implementation {
+public:
+  typedef size_t size_type;
+
+  virtual void* allocate(size_type n, void* hint = 0) = 0;
+  virtual void deallocate(void* p) = 0;
+  virtual ~allocator_implementation() {}
+};
+
+class newdelete_allocator_implementation : public allocator_implementation {
+public: 
+  static newdelete_allocator_implementation* singleton()
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      static newdelete_allocator_implementation self;
+      return &self;
+  }
+
+  void* allocate(size_type n, void* hint = 0)
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      return new char[n];
+  }
+  void deallocate(void* p)
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+      delete static_cast<char*>(p);
+  }
+};
+
 template <class _Tp>
 class allocator {
-  typedef alloc _Alloc;          // The underlying allocator.
+  //typedef alloc _Alloc;          // The underlying allocator.
+  allocator_implementation* imp;
 public:
   typedef size_t     size_type;
   typedef ptrdiff_t  difference_type;
@@ -599,10 +636,23 @@ public:
     typedef allocator<_Tp1> other;
   };
 
-  allocator() __STL_NOTHROW {}
-  allocator(const allocator&) __STL_NOTHROW {}
-  template <class _Tp1> allocator(const allocator<_Tp1>&) __STL_NOTHROW {}
-  ~allocator() __STL_NOTHROW {}
+  allocator(allocator_implementation* i/* = 0*/) __STL_NOTHROW {
+      do_checkpoint(__PRETTY_FUNCTION__);
+    if (i)
+      imp = i;
+    else
+      imp = newdelete_allocator_implementation::singleton();
+  kconsole << "IMP: " <<imp << endl;
+  kconsole << "this "<<this<<", IMP at " << &imp << endl;
+  }
+  allocator(const allocator& __a) __STL_NOTHROW : imp(__a.get_implementation()) {do_checkpoint(__PRETTY_FUNCTION__);}
+  template <class _Tp1> allocator(const allocator<_Tp1>& __a) __STL_NOTHROW : imp(__a.get_implementation()) {do_checkpoint(__PRETTY_FUNCTION__);}
+  ~allocator() __STL_NOTHROW {do_checkpoint(__PRETTY_FUNCTION__);}
+
+  allocator_implementation* get_implementation() const { return imp; }
+  void swap(allocator& other) __STL_NOTHROW {
+      swap(this->imp, other.imp);
+  }
 
   pointer address(reference __x) const { return &__x; }
   const_pointer address(const_reference __x) const { return &__x; }
@@ -610,13 +660,20 @@ public:
   // __n is permitted to be 0.  The C++ standard says nothing about what
   // the return value is when __n == 0.
   _Tp* allocate(size_type __n, const void* = 0) {
-    return __n != 0 ? static_cast<_Tp*>(_Alloc::allocate(__n * sizeof(_Tp))) 
+      do_checkpoint(__PRETTY_FUNCTION__);
+      kconsole << "IMP: " <<imp << endl;
+      kconsole << "this "<<this<<", IMP at " << &imp << endl;
+      bochs_magic_trap();
+      
+    return __n != 0 ? static_cast<_Tp*>(imp->allocate(__n * sizeof(_Tp))) 
                     : 0;
   }
 
   // __p is not permitted to be a null pointer.
   void deallocate(pointer __p, size_type __n)
-    { _Alloc::deallocate(__p, __n * sizeof(_Tp)); }
+    { 
+        do_checkpoint(__PRETTY_FUNCTION__);
+        imp->deallocate(__p/*, __n * sizeof(_Tp)*/); }
 
   size_type max_size() const __STL_NOTHROW 
     { return size_t(-1) / sizeof(_Tp); }
@@ -639,7 +696,6 @@ public:
   };
 };
 
-
 template <class _T1, class _T2>
 inline bool operator==(const allocator<_T1>&, const allocator<_T2>&) 
 {
@@ -651,109 +707,6 @@ inline bool operator!=(const allocator<_T1>&, const allocator<_T2>&)
 {
   return false;
 }
-
-// Allocator adaptor to turn an SGI-style allocator (e.g. alloc, malloc_alloc)
-// into a standard-conforming allocator.   Note that this adaptor does
-// *not* assume that all objects of the underlying alloc class are
-// identical, nor does it assume that all of the underlying alloc's
-// member functions are static member functions.  Note, also, that 
-// __allocator<_Tp, alloc> is essentially the same thing as allocator<_Tp>.
-
-template <class _Tp, class _Alloc>
-class __allocator {
-public:
-  _Alloc __underlying_alloc;
-
-  typedef size_t    size_type;
-  typedef ptrdiff_t difference_type;
-  typedef _Tp*       pointer;
-  typedef const _Tp* const_pointer;
-  typedef _Tp&       reference;
-  typedef const _Tp& const_reference;
-  typedef _Tp        value_type;
-
-  template <class _Tp1> struct rebind {
-    typedef __allocator<_Tp1, _Alloc> other;
-  };
-
-  __allocator() __STL_NOTHROW {}
-  __allocator(const __allocator& __a) __STL_NOTHROW
-    : __underlying_alloc(__a.__underlying_alloc) {}
-  template <class _Tp1> 
-  __allocator(const __allocator<_Tp1, _Alloc>& __a) __STL_NOTHROW
-    : __underlying_alloc(__a.__underlying_alloc) {}
-  ~__allocator() __STL_NOTHROW {}
-
-  pointer address(reference __x) const { return &__x; }
-  const_pointer address(const_reference __x) const { return &__x; }
-
-  // __n is permitted to be 0.
-  _Tp* allocate(size_type __n, const void* = 0) {
-    return __n != 0 
-        ? static_cast<_Tp*>(__underlying_alloc.allocate(__n * sizeof(_Tp))) 
-        : 0;
-  }
-
-  // __p is not permitted to be a null pointer.
-  void deallocate(pointer __p, size_type __n)
-    { __underlying_alloc.deallocate(__p, __n * sizeof(_Tp)); }
-
-  size_type max_size() const __STL_NOTHROW 
-    { return size_t(-1) / sizeof(_Tp); }
-
-  void construct(pointer __p, const _Tp& __val) { new(__p) _Tp(__val); }
-  void destroy(pointer __p) { __p->~_Tp(); }
-};
-
-template <class _Alloc>
-class __allocator<void, _Alloc> {
-  typedef size_t      size_type;
-  typedef ptrdiff_t   difference_type;
-  typedef void*       pointer;
-  typedef const void* const_pointer;
-  typedef void        value_type;
-
-  template <class _Tp1> struct rebind {
-    typedef __allocator<_Tp1, _Alloc> other;
-  };
-};
-
-template <class _Tp, class _Alloc>
-inline bool operator==(const __allocator<_Tp, _Alloc>& __a1,
-                       const __allocator<_Tp, _Alloc>& __a2)
-{
-  return __a1.__underlying_alloc == __a2.__underlying_alloc;
-}
-
-#ifdef __STL_FUNCTION_TMPL_PARTIAL_ORDER
-template <class _Tp, class _Alloc>
-inline bool operator!=(const __allocator<_Tp, _Alloc>& __a1,
-                       const __allocator<_Tp, _Alloc>& __a2)
-{
-  return __a1.__underlying_alloc != __a2.__underlying_alloc;
-}
-#endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
-
-// Comparison operators for all of the predifined SGI-style allocators.
-// This ensures that __allocator<malloc_alloc> (for example) will
-// work correctly.
-
-template <int inst>
-inline bool operator==(const __malloc_alloc_template<inst>&,
-                       const __malloc_alloc_template<inst>&)
-{
-  return true;
-}
-
-#ifdef __STL_FUNCTION_TMPL_PARTIAL_ORDER
-template <int __inst>
-inline bool operator!=(const __malloc_alloc_template<__inst>&,
-                       const __malloc_alloc_template<__inst>&)
-{
-  return false;
-}
-#endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
-
 
 template <class _Alloc>
 inline bool operator==(const debug_alloc<_Alloc>&,
@@ -768,6 +721,15 @@ inline bool operator!=(const debug_alloc<_Alloc>&,
   return false;
 }
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
+
+template <typename _Alloc>
+struct is_lakos_allocator : __false_type {};
+
+template <typename _Alloc>
+struct uses_lakos_allocator : __false_type {};
+
+template <typename _Type>
+struct is_lakos_allocator<allocator<_Type>> : __true_type {};
 
 /*!
 // Another allocator adaptor: _Alloc_traits.  This serves two
@@ -814,71 +776,10 @@ const bool _Alloc_traits<_Tp, _Allocator>::_S_instanceless;
 template <class _Tp, class _Tp1>
 struct _Alloc_traits<_Tp, allocator<_Tp1> >
 {
-  static const bool _S_instanceless = true;
+  static const bool _S_instanceless = false;
   typedef simple_alloc<_Tp, alloc> _Alloc_type;
   typedef allocator<_Tp> allocator_type;
 };
-
-// Versions for the predefined SGI-style allocators.
-
-template <class _Tp, int __inst>
-struct _Alloc_traits<_Tp, __malloc_alloc_template<__inst> >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, __malloc_alloc_template<__inst> > _Alloc_type;
-  typedef __allocator<_Tp, __malloc_alloc_template<__inst> > allocator_type;
-};
-
-template <class _Tp, bool __threads, int __inst>
-struct _Alloc_traits<_Tp, __default_alloc_template<__threads, __inst> >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, __default_alloc_template<__threads, __inst> > 
-          _Alloc_type;
-  typedef __allocator<_Tp, __default_alloc_template<__threads, __inst> > 
-          allocator_type;
-};
-
-template <class _Tp, class _Alloc>
-struct _Alloc_traits<_Tp, debug_alloc<_Alloc> >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, debug_alloc<_Alloc> > _Alloc_type;
-  typedef __allocator<_Tp, debug_alloc<_Alloc> > allocator_type;
-};
-
-// Versions for the __allocator adaptor used with the predefined
-// SGI-style allocators.
-
-template <class _Tp, class _Tp1, int __inst>
-struct _Alloc_traits<_Tp, 
-                     __allocator<_Tp1, __malloc_alloc_template<__inst> > >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, __malloc_alloc_template<__inst> > _Alloc_type;
-  typedef __allocator<_Tp, __malloc_alloc_template<__inst> > allocator_type;
-};
-
-template <class _Tp, class _Tp1, bool __thr, int __inst>
-struct _Alloc_traits<_Tp, 
-                      __allocator<_Tp1, 
-                                  __default_alloc_template<__thr, __inst> > >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, __default_alloc_template<__thr,__inst> > 
-          _Alloc_type;
-  typedef __allocator<_Tp, __default_alloc_template<__thr,__inst> > 
-          allocator_type;
-};
-
-template <class _Tp, class _Tp1, class _Alloc>
-struct _Alloc_traits<_Tp, __allocator<_Tp1, debug_alloc<_Alloc> > >
-{
-  static const bool _S_instanceless = true;
-  typedef simple_alloc<_Tp, debug_alloc<_Alloc> > _Alloc_type;
-  typedef __allocator<_Tp, debug_alloc<_Alloc> > allocator_type;
-};
-
 
 #endif /* __STL_USE_STD_ALLOCATORS */
 

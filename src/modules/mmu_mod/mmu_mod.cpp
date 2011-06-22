@@ -8,10 +8,11 @@
 #include "mmu_v1_impl.h"
 #include "ramtab_v1_interface.h"
 #include "ramtab_v1_impl.h"
-#include "cpu.h"
 #include "page_directory.h"
 #include "system_frame_allocator_v1_interface.h"
 #include "heap_v1_interface.h"
+#include "nucleus.h"
+#include "cpu.h"
 
 //======================================================================================================================
 // mmu_v1 methods
@@ -76,9 +77,9 @@ struct mmu_v1_state
 
     bool                  use_global_pages;    /* Set iff we can use PGE    */
 
-    system_frame_allocator_v1_closure*  system_frame_allocator;
+    /*system_*/frame_allocator_v1_closure*  system_frame_allocator;
     heap_v1_closure*                    heap;
-//  stretch_allocator_v1_closure*       stretch_allocator;
+    stretch_allocator_v1_closure*       stretch_allocator;
 
 //    uint32_t              n_frames;//FIXME: UNUSED!!?!
 
@@ -139,6 +140,7 @@ static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner,
 
 static uint32_t ramtab_v1_get(ramtab_v1_closure* self, uint32_t pfn, uint32_t* fwidth, ramtab_v1_state_e* st)
 {
+    //kconsole << " +-ramtab_v1: get " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
     return 0;
 }
 
@@ -331,14 +333,14 @@ static void enter_mappings(mmu_v1_state* state)
             pte.set_frame(phys);
             pte.set_flags(flags);
             
-    	    if (!add4k_page(state, virt, pte, SID_NULL))
-    	    {
-    		    kconsole << "enter_mappings: failed to add mapping " << virt << "->" << phys << endl;
+            if (!add4k_page(state, virt, pte, SID_NULL))
+            {
+                kconsole << "enter_mappings: failed to add mapping " << virt << "->" << phys << endl;
                 PANIC("enter_mappings failed!");
-    	    }
+            }
 
             state->ramtab_closure.put(phys >> FRAME_WIDTH, OWNER_SYSTEM, FRAME_WIDTH, ramtab_v1_state_e_mapped);
-		}
+        }
     });
 
     kconsole << " +-mmu_module_v1: enter_mappings required total of " << state->l2_next << " new l2 tables." << endl;
@@ -445,18 +447,15 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 
     state->l2_next = 0;
     for(i = 0; i < state->l2_max; i++)
-	    state->info[i] = L2FREE;
+        state->info[i] = L2FREE;
 
     // Enter mappings for all the existing translations.
     enter_mappings(state); // this call uses mappings in bootinfo_page, so we need to set them up sooner or call enter_mappings() later, maybe in Done or Engage?
 
     // Swap over to our new page table!
-//    MTRC(eprintf("MMUMod: setting new ptbr to va=%p, pa=%p\n", 
-//	    st->va_l1, st->pa_l1));
-    ia32_mmu_t::set_active_pagetable(state->l1_mapping_phys);
-//    ntsc_wptbr(st->va_l1, st->pa_l1, st->vtab_va); //PDBR syscall
-// nucleus_write_pdbr(); <<-- proposed syscalls format
-//    MTRC(eprintf("+++ done new ptbr.\n"));
+    kconsole << " +-mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys << endl;
+    nucleus::write_pdbr(state->l1_mapping_virt, state->l1_mapping_phys);
+    kconsole << " +-mmu_module_v1: wrote new pdbr using syscall!" << endl;
 
     // And store some useful pointers in the PIP for user-level translation.
 //    INFO_PAGE.l1_va  = st->va_l1; 
@@ -469,8 +468,17 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     return cl;
 }
 
+static void mmu_module_v1_finish_init(mmu_module_v1_closure* self, mmu_v1_closure* mmu, frame_allocator_v1_closure* frames, heap_v1_closure* heap, stretch_allocator_v1_closure* sysalloc)
+{
+    /* We don't require much here; just squirrel away the closures */
+    mmu->state->system_frame_allocator = frames;
+    mmu->state->heap = heap;
+    mmu->state->stretch_allocator = sysalloc;
+}
+
 static const mmu_module_v1_ops mmu_module_v1_method_table = {
     mmu_module_v1_create,
+    mmu_module_v1_finish_init
 };
 
 static const mmu_module_v1_closure clos = {

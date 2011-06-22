@@ -11,8 +11,8 @@ def setup_module_build(bld, name):
     mod.env = bld.env_of_name('KERNEL_ENV').copy()
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99 ../../modules'
-    mod.uselib_local = 'component_support platform minruntime kernel common interfaces'
+    mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/api ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99 ../../modules'
+    mod.uselib_local = 'interfaces component_support kernel platform common runtime'
     bld.new_task_gen(
         source = name+'.comp',
         rule = 'nm -u ${SRC[0].abspath(env)}',

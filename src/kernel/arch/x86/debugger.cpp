@@ -74,9 +74,11 @@ address_t debugger_t::backtrace(int n)
     return 0;
 }
 
-void debugger_t::print_backtrace(address_t base_pointer, int n)
+void debugger_t::print_backtrace(address_t base_pointer, address_t eip, int n)
 {
-    address_t eip = 1; // Don't initialise to 0, will kill the loop immediately.
+    if (eip == 0)
+        eip = 1; // Don't initialise to 0, will kill the loop immediately.
+
     if (base_pointer == 0)
     {
         base_pointer = read_base_pointer();
@@ -90,11 +92,15 @@ void debugger_t::print_backtrace(address_t base_pointer, int n)
     int i = 0;
     while (base_pointer && eip && ((n && i<n) || !n))
     {
-        base_pointer = backtrace(base_pointer, eip);
+        // Start printing from EIP if we've been passed a valid one.
+        if (eip > 1)
+        {
 //         unsigned int offset;
 //         char *symbol = kernel_elf_parser.find_symbol(eip, &offset);
 //         offset = eip - offset;
-        kconsole << "| " << (unsigned)eip << endl; //" <" << (symbol ? symbol : "UNRESOLVED") << "+0x" << offset << ">" << endl;
+            kconsole << "| " << (unsigned)eip << endl; //" <" << (symbol ? symbol : "UNRESOLVED") << "+0x" << offset << ">" << endl;
+        }
+        base_pointer = backtrace(base_pointer, eip);
         i++;
     }
 }

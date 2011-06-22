@@ -25,6 +25,11 @@
 
 __STL_BEGIN_NAMESPACE
 
+template <typename Type>
+void swap(allocator<Type>& a, allocator<Type>& b) throw() {
+    a.swap(b);
+}
+
 #if defined(__SGI_STL_USE_AUTO_PTR_CONVERSIONS) && \
     defined(__STL_MEMBER_TEMPLATES)
 

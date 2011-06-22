@@ -22,14 +22,11 @@
 #include "c++ctors.h"
 #include "gdt.h"
 #include "idt.h"
+#include "isr.h"
 #include "root_domain.h"
 #include "registers.h"
 #include "new.h"
-
-// Declare C linkage.
-extern "C" void kernel_startup();
-// extern "C" address_t placement_address;
-// extern "C" address_t KICKSTART_BASE;
+#include "debugger.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -206,6 +203,45 @@ static void prepare_infopage()
 extern timer_v1_closure* init_timer();
 static continuation_t new_context;
 
+static void dump_regs(registers_t* regs)
+{
+    kconsole << endl << RED 
+        << "=================================================================================================" << endl
+        << "Interrupt " << regs->int_no << ", error code " << regs->err_code << endl
+        << "     EAX:" << regs->eax << " EBX:" << regs->ebx << " ECX:" << regs->ecx << " EDX:" << regs->edx << endl
+        << "     ESI:" << regs->esi << " EDI:" << regs->edi << " EBP:" << regs->ebp << " ESP:" << regs->esp << endl
+        << "user ESP:" << regs->useresp << " CS:" << regs->cs << " DS:" << regs->ds << " SS:" << regs->ss << endl
+        << "     EIP:" << regs->eip << " EFLAGS:" << regs->eflags << endl;
+
+    debugger_t::print_backtrace(regs->ebp, regs->eip, 20);
+
+    kconsole << "=================================================================================================" << endl;    
+}
+
+class general_fault_handler_t : public interrupt_service_routine_t
+{
+public:
+    virtual void run(registers_t* regs)
+    {
+        dump_regs(regs);
+        PANIC("GENERAL PROTECTION FAULT");
+    }
+};
+
+class invalid_opcode_handler_t : public interrupt_service_routine_t
+{
+public:
+    virtual void run(registers_t* regs)
+    {
+        dump_regs(regs);
+        PANIC("INVALID OPCODE");
+    }
+};
+
+
+general_fault_handler_t gpf_handler;
+invalid_opcode_handler_t iop_handler;
+
 /*!
  * Get the system going.
  *
@@ -213,18 +249,20 @@ static continuation_t new_context;
  *
  * TODO: relate Pistachio SMP startup routines here.
  */
-void kernel_startup()
+extern "C" void kernel_startup()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
     global_descriptor_table_t gdt;
-//     kconsole << "Created GDT." << endl;
+    kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
-//     kconsole << "Created IDT." << endl;
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x6, &iop_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xd, &gpf_handler);
+    kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
     address_t start, end;
     const char* name;
@@ -248,7 +286,7 @@ void kernel_startup()
     timer->enable(0); // enable timer interrupts
     x86_cpu_t::enable_fpu();
 
-    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
+//    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     root_domain_t root_dom(bootimage);
 

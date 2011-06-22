@@ -10,11 +10,11 @@
 
 #include "types.h"
 
-void* operator new(size_t size);
-void* operator new(size_t size, bool page_align, address_t* phys_addr = NULL);
-void* operator new[](size_t size);
-void* operator new[](size_t size, bool page_align, address_t* phys_addr = NULL);
-void  operator delete(void* p);
+void* operator new(size_t size) throw();
+//void* operator new(size_t size, bool page_align, address_t* phys_addr = NULL);
+void* operator new[](size_t size) throw();
+//void* operator new[](size_t size, bool page_align, address_t* phys_addr = NULL);
+void  operator delete(void* p) throw();
 void  operator delete[](void* p);
 
 // placement new and delete

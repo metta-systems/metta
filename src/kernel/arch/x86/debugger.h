@@ -32,11 +32,11 @@ public:
     **/
     static address_t backtrace(int n);
 
-    /**
-    * Print a full backtrace from the current location. (Or, if @p n is specified,
-    * up to n stack frames.
-    **/
-    static void print_backtrace(address_t base_pointer = 0, int n = 0);
+    /*!
+     * Print a full backtrace from the start location EIP and following the stack frames starting at EBP.
+     * (Or, if @p n is specified, up to n stack frames.)
+     */
+    static void print_backtrace(address_t base_pointer = 0, address_t eip = 0, int n = 0);
 
     /**
     * Prints first @p n words from the stack

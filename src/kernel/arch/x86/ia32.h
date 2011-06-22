@@ -29,9 +29,9 @@
 // Next to last 4 megs are for kernel temporary mappings.
 #define KERNEL_VIRTUAL_MAPPINGS 0xff800000
 
-const size_t    PAGE_SIZE = 0x1000;
-const address_t PAGE_MASK = 0xFFFFF000;
-const size_t    FRAME_WIDTH = 12;
+static const size_t    PAGE_SIZE = 0x1000;
+static const address_t PAGE_MASK = 0xFFFFF000;
+static const size_t    FRAME_WIDTH = 12;
 
 // Page attributes
 #define IA32_PAGE_PRESENT        (1<<0)

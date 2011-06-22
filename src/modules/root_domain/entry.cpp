@@ -19,6 +19,7 @@
 #include "system_stretch_allocator_v1_interface.h"
 #include "stretch_driver_module_v1_interface.h"
 #include "stretch_table_module_v1_interface.h"
+#include "stretch_allocator_module_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -43,7 +44,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     kconsole << " + Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
     elf_parser_t loader(addr.start);
     return bi->get_module_loader().load_module(module_name, loader, clos);
     /* FIXME: Skip dependencies for now */
@@ -64,27 +65,27 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + init_mem" << endl;
 
     // Load modules used for booting before we overwrite them.
-    auto frames_mod = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
-    ASSERT(frames_mod);
+    auto frames_factory = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    ASSERT(frames_factory);
 
     auto mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
-    ASSERT(mmu_mod);
+    ASSERT(mmu_mod); // mmu_factory
 
     auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
-    ASSERT(heap_mod);
+    ASSERT(heap_mod); // heap_factory
 
-    auto stretch_allocator = load_module<system_stretch_allocator_v1_closure>(bootimg, "stretch_allocator_mod", "exported_system_stretch_allocator_rootdom");
-    ASSERT(stretch_allocator);
+    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
+    ASSERT(stretch_allocator_mod);
     
-    auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretchtbl_module_rootdom");
+    auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
     ASSERT(stretch_table_mod);
 
-    auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom");
+    auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
     ASSERT(stretch_driver_mod);
 
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
-    int required = frames_mod->required_size();
+    int required = frames_factory->required_size();
     int initial_heap_size = 128*KiB;
 
     ramtab_v1_closure* rtab;
@@ -99,14 +100,15 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
     kconsole << " + Creating frame allocator" << endl;
-    auto frames = frames_mod->create(rtab, next_free);
+    auto frames = frames_factory->create(rtab, next_free);
 
     kconsole << " + Creating heap" << endl;
     auto heap = heap_mod->create_raw(next_free + required, initial_heap_size);
     PVS(heap) = heap;
 
-    frames_mod->finish_init(frames, heap);
+    frames_factory->finish_init(frames, heap);
 
+#if HEAP_DEBUG
     kconsole << " + Heap alloc test:";
     for (size_t counter = 0; counter < 127*KiB; ++counter)
     {
@@ -120,17 +122,12 @@ static void init_mem(bootimage_t& bootimg)
     }
     heap->check(true);
     kconsole << " done." << endl;
-
-    kconsole << " + Frames create_client test" << endl;
-    frames->create_client(0x2000, 0x2000, 20, 20, 20);
-}
-#if 0
-    // create stretch allocator
-    kconsole << " + Creating stretch allocator" << endl;
-    // assign stretches to address ranges
-    auto salloc = init_virt_mem(salloc_mod, memmap, heap, mmu);
-    PVS(strech_allocator) = salloc;
-
+#endif
+/*
+    kconsole << " + Creating system stretch allocator" << endl;
+    auto system_stretch_allocator = stretch_allocator_mod->create(heap, mmu);
+    PVS(stretch_allocator) = system_stretch_allocator;
+*/
     /*
      * We create a 'special' stretch allocator which produces stretches
      * for page tables, protection domains, DCBs, and so forth.
@@ -138,13 +135,24 @@ static void init_mem(bootimage_t& bootimg)
      * but it will typcially imply at least that the stretches will
      * be backed by phyiscal memory on creation.
      */
-    auto sysalloc = salloc->create_nailed(frames, heap);
+/*    kconsole << " + Creating nailed stretch allocator" << endl;
+    auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1_closure*>(frames), heap);//yikes!
 
-    mmu_mod->finished(mmu, frames, heap, sysalloc);
+//    debugger_t::checkpoint("ONE");
 
+    mmu_mod->finish_init(mmu, reinterpret_cast<frame_allocator_v1_closure*>(frames), heap, sysalloc); //yikes again!
+
+//    debugger_t::checkpoint("TWO");
+*/
+    kconsole << " + Creating stretch table" << endl;
     auto strtab = stretch_table_mod->create(heap);
-    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
 
+//    debugger_t::checkpoint("THREE");
+
+//    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
+
+}
+#if 0
     // Create the initial address space; returns a pdom for Nemesis domain.
     kconsole << " + Creating initial address space." << endl;
     nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
@@ -926,19 +934,8 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
     kconsole << "      + vp closure     = %p\n", (addr_t)vp));
     kconsole << "      + rop            = %p\n", (addr_t)RO(vp)));
 
-#if defined(__i386__) || defined(__x86_64)
     kconsole << "*************** ENGAGING PROTECTION ******************\n"));
     MMU$Engage(mmu, VP$ProtDomID(vp));
-#else
-    // install page fault handler
-    // Identity map currently executing code.
-    // page 0 is not mapped to catch null pointers
-    //     map_identity("bottom 4Mb", PAGE_SIZE, 4*MiB - PAGE_SIZE);
-    // enable paging
-    //     static_cast<x86_protection_domain_t&>(protection_domain_t::privileged()).enable_paging();
-    //     kconsole << "Enabled paging." << endl;
-    #warning Need some protection for your architecture.
-#endif
 
     kconsole << "NemesisPrimal: Activating Nemesis domain" << endl;
     ntsc_actdom(RO(vp), Activation_Reason_Allocated);
@@ -982,7 +979,7 @@ extern "C" void _start()
 
     kconsole << " + image bootup entry!" << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(false);
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
     address_t start, end;
     const char* name;
     if (!bi->get_module(1, start, end, name))

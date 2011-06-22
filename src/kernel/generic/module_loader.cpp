@@ -216,7 +216,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
-        kconsole << "+-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
+        kconsole << " +-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
 
         start = 0;
         size_t section_offset = 0;
@@ -301,12 +301,14 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (!closure_name)
     {
         address_t entry = module.get_entry_point();
-		V(kconsole << "entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *last_available_address << endl);
+		V(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *last_available_address << endl);
         return (void*)(entry + section_base - start);
     }
     else
     {
         // Symbol is a pointer to closure structure.
+        address_t entry = reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
+        kconsole << " +-- Returning closure pointer " << entry << endl;
         return *(void**)(module.find_symbol(closure_name));
     }
 }

@@ -1,0 +1,22 @@
+local interface stretch_allocator_module_v1
+{
+    # Creates the initial "system_stretch_allocator" which allocates the virtual
+    # address regions described by "allvm". Any regions which have
+    # been already 'allocated' (e.g. used by a bootloader or sim.)
+    # are given in "used". 
+    # 
+    # Subsidiary storage (e.g. for closures and state) is taken from the
+    # separately instantiated "Heap".
+
+    create(heap_v1& heap, mmu_v1& mmu)
+        returns (system_stretch_allocator_v1& stretch_allocator)
+        raises (heap_v1.no_memory, memory_v1.failure);
+
+    # The inital "StretchAllocatorF" is created before a number of
+    # things are available; most importantly we do not know the 
+    # VCPU of our 'client' (viz. nemesis). 
+    # Hence we call this routine after we have a valid vp to allow
+    # the StretchAllocator to update it's internal information.
+
+    finish_init(system_stretch_allocator_v1& stretch_allocator, vcpu_v1& vcpu, protection_domain_v1.id pdid);
+}
