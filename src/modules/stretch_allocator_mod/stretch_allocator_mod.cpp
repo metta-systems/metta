@@ -1,7 +1,9 @@
 #include "stretch_allocator_module_v1_interface.h"
 #include "stretch_allocator_module_v1_impl.h"
 #include "system_stretch_allocator_v1_interface.h"
+#include "system_stretch_allocator_v1_impl.h"
 #include "stretch_allocator_v1_interface.h"
+#include "stretch_allocator_v1_impl.h"
 #include "stretch_v1_interface.h"
 #include "memory_v1_interface.h"
 #include "default_console.h"
@@ -49,6 +51,48 @@ struct system_stretch_allocator_v1_state
 }; 
 
 //======================================================================================================================
+// stretch_allocator_v1 methods
+//======================================================================================================================
+
+//======================================================================================================================
+// nailed version
+//======================================================================================================================
+
+static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+//======================================================================================================================
+// system_stretch_allocator_v1 methods
+//======================================================================================================================
+
+stretch_allocator_v1_closure* system_stretch_allocator_v1_create_nailed(system_stretch_allocator_v1_closure* self, frame_allocator_v1_closure* frames, heap_v1_closure* heap)
+{
+    kconsole << __PRETTY_FUNCTION__ << endl;
+    stretch_allocator_v1_closure* cl = new(heap) stretch_allocator_v1_closure;
+    cl->methods = &stretch_allocator_v1_nailed_methods;
+    cl->state = NULL;
+    return cl;
+}
+
+static const system_stretch_allocator_v1_ops system_stretch_allocator_v1_methods = {
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    system_stretch_allocator_v1_create_nailed,
+    NULL
+};
+
+//======================================================================================================================
 // stretch_allocator_module_v1 methods
 //======================================================================================================================
 
@@ -60,7 +104,11 @@ static system_stretch_allocator_v1_closure* create(stretch_allocator_module_v1_c
     
     // allvm is just an entire virtual address space (0 to ADDRESS_T_MAX, except some unusable areas, if any)
     
-    PANIC("end");
+    system_stretch_allocator_v1_closure* cl = new(heap) system_stretch_allocator_v1_closure;
+    cl->methods = &system_stretch_allocator_v1_methods;
+    cl->state = NULL;
+
+    return cl;
 }
 
 static void finish_init(stretch_allocator_module_v1_closure* self, system_stretch_allocator_v1_closure* stretch_allocator, vcpu_v1_closure* vcpu, protection_domain_v1_id pdid)
