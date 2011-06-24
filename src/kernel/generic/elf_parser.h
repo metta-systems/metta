@@ -134,6 +134,8 @@ public:
 protected:
 
     elf32::header_t*         header;          //!< ELF file header.
+    mutable elf32::section_header_t* strtab;  //!< Cache .strtab location to speed up symbol lookup.
+    mutable elf32::section_header_t* symtab;  //!< Cache SHT_SYMTAB location to speed up symbol lookup.
 };
 
 // kate: indent-width 4; replace-tabs on;
