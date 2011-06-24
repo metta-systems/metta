@@ -51,7 +51,7 @@ struct hash_fn : std::unary_function<size_t, const stretch_v1_closure*>
     size_t operator()(const stretch_v1_closure* s) const
     {
         address_t w = reinterpret_cast<address_t>(s);
-        return w ^ (w >> 8);
+        return w ^ (w >> 18);
     }
 };
 
@@ -100,12 +100,21 @@ static bool put(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uin
 
 static bool remove(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uint32_t* page_width, stretch_driver_v1_closure** stretch_driver)
 {
+    stretch_map::iterator it = self->state->stretches->find(stretch);
+    if (it != self->state->stretches->end())
+    {
+        driver_rec result = (*it).second;
+        *page_width = result.page_width;
+        *stretch_driver = result.driver;
+        self->state->stretches->erase(it);
+        return true;
+    }
     return false;
 }
 
 static void destroy(stretch_table_v1_closure* self)
 {
-    delete self->state->stretches;
+    delete self->state->stretches; //hmmmm, need to use right allocators and stuff..
 }
 
 static const stretch_table_v1_ops stretch_table_v1_methods =
@@ -129,13 +138,13 @@ static stretch_table_v1_closure* create(stretch_table_module_v1_closure* self, h
     kconsole << "WHEE"<<endl;
 
     new_state->heap = heap;
-    new_state->stretches = new(heap) stretch_map(heap_alloc); // kaboom.
+    new_state->stretches = new(heap) stretch_map(heap_alloc);
     kconsole << "TIHII" << endl;
 
     stretch_table_v1_closure* cl = new(heap) stretch_table_v1_closure;
     kconsole << "BUP!" << endl;
     cl->state = new_state;
-    cl->methods = 0;
+    cl->methods = &stretch_table_v1_methods;
 
     return cl;
 }
