@@ -663,7 +663,7 @@ public:
       do_checkpoint(__PRETTY_FUNCTION__);
       kconsole << "IMP: " <<imp << endl;
       kconsole << "this "<<this<<", IMP at " << &imp << endl;
-      bochs_magic_trap();
+      //bochs_magic_trap();
       
     return __n != 0 ? static_cast<_Tp*>(imp->allocate(__n * sizeof(_Tp))) 
                     : 0;
