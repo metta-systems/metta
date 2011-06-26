@@ -6,7 +6,7 @@ local interface stretch_allocator_module_v1
     # are given in "used". 
     # 
     # Subsidiary storage (e.g. for closures and state) is taken from the
-    # separately instantiated "Heap".
+    # separately instantiated "heap".
 
     create(heap_v1& heap, mmu_v1& mmu)
         returns (system_stretch_allocator_v1& stretch_allocator)

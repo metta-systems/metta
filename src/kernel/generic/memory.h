@@ -11,7 +11,7 @@
 #include "types.h"
 #include "ia32.h"
 
-/* Roundup a value "size" to an intergral number of frames of width "frame_width" */
+/* Roundup a value "size" up to an intergral number of frames of width "frame_width" */
 template <typename S, typename W>
 inline S align_to_frame_width(S size, W frame_width)
 {
