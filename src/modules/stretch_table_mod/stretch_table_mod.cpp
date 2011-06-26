@@ -114,7 +114,8 @@ static bool remove(stretch_table_v1_closure* self, stretch_v1_closure* stretch, 
 
 static void destroy(stretch_table_v1_closure* self)
 {
-    delete self->state->stretches; //hmmmm, need to use right allocators and stuff..
+    kconsole << "Trying to destroy a stretch_table, might not work!" << endl;
+    delete/*(self->state->heap)*/ self->state->stretches; //hmmmm, need to use right allocators and stuff..
 }
 
 static const stretch_table_v1_ops stretch_table_v1_methods =
@@ -131,18 +132,13 @@ static const stretch_table_v1_ops stretch_table_v1_methods =
 
 static stretch_table_v1_closure* create(stretch_table_module_v1_closure* self, heap_v1_closure* heap)
 {
-    kconsole << "WHOO"<<endl;
     stretch_table_v1_state* new_state = new(heap) stretch_table_v1_state;
-    kconsole << "CHOO"<<endl;
     auto heap_alloc = new(heap) heap_allocator_implementation(heap);
-    kconsole << "WHEE"<<endl;
 
     new_state->heap = heap;
     new_state->stretches = new(heap) stretch_map(heap_alloc);
-    kconsole << "TIHII" << endl;
 
     stretch_table_v1_closure* cl = new(heap) stretch_table_v1_closure;
-    kconsole << "BUP!" << endl;
     cl->state = new_state;
     cl->methods = &stretch_table_v1_methods;
 
