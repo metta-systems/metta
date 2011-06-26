@@ -90,6 +90,7 @@ def configure(conf):
         extra_cross_cxxflags = ['-std=gnu++0x']
         linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
         linkflags += ['--gc-sections', '--print-gc-sections']
+        linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
     cxxflags = cflags
 
