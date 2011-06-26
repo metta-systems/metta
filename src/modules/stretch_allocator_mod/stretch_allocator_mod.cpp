@@ -200,6 +200,7 @@ static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_addre
                 new_region->desc.start_addr = *virt_addr + align_to_frame_width(size, region->desc.page_width);
                 new_region->desc.n_pages = region->desc.n_pages - (npages + region_page_offset);
                 new_region->desc.page_width = region->desc.page_width;
+                new_region->desc.attr = region->desc.attr;
                 region->desc.n_pages = region_page_offset;
                 region->insert_after(new_region);
             }
