@@ -2,6 +2,7 @@
 
 #include "time_v1_interface.h"
 #include "pervasives_v1_interface.h"
+#include "stretch_v1_interface.h"
 
 struct information_page_t
 {
@@ -18,10 +19,12 @@ struct information_page_t
              faults_heartbeat;
 
     uint32_t cpu_features;
-    
+
     void* protection_domains;
-    
+
     bool mmu_ok;
+
+    stretch_v1_closure** stretch_mapping;
 };
 
 #define INFO_PAGE_ADDR 0x1000
