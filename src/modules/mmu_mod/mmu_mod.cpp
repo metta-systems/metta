@@ -13,6 +13,7 @@
 #include "heap_v1_interface.h"
 #include "nucleus.h"
 #include "cpu.h"
+#include "domain.h"
 
 //======================================================================================================================
 // mmu_v1 methods
@@ -33,14 +34,6 @@ struct pdom_st
     uint16_t            gen;     /* current generation of this pdom */
     stretch_v1_closure* stretch; /* handle on stretch (for destroy) */ 
 };
-
-/*
-** Protection domains are implemented as arrays of 4-bit elements, 
-** indexed by stretch id.
-*/
-typedef uint16_t  sid_t;
-#define SID_NULL  0xFFFF
-#define SID_MAX   16384
 
 struct pdom_t
 {
