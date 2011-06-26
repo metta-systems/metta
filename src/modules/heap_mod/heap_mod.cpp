@@ -47,7 +47,7 @@ static const heap_v1_ops heap_v1_methods = {
 
 static heap_v1_closure* heap_module_v1_create_raw(heap_module_v1_closure* self, memory_v1_address where, memory_v1_size size)
 {
-    kconsole << "heap_mod: create_raw at " << where << " with " << int(size) << " bytes." << endl;
+    kconsole << __FUNCTION__ << ": at " << where << " with " << int(size) << " bytes." << endl;
 
     size = page_align_up(size);
     if (size < HEAP_MIN_SIZE - sizeof(heap_v1_state))
@@ -74,9 +74,23 @@ static memory_v1_address heap_module_v1_where(heap_module_v1_closure* self, heap
     return 0;
 }
 
+/*!
+ * Realize is used to turn a 'raw' heap into a stretch-based one, and requires that the given stretch maps exactly over
+ * the frames of the original heap.
+ */
+static heap_v1_closure* heap_module_v1_realize(heap_module_v1_closure* self, heap_v1_closure* raw_heap, stretch_v1_closure* stretch)
+{
+    // switch heap type to 'stretch'
+    // clear out all stretches
+    // map given stretch as a single stretch
+    // replace ops with stretch based ones
+    return raw_heap;
+}
+
 static const heap_module_v1_ops ops = {
     heap_module_v1_create_raw,
-    heap_module_v1_where
+    heap_module_v1_where,
+    heap_module_v1_realize
 };
 
 static const heap_module_v1_closure clos = {
