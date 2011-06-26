@@ -10,9 +10,18 @@
 //
 #include "macros.h"
 #include "mmu.h"
+#include "debugger.h"
 
 namespace nucleus
 {
+    inline void syscall(int syscall_no)
+    {
+        if (syscall_no == 0x90)
+            debugger_t::breakpoint();
+        else
+            PANIC("Syscall unimplemented!");
+    }
+
     template <typename T1, typename T2>
     inline void syscall(int syscall_no, T1 arg1, T2 arg2)
     {
@@ -30,5 +39,10 @@ namespace nucleus
     inline void write_pdbr(address_t pdba_phys, address_t pdba_virt)
     {
         syscall(0x80, pdba_phys, pdba_virt);
+    }
+    
+    inline void debug_stop()
+    {
+        syscall(0x90);
     }
 }
