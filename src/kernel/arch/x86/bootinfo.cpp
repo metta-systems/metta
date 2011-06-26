@@ -219,6 +219,12 @@ module_loader_t bootinfo_t::get_module_loader()
     return module_loader_t(this, &last_available_module_address);
 }
 
+address_t bootinfo_t::used_modules_memory(size_t* size)
+{
+    *size = last_available_module_address - MODULE_LOAD_START;
+    return MODULE_LOAD_START;
+}
+
 bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, const char*& name)
 {
     bootrec_info_t info;

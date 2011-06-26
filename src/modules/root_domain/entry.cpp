@@ -19,6 +19,7 @@
 #include "system_stretch_allocator_v1_interface.h"
 #include "stretch_driver_module_v1_interface.h"
 #include "stretch_table_module_v1_interface.h"
+#include "stretch_table_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
 
 // bootimage contains modules and namespaces
@@ -63,6 +64,7 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 static void init_mem(bootimage_t& bootimg)
 {
     kconsole << " + init_mem" << endl;
+    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
     // Load modules used for booting before we overwrite them.
     auto frames_factory = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
@@ -82,6 +84,10 @@ static void init_mem(bootimage_t& bootimg)
 
     auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
     ASSERT(stretch_driver_mod);
+    
+    size_t modules_size;
+    address_t modules_base = bi->used_modules_memory(&modules_size);
+    bi->use_memory(modules_base, modules_size);
 
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
@@ -123,11 +129,11 @@ static void init_mem(bootimage_t& bootimg)
     heap->check(true);
     kconsole << " done." << endl;
 #endif
-/*
+
     kconsole << " + Creating system stretch allocator" << endl;
     auto system_stretch_allocator = stretch_allocator_mod->create(heap, mmu);
     PVS(stretch_allocator) = system_stretch_allocator;
-*/
+
     /*
      * We create a 'special' stretch allocator which produces stretches
      * for page tables, protection domains, DCBs, and so forth.
@@ -135,61 +141,45 @@ static void init_mem(bootimage_t& bootimg)
      * but it will typcially imply at least that the stretches will
      * be backed by phyiscal memory on creation.
      */
-/*    kconsole << " + Creating nailed stretch allocator" << endl;
+    kconsole << " + Creating nailed stretch allocator" << endl;
     auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1_closure*>(frames), heap);//yikes!
-
-//    debugger_t::checkpoint("ONE");
 
     mmu_mod->finish_init(mmu, reinterpret_cast<frame_allocator_v1_closure*>(frames), heap, sysalloc); //yikes again!
 
-//    debugger_t::checkpoint("TWO");
-*/
     kconsole << " + Creating stretch table" << endl;
     auto strtab = stretch_table_mod->create(heap);
 
-//    debugger_t::checkpoint("THREE");
+    kconsole << " + Creating null stretch driver" << endl;
+    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
 
-//    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
-
-}
-#if 0
     // Create the initial address space; returns a pdom for Nemesis domain.
     kconsole << " + Creating initial address space." << endl;
-    nemesis_pdid = CreateAddressSpace(frames, mmu, salloc, nexusp);
-    MapInitialHeap(heap_mod, heap, initial_heap_size, nemesis_pdid);
+//    root_domain_pdid = create_address_space(frames, mmu, system_stretch_allocator, ??);
+//    map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
 }
+#if 0
 
-//init_virt_mem
-StretchAllocatorF_cl *InitVMem(SAllocMod_cl *smod, Mem_Map memmap, 
-			       Heap_cl *h, MMU_cl *mmu)
+protection_domain_v1_id create_address_space()
 {
-    StretchAllocatorF_cl *salloc;
-    Mem_VMemDesc allvm[2];
-    Mem_VMemDesc used[32];
-    int i;
+    pdom = mmu->create_domain();
 
-    allvm[0].start_addr = 0;
-    allvm[0].npages     = VA_SIZE >> PAGE_WIDTH;
-    allvm[0].page_width = PAGE_WIDTH;
-    allvm[0].attr       = 0;
+    /* First we need to map the PIP globally read-only */
+    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR, 
+				    (addr_t)INFO_PAGE_ADDRESS, 
+				    0, PAGE_WIDTH, NULL);
+    
+    /* Map stretches over the boot image */
+    // is there any still needed? we overwrote it all anyway... maybe rethink the allocation strategy during bootup
 
-    allvm[1].npages     = 0;  /* end of array marker */
+    // map nucleus glue code
 
-    /* Determine the used vm from the mapping info */
-    for(i=0; memmap[i].nframes; i++) {
-	
-	used[i].start_addr  = memmap[i].vaddr;
-	used[i].npages      = memmap[i].nframes;
-	used[i].page_width  = memmap[i].frame_width; 
-	used[i].attr        = 0;
-
-    }
-
-    /* now terminate the array */
-    used[i].npages = 0;
-
-    salloc = SAllocMod$NewF(smod, h, mmu, allvm, used);
-    return salloc;
+    // map over loaded modules
+        	    TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
+        			    mod->addr, mod->size));
+        	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
+        					    (addr_t)mod->addr, 
+        					    0, PAGE_WIDTH, NULL);
+        	    ASSERT_ADDRESS(str, mod->addr);
 }
 
 ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu, 
@@ -918,7 +908,9 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
 */
 
     /* register our vp and pdom with the stretch allocators */
-/*    SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
+/*    
+    //stretch_allocator_mod->finish_init():
+SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     SAllocMod$Done(SAllocMod, (StretchAllocatorF_cl *)sysalloc,
                 vp, nemesis_pdid);
 
@@ -986,6 +978,10 @@ extern "C" void _start()
     {
         PANIC("Bootimage not found! in image bootup");
     }
+
+    bi->use_memory(INFO_PAGE_ADDR, PAGE_SIZE);
+    bi->use_memory(BOOTINFO_PAGE, PAGE_SIZE);
+    bi->use_memory(0xb8000, PAGE_SIZE);
 
     bootimage_t bootimage(name, start, end);
 

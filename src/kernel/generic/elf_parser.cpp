@@ -28,6 +28,10 @@
 
 using namespace elf32;
 
+//======================================================================================================================
+// elf_parser_t::program_iterator impl
+//======================================================================================================================
+
 elf_parser_t::program_iterator::program_iterator(program_header_t* entry, program_header_t* end, size_t entry_size)
     : ptr(entry)
     , end(end)
@@ -47,6 +51,10 @@ void elf_parser_t::program_iterator::operator ++()
         ptr = 0;
     return;
 }
+
+//======================================================================================================================
+// elf_parser_t::section_iterator impl
+//======================================================================================================================
 
 elf_parser_t::section_iterator::section_iterator(section_header_t* entry, section_header_t* end, size_t entry_size)
     : ptr(entry)
@@ -73,13 +81,21 @@ void elf_parser_t::section_iterator::operator ++()
     return;
 }
 
+//======================================================================================================================
+// elf_parser_t impl
+//======================================================================================================================
+
 elf_parser_t::elf_parser_t()
     : header(NULL)
+    , strtab(NULL)
+    , symtab(NULL)
 {
 }
 
 elf_parser_t::elf_parser_t(address_t image_base)
     : header(NULL)
+    , strtab(NULL)
+    , symtab(NULL)
 {
     parse(image_base);
 }
@@ -150,28 +166,32 @@ section_header_t* elf_parser_t::section_shstring_table() const
 
 section_header_t* elf_parser_t::section_string_table() const
 {
-    return section_header(".strtab");
+    if (strtab == 0)
+        strtab = section_header(".strtab");
+    return strtab;
 }
 
 size_t elf_parser_t::string_entries_count() const
 {
-    section_header_t* strtab = section_string_table();
-    if (!strtab)
+    section_header_t* _strtab = section_string_table();
+    if (!_strtab)
         return 0;
-    return strtab->size / strtab->entsize;
+    return _strtab->size / _strtab->entsize;
 }
 
 section_header_t* elf_parser_t::section_symbol_table() const
 {
-    return section_header_by_type(SHT_SYMTAB);
+    if (symtab == 0)
+        symtab = section_header_by_type(SHT_SYMTAB);
+    return symtab;
 }
 
 size_t elf_parser_t::symbol_entries_count() const
 {
-    section_header_t* symtab = section_symbol_table();
-    if (!symtab)
+    section_header_t* _symtab = section_symbol_table();
+    if (!_symtab)
         return 0;
-    return symtab->size / symtab->entsize;
+    return _symtab->size / _symtab->entsize;
 }
 
 section_header_t* elf_parser_t::section_header(cstring_t name) const
@@ -184,17 +204,17 @@ section_header_t* elf_parser_t::section_header(cstring_t name) const
     for (int i = 0; i < header->shnum; i++)
     {
         s = section_header(i);
-        if (cstring_t(strtab_pointer(shstrtab, s->name)) == name)
+        if (name == strtab_pointer(shstrtab, s->name))
             return s;
     }
     return 0;
 }
 
-const char* elf_parser_t::strtab_pointer(section_header_t* strtab, elf32::word_t name_offset) const
+const char* elf_parser_t::strtab_pointer(section_header_t* _strtab, elf32::word_t name_offset) const
 {
-    if (!strtab)
+    if (!_strtab)
         return 0;
-    return reinterpret_cast<char*>(header) + strtab->offset + name_offset;
+    return reinterpret_cast<char*>(header) + _strtab->offset + name_offset;
 }
 
 bool elf_parser_t::is_valid() const
@@ -259,8 +279,8 @@ bool elf_parser_t::relocate_to(address_t load_address)
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
             ASSERT(sizeof(rels[0]) == rel_section->entsize); // Standard says entsize should tell the actual entry size
             size_t nrels = rel_section->size / sizeof(rels[0]);
-            section_header_t* symtab = section_header(rel_section->link);
-            symbol_t* symbols = symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, symtab->offset)) : 0;
+            section_header_t* _symtab = section_header(rel_section->link);
+            symbol_t* symbols = _symtab ? reinterpret_cast<symbol_t*>(elf2loc(header, _symtab->offset)) : 0;
             if (symbols)
             {
                 for (size_t j = 0; j < nrels; j++)
@@ -379,9 +399,9 @@ address_t elf_parser_t::find_symbol(cstring_t str)
     if (!symbol_table)
         return 0;
 
-//     kconsole << symbol_entries_count() << " symbols to consider." << endl;
-//     kconsole << "Symbol table @ " << start() + symbol_table->offset << endl;
-//     kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl;
+    V(kconsole << symbol_entries_count() << " symbols to consider." << endl);
+    V(kconsole << "Symbol table @ " << start() + symbol_table->offset << endl);
+    V(kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl);
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
@@ -390,7 +410,7 @@ address_t elf_parser_t::find_symbol(cstring_t str)
         symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
 
         const char* c = strtab_pointer(section_string_table(), symbol->name);
-//         kconsole << "Looking at symbol " << c << " @ " << symbol << endl;
+        V(kconsole << "Looking at symbol " << c << " @ " << symbol << endl);
         if (str == c)
         {
             if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
@@ -411,6 +431,7 @@ address_t elf_parser_t::find_symbol(cstring_t str)
 // symbol_table_t
 // iterator for searching the symbols by name
 // non-linear lookups
+// support elf .so hash tables?
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

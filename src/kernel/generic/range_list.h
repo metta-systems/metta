@@ -19,6 +19,7 @@ template <typename type_t>
 class range_list_t
 {
 public:
+    template <typename _Extra_t>// todo: add extra data that goes with the range
     class range_t
     {
     public:

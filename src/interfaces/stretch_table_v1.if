@@ -13,8 +13,8 @@ local interface stretch_table_v1
     # otherwise return "False", leaving OUT params unchanged.
     get(stretch_v1& stretch, out card32 page_width, out stretch_driver_v1& stretch_driver) returns (boolean result);
 
-    # Return "str" $\in$ "dom(self)" and set "pw[str] := pwidth" and 
-    # "sdriver[str] := sdriver".
+    # If the stretch already was in the table, update its page_width and stretch_driver and return true.
+    # Otherwise, insert it in the table and return false.
     put(stretch_v1& stretch, card32 page_width, stretch_driver_v1& stretch_driver) returns (boolean result);
 
     # If "str" $\in$ "dom(self)" then set "pwidth := pw[str]", 

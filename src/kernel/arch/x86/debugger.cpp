@@ -123,5 +123,10 @@ void debugger_t::checkpoint(const char* str)
     kconsole.wait_ack();
 }
 
+void debugger_t::breakpoint()
+{
+    bochs_magic_trap();
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

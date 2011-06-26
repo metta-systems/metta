@@ -211,8 +211,20 @@ static void dump_regs(registers_t* regs)
         << "     EAX:" << regs->eax << " EBX:" << regs->ebx << " ECX:" << regs->ecx << " EDX:" << regs->edx << endl
         << "     ESI:" << regs->esi << " EDI:" << regs->edi << " EBP:" << regs->ebp << " ESP:" << regs->esp << endl
         << "user ESP:" << regs->useresp << " CS:" << regs->cs << " DS:" << regs->ds << " SS:" << regs->ss << endl
-        << "     EIP:" << regs->eip << " EFLAGS:" << regs->eflags << endl;
+        << "     EIP:" << regs->eip << " EFLAGS:" << regs->eflags;
 
+    // EFLAGS bits names from msb (bit 31) to lsb (bit 0)
+    const char* eflags_bits[] = {
+        "<31>", "<30>", "<29>", "<28>", "<27>", "<26>", "<25>", "<24>",
+        "<23>", "<22>", "ID", "VIP", "VIF", "AC", "VM", "RF",
+        "<15>", "NT", "IOPL1", "IOPL0", "OF", "DF", "IF", "TF",
+        "SF", "ZF", "<5>", "AF", "<3>", "PF", "<1>", "CF"
+    };
+    for (int i = 0; i < 32; i++)
+        if (regs->eflags & (1 << (31 - i)))
+            kconsole << " " << eflags_bits[i];
+
+    kconsole << endl;
     debugger_t::print_backtrace(regs->ebp, regs->eip, 20);
 
     kconsole << "=================================================================================================" << endl;    
