@@ -26,7 +26,7 @@ local interface memory_v1
 
     record physmem_desc {
         address start_addr;
-        size nframes;
+        size n_frames;
         size frame_width;
         attr_flags attr;
     }
@@ -41,7 +41,7 @@ local interface memory_v1
 
     record virtmem_desc {
         address start_addr;
-        size npages;
+        size n_pages;
         size page_width;
         attrs attr;
     }
@@ -120,6 +120,7 @@ local interface memory_v1
         fault_on_write,
         fault_on_read,
         page_faut,
-        breakpoint
+        breakpoint,
+        max_fault_number
     } fault;
 }
