@@ -161,6 +161,10 @@ public:
     // two different bootinfos at once! 
     // (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
     module_loader_t get_module_loader();
+    /*!
+     * Return memory occupied by loaded modules.
+     */
+    address_t used_modules_memory(size_t* size);
 
     // Load module ELF file by number.
     bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);
@@ -189,6 +193,7 @@ public:
 	address_t find_usable_physical_memory_top();
 	address_t find_highmem_range_of_at_least(size_t bytes);
 	bool use_memory(address_t start, size_t size);
+    bool use_memory(void* start, size_t size) { return use_memory(reinterpret_cast<address_t>(start), size); }
 };
 
 // kate: indent-width 4; replace-tabs on;
