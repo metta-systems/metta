@@ -11,12 +11,13 @@
 #include "page_directory.h"
 #include "system_frame_allocator_v1_interface.h"
 #include "heap_v1_interface.h"
+#include "stretch_allocator_v1_interface.h"
 #include "nucleus.h"
 #include "cpu.h"
 #include "domain.h"
 
 //======================================================================================================================
-// mmu_v1 methods
+// mmu_v1 state
 //======================================================================================================================
 
 static const size_t N_L1_TABLES = 1024;
@@ -28,11 +29,11 @@ struct ramtab_entry_t
     uint16_t state;         /* Misc bits, e.g. is_mapped, is_nailed, etc */
 } PACKED;
 
-struct pdom_st 
+struct pdom_st
 {
     uint16_t            refcnt;  /* reference count on this pdom    */
     uint16_t            gen;     /* current generation of this pdom */
-    stretch_v1_closure* stretch; /* handle on stretch (for destroy) */ 
+    stretch_v1_closure* stretch; /* handle on stretch (for destroy) */
 };
 
 struct pdom_t
@@ -48,11 +49,11 @@ struct shadow_t
 
 #define SHADOW(_va)  reinterpret_cast<shadow_t*>(reinterpret_cast<char*>(_va) + 4*KiB)
 
-
 typedef uint8_t     l2_info;    /* free or used info for 1K L2 page tables */
 #define L2FREE      (l2_info)0x12
 #define L2USED      (l2_info)0x99
 
+#define PDIDX(_pdid)   ((_pdid) & 0xffff)
 #define PDIDX_MAX       0x80   /* Allow up to 128 protection domains */
 
 struct mmu_v1_state
@@ -92,20 +93,150 @@ struct mmu_v1_state
     l2_info               info[0];  /* free/used L2 info; actually l2_max entries   */
 };
 
+//======================================================================================================================
+// mmu_v1 methods
+//======================================================================================================================
+
+inline uint16_t alloc_pdidx(mmu_v1_state* state)
+{
+    uint32_t i = state->next_pdidx;
+    do {
+        if (state->pdom_tbl[i] == NULL)
+        {
+            state->next_pdidx = (i + 1) % PDIDX_MAX;
+            return i;
+        }
+        i = (i + 1) % PDIDX_MAX;
+    } while(i != state->next_pdidx);
+
+    kconsole << "alloc_pdidx: out of identifiers!" << endl;
+    nucleus::debug_stop();
+    return 0xdead;
+}
+
+static void mmu_v1_start(mmu_v1_closure* self, protection_domain_v1_id root_domain)
+{
+    // nucleus::flush_tlb();
+    // nucleus::wrpdom(base);
+}
+
+static void mmu_v1_add_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights rights)
+{
+
+}
+
+static void mmu_v1_add_mapped_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, memory_v1_physmem_desc pmem, stretch_v1_rights rights)
+{
+
+}
+
+static void mmu_v1_update_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights rights)
+{
+
+}
+
+static void mmu_v1_free_range(mmu_v1_closure* self, memory_v1_virtmem_desc mem_range)
+{
+
+}
+
+static protection_domain_v1_id mmu_v1_create_domain(mmu_v1_closure* self)
+{
+    auto state = self->state;
+
+    uint16_t idx = alloc_pdidx(state);
+
+    state->pdominfo[idx].refcnt = 0;
+    state->pdominfo[idx].stretch = state->stretch_allocator->create(sizeof(pdom_t), 0/*stretch_v1_rights_none*/);
+    state->pdominfo[idx].gen++;
+
+    memory_v1_size sz;
+    pdom_t* base = reinterpret_cast<pdom_t*>(state->pdominfo[idx].stretch->info(&sz));
+    memutils::clear_memory(base, /*sz?*/sizeof(pdom_t));
+    
+    state->pdom_tbl[idx] = base;
+    
+    // Construct the pdid from the generation and the index.
+    protection_domain_v1_id pdid = (uint32_t(state->pdominfo[idx].gen) << 16) | idx;
+    kconsole << __FUNCTION__ << ": generated new pdid " << pdid << endl;
+    return pdid;
+}
+
+static void mmu_v1_retain_domain(mmu_v1_closure* self, protection_domain_v1_id dom_id)
+{
+    auto state = self->state;
+    uint16_t idx = PDIDX(dom_id);
+    
+    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    {
+        kconsole << __FUNCTION__ << ": bogus pdom id" << endl;
+        nucleus::debug_stop();
+    }
+    
+    state->pdominfo[idx].refcnt++;
+}
+
+static void mmu_v1_release_domain(mmu_v1_closure* self, protection_domain_v1_id dom_id)
+{
+    auto state = self->state;
+    uint16_t idx = PDIDX(dom_id);
+    
+    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    {
+        kconsole << __FUNCTION__ << ": bogus pdom id" << endl;
+        nucleus::debug_stop();
+    }
+    
+    if (state->pdominfo[idx].refcnt)
+        state->pdominfo[idx].refcnt--;
+
+    if (state->pdominfo[idx].refcnt == 0)
+    {
+        state->stretch_allocator->destroy_stretch(state->pdominfo[idx].stretch);
+        state->pdom_tbl[idx] = NULL;
+    }
+}
+
+static void mmu_v1_set_rights(mmu_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_closure* str, stretch_v1_rights rights)
+{
+
+}
+
+static stretch_v1_rights mmu_v1_query_rights(mmu_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_closure* str)
+{
+    return 0;
+}
+
+// No ASN supported on x86.
+static int32_t mmu_v1_query_asn(mmu_v1_closure* self, protection_domain_v1_id dom_id)
+{
+    return 0x666;
+}
+
+static stretch_v1_rights mmu_v1_query_global_rights(mmu_v1_closure* self, stretch_v1_closure* str)
+{
+    return 0;
+}
+
+static void mmu_v1_clone_rights(mmu_v1_closure* self, stretch_v1_closure* tmpl, stretch_v1_closure* str)
+{
+
+}
+
 static const mmu_v1_ops mmu_v1_method_table = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    mmu_v1_start,
+    mmu_v1_add_range,
+    mmu_v1_add_mapped_range,
+    mmu_v1_update_range,
+    mmu_v1_free_range,
+    mmu_v1_create_domain,
+    mmu_v1_retain_domain,
+    mmu_v1_release_domain,
+    mmu_v1_set_rights,
+    mmu_v1_query_rights,
+    mmu_v1_query_asn,
+    mmu_v1_query_global_rights,
+    mmu_v1_clone_rights
 };
 
 //======================================================================================================================
@@ -126,15 +257,36 @@ static memory_v1_address ramtab_v1_base(ramtab_v1_closure* self)
     return reinterpret_cast<memory_v1_address>(st->ramtab);
 }
 
-static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e st)
+static void ramtab_v1_put(ramtab_v1_closure* self, uint32_t pfn, uint32_t owner, uint32_t fwidth, ramtab_v1_state_e state)
 {
-    //kconsole << " +-ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
+    mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
+    kconsole << "ramtab_v1: put " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
+    if (pfn >= st->ramtab_size)
+    {
+        kconsole << __FUNCTION__ << ": out of range page number " << pfn << ", max is " << st->ramtab_size << endl;
+        nucleus::debug_stop();
+        return;
+    }
+    
+    st->ramtab[pfn].owner = owner;
+    st->ramtab[pfn].frame_width = fwidth;
+    st->ramtab[pfn].state = state;
 }
 
-static uint32_t ramtab_v1_get(ramtab_v1_closure* self, uint32_t pfn, uint32_t* fwidth, ramtab_v1_state_e* st)
+static uint32_t ramtab_v1_get(ramtab_v1_closure* self, uint32_t pfn, uint32_t* fwidth, ramtab_v1_state_e* state)
 {
-    //kconsole << " +-ramtab_v1: get " << pfn << " with owner " << owner << " and frame width " << fwidth << " in state " << st << endl;
-    return 0;
+    mmu_v1_state* st = reinterpret_cast<mmu_v1_state*>(self->state);
+    if (pfn >= st->ramtab_size)
+    {
+        kconsole << __FUNCTION__ << ": out of range page number " << pfn << ", max is " << st->ramtab_size << endl;
+        nucleus::debug_stop();
+        return 0xdeadd00d;
+    }
+
+    *fwidth = st->ramtab[pfn].frame_width;
+    *state = ramtab_v1_state_e(st->ramtab[pfn].state);
+    kconsole << "ramtab_v1: get " << pfn << " with owner " << st->ramtab[pfn].owner << " and frame width " << *fwidth << " in state " << *state << endl;
+    return st->ramtab[pfn].owner;
 }
 
 static const ramtab_v1_ops ramtab_v1_method_table = {
@@ -148,13 +300,13 @@ static const ramtab_v1_ops ramtab_v1_method_table = {
 // mmu_module_v1 methods
 //======================================================================================================================
 
-/* 
-** Compute how much space is required initially for page tables: 
+/*
+** Compute how much space is required initially for page tables:
 ** We do this currently by cycling through all initial mappings
-** and setting a bit in a 1024-bit bitmap if a particular 4Mb 
-** chunk of the virtual address space requires a L2 page table. 
-** We then add a fixed number to this to allow for L2 allocation 
-** before we get frames and stretch allocators. 
+** and setting a bit in a 1024-bit bitmap if a particular 4Mb
+** chunk of the virtual address space requires a L2 page table.
+** We then add a fixed number to this to allow for L2 allocation
+** before we get frames and stretch allocators.
 */
 static int bitmap_bit(address_t va)
 {
@@ -177,7 +329,7 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [&bitmap](const memory_v1_mapping* e)
     {
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
-        for (size_t j = 0; j < e->nframes; ++j) 
+        for (size_t j = 0; j < e->nframes; ++j)
         {
 	    	address_t va = e->virt + (j << FRAME_WIDTH);
 	    	bitmap[bitmap_index(va)] |= 1 << bitmap_bit(va);
@@ -189,9 +341,9 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
     {
 		while (bitmap[i])
 		{
-	    	if (bitmap[i] & 1) 
+	    	if (bitmap[i] & 1)
 				nptabs++;
-	    	bitmap[i] >>= 1; 
+	    	bitmap[i] >>= 1;
 		}
     }
 
@@ -205,12 +357,12 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 
     kconsole << " +--Got nptabs " << nptabs << endl;
 
-    return res;// + (n_l2_tables * L2SIZE);
+    return res;
 }
 
-/* 
-** Compute how much space is required for the ram table; this is a 
-** system wide table which contains ownership information (and other 
+/*
+** Compute how much space is required for the ram table; this is a
+** system wide table which contains ownership information (and other
 ** misc. stuff) for each frame of 'real' physical memory.
 */
 static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
@@ -221,13 +373,13 @@ static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 
 inline bool alloc_l2table(mmu_v1_state* state, address_t *l2va, address_t *l2pa)
 {
-    size_t i; 
+    size_t i;
 
     for (i = state->l2_next; i < state->l2_max; i++)
-	    if (state->info[i] == L2FREE) 
+	    if (state->info[i] == L2FREE)
 	        break;
 
-    if (i == state->l2_max) 
+    if (i == state->l2_max)
     {
 	    // XXX go get some more mem from frames/salloc
 	    kconsole << "alloc_l2table: out of memory for tables!" << endl;
@@ -235,12 +387,12 @@ inline bool alloc_l2table(mmu_v1_state* state, address_t *l2va, address_t *l2pa)
     }
 
     state->info[i] = L2USED;
-    state->l2_next = i+1; 
+    state->l2_next = i+1;
 
     *l2va = state->l2_virt + (L2SIZE * i);
     memutils::clear_memory(reinterpret_cast<void*>(*l2va), L2SIZE);
     *l2pa = state->l2_phys + (L2SIZE * i);
-    
+
     kconsole << "alloc_l2table: new L2 table at va=" << *l2va << ", pa=" << *l2pa << ", shadow va=" << SHADOW(*l2va) << endl;
     return true;
 }
@@ -264,10 +416,10 @@ static bool add4k_page(mmu_v1_state* state, address_t va, page_t pte, sid_t sid)
 	    state->l1_virt[l1idx].set_frame(l2va);
     }
 
-    if(state->l1_mapping[l1idx].is_4mb()) 
+    if(state->l1_mapping[l1idx].is_4mb())
     {
         kconsole << "URK! mapping va=" << va << " would use a 4MB page!" << endl;
-	    return false;      
+	    return false;
     }
 
     l2pa = state->l1_mapping[l1idx].frame();
@@ -275,10 +427,10 @@ static bool add4k_page(mmu_v1_state* state, address_t va, page_t pte, sid_t sid)
     // XXX PARANOIA
     if (l2va != state->l1_virt[l1idx].frame())
         kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
-    
+
     // Ok, once here, we have a pointer to our l2 table in "l2va"
     l2idx = pte_entry(va);
-    
+
     // Set pte into real ptab
     reinterpret_cast<page_t*>(l2va)[l2idx] = pte;
 
@@ -294,25 +446,25 @@ static void enter_mappings(mmu_v1_state* state)
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [bi, state](const memory_v1_mapping* e)
     {
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
-        for (size_t j = 0; j < e->nframes; ++j) 
+        for (size_t j = 0; j < e->nframes; ++j)
         {
 	    	address_t virt = e->virt + (j << FRAME_WIDTH);
             address_t phys = e->phys + (j << FRAME_WIDTH);
-            
+
             uint32_t flags = page_t::writable;
 
-    	    /* We assume the frames used by the established mappings 
+    	    /* We assume the frames used by the established mappings
     	       are part of the image unless otherwise specified */
 
-    	    /* 
-    	    ** Generally we want to cache things, but in the case 
+    	    /*
+    	    ** Generally we want to cache things, but in the case
     	    ** of IO space we prefer not to.
     	    */
     	    std::for_each(bi->mmap_begin(), bi->mmap_end(), [phys, virt, &flags](const multiboot_t::mmap_entry_t* e)
     	    {
     	        if ((e->type() != multiboot_t::mmap_entry_t::free) && (e->address() <= phys) && (e->address() + e->size() > phys))
     		    {
-    		        //kconsole << "Disabling cache for va=" << virt << endl;
+    		        kconsole << "Disabling cache for va=" << virt << endl;
     		        flags |= page_t::cache_disable;
     		    }
             });
@@ -325,7 +477,7 @@ static void enter_mappings(mmu_v1_state* state)
             pte = 0;
             pte.set_frame(phys);
             pte.set_flags(flags);
-            
+
             if (!add4k_page(state, virt, pte, SID_NULL))
             {
                 kconsole << "enter_mappings: failed to add mapping " << virt << "->" << phys << endl;
@@ -345,7 +497,7 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
 
 	size_t mmu_memory_needed_bytes = 0;
-	
+
     // Calculate how much space is needed for the MMU structures.
     //    mmu_state,
     //    pagetables
@@ -356,12 +508,12 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 
 	mmu_memory_needed_bytes = memory_required(bi, n_l2_tables);
 	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
-	
+
     address_t ramtab_offset = mmu_memory_needed_bytes;
 
 	mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries);
 	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
-	
+
     address_t l2_tables_offset = mmu_memory_needed_bytes;
 
     mmu_memory_needed_bytes += n_l2_tables * L2SIZE; // page-aligned by definition
@@ -386,19 +538,19 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 	mmu_v1_closure *cl = &state->mmu_closure;
 	cl->methods = &mmu_v1_method_table;
 	cl->state = state;
-	
+
     state->l1_mapping_virt = state->l1_mapping_phys = first_range;
     state->l1_virt_virt = reinterpret_cast<address_t>(&state->l1_virt);
 
     kconsole << " +-mmu_module_v1: L1 phys table at va=" << state->l1_mapping_virt << ", pa=" << state->l1_mapping_phys << ", virt table at va=" << state->l1_virt_virt << endl;
 
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
-    for(i = 0; i < N_L1_TABLES; i++) 
+    for(i = 0; i < N_L1_TABLES; i++)
     {
 	    state->l1_mapping[i] = 0;
 	    state->l1_virt[i] = 0;
 	    state->l1_shadows[i].sid = SID_NULL;
-	    state->l1_shadows[i].ctl = 0; 
+	    state->l1_shadows[i].ctl = 0;
     }
 
     // Initialise the ram table; it follows the state record immediately.
@@ -409,11 +561,11 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     state->ramtab_closure.methods = &ramtab_v1_method_table;
     state->ramtab_closure.state = reinterpret_cast<ramtab_v1_state*>(first_range);
     *ramtab = &state->ramtab_closure;
-    
+
     kconsole << " +-mmu_module_v1: ramtab at " << state->ramtab << " with " << state->ramtab_size << " entries." << endl;
 
     // Initialise the protection domain tables
-    state->next_pdidx = 0; 
+    state->next_pdidx = 0;
     for(i = 0; i < PDIDX_MAX; i++)
     {
 	    state->pdom_tbl[i] = NULL;
@@ -423,7 +575,7 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     }
 
     // And store a pointer to the pdom_tbl in the info page.
-    INFO_PAGE.protection_domains = &(state->pdom_tbl); 
+    INFO_PAGE.protection_domains = &(state->pdom_tbl);
 
     state->use_global_pages = (INFO_PAGE.cpu_features & X86_32_FEAT_PGE) != 0;
 
@@ -435,7 +587,7 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     state->l2_virt  = page_align_up(first_range + l2_tables_offset);
     state->l2_phys  = page_align_up(state->l1_mapping_phys + l2_tables_offset);
     state->l2_max  = n_l2_tables;
-    
+
     kconsole << " +-mmu_module_v1: " << static_cast<int>(state->l2_max) << " L2 tables at va=" << state->l2_virt << ", pa=" << state->l2_phys << endl;
 
     state->l2_next = 0;
@@ -451,9 +603,9 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     kconsole << " +-mmu_module_v1: wrote new pdbr using syscall!" << endl;
 
     // And store some useful pointers in the PIP for user-level translation.
-//    INFO_PAGE.l1_va  = st->va_l1; 
-//    INFO_PAGE.l2tab  = st->vtab_va; 
-    INFO_PAGE.mmu_ok = true; 
+//    INFO_PAGE.l1_va  = st->va_l1;
+//    INFO_PAGE.l2tab  = st->vtab_va;
+    INFO_PAGE.mmu_ok = true;
 
     /* Sort out pointer to free space for caller */
     *free = first_range +  l2_tables_offset + n_l2_tables * L2SIZE;

@@ -72,13 +72,43 @@ struct system_stretch_allocator_v1_state : public stretch_allocator_v1_state, pu
 // nailed version
 //======================================================================================================================
 
+static stretch_v1_closure* stretch_allocator_v1_nailed_create(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access)
+{
+    return 0;
+}
+
+static stretch_allocator_v1_stretch_seq stretch_allocator_v1_nailed_create_list(stretch_allocator_v1_closure* self, stretch_allocator_v1_size_seq sizes, stretch_v1_rights access)
+{
+    return 0;
+}
+
+static stretch_v1_closure* stretch_allocator_v1_nailed_create_at(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access, memory_v1_address start, memory_v1_attrs attr, memory_v1_physmem_desc region)
+{
+    return 0;
+}
+
+static stretch_v1_closure* stretch_allocator_v1_nailed_clone(stretch_allocator_v1_closure* self, stretch_v1_closure* template_stretch, memory_v1_size size)
+{
+    return 0;
+}
+
+static void stretch_allocator_v1_nailed_destroy_stretch(stretch_allocator_v1_closure* self, stretch_v1_closure* stretch)
+{
+    
+}
+
+static void stretch_allocator_v1_nailed_destroy(stretch_allocator_v1_closure* self)
+{
+    
+}
+
 static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    stretch_allocator_v1_nailed_create,
+    stretch_allocator_v1_nailed_create_list,
+    stretch_allocator_v1_nailed_create_at,
+    stretch_allocator_v1_nailed_clone,
+    stretch_allocator_v1_nailed_destroy_stretch,
+    stretch_allocator_v1_nailed_destroy
 };
 
 //======================================================================================================================
@@ -200,6 +230,7 @@ static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_addre
                 new_region->desc.start_addr = *virt_addr + align_to_frame_width(size, region->desc.page_width);
                 new_region->desc.n_pages = region->desc.n_pages - (npages + region_page_offset);
                 new_region->desc.page_width = region->desc.page_width;
+                new_region->desc.attr = region->desc.attr;
                 region->desc.n_pages = region_page_offset;
                 region->insert_after(new_region);
             }
@@ -217,7 +248,6 @@ static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_addre
  * address. The fact of the magic prefix also simplifies the task of sanity checking arguments for the palcode.
  * On intel machines, all that 'special' means is that the stretches are backed by physical memory on creation.
  */
-// salloc_expt.c:1194
 stretch_allocator_v1_closure* system_stretch_allocator_v1_create_nailed(system_stretch_allocator_v1_closure* self, frame_allocator_v1_closure* frames, heap_v1_closure* heap)
 {
     kconsole << __FUNCTION__ << endl;
@@ -273,6 +303,11 @@ stretch_allocator_v1_closure* system_stretch_allocator_v1_create_nailed(system_s
     return &client_state->closure;
 }
 
+static stretch_v1_closure* system_stretch_allocator_v1_create_over(system_stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access, memory_v1_address start, memory_v1_attrs attr, uint32_t page_width, memory_v1_physmem_desc pmem)
+{
+    return 0;
+}
+
 static const system_stretch_allocator_v1_ops system_stretch_allocator_v1_methods = {
     NULL,
     NULL,
@@ -282,7 +317,7 @@ static const system_stretch_allocator_v1_ops system_stretch_allocator_v1_methods
     NULL,
     NULL,
     system_stretch_allocator_v1_create_nailed,
-    NULL
+    system_stretch_allocator_v1_create_over
 };
 
 //======================================================================================================================
