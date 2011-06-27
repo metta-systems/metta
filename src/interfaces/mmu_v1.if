@@ -42,7 +42,7 @@ local interface mmu_v1
 
     # Create a new protection domain and return an identifier for it. Initially its reference count will be zero,
     # typically this will be incremented when it is first associated with an executable domain by the domain manager.
-    new_domain()
+    create_domain()
         returns (protection_domain_v1.id new_dom_id)
         raises (memory_v1.failure);
 
@@ -73,8 +73,8 @@ local interface mmu_v1
     #===================================================================================================================
 
     # Return the global rights currently associated with the stretch "str".
-   query_global_rights(stretch_v1& str)
-       returns (stretch_v1.rights rights);
+    query_global_rights(stretch_v1& str)
+        returns (stretch_v1.rights rights);
 
     # Set the protections on stretch "str" to be the same as those of the stretch "tmpl" in all protection domains.
     # This does NOT affect the global rights - these must be done
