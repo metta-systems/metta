@@ -213,6 +213,12 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 	// Type declarations.
 	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
     {
+        t->emit_include(s);
+		s << std::endl;
+    });
+
+	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+    {
         t->emit_interface_h(s);
 		s << std::endl;
     });
@@ -487,13 +493,18 @@ void array_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
 }
 
+void set_alias_t::emit_include(std::ostringstream& s)
+{
+	s << "#include \"set_t.h\"";
+}
+
 void set_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
 void set_alias_t::emit_interface_h(std::ostringstream& s)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << "typedef set_t<" << replace_dots(get_root()->name() + "." + type()) << "> " << replace_dots(get_root()->name() + "." + name()) << ";" << endl;
 }
 
 void set_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
