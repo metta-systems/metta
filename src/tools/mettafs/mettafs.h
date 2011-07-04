@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 /*!
  * A fixed sized tuple used to identify and sort items in a Btree. The key is broken up into 3 parts: objectid, type,
  * and position. The type field indicates how each of the other two fields should be used, and what to expect to find in
@@ -150,3 +158,6 @@ block = root_block;
 path->nodes[block->level] = block;
 bin_search(block, key, slot);
 path->slots[block->level] = slot;
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
