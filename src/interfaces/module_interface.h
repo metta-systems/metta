@@ -21,12 +21,20 @@
 
 // generic part
 // TODO: use as virtual base mixin class? - easier to just generate full method list from idl hierarchy
+// ops_types should inherit from each other, leaving closure wrappers separate.
 template <class ops_type, class state_type>
 struct module_interface
 {
     ops_type* methods;
     state_type* state;
 };
+
+template <class C, class O, class S>
+void closure_init(C closure, O* ops, S* state)
+{
+    closure.methods = ops;
+    closure.state = state;
+}
 
 /* #define DECLARE_CLOSURE_(name, parent) \
     struct name##_ops; struct name##_state; template <class ops_type = name##_ops, class state_type = name##_state> struct name##_closure : public parent##_closure<name##_ops, name##_state>
