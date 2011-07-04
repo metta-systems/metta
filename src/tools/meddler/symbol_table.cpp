@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "symbol_table.h"
 #include <algorithm>
 #include <iostream>
@@ -88,3 +96,6 @@ void symbol_table_t::dump()
         std::cout << "symbol: " << it.first << ", value: " << it.second << ", name: " << token_to_name(it.second) << std::endl;
     });
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
