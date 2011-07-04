@@ -1,3 +1,6 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
 /*
  * Copyright (C) 2003-2008,  Karlsruhe University
  * File path:     arch/x86/x32/x86.h
@@ -64,3 +67,6 @@
 #define X86_FLAGS_VIF     (1 << 19)       /* virtual interrupt flag       */
 #define X86_FLAGS_VIP     (1 << 20)       /* virtual interrupt pending    */
 #define X86_FLAGS_ID      (1 << 21)       /* CPUID flag                   */
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :
