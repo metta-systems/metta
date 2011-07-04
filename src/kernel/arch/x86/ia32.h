@@ -19,7 +19,7 @@
 #define OWNER_NONE    0x0     /* physical frame is unused by anyone        */
 #define OWNER_SYSTEM  0x1     /* physical frame is owned by us (mmgmt etc) */
 
-#define NULL_PDID            ((address_t)-1L)
+#define NULL_PDID            ((protection_domain_v1_id)~0U)
 
 //======================================================================================================================
 // MMU
@@ -33,7 +33,7 @@
 
 static const size_t    PAGE_SIZE = 0x1000;
 static const address_t PAGE_MASK = 0xFFFFF000;
-static const size_t    PAGE_WIDTH = 12;
+static const size_t    PAGE_WIDTH = 12; // replace this with page_t::width
 static const size_t    FRAME_WIDTH = 12;
 
 // Page attributes
