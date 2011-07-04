@@ -300,13 +300,13 @@ def build(bld):
     #parsedwarf.uselib_local = 'toolruntime common'
 
     # Tool to build bootimage.
-    mkbootimage = bld.new_task_gen('cxx', 'program')
-    mkbootimage.target = 'mkbootimage'
-    mkbootimage.source = 'tools/mkbootimage/mkbootimage.cpp'
-    mkbootimage.env = bld.env_of_name('TOOLS_ENV').copy()
-    mkbootimage.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    mkbootimage.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
-    mkbootimage.includes = mkbootimage.env['INCLUDE_DIRS']
+    buildboot = bld.new_task_gen('cxx', 'program')
+    buildboot.target = 'buildboot'
+    buildboot.source = 'tools/buildboot/buildboot.cpp'
+    buildboot.env = bld.env_of_name('TOOLS_ENV').copy()
+    buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    buildboot.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
+    buildboot.includes = buildboot.env['INCLUDE_DIRS']
 
     # Initial loader
     kickstart = bld.new_task_gen('cxx', 'program')
@@ -376,7 +376,7 @@ def build(bld):
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
     bld.new_task_gen(
-        source = 'mkbootimage kernel/arch/x86/bootimage.lst'.split() + nm, # x86 arch dep
+        source = 'buildboot kernel/arch/x86/bootimage.lst'.split() + nm, # x86 arch dep
         target = 'init.img',
         rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
