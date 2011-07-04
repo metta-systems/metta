@@ -6,6 +6,17 @@
 #include <iostream>
 #include <algorithm>
 
+//TODO
+// Generate enums and typedefs inside a wrapper struct:
+// struct stretch_v1
+// {
+    // typedef uint32_t size;
+    // enum right { right_read, right_write, right_meta };
+    // typedef stretch_v1_closure closure; //?
+    // typedef stretch_v1_state state; //?
+    // ops are not exposed //?
+// };
+
 using namespace std;
 
 namespace AST
