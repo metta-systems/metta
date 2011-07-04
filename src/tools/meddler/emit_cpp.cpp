@@ -6,6 +6,17 @@
 #include <iostream>
 #include <algorithm>
 
+//TODO
+// Generate enums and typedefs inside a wrapper struct:
+// struct stretch_v1
+// {
+    // typedef uint32_t size;
+    // enum right { right_read, right_write, right_meta };
+    // typedef stretch_v1_closure closure; //?
+    // typedef stretch_v1_state state; //?
+    // ops are not exposed //?
+// };
+
 using namespace std;
 
 namespace AST
@@ -211,6 +222,12 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 	s << std::endl;
 
 	// Type declarations.
+	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+    {
+        t->emit_include(s);
+		s << std::endl;
+    });
+
 	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
     {
         t->emit_interface_h(s);
@@ -487,13 +504,18 @@ void array_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
 }
 
+void set_alias_t::emit_include(std::ostringstream& s)
+{
+	s << "#include \"set_t.h\"";
+}
+
 void set_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
 void set_alias_t::emit_interface_h(std::ostringstream& s)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << "typedef set_t<" << replace_dots(get_root()->name() + "." + type()) << "> " << replace_dots(get_root()->name() + "." + name()) << ";" << endl;
 }
 
 void set_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)

@@ -15,12 +15,14 @@
 #include "nucleus.h"
 #include "cpu.h"
 #include "domain.h"
+#include "stretch_v1_state.h"
 
 //======================================================================================================================
 // mmu_v1 state
 //======================================================================================================================
 
 static const size_t N_L1_TABLES = 1024;
+static const size_t N_L2_ENTRIES = 1024;
 
 struct ramtab_entry_t
 {
@@ -97,6 +99,163 @@ struct mmu_v1_state
 // mmu_v1 methods
 //======================================================================================================================
 
+#define L2SIZE          (8*KiB)                // 4K for L2 pagetable + 4K for shadow(?)
+
+inline bool alloc_l2table(mmu_v1_state* state, address_t *l2va, address_t *l2pa)
+{
+    size_t i;
+
+    for (i = state->l2_next; i < state->l2_max; i++)
+	    if (state->info[i] == L2FREE)
+	        break;
+
+    if (i == state->l2_max)
+    {
+	    // XXX go get some more mem from frames/salloc
+	    kconsole << "alloc_l2table: out of memory for tables!" << endl;
+	    return false;
+    }
+
+    state->info[i] = L2USED;
+    state->l2_next = i+1;
+
+    *l2va = state->l2_virt + (L2SIZE * i);
+    memutils::clear_memory(reinterpret_cast<void*>(*l2va), L2SIZE);
+    *l2pa = state->l2_phys + (L2SIZE * i);
+
+    kconsole << "alloc_l2table: new L2 table at va=" << *l2va << ", pa=" << *l2pa << ", shadow va=" << SHADOW(*l2va) << endl;
+    return true;
+}
+
+static bool add4k_page(mmu_v1_state* state, address_t va, page_t pte, sid_t sid)
+{
+    int l1idx, l2idx;
+    address_t  l2va, l2pa;
+
+    l1idx  = pde_entry(va);
+
+    if (!state->l1_mapping[l1idx].is_present())
+    {
+        kconsole << "mapping va=" << va << " requires new L2 table" << endl;
+	    if (!alloc_l2table(state, &l2va, &l2pa)) {
+            kconsole << "!!! intel_mmu:add4k_page - cannot alloc l2 table." << endl;
+	        return false;
+	    }
+        state->l1_mapping[l1idx].set_frame(l2pa);
+        state->l1_mapping[l1idx].set_flags(page_t::writable|page_t::write_through);
+	    state->l1_virt[l1idx].set_frame(l2va);
+    }
+
+    if (state->l1_mapping[l1idx].is_4mb())
+    {
+        kconsole << "URK! mapping va=" << va << " would use a 4MB page!" << endl;
+	    return false;
+    }
+
+    l2pa = state->l1_mapping[l1idx].frame();
+    l2va = state->l2_virt + (l2pa - state->l2_phys);
+    // XXX PARANOIA
+    if (l2va != state->l1_virt[l1idx].frame())
+        kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
+
+    // Ok, once here, we have a pointer to our l2 table in "l2va"
+    l2idx = pte_entry(va);
+
+    // Set pte into real ptab
+    reinterpret_cast<page_t*>(l2va)[l2idx] = pte;
+
+    // Setup shadow pte (holds sid + original global rights)
+    SHADOW(l2va)[l2idx].sid = sid;  // store sid in shadow
+//    swpte->ctl.all = ((hwpte_t *)&pte)->bits & 0xFF;
+    return true;
+}
+
+/*
+** update4k_pages is used to modify the information in the 
+** page table about a particular contiguous range of pages. 
+** It returns the number of pages (from 1 upto npages) 
+** successfully updated, or zero on failure. 
+*/
+static size_t update4k_pages(mmu_v1_state* state, address_t va, size_t n_pages, page_t pte, sid_t sid)
+{
+    int l1idx, l2idx;
+    address_t  l2va, l2pa;
+
+    l1idx  = pde_entry(va);
+
+    if (!state->l1_mapping[l1idx].is_present())
+    {
+        kconsole << __FUNCTION__ << ": page at " << va << " not present, cannot update" << endl;
+        return 0;
+    }
+    
+    if (state->l1_mapping[l1idx].is_4mb())
+    {
+        kconsole << __FUNCTION__ << ": address " << va << " is mapped using a 4MB page!" << endl;
+	    return 0;
+    }
+    
+    l2pa = state->l1_mapping[l1idx].frame();
+    l2va = state->l2_virt + (l2pa - state->l2_phys);
+    
+    // XXX PARANOIA
+    if (l2va != state->l1_virt[l1idx].frame())
+        kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
+    
+    // Ok, once here, we have a pointer to our l2 table in "l2va"
+    l2idx = pte_entry(va);
+
+    // Update only flags and sid.
+    flags_t flags = pte.flags();
+    size_t i;
+
+    for (i = 0; (i < n_pages) && ((i + l2idx) < N_L2_ENTRIES); ++i)
+    {
+        reinterpret_cast<page_t*>(l2va)[l2idx + i].set_flags(flags);
+
+        // Setup shadow pte (holds sid + original global rights)
+        SHADOW(l2va)[l2idx + i].sid = sid;  // store sid in shadow
+        // swpte->ctl.all = ((hwpte_t *)&pte)->bits & 0xFF;
+    }
+    
+    return i;
+}
+
+static bool add_page(mmu_v1_state* state, size_t page_width, address_t va, page_t pte, sid_t sid)
+{
+    bool result = false;
+    pte.set_frame(va);//FIXME: set pte page width first, so it sets the right frame.
+    switch (page_width)
+    {
+        case page_t::width_4kib:
+            result = add4k_page(state, va, pte, sid);
+            break;
+        case page_t::width_4mib:
+            // result = add4m_page(state, va, pte, sid);
+            break;
+        default:
+            kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+    }
+    return result;
+}
+
+static size_t update_pages(mmu_v1_state* state, size_t page_width, address_t va, size_t n_pages, page_t pte, sid_t sid)
+{
+    size_t result = 0;
+    switch (page_width)
+    {
+        case page_t::width_4kib:
+            result = update4k_pages(state, va, n_pages, pte, sid);
+            break;
+        case page_t::width_4mib:
+            // result = update4m_pages(state, va, n_pages, pte, sid);
+            break;
+        default:
+            kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+    }
+    return result;
+}
+
 inline uint16_t alloc_pdidx(mmu_v1_state* state)
 {
     uint32_t i = state->next_pdidx;
@@ -120,19 +279,97 @@ static void mmu_v1_start(mmu_v1_closure* self, protection_domain_v1_id root_doma
     // nucleus::wrpdom(base);
 }
 
-static void mmu_v1_add_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights rights)
+static flags_t control_bits(mmu_v1_state* state, stretch_v1_rights rights, bool valid)
+{
+    flags_t flags = 0;
+    if (!valid)
+        flags |= page_t::swapped;
+    if (!rights.has(stretch_v1_right_read))
+        flags |= page_t::kernel_mode;
+    if (rights.has(stretch_v1_right_execute))
+        flags |= page_t::executable;
+    if (rights.has(stretch_v1_right_write))
+        flags |= page_t::writable;
+    if (state->use_global_pages && rights.has(stretch_v1_right_global))
+        flags |= page_t::global;
+    return flags;
+}
+
+inline bool valid_width(uint32_t width)
+{
+    return width == page_t::width_4kib || width == page_t::width_4mib;
+}
+
+static void mmu_v1_add_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights global_rights)
+{
+    page_t pte;
+    flags_t flags = control_bits(self->state, global_rights, false);
+    pte.set_flags(flags);
+
+    size_t page_width = mem_range.page_width;
+
+    if (!valid_width(page_width))
+    {
+        kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+        return;
+    }
+
+    address_t virt = mem_range.start_addr;
+    size_t page_size = 1UL << page_width;
+
+    for (size_t n_pages = 0; n_pages < mem_range.n_pages; ++n_pages)
+    {
+        if (!add_page(self->state, page_width, virt, pte, str->state->sid))
+        {
+            kconsole << __FUNCTION__ << ": failed to add page at " << virt << endl;
+            return;
+        }
+        virt += page_size;
+    }
+    
+    kconsole << __FUNCTION__ << ": added range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->state->sid << endl;
+}
+
+static void mmu_v1_add_mapped_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, memory_v1_physmem_desc pmem, stretch_v1_rights global_rights)
 {
 
 }
 
-static void mmu_v1_add_mapped_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, memory_v1_physmem_desc pmem, stretch_v1_rights rights)
+/*!
+ * Note: update cannot currently modify mappings, and expects that the virtual range contains valid PFNs already.
+ */
+static void mmu_v1_update_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights global_rights)
 {
+    page_t pte;
+    flags_t flags = control_bits(self->state, global_rights, true);
+    pte.set_flags(flags);
 
-}
+    size_t page_width = mem_range.page_width;
 
-static void mmu_v1_update_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights rights)
-{
+    if (!valid_width(page_width))
+    {
+        kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+        return;
+    }
 
+    size_t page_size = 1UL << page_width;
+    address_t virt = mem_range.start_addr;
+    size_t n_pages = mem_range.n_pages;
+    
+    while (n_pages > 0)
+    {
+        size_t updated = update_pages(self->state, page_width, virt, n_pages, pte, str->state->sid);
+        if (updated == 0)
+        {
+            kconsole << __FUNCTION__ << ": failed to update pages at " << virt << endl;
+            nucleus::debug_stop();
+            return;
+        }
+        virt += updated * page_size;
+        n_pages -= updated;
+    }
+
+    kconsole << __FUNCTION__ << ": updated range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->state->sid << endl;
 }
 
 static void mmu_v1_free_range(mmu_v1_closure* self, memory_v1_virtmem_desc mem_range)
@@ -169,8 +406,9 @@ static void mmu_v1_retain_domain(mmu_v1_closure* self, protection_domain_v1_id d
     
     if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
     {
-        kconsole << __FUNCTION__ << ": bogus pdom id" << endl;
+        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
         nucleus::debug_stop();
+        return;
     }
     
     state->pdominfo[idx].refcnt++;
@@ -183,8 +421,9 @@ static void mmu_v1_release_domain(mmu_v1_closure* self, protection_domain_v1_id 
     
     if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
     {
-        kconsole << __FUNCTION__ << ": bogus pdom id" << endl;
+        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
         nucleus::debug_stop();
+        return;
     }
     
     if (state->pdominfo[idx].refcnt)
@@ -199,7 +438,35 @@ static void mmu_v1_release_domain(mmu_v1_closure* self, protection_domain_v1_id 
 
 static void mmu_v1_set_rights(mmu_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_closure* str, stretch_v1_rights rights)
 {
+    auto state = self->state;
+    uint16_t idx = PDIDX(dom_id);
 
+    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    {
+        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
+        nucleus::debug_stop();
+        return;
+    }
+
+    pdom_t* pdom = state->pdom_tbl[idx];
+    sid_t sid = str->state->sid;
+
+    kconsole << __FUNCTION__ << ": pdom " << pdom << ", sid " << sid << "[" 
+              << (rights.has(stretch_v1_right_meta)    ? "M" : "-")
+              << (rights.has(stretch_v1_right_read)    ? "R" : "-")
+              << (rights.has(stretch_v1_right_write)   ? "W" : "-")
+              << (rights.has(stretch_v1_right_execute) ? "X" : "-")
+              << "]" << endl;
+
+    uint8_t mask = sid & 1 ? 0xf0 : 0x0f;
+    uint32_t val = rights;
+    if (sid & 1) val <<= 4;
+    pdom->rights[sid>>1] &= ~mask;
+    pdom->rights[sid>>1] |= val;
+
+    // Want to invalidate all non-global TB entries, but we can't
+    // do that on Intel so just blow away the whole thing.
+    // nucleus::flush_tlb();
 }
 
 static stretch_v1_rights mmu_v1_query_rights(mmu_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_closure* str)
@@ -318,8 +585,7 @@ static int bitmap_index(address_t va)
     return va >> 27; // Each array word represents 32*4Mb = 128Mb => 27 bits.
 }
 
-#define L2SIZE          (8*KiB)                // 4K for L2 pagetable + 4K for shadow(?)
-#define N_EXTRA_L2S     32                     /* We require an additional margin of L2 ptabs */
+#define N_EXTRA_L2S     32                     // We require an additional margin of L2 ptabs.
 
 static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 {
@@ -369,75 +635,6 @@ static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 {
 	max_ramtab_entries = bi->find_usable_physical_memory_top() / PAGE_SIZE;
 	return max_ramtab_entries * sizeof(ramtab_entry_t);
-}
-
-inline bool alloc_l2table(mmu_v1_state* state, address_t *l2va, address_t *l2pa)
-{
-    size_t i;
-
-    for (i = state->l2_next; i < state->l2_max; i++)
-	    if (state->info[i] == L2FREE)
-	        break;
-
-    if (i == state->l2_max)
-    {
-	    // XXX go get some more mem from frames/salloc
-	    kconsole << "alloc_l2table: out of memory for tables!" << endl;
-	    return false;
-    }
-
-    state->info[i] = L2USED;
-    state->l2_next = i+1;
-
-    *l2va = state->l2_virt + (L2SIZE * i);
-    memutils::clear_memory(reinterpret_cast<void*>(*l2va), L2SIZE);
-    *l2pa = state->l2_phys + (L2SIZE * i);
-
-    kconsole << "alloc_l2table: new L2 table at va=" << *l2va << ", pa=" << *l2pa << ", shadow va=" << SHADOW(*l2va) << endl;
-    return true;
-}
-
-static bool add4k_page(mmu_v1_state* state, address_t va, page_t pte, sid_t sid)
-{
-    int l1idx, l2idx;
-    address_t   l2va, l2pa;
-
-    l1idx  = pde_entry(va);
-
-    if (!state->l1_mapping[l1idx].is_present())
-    {
-        kconsole << "mapping va=" << va << " requires new L2 table" << endl;
-	    if(!alloc_l2table(state, &l2va, &l2pa)) {
-            kconsole << "!!! intel_mmu:add4k_page - cannot alloc l2 table." << endl;
-	        return false;
-	    }
-        state->l1_mapping[l1idx].set_frame(l2pa);
-        state->l1_mapping[l1idx].set_flags(page_t::writable|page_t::write_through);
-	    state->l1_virt[l1idx].set_frame(l2va);
-    }
-
-    if(state->l1_mapping[l1idx].is_4mb())
-    {
-        kconsole << "URK! mapping va=" << va << " would use a 4MB page!" << endl;
-	    return false;
-    }
-
-    l2pa = state->l1_mapping[l1idx].frame();
-    l2va = state->l2_virt + (l2pa - state->l2_phys);
-    // XXX PARANOIA
-    if (l2va != state->l1_virt[l1idx].frame())
-        kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
-
-    // Ok, once here, we have a pointer to our l2 table in "l2va"
-    l2idx = pte_entry(va);
-
-    // Set pte into real ptab
-    reinterpret_cast<page_t*>(l2va)[l2idx] = pte;
-
-    // Setup shadow pte (holds sid + original global rights)
-    SHADOW(l2va)[l2idx].sid = sid;  // store sid in shadow
-//    swpte->ctl.all = ((hwpte_t *)&pte)->bits & 0xFF;
-    return true;
 }
 
 static void enter_mappings(mmu_v1_state* state)

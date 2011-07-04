@@ -11,11 +11,23 @@
 #include "types.h"
 #include "ia32.h"
 
+template <typename S, typename W>
+inline S size_in_whole_frames(S size_in_bytes, W frame_width)
+{
+    return (size_in_bytes + (1 << frame_width) - 1) >> frame_width;
+}
+
+template <typename T>
+inline T size_in_whole_pages(T size_in_bytes)
+{
+    return size_in_whole_frames(size_in_bytes, PAGE_WIDTH);
+}
+
 /* Roundup a value "size" up to an intergral number of frames of width "frame_width" */
 template <typename S, typename W>
 inline S align_to_frame_width(S size, W frame_width)
 {
-    return (size + ((1 << frame_width) - 1)) & ~((1UL << frame_width) - 1);
+    return (size + (1 << frame_width) - 1) & ~((1UL << frame_width) - 1);
 }
 
 //! Return bytes needed to align @c addr to next @c size boundary. Size must be power of 2.
