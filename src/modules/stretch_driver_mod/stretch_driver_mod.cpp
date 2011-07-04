@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "stretch_driver_module_v1_interface.h"
 #include "stretch_driver_module_v1_impl.h"
 #include "stretch_driver_v1_interface.h"
@@ -182,3 +190,6 @@ static const stretch_driver_module_v1_closure clos = {
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(stretch_driver_module, v1, clos);
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

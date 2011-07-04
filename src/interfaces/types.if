@@ -1,3 +1,11 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 # Type interface does not have a version, because it defines system-independent view of types.
 # You cannot derive from this interface (hence it's final).
 
@@ -16,3 +24,6 @@ final interface types #extends builtin_types
 
     sequence<any> any_seq;
 }
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

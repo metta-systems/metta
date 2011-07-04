@@ -1,4 +1,12 @@
 #
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+#
 # User-level Virtual Processor management; for use by user-level schedulers.
 # The kernel scheduler communicates with a domain's user-level scheduler via state
 # and operations on the domain's Virtual Processor (VP).
@@ -227,3 +235,6 @@ local interface vcpu_v1
 
 #    binder_offer() returns (idc_offer_v1& offer);
 }
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

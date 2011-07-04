@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,7 @@
 
 /*!
 * Implements a heap. The algorithm is based on dlmalloc and uses tagged
-* areas and an index of free areas.
+* areas plus free blocks lists (sorted by allocation size).
 * Every free or allocated area (block) has a header and footer around it.
 * The footer has a pointer to the header, with the header also containing
 * size information.

@@ -1,13 +1,22 @@
 //
-// Read file with image description and create corresponding initfs image.
-//
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+// Read file with image description and create corresponding boot image.
+//
+/*!
+ * Run with:
+ * buildboot _build_/x86-pc99-release/modules/ components.lst init.img
+ *                                  ^                ^          ^
+ *                                  |                |          |
+ *  module search path      --------+                |          |
+ *  list of modules        --------------------------+          |
+ *  output file           --------------------------------------+
+ */
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
@@ -456,17 +465,13 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
     modules.push_back(mod);
 }
 
-/*!
- * Run like:
- * mkbootimg _build_/x86-pc99-release/modules/ components.lst init.img
- */
 /*
 !! namespace mapping can be a module name or module symbol name, fully qualified, or an integer or string constant.
 */
 int main(int argc, char** argv)
 {
     if (argc != 4)
-        throw runtime_error("usage: mkbootimage base-path components.lst init.img");
+        throw runtime_error("usage: buildboot base-path components.lst init.img");
 
     if (sizeof(bootimage_n::root_domain_t) != 28)
         throw runtime_error("sizeof(root_domain) record is invalid!");
