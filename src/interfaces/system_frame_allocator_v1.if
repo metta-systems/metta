@@ -1,3 +1,11 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 # The "system_frame_allocator" interface provides in addition to the basic allocation & freeing of physical memory
 # a mechanism whereby the system can create a new per-domain interface for physical memory allocation.
 # It also allows for the extension of the set of physical regions managed by the frames allocator in the case that not
@@ -30,3 +38,6 @@ local interface system_frame_allocator_v1 #extends frame_allocator_v1
         returns (boolean added);
 }
 
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

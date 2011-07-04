@@ -1,3 +1,11 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 # A "stretch_driver" is a thing which is responsible for dealing with faults on a stretch.
 # In general, every "stretch" is associated with some "stretch_driver".
 # Note that the StretchAllocator and/or Stretch interfaces are enough for most people;
@@ -103,3 +111,6 @@ local interface stretch_driver_v1
     revoke_frames(memory_v1.size max_frames)
         returns (memory_v1.size n_frames);
 }
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :
