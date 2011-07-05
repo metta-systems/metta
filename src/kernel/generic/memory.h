@@ -11,6 +11,10 @@
 #include "types.h"
 #include "ia32.h"
 
+/*!
+ * Roundup a value "size" up to an integral number of frames of width "frame_width".
+ * @return Number of frames.
+ */
 template <typename S, typename W>
 inline S size_in_whole_frames(S size_in_bytes, W frame_width)
 {
@@ -23,7 +27,10 @@ inline T size_in_whole_pages(T size_in_bytes)
     return size_in_whole_frames(size_in_bytes, PAGE_WIDTH);
 }
 
-/* Roundup a value "size" up to an intergral number of frames of width "frame_width" */
+/*!
+ * Roundup a value "size" up to an integral number of frames of width "frame_width".
+ * @return Number of bytes.
+ */
 template <typename S, typename W>
 inline S align_to_frame_width(S size, W frame_width)
 {
