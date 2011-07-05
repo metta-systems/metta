@@ -31,7 +31,7 @@ default_console_t::default_console_t()
 
 void default_console_t::clear()
 {
-    memutils::fill_memory((void*)(videoram), 0, LINE_PITCH*LINE_COUNT);
+    memutils::clear_memory((void*)videoram, LINE_PITCH*LINE_COUNT);
     locate(0,0);
     attr = 0x07;
 }

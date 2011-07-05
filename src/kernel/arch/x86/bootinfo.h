@@ -17,9 +17,6 @@
 #include "new.h"
 #include "memory_v1_interface.h"
 
-// Rather arbitrary location for the bootinfo page.
-static void* BOOTINFO_PAGE UNUSED_ARG = (void*)0x8000;
-
 // TODO: We need to abstract frames module from the format of bootinfo page,
 // so we add a type for memory_map and make it hide the fact that it uses the bootinfo_page
 // we pass the memory_map type to frames_mod.
@@ -67,20 +64,24 @@ public:
  * Provides access to boot info page structures.
  *
  * Common way of accessing it is to create an instance of bootinfo_t using placement new at the location
- * of BOOTINFO_PAGE, e.g.:
- * bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+ * of bootinfo_t::ADDRESS, e.g.:
+ * bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
  * Then you can add items or query items.
  */
 class bootinfo_t
 {
     uint32_t  magic;
     char*     free;
+    address_t first_module_address;
     address_t last_available_module_address;
 
     static const uint32_t BI_MAGIC = 0xbeefdea1;
     multiboot_t::mmap_entry_t* find_matching_entry(address_t start, size_t size, int& n_way);
 
 public:
+    // Rather arbitrary location for the bootinfo page.
+    static void* ADDRESS; // not an enum because of placement new()
+
     /* Iterator for going over available physical memory map entries. */
     class mmap_iterator : public std::iterator<std::forward_iterator_tag, multiboot_t::mmap_entry_t>
     {
@@ -162,7 +163,7 @@ public:
     // (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
     module_loader_t get_module_loader();
     /*!
-     * Return memory occupied by loaded modules.
+     * Return memory occupied by already loaded and relocated modules.
      */
     address_t used_modules_memory(size_t* size);
 

@@ -48,7 +48,7 @@ _start:
     cli
     jmp short $                        ; halt machine should startup code return
 
-section .multiboot_info                ; mboot header should fit in first 8KiB so we make a section for it
+section .multiboot_info                ; mboot header should fit in the first 8KiB so we make a section for it
 align 4
 multiboot_header:
     dd MAGIC

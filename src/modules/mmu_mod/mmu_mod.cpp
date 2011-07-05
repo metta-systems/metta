@@ -647,7 +647,7 @@ static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 
 static void enter_mappings(mmu_v1_state* state)
 {
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [bi, state](const memory_v1_mapping* e)
     {
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
@@ -699,7 +699,7 @@ static void enter_mappings(mmu_v1_state* state)
 static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_t initial_reservation, ramtab_v1_closure** ramtab, memory_v1_address* free)
 {
     kconsole << " +-mmu_module_v1.create" << endl;
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
 	size_t mmu_memory_needed_bytes = 0;
 
@@ -833,7 +833,7 @@ static const mmu_module_v1_ops mmu_module_v1_method_table = {
 
 static const mmu_module_v1_closure clos = {
     &mmu_module_v1_method_table,
-    NULL
+    NULL // no state
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(mmu_module, v1, clos);

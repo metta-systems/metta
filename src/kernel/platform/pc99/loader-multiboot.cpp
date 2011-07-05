@@ -28,7 +28,7 @@ bool mbi_probe()
         return false;
 
     // Make a safe copy of the MBI structure itself.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t(true);
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t(true);
 
     // We need info about memory map, modules and command line.
     multiboot_t::mmap_t* memmap = _mbi->memory_map();
@@ -43,9 +43,19 @@ bool mbi_probe()
     }
 
     for (size_t i = 0; i < _mbi->module_count(); i++)
+    {
         bi->append_module(i, _mbi->module(i));
+    }
 
-    //TODO: mark loaded modules memory as used in the bootinfo (so we don't overwrite them later on)
+    // mark loaded modules memory as used in the bootinfo (so we don't overwrite them later on)
+    for (size_t i = 0; i < _mbi->module_count(); i++)
+    {
+        if (!bi->use_memory(_mbi->module(i)->mod_start, _mbi->module(i)->mod_end - _mbi->module(i)->mod_start))
+        {
+            kconsole << __FUNCTION__ << ": unable to reserve module memory in memmap!" << endl;
+            break;
+        }
+    }
 
     bi->append_cmdline(_mbi->cmdline());
 
@@ -73,7 +83,7 @@ address_t mbi_init()
     multiboot_t* mbi = multiboot_t::prepare();
 
     // Load and relocate kernel-startup elf.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t elf(mbi->module(0)->mod_start);
 
     return (address_t)bi->get_module_loader().load_module("kernel_boot", elf, NULL);

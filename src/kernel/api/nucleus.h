@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "mmu.h"
 #include "debugger.h"
+#include "panic.h"
 
 namespace nucleus
 {

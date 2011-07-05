@@ -28,7 +28,6 @@
 #include <boost/foreach.hpp>
 #include "types.h"
 #include "fourcc.h"
-#include "bootimage.h"
 #include "bootimage_private.h"
 #include "raiifile.h"
 #include "config.h"

@@ -8,7 +8,7 @@
 //
 #pragma once
 
-#include "panic.h"
+#include "types.h"
 
 #define endl console_t::eol
 

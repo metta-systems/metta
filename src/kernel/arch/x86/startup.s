@@ -15,7 +15,7 @@ bits 32                                ; 32 bit PM
 
 [section .bss]
 align 0x1000
-resb 0x1000
+resb  0x1000
 initial_stack:                         ; reserve one page for startup stack
 
 [section .text]

@@ -14,6 +14,7 @@
 #include "memutils.h"
 #include "default_console.h"
 #include "debugger.h"
+#include "panic.h"
 
 void* operator new[](size_t size)
 {

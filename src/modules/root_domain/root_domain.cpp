@@ -18,13 +18,13 @@ root_domain_t::root_domain_t(bootimage_t& img)
     : ns(0, 0)
 {
     bootimage_t::modinfo_t mi = img.find_root_domain(&ns);
-    kconsole << "Root domain at " << (unsigned)mi.start << ", size " << mi.size << " bytes." << endl;
+    kconsole << "Root domain at " << (unsigned)mi.start << ", size " << int(mi.size) << " bytes." << endl;
 
     elf.parse(mi.start);
     if (!elf.is_valid())
         PANIC("Invalid root_domain ELF image!");
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     entry_point = (address_t)bi->get_module_loader().load_module("root_domain", elf, NULL);
 }
 
