@@ -20,6 +20,7 @@ stl_include_dirs = ['runtime/stl']
 #-fvisibility-inlines-hidden -fvisibility=hidden
 cflags = []
 flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
+non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
 
 # Change default waf behaviour wrt extensions.
@@ -121,7 +122,7 @@ def configure(conf):
     conf.define('CONFIG_DEBUG_SYMBOLS', 1)
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
-    conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('ELF_LOADER_DEBUG', 0)
     conf.define('ELF_RELOC_DEBUG_V', 0)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
@@ -231,7 +232,7 @@ def build(bld):
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
     bld.add_subdirs("modules")
-    bld.add_subdirs("tools/mettafs")
+    #bld.add_subdirs("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
@@ -315,7 +316,7 @@ def build(bld):
     kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
     kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
     kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    kickstart.uselib_local = 'common minruntime platform'# kernel
+    kickstart.uselib_local = 'common platform minruntime'# kernel
 
     # Launcher
     # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
