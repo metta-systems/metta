@@ -149,9 +149,11 @@ static sid_t alloc_sid(server_state_t* state)
             size_t k;
             for (k = 0; (k < 32) && (sid & (1 << k)); ++k) {}
             state->sids[i] = sid | (1 << k);
+            kconsole << __FUNCTION__ << ": allocated sid " << i * 32 + k << endl;
             return i * 32 + k;
         }
     }
+    kconsole << __FUNCTION__ << ": sid allocation FAILED" << endl;
     return SID_NULL;
 }
 
@@ -162,6 +164,7 @@ static void register_sid(server_state_t* state, sid_t sid, stretch_v1_closure* s
 
 // static void free_sid(server_state_t* state, sid_t sid)
 // {
+    // kconsole << __FUNCTION__ << ": deallocated sid " << sid << endl;
     // state->sids[sid / 32] &= ~(1 << (sid % 32));
 // }
 
@@ -174,7 +177,7 @@ static stretch_v1_state* create_stretch(server_state_t* state, address_t base, s
         return NULL;
     }
 
-    closure_init(stretch->closure, &stretch_v1_methods, stretch);
+    closure_init(&stretch->closure, &stretch_v1_methods, stretch);
     stretch->base = base;
     stretch->size = n_pages << PAGE_WIDTH;
     stretch->sid = alloc_sid(state);
@@ -190,7 +193,7 @@ static stretch_v1_state* create_stretch(server_state_t* state, address_t base, s
 
 static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_address start, memory_v1_address* virt_addr, size_t* n_pages, size_t* page_width)
 {
-    kconsole << __PRETTY_FUNCTION__ << " size " << size << ", start " << start << endl;
+    kconsole << __FUNCTION__ << " size " << size << ", start " << start << endl;
 
     size_t npages = (size + PAGE_SIZE - 1) >> PAGE_WIDTH;
     virtual_address_space_region* region;
@@ -307,6 +310,7 @@ static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_addre
         }
     }
 
+    kconsole << __FUNCTION__ << ": allocated [" << *virt_addr << ".." << *virt_addr + (*n_pages << *page_width) << ")" << endl;
     return true;
 }
 
@@ -391,6 +395,8 @@ static stretch_v1_closure* system_stretch_allocator_v1_create_over(system_stretc
     bool update = false;
     server_state_t* state = self->state->shared_state;
 
+    kconsole << __FUNCTION__ << ": start " << start << ", size " << size << endl;
+
     if (!vm_alloc(state, size, start, &virtmem.start_addr, &virtmem.n_pages, &virtmem.page_width))
     {
         /*
@@ -415,6 +421,8 @@ static stretch_v1_closure* system_stretch_allocator_v1_create_over(system_stretc
 
     s->allocator = reinterpret_cast<stretch_allocator_v1_closure*>(self);//YIKES!
 
+    kconsole << __FUNCTION__ << ": created [" << s->base << ".." << (s->base + s->size) << "), sid " << s->sid << endl;
+
     if (update)
         state->mmu->update_range(&s->closure, virtmem, global_rights);
     else
@@ -434,6 +442,7 @@ static stretch_v1_closure* system_stretch_allocator_v1_create_over(system_stretc
     self->state->stretches.add_to_tail(link);
     //unlock();
 
+    kconsole << __FUNCTION__ << ": returning stretch at " << &s->closure << endl;
     return &s->closure;
 }
 
@@ -456,7 +465,7 @@ static const system_stretch_allocator_v1_ops system_stretch_allocator_v1_methods
 static system_stretch_allocator_v1_closure* stretch_allocator_module_v1_create(stretch_allocator_module_v1_closure* self, heap_v1_closure* heap, mmu_v1_closure* mmu)
 {
     kconsole << __FUNCTION__ << endl;
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     server_state_t* shared_state = new(heap) server_state_t;
     shared_state->heap = heap;
