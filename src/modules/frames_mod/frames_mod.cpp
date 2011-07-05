@@ -677,7 +677,7 @@ static memory_v1_size frames_module_v1_required_size(frames_module_v1_closure* s
 {
     UNUSED(self);
     size_t n_regions = 0, n_frames = 0, res = 0;
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t; // simplify memory map operations
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t; // simplify memory map operations
 
     // Scan through the set of mem desc and count the number of logical frames they contain in total.
     std::for_each(bi->mmap_begin(), bi->mmap_end(), [&n_regions, &n_frames](const multiboot_t::mmap_entry_t* e)
@@ -722,7 +722,7 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
     frames_module_v1_state* last_state = running_state;
     size_t n_regions = 0;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     std::for_each(bi->mmap_begin(), bi->mmap_end(), [&running_state, &last_state, &n_regions, rtab](const multiboot_t::mmap_entry_t* e)
     {
         if (e->type() == multiboot_t::mmap_entry_t::non_free)
