@@ -199,7 +199,7 @@ static void prepare_infopage()
     INFO_PAGE.cpu_features        = 0;
 }
 
-extern timer_v1_closure* init_timer();
+extern timer_v1_closure* init_timer(); // YIKES FIXME
 static continuation_t new_context;
 
 static void dump_regs(registers_t* regs)
@@ -213,7 +213,7 @@ static void dump_regs(registers_t* regs)
         << "     EIP:" << regs->eip << " EFLAGS:" << regs->eflags;
 
     // EFLAGS bits names from msb (bit 31) to lsb (bit 0)
-    const char* eflags_bits[] = {
+    static const char* eflags_bits[] = {
         "<31>", "<30>", "<29>", "<28>", "<27>", "<26>", "<25>", "<24>",
         "<23>", "<22>", "ID", "VIP", "VIF", "AC", "VM", "RF",
         "<15>", "NT", "IOPL1", "IOPL0", "OF", "DF", "IF", "TF",
@@ -249,9 +249,19 @@ public:
     }
 };
 
+class dummy_handler_t : public interrupt_service_routine_t
+{
+public:
+    virtual void run(registers_t* regs)
+    {
+        dump_regs(regs);
+        PANIC("CATCH-ALL");
+    }
+};
 
 general_fault_handler_t gpf_handler;
 invalid_opcode_handler_t iop_handler;
+dummy_handler_t all_exceptions_handler;
 
 /*!
  * Get the system going.
@@ -268,12 +278,42 @@ extern "C" void kernel_startup()
     global_descriptor_table_t gdt;
     kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x0, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x2, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x3, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x4, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x5, &all_exceptions_handler);
     interrupt_descriptor_table_t::instance().set_isr_handler(0x6, &iop_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x7, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x8, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x9, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xa, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xb, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xc, &all_exceptions_handler);
     interrupt_descriptor_table_t::instance().set_isr_handler(0xd, &gpf_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xe, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0xf, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x10, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x11, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x12, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x13, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x14, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x15, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x16, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x17, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x18, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x19, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1a, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1b, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1c, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1d, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1e, &all_exceptions_handler);
+    interrupt_descriptor_table_t::instance().set_isr_handler(0x1f, &all_exceptions_handler);
     kconsole << "Created IDT." << endl;
 
     // Grab the bootinfo page and discover where is our bootimage.
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     address_t start, end;
     const char* name;
@@ -292,10 +332,12 @@ extern "C" void kernel_startup()
     // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
 //    int ramtop = 16*MiB;
     bi->append_vmap(0, 0, 16*MiB);//min(16*MiB, ramtop));
-    
+
     timer_v1_closure* timer = init_timer();
     timer->enable(0); // enable timer interrupts
+    kconsole << "Timer interrupt enabled." << endl;
     x86_cpu_t::enable_fpu();
+    kconsole << "FPU enabled." << endl;
 
 //    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
