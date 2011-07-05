@@ -14,6 +14,8 @@
 
 struct information_page_t
 {
+    enum { ADDRESS = 0x1000 };
+
     volatile time_v1_ns   now;       /* 00 Current system time              */
     volatile time_v1_ns   alarm;     /* 08 Alarm time                       */
     volatile uint32_t     pcc;       /* 10 Cycle count at last tick         */
@@ -35,8 +37,7 @@ struct information_page_t
     stretch_v1_closure** stretch_mapping;
 };
 
-#define INFO_PAGE_ADDR 0x1000
-#define INFO_PAGE (*((information_page_t*)INFO_PAGE_ADDR))
+#define INFO_PAGE (*((information_page_t*)information_page_t::ADDRESS))
 
 // Pervasives accessor.
 #define PVS(member) (INFO_PAGE.pervasives->member)
