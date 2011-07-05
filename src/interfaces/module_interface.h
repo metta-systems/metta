@@ -30,10 +30,10 @@ struct module_interface
 };
 
 template <class C, class O, class S>
-void closure_init(C closure, O* ops, S* state)
+void closure_init(C* closure, O* ops, S* state)
 {
-    closure.methods = ops;
-    closure.state = state;
+    closure->methods = ops;
+    closure->state = state;
 }
 
 /* #define DECLARE_CLOSURE_(name, parent) \
