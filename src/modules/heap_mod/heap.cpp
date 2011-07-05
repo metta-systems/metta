@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "debugger.h"
 #include "default_console.h"
+#include "panic.h"
 //#include "config.h" // for HEAP_DEBUG
 
 #define HEAP_DEBUG 1
