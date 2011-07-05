@@ -53,7 +53,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     kconsole << " + Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
     return bi->get_module_loader().load_module(module_name, loader, clos);
     /* FIXME: Skip dependencies for now */
@@ -69,10 +69,36 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 // setup MMU and frame allocator
 //======================================================================================================================
 
+static protection_domain_v1_id create_address_space(system_frame_allocator_v1_closure* frames, mmu_v1_closure* mmu, system_stretch_allocator_v1_closure* system_stretch_allocator)
+{
+    auto pdom = mmu->create_domain();
+
+    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's even unused!
+
+    // First we need to map the PIP globally read-only.
+    auto str = system_stretch_allocator->create_over(PAGE_SIZE,
+            stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_global), 
+            information_page_t::ADDRESS, memory_v1_attrs_regular, PAGE_WIDTH, null_pmem);
+
+    /* Map stretches over the boot image */
+    // is there any still needed? we overwrote it all anyway... maybe rethink the allocation strategy during bootup
+
+    // map nucleus glue code
+
+    // map over loaded modules
+                // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
+                //                      mod->addr, mod->size));
+                // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
+                //                              (addr_t)mod->addr, 
+                //                              0, PAGE_WIDTH, NULL);
+                // ASSERT_ADDRESS(str, mod->addr);
+    return pdom;
+}
+
 static void init_mem(bootimage_t& bootimg)
 {
     kconsole << " + init_mem" << endl;
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     // Load modules used for booting before we overwrite them.
     auto frames_factory = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
@@ -95,7 +121,7 @@ static void init_mem(bootimage_t& bootimg)
     
     size_t modules_size;
     address_t modules_base = bi->used_modules_memory(&modules_size);
-    bi->use_memory(modules_base, modules_size);
+    bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
 
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
@@ -105,11 +131,8 @@ static void init_mem(bootimage_t& bootimg)
     ramtab_v1_closure* rtab;
     memory_v1_address next_free;
 
-    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
+    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;    
     mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
-    UNUSED(mmu);
-
-//FIXME: we've just overwritten our bootimage, congratulations, gentlemen! Finding heap module will be fun.
 
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
@@ -162,34 +185,11 @@ static void init_mem(bootimage_t& bootimg)
 
     // Create the initial address space; returns a pdom for Nemesis domain.
     kconsole << " + Creating initial address space." << endl;
-//    root_domain_pdid = create_address_space(frames, mmu, system_stretch_allocator, ??);
+    auto root_domain_pdid = create_address_space(frames, mmu, system_stretch_allocator);
 //    map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
 }
+
 #if 0
-
-protection_domain_v1_id create_address_space()
-{
-    pdom = mmu->create_domain();
-
-    /* First we need to map the PIP globally read-only */
-    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR, 
-				    (addr_t)INFO_PAGE_ADDRESS, 
-				    0, PAGE_WIDTH, NULL);
-    
-    /* Map stretches over the boot image */
-    // is there any still needed? we overwrote it all anyway... maybe rethink the allocation strategy during bootup
-
-    // map nucleus glue code
-
-    // map over loaded modules
-        	    TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
-        			    mod->addr, mod->size));
-        	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
-        					    (addr_t)mod->addr, 
-        					    0, PAGE_WIDTH, NULL);
-        	    ASSERT_ADDRESS(str, mod->addr);
-}
-
 ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu, 
 					StretchAllocatorF_clp sallocF, 
 					nexus_ptr_t nexus_ptr)
@@ -979,7 +979,7 @@ extern "C" void _start()
 
     kconsole << " + image bootup entry!" << endl;
 
-    bootinfo_t* bi = new(BOOTINFO_PAGE) bootinfo_t;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;
     const char* name;
     if (!bi->get_module(1, start, end, name))
@@ -987,8 +987,8 @@ extern "C" void _start()
         PANIC("Bootimage not found! in image bootup");
     }
 
-    bi->use_memory(INFO_PAGE_ADDR, PAGE_SIZE);
-    bi->use_memory(BOOTINFO_PAGE, PAGE_SIZE);
+    bi->use_memory(information_page_t::ADDRESS, PAGE_SIZE);
+    bi->use_memory(bootinfo_t::ADDRESS, PAGE_SIZE);
     bi->use_memory(0xb8000, PAGE_SIZE);
 
     bootimage_t bootimage(name, start, end);
