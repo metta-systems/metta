@@ -63,7 +63,7 @@ static time_v1_ns read(timer_v1_closure* self)
     return self->state->now;
 }
 
-static void set(timer_v1_closure* self, time_v1_ns time)
+static void arm(timer_v1_closure* self, time_v1_ns time)
 {
     self->state->alarm = time;
 }
@@ -81,9 +81,10 @@ static void enable(timer_v1_closure* /*self*/, uint32_t /*sirq*/)
 
 // Timer closure set up.
 
-static timer_v1_ops ops = {
+static const timer_v1_ops ops = 
+{
     read,
-    set,
+    arm,
     clear,
     enable
 };
@@ -95,8 +96,7 @@ timer_v1_closure* init_timer()
 {
     kconsole << "Initializing interrupt timer." << endl;
     init_pit(100);
-    timer.methods = &ops;
-    timer.state = reinterpret_cast<timer_v1_state*>(INFO_PAGE_ADDR);
+    closure_init(&timer, &ops, reinterpret_cast<timer_v1_state*>(information_page_t::ADDRESS));
     return &timer;
 }
 
