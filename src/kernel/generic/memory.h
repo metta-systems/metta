@@ -11,6 +11,9 @@
 #include "types.h"
 #include "ia32.h"
 
+/*!
+ * Round down address to a nearest frame width.
+ */
 inline address_t phys_frame_number(address_t addr)
 {
     return addr >> FRAME_WIDTH;
@@ -40,6 +43,19 @@ template <typename S, typename W>
 inline S align_to_frame_width(S size, W frame_width)
 {
     return (size + (1 << frame_width) - 1) & ~((1UL << frame_width) - 1);
+}
+
+/*!
+ * Convert "bytes" into a number of frames of logical width "frame_width".
+ */
+inline size_t bytes_to_log_frames(size_t bytes, size_t frame_width)
+{
+    return align_to_frame_width(bytes, frame_width) >> frame_width;
+}
+
+inline size_t log_frames_to_bytes(size_t frames, size_t frame_width)
+{
+    return frames << frame_width;
 }
 
 //! Return bytes needed to align @c addr to next @c size boundary. Size must be power of 2.
