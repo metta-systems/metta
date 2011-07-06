@@ -6,9 +6,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "parser.h"
 #include <iostream>
 #include <sstream>
-#include "parser.h"
 #include "ast.h"
 #include <llvm/ADT/Twine.h>
 

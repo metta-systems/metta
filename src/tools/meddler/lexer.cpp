@@ -6,9 +6,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "lexer.h"
 #include <string.h>
 #include "token.h"
-#include "lexer.h"
 
 lexer_t::lexer_t(bool be_verbose)
     : cur_ptr(0)
