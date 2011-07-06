@@ -8,10 +8,10 @@
 //
 // TODO: this will go into interrupt_dispatcher
 //
-#include "default_console.h"
 #include "isr.h"
 #include "idt.h"
 #include "cpu.h"
+#include "default_console.h"
 
 extern "C"
 {
