@@ -1,10 +1,15 @@
-#!/usr/bin/env ruby
+#!/bin/sh
+
+name="$1"
 
 mkdir modules/$name
-output = modules/$name/wscript
-output <<EOF
-from ../module_template import setup_module_build
+cat modules/$name/wscript <<EOF
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 def build(bld):
-   $name = bld.gen('cpp', blah)
-   setup_module_build(bld)
+    mod = bld.setup_module_build(bld, 'root_domain')
+    mod.source = 'entry.cpp root_domain.cpp'.split()
+    mod.idl_source = 'all_idl'
 EOF
+
