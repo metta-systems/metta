@@ -114,7 +114,7 @@ static const frame_allocator_v1_ops frame_allocator_v1_methods =
 static void mark_frames_used(frame_allocator_v1_state* client_state, frames_module_v1_state* state, address_t first_frame, size_t n_frames)
 {
     for (size_t j = first_frame; j < (first_frame + n_frames); ++j)
-        state->frames[j].free  = 0;
+        state->frames[j].free = 0;
 
     if (state->ramtab)
     {
@@ -124,6 +124,7 @@ static void mark_frames_used(frame_allocator_v1_state* client_state, frames_modu
         {
             for(size_t k = 0; k < (1UL << fshift); ++k)
             {
+                // Effectively, set only owner and frame_width. Frames are yet unused (neither mapped nor nailed).
                 state->ramtab->put(ridx + (j << fshift) + k, client_state->owner, state->frame_width, ramtab_v1_state_e_unused);
             }
         }
@@ -230,17 +231,6 @@ static frames_module_v1_state* get_region(frames_module_v1_state* state, address
     }
 
     return ret;
-}
-
-/* Convert "bytes" into a number of frames of logical width "frame_width" */
-inline size_t bytes_to_log_frames(size_t bytes, size_t frame_width)
-{
-    return align_to_frame_width(bytes, frame_width) >> frame_width;
-}
-
-inline size_t log_frames_to_bytes(size_t frames, size_t frame_width)
-{
-    return frames << frame_width;
 }
 
 inline address_t frame_address(frames_module_v1_state* cur_state, address_t frame_index)
@@ -402,7 +392,7 @@ static memory_v1_address system_frame_allocator_v1_allocate_range(system_frame_a
         PANIC("Something's wrong.");
     }
 
-    kconsole << "  allocated " << start << endl;
+    kconsole << __FUNCTION__ << ": allocated " << start << endl;
     return start;
 }
 
@@ -426,11 +416,6 @@ static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1_closur
 
     *attr = cur_state->attrs;
     return cur_state->frame_width;
-}
-
-inline address_t phys_frame_number(address_t addr)
-{
-    return addr >> FRAME_WIDTH;
 }
 
 static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_size bytes)
@@ -544,6 +529,7 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* se
         for (size_t j = start_log_frame; j < end_log_frame; ++j)
         {
             //FIXME: indexing will be wrong with fshift > 0
+            // Effectively, just set the owner to none and state to unused.
             cur_state->ramtab->put(ridx + (j << fshift), OWNER_NONE, cur_state->frame_width, ramtab_v1_state_e_unused);
         }
     }
@@ -706,8 +692,7 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
     frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(where_to_start);
 
     system_frame_allocator_v1_closure* ret = reinterpret_cast<system_frame_allocator_v1_closure*>(&client_state->closure);
-    ret->state = reinterpret_cast<system_frame_allocator_v1_state*>(client_state);
-    ret->methods = &system_frame_allocator_v1_methods;
+    closure_init(ret, &system_frame_allocator_v1_methods, reinterpret_cast<system_frame_allocator_v1_state*>(client_state));
 
     frames_module_v1_state* frames_state = reinterpret_cast<frames_module_v1_state*>(where_to_start + sizeof(frame_allocator_v1_state));
 
@@ -729,7 +714,7 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
             return;
 
         running_state->start = e->address();
-        running_state->n_logical_frames = e->size() >> FRAME_WIDTH;
+        running_state->n_logical_frames = phys_frame_number(e->size());
         running_state->frame_width = FRAME_WIDTH;
         if ((e->type() == multiboot_t::mmap_entry_t::free) || (e->type() == multiboot_t::mmap_entry_t::acpi_reclaimable))
         {
@@ -770,11 +755,14 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
 
         address_t first_frame;
         size_t n_frames;
-        auto running_state = alloc_range(ret, e->size() >> FRAME_WIDTH, e->address(), &first_frame, &n_frames);
+        auto running_state = alloc_range(ret, size_in_whole_frames(e->size(), FRAME_WIDTH), e->address(), &first_frame, &n_frames);
         if (n_frames == 0)
             PANIC("Already allocated range deemed unavailable!");
 
+        alloc_update_free_predecessors(running_state, first_frame);
         mark_frames_used(client_state, running_state, first_frame, n_frames);
+        
+        client_state->n_allocated_phys_frames += n_frames;
     });
 
     return ret;
