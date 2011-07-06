@@ -9,15 +9,18 @@
 #pragma once
 
 // Simple wrapper for IDL set class.
+// T cannot be uint32_t...
 template <typename T>
 class set_t
 {
     uint32_t value; // It has a limit of 32 entries in the set, but we're unlikely to exceed it for any IDL set types.
 public:
     set_t() : value(0) {}
-    set_t(uint32_t v) : value(v) {} // allows implicit conversion
+    set_t(uint32_t v) : value(v) {} // allows implicit uint32_t conversion
+    set_t(T v) : value(0) { add(v); }
     set_t(const set_t<T>& other) : value(other.value) {}
     void operator =(uint32_t v) { value = v; }
+    void operator =(T v) { value = 0; add(v); }
     operator uint32_t() { return value; }
 
     // TODO: add asserts for n < 32

@@ -481,7 +481,6 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
 
     });
     kconsole << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range << endl;
-    debugger_t::breakpoint();
     return first_range;
 }
 

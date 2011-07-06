@@ -12,6 +12,7 @@
 #include "stretch_v1_interface.h"
 #include "doubly_linked_list.h"
 #include "domain.h"
+#include "console.h"
 
 struct stretch_allocator_v1_closure;
 struct mmu_v1_closure;
@@ -35,6 +36,17 @@ struct stretch_v1_state : public dl_link_t<stretch_v1_state>
 };
 
 const uint32_t stretch_v1_right_none = 0;
+
+inline console_t& operator << (console_t& con, stretch_v1_rights rights)
+{
+    con << "["
+        << (rights.has(stretch_v1_right_meta)    ? "M" : "-")
+        << (rights.has(stretch_v1_right_read)    ? "R" : "-")
+        << (rights.has(stretch_v1_right_write)   ? "W" : "-")
+        << (rights.has(stretch_v1_right_execute) ? "X" : "-")
+        << "]";
+    return con;
+}
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

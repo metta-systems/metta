@@ -69,30 +69,53 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 // setup MMU and frame allocator
 //======================================================================================================================
 
-static protection_domain_v1_id create_address_space(system_frame_allocator_v1_closure* frames, mmu_v1_closure* mmu, system_stretch_allocator_v1_closure* system_stretch_allocator)
+static protection_domain_v1_id create_address_space(system_frame_allocator_v1_closure* frames, mmu_v1_closure* mmu)
 {
     auto pdom = mmu->create_domain();
 
-    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's even unused!
+    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
 
     // First we need to map the PIP globally read-only.
-    auto str = system_stretch_allocator->create_over(PAGE_SIZE,
-            stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_global), 
+    auto str = PVS(stretch_allocator)->create_over(PAGE_SIZE,
+            stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_global),
             information_page_t::ADDRESS, memory_v1_attrs_regular, PAGE_WIDTH, null_pmem);
 
     /* Map stretches over the boot image */
-    // is there any still needed? we overwrote it all anyway... maybe rethink the allocation strategy during bootup
 
     // map nucleus glue code
 
     // map over loaded modules
                 // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
                 //                      mod->addr, mod->size));
-                // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
-                //                              (addr_t)mod->addr, 
+                // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
+                //                              (addr_t)mod->addr,
                 //                              0, PAGE_WIDTH, NULL);
                 // ASSERT_ADDRESS(str, mod->addr);
     return pdom;
+}
+
+/*!
+ * At startup we created a physical heap; while this is fine, the idea
+ * of protection is closely tied to that of stretches. Hence this function
+ * maps a stretch over the existing heap.
+ * This allows us to map it read/write for us, and read-only to everyone else.
+ */
+static void map_initial_heap(heap_module_v1_closure* heap_mod, heap_v1_closure* heap, size_t initial_heap_size, protection_domain_v1_id root_domain_pdid)
+{
+    kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
+    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
+
+    auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1_rights(stretch_v1_right_read), memory_v1_address(heap), memory_v1_attrs_regular, PAGE_WIDTH, null_pmem);
+
+    auto real_heap = heap_mod->realize(heap, str);
+
+    if (real_heap != heap)
+    {
+        kconsole << WARNING << __FUNCTION__ << ": realize changed heap address from " << heap << " to " << real_heap << endl;
+    }
+
+    // Map our heap as local read/write
+    str->set_rights(root_domain_pdid, stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_write));
 }
 
 static void init_mem(bootimage_t& bootimg)
@@ -112,13 +135,13 @@ static void init_mem(bootimage_t& bootimg)
 
     auto stretch_allocator_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
     ASSERT(stretch_allocator_mod);
-    
+
     auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
     ASSERT(stretch_table_mod);
 
     auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
     ASSERT(stretch_driver_mod);
-    
+
     size_t modules_size;
     address_t modules_base = bi->used_modules_memory(&modules_size);
     bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
@@ -131,7 +154,7 @@ static void init_mem(bootimage_t& bootimg)
     ramtab_v1_closure* rtab;
     memory_v1_address next_free;
 
-    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;    
+    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
     mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
 
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
@@ -183,15 +206,15 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + Creating null stretch driver" << endl;
     PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
 
-    // Create the initial address space; returns a pdom for Nemesis domain.
+    // Create the initial address space; returns a pdom for root domain.
     kconsole << " + Creating initial address space." << endl;
-    auto root_domain_pdid = create_address_space(frames, mmu, system_stretch_allocator);
-//    map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
+    auto root_domain_pdid = create_address_space(frames, mmu);
+    map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
 }
 
 #if 0
-ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu, 
-					StretchAllocatorF_clp sallocF, 
+ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
+					StretchAllocatorF_clp sallocF,
 					nexus_ptr_t nexus_ptr)
 {
     nexus_ptr_t          nexus_end;
@@ -224,35 +247,35 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
     }
     map_index= 0;
 
-    /* 
+    /*
     ** Sort out memory before the boot address (platform specific)
-    ** In MEMSYS_EXPT, this memory has already been marked as used 
-    ** (both in virtual and physical address allocators) by the 
-    ** initialisation code, so all we wish to do is to map some 
-    ** stretches over certain parts of it. 
-    ** Most of the relevant information is provided in the nexus, 
-    ** although even before this we have the PIP. 
+    ** In MEMSYS_EXPT, this memory has already been marked as used
+    ** (both in virtual and physical address allocators) by the
+    ** initialisation code, so all we wish to do is to map some
+    ** stretches over certain parts of it.
+    ** Most of the relevant information is provided in the nexus,
+    ** although even before this we have the PIP.
     */
 
     /* First we need to map the PIP globally read-only */
-    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR, 
-				    (addr_t)INFO_PAGE_ADDRESS, 
+    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR,
+				    (addr_t)INFO_PAGE_ADDRESS,
 				    0, PAGE_WIDTH, NULL);
     ASSERT_ADDRESS(str, INFO_PAGE_ADDRESS);
 
     /* Map stretches over the boot image */
-    TRC_MEM(eprintf("CreateAddressSpace (EXPT): Parsing NEXUS at %p\n", 
+    TRC_MEM(eprintf("CreateAddressSpace (EXPT): Parsing NEXUS at %p\n",
 		nexus_ptr.generic));
 
     while(nexus_ptr.generic < nexus_end.generic)  {
-	
+
 	switch(*nexus_ptr.tag) {
-	    
+
 	  case nexus_primal:
 	    primal = nexus_ptr.nu_primal++;
 	    TRC_MEM(eprintf("PRIM: %lx\n", primal->lastaddr));
 	    break;
-	    
+
 	  case nexus_ntsc:
 	    ntsc = nexus_ptr.nu_ntsc++;
 	    TRC_MEM(eprintf("NTSC: T=%06lx:%06lx D=%06lx:%06lx "
@@ -283,15 +306,15 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 		if (ALIGN(ntsc->daddr - ntsc->taddr) - FRAME_SIZE != 0)
 		{
 		    str = StretchAllocatorF$NewOver(
-			sallocF, ALIGN(ntsc->daddr - ntsc->taddr)-FRAME_SIZE, 
+			sallocF, ALIGN(ntsc->daddr - ntsc->taddr)-FRAME_SIZE,
 			AXS_GE, (addr_t)ntsc->taddr, 0, PAGE_WIDTH, NULL);
 		    ASSERT_ADDRESS(str, ntsc->taddr);
 		}
 
 		/* create hack page */
 		str = StretchAllocatorF$NewOver(
-		    sallocF, FRAME_SIZE, AXS_NONE, 
-		    (addr_t)(ALIGN(ntsc->daddr) - FRAME_SIZE), 0, 
+		    sallocF, FRAME_SIZE, AXS_NONE,
+		    (addr_t)(ALIGN(ntsc->daddr) - FRAME_SIZE), 0,
 		    PAGE_WIDTH, NULL);
 		TRC_MEM(eprintf("       -- hack page at %06lx\n",
 				ALIGN(ntsc->daddr) - FRAME_SIZE));
@@ -305,60 +328,60 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 	    {
 		/* no hack page needed */
 		str = StretchAllocatorF$NewOver(sallocF, ntsc->tsize, AXS_GE,
-						(addr_t)ntsc->taddr, 0, 
+						(addr_t)ntsc->taddr, 0,
 						PAGE_WIDTH, NULL);
 		ASSERT_ADDRESS(str, ntsc->taddr);
 	    }
 	    break;
-	    
+
 	  case nexus_nexus:
 	    nexus = nexus_ptr.nu_nexus++;
-	    TRC_MEM(eprintf("NEX:  N=%06lx,%06lx IGNORING\n", 
+	    TRC_MEM(eprintf("NEX:  N=%06lx,%06lx IGNORING\n",
 			    nexus->addr, nexus->size));
 	    nexus_end.generic = (addr_t)(nexus->addr + nexus->size);
 
 	    /* XXX Subtlety - NEXUS tacked on the end of NTSC BSS */
-	    /* 
+	    /*
 	    ** XXX More subtlety; the NEXUS is always a page and `a bit', where
 	    ** the bit is whatever's left from the end of the ntsc's bss upto
 	    ** a page boundary, and the page is the one following that.
-	    ** This is regardless of whether or not the nexus requires this 
-	    ** space, and as such nexus->size can be misleading. Simplest 
-            ** way to ensure we alloc enough mem for now is to simply 
+	    ** This is regardless of whether or not the nexus requires this
+	    ** space, and as such nexus->size can be misleading. Simplest
+            ** way to ensure we alloc enough mem for now is to simply
 	    ** use 1 page as a lower bound for the nexus size.
 	    */
 	    if ((ntsc->dsize + ntsc->bsize + MAX(nexus->size, FRAME_SIZE) -
 		(ALIGN(ntsc->daddr) - ntsc->daddr)) > 0)
 	    {
 		str = StretchAllocatorF$NewOver(
-		    sallocF, ntsc->dsize + ntsc->bsize + 
+		    sallocF, ntsc->dsize + ntsc->bsize +
 		    MAX(nexus->size, FRAME_SIZE) -
-		    (ALIGN(ntsc->daddr) - ntsc->daddr) /* size */, 
+		    (ALIGN(ntsc->daddr) - ntsc->daddr) /* size */,
 		    AXS_NONE, (addr_t)ALIGN(ntsc->daddr), 0, PAGE_WIDTH, NULL);
 		ASSERT_ADDRESS(str, ALIGN(ntsc->daddr));
 		TRC_MEM(eprintf("Setting pdom prot on ntsc data (%p)\n",
 				ALIGN(ntsc->daddr)));
-		SALLOC_SETPROT(salloc, str, pdom, 
+		SALLOC_SETPROT(salloc, str, pdom,
 					 SET_ELEM(Stretch_Right_Read));
 	    }
 
 	    break;
-	    
+
 	  case nexus_module:
 	    mod = nexus_ptr.nu_mod++;
 	    TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
 			    mod->addr, mod->size));
-	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE, 
-					    (addr_t)mod->addr, 
+	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
+					    (addr_t)mod->addr,
 					    0, PAGE_WIDTH, NULL);
 	    ASSERT_ADDRESS(str, mod->addr);
 	    break;
-	    
+
 	  case nexus_namespace:
 	    name = nexus_ptr.nu_name++;
-	    nexus_ptr.generic = (char *)nexus_ptr.generic + 
+	    nexus_ptr.generic = (char *)nexus_ptr.generic +
 		name->nmods * sizeof(addr_t);
-	    TRC_MEM(eprintf("NAME: N=%06lx:%06lx\n", 
+	    TRC_MEM(eprintf("NAME: N=%06lx:%06lx\n",
 			    name->naddr, name->nsize));
 	    if (name->nsize == 0){
 
@@ -376,14 +399,14 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 
 		name ->nsize = 1;
 	    }
-	    
 
-	    str = StretchAllocatorF$NewOver(sallocF, name->nsize, 
-					    AXS_GR, (addr_t)name->naddr, 
+
+	    str = StretchAllocatorF$NewOver(sallocF, name->nsize,
+					    AXS_GR, (addr_t)name->naddr,
 					    0, PAGE_WIDTH, NULL);
 	    ASSERT_ADDRESS(str, name->naddr);
 	    break;
-	    
+
 	  case nexus_program:
 	    prog= nexus_ptr.nu_prog++;
 	    TRC_MEM(eprintf("PROG: T=%06lx:%06lx D=%06lx:%06lx "
@@ -393,8 +416,8 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 			    prog->baddr, prog->bsize,
 			    prog->program_name));
 
-	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize, 
-					    AXS_NONE, (addr_t)prog->taddr, 
+	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize,
+					    AXS_NONE, (addr_t)prog->taddr,
 					    0, PAGE_WIDTH, NULL);
 	    ASSERT_ADDRESS(str, prog->taddr);
 
@@ -404,14 +427,14 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 
 	    if (prog->dsize + prog->bsize) {
 		str = StretchAllocatorF$NewOver(
-		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH), 
+		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH),
 		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, NULL);
 		ASSERT_ADDRESS(str, prog->daddr);
 		/* Keep record of the stretch for later mapping into pdom */
 		addr_map[map_index].address= (addr_t)prog->daddr;
 		addr_map[map_index++].str  = str;
 	    }
-	    
+
 	    break;
 
 	case nexus_blob:
@@ -420,8 +443,8 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 			    blob->base, blob->len));
 
 	    /* slap a stretch over it */
-	    str = StretchAllocatorF$NewOver(sallocF, blob->len, 
-					    AXS_GR, (addr_t)blob->base, 
+	    str = StretchAllocatorF$NewOver(sallocF, blob->len,
+					    AXS_GR, (addr_t)blob->base,
 					    0, PAGE_WIDTH, NULL);
 	    ASSERT_ADDRESS(str, blob->base);
 	    break;
@@ -430,7 +453,7 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 	    EOI = nexus_ptr.nu_EOI++;
 	    TRC_MEM(eprintf("EOI:  %lx\n", EOI->lastaddr));
 	    break;
-	    
+
 	  default:
 	    TRC_MEM(eprintf("Bogus NEXUS entry: %x\n", *nexus_ptr.tag));
 	    ntsc_halt();
@@ -443,38 +466,6 @@ ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
 }
 
 
-/*
-** At startup we create a physical heap; while this is fine, the idea
-** of protection is closely tied to that of stretches. Hence this function
-** maps a stretch over the existing heap.
-** This allows us to map it read/write for us, and read-only to everyone else.
-*/
-void MapInitialHeap(HeapMod_clp hmod, Heap_clp heap, 
-		    word_t heap_size, ProtectionDomain_ID pdom)
-{
-    Stretch_clp str;
-    Heap_clp realheap; 
-    addr_t a = (addr_t)((size_t)heap & ~(PAGE_SIZE-1));
-
-    TRC(eprintf(" + Mapping stretch over heap: 0x%x bytes at %p\n", 
-	    heap_size, a));
-    str = StretchAllocatorF$NewOver((StretchAllocatorF_cl *)Pvs(salloc), 
-				    heap_size, AXS_R, a, 0, 
-				    PAGE_WIDTH, NULL);
-    ASSERT_ADDRESS(str, a);
-    TRC(eprintf(" + Done!\n"));
-
-    realheap = HeapMod$Realize(hmod, heap, str);
-
-    if(realheap != heap) 
-	eprintf("WARNING: HeapMod$Realize(%p) => %p\n", 
-		heap, realheap);
-
-
-    /* Map our heap as local read/write */
-    STR_SETPROT(str, pdom, (SET_ELEM(Stretch_Right_Read)|
-			    SET_ELEM(Stretch_Right_Write)));
-}
 
 #endif
 
@@ -916,7 +907,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
 */
 
     /* register our vp and pdom with the stretch allocators */
-/*    
+/*
     //stretch_allocator_mod->finish_init():
 SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     SAllocMod$Done(SAllocMod, (StretchAllocatorF_cl *)sysalloc,

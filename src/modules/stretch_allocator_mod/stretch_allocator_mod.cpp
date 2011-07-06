@@ -12,6 +12,7 @@
 #include "system_stretch_allocator_v1_impl.h"
 #include "stretch_allocator_v1_interface.h"
 #include "stretch_allocator_v1_impl.h"
+#include "frame_allocator_v1_interface.h"
 #include "stretch_v1_interface.h"
 #include "stretch_v1_state.h"
 #include "stretch_v1_impl.h"
@@ -76,66 +77,6 @@ struct system_stretch_allocator_v1_state : public stretch_allocator_v1_state, pu
 };
 
 //======================================================================================================================
-// stretch_v1 methods
-//======================================================================================================================
-
-static const stretch_v1_ops stretch_v1_methods = {
-    NULL, // memory_v1_address (*info)(stretch_v1_closure* self, memory_v1_size* s);
-    NULL, // void (*set_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_rights access);
-    NULL, // void (*remove_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
-    NULL, // void (*set_global_rights)(stretch_v1_closure* self, stretch_v1_rights access);
-    NULL  // stretch_v1_rights (*query_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
-};
-
-
-//======================================================================================================================
-// stretch_allocator_v1 methods
-//======================================================================================================================
-
-//======================================================================================================================
-// nailed version
-//======================================================================================================================
-
-static stretch_v1_closure* stretch_allocator_v1_nailed_create(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access)
-{
-    return 0;
-}
-
-static stretch_allocator_v1_stretch_seq stretch_allocator_v1_nailed_create_list(stretch_allocator_v1_closure* self, stretch_allocator_v1_size_seq sizes, stretch_v1_rights access)
-{
-    return 0;
-}
-
-static stretch_v1_closure* stretch_allocator_v1_nailed_create_at(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access, memory_v1_address start, memory_v1_attrs attr, memory_v1_physmem_desc region)
-{
-    return 0;
-}
-
-static stretch_v1_closure* stretch_allocator_v1_nailed_clone(stretch_allocator_v1_closure* self, stretch_v1_closure* template_stretch, memory_v1_size size)
-{
-    return 0;
-}
-
-static void stretch_allocator_v1_nailed_destroy_stretch(stretch_allocator_v1_closure* self, stretch_v1_closure* stretch)
-{
-
-}
-
-static void stretch_allocator_v1_nailed_destroy(stretch_allocator_v1_closure* self)
-{
-
-}
-
-static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods = {
-    stretch_allocator_v1_nailed_create,
-    stretch_allocator_v1_nailed_create_list,
-    stretch_allocator_v1_nailed_create_at,
-    stretch_allocator_v1_nailed_clone,
-    stretch_allocator_v1_nailed_destroy_stretch,
-    stretch_allocator_v1_nailed_destroy
-};
-
-//======================================================================================================================
 // helper functions
 //======================================================================================================================
 
@@ -168,27 +109,8 @@ static void register_sid(server_state_t* state, sid_t sid, stretch_v1_closure* s
     // state->sids[sid / 32] &= ~(1 << (sid % 32));
 // }
 
-static stretch_v1_state* create_stretch(server_state_t* state, address_t base, size_t n_pages)
-{
-    auto stretch = new(state->heap) stretch_v1_state;
-    if (!stretch)
-    {
-        kconsole << __FUNCTION__ << ": stretch alloc failed!" << endl;
-        return NULL;
-    }
-
-    closure_init(&stretch->closure, &stretch_v1_methods, stretch);
-    stretch->base = base;
-    stretch->size = n_pages << PAGE_WIDTH;
-    stretch->sid = alloc_sid(state);
-    stretch->mmu = state->mmu;
-
-    register_sid(state, stretch->sid, &stretch->closure);
-
-    return stretch;
-}
-
 #define SYSALLOC_VA_BASE ANY_ADDRESS
+// #define SYSALLOC_VA_BASE (256*MiB)
 #define SYSALLOC_VA_SIZE (256*MiB)
 
 static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_address start, memory_v1_address* virt_addr, size_t* n_pages, size_t* page_width)
@@ -314,6 +236,171 @@ static bool vm_alloc(server_state_t* state, memory_v1_size size, memory_v1_addre
     return true;
 }
 
+static void set_default_rights(system_stretch_allocator_v1_state* state, stretch_v1_closure* stretch)
+{
+    server_state_t* ss = state->shared_state;
+    if (state->pdid != NULL_PDID)
+    {
+        ss->mmu->set_rights(state->pdid, stretch, stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_write).add(stretch_v1_right_meta));
+        if (state->parent != NULL_PDID)
+            ss->mmu->set_rights(state->parent, stretch, stretch_v1_rights(stretch_v1_right_meta));
+    }
+}
+
+//======================================================================================================================
+// stretch_v1 methods
+//======================================================================================================================
+
+static memory_v1_address stretch_v1_info(stretch_v1_closure* self, memory_v1_size* s)
+{
+    kconsole << __FUNCTION__ << endl;
+    *s = self->state->size;
+    return self->state->base;
+}
+
+static void stretch_v1_set_rights(stretch_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_rights access)
+{
+    kconsole << __FUNCTION__ << ": pdom " << dom_id << ", sid " << self->state->sid << " " << access << endl;
+    address_t start_page = self->state->base >> PAGE_WIDTH;
+    size_t n_pages = self->state->size >> PAGE_WIDTH;
+    if (nucleus::protect(dom_id, start_page, n_pages, access))
+    {
+        kconsole << ERROR << __FUNCTION__ << ": nucleus returned error" << endl;
+        nucleus::debug_stop();
+    }
+}
+
+static const stretch_v1_ops stretch_v1_methods = {
+    stretch_v1_info,
+    stretch_v1_set_rights,
+    NULL, // void (*remove_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
+    NULL, // void (*set_global_rights)(stretch_v1_closure* self, stretch_v1_rights access);
+    NULL  // stretch_v1_rights (*query_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
+};
+
+//======================================================================================================================
+// helper functions that depend on stretch_v1_ops
+//======================================================================================================================
+
+static stretch_v1_state* create_stretch(server_state_t* state, address_t base, size_t n_pages)
+{
+    auto stretch = new(state->heap) stretch_v1_state;
+    if (!stretch)
+    {
+        kconsole << __FUNCTION__ << ": stretch alloc failed!" << endl;
+        return NULL;
+    }
+
+    closure_init(&stretch->closure, &stretch_v1_methods, stretch);
+    stretch->base = base;
+    stretch->size = n_pages << PAGE_WIDTH;
+    stretch->sid = alloc_sid(state);
+    stretch->mmu = state->mmu;
+
+    register_sid(state, stretch->sid, &stretch->closure);
+
+    return stretch;
+}
+
+//======================================================================================================================
+// stretch_allocator_v1 methods
+//======================================================================================================================
+
+//======================================================================================================================
+// nailed version
+//======================================================================================================================
+
+static stretch_v1_closure* stretch_allocator_v1_nailed_create(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights global_rights)
+{
+    kconsole << __FUNCTION__ << ": size " << size << endl;
+    memory_v1_virtmem_desc virt;
+    memory_v1_physmem_desc phys;
+    auto state = reinterpret_cast<system_stretch_allocator_v1_state*>(self->state);
+    server_state_t* ss = state->shared_state;
+    
+    phys.start_addr = ss->frames->allocate(size, FRAME_WIDTH);
+    if (phys.start_addr == NO_ADDRESS)
+    {
+        kconsole << __FUNCTION__ << ": Failed to get physmem" << endl;
+        //raise(memory_v1_falure);
+        return NULL;
+    }
+    phys.frame_width = FRAME_WIDTH;
+    phys.n_frames = size_in_whole_frames(size, FRAME_WIDTH);
+    
+    if (!vm_alloc(ss, size, ANY_ADDRESS /*SYSALLOC_VA_BASE + phys.start_addr*/, &virt.start_addr, &virt.n_pages, &virt.page_width))
+    {
+        kconsole << __FUNCTION__ << ": Failed to get virtmem" << endl;
+        ss->frames->free(phys.start_addr, size);
+        //raise(memory_v1_falure);
+        return NULL;
+    }
+    
+    auto s = create_stretch(ss, virt.start_addr, virt.n_pages);
+    
+    if (!s)
+    {
+        kconsole << __FUNCTION__ << ": Failed to create_stretch" << endl;
+        ss->frames->free(phys.start_addr, size);
+        //raise(memory_v1_falure);
+        return NULL;
+    }
+    
+    s->allocator = self;
+    ss->mmu->add_mapped_range(&s->closure, virt, phys, global_rights);
+    
+    set_default_rights(state, &s->closure);
+    
+    //TODO: need locking here! at least lightweight
+    //lock();
+    stretch_list_t* link = new(ss->heap) stretch_list_t;
+    link->stretch = &s->closure;
+    state->stretches.add_to_tail(link);
+    //unlock();
+
+    kconsole << __FUNCTION__ << ": returning stretch at " << &s->closure << endl;
+    return &s->closure;
+}
+
+static stretch_allocator_v1_stretch_seq stretch_allocator_v1_nailed_create_list(stretch_allocator_v1_closure* self, stretch_allocator_v1_size_seq sizes, stretch_v1_rights access)
+{
+    kconsole << __FUNCTION__ << endl;
+    return 0;
+}
+
+static stretch_v1_closure* stretch_allocator_v1_nailed_create_at(stretch_allocator_v1_closure* self, memory_v1_size size, stretch_v1_rights access, memory_v1_address start, memory_v1_attrs attr, memory_v1_physmem_desc region)
+{
+    kconsole << __FUNCTION__ << endl;
+    return 0;
+}
+
+static stretch_v1_closure* stretch_allocator_v1_nailed_clone(stretch_allocator_v1_closure* self, stretch_v1_closure* template_stretch, memory_v1_size size)
+{
+    kconsole << __FUNCTION__ << endl;
+    return 0;
+}
+
+static void stretch_allocator_v1_nailed_destroy_stretch(stretch_allocator_v1_closure* self, stretch_v1_closure* stretch)
+{
+    kconsole << __FUNCTION__ << endl;
+
+}
+
+static void stretch_allocator_v1_nailed_destroy(stretch_allocator_v1_closure* self)
+{
+    kconsole << __FUNCTION__ << endl;
+
+}
+
+static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods = {
+    stretch_allocator_v1_nailed_create,
+    stretch_allocator_v1_nailed_create_list,
+    stretch_allocator_v1_nailed_create_at,
+    stretch_allocator_v1_nailed_clone,
+    stretch_allocator_v1_nailed_destroy_stretch,
+    stretch_allocator_v1_nailed_destroy
+};
+
 //======================================================================================================================
 // system_stretch_allocator_v1 methods
 //======================================================================================================================
@@ -428,12 +515,7 @@ static stretch_v1_closure* system_stretch_allocator_v1_create_over(system_stretc
     else
         state->mmu->add_range(&s->closure, virtmem, global_rights);
 
-    if (self->state->pdid != NULL_PDID)
-    {
-        state->mmu->set_rights(self->state->pdid, &s->closure, stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_write).add(stretch_v1_right_meta));
-        if (self->state->parent != NULL_PDID)
-            state->mmu->set_rights(self->state->parent, &s->closure, stretch_v1_rights(stretch_v1_right_meta));
-    }
+    set_default_rights(self->state, &s->closure);
 
     //TODO: need locking here! at least lightweight
     //lock();
