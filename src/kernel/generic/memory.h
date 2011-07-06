@@ -11,6 +11,11 @@
 #include "types.h"
 #include "ia32.h"
 
+inline address_t phys_frame_number(address_t addr)
+{
+    return addr >> FRAME_WIDTH;
+}
+
 /*!
  * Roundup a value "size" up to an integral number of frames of width "frame_width".
  * @return Number of frames.
