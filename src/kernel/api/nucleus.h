@@ -12,6 +12,8 @@
 #include "mmu.h"
 #include "debugger.h"
 #include "panic.h"
+#include "protection_domain_v1_interface.h"
+#include "stretch_v1_interface.h"
 
 namespace nucleus
 {
@@ -42,6 +44,11 @@ namespace nucleus
         syscall(0x80, pdba_phys, pdba_virt);
     }
     
+    inline int protect(protection_domain_v1_id dom_id, address_t start_page, size_t n_pages, stretch_v1_rights access)
+    {
+        return 0;
+    }
+
     inline void debug_stop()
     {
         syscall(0x90);
