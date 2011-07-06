@@ -258,9 +258,21 @@ static memory_v1_address stretch_v1_info(stretch_v1_closure* self, memory_v1_siz
     return self->state->base;
 }
 
+static void stretch_v1_set_rights(stretch_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_rights access)
+{
+    kconsole << __FUNCTION__ << ": pdom " << dom_id << ", sid " << self->state->sid << " " << access << endl;
+    address_t start_page = self->state->base >> PAGE_WIDTH;
+    size_t n_pages = self->state->size >> PAGE_WIDTH;
+    if (nucleus::protect(dom_id, start_page, n_pages, access))
+    {
+        kconsole << ERROR << __FUNCTION__ << ": nucleus returned error" << endl;
+        nucleus::debug_stop();
+    }
+}
+
 static const stretch_v1_ops stretch_v1_methods = {
     stretch_v1_info,
-    NULL, // void (*set_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id, stretch_v1_rights access);
+    stretch_v1_set_rights,
     NULL, // void (*remove_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
     NULL, // void (*set_global_rights)(stretch_v1_closure* self, stretch_v1_rights access);
     NULL  // stretch_v1_rights (*query_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
