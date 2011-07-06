@@ -28,7 +28,10 @@ enum Color {
     LIGHTRED,
     LIGHTMAGENTA,
     YELLOW,
-    WHITE
+    WHITE,
+    // Special colors
+    WARNING = YELLOW,
+    ERROR = LIGHTRED
 };
 
 /*!
