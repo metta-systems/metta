@@ -85,12 +85,78 @@ static protection_domain_v1_id create_address_space(system_frame_allocator_v1_cl
     // map nucleus glue code
 
     // map over loaded modules
+    // FIXME: 
+    // should use module_loader module map and map with appropriate rights for text (RX), rodata(R), and bss (RW)...
                 // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
                 //                      mod->addr, mod->size));
                 // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
                 //                              (addr_t)mod->addr,
                 //                              0, PAGE_WIDTH, NULL);
                 // ASSERT_ADDRESS(str, mod->addr);
+#if 0
+    /* Intialise the pdom map to zero */
+    for (map_index=0; map_index < MAP_SIZE; map_index++) {
+        addr_map[map_index].address= NULL;
+        addr_map[map_index].str    = (Stretch_cl *)NULL;
+    }
+    map_index= 0;
+
+    /* Map stretches over the boot image */
+	  case nexus_namespace:
+	    name = nexus_ptr.nu_name++;
+	    nexus_ptr.generic = (char *)nexus_ptr.generic +
+		name->nmods * sizeof(addr_t);
+	    TRC_MEM(eprintf("NAME: N=%06lx:%06lx\n",
+			    name->naddr, name->nsize));
+	    str = StretchAllocatorF$NewOver(sallocF, name->nsize,
+					    AXS_GR, (addr_t)name->naddr,
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, name->naddr);
+	    break;
+
+	  case nexus_program:
+	    prog= nexus_ptr.nu_prog++;
+	    TRC_MEM(eprintf("PROG: T=%06lx:%06lx D=%06lx:%06lx "
+			    "B=%06lx:%06lx  \"%s\"\n",
+			    prog->taddr, prog->tsize,
+			    prog->daddr, prog->dsize,
+			    prog->baddr, prog->bsize,
+			    prog->program_name));
+
+	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize,
+					    AXS_NONE, (addr_t)prog->taddr,
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, prog->taddr);
+
+	    /* Keep record of the stretch for later mapping into pdom */
+	    addr_map[map_index].address= (addr_t)prog->taddr;
+	    addr_map[map_index++].str  = str;
+
+	    if (prog->dsize + prog->bsize) {
+		str = StretchAllocatorF$NewOver(
+		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH),
+		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, NULL);
+		ASSERT_ADDRESS(str, prog->daddr);
+		/* Keep record of the stretch for later mapping into pdom */
+		addr_map[map_index].address= (addr_t)prog->daddr;
+		addr_map[map_index++].str  = str;
+	    }
+
+	    break;
+
+	case nexus_blob:
+	    blob = nexus_ptr.nu_blob++;
+	    TRC_MEM(eprintf("BLOB: B=%06lx:%06lx\n",
+			    blob->base, blob->len));
+
+	    /* slap a stretch over it */
+	    str = StretchAllocatorF$NewOver(sallocF, blob->len,
+					    AXS_GR, (addr_t)blob->base,
+					    0, PAGE_WIDTH, NULL);
+	    ASSERT_ADDRESS(str, blob->base);
+	    break;
+
+#endif
     return pdom;
 }
 
@@ -211,265 +277,6 @@ static void init_mem(bootimage_t& bootimg)
     auto root_domain_pdid = create_address_space(frames, mmu);
     map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
 }
-
-#if 0
-ProtectionDomain_ID CreateAddressSpace(Frames_clp frames, MMU_clp mmu,
-					StretchAllocatorF_clp sallocF,
-					nexus_ptr_t nexus_ptr)
-{
-    nexus_ptr_t          nexus_end;
-    struct nexus_ntsc   *ntsc  = NULL;
-    struct nexus_module *mod;
-    struct nexus_blob   *blob;
-    struct nexus_prog   *prog;
-    struct nexus_primal *primal;
-    struct nexus_nexus  *nexus;
-    struct nexus_name   *name;
-    struct nexus_EOI    *EOI;
-    ProtectionDomain_ID  pdom;
-    Stretch_clp          str;
-    int                  map_index;
-
-    primal    = nexus_ptr.nu_primal;
-    nexus_end = nexus_ptr.generic;
-    nexus_end.nu_primal++;	/* At least one primal */
-    nexus_end.nu_ntsc++;	/* At least one ntsc */
-    nexus_end.nu_nexus++;	/* At least one nexus */
-    nexus_end.nu_EOI++;		/* At least one EOI */
-
-    ETRC(eprintf("Creating new protection domain (mmu at %p)\n", mmu));
-    pdom = MMU$NewDomain(mmu);
-
-    /* Intialise the pdom map to zero */
-    for (map_index=0; map_index < MAP_SIZE; map_index++) {
-        addr_map[map_index].address= NULL;
-        addr_map[map_index].str    = (Stretch_cl *)NULL;
-    }
-    map_index= 0;
-
-    /*
-    ** Sort out memory before the boot address (platform specific)
-    ** In MEMSYS_EXPT, this memory has already been marked as used
-    ** (both in virtual and physical address allocators) by the
-    ** initialisation code, so all we wish to do is to map some
-    ** stretches over certain parts of it.
-    ** Most of the relevant information is provided in the nexus,
-    ** although even before this we have the PIP.
-    */
-
-    /* First we need to map the PIP globally read-only */
-    str = StretchAllocatorF$NewOver(sallocF, PAGE_SIZE, AXS_GR,
-				    (addr_t)INFO_PAGE_ADDRESS,
-				    0, PAGE_WIDTH, NULL);
-    ASSERT_ADDRESS(str, INFO_PAGE_ADDRESS);
-
-    /* Map stretches over the boot image */
-    TRC_MEM(eprintf("CreateAddressSpace (EXPT): Parsing NEXUS at %p\n",
-		nexus_ptr.generic));
-
-    while(nexus_ptr.generic < nexus_end.generic)  {
-
-	switch(*nexus_ptr.tag) {
-
-	  case nexus_primal:
-	    primal = nexus_ptr.nu_primal++;
-	    TRC_MEM(eprintf("PRIM: %lx\n", primal->lastaddr));
-	    break;
-
-	  case nexus_ntsc:
-	    ntsc = nexus_ptr.nu_ntsc++;
-	    TRC_MEM(eprintf("NTSC: T=%06lx:%06lx D=%06lx:%06lx "
-			    "B=%06lx:%06lx\n",
-			    ntsc->taddr, ntsc->tsize,
-			    ntsc->daddr, ntsc->dsize,
-			    ntsc->baddr, ntsc->bsize));
-
-        /* Listen up, dudes: here's the drill:
-         *
-         *   |    bss     |  read/write perms
-         *   |------------|
-         *   |   data     |-------------
-         *   |------------|  read/write & execute perms  (hack page)
-         *   |   text     |-------------   <- page boundary
-         *   |            |
-         *   |            |  read/execute perms
-	     *
-	     * Now, the text and data boundary of the NTSC is not
-	     * necessarily page aligned, so there may or may not be a
-	     * hack page overlapping it.
-	     * The next few bits of code work out whether we need a
-	     * hack page, and creates it.
-	     */
-	    if ((ntsc->daddr - ntsc->taddr) & (FRAME_SIZE-1))
-	    {
-		/* If NTSC text is over 1 page, need some text pages */
-		if (ALIGN(ntsc->daddr - ntsc->taddr) - FRAME_SIZE != 0)
-		{
-		    str = StretchAllocatorF$NewOver(
-			sallocF, ALIGN(ntsc->daddr - ntsc->taddr)-FRAME_SIZE,
-			AXS_GE, (addr_t)ntsc->taddr, 0, PAGE_WIDTH, NULL);
-		    ASSERT_ADDRESS(str, ntsc->taddr);
-		}
-
-		/* create hack page */
-		str = StretchAllocatorF$NewOver(
-		    sallocF, FRAME_SIZE, AXS_NONE,
-		    (addr_t)(ALIGN(ntsc->daddr) - FRAME_SIZE), 0,
-		    PAGE_WIDTH, NULL);
-		TRC_MEM(eprintf("       -- hack page at %06lx\n",
-				ALIGN(ntsc->daddr) - FRAME_SIZE));
-		ASSERT_ADDRESS(str, ALIGN(ntsc->daddr) - FRAME_SIZE);
-		SALLOC_SETPROT(salloc, str, pdom,
-					 SET_ELEM(Stretch_Right_Read) |
-					 SET_ELEM(Stretch_Right_Write) |
-					 SET_ELEM(Stretch_Right_Execute));
-	    }
-	    else
-	    {
-		/* no hack page needed */
-		str = StretchAllocatorF$NewOver(sallocF, ntsc->tsize, AXS_GE,
-						(addr_t)ntsc->taddr, 0,
-						PAGE_WIDTH, NULL);
-		ASSERT_ADDRESS(str, ntsc->taddr);
-	    }
-	    break;
-
-	  case nexus_nexus:
-	    nexus = nexus_ptr.nu_nexus++;
-	    TRC_MEM(eprintf("NEX:  N=%06lx,%06lx IGNORING\n",
-			    nexus->addr, nexus->size));
-	    nexus_end.generic = (addr_t)(nexus->addr + nexus->size);
-
-	    /* XXX Subtlety - NEXUS tacked on the end of NTSC BSS */
-	    /*
-	    ** XXX More subtlety; the NEXUS is always a page and `a bit', where
-	    ** the bit is whatever's left from the end of the ntsc's bss upto
-	    ** a page boundary, and the page is the one following that.
-	    ** This is regardless of whether or not the nexus requires this
-	    ** space, and as such nexus->size can be misleading. Simplest
-            ** way to ensure we alloc enough mem for now is to simply
-	    ** use 1 page as a lower bound for the nexus size.
-	    */
-	    if ((ntsc->dsize + ntsc->bsize + MAX(nexus->size, FRAME_SIZE) -
-		(ALIGN(ntsc->daddr) - ntsc->daddr)) > 0)
-	    {
-		str = StretchAllocatorF$NewOver(
-		    sallocF, ntsc->dsize + ntsc->bsize +
-		    MAX(nexus->size, FRAME_SIZE) -
-		    (ALIGN(ntsc->daddr) - ntsc->daddr) /* size */,
-		    AXS_NONE, (addr_t)ALIGN(ntsc->daddr), 0, PAGE_WIDTH, NULL);
-		ASSERT_ADDRESS(str, ALIGN(ntsc->daddr));
-		TRC_MEM(eprintf("Setting pdom prot on ntsc data (%p)\n",
-				ALIGN(ntsc->daddr)));
-		SALLOC_SETPROT(salloc, str, pdom,
-					 SET_ELEM(Stretch_Right_Read));
-	    }
-
-	    break;
-
-	  case nexus_module:
-	    mod = nexus_ptr.nu_mod++;
-	    TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
-			    mod->addr, mod->size));
-	    str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
-					    (addr_t)mod->addr,
-					    0, PAGE_WIDTH, NULL);
-	    ASSERT_ADDRESS(str, mod->addr);
-	    break;
-
-	  case nexus_namespace:
-	    name = nexus_ptr.nu_name++;
-	    nexus_ptr.generic = (char *)nexus_ptr.generic +
-		name->nmods * sizeof(addr_t);
-	    TRC_MEM(eprintf("NAME: N=%06lx:%06lx\n",
-			    name->naddr, name->nsize));
-	    if (name->nsize == 0){
-
-		/* XXX If we put an empty namespace in the nemesis.nbf
-		   file, nembuild still reserves a page for it in the
-		   nexus, so we need to make sure that at least a page is
-		   requested from the stretch allocator, otherwise the
-		   _next_ entry in the nexus will cause the ASSERT_ADDRESS
-		   to fail. This probably needs to be fixed in
-		   nembuild.
-		   */
-
-		TRC_MEM(eprintf(
-		    "NAME: Allocating pad page for empty namespace\n"));
-
-		name ->nsize = 1;
-	    }
-
-
-	    str = StretchAllocatorF$NewOver(sallocF, name->nsize,
-					    AXS_GR, (addr_t)name->naddr,
-					    0, PAGE_WIDTH, NULL);
-	    ASSERT_ADDRESS(str, name->naddr);
-	    break;
-
-	  case nexus_program:
-	    prog= nexus_ptr.nu_prog++;
-	    TRC_MEM(eprintf("PROG: T=%06lx:%06lx D=%06lx:%06lx "
-			    "B=%06lx:%06lx  \"%s\"\n",
-			    prog->taddr, prog->tsize,
-			    prog->daddr, prog->dsize,
-			    prog->baddr, prog->bsize,
-			    prog->program_name));
-
-	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize,
-					    AXS_NONE, (addr_t)prog->taddr,
-					    0, PAGE_WIDTH, NULL);
-	    ASSERT_ADDRESS(str, prog->taddr);
-
-	    /* Keep record of the stretch for later mapping into pdom */
-	    addr_map[map_index].address= (addr_t)prog->taddr;
-	    addr_map[map_index++].str  = str;
-
-	    if (prog->dsize + prog->bsize) {
-		str = StretchAllocatorF$NewOver(
-		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH),
-		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, NULL);
-		ASSERT_ADDRESS(str, prog->daddr);
-		/* Keep record of the stretch for later mapping into pdom */
-		addr_map[map_index].address= (addr_t)prog->daddr;
-		addr_map[map_index++].str  = str;
-	    }
-
-	    break;
-
-	case nexus_blob:
-	    blob = nexus_ptr.nu_blob++;
-	    TRC_MEM(eprintf("BLOB: B=%06lx:%06lx\n",
-			    blob->base, blob->len));
-
-	    /* slap a stretch over it */
-	    str = StretchAllocatorF$NewOver(sallocF, blob->len,
-					    AXS_GR, (addr_t)blob->base,
-					    0, PAGE_WIDTH, NULL);
-	    ASSERT_ADDRESS(str, blob->base);
-	    break;
-
-	  case nexus_EOI:
-	    EOI = nexus_ptr.nu_EOI++;
-	    TRC_MEM(eprintf("EOI:  %lx\n", EOI->lastaddr));
-	    break;
-
-	  default:
-	    TRC_MEM(eprintf("Bogus NEXUS entry: %x\n", *nexus_ptr.tag));
-	    ntsc_halt();
-	    break;
-	}
-    }
-    TRC_MEM(eprintf("CreateAddressSpace: Done\n"));
-    return pdom;
-
-}
-
-
-
-#endif
-
-
 
 static void init_type_system(bootimage_t& /*bootimg*/)
 {
