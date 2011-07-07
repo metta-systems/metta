@@ -270,12 +270,28 @@ static void stretch_v1_set_rights(stretch_v1_closure* self, protection_domain_v1
     }
 }
 
-static const stretch_v1_ops stretch_v1_methods = {
+static void stretch_v1_remove_rights(stretch_v1_closure* self, protection_domain_v1_id dom_id)
+{
+    
+}
+
+static void stretch_v1_set_global_rights(stretch_v1_closure* self, stretch_v1_rights access)
+{
+    
+}
+
+static stretch_v1_rights stretch_v1_query_rights(stretch_v1_closure* self, protection_domain_v1_id dom_id)
+{
+    return 0;
+}
+
+static const stretch_v1_ops stretch_v1_methods =
+{
     stretch_v1_info,
     stretch_v1_set_rights,
-    NULL, // void (*remove_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
-    NULL, // void (*set_global_rights)(stretch_v1_closure* self, stretch_v1_rights access);
-    NULL  // stretch_v1_rights (*query_rights)(stretch_v1_closure* self, protection_domain_v1_id dom_id);
+    stretch_v1_remove_rights,
+    stretch_v1_set_global_rights,
+    stretch_v1_query_rights
 };
 
 //======================================================================================================================
@@ -392,7 +408,8 @@ static void stretch_allocator_v1_nailed_destroy(stretch_allocator_v1_closure* se
 
 }
 
-static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods = {
+static const stretch_allocator_v1_ops stretch_allocator_v1_nailed_methods =
+{
     stretch_allocator_v1_nailed_create,
     stretch_allocator_v1_nailed_create_list,
     stretch_allocator_v1_nailed_create_at,
@@ -625,12 +642,14 @@ static void stretch_allocator_module_v1_finish_init(stretch_allocator_module_v1_
     stretch_allocator->state->pdid = pdid;
 }
 
-static const stretch_allocator_module_v1_ops stretch_allocator_module_v1_methods = {
+static const stretch_allocator_module_v1_ops stretch_allocator_module_v1_methods =
+{
     stretch_allocator_module_v1_create,
     stretch_allocator_module_v1_finish_init
 };
 
-static const stretch_allocator_module_v1_closure clos = {
+static const stretch_allocator_module_v1_closure clos =
+{
     &stretch_allocator_module_v1_methods,
     NULL
 };
