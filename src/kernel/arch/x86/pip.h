@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 /*!
  * Public information page contains information publicly available to non-privileged domains.
  */
@@ -15,3 +23,6 @@ struct public_info_page
 #define INFO_PAGE_ADDRESS 0x1000
 #define INFO_PAGE (((public_info_page*)INFO_PAGE_ADDRESS)[0])
 //TODO: SMP per-CPU accessors
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

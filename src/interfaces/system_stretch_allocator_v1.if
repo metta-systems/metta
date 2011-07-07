@@ -1,0 +1,40 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+local interface system_stretch_allocator_v1
+{
+    # Copied from stretch_allocator_v1 for now (sans inheritance in meddler)
+    exception failure {}
+    
+    sequence<memory_v1.size> size_seq;
+    sequence<stretch_v1&> stretch_seq;
+    
+    create(memory_v1.size size, stretch_v1.rights access) returns (stretch_v1& stretch) raises (failure);
+    create_list(size_seq sizes, stretch_v1.rights access) returns (stretch_seq stretches) raises (failure);
+    create_at(memory_v1.size size, stretch_v1.rights access, memory_v1.address start, memory_v1.attrs attr, memory_v1.physmem_desc region) returns (stretch_v1& stretch) raises (memory_v1.failure);
+    clone(stretch_v1& template_stretch, memory_v1.size size) returns (stretch_v1& stretch) raises (failure);
+    destroy_stretch(stretch_v1& stretch) raises (stretch_v1.denied);
+    destroy();
+    
+    # System frame allocator methods:
+    create_client(protection_domain_v1.id child, vcpu_v1& vp, protection_domain_v1.id parent)
+        returns (stretch_allocator_v1& allocator)
+        raises (heap_v1.no_memory);
+        
+    create_nailed(frame_allocator_v1& frames, heap_v1& heap)
+        returns (stretch_allocator_v1& allocator)
+        raises (heap_v1.no_memory);
+
+    create_over(memory_v1.size size, stretch_v1.rights access, 
+                memory_v1.address start, memory_v1.attrs attr, card32 page_width, memory_v1.physmem_desc pmem)
+        returns (stretch_v1& stretch)
+        raises (memory_v1.failure);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,3 +1,11 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 # The "MMU" interface is used for the creation and deletion of protection domains, and for the adding, freeing
 # or updating virtual ranges to the translation structures.
 
@@ -42,7 +50,7 @@ local interface mmu_v1
 
     # Create a new protection domain and return an identifier for it. Initially its reference count will be zero,
     # typically this will be incremented when it is first associated with an executable domain by the domain manager.
-    new_domain()
+    create_domain()
         returns (protection_domain_v1.id new_dom_id)
         raises (memory_v1.failure);
 
@@ -73,8 +81,8 @@ local interface mmu_v1
     #===================================================================================================================
 
     # Return the global rights currently associated with the stretch "str".
-   query_global_rights(stretch_v1& str)
-       returns (stretch_v1.rights rights);
+    query_global_rights(stretch_v1& str)
+        returns (stretch_v1.rights rights);
 
     # Set the protections on stretch "str" to be the same as those of the stretch "tmpl" in all protection domains.
     # This does NOT affect the global rights - these must be done
@@ -82,3 +90,6 @@ local interface mmu_v1
     clone_rights(stretch_v1& tmpl, stretch_v1& str);
 }
 
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

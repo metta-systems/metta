@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "ast.h"
 #include "macros.h"
 #include "logger.h"
@@ -5,6 +13,17 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+
+//TODO
+// Generate enums and typedefs inside a wrapper struct:
+// struct stretch_v1
+// {
+    // typedef uint32_t size;
+    // enum right { right_read, right_write, right_meta };
+    // typedef stretch_v1_closure closure; //?
+    // typedef stretch_v1_state state; //?
+    // ops are not exposed //?
+// };
 
 using namespace std;
 
@@ -211,6 +230,12 @@ void interface_t::emit_interface_h(std::ostringstream& s)
 	s << std::endl;
 
 	// Type declarations.
+	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+    {
+        t->emit_include(s);
+		s << std::endl;
+    });
+
 	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
     {
         t->emit_interface_h(s);
@@ -487,13 +512,18 @@ void array_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 {
 }
 
+void set_alias_t::emit_include(std::ostringstream& s)
+{
+	s << "#include \"set_t.h\"";
+}
+
 void set_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
 {
 }
 
 void set_alias_t::emit_interface_h(std::ostringstream& s)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << "typedef set_t<" << replace_dots(get_root()->name() + "." + type()) << "> " << replace_dots(get_root()->name() + "." + name()) << ";" << endl;
 }
 
 void set_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
@@ -554,3 +584,6 @@ void range_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
 }
 
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

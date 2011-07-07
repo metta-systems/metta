@@ -1,3 +1,11 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
 # Type definitions for the various kinds of memory descriptors.
 
 local interface memory_v1
@@ -12,20 +20,21 @@ local interface memory_v1
     # Memory may have various attributes; some of which apply only to either physical memory or virtual memory,
     # some may apply to both.
     # The currently defined set is:
+    #   regular    - regular RAM
     #   nailed     - a region of the virtual address space which is not pageable.
     #   non_memory - a region of the physical address space which has non-memory-like properties (e.g. IO space)
     #   no_cache   - a region of the physical address space which is not cached.
     #   dma        - a region of the physical address space to which or from where DMA may take place.
     #   read_only  - a piece of virt/phys memory which is now and always shall be read-only. E.g. ROM, NTSC stuff.
 
-    enum { nailed, non_memory, no_cache, dma, read_only } attrs;
+    enum { regular, nailed, non_memory, no_cache, dma, read_only } attrs;
     set<attrs> attr_flags;
 
     # A region of physical memory is described by a physmem_desc
 
     record physmem_desc {
         address start_addr;
-        size nframes;
+        size n_frames;
         size frame_width;
         attr_flags attr;
     }
@@ -40,7 +49,7 @@ local interface memory_v1
 
     record virtmem_desc {
         address start_addr;
-        size npages;
+        size n_pages;
         size page_width;
         attrs attr;
     }
@@ -119,6 +128,10 @@ local interface memory_v1
         fault_on_write,
         fault_on_read,
         page_faut,
-        breakpoint
+        breakpoint,
+        max_fault_number
     } fault;
 }
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

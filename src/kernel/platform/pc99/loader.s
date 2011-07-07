@@ -1,13 +1,13 @@
 ;
-; x86 multiboot loader.
-; jump to loader() in loader.cpp to do all the dirty job.
-;
 ; Part of Metta OS. Check http://metta.exquance.com for latest version.
 ;
-; Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+; Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 ;
 ; Distributed under the Boost Software License, Version 1.0.
 ; (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+;
+; x86 multiboot loader.
+; jump to loader() in loader.cpp to do all the dirty job.
 ;
 global _start                          ; making entry point visible to linker
 extern loader
@@ -48,7 +48,7 @@ _start:
     cli
     jmp short $                        ; halt machine should startup code return
 
-section .multiboot_info                ; mboot header should fit in first 8KiB so we make a section for it
+section .multiboot_info                ; mboot header should fit in the first 8KiB so we make a section for it
 align 4
 multiboot_header:
     dd MAGIC

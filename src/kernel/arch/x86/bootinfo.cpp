@@ -11,16 +11,22 @@
 #include "algorithm"
 #include "default_console.h"
 #include "memory_v1_interface.h"
+#include "debugger.h"
+#include "range_list.h"
 
 //======================================================================================================================
 // internal structures
 //======================================================================================================================
+
+void* bootinfo_t::ADDRESS = (void*)0x8000;
 
 /*!
  * boot info page layout
  * -------------------- START of page
  * 4 bytes magic (0xbeefdea1)
  * 4 bytes offset of first free byte
+ * 4 bytes first loaded module address
+ * 4 bytes last available for module loading address
  * then a list of bootrec_t subtypes
  * (free space)
  * -------------------- END of page
@@ -199,24 +205,26 @@ void bootinfo_t::vmap_iterator::operator ++()
 // bootinfo_t
 //======================================================================================================================
 
-/*!
- * FIXME: Fairly arbitrary location chosen to not mess around with memory maps atm.
- */
-static const int MODULE_LOAD_START = 4*MiB;
-
 bootinfo_t::bootinfo_t(bool create_new)
 {
     if (create_new)
     {
         magic = BI_MAGIC;
         free = reinterpret_cast<char*>(this + 1);
-        last_available_module_address = MODULE_LOAD_START;
+        first_module_address = 0;
+        last_available_module_address = 0;
     }
 }
 
 module_loader_t bootinfo_t::get_module_loader()
 {
-    return module_loader_t(this, &last_available_module_address);
+    return module_loader_t(this, &first_module_address, &last_available_module_address);
+}
+
+address_t bootinfo_t::used_modules_memory(size_t* size)
+{
+    *size = last_available_module_address - first_module_address;
+    return first_module_address;
 }
 
 bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, const char*& name)
@@ -306,6 +314,9 @@ bool bootinfo_t::append_module(uint32_t number, multiboot_t::modinfo_t* mod)
     if (will_overflow(size))
         return false;
 
+    if (mod->mod_end > last_available_module_address)
+        last_available_module_address = mod->mod_end;
+
     bootrec_module_t* bootmod = new(free) bootrec_module_t;
     bootmod->tag = bootrec_module;
     bootmod->size = size;
@@ -393,10 +404,7 @@ address_t bootinfo_t::find_usable_physical_memory_top()
     address_t top = 0;
     std::for_each(mmap_begin(), mmap_end(), [&top](const multiboot_t::mmap_entry_t* e)
     {
-// temp defines
-#define RAM_FREE 1
-#define ACPI_RECLAIMABLE 3
-        if ((e->type() == RAM_FREE) || (e->type() == ACPI_RECLAIMABLE))
+        if ((e->type() == multiboot_t::mmap_entry_t::free) || (e->type() == multiboot_t::mmap_entry_t::acpi_reclaimable))
         {
             if (e->start() + e->size() > top)
                 top = e->start() + e->size();
@@ -407,22 +415,73 @@ address_t bootinfo_t::find_usable_physical_memory_top()
 
 /*!
  * Find usable memory range of given size above the low memory (which means 1Mb mark on x86).
+ *
+ *   |+++++++++++++++++++++++|  |++++++++++++| |+++++++++++++| free base
+ *             |---||----|      |----|                   |---| non-free overlay
+ *   |++++++++|           |++|        |++++++| |++++++++|      resulting map
+ *                              ^
+ *   ^                          +-LOWER_BOUND
+ *   +-first_range_start
  */
 address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
 {
-	const address_t LOWER_BOUND = 1*MB;
-	address_t first_range = ~0;
-    std::for_each(mmap_begin(), mmap_end(), [&first_range, bytes](const multiboot_t::mmap_entry_t* e)
-    {
-			if (e->is_free() && (e->start() > LOWER_BOUND) && (first_range > e->start()) && (e->size() >= bytes))
-				first_range = e->start();
-			else if ((e->type() == multiboot_t::mmap_entry_t::bootinfo) && (first_range <= e->end()))
-				first_range = e->end() + 1;
+    const address_t LOWER_BOUND = 1*MB;
+    range_list_t<address_t>::range_t range;
+    address_t first_range = ~0;
 
-            kconsole << "memory at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
+    std::for_each(mmap_begin(), mmap_end(), [&first_range, &range, bytes, this](const multiboot_t::mmap_entry_t* e)
+    {
+        if (!e->is_free() || (e->start() < LOWER_BOUND))
+            return;
+
+        kconsole << "Parsing free highmem range [" << e->start() << ".." << e->end() << ")" << endl;
+        range.set(e->start(), e->size());
+
+        std::for_each(mmap_begin(), mmap_end(), [&range, this](const multiboot_t::mmap_entry_t* f)
+        {
+            if (range.size() == 0)
+                return;
+            if (f->is_free())
+                return;
+
+            kconsole << "Non-free range [" << f->start() << ".." << f->end() << ")" << endl;
+
+            if ((f->end() < range.start()) || (f->start() > range.end()))
+                return; // no overlap
+
+            if (f->end() > range.start())
+            {
+                if (f->start() > range.end())
+                {
+                    // nothing to do
+                }
+                else
+                {
+                    if (f->end() > range.end())
+                    {
+                        if (f->start() > range.start())
+                        {
+                            range.set(range.start(), f->start() - range.start());
+                        }
+                        else
+                        {
+                            range.reset();
+                        }
+                    }
+                    else
+                    {
+                        range.set(f->end(), range.end() - f->end());
+                    }
+                }
+            }
+        });
+
+        if (range.size() > bytes)
+            first_range = range.start();
+
     });
-	kconsole << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range << endl;
-	return first_range;
+    kconsole << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range << endl;
+    return first_range;
 }
 
 /*!
@@ -462,6 +521,14 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
             ret = const_cast<multiboot_t::mmap_entry_t*>(e);
 		}
 	});
+	if (ret)
+	{
+	    kconsole << __FUNCTION__ << ": found matching memmap entry at " << ret << 
+	        (n_way == 0 ? ", removing fully" : 
+	        (n_way == 1 ? ", using start" :
+	        (n_way == 2 ? ", using end" :
+            (n_way == 3 ? ", splitting in the middle" : "ERROR")))) << endl;
+	}
     return ret;
 }
 
@@ -474,48 +541,22 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
  * @returns true if memory map is updated successfully.
  */
 // TODO: also add used memory to VMAP?
+// FIXME: use_memory should not augment original entries, should just put used regions on top as an overlay
+// this would help frames mod initialisation to build proper physical frame regions.
 bool bootinfo_t::use_memory(address_t start, size_t size)
 {
 	multiboot_t::mmap_entry_t temp_entry;
 	multiboot_t::mmap_entry_t* orig_entry;
     int n_way;
 
+    kconsole << __FUNCTION__ << ": using " << int(size) << " bytes starting at " << start << endl;
     orig_entry = find_matching_entry(start, size, n_way);
-    kconsole << __FUNCTION__ << " found matching entry " << orig_entry << " at " << orig_entry->address() << " of " << orig_entry->size() << " bytes of type " << orig_entry->type() << ", n_way is " << n_way << endl;
-    if (!orig_entry || n_way == -1 || !orig_entry->is_free())
+    if (!orig_entry || !orig_entry->is_free())
         return false;
 
-    if (n_way == 0)
-        orig_entry->set_free(false);
-    else
-    {
-        if (n_way == 1)
-        {
-            // add free entry at the end
-            temp_entry.set_region(start + size, orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-        }
-        else if (n_way == 2)
-        {
-            // add free entry at the start
-            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(orig_entry->start(), orig_entry->size() - size, multiboot_t::mmap_entry_t::free);
-        }
-        else if (n_way == 3)
-        {
-            temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            temp_entry.set_region(start + size, orig_entry->size() - (start - orig_entry->start()) - size, multiboot_t::mmap_entry_t::free);
-            if (!append_mmap(&temp_entry))
-                return false;
-            orig_entry->set_region(orig_entry->start(), start - orig_entry->start(), multiboot_t::mmap_entry_t::free);
-        }
-    }
+    temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+    if (!append_mmap(&temp_entry))
+        return false;
 
 	return true;
 }

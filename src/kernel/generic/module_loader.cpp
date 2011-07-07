@@ -1,9 +1,24 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "module_loader.h"
 #include "config.h"
 #include "stl/algorithm"
-#include "module_loader.h"
 #include "default_console.h"
 #include "memory.h"
 #include "debugger.h"
+#include "panic.h"
+
+#if ELF_LOADER_DEBUG
+#define D(s) s
+#else
+#define D(s)
+#endif
 
 #if ELF_RELOC_DEBUG_V
 #define V(s) s
@@ -12,6 +27,8 @@
 #endif
 
 /*!
+ * @class module_loader_t
+ *
  * Load modules into last_load_address, allocate ST_ALLOC sections, copy only ST_LOAD sections
  * and relocate the resulting code.
  */
@@ -30,9 +47,9 @@ struct module_descriptor_t
     address_t debug_start; // start of debugging info tables
 };
 
-static const int MAX_MODULES = 32;
-static module_descriptor_t modules[MAX_MODULES];
-static int num_modules = 0;
+// static const int MAX_MODULES = 32;
+// static module_descriptor_t modules[MAX_MODULES];
+// static int num_modules = 0;
 
 void elf32::program_header_t::dump()
 {
@@ -144,6 +161,21 @@ void elf32::section_header_t::dump(const char* shstrtab)
     kconsole << endl;
 }
 
+// static void dump_loaded_modules()
+// {
+//     kconsole << " ** Already loaded modules:" << endl;
+//     for (int i = 0; i < num_modules; ++i)
+//     {
+//         module_descriptor_t* module = &modules[i];
+//         kconsole << i << ". " << module->name << (module->initialised ? " (initialised)" : " (loaded)") << endl
+//                  << "    entry   " << module->entry_point << endl
+//                  << "    code at " << module->code_start << ", " << int(module->code_size) << " bytes" << endl
+//                  << "    data at " << module->data_start << ", " << int(module->data_size) << " bytes" << endl
+//                  << "     bss at " << module->bss_start << ", " << int(module->bss_size) << " bytes" << endl
+//                  << " debug info " << module->debug_start << endl;
+//     }
+// }
+
 /*!
  * Load data from ELF file into a predefined location, relocate it and return entry point address or
  * a closure location (if closure_name is not null).
@@ -152,23 +184,31 @@ void elf32::section_header_t::dump(const char* shstrtab)
  */
 void* module_loader_t::load_module(const char* name, elf_parser_t& module, const char* closure_name)
 {
-    if (num_modules >= MAX_MODULES)
-    {
-        kconsole << "Cannot load more modules, increase MAX_MODULES in module_loader.cpp" << endl;
-        return 0;
-    }
-    module_descriptor_t* loaded_module = &modules[num_modules];
-    memutils::copy_string(loaded_module->name, name, sizeof(loaded_module->name));
-    loaded_module->initialised = false;
+    // if (num_modules >= MAX_MODULES)
+    // {
+    //     kconsole << "num_modules = " << num_modules << endl;
+    //     kconsole << "Cannot load more modules, increase MAX_MODULES in module_loader.cpp" << endl;
+    //     return 0;
+    // }
+    // 
+    // dump_loaded_modules();
+    // 
+    // module_descriptor_t* loaded_module = &modules[num_modules];
+    // memutils::copy_string(loaded_module->name, name, sizeof(loaded_module->name));
+    // loaded_module->initialised = false;
 
     size_t size = 0;
     address_t start = ~0;
 
     // Load either program OR sections, prefer program (faster loading ideally).
-    V(kconsole << "program headers: " << module.program_header_count() << endl
+    D(kconsole << "program headers: " << module.program_header_count() << endl
              << "section headers: " << module.section_header_count() << endl);
 
-    address_t section_base = *last_available_address;
+    address_t section_base = page_align_up(*d_last_available_address);
+    if (*d_first_used_address == 0)
+        *d_first_used_address = section_base;
+
+    kconsole << __FUNCTION__ << ": loading module at " << section_base << endl;
 
 /*    if (module.program_header_count() > 0)
     {
@@ -216,63 +256,64 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
-        kconsole << "+-- Loading module " << name << " with " << module.section_header_count() << " section headers."<< endl;
+        kconsole << " +-- Loading module " << name << " with " << int(module.section_header_count()) << " section headers." << endl;
 
+        // Calculate section offsets and sizes.
         start = 0;
         size_t section_offset = 0;
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
             [this, &module, &start, &size, &section_base, &section_offset]
             (elf32::section_header_t& sh)
         {
-                if (sh.flags & SHF_ALLOC)
+            if (sh.flags & SHF_ALLOC)
+            {
+                if (sh.vaddr == 0)
+                    sh.vaddr = section_base + section_offset;
+                else
                 {
-                    if (sh.vaddr == 0)
-                        sh.vaddr = section_base + section_offset;
-                    else
-                    {
-                        // Sometimes relocatable section vaddr is non-zero and I'm utterly confused as to what this
-                        // could mean, didn't find any reasonable explanation on the internets, might need to look
-                        // into gcc/binutils ELF generation code.
-                        // For now we just move section_offset by this value, pretending that we reserved this space.
-                        section_offset += sh.vaddr;
-                        sh.vaddr = section_base + section_offset;
-                    }
-                    // Align section to its alignment constraint
-                    if (sh.addralign > 1)
-                    {
-                        size_t align = align_bytes(sh.vaddr, sh.addralign);
-                        sh.vaddr += align;
-                        section_offset += align;
-                    }
-                    section_offset += sh.size;
+                    // Sometimes relocatable section vaddr is non-zero and I'm utterly confused as to what this
+                    // could mean, didn't find any reasonable explanation on the internets, might need to look
+                    // into gcc/binutils ELF generation code.
+                    // For now we just move section_offset by this value, pretending that we reserved this space.
+                    section_offset += sh.vaddr;
+                    sh.vaddr = section_base + section_offset;
                 }
+                // Align section to its alignment constraint
+                if (sh.addralign > 1)
+                {
+                    size_t align = align_bytes(sh.vaddr, sh.addralign);
+                    sh.vaddr += align;
+                    section_offset += align;
+                }
+                section_offset += sh.size;
             }
-        );
+        });
 
         // Allocate space for this ELF file sections.
-        *last_available_address += section_offset;
-        // Page-align after last section, so that next module could be loaded onto separate page.
-        *last_available_address = page_align_up(*last_available_address);
+        *d_last_available_address += section_offset;
 
+        // Actually "load" the sections.
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
-            [this, &module, &start, &size, &section_base]
+            [this, name, &module]
             (elf32::section_header_t& sh)
         {
-                if (sh.flags & SHF_ALLOC)
+            if (sh.flags & SHF_ALLOC)
+            {
+                if (sh.type == SHT_NOBITS)
                 {
-                    if (sh.type == SHT_NOBITS)
-                    {
-                        V(kconsole << "Clearing " << sh.size << " bytes at " << sh.vaddr << endl);
-                        memutils::fill_memory((void*)sh.vaddr, 0, sh.size);
-                    }
-                    else
-                    {
-                        V(kconsole << "Copying " << sh.size << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr << endl);
-                        memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
-                    }
+                    D(kconsole << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr << endl);
+                    memutils::clear_memory((void*)sh.vaddr, sh.size);
+                    // Adjust module end address (the above is only for non-bss sections).
+                    if (sh.vaddr + sh.size > *d_last_available_address)
+                        *d_last_available_address = sh.vaddr + sh.size;
+                }
+                else
+                {
+                    D(kconsole << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr << endl);
+                    memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                 }
             }
-        );
+        });
     }
     else
         PANIC("Do not know how to load ELF file!");
@@ -296,17 +337,25 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     // Relocate loaded data.
     module.relocate_to(section_base);
 
-    ++num_modules;
+    // ++num_modules;
+    
+    //TODO:
+    //d_parent->use_memory(from, to);
 
     if (!closure_name)
     {
         address_t entry = module.get_entry_point();
-		V(kconsole << "entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *last_available_address << endl);
+		D(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
         return (void*)(entry + section_base - start);
     }
     else
     {
         // Symbol is a pointer to closure structure.
+        address_t entry = reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
+        kconsole << " +-- Returning closure pointer " << entry << endl;
         return *(void**)(module.find_symbol(closure_name));
     }
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

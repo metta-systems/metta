@@ -1,6 +1,14 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include "lexer.h"
 #include <string.h>
 #include "token.h"
-#include "lexer.h"
 
 lexer_t::lexer_t(bool be_verbose)
     : cur_ptr(0)
@@ -156,3 +164,6 @@ token::kind lexer_t::get_cardinal()
     else
         return token::error;
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

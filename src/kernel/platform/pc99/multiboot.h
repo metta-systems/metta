@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -66,7 +66,14 @@ public:
     {
     public:
         enum entry_type_e {
+            // standard BIOS memory types
             free = 1,
+            reserved = 2,
+            acpi_reclaimable = 3,
+            acpi_nvs = 4, // non-volatile storage
+            bad_memory = 5, // unusable
+            disabled = 6,
+            // end of standard memory types
             non_free = 99, //something arbitrary for now.
             bootinfo = 111
         };

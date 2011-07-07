@@ -1,17 +1,25 @@
 //
-// Architecture-dependent defines.
-// Do not put any functions in this file: it is used with assembler. (FIXME?)
-//
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+// Architecture-dependent defines.
+// Do not put any functions in this file: it is used with assembler. (FIXME?)
+//
 #pragma once
 
 #include "types.h"
+
+#define ANY_ADDRESS ((address_t)-1)
+#define NO_ADDRESS  ((address_t)-1)
+/* definitions for owner field of ramtab */
+#define OWNER_NONE    0x0     /* physical frame is unused by anyone        */
+#define OWNER_SYSTEM  0x1     /* physical frame is owned by us (mmgmt etc) */
+
+#define NULL_PDID            ((protection_domain_v1_id)~0U)
 
 //======================================================================================================================
 // MMU
@@ -23,9 +31,10 @@
 // Next to last 4 megs are for kernel temporary mappings.
 #define KERNEL_VIRTUAL_MAPPINGS 0xff800000
 
-const size_t    PAGE_SIZE = 0x1000;
-const address_t PAGE_MASK = 0xFFFFF000;
-const size_t    FRAME_WIDTH = 12;
+static const size_t    PAGE_SIZE = 0x1000;
+static const address_t PAGE_MASK = 0xFFFFF000;
+static const size_t    PAGE_WIDTH = 12; // replace this with page_t::width
+static const size_t    FRAME_WIDTH = 12;
 
 // Page attributes
 #define IA32_PAGE_PRESENT        (1<<0)
