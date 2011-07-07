@@ -54,7 +54,7 @@ struct pdom_t
 struct shadow_t
 {
     sid_t sid;
-    uint16_t ctl;
+    uint16_t flags;
 } PACKED;
 
 #define SHADOW(_va)  reinterpret_cast<shadow_t*>(reinterpret_cast<char*>(_va) + 4*KiB)
@@ -104,7 +104,7 @@ struct mmu_v1_state
 };
 
 //======================================================================================================================
-// mmu_v1 methods
+// helper methods
 //======================================================================================================================
 
 #define L2SIZE          (8*KiB)                // 4K for L2 pagetable + 4K for shadow(?)
@@ -174,7 +174,7 @@ static bool add4k_page(mmu_v1_state* state, address_t va, page_t pte, sid_t sid)
 
     // Setup shadow pte (holds sid + original global rights)
     SHADOW(l2va)[l2idx].sid = sid;  // store sid in shadow
-//    swpte->ctl.all = ((hwpte_t *)&pte)->bits & 0xFF;
+    SHADOW(l2va)[l2idx].flags = pte.flags();
     return true;
 }
 
@@ -223,7 +223,7 @@ static size_t update4k_pages(mmu_v1_state* state, address_t va, size_t n_pages, 
 
         // Setup shadow pte (holds sid + original global rights)
         SHADOW(l2va)[l2idx + i].sid = sid;  // store sid in shadow
-        // swpte->ctl.all = ((hwpte_t *)&pte)->bits & 0xFF;
+        SHADOW(l2va)[l2idx + i].flags = flags; //??
     }
 
     return i;
@@ -289,12 +289,6 @@ inline uint16_t alloc_pdidx(mmu_v1_state* state)
     return 0xdead;
 }
 
-static void mmu_v1_start(mmu_v1_closure* self, protection_domain_v1_id root_domain)
-{
-    // nucleus::flush_tlb();
-    // nucleus::wrpdom(base);
-}
-
 static flags_t control_bits(mmu_v1_state* state, stretch_v1_rights rights, memory_v1_attr_flags attr, bool valid)
 {
     flags_t flags = 0;
@@ -334,6 +328,16 @@ static flags_t control_bits(mmu_v1_state* state, stretch_v1_rights rights, memor
 inline bool valid_width(uint32_t width)
 {
     return width == page_t::width_4kib || width == page_t::width_4mib;
+}
+
+//======================================================================================================================
+// mmu_v1 methods
+//======================================================================================================================
+
+static void mmu_v1_start(mmu_v1_closure* self, protection_domain_v1_id root_domain)
+{
+    // nucleus::flush_tlb();
+    // nucleus::wrpdom(base);
 }
 
 static void mmu_v1_add_range(mmu_v1_closure* self, stretch_v1_closure* str, memory_v1_virtmem_desc mem_range, stretch_v1_rights global_rights)
@@ -617,7 +621,8 @@ static void mmu_v1_clone_rights(mmu_v1_closure* self, stretch_v1_closure* tmpl, 
 
 }
 
-static const mmu_v1_ops mmu_v1_method_table = {
+static const mmu_v1_ops mmu_v1_methods =
+{
     mmu_v1_start,
     mmu_v1_add_range,
     mmu_v1_add_mapped_range,
@@ -689,7 +694,8 @@ static uint32_t ramtab_v1_get(ramtab_v1_closure* self, uint32_t frame, uint32_t*
     return st->ramtab[frame].owner;
 }
 
-static const ramtab_v1_ops ramtab_v1_method_table = {
+static const ramtab_v1_ops ramtab_v1_methods =
+{
     ramtab_v1_size,
     ramtab_v1_base,
     ramtab_v1_put,
@@ -873,11 +879,9 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
 
 	kconsole << " +-mmu_module_v1: state allocated at " << first_range << endl;
 
-    // Recursion Unleashed!
 	mmu_v1_state *state = reinterpret_cast<mmu_v1_state*>(first_range);
 	mmu_v1_closure *cl = &state->mmu_closure;
-	cl->methods = &mmu_v1_method_table;
-	cl->state = state;
+	closure_init(cl, &mmu_v1_methods, state);
 
     state->l1_mapping_virt = state->l1_mapping_phys = first_range;
     state->l1_virt_virt = reinterpret_cast<address_t>(&state->l1_virt);
@@ -898,8 +902,7 @@ static mmu_v1_closure* mmu_module_v1_create(mmu_module_v1_closure* self, uint32_
     state->ramtab = reinterpret_cast<ramtab_entry_t*>(first_range + ramtab_offset);
     memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t));
 
-    state->ramtab_closure.methods = &ramtab_v1_method_table;
-    state->ramtab_closure.state = reinterpret_cast<ramtab_v1_state*>(first_range);
+    closure_init(&state->ramtab_closure, &ramtab_v1_methods, reinterpret_cast<ramtab_v1_state*>(first_range));
     *ramtab = &state->ramtab_closure;
 
     kconsole << " +-mmu_module_v1: ramtab at " << state->ramtab << " with " << state->ramtab_size << " entries." << endl;
@@ -961,13 +964,15 @@ static void mmu_module_v1_finish_init(mmu_module_v1_closure* self, mmu_v1_closur
     mmu->state->stretch_allocator = sysalloc;
 }
 
-static const mmu_module_v1_ops mmu_module_v1_method_table = {
+static const mmu_module_v1_ops mmu_module_v1_methods =
+{
     mmu_module_v1_create,
     mmu_module_v1_finish_init
 };
 
-static const mmu_module_v1_closure clos = {
-    &mmu_module_v1_method_table,
+static const mmu_module_v1_closure clos =
+{
+    &mmu_module_v1_methods,
     NULL // no state
 };
 
