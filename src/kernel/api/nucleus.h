@@ -44,7 +44,7 @@ namespace nucleus
         syscall(0x80, pdba_phys, pdba_virt);
     }
     
-    inline int protect(protection_domain_v1_id dom_id, address_t start_page, size_t n_pages, stretch_v1_rights access)
+    inline int protect(protection_domain_v1::id dom_id, address_t start_page, size_t n_pages, stretch_v1::rights access)
     {
         return 0;
     }

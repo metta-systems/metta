@@ -8,18 +8,18 @@
 #
 local interface ramtab_v1
 {
-    enum { unused, mapped, nailed } state_e; # problem: state clashes with state field in closure
+    enum { unused, mapped, nailed } state;
     
-    # "Size" returns the total number of frames handled by this interface.
-    size() returns (memory_v1.size maxpfn);
-    # "Base" returns the base address of the ramtab. 
+    # "size" returns the total number of frames handled by this interface.
+    size() returns (memory_v1.size max_frame_number);
+    # "base" returns the base address of the ramtab. 
     base() returns (memory_v1.address base);
 
-    # "Put" sets the owner, width, and state of a given physical frame.
-    put(card32 pfn, card32 owner, card32 fwidth, state_e st);
+    # "put" sets the owner, width, and state of a given physical frame.
+    put(memory_v1.size phys_frame_number, card32 owner, card32 frame_width, state st);
 
-    # "Get" reads the owner, width, and state of a given physical frame.
-    get(card32 pfn) returns (card32 owner, card32 fwidth, state_e st);
+    # "get" reads the owner, width, and state of a given physical frame.
+    get(memory_v1.size phys_frame_number) returns (card32 owner, card32 frame_width, state st);
 }
 
 # kate: indent-width 4; replace-tabs on;

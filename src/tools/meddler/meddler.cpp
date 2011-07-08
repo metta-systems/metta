@@ -62,9 +62,9 @@ public:
     bool emit(const string& output_dir)
     {
         ostringstream impl_h, interface_h, interface_cpp, filename;
-        parser.parse_tree->emit_impl_h(impl_h);
-        parser.parse_tree->emit_interface_h(interface_h);
-        parser.parse_tree->emit_interface_cpp(interface_cpp);
+        parser.parse_tree->emit_impl_h(impl_h, "");
+        parser.parse_tree->emit_interface_h(interface_h, "");
+        parser.parse_tree->emit_interface_cpp(interface_cpp, "");
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
         ofstream of(filename.str().c_str(), ios::out|ios::trunc);

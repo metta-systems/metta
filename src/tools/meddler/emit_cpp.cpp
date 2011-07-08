@@ -14,17 +14,6 @@
 #include <iostream>
 #include <algorithm>
 
-//TODO
-// Generate enums and typedefs inside a wrapper struct:
-// struct stretch_v1
-// {
-    // typedef uint32_t size;
-    // enum right { right_read, right_write, right_meta };
-    // typedef stretch_v1_closure closure; //?
-    // typedef stretch_v1_state state; //?
-    // ops are not exposed //?
-// };
-
 using namespace std;
 
 namespace AST
@@ -111,15 +100,16 @@ static std::vector<std::string> build_forwards(interface_t* intf)
     return forwards;
 }
 
-// Standard string is blergh!
+// Replace dots in the name with scope operator (:: for C++)
 static std::string replace_dots(std::string input)
 {
-	size_t pos;
-	while ((pos = input.find(".")) != std::string::npos)
-	{
-		input.replace(input.begin()+pos, input.begin()+pos+1, "_");
-	}
-	return input;
+    size_t pos;
+    while ((pos = input.find(".")) != std::string::npos)
+    {
+        auto begin = input.begin() + pos;
+        input.replace(begin, begin + 1, "::");
+    }
+    return input;
 }
 
 /*!
@@ -150,7 +140,7 @@ static std::string emit_type(alias_t& type)
 	else
 	if (type.is_local_type())
 	{
-		result = replace_dots(type.get_root()->name() + "." + type.type());
+		result = replace_dots(type.type());
 		cout << "EMITTING LOCAL TYPE " << result << endl;
 	}
 	else
@@ -160,7 +150,7 @@ static std::string emit_type(alias_t& type)
     }
 
 	if (type.is_interface_reference())
-		result += "_closure*";
+		result += "::closure_t*";
 	else
     	if (type.is_reference())
         	result += "&";
@@ -168,116 +158,131 @@ static std::string emit_type(alias_t& type)
     return result;
 }
 
-void interface_t::emit_impl_h(std::ostringstream& s)
+void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "#pragma once" << std::endl << std::endl;
+    s << indent_prefix << "#pragma once" << std::endl << std::endl;
 
+    //FIXME: also use forwards from the emit_interface_h? to be self-sufficient header...
     std::vector<std::string> fwd = build_forwards(this);
     if (fwd.size() > 0)
     {
-        std::for_each(fwd.begin(), fwd.end(), [&s](std::string str)
+        std::for_each(fwd.begin(), fwd.end(), [&s, indent_prefix](std::string str)
         {
-            s << "struct " << str << "_closure;" << std::endl;
+            s << indent_prefix << "namespace " << str << " { struct closure_t; }" << endl;
         });
         s << std::endl;
     }
 
     if (methods.size() > 0)
     {
-        s << "// ops structure should be exposed to module implementors!" << std::endl;
-        s << "struct " << name() << "_ops" << std::endl
-          << "{" << std::endl;
+        s << indent_prefix << "// ops structure should be exposed to module implementors!" << std::endl;
+        s << indent_prefix << "namespace " << name() << std::endl
+          << indent_prefix << "{" << std::endl
+          << indent_prefix << "    struct ops_t" << std::endl
+          << indent_prefix << "    {" << std::endl;
 
-        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+        std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
         {
-            m->emit_impl_h(s);
+            m->emit_impl_h(s, indent_prefix + "    ");
         });
 
-        s << "};" << std::endl;
+        s << indent_prefix << "    };" << std::endl
+          << indent_prefix << "}" << std::endl;
     }
 }
 
-void interface_t::emit_interface_h(std::ostringstream& s)
+void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "#pragma once" << std::endl << std::endl
-      << "#include \"module_interface.h\"" << std::endl;
+    s << indent_prefix << "#pragma once" << std::endl << std::endl
+      << indent_prefix << "#include \"module_interface.h\"" << std::endl;
 
     // Includes.
     // Do not include interface-only references, as it creates cyclic dependencies.
     // Instead, make a forward declaration down below..
     std::vector<std::string> interface_included;
 
-    std::for_each(imported_types.begin(), imported_types.end(), [&s, &interface_included](alias_t* t)
-	{
-	    if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
-	    {
-            t->emit_include(s);
-            s << std::endl;
+    std::for_each(imported_types.begin(), imported_types.end(), [&s, indent_prefix, &interface_included](alias_t* t)
+    {
+        if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
+        {
+            t->emit_include(s, indent_prefix);
             interface_included.push_back(t->base_name());
         }
-	});
+    });
 
-	s << std::endl;
-	
-	// Forward declarations.
-	std::for_each(imported_types.begin(), imported_types.end(), [&s, &interface_included](alias_t* t)
+    std::for_each(types.begin(), types.end(), [&s, indent_prefix](alias_t* t)
+    {
+        t->emit_include(s, indent_prefix);
+    });
+
+    s << std::endl;
+
+    // Forward declarations.
+    std::for_each(imported_types.begin(), imported_types.end(), [&s, indent_prefix, &interface_included](alias_t* t)
     {
         if (t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
         {
-            s << "struct " << t->base_name() << "_closure;" << endl;
+            s << indent_prefix << "namespace " << t->base_name() << " { struct closure_t; }" << endl;
         }
     });
-	s << std::endl;
 
-	// Type declarations.
-	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
-    {
-        t->emit_include(s);
-		s << std::endl;
-    });
+    s << std::endl;
 
-	std::for_each(types.begin(), types.end(), [&s](alias_t* t)
+    // Closure.
+    
+    // This structure acts as a namespace, limiting the scope of all declarations.
+    s << indent_prefix << "namespace " << name() << std::endl
+      << indent_prefix << "{" << std::endl;
+
+    // Type declarations.
+    std::for_each(types.begin(), types.end(), [&s, indent_prefix](alias_t* t)
     {
-        t->emit_interface_h(s);
-		s << std::endl;
+        t->emit_interface_h(s, indent_prefix + "    ");
+        s << std::endl;
     });
     
-	s << std::endl;
-	// Closure.
-//	if (methods.size() > 0)
-	{
-        s << "struct " << name() << "_ops;" << std::endl
-          << "struct " << name() << "_state;" << std::endl << std::endl
-          << "struct " << name() << "_closure" << std::endl
-          << "{" << std::endl
-          << '\t' << "const " << name() << "_ops* methods;" << std::endl
-          << '\t' << name() << "_state* state;" << std::endl << std::endl;
+    s << std::endl;
 
-        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
-        {
-            m->emit_interface_h(s);
-        });
+    s << indent_prefix << "    struct ops_t;   // defined in " << name() << "_impl.h" << std::endl
+      << indent_prefix << "    struct state_t; // opaque" << std::endl << endl;
 
-        s << "};" << std::endl;
-    }
+    s << indent_prefix << "    struct closure_t {" << std::endl
+      << indent_prefix << "        const " << name() << "::ops_t* d_methods;" << std::endl
+      << indent_prefix << "        " << name() << "::state_t* d_state;" << std::endl << std::endl;
+
+    // Methods (part of closure_t).
+    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
+    {
+        m->emit_interface_h(s, indent_prefix + "        ");
+    });
+
+    s << indent_prefix << "    };" << std::endl;
+
+    s << indent_prefix << "}" << std::endl;
+
 }
 
 // Currently no need to generate interface.cpp if there are no methods.
-void interface_t::emit_interface_cpp(std::ostringstream& s)
+void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
-	if (methods.size() > 0)
-	{
-        s << "#include \"" << name() << "_interface.h\"" << std::endl
-          << "#include \"" << name() << "_impl.h\"" << std::endl << std::endl;
+    if (methods.size() > 0)
+    {
+        s << indent_prefix << "#include \"" << name() << "_interface.h\"" << std::endl
+          << indent_prefix << "#include \"" << name() << "_impl.h\"" << std::endl << std::endl;
 
-        std::for_each(methods.begin(), methods.end(), [&s](method_t* m)
+        s << indent_prefix << "namespace " << name() << std::endl
+          << indent_prefix << "{" << endl << endl;
+
+        std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
         {
-            m->emit_interface_cpp(s);
+            m->emit_interface_cpp(s, indent_prefix);
         });
+
+        s << indent_prefix << "}" << endl;
     }
 }
 
-void method_t::emit_impl_h(std::ostringstream& s)
+void method_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
     std::string return_value_type;
     if (never_returns || (returns.size() == 0))
@@ -287,15 +292,15 @@ void method_t::emit_impl_h(std::ostringstream& s)
         return_value_type = emit_type(*returns.front());
     }
 
-    s << '\t' << return_value_type
+    s << indent_prefix << return_value_type
       << " (*" << name() << ")(";
 
-    s << parent_interface << "_closure* self";
+    s << parent_interface << "::closure_t* self";
 
     std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
     {
         s << ", ";
-        param->emit_impl_h(s);
+        param->emit_impl_h(s, "");
     });
 
     // TODO: add by-ptr for non-interface returns
@@ -304,14 +309,14 @@ void method_t::emit_impl_h(std::ostringstream& s)
         std::for_each(returns.begin()+1, returns.end(), [&s](parameter_t* param)
         {
             s << ", ";
-            param->emit_impl_h(s);
+            param->emit_impl_h(s, "");
         });
     }
 
     s << ");" << std::endl;
 }
 
-void method_t::emit_interface_h(std::ostringstream& s)
+void method_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
     std::string return_value_type;
     if (never_returns || returns.size() == 0)
@@ -321,7 +326,7 @@ void method_t::emit_interface_h(std::ostringstream& s)
         return_value_type = emit_type(*returns.front());
     }
 
-    s << '\t' << return_value_type
+    s << indent_prefix << return_value_type
       << " " << name() << "(";
 
     bool first = true;
@@ -331,7 +336,7 @@ void method_t::emit_interface_h(std::ostringstream& s)
             s << ", ";
         else
             first = false;
-        param->emit_interface_h(s);
+        param->emit_interface_h(s, "");
     });
 
     // TODO: add by-ptr for non-interface returns
@@ -343,14 +348,14 @@ void method_t::emit_interface_h(std::ostringstream& s)
                 s << ", ";
             else
                 first = false;
-            param->emit_interface_h(s);
+            param->emit_interface_h(s, "");
         });
     }
 
     s << ");" << std::endl;
 }
 
-void method_t::emit_interface_cpp(std::ostringstream& s)
+void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
     std::string return_value_type;
     if (never_returns || returns.size() == 0)
@@ -360,8 +365,8 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
         return_value_type = emit_type(*returns.front());
     }
 
-    s << return_value_type
-      << " " << parent_interface << "_closure::" << name() << "(";
+    s << indent_prefix << return_value_type
+      << " " << parent_interface << "::closure_t::" << name() << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first](parameter_t* param)
@@ -370,7 +375,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
             s << ", ";
         else
             first = false;
-        param->emit_interface_cpp(s);
+        param->emit_interface_cpp(s, "");
     });
 
     // TODO: add by-ptr for non-interface returns
@@ -382,16 +387,16 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
                 s << ", ";
             else
                 first = false;
-            param->emit_interface_cpp(s);
+            param->emit_interface_cpp(s, "");
         });
     }
 
     s << ")" << std::endl
-      << "{" << std::endl
-      << '\t';
+      << indent_prefix << "{" << std::endl
+      << indent_prefix << "    ";
     if (return_value_type != "void")
         s << "return ";
-    s << "methods->" << name() << "(this";
+    s << "d_methods->" << name() << "(this";
 
     std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
     {
@@ -410,176 +415,175 @@ void method_t::emit_interface_cpp(std::ostringstream& s)
     }
 
     s << ");" << std::endl
-      << "}" << std::endl << std::endl;
+      << indent_prefix << "}" << std::endl << std::endl;
 }
 
-void exception_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void exception_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void exception_t::emit_interface_h(std::ostringstream& s)
+void exception_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "typedef int xcp_" << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << indent_prefix << "typedef int xcp_" << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void exception_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void alias_t::emit_include(std::ostringstream& s)
+void alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
-	s << "#include \"" << base_name() << "_interface.h\"";
+	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
 }
 
-void alias_t::emit_impl_h(std::ostringstream& s)
+void alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
 
-void alias_t::emit_interface_h(std::ostringstream& s)
+void alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
 
-void alias_t::emit_interface_cpp(std::ostringstream& s)
+void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
 
-void parameter_t::emit_impl_h(std::ostringstream& s)
+void parameter_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     if (direction != in)
         s << "*";
     s << " " << name();
 }
 
-void parameter_t::emit_interface_h(std::ostringstream& s)
+void parameter_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     if (direction != in)
         s << "*";
     s << " " << name();
 }
 
-void parameter_t::emit_interface_cpp(std::ostringstream& s)
+void parameter_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
-    s << emit_type(*this);
+    s << indent_prefix << emit_type(*this);
     if (direction != in)
         s << "*";
     s << " " << name();
 }
 
-void type_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void type_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void type_alias_t::emit_interface_h(std::ostringstream& s)
+void type_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-	s << "typedef " << emit_type(*this) << " " << replace_dots(get_root()->name() + "." + name()) << ";";
+	s << indent_prefix << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
 }
 
-void type_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
-{
-}
-
-void sequence_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void type_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void sequence_alias_t::emit_interface_h(std::ostringstream& s)
-{
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
-}
-
-void sequence_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void sequence_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void array_alias_t::emit_impl_h(std::ostringstream& s)
+void sequence_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << indent_prefix << "typedef int " << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void array_alias_t::emit_interface_h(std::ostringstream& s UNUSED_ARG)
-{
-}
-
-void array_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void sequence_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void set_alias_t::emit_include(std::ostringstream& s)
+void array_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
-	s << "#include \"set_t.h\"";
+    s << indent_prefix << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
-void set_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
-{
-}
-
-void set_alias_t::emit_interface_h(std::ostringstream& s)
-{
-    s << "typedef set_t<" << replace_dots(get_root()->name() + "." + type()) << "> " << replace_dots(get_root()->name() + "." + name()) << ";" << endl;
-}
-
-void set_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void array_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void record_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void array_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void record_alias_t::emit_interface_h(std::ostringstream& s)
+void set_alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
-	s << "struct " << replace_dots(get_root()->name() + "." + name()) << endl
-	  << "{" << endl;
-    std::for_each(fields.begin(), fields.end(), [&s](alias_t* field)
+	s << indent_prefix << "#include \"set_t.h\"" << std::endl;
+}
+
+void set_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+{
+}
+
+void set_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+{
+    s << indent_prefix << "typedef set_t<" << /*FIXME:? emit_*/type() << "> " << name() << ";" << endl;
+}
+
+void set_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+{
+}
+
+void record_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+{
+}
+
+void record_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+{
+	s << indent_prefix << "struct " << replace_dots(name()) << endl
+	  << indent_prefix << "{" << endl;
+    std::for_each(fields.begin(), fields.end(), [&s, indent_prefix](alias_t* field)
     {
-        s << '\t';
-        field->emit_interface_h(s);
+        field->emit_interface_h(s, indent_prefix + "    ");
         s << ";" << endl;
     });
-    s << "};" << endl;
+    s << indent_prefix << "};" << endl;
 }
 
-void record_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void record_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void enum_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void enum_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void enum_alias_t::emit_interface_h(std::ostringstream& s)
+void enum_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "enum " << replace_dots(get_root()->name() + "." + name()) << " {" << endl;
-    std::for_each(fields.begin(), fields.end(), [&s, this](std::string field)
+    s << indent_prefix << "enum " << replace_dots(name()) << endl
+      << indent_prefix << "{" << endl;
+    std::for_each(fields.begin(), fields.end(), [&s, indent_prefix, this](std::string field)
     {
-        s << '\t';
-        s << replace_dots(this->get_root()->name() + "." + this->name() + "." + field) << "," << endl;
+        s << indent_prefix << "    " << replace_dots(this->name() + "_" + field) << "," << endl;
     });
-    s << "};" << endl;
+    s << indent_prefix << "};" << endl;
 }
 
-void enum_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void enum_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void range_alias_t::emit_impl_h(std::ostringstream& s UNUSED_ARG)
+void range_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }
 
-void range_alias_t::emit_interface_h(std::ostringstream& s)
+void range_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
 {
-    s << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
+    s << indent_prefix << "typedef int " << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void range_alias_t::emit_interface_cpp(std::ostringstream& s UNUSED_ARG)
+void range_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
 {
 }
 

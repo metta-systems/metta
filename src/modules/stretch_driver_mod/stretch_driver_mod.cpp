@@ -22,25 +22,28 @@
 // NULL implementation
 //======================================================================================================================
 
-struct stretch_driver_v1_state {};
+struct stretch_driver_v1::state_t
+{
+    // Ma, look, no state!
+};
 
 /*!
  * Simply contains a bunch of minimal fields.
  */
-struct null_driver_state_t : public stretch_driver_v1_state
+struct null_driver_state_t : public stretch_driver_v1::state_t
 {
-    stretch_driver_v1_closure closure;
-    stretch_driver_v1_kind kind;
-    vcpu_v1_closure*      vcpu;
-    bool                  mode;
-    heap_v1_closure*      heap;
-    stretch_table_v1_closure* stretch_table;
-    fault_handler_v1_closure* overrides[memory_v1_fault_max_fault_number];
+    stretch_driver_v1::closure_t  closure;
+    stretch_driver_v1::kind       kind;
+    vcpu_v1::closure_t*           vcpu;
+    bool                          mode;
+    heap_v1::closure_t*           heap;
+    stretch_table_v1::closure_t*  stretch_table;
+    fault_handler_v1::closure_t*  overrides[memory_v1::fault_max_fault_number];
 };
 
-void null_bind(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, uint32_t page_width)
+void null_bind(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch, uint32_t page_width)
 {
-    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->state);
+    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
 
     if (page_width < PAGE_WIDTH)
     {
@@ -50,8 +53,8 @@ void null_bind(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, uin
     else if (page_width > PAGE_WIDTH)
     {
         // Check size is a multiple of the page width.
-        memory_v1_address base;
-        memory_v1_size size;
+        memory_v1::address base;
+        memory_v1::size size;
         base = stretch->info(&size);
         if (size & ((1UL << page_width) - 1))
         {
@@ -67,73 +70,74 @@ void null_bind(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, uin
     }
 }
 
-void null_unbind(stretch_driver_v1_closure* self, stretch_v1_closure* stretch)
+void null_unbind(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch)
 {
-    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->state);
-    stretch_driver_v1_closure* driver;
+    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
+    stretch_driver_v1::closure_t* driver;
     uint32_t page_width;
     state->stretch_table->remove(stretch, &page_width, &driver);
 }
 
-stretch_driver_v1_kind null_get_kind(stretch_driver_v1_closure* self)
+stretch_driver_v1::kind null_get_kind(stretch_driver_v1::closure_t* self)
 {
-    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->state);
+    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
     return state->kind;
 }
 
-stretch_table_v1_closure* null_get_table(stretch_driver_v1_closure* self)
+stretch_table_v1::closure_t* null_get_table(stretch_driver_v1::closure_t* self)
 {
-    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->state);
+    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
     return state->stretch_table;
 }
 
-stretch_driver_v1_result null_map(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, memory_v1_address virt)
+stretch_driver_v1::result null_map(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch, memory_v1::address virt)
 {
     kconsole << __FUNCTION__ << ": mapping not supported!" << endl;
     nucleus::debug_stop();
-    return stretch_driver_v1_result_success;
+    return stretch_driver_v1::result_success;
 }
 
-stretch_driver_v1_result null_fault(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, memory_v1_address virt, memory_v1_fault reason)
+stretch_driver_v1::result null_fault(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch, memory_v1::address virt, memory_v1::fault reason)
 {
     kconsole << __FUNCTION__ << ": fault handling not supported!" << endl;
     kconsole << __FUNCTION__ << ": fault reason " << reason << endl;
     nucleus::debug_stop();
-    return stretch_driver_v1_result_success;
+    return stretch_driver_v1::result_success;
 }
 
-fault_handler_v1_closure* null_add_handler(stretch_driver_v1_closure* self, memory_v1_fault reason, fault_handler_v1_closure* handler)
+fault_handler_v1::closure_t* null_add_handler(stretch_driver_v1::closure_t* self, memory_v1::fault reason, fault_handler_v1::closure_t* handler)
 {
-    if (reason > memory_v1_fault_max_fault_number)
+    if (reason > memory_v1::fault_max_fault_number)
     {
         kconsole << __FUNCTION__ << ": bogus reason, ignored." << endl;
         return NULL;
     }
-    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->state);
+    null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
     auto result = state->overrides[reason];
     state->overrides[reason] = handler;
     return result;
 }
 
-stretch_driver_v1_result null_lock(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, memory_v1_address virt)
+stretch_driver_v1::result null_lock(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch, memory_v1::address virt)
 {
     kconsole << __FUNCTION__ << ": locking not supported!" << endl;
-    return stretch_driver_v1_result_failure;
+    return stretch_driver_v1::result_failure;
 }
 
-stretch_driver_v1_result null_unlock(stretch_driver_v1_closure* self, stretch_v1_closure* stretch, memory_v1_address virt)
+stretch_driver_v1::result null_unlock(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretch, memory_v1::address virt)
 {
     kconsole << __FUNCTION__ << ": unlocking not supported!" << endl;
-    return stretch_driver_v1_result_failure;
+    return stretch_driver_v1::result_failure;
 }
 
-memory_v1_size null_revoke_frames(stretch_driver_v1_closure* self, memory_v1_size max_frames)
+memory_v1::size null_revoke_frames(stretch_driver_v1::closure_t* self, memory_v1::size max_frames)
 {
     kconsole << __FUNCTION__ << ": revoking frames not supported!" << endl;
     return 0;
 }
 
-static const stretch_driver_v1_ops stretch_driver_v1_null_methods = {
+static const stretch_driver_v1::ops_t stretch_driver_v1_null_methods =
+{
     null_bind,
     null_unbind,
     null_get_kind,
@@ -155,7 +159,7 @@ static const stretch_driver_v1_ops stretch_driver_v1_null_methods = {
  * but simply produces a closure of the correct type during system startup.
  * Not useful for standard user-domains.
  */
-static stretch_driver_v1_closure* create_null(stretch_driver_module_v1_closure* self, heap_v1_closure* heap, stretch_table_v1_closure* strtab)
+static stretch_driver_v1::closure_t* create_null(stretch_driver_module_v1::closure_t* self, heap_v1::closure_t* heap, stretch_table_v1::closure_t* strtab)
 {
     kconsole << __PRETTY_FUNCTION__ << endl;
     auto state = new(heap) null_driver_state_t;
@@ -163,28 +167,29 @@ static stretch_driver_v1_closure* create_null(stretch_driver_module_v1_closure* 
     if (!state)
         return NULL;
 
-    state->kind = stretch_driver_v1_kind_null;
+    state->kind = stretch_driver_v1::kind_null;
     state->vcpu = NULL; // don't have/need
     state->heap = heap;
     state->stretch_table = strtab;
 
-    for(size_t i = 0; i < memory_v1_fault_max_fault_number; ++i)
+    for(size_t i = 0; i < memory_v1::fault_max_fault_number; ++i)
         state->overrides[i] = NULL;
 
-    state->closure.methods = &stretch_driver_v1_null_methods;
-    state->closure.state = state;
+    closure_init(&state->closure, &stretch_driver_v1_null_methods, state);
 
     return &state->closure;
 }
 
-static const stretch_driver_module_v1_ops stretch_driver_module_v1_methods = {
+static const stretch_driver_module_v1::ops_t stretch_driver_module_v1_methods =
+{
     create_null,
     NULL,
     NULL,
     NULL
 };
 
-static const stretch_driver_module_v1_closure clos = {
+static const stretch_driver_module_v1::closure_t clos =
+{
     &stretch_driver_module_v1_methods,
     NULL
 };

@@ -35,7 +35,7 @@
 // startup module from which root_domain starts also has a namespace called "default_namespace"
 // it defines general system attributes and startup configuration.
 
-static pervasives_v1_rec pervasives;
+static pervasives_v1::rec pervasives;
 
 //======================================================================================================================
 // Look up in root_domain's namespace and load a module by given name, satisfying its dependencies, if possible.
@@ -69,16 +69,16 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 // setup MMU and frame allocator
 //======================================================================================================================
 
-static protection_domain_v1_id create_address_space(system_frame_allocator_v1_closure* frames, mmu_v1_closure* mmu)
+static protection_domain_v1::id create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
 {
     auto pdom = mmu->create_domain();
 
-    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
+    memory_v1::physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
 
     // First we need to map the PIP globally read-only.
     auto str = PVS(stretch_allocator)->create_over(PAGE_SIZE,
-            stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_global),
-            information_page_t::ADDRESS, memory_v1_attrs_regular, PAGE_WIDTH, null_pmem);
+            stretch_v1::rights(stretch_v1::right_read).add(stretch_v1::right_global),
+            information_page_t::ADDRESS, memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
     /* Map stretches over the boot image */
 
@@ -166,12 +166,12 @@ static protection_domain_v1_id create_address_space(system_frame_allocator_v1_cl
  * maps a stretch over the existing heap.
  * This allows us to map it read/write for us, and read-only to everyone else.
  */
-static void map_initial_heap(heap_module_v1_closure* heap_mod, heap_v1_closure* heap, size_t initial_heap_size, protection_domain_v1_id root_domain_pdid)
+static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
 {
     kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
-    memory_v1_physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
+    memory_v1::physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
 
-    auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1_rights(stretch_v1_right_read), memory_v1_address(heap), memory_v1_attrs_regular, PAGE_WIDTH, null_pmem);
+    auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1::rights(stretch_v1::right_read), memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
     auto real_heap = heap_mod->realize(heap, str);
 
@@ -181,7 +181,7 @@ static void map_initial_heap(heap_module_v1_closure* heap_mod, heap_v1_closure* 
     }
 
     // Map our heap as local read/write
-    str->set_rights(root_domain_pdid, stretch_v1_rights(stretch_v1_right_read).add(stretch_v1_right_write));
+    str->set_rights(root_domain_pdid, stretch_v1::rights(stretch_v1::right_read).add(stretch_v1::right_write));
 }
 
 static void init_mem(bootimage_t& bootimg)
@@ -190,22 +190,22 @@ static void init_mem(bootimage_t& bootimg)
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     // Load modules used for booting before we overwrite them.
-    auto frames_factory = load_module<frames_module_v1_closure>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
 
-    auto mmu_mod = load_module<mmu_module_v1_closure>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    auto mmu_mod = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod); // mmu_factory
 
-    auto heap_mod = load_module<heap_module_v1_closure>(bootimg, "heap_mod", "exported_heap_module_rootdom");
+    auto heap_mod = load_module<heap_module_v1::closure_t>(bootimg, "heap_mod", "exported_heap_module_rootdom");
     ASSERT(heap_mod); // heap_factory
 
-    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1_closure>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
+    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
     ASSERT(stretch_allocator_mod);
 
-    auto stretch_table_mod = load_module<stretch_table_module_v1_closure>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
+    auto stretch_table_mod = load_module<stretch_table_module_v1::closure_t>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
     ASSERT(stretch_table_mod);
 
-    auto stretch_driver_mod = load_module<stretch_driver_module_v1_closure>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
+    auto stretch_driver_mod = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
     ASSERT(stretch_driver_mod);
 
     size_t modules_size;
@@ -217,11 +217,11 @@ static void init_mem(bootimage_t& bootimg)
     int required = frames_factory->required_size();
     int initial_heap_size = 128*KiB;
 
-    ramtab_v1_closure* rtab;
-    memory_v1_address next_free;
+    ramtab_v1::closure_t* rtab;
+    memory_v1::address next_free;
 
     kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
-    mmu_v1_closure* mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
+    auto mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
 
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
@@ -262,9 +262,9 @@ static void init_mem(bootimage_t& bootimg)
      * be backed by phyiscal memory on creation.
      */
     kconsole << " + Creating nailed stretch allocator" << endl;
-    auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1_closure*>(frames), heap);//yikes!
+    auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap);//yikes!
 
-    mmu_mod->finish_init(mmu, reinterpret_cast<frame_allocator_v1_closure*>(frames), heap, sysalloc); //yikes again!
+    mmu_mod->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
     kconsole << " + Creating stretch table" << endl;
     auto strtab = stretch_table_mod->create(heap);

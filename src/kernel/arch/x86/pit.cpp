@@ -53,27 +53,27 @@ static void init_pit(int hz)
     x86_cpu_t::outb(PIT_CH0, (divisor >> 8) & 0xff);
 }
 
-struct timer_v1_state : information_page_t
+struct timer_v1::state_t : information_page_t
 {
 };
 
 // Timer ops.
-static time_v1_ns read(timer_v1_closure* self)
+static time_v1::ns read(timer_v1::closure_t* self)
 {
-    return self->state->now;
+    return self->d_state->now;
 }
 
-static void arm(timer_v1_closure* self, time_v1_ns time)
+static void arm(timer_v1::closure_t* self, time_v1::ns time)
 {
-    self->state->alarm = time;
+    self->d_state->alarm = time;
 }
 
-static time_v1_ns clear(timer_v1_closure* /*self*/, time_v1_ns* /*itime*/)
+static time_v1::ns clear(timer_v1::closure_t* /*self*/, time_v1::ns* /*itime*/)
 {
     return 0;
 }
 
-static void enable(timer_v1_closure* /*self*/, uint32_t /*sirq*/)
+static void enable(timer_v1::closure_t* /*self*/, uint32_t /*sirq*/)
 {
     kconsole << "timer.enable()" << endl;
 //     interrupt_descriptor_table_t::instance().set_interrupt(?, ?);
@@ -81,7 +81,7 @@ static void enable(timer_v1_closure* /*self*/, uint32_t /*sirq*/)
 
 // Timer closure set up.
 
-static const timer_v1_ops ops = 
+static const timer_v1::ops_t ops = 
 {
     read,
     arm,
@@ -90,13 +90,16 @@ static const timer_v1_ops ops =
 };
 
 // Timer state is in the infopage.
-static timer_v1_closure timer;// = { methods: &ops, state: INFO_PAGE_ADDR };
+static timer_v1::closure_t timer =
+{
+    &ops,
+    reinterpret_cast<timer_v1::state_t*>(information_page_t::ADDRESS)
+};
 
-timer_v1_closure* init_timer()
+timer_v1::closure_t* init_timer()
 {
     kconsole << "Initializing interrupt timer." << endl;
     init_pit(100);
-    closure_init(&timer, &ops, reinterpret_cast<timer_v1_state*>(information_page_t::ADDRESS));
     return &timer;
 }
 
