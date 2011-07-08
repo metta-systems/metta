@@ -19,7 +19,7 @@
 #define OWNER_NONE    0x0     /* physical frame is unused by anyone        */
 #define OWNER_SYSTEM  0x1     /* physical frame is owned by us (mmgmt etc) */
 
-#define NULL_PDID            ((protection_domain_v1_id)~0U)
+#define NULL_PDID            ((protection_domain_v1::id)~0U)
 
 //======================================================================================================================
 // MMU

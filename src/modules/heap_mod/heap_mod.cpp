@@ -19,31 +19,32 @@
 // heap_v1 implementation
 //======================================================================================================================
 
-struct heap_v1_state
+struct heap_v1::state_t
 {
-    heap_v1_closure closure;
+    heap_v1::closure_t closure;
     heap_t* heap;
 };
 
-static memory_v1_address heap_v1_allocate(heap_v1_closure* self, memory_v1_size size)
+static memory_v1::address heap_v1_allocate(heap_v1::closure_t* self, memory_v1::size size)
 {
-    lockable_scope_lock_t lock(*self->state->heap);
-    return reinterpret_cast<memory_v1_address>(self->state->heap->allocate(size));
+    lockable_scope_lock_t lock(*self->d_state->heap);
+    return reinterpret_cast<memory_v1::address>(self->d_state->heap->allocate(size));
 }
 
-static void heap_v1_free(heap_v1_closure* self, memory_v1_address ptr)
+static void heap_v1_free(heap_v1::closure_t* self, memory_v1::address ptr)
 {
-    lockable_scope_lock_t lock(*self->state->heap);
-    self->state->heap->free(reinterpret_cast<void*>(ptr));
+    lockable_scope_lock_t lock(*self->d_state->heap);
+    self->d_state->heap->free(reinterpret_cast<void*>(ptr));
 }
 
-static void heap_v1_check(heap_v1_closure* self, bool /*check_free_blocks*/)
+static void heap_v1_check(heap_v1::closure_t* self, bool /*check_free_blocks*/)
 {
-    lockable_scope_lock_t lock(*self->state->heap);
-    self->state->heap->check_integrity();
+    lockable_scope_lock_t lock(*self->d_state->heap);
+    self->d_state->heap->check_integrity();
 }
 
-static const heap_v1_ops heap_v1_methods = {
+static const heap_v1::ops_t heap_v1_methods =
+{
     heap_v1_allocate,
     heap_v1_free,
     heap_v1_check
@@ -53,31 +54,31 @@ static const heap_v1_ops heap_v1_methods = {
 // heap_module_v1 implementation
 //======================================================================================================================
 
-static heap_v1_closure* heap_module_v1_create_raw(heap_module_v1_closure* self, memory_v1_address where, memory_v1_size size)
+static heap_v1::closure_t* heap_module_v1_create_raw(heap_module_v1::closure_t* self, memory_v1::address where, memory_v1::size size)
 {
     kconsole << __FUNCTION__ << ": at " << where << " with " << int(size) << " bytes." << endl;
 
     size = page_align_up(size);
-    if (size < HEAP_MIN_SIZE - sizeof(heap_v1_state))
+    if (size < HEAP_MIN_SIZE - sizeof(heap_v1::state_t))
     {
-        kconsole << "Too small heap requested, not allocating!" << endl;
+        kconsole << __FUNCTION__ << ": too small heap requested, not allocating!" << endl;
         return 0;
     }
 
-    heap_v1_state* state = reinterpret_cast<heap_v1_state*>(where);
+    heap_v1::state_t* state = reinterpret_cast<heap_v1::state_t*>(where);
 
-    heap_v1_closure* ret = &state->closure;
-    ret->methods = &heap_v1_methods;
-    ret->state = state;
+    heap_v1::closure_t* ret = &state->closure;
+    closure_init(ret, &heap_v1_methods, state);
 
     address_t end = where + size;
-    address_t start = where + sizeof(heap_v1_state) + sizeof(heap_t);
-    state->heap = new(reinterpret_cast<void*>(where + sizeof(heap_v1_state))) heap_t(start, end);
+    address_t start = where + sizeof(heap_v1::state_t) + sizeof(heap_t);
+    // TODO: heap could be constructed as a member of state_t?
+    state->heap = new(reinterpret_cast<void*>(where + sizeof(heap_v1::state_t))) heap_t(start, end);
 
     return ret;
 }
 
-static memory_v1_address heap_module_v1_where(heap_module_v1_closure* self, heap_v1_closure* heap, memory_v1_size* size)
+static memory_v1::address heap_module_v1_where(heap_module_v1::closure_t* self, heap_v1::closure_t* heap, memory_v1::size* size)
 {
     return 0;
 }
@@ -86,7 +87,7 @@ static memory_v1_address heap_module_v1_where(heap_module_v1_closure* self, heap
  * Realize is used to turn a 'raw' heap into a stretch-based one, and requires that the given stretch maps exactly over
  * the frames of the original heap.
  */
-static heap_v1_closure* heap_module_v1_realize(heap_module_v1_closure* self, heap_v1_closure* raw_heap, stretch_v1_closure* stretch)
+static heap_v1::closure_t* heap_module_v1_realize(heap_module_v1::closure_t* self, heap_v1::closure_t* raw_heap, stretch_v1::closure_t* stretch)
 {
     // switch heap type to 'stretch'
     // clear out all stretches
@@ -95,14 +96,16 @@ static heap_v1_closure* heap_module_v1_realize(heap_module_v1_closure* self, hea
     return raw_heap;
 }
 
-static const heap_module_v1_ops ops = {
+static const heap_module_v1::ops_t heap_module_v1_methods =
+{
     heap_module_v1_create_raw,
     heap_module_v1_where,
     heap_module_v1_realize
 };
 
-static const heap_module_v1_closure clos = {
-    &ops,
+static const heap_module_v1::closure_t clos =
+{
+    &heap_module_v1_methods,
     NULL
 };
 

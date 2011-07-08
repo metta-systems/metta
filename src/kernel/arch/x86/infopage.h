@@ -16,13 +16,13 @@ struct information_page_t
 {
     enum { ADDRESS = 0x1000 };
 
-    volatile time_v1_ns   now;       /* 00 Current system time              */
-    volatile time_v1_ns   alarm;     /* 08 Alarm time                       */
+    volatile time_v1::ns  now;       /* 00 Current system time              */
+    volatile time_v1::ns  alarm;     /* 08 Alarm time                       */
     volatile uint32_t     pcc;       /* 10 Cycle count at last tick         */
     uint32_t              scale;     /* 14 Cycle count scale factor         */
     uint32_t              cycle;     /* 18 Cycle time in picoseconds        */
 
-    pervasives_v1_rec* pervasives;   /* Pervasives pointer for current thread */
+    pervasives_v1::rec*   pervasives;   /* Pervasives pointer for current thread */
     uint64_t scheduler_heartbeat,
              irqs_heartbeat,
              glue_heartbeat,
@@ -34,7 +34,7 @@ struct information_page_t
 
     bool mmu_ok;
 
-    stretch_v1_closure** stretch_mapping;
+    stretch_v1::closure_t** stretch_mapping;
 };
 
 #define INFO_PAGE (*((information_page_t*)information_page_t::ADDRESS))

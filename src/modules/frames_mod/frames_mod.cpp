@@ -25,9 +25,9 @@
 /*!
  * Frame allocator client record.
  */
-struct frame_allocator_v1_state
+struct frame_allocator_v1::state_t
 {
-    frame_allocator_v1_closure closure;
+    frame_allocator_v1::closure_t closure;
 
     dcb_ro_t* domain;                      //<! Virtual address of client's RO DCB.
     region_list_t* region_list;            //<! List of frame regions allocated for this client.
@@ -38,8 +38,8 @@ struct frame_allocator_v1_state
     size_t guaranteed_frames;
     size_t extra_frames;
 
-    heap_v1_closure* heap;
-    frames_module_v1_state* module_state;  //<! Back pointer to shared state.
+    heap_v1::closure_t* heap;
+    frames_module_v1::state_t* module_state;  //<! Back pointer to shared state.
 };
 
 struct frame_st
@@ -50,14 +50,14 @@ struct frame_st
 /*!
  * Frame allocator region record.
  */
-struct frames_module_v1_state
+struct frames_module_v1::state_t
 {
     address_t start;
     size_t n_logical_frames;
     uint32_t frame_width;
-    memory_v1_attrs attrs;
-    ramtab_v1_closure* ramtab;
-    frames_module_v1_state* next;
+    memory_v1::attrs attrs;
+    ramtab_v1::closure_t* ramtab;
+    frames_module_v1::state_t* next;
     frame_st* frames;
 };
 
@@ -67,38 +67,38 @@ struct frames_module_v1_state
 // All the forward function mumbo-jumbo is just because we cannot forward-declare a static const struct in C++.
 //======================================================================================================================
 
-static memory_v1_address system_frame_allocator_v1_allocate(system_frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width);
-static memory_v1_address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width, memory_v1_address start, memory_v1_attrs attr);
-static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_attrs* attr);
-static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_size bytes);
-static void system_frame_allocator_v1_destroy(system_frame_allocator_v1_closure* self);
+static memory_v1::address system_frame_allocator_v1_allocate(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width);
+static memory_v1::address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr);
+static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr);
+static void system_frame_allocator_v1_free(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes);
+static void system_frame_allocator_v1_destroy(system_frame_allocator_v1::closure_t* self);
 
-static memory_v1_address frame_allocator_v1_allocate(frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width)
+static memory_v1::address frame_allocator_v1_allocate(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width)
 {
-    return system_frame_allocator_v1_allocate(reinterpret_cast<system_frame_allocator_v1_closure*>(self), bytes, frame_width);
+    return system_frame_allocator_v1_allocate(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), bytes, frame_width);
 }
 
-static memory_v1_address frame_allocator_v1_allocate_range(frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width, memory_v1_address start, memory_v1_attrs attr)
+static memory_v1::address frame_allocator_v1_allocate_range(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr)
 {
-    return system_frame_allocator_v1_allocate_range(reinterpret_cast<system_frame_allocator_v1_closure*>(self), bytes, frame_width, start, attr);
+    return system_frame_allocator_v1_allocate_range(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), bytes, frame_width, start, attr);
 }
 
-static uint32_t frame_allocator_v1_query(frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_attrs* attr)
+static uint32_t frame_allocator_v1_query(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr)
 {
-    return system_frame_allocator_v1_query(reinterpret_cast<system_frame_allocator_v1_closure*>(self), addr, attr);
+    return system_frame_allocator_v1_query(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), addr, attr);
 }
 
-static void frame_allocator_v1_free(frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_size bytes)
+static void frame_allocator_v1_free(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes)
 {
-    system_frame_allocator_v1_free(reinterpret_cast<system_frame_allocator_v1_closure*>(self), addr, bytes);
+    system_frame_allocator_v1_free(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), addr, bytes);
 }
 
-static void frame_allocator_v1_destroy(frame_allocator_v1_closure* self)
+static void frame_allocator_v1_destroy(frame_allocator_v1::closure_t* self)
 {
-    system_frame_allocator_v1_destroy(reinterpret_cast<system_frame_allocator_v1_closure*>(self));
+    system_frame_allocator_v1_destroy(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self));
 }
 
-static const frame_allocator_v1_ops frame_allocator_v1_methods =
+static const frame_allocator_v1::ops_t frame_allocator_v1_methods =
 {
     frame_allocator_v1_allocate,
     frame_allocator_v1_allocate_range,
@@ -111,7 +111,7 @@ static const frame_allocator_v1_ops frame_allocator_v1_methods =
 // implementation helper functions
 //======================================================================================================================
 
-static void mark_frames_used(frame_allocator_v1_state* client_state, frames_module_v1_state* state, address_t first_frame, size_t n_frames)
+static void mark_frames_used(frame_allocator_v1::state_t* client_state, frames_module_v1::state_t* state, address_t first_frame, size_t n_frames)
 {
     for (size_t j = first_frame; j < (first_frame + n_frames); ++j)
         state->frames[j].free = 0;
@@ -125,7 +125,7 @@ static void mark_frames_used(frame_allocator_v1_state* client_state, frames_modu
             for(size_t k = 0; k < (1UL << fshift); ++k)
             {
                 // Effectively, set only owner and frame_width. Frames are yet unused (neither mapped nor nailed).
-                state->ramtab->put(ridx + (j << fshift) + k, client_state->owner, state->frame_width, ramtab_v1_state_e_unused);
+                state->ramtab->put(ridx + (j << fshift) + k, client_state->owner, state->frame_width, ramtab_v1::state_unused);
             }
         }
     }
@@ -134,7 +134,7 @@ static void mark_frames_used(frame_allocator_v1_state* client_state, frames_modu
 /*!
  * After allocation, update predecessors free frames info.
  */
-static void alloc_update_free_predecessors(frames_module_v1_state* cur_state, address_t first_frame)
+static void alloc_update_free_predecessors(frames_module_v1::state_t* cur_state, address_t first_frame)
 {
     uint32_t start_free = cur_state->frames[first_frame].free;
     for (address_t i = first_frame; i != 0; )
@@ -148,7 +148,7 @@ static void alloc_update_free_predecessors(frames_module_v1_state* cur_state, ad
 
 // FIXME: Lots of reinterpret casts suck, do something about it!
 
-static bool add_range_element(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
+static bool add_range_element(frame_allocator_v1::state_t* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
     region_list_t* new_entry = new(client_state->heap) region_list_t;
     if (new_entry == NULL)
@@ -163,7 +163,7 @@ static bool add_range_element(frame_allocator_v1_state* client_state, address_t 
     return true;
 }
 
-static bool add_range(frame_allocator_v1_state* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
+static bool add_range(frame_allocator_v1::state_t* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
     if (!client_state->heap || !client_state->region_list || !n_phys_frames)
         return true;
@@ -219,9 +219,9 @@ static bool add_range(frame_allocator_v1_state* client_state, address_t start, s
 ** the 'state' of whatever region the address addr is in, or NULL
 ** if addr is not in any of the regions which we manage.
 */
-static frames_module_v1_state* get_region(frames_module_v1_state* state, address_t addr)
+static frames_module_v1::state_t* get_region(frames_module_v1::state_t* state, address_t addr)
 {
-    frames_module_v1_state* ret = state;
+    frames_module_v1::state_t* ret = state;
 
     while(ret)
     {
@@ -233,16 +233,16 @@ static frames_module_v1_state* get_region(frames_module_v1_state* state, address
     return ret;
 }
 
-inline address_t frame_address(frames_module_v1_state* cur_state, address_t frame_index)
+inline address_t frame_address(frames_module_v1::state_t* cur_state, address_t frame_index)
 {
     return cur_state->start + (frame_index << cur_state->frame_width);
 }
 
-static frames_module_v1_state* alloc_any(frame_allocator_v1_closure* self, size_t n_physical_frames, uint32_t align, address_t* first_log_frame, size_t* n_log_frames)
+static frames_module_v1::state_t* alloc_any(frame_allocator_v1::closure_t* self, size_t n_physical_frames, uint32_t align, address_t* first_log_frame, size_t* n_log_frames)
 {
-    frame_allocator_v1_state* client_state = self->state;
-    frames_module_v1_state* state = client_state->module_state;
-    frames_module_v1_state* cur_state = state;
+    frame_allocator_v1::state_t* client_state = self->d_state;
+    frames_module_v1::state_t* state = client_state->module_state;
+    frames_module_v1::state_t* cur_state = state;
 
     kconsole << __FUNCTION__ << ": requested " << n_physical_frames << " frames." << endl;
 
@@ -270,16 +270,16 @@ static frames_module_v1_state* alloc_any(frame_allocator_v1_closure* self, size_
     return NULL; // out of physical memory
 }
 
-static frames_module_v1_state* alloc_any(system_frame_allocator_v1_closure* self, size_t n_physical_frames, uint32_t align, address_t* first_log_frame, size_t* n_log_frames)
+static frames_module_v1::state_t* alloc_any(system_frame_allocator_v1::closure_t* self, size_t n_physical_frames, uint32_t align, address_t* first_log_frame, size_t* n_log_frames)
 {
-    return alloc_any(reinterpret_cast<frame_allocator_v1_closure*>(self), n_physical_frames, align, first_log_frame, n_log_frames);
+    return alloc_any(reinterpret_cast<frame_allocator_v1::closure_t*>(self), n_physical_frames, align, first_log_frame, n_log_frames);
 }
 
-static frames_module_v1_state* alloc_range(frame_allocator_v1_closure* self, size_t n_physical_frames, address_t start, address_t* first_log_frame, size_t* n_log_frames)
+static frames_module_v1::state_t* alloc_range(frame_allocator_v1::closure_t* self, size_t n_physical_frames, address_t start, address_t* first_log_frame, size_t* n_log_frames)
 {
-    frame_allocator_v1_state* client_state = self->state;
-    frames_module_v1_state* state = client_state->module_state;
-    frames_module_v1_state* cur_state = state;
+    frame_allocator_v1::state_t* client_state = self->d_state;
+    frames_module_v1::state_t* state = client_state->module_state;
+    frames_module_v1::state_t* cur_state = state;
     uint32_t fshift;
 
     if ((cur_state = get_region(state, start)) == NULL)
@@ -311,19 +311,19 @@ static frames_module_v1_state* alloc_range(frame_allocator_v1_closure* self, siz
     return cur_state;
 }
 
-static frames_module_v1_state* alloc_range(system_frame_allocator_v1_closure* self, size_t n_frames, address_t start, address_t* first_log_frame, size_t* n_log_frames)
+static frames_module_v1::state_t* alloc_range(system_frame_allocator_v1::closure_t* self, size_t n_frames, address_t start, address_t* first_log_frame, size_t* n_log_frames)
 {
-    return alloc_range(reinterpret_cast<frame_allocator_v1_closure*>(self), n_frames, start, first_log_frame, n_log_frames);
+    return alloc_range(reinterpret_cast<frame_allocator_v1::closure_t*>(self), n_frames, start, first_log_frame, n_log_frames);
 }
 
 //======================================================================================================================
 // system_frame_allocator_v1 implementation
 //======================================================================================================================
 
-static memory_v1_address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width, memory_v1_address start, memory_v1_attrs attr)
+static memory_v1::address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr)
 {
-    frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(self->state);
-    frames_module_v1_state* cur_state;
+    frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
+    frames_module_v1::state_t* cur_state;
     address_t first_frame;
     size_t n_frames;
 
@@ -396,17 +396,17 @@ static memory_v1_address system_frame_allocator_v1_allocate_range(system_frame_a
     return start;
 }
 
-static memory_v1_address system_frame_allocator_v1_allocate(system_frame_allocator_v1_closure* self, memory_v1_size bytes, uint32_t frame_width)
+static memory_v1::address system_frame_allocator_v1_allocate(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width)
 {
-    return system_frame_allocator_v1_allocate_range(self, bytes, frame_width, ANY_ADDRESS, memory_v1_attrs_regular);
+    return system_frame_allocator_v1_allocate_range(self, bytes, frame_width, ANY_ADDRESS, memory_v1::attrs_regular);
 }
 
-static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_attrs* attr)
+static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr)
 {
-    frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(self->state);
-    frames_module_v1_state* state = client_state->module_state;
+    frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
+    frames_module_v1::state_t* state = client_state->module_state;
 
-    frames_module_v1_state* cur_state = get_region(state, addr);
+    frames_module_v1::state_t* cur_state = get_region(state, addr);
 
     if (!cur_state)
     {
@@ -418,10 +418,10 @@ static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1_closur
     return cur_state->frame_width;
 }
 
-static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* self, memory_v1_address addr, memory_v1_size bytes)
+static void system_frame_allocator_v1_free(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes)
 {
-    frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(self->state);
-    frames_module_v1_state* cur_state = get_region(client_state->module_state, addr);
+    frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
+    frames_module_v1::state_t* cur_state = get_region(client_state->module_state, addr);
 
     if (!cur_state)
     {
@@ -447,7 +447,7 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* se
     */
 
     address_t owner;
-    ramtab_v1_state_e mem_state;
+    ramtab_v1::state mem_state;
     size_t region_frame_width = cur_state->frame_width;
     size_t allocation_frame_width = region_frame_width;
     if (cur_state->ramtab)
@@ -478,9 +478,9 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* se
                 kconsole << __FUNCTION__ << ": frame " << (first_frame + i) << " width is " << frame_width << ", should be " << allocation_frame_width << endl;
                 PANIC("Frame allocator misuse.");
             }
-            if ((mem_state == ramtab_v1_state_e_mapped) || (mem_state == ramtab_v1_state_e_nailed))
+            if ((mem_state == ramtab_v1::state_mapped) || (mem_state == ramtab_v1::state_nailed))
             {
-                kconsole << __FUNCTION__ << ": frame at " << ((first_frame + i) << FRAME_WIDTH) << " is " << (mem_state == ramtab_v1_state_e_mapped ? "mapped" : "nailed") << endl;
+                kconsole << __FUNCTION__ << ": frame at " << ((first_frame + i) << FRAME_WIDTH) << " is " << (mem_state == ramtab_v1::state_mapped ? "mapped" : "nailed") << endl;
                 PANIC("Frame allocator misuse.");
             }
         }
@@ -530,7 +530,7 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* se
         {
             //FIXME: indexing will be wrong with fshift > 0
             // Effectively, just set the owner to none and state to unused.
-            cur_state->ramtab->put(ridx + (j << fshift), OWNER_NONE, cur_state->frame_width, ramtab_v1_state_e_unused);
+            cur_state->ramtab->put(ridx + (j << fshift), OWNER_NONE, cur_state->frame_width, ramtab_v1::state_unused);
         }
     }
 
@@ -549,15 +549,15 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1_closure* se
     }*/
 }
 
-static void system_frame_allocator_v1_destroy(system_frame_allocator_v1_closure* self)
+static void system_frame_allocator_v1_destroy(system_frame_allocator_v1::closure_t* self)
 {
     PANIC("frames_mod: destroy is not implemented!");
 }
 
-static frame_allocator_v1_closure* system_frame_allocator_v1_create_client(system_frame_allocator_v1_closure* self, memory_v1_address owner_dcb_virt, memory_v1_address owner_dcb_phys, uint32_t granted_frames, uint32_t extra_frames, uint32_t init_alloc_frames)
+static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(system_frame_allocator_v1::closure_t* self, memory_v1::address owner_dcb_virt, memory_v1::address owner_dcb_phys, uint32_t granted_frames, uint32_t extra_frames, uint32_t init_alloc_frames)
 {
-    frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(self->state);
-    frames_module_v1_state* state = client_state->module_state;
+    frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
+    frames_module_v1::state_t* state = client_state->module_state;
 
     if (!client_state->heap)
     {
@@ -573,7 +573,7 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_create_client(syste
     // Invariant: extra_frames >= granted_frames >= init_alloc_frames
     kconsole << __FUNCTION__ << ": allocating new client state" << endl;
 
-    frame_allocator_v1_state* new_client_state = reinterpret_cast<frame_allocator_v1_state*>(client_state->heap->allocate(sizeof(*new_client_state)));
+    frame_allocator_v1::state_t* new_client_state = reinterpret_cast<frame_allocator_v1::state_t*>(client_state->heap->allocate(sizeof(*new_client_state)));
     if (!new_client_state)
     {
         kconsole << __FUNCTION__ << ": out of memory in frames allocator." << endl;
@@ -602,7 +602,7 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_create_client(syste
     // Allocate init_alloc_frames.
     address_t first_frame;
     size_t n_frames;
-    frames_module_v1_state* cur_state;
+    frames_module_v1::state_t* cur_state;
 
     kconsole << __FUNCTION__ << ": allocating " << init_alloc_frames << " init frames" << endl;
 
@@ -633,18 +633,18 @@ static frame_allocator_v1_closure* system_frame_allocator_v1_create_client(syste
     }
 
     // And that is it.
-    new_client_state->closure.methods = &frame_allocator_v1_methods;
-    new_client_state->closure.state = new_client_state;
+    closure_init(&new_client_state->closure, &frame_allocator_v1_methods, new_client_state);
+
     return &new_client_state->closure;
 }
 
-static bool system_frame_allocator_v1_add_frames(system_frame_allocator_v1_closure* self, memory_v1_physmem_desc region)
+static bool system_frame_allocator_v1_add_frames(system_frame_allocator_v1::closure_t* self, memory_v1::physmem_desc region)
 {
     PANIC("Unimplemented!");
     return false;
 }
 
-static const system_frame_allocator_v1_ops system_frame_allocator_v1_methods =
+static const system_frame_allocator_v1::ops_t system_frame_allocator_v1_methods =
 {
     system_frame_allocator_v1_allocate,
     system_frame_allocator_v1_allocate_range,
@@ -659,7 +659,7 @@ static const system_frame_allocator_v1_ops system_frame_allocator_v1_methods =
 // frames_module_v1 implementation
 //======================================================================================================================
 
-static memory_v1_size frames_module_v1_required_size(frames_module_v1_closure* self)
+static memory_v1::size frames_module_v1_required_size(frames_module_v1::closure_t* self)
 {
     UNUSED(self);
     size_t n_regions = 0, n_frames = 0, res = 0;
@@ -675,7 +675,7 @@ static memory_v1_size frames_module_v1_required_size(frames_module_v1_closure* s
         ++n_regions;
     });
 
-    res = sizeof(frame_allocator_v1_closure) + sizeof(frame_allocator_v1_state) + n_regions * sizeof(frames_module_v1_state) + n_frames * sizeof(frame_st);
+    res = sizeof(frame_allocator_v1::closure_t) + sizeof(frame_allocator_v1::state_t) + n_regions * sizeof(frames_module_v1::state_t) + n_frames * sizeof(frame_st);
     res = page_align_up(res);
 
     kconsole << " +-frames_mod: counted " << n_regions << " memory regions" << endl;
@@ -684,17 +684,17 @@ static memory_v1_size frames_module_v1_required_size(frames_module_v1_closure* s
 
 //Don't need where_to_start, bootinfo page has logic for finding an allocatable place. We do not use it currently because MMU mod has to enter some initial mappings - but this could be streamlined.
 
-static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_v1_closure* self, ramtab_v1_closure* rtab, memory_v1_address where_to_start)
+static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_module_v1::closure_t* self, ramtab_v1::closure_t* rtab, memory_v1::address where_to_start)
 {
     UNUSED(self);
 
     kconsole << "frames_mod create @ " << where_to_start << endl;
-    frame_allocator_v1_state* client_state = reinterpret_cast<frame_allocator_v1_state*>(where_to_start);
+    frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(where_to_start);
 
-    system_frame_allocator_v1_closure* ret = reinterpret_cast<system_frame_allocator_v1_closure*>(&client_state->closure);
-    closure_init(ret, &system_frame_allocator_v1_methods, reinterpret_cast<system_frame_allocator_v1_state*>(client_state));
+    system_frame_allocator_v1::closure_t* ret = reinterpret_cast<system_frame_allocator_v1::closure_t*>(&client_state->closure);
+    closure_init(ret, &system_frame_allocator_v1_methods, reinterpret_cast<system_frame_allocator_v1::state_t*>(client_state));
 
-    frames_module_v1_state* frames_state = reinterpret_cast<frames_module_v1_state*>(where_to_start + sizeof(frame_allocator_v1_state));
+    frames_module_v1::state_t* frames_state = reinterpret_cast<frames_module_v1::state_t*>(where_to_start + sizeof(frame_allocator_v1::state_t));
 
     client_state->owner = OWNER_SYSTEM;
     client_state->n_allocated_phys_frames = 0;
@@ -703,8 +703,8 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
     client_state->heap = 0;
     client_state->module_state = frames_state;
 
-    frames_module_v1_state* running_state = frames_state;
-    frames_module_v1_state* last_state = running_state;
+    frames_module_v1::state_t* running_state = frames_state;
+    frames_module_v1::state_t* last_state = running_state;
     size_t n_regions = 0;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
@@ -718,13 +718,13 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
         running_state->frame_width = FRAME_WIDTH;
         if ((e->type() == multiboot_t::mmap_entry_t::free) || (e->type() == multiboot_t::mmap_entry_t::acpi_reclaimable))
         {
-            running_state->attrs = memory_v1_attrs_regular;
+            running_state->attrs = memory_v1::attrs_regular;
             running_state->ramtab = rtab;
             kconsole << "Adding RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
         }
         else
         {
-            running_state->attrs = memory_v1_attrs_non_memory;
+            running_state->attrs = memory_v1::attrs_non_memory;
             running_state->ramtab = 0;
             kconsole << "Adding non-RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
         }
@@ -733,7 +733,7 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
         for(size_t j = 0; j < running_state->n_logical_frames; ++j)
             running_state->frames[j].free = running_state->n_logical_frames - j;
 
-        running_state->next = reinterpret_cast<frames_module_v1_state*>(&running_state->frames[running_state->n_logical_frames]);
+        running_state->next = reinterpret_cast<frames_module_v1::state_t*>(&running_state->frames[running_state->n_logical_frames]);
         last_state = running_state;
         running_state = running_state->next;
         ++n_regions;
@@ -768,9 +768,9 @@ static system_frame_allocator_v1_closure* frames_module_v1_create(frames_module_
     return ret;
 }
 
-static void frames_module_v1_finish_init(frames_module_v1_closure* self, system_frame_allocator_v1_closure* frames, heap_v1_closure* heap)
+static void frames_module_v1_finish_init(frames_module_v1::closure_t* self, system_frame_allocator_v1::closure_t* frames, heap_v1::closure_t* heap)
 {
-    frame_allocator_v1_state* state = reinterpret_cast<frame_allocator_v1_state*>(frames->state);
+    frame_allocator_v1::state_t* state = reinterpret_cast<frame_allocator_v1::state_t*>(frames->d_state);
 
     if (state->heap != NULL)
     {
@@ -781,13 +781,15 @@ static void frames_module_v1_finish_init(frames_module_v1_closure* self, system_
     state->heap = heap;
 }
 
-static const frames_module_v1_ops ops = {
+static const frames_module_v1::ops_t ops =
+{
     frames_module_v1_required_size,
     frames_module_v1_create,
     frames_module_v1_finish_init
 };
 
-static const frames_module_v1_closure clos = {
+static const frames_module_v1::closure_t clos =
+{
     &ops,
     NULL
 };

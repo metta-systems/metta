@@ -90,12 +90,12 @@ private:
 private:
     struct heap_rec_t
     {
-        memory_v1_size prev;  // either a magic or size of previous block (backlink).
-        memory_v1_size size;  // size of allocated block, including the end footer.
-        int32_t        index; // allocation table index.
+        memory_v1::size  prev;  // either a magic or size of previous block (backlink).
+        memory_v1::size  size;  // size of allocated block, including the end footer.
+        int32_t          index; // allocation table index.
         union {
-            heap_t/*v1_closure*/* heap; // when busy
-            heap_rec_t*      next; // when free
+            heap_t*      heap;  // when busy
+            heap_rec_t*  next;  // when free
         };
     };
 
@@ -111,7 +111,7 @@ private:
     static const int SMALL_BLOCKS = 16;
     static const int LARGE_BLOCKS = 24;
     static const int COUNT = (SMALL_BLOCKS + LARGE_BLOCKS + 1);
-    static const memory_v1_size all_sizes[COUNT];
+    static const memory_v1::size all_sizes[COUNT];
 
     heap_rec_t* blocks[COUNT];
     heap_rec_t* null_malloc;

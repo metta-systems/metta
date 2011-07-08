@@ -75,7 +75,7 @@ public:
 class bootrec_vmap_entry_t : public bootrec_t
 {
 public:
-    memory_v1_mapping mapping;  
+    memory_v1::mapping mapping;  
 };
 
 class bootrec_cmdline_t : public bootrec_t
@@ -163,7 +163,7 @@ void bootinfo_t::vmap_iterator::set(void* entry)
     ptr = entry;
 }
 
-memory_v1_mapping* bootinfo_t::vmap_iterator::operator *()
+memory_v1::mapping* bootinfo_t::vmap_iterator::operator *()
 {
     if (!ptr)
         return 0;
