@@ -104,7 +104,7 @@ public:
     };
 
     /* Iterator for going over available virtual memory mapping entries. */
-    class vmap_iterator : public std::iterator<std::forward_iterator_tag, memory_v1_mapping>
+    class vmap_iterator : public std::iterator<std::forward_iterator_tag, memory_v1::mapping>
     {
 //        address_t start;
 //        size_t size;
@@ -117,7 +117,7 @@ public:
     public:
         vmap_iterator() : ptr(0), end(0) {}
         vmap_iterator(void* entry, void* end);
-        memory_v1_mapping* operator *(); // we don't need to in-place modify memory mappings, but lets keep it this way for simplicity at the moment.
+        memory_v1::mapping* operator *(); // we don't need to in-place modify memory mappings, but lets keep it this way for simplicity at the moment.
         void operator ++();
         void operator ++(int);
         inline bool operator == (const vmap_iterator& other) { return ptr == other.ptr; }

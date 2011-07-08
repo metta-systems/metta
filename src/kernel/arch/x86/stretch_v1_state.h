@@ -14,36 +14,42 @@
 #include "domain.h"
 #include "console.h"
 
-struct stretch_allocator_v1_closure;
-struct mmu_v1_closure;
+namespace stretch_allocator_v1 { struct closure_t; }
+namespace mmu_v1 { struct closure_t; }
+
+namespace stretch_v1
+{
 
 /*!
  * State record for a stretch
  * We expose it for the benefit of the MMU code.
  * Would prefer not to, but reckon it's better than exposing SIDs in IDL...
  */
-struct stretch_v1_state : public dl_link_t<stretch_v1_state>
+struct state_t : public dl_link_t<state_t>
 {
-    stretch_allocator_v1_closure* allocator;
-    mmu_v1_closure*               mmu;
-    stretch_v1_closure            closure;
-    sid_t sid;
+    stretch_allocator_v1::closure_t* allocator;
+    mmu_v1::closure_t*               mmu;
+    stretch_v1::closure_t            closure;
+    sid_t                            sid;
     
-    memory_v1_address base;
-    memory_v1_size    size;
+    memory_v1::address               base;
+    memory_v1::size                  size;
     
-    stretch_v1_rights global_rights;
+    stretch_v1::rights               global_rights;
 };
 
-const uint32_t stretch_v1_right_none = 0;
+//! Convenience constant to denote "no rights".
+const uint32_t right_none = 0;
 
-inline console_t& operator << (console_t& con, stretch_v1_rights rights)
+} // namespace stretch_v1
+
+inline console_t& operator << (console_t& con, stretch_v1::rights rights)
 {
     con << "["
-        << (rights.has(stretch_v1_right_meta)    ? "M" : "-")
-        << (rights.has(stretch_v1_right_read)    ? "R" : "-")
-        << (rights.has(stretch_v1_right_write)   ? "W" : "-")
-        << (rights.has(stretch_v1_right_execute) ? "X" : "-")
+        << (rights.has(stretch_v1::right_meta)    ? "M" : "-")
+        << (rights.has(stretch_v1::right_read)    ? "R" : "-")
+        << (rights.has(stretch_v1::right_write)   ? "W" : "-")
+        << (rights.has(stretch_v1::right_execute) ? "X" : "-")
         << "]";
     return con;
 }

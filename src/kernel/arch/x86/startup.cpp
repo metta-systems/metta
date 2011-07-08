@@ -199,7 +199,7 @@ static void prepare_infopage()
     INFO_PAGE.cpu_features        = 0;
 }
 
-extern timer_v1_closure* init_timer(); // YIKES FIXME
+extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 static continuation_t new_context;
 
 static void dump_regs(registers_t* regs)
@@ -333,7 +333,7 @@ extern "C" void kernel_startup()
 //    int ramtop = 16*MiB;
     bi->append_vmap(0, 0, 16*MiB);//min(16*MiB, ramtop));
 
-    timer_v1_closure* timer = init_timer();
+    timer_v1::closure_t* timer = init_timer();
     timer->enable(0); // enable timer interrupts
     kconsole << "Timer interrupt enabled." << endl;
     x86_cpu_t::enable_fpu();

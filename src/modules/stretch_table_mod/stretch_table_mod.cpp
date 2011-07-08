@@ -33,11 +33,11 @@ void do_checkpoint(const char* chk)
 
 class heap_allocator_implementation : public std::allocator_implementation
 {
-    heap_v1_closure* heap;
+    heap_v1::closure_t* heap;
 public:
     typedef size_t size_type;
 
-    heap_allocator_implementation(heap_v1_closure* h) : heap(h) 
+    heap_allocator_implementation(heap_v1::closure_t* h) : heap(h) 
     {
         kconsole << "** heap_allocator_impl: ctor this " << this << ", heap " << h << endl;
     }
@@ -50,22 +50,22 @@ public:
     void deallocate(void* __p)
     { 
         kconsole << "** heap_allocator_impl: deallocate " << __p << endl;
-        heap->free(reinterpret_cast<memory_v1_address>(__p));
+        heap->free(reinterpret_cast<memory_v1::address>(__p));
     }
 };
 
-struct hash_fn : std::unary_function<size_t, const stretch_v1_closure*>
+struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
 {
-    size_t operator()(const stretch_v1_closure* s) const
+    size_t operator()(const stretch_v1::closure_t* s) const
     {
         address_t w = reinterpret_cast<address_t>(s);
         return w ^ (w >> 18);
     }
 };
 
-struct equal_fn : std::binary_function<bool, const stretch_v1_closure*, const stretch_v1_closure*>
+struct equal_fn : std::binary_function<bool, const stretch_v1::closure_t*, const stretch_v1::closure_t*>
 {
-    bool operator()(stretch_v1_closure* a, stretch_v1_closure* b) const
+    bool operator()(stretch_v1::closure_t* a, stretch_v1::closure_t* b) const
     {
         return a == b;
     }
@@ -74,24 +74,24 @@ struct equal_fn : std::binary_function<bool, const stretch_v1_closure*, const st
 // tuple might be a better choice here?
 struct driver_rec
 {
-    driver_rec(stretch_driver_v1_closure* d, size_t p) : driver(d), page_width(p) {}
-    stretch_driver_v1_closure* driver;
+    driver_rec(stretch_driver_v1::closure_t* d, size_t p) : driver(d), page_width(p) {}
+    stretch_driver_v1::closure_t* driver;
     size_t page_width;
 };
 
-typedef std::allocator<std::pair<stretch_v1_closure*, driver_rec>> stretch_heap_allocator;
-typedef std::hash_map<stretch_v1_closure*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
+typedef std::allocator<std::pair<stretch_v1::closure_t*, driver_rec>> stretch_heap_allocator;
+typedef std::hash_map<stretch_v1::closure_t*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
 
-struct stretch_table_v1_state
+struct stretch_table_v1::state_t
 {
     stretch_map* stretches;
-    heap_v1_closure* heap;
+    heap_v1::closure_t* heap;
 };
 
-static bool get(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uint32_t* page_width, stretch_driver_v1_closure** stretch_driver)
+static bool get(stretch_table_v1::closure_t* self, stretch_v1::closure_t* stretch, uint32_t* page_width, stretch_driver_v1::closure_t** stretch_driver)
 {
-    stretch_map::iterator it = self->state->stretches->find(stretch);
-    if (it != self->state->stretches->end())
+    stretch_map::iterator it = self->d_state->stretches->find(stretch);
+    if (it != self->d_state->stretches->end())
     {
         driver_rec result = (*it).second;
         *page_width = result.page_width;
@@ -101,32 +101,32 @@ static bool get(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uin
     return false;
 }
 
-static bool put(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uint32_t page_width, stretch_driver_v1_closure* stretch_driver)
+static bool put(stretch_table_v1::closure_t* self, stretch_v1::closure_t* stretch, uint32_t page_width, stretch_driver_v1::closure_t* stretch_driver)
 {
-    return self->state->stretches->insert(std::make_pair(stretch, driver_rec(stretch_driver, page_width))).second;
+    return self->d_state->stretches->insert(std::make_pair(stretch, driver_rec(stretch_driver, page_width))).second;
 }
 
-static bool remove(stretch_table_v1_closure* self, stretch_v1_closure* stretch, uint32_t* page_width, stretch_driver_v1_closure** stretch_driver)
+static bool remove(stretch_table_v1::closure_t* self, stretch_v1::closure_t* stretch, uint32_t* page_width, stretch_driver_v1::closure_t** stretch_driver)
 {
-    stretch_map::iterator it = self->state->stretches->find(stretch);
-    if (it != self->state->stretches->end())
+    stretch_map::iterator it = self->d_state->stretches->find(stretch);
+    if (it != self->d_state->stretches->end())
     {
         driver_rec result = (*it).second;
         *page_width = result.page_width;
         *stretch_driver = result.driver;
-        self->state->stretches->erase(it);
+        self->d_state->stretches->erase(it);
         return true;
     }
     return false;
 }
 
-static void destroy(stretch_table_v1_closure* self)
+static void destroy(stretch_table_v1::closure_t* self)
 {
     kconsole << "Trying to destroy a stretch_table, might not work!" << endl;
-    delete/*(self->state->heap)*/ self->state->stretches; //hmmmm, need to use right allocators and stuff..
+    delete/*(self->state->heap)*/ self->d_state->stretches; //hmmmm, need to use right allocators and stuff..
 }
 
-static const stretch_table_v1_ops stretch_table_v1_methods =
+static const stretch_table_v1::ops_t stretch_table_v1_methods =
 {
     get,
     put,
@@ -138,27 +138,27 @@ static const stretch_table_v1_ops stretch_table_v1_methods =
 // stretch_table_module_v1 implementation: TODO rename _module to _factory?
 //======================================================================================================================
 
-static stretch_table_v1_closure* create(stretch_table_module_v1_closure* self, heap_v1_closure* heap)
+static stretch_table_v1::closure_t* create(stretch_table_module_v1::closure_t* self, heap_v1::closure_t* heap)
 {
-    stretch_table_v1_state* new_state = new(heap) stretch_table_v1_state;
+    stretch_table_v1::state_t* new_state = new(heap) stretch_table_v1::state_t;
     auto heap_alloc = new(heap) heap_allocator_implementation(heap);
 
     new_state->heap = heap;
     new_state->stretches = new(heap) stretch_map(heap_alloc);
 
-    stretch_table_v1_closure* cl = new(heap) stretch_table_v1_closure;
-    cl->state = new_state;
-    cl->methods = &stretch_table_v1_methods;
+    stretch_table_v1::closure_t* cl = new(heap) stretch_table_v1::closure_t;
+    closure_init(cl, &stretch_table_v1_methods, new_state);
 
     return cl;
 }
 
-static const stretch_table_module_v1_ops stretch_table_module_v1_methods =
+static const stretch_table_module_v1::ops_t stretch_table_module_v1_methods =
 {
     create
 };
 
-static const stretch_table_module_v1_closure clos = {
+static const stretch_table_module_v1::closure_t clos =
+{
     &stretch_table_module_v1_methods,
     NULL
 };

@@ -43,9 +43,9 @@ public:
 	    return name().substr(0, name().find_first_of('.'));
 	}
 
-    virtual void emit_impl_h(std::ostringstream& s) = 0;
-    virtual void emit_interface_h(std::ostringstream& s) = 0;
-    virtual void emit_interface_cpp(std::ostringstream& s) = 0;
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix) = 0;
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix) = 0;
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix) = 0;
 
     virtual void dump(std::string indent_prefix) = 0;
     virtual bool add_field(alias_t*) { return false; }
@@ -76,10 +76,10 @@ public:
     void set_reference(bool enable = true) { reference = enable; }
     void set_interface_reference(bool enable = true) { interface = enable; }
 
-    virtual void emit_include(std::ostringstream& s);
-    virtual void emit_impl_h(std::ostringstream&);
-    virtual void emit_interface_h(std::ostringstream&);
-    virtual void emit_interface_cpp(std::ostringstream&);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
 private:
     std::string type_; // use known types! check LLVM's Type/TypeBuilder
@@ -94,10 +94,10 @@ class type_alias_t : public alias_t
 {
 public:
     type_alias_t(node_t* parent) : alias_t(parent) {}
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class sequence_alias_t : public alias_t
@@ -107,10 +107,10 @@ public:
     // name - sequence type name
     sequence_alias_t(node_t* parent, std::string type, std::string base_type) : alias_t(parent, base_type, type) {}
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class array_alias_t : public alias_t
@@ -120,10 +120,10 @@ public:
     // name - sequence type name
     array_alias_t(node_t* parent, std::string type, std::string base_type, int c) : alias_t(parent, base_type, type), count(c) {}
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
     int count;
 };
@@ -135,10 +135,10 @@ public:
     // name - set type name
     set_alias_t(node_t* parent, std::string type, std::string base_type) : alias_t(parent, base_type, type) {}
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream& s);
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class record_alias_t : public alias_t
@@ -149,10 +149,10 @@ public:
     record_alias_t(node_t* parent, std::string nm) : alias_t(parent, nm) {}
     virtual bool add_field(alias_t* field);
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class enum_alias_t : public alias_t
@@ -163,10 +163,10 @@ public:
     enum_alias_t(node_t* parent) : alias_t(parent) { }
     virtual bool add_field(alias_t* field);
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class range_alias_t : public alias_t
@@ -176,10 +176,10 @@ public:
 
     range_alias_t(node_t* parent, std::string nm, std::string s, std::string e) : alias_t(parent, nm), start(s), end(e) { }
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 // Represents both method arguments and returns.
@@ -189,10 +189,10 @@ public:
     enum direction_e { in, out, inout } direction;
 	parameter_t(node_t* parent) : alias_t(parent), direction(inout) {}
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream&) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 };
 
 class exception_t : public node_t
@@ -201,9 +201,9 @@ public:
     exception_t(node_t* parent, std::string nm) : node_t(parent, nm) {}
     virtual bool add_field(alias_t* field);
     virtual void dump(std::string indent_prefix);
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
     std::vector<alias_t*> fields;
 };
@@ -216,9 +216,9 @@ public:
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
     virtual bool add_exception(exception_t*);
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
@@ -244,9 +244,9 @@ public:
 	bool types_lookup(alias_t& type);
 	bool imported_types_lookup(alias_t& type);
 
-    virtual void emit_impl_h(std::ostringstream& s);
-    virtual void emit_interface_h(std::ostringstream& s);
-    virtual void emit_interface_cpp(std::ostringstream& s);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
     bool local;
     bool final;

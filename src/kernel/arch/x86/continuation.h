@@ -41,7 +41,7 @@ public:
 
 private:
     gpregs_t regs;
-    pervasives_v1_rec* pervasives;
+    pervasives_v1::rec* pervasives;
     uint32_t flags;
     uint32_t cs, ds;
     uint32_t fpregs[27]; // FPU registers

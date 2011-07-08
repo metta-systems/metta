@@ -38,7 +38,7 @@ static inline size_t BLOCK_ALIGN(size_t _x) { return ((_x)+WORD_SIZE) & -(WORD_S
 #define LARGE_LIMIT _S(1296)
 #define SMALL_INDEX(x) ((x-1) / WORD_SIZE)
 
-const memory_v1_size heap_t::all_sizes[heap_t::COUNT] =
+const memory_v1::size heap_t::all_sizes[heap_t::COUNT] =
 {
     _S(1),   _S(2),   _S(3),   _S(4),   _S(5),   _S(6),   _S(7),    _S(8),
     _S(9),   _S(10),  _S(11),  _S(12),  _S(13),  _S(14),  _S(15),   _S(16),

@@ -8,7 +8,9 @@
 //
 #pragma once
 
-#include "types.h" // include builtin types for generated interfaces
+// This file is included by all generated interfaces.
+// Include built-in types, meddler-generated code uses them.
+#include "types.h"
 
 // A mixed influence of OSKit COM and Nemesis component interfaces.
 
@@ -19,37 +21,17 @@
 // ops = typed fn ptrs array
 // state = opaque pointer for clients, specific pointer for owner/implementor
 
-// generic part
-// TODO: use as virtual base mixin class? - easier to just generate full method list from idl hierarchy
-// ops_types should inherit from each other, leaving closure wrappers separate.
-template <class ops_type, class state_type>
-struct module_interface
-{
-    ops_type* methods;
-    state_type* state;
-};
-
+// Initialise closure pointer members, simple wrapper for greppability.
 template <class C, class O, class S>
 void closure_init(C* closure, O* ops, S* state)
 {
-    closure->methods = ops;
-    closure->state = state;
+    closure->d_methods = ops;
+    closure->d_state = state;
 }
 
-/* #define DECLARE_CLOSURE_(name, parent) \
-    struct name##_ops; struct name##_state; template <class ops_type = name##_ops, class state_type = name##_state> struct name##_closure : public parent##_closure<name##_ops, name##_state>
-
-#define DECLARE_CLOSURE(name) \
-    struct name##_ops; struct name##_state; template <class ops_type = name##_ops, class state_type = name##_state> struct name##_closure : public module_interface<name##_ops, name##_state>*/
-
-#define DECLARE_CLOSURE_(name, parent) \
-    struct name##_ops; struct name##_state; struct name##_closure : public parent##_closure<name##_ops, name##_state>
-
-#define DECLARE_CLOSURE(name) \
-    struct name##_ops; struct name##_state; struct name##_closure : public module_interface<name##_ops, name##_state>
-
+// Make given closure available to the root domain during bootup.
 #define EXPORT_CLOSURE_TO_ROOTDOM(_name, _version, _cl) \
-    extern "C" const _name##_##_version##_closure* const exported_##_name##_rootdom = &_cl
+extern "C" const _name##_##_version::closure_t* const exported_##_name##_rootdom = &_cl
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
