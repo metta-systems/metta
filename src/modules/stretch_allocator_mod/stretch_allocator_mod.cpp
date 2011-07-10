@@ -113,6 +113,16 @@ static void register_sid(server_state_t* state, sid_t sid, stretch_v1::closure_t
 // #define SYSALLOC_VA_BASE (256*MiB)
 #define SYSALLOC_VA_SIZE (256*MiB)
 
+inline console_t& operator << (console_t& con, virtual_address_space_region* region)
+{
+    con << "region:" << endl
+        << "  start: " << region->desc.start_addr << endl
+        << "  pages: " << region->desc.n_pages << endl
+        << "  width: " << region->desc.page_width << endl
+        << "  attrs: " << region->desc.attr << endl;
+    return con;
+}
+
 static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::address start, memory_v1::address* virt_addr, size_t* n_pages, size_t* page_width)
 {
     kconsole << __FUNCTION__ << " size " << size << ", start " << start << endl;
@@ -120,19 +130,12 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
     size_t npages = (size + PAGE_SIZE - 1) >> PAGE_WIDTH;
     virtual_address_space_region* region;
 
-    kconsole << "Check1" << endl;
-
     if (unaligned(start))
     {
-        kconsole << "Check2" << endl;
         // no start address requested, allocate at start of any suitable region.
         for (region = state->regions->next; region != state->regions; region = region->next)
         {
-            kconsole << "region:" << endl
-                     << "  start: " << region->desc.start_addr << endl
-                     << "  pages: " << region->desc.n_pages << endl
-                     << "  width: " << region->desc.page_width << endl
-                     << "  attrs: " << region->desc.attr << endl;
+            kconsole << region;
 
             if (npages <= region->desc.n_pages)
                 break;
