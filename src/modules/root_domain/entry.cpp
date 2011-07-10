@@ -189,7 +189,7 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + init_mem" << endl;
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
-    // Load modules used for booting before we overwrite them.
+    // For address space randomization we should load modules as we go, for simplicity we load them all here.
     auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
 
@@ -280,6 +280,8 @@ static void init_mem(bootimage_t& bootimg)
 
 static void init_type_system(bootimage_t& /*bootimg*/)
 {
+    //TODO: exceptions
+    //TODO: type system, meta-interface
 #if 0
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
@@ -317,6 +319,9 @@ static void init_type_system(bootimage_t& /*bootimg*/)
 
 static void init_namespaces(bootimage_t& /*bm*/)
 {
+    //TODO: module namespaces
+    //TODO: context
+    //TODO: IDC stubs
 #if 0
     /* Build initial name space */
     kconsole <<  " + Building initial name space: ";
@@ -635,6 +640,9 @@ static void init_namespaces(bootimage_t& /*bm*/)
 
 static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
 {
+    //TODO: domain manager
+    //TODO: VCPU
+    //TODO: nucleus syscalls
     /* Find the Virtual Processor module */
 /*    vp = NAME_FIND("modules>VP", VP_clp);
     kconsole << " + got VP   at %p\n", vp));
