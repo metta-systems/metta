@@ -38,11 +38,11 @@ def set_options(opt):
 
     opt.tool_options('compiler_cc compiler_cxx')
 
-    # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
+    # arch (x86, x86-64, ppc, ppc64, hosted) - a generic cpu architecture (isa)
     # cpu (p4, arm11jsf) - a specific cpu format
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for." + '[default: %default]')
 
-    # platform (efi, pc99) - a generic infrastructure
+    # platform (efi, pc99, hosted) - a generic infrastructure
     # board (vulcan, beagleboard) - a specific infrastructure
     opt.add_option("--platform", action="store", default="pc99", help="Select platform to build for." + '[default: %default]')
 
@@ -112,6 +112,8 @@ def configure(conf):
     # Set arch-specific include paths
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
+    # Append shared includes after, so we could override in arch-specific ones.
+    conf.env.append_unique('INCLUDE_DIRS', 'kernel/arch/shared kernel/platform/shared'.split())
 
     # Generate config.h
     # *_V options generate huge amount of output, beware.

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import Options
 
 def build(bld):
     complib = bld.new_task_gen('cxx', 'staticlib')
@@ -8,9 +9,12 @@ def build(bld):
     complib.includes = '. ../runtime ../runtime/stl ../interfaces ../kernel/generic ../kernel/arch/x86 ../kernel/platform/pc99'
     complib.target = 'component_support'
 
+    platform = Options.options.platform
+
+    bld.add_subdirs('platform/shared')
+    bld.add_subdirs('platform/'+platform+'/mmu_mod')
     bld.add_subdirs('root_domain')
     bld.add_subdirs('frames_mod')
-    bld.add_subdirs('mmu_mod')
     bld.add_subdirs('heap_mod')
     bld.add_subdirs('stretch_allocator_mod')
     bld.add_subdirs('stretch_table_mod')
