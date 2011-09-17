@@ -380,7 +380,7 @@ def build(bld):
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
     bld.new_task_gen(
-        source = 'buildboot kernel/arch/x86/bootimage.lst'.split() + nm, # x86 arch dep
+        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm, # x86 arch dep
         target = 'init.img',
         rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
         name = 'init.img',
