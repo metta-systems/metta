@@ -30,6 +30,9 @@
 #include "stretch_table_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
 
+// temp for calls debug
+#include "frames_module_v1_impl.h"
+
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
 // startup module from which root_domain starts also has a namespace called "default_namespace"
@@ -192,6 +195,7 @@ static void init_mem(bootimage_t& bootimg)
     // Load modules used for booting before we overwrite them.
     auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
+    kconsole << "1. CALLING FRAMES FACTORY at " << (address_t)frames_factory->d_methods->required_size << endl;
 
     auto mmu_mod = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod); // mmu_factory
@@ -212,9 +216,11 @@ static void init_mem(bootimage_t& bootimg)
     address_t modules_base = bi->used_modules_memory(&modules_size);
     bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
 
+    kconsole << "2. CALLING FRAMES FACTORY at " << (address_t)frames_factory->d_methods->required_size << endl;
 // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
     int required = frames_factory->required_size();
+    kconsole << "CALLED FRAMES FACTORY" << endl;
     int initial_heap_size = 128*KiB;
 
     ramtab_v1::closure_t* rtab;
@@ -771,7 +777,7 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
  * Image bootup starts executing without paging and with full ring0 rights.
  */
 
-extern "C" void _start()
+extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 

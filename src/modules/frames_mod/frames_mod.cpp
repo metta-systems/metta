@@ -661,6 +661,7 @@ static const system_frame_allocator_v1::ops_t system_frame_allocator_v1_methods 
 
 static memory_v1::size frames_module_v1_required_size(frames_module_v1::closure_t* self)
 {
+    kconsole << " +-frames_mod: required_size {" << endl;
     UNUSED(self);
     size_t n_regions = 0, n_frames = 0, res = 0;
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t; // simplify memory map operations
@@ -678,7 +679,8 @@ static memory_v1::size frames_module_v1_required_size(frames_module_v1::closure_
     res = sizeof(frame_allocator_v1::closure_t) + sizeof(frame_allocator_v1::state_t) + n_regions * sizeof(frames_module_v1::state_t) + n_frames * sizeof(frame_st);
     res = page_align_up(res);
 
-    kconsole << " +-frames_mod: counted " << n_regions << " memory regions" << endl;
+    kconsole << " +-frames_mod: counted " << n_regions << " memory regions" << endl
+             << "}" << endl;
     return res;
 }
 
@@ -781,7 +783,7 @@ static void frames_module_v1_finish_init(frames_module_v1::closure_t* self, syst
     state->heap = heap;
 }
 
-static const frames_module_v1::ops_t ops =
+static const frames_module_v1::ops_t frames_module_v1_methods =
 {
     frames_module_v1_required_size,
     frames_module_v1_create,
@@ -790,7 +792,7 @@ static const frames_module_v1::ops_t ops =
 
 static const frames_module_v1::closure_t clos =
 {
-    &ops,
+    &frames_module_v1_methods,
     NULL
 };
 

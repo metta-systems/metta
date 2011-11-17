@@ -10,7 +10,9 @@
 
 #include "types.h"
 
+#ifndef endl
 #define endl console_t::eol
+#endif
 
 enum Color {
     BLACK = 0,

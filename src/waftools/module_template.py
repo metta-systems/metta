@@ -13,10 +13,10 @@ def setup_module_build(bld, name, prefix):
     mod.target = name+'.comp'
     mod.env = bld.env_of_name('KERNEL_ENV').copy()
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
-    mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix]
+    if platform != 'hosted':
+        mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
+    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
     mod.uselib_local = 'component_support interfaces kernel platform common runtime'
-    mod.idl_source = 'all_idl' # Trigger building interface files.
     bld.new_task_gen(
         source = name+'.comp',
         rule = 'nm -u ${SRC[0].abspath(env)}',

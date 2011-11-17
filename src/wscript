@@ -38,7 +38,7 @@ def set_options(opt):
 
     opt.tool_options('compiler_cc compiler_cxx')
 
-    # arch (x86, x86-64, ppc, ppc64, hosted) - a generic cpu architecture (isa)
+    # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
     # cpu (p4, arm11jsf) - a specific cpu format
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for." + '[default: %default]')
 
@@ -89,9 +89,14 @@ def configure(conf):
     else:
         conf.check_tool('compiler_cc compiler_cxx', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_cxxflags = ['-std=gnu++0x']
-        linkflags = '-nostdlib -nostartfiles -nodefaultlibs'.split()
+        linkflags = []
+        if platform != 'hosted': linkflags += '-nostdlib -nostartfiles -nodefaultlibs'.split()
         linkflags += ['--gc-sections', '--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
+
+    #conf.env.append_unique('CROSS_PREFIX', '/opt/crossgcc/bin/i586-elf-')
+    #conf.env['COMPILER_CC'] = conf.env['CROSS_PREFIX'].join()+'gcc'
+    #conf.env['COMPILER_CXX'] = conf.env['CROSS_PREFIX'].join()+'g++'
 
     cxxflags = cflags
 
@@ -185,31 +190,33 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    #conf.env['CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['CXX'] = '/Developer/usr/bin/g++'
-    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    #conf.env.append_unique('CCFLAGS', ['-m32'])
-    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    #conf.env['CC'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-gcc', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
+    #conf.env['CXX'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-g++', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
+    #conf.env['LINK_CC'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-gcc', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
+    #conf.env['LINK_CXX'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-g++', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
+    # conf.env.append_unique('CCFLAGS', ['-m32'])
+    # conf.env.append_unique('CXXFLAGS', ['-m32'])
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
-    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    # conf.env.append_unique('LINKFLAGS', ['-m32'])
     # set uselib
     conf.env.LIB_UUID = 'uuid'
     conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
+    #conf.env.LIBPATH_LLVM = '/Users/berkus/Hobby/llvm/build/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
-    #conf.setenv('TEST_ENV')
-    #conf.env['CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['CXX'] = '/Developer/usr/bin/g++'
-    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    #conf.env.append_unique('CCFLAGS', ['-m32'])
-    #conf.env.append_unique('CXXFLAGS', ['-m32'])
-    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    # conf.setenv('TEST_ENV')
+    # conf.env['CC'] = '/Developer/usr/bin/gcc'
+    # conf.env['CXX'] = '/Developer/usr/bin/g++'
+    # conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    # conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    # conf.env.append_unique('CCFLAGS', ['-m32'])
+    # conf.env.append_unique('CXXFLAGS', ['-m32'])
+    # conf.env.append_unique('LINKFLAGS', ['-m32'])
 
 def build(bld):
     arch = Options.options.arch
+    platform = Options.options.platform
 
     # Tool to parse interface files.
     # Build it first so that we can transform interface defitions to code during build.
@@ -230,7 +237,11 @@ def build(bld):
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
-    bld(source = map(lambda d: 'interfaces/'+d+'.if', interface_files), name = 'all_idl')
+    bld(
+        source = map(lambda d: 'interfaces/'+d+'.if', interface_files), 
+        name = 'all_idl',
+#FIXME: dependency on meddler        after = 'meddler'
+    )
 
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
@@ -240,13 +251,15 @@ def build(bld):
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
     runtime = bld.new_task_gen('cxx', 'staticlib')
-    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support memutils cstring stdlib newdelete'.split())
+    runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split())
+    if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
     runtime.env = bld.env_of_name('KERNEL_ENV').copy()
     runtime.includes = runtime.env['INCLUDE_DIRS']
     runtime.target = 'runtime'
 
     minruntime = bld.new_task_gen('cxx', 'staticlib')
-    minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'g++support dummy_delete memutils cstring'.split())
+    minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'dummy_delete memutils cstring'.split())
+    if platform != 'hosted': minruntime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support'.split())
     minruntime.env = bld.env_of_name('KERNEL_ENV').copy()
     minruntime.includes = minruntime.env['INCLUDE_DIRS']
     minruntime.target = 'minruntime'
@@ -263,14 +276,10 @@ def build(bld):
     commons.includes = commons.env['INCLUDE_DIRS']
     commons.target = 'common'
 
-    platform = bld.new_task_gen('cxx', 'staticlib')
-    platform.source = map(lambda d: "kernel/platform/" + Options.options.platform + "/" + d, 'multiboot.cpp default_console.cpp'.split()) + map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
-    platform.env = bld.env_of_name('KERNEL_ENV').copy()
-    platform.includes = platform.env['INCLUDE_DIRS']
-    platform.target = 'platform'
+    bld.add_subdirs('kernel/platform/'+Options.options.platform)
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split()) + ['kernel/arch/shared/bootinfo.cpp'] #cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -279,6 +288,7 @@ def build(bld):
     interfaces.source = map(lambda d: 'interfaces/' + d + '_interface.cpp', interface_files)
     interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
     interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.idl_source = 'all_idl' # Trigger building interface files.
     interfaces.target = 'interfaces'
 
     # Tests
@@ -312,41 +322,65 @@ def build(bld):
     buildboot.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     buildboot.includes = buildboot.env['INCLUDE_DIRS']
 
-    # Initial loader
-    kickstart = bld.new_task_gen('cxx', 'program')
-    kickstart.target = 'kickstart.sys'
-    kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
-    kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
-    kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    kickstart.uselib_local = 'common platform minruntime'# kernel
+    ################################
+    # FINAL OUTPUTS
+    ################################
 
-    # Launcher
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
-    # TODO: post-process linked modules with symbol checker
-    # TODO: put elf manipulation code to libgaladriel
-    startup = bld.new_task_gen('cxx', 'program')
-    startup.target = 'kernel-startup.sys'
-    startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
-    startup.env = bld.env_of_name('KERNEL_ENV').copy()
-    startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-    startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-    startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-    startup.uselib_local = 'common platform kernel minruntime'# interfaces
+    if platform != 'hosted':
+        # Initial loader
+        kickstart = bld.new_task_gen('cxx', 'program')
+        kickstart.target = 'kickstart.sys'
+        kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp', 'kernel/arch/shared/bootinfo.cpp']
+        kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
+        kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
+        kickstart.includes = kickstart.env['INCLUDE_DIRS']
+        kickstart.uselib_local = 'common platform minruntime'# kernel
 
-    # Glue code
-    # Glue code is the only ring0 privileged part of the system.
-    # It includes interrupt handlers and some minimal syscall processing.
-    
-    # TODO: add nucleus_* code here, initialize glue before kernel startup??
-    glue = bld.new_task_gen('cxx', 'program')
-    glue.target = 'glue.sys'
-    glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
-    glue.env = bld.env_of_name('KERNEL_ENV').copy()
-    glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
-    glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
-    glue.includes = glue.env['INCLUDE_DIRS']
-    glue.uselib_local = 'common kernel minruntime platform'
+        # Launcher
+        # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+        # TODO: post-process linked modules with symbol checker
+        # TODO: put elf manipulation code to libgaladriel
+        startup = bld.new_task_gen('cxx', 'program')
+        startup.target = 'kernel-startup.sys'
+        startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
+        startup.source += ['kernel/arch/'+arch+'/startup.s']
+        startup.env = bld.env_of_name('KERNEL_ENV').copy()
+        startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
+        startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
+        startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
+        startup.uselib_local = 'common platform kernel minruntime'# interfaces
+
+        # Glue code
+        # Glue code is the only ring0 privileged part of the system.
+        # It includes interrupt handlers and some minimal syscall processing.
+        # TODO: add nucleus_* code here, initialize glue before kernel startup??
+        # glue = bld.new_task_gen('cxx', 'program')
+        # glue.target = 'glue.sys'
+        # glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
+        # glue.env = bld.env_of_name('KERNEL_ENV').copy()
+        # glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
+        # glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
+        # glue.includes = glue.env['INCLUDE_DIRS']
+        # glue.uselib_local = 'common kernel minruntime platform'
+
+        bld.new_task_gen(
+            source = 'kernel-startup.sys',
+            rule = 'nm -u ${SRC[0].abspath(env)}',
+            name = 'nm undef check (kernel-startup)',
+            after = 'cxx_link'
+        )
+
+        # bld.new_task_gen(
+        #     source = 'glue.sys',
+        #     rule = 'nm -u ${SRC[0].abspath(env)}',
+        #     name = 'nm undef check (glue)',
+        #     after = 'cxx_link'
+        # )
+
+    if platform == 'hosted':
+        # Generate a single executable to run whole OS as an application.
+        hosted = bld.new_task_gen('cxx', 'program')
+        hosted.target = 'mettanode'
 
     #kickstart = bld.new_task_gen('cxx', 'program')
     #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
@@ -357,19 +391,6 @@ def build(bld):
     #kickstart.target = 'kickstart.sys'
     #kickstart.uselib_local = 'platform common kernel runtime'
 
-    bld.new_task_gen(
-        source = 'kernel-startup.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (kernel-startup)',
-        after = 'cxx_link'
-    )
-
-    bld.new_task_gen(
-        source = 'glue.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (glue)',
-        after = 'cxx_link'
-    )
 
     #Check and add all output modules.
     nm = []
@@ -379,10 +400,13 @@ def build(bld):
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
+    target_variant = Options.options.arch + '-' + Options.options.platform + '-' + Options.options.build
+    print "Target variant: "+target_variant
+
     bld.new_task_gen(
-        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm, # x86 arch dep
+        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
         target = 'init.img',
-        rule = '${SRC[0].abspath(env)} x86-pc99-release/ ${SRC[1].abspath(env)} ${TGT}',
+        rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
         name = 'init.img',
         after = 'cxx_link'
     )

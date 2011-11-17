@@ -327,8 +327,15 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(module.start() + symbol_table->offset + i * symbol_table->entsize);
             if (ELF32_ST_TYPE(symbol->info) < STT_SECTION)
             {
+                // cstring_t symname(module.string_table() + symbol->name);
+                // if (closure_name && (symname == closure_name)) {
+                //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (before)" << endl; 
+                // }
                 V(kconsole << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value);
                 symbol->value += module.section_header(symbol->shndx)->vaddr;
+                // if (closure_name && (symname == closure_name)) {
+                //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (after)" << endl;
+                // }
                 V(kconsole << ", new value " << symbol->value << endl);
             }
         }
@@ -345,15 +352,16 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (!closure_name)
     {
         address_t entry = module.get_entry_point();
-		D(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
+		kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl;
         return (void*)(entry + section_base - start);
     }
     else
     {
         // Symbol is a pointer to closure structure.
-        address_t entry = reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
+        address_t entry = module.find_symbol(closure_name);//reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
         kconsole << " +-- Returning closure pointer " << entry << endl;
-        return *(void**)(module.find_symbol(closure_name));
+        return reinterpret_cast<void*>(module.find_symbol(closure_name));
+        // return *(void**)(module.find_symbol(closure_name));
     }
 }
 
