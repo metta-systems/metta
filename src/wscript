@@ -87,11 +87,13 @@ def configure(conf):
         extra_cross_cxxflags = ['-std=c++0x']
         linkflags = '-nostdlib'.split()
     else:
+        # ENV['CC']='i586-elf-gcc'
+        # ENV['CXX']='i586-elf-g++'
         conf.check_tool('compiler_cc compiler_cxx', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_cxxflags = ['-std=gnu++0x']
         linkflags = []
         if platform != 'hosted': linkflags += '-nostdlib -nostartfiles -nodefaultlibs'.split()
-        linkflags += ['--gc-sections', '--print-gc-sections']
+        # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
     #conf.env.append_unique('CROSS_PREFIX', '/opt/crossgcc/bin/i586-elf-')
@@ -159,7 +161,7 @@ def configure(conf):
     # Flag that we're building under/for Metta.
     # Value is metta release number, monotonically increasing with each public release.
     metta_flag = "__Metta__=1"
-    kernel_flags = '-fno-strict-aliasing'.split() #-ffreestanding -nostdinc
+    kernel_flags = '-fno-strict-aliasing -ffreestanding'.split() # -nostdinc
     # --gc-sections ruins everything
     kernel_linkflags = [] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
 
@@ -196,6 +198,10 @@ def configure(conf):
     #conf.env['LINK_CXX'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-g++', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
     # conf.env.append_unique('CCFLAGS', ['-m32'])
     # conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env['CC'] = ['/usr/bin/gcc']
+    conf.env['CXX'] = ['/usr/bin/g++']
+    conf.env['LINK_CC'] = ['/usr/bin/gcc']
+    conf.env['LINK_CXX'] = ['/usr/bin/g++']
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
     # conf.env.append_unique('LINKFLAGS', ['-m32'])
     # set uselib
@@ -205,7 +211,12 @@ def configure(conf):
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
-    # conf.setenv('TEST_ENV')
+    # These are HOST_TESTS_ENV actually.
+    conf.setenv('TEST_ENV')
+    conf.env['CC'] = ['/usr/bin/gcc']
+    conf.env['CXX'] = ['/usr/bin/g++']
+    conf.env['LINK_CC'] = ['/usr/bin/gcc']
+    conf.env['LINK_CXX'] = ['/usr/bin/g++']
     # conf.env['CC'] = '/Developer/usr/bin/gcc'
     # conf.env['CXX'] = '/Developer/usr/bin/g++'
     # conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'

@@ -100,6 +100,12 @@ inline console_t& operator << (console_t& con, int data)
     return con;
 }
 
+inline console_t& operator << (console_t& con, int32_t data)
+{
+    con.print_int(data);
+    return con;
+}
+
 inline console_t& operator << (console_t& con, unsigned int data)
 {
     con.print_hex(data);
