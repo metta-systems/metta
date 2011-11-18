@@ -5,7 +5,7 @@ import Options
 def build(bld):
     arch = Options.options.arch
     platform = bld.new_task_gen('cxx', 'staticlib')
-    platform.source = map(lambda d: d, 'multiboot.cpp default_console.cpp'.split()) + map(lambda d: "../../../kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
+    platform.source = map(lambda d: d, 'multiboot.cpp default_console.cpp'.split())
     platform.env = bld.env_of_name('KERNEL_ENV').copy()
     platform.includes = map(lambda d: '../../../'+d, platform.env['INCLUDE_DIRS'])
     platform.target = 'platform'

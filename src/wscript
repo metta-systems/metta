@@ -261,6 +261,12 @@ def build(bld):
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
+    libdebug = bld.new_task_gen('cxx', 'staticlib')
+    libdebug.source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
+    libdebug.env = bld.env_of_name('KERNEL_ENV').copy()
+    libdebug.includes = libdebug.env['INCLUDE_DIRS']
+    libdebug.target = 'debug'
+
     runtime = bld.new_task_gen('cxx', 'staticlib')
     runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split())
     if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
@@ -345,7 +351,7 @@ def build(bld):
         kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
         kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
         kickstart.includes = kickstart.env['INCLUDE_DIRS']
-        kickstart.uselib_local = 'common platform minruntime'# kernel
+        kickstart.uselib_local = 'common platform minruntime debug'# kernel
 
         # Launcher
         # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
@@ -359,7 +365,7 @@ def build(bld):
         startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
         startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
         startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-        startup.uselib_local = 'common platform kernel minruntime'# interfaces
+        startup.uselib_local = 'common platform kernel minruntime debug'# interfaces
 
         # Glue code
         # Glue code is the only ring0 privileged part of the system.
@@ -373,6 +379,13 @@ def build(bld):
         # glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
         # glue.includes = glue.env['INCLUDE_DIRS']
         # glue.uselib_local = 'common kernel minruntime platform'
+
+        bld.new_task_gen(
+            source = 'kickstart.sys',
+            rule = 'nm -u ${SRC[0].abspath(env)}',
+            name = 'nm undef check (kickstart)',
+            after = 'cxx_link'
+        )
 
         bld.new_task_gen(
             source = 'kernel-startup.sys',

@@ -16,7 +16,7 @@ def setup_module_build(bld, name, prefix):
     if platform != 'hosted':
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
     mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
-    mod.uselib_local = 'component_support interfaces kernel platform common runtime'
+    mod.uselib_local = 'component_support interfaces kernel platform common runtime debug'
     bld.new_task_gen(
         source = name+'.comp',
         rule = 'nm -u ${SRC[0].abspath(env)}',
