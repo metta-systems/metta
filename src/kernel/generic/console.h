@@ -62,11 +62,11 @@ public:
     virtual void print_str(const char *s) = 0;
 
     // Wrappers for template version
-    inline void print(int n) { print_int(n); }
+    inline void print(int32_t n) { print_int(n); }
     inline void print(char ch) { print_char(ch); }
     inline void print(unsigned char n) { print_byte(n); }
-    inline void print(unsigned int n) { print_hex(n); }
-    inline void print(void *p) { print((unsigned int)p); }
+    inline void print(uint32_t n) { print_hex(n); }
+    inline void print(void *p) { print((uint32_t)p); }
     inline void print(uint64_t n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
     /*template<typename T, typename... Args>
@@ -112,14 +112,13 @@ inline console_t& operator << (console_t& con, unsigned int data)
     return con;
 }
 
-inline console_t& operator << (console_t& con, uint64_t data)
+inline console_t& operator << (console_t& con, uint32_t data)
 {
-    con.print_hex8(data);
+    con.print_hex(data);
     return con;
 }
 
-// needs to depend on sizeof(ulong)
-inline console_t& operator << (console_t& con, unsigned long data)
+inline console_t& operator << (console_t& con, uint64_t data)
 {
     con.print_hex8(data);
     return con;
