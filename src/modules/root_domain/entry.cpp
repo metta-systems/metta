@@ -58,7 +58,8 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
-    return bi->get_module_loader().load_module(module_name, loader, clos);
+    void** closure_ptr = reinterpret_cast<void**>(bi->get_module_loader().load_module(module_name, loader, clos));
+    return *closure_ptr; // FIXME: little discrepancy due to root_domain using the same load_module() to find its own entry point.
     /* FIXME: Skip dependencies for now */
 }
 
@@ -195,7 +196,6 @@ static void init_mem(bootimage_t& bootimg)
     // Load modules used for booting before we overwrite them.
     auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
-    kconsole << "1. CALLING FRAMES FACTORY at " << (address_t)frames_factory->d_methods->required_size << endl;
 
     auto mmu_mod = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
     ASSERT(mmu_mod); // mmu_factory
@@ -216,11 +216,9 @@ static void init_mem(bootimage_t& bootimg)
     address_t modules_base = bi->used_modules_memory(&modules_size);
     bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
 
-    kconsole << "2. CALLING FRAMES FACTORY at " << (address_t)frames_factory->d_methods->required_size << endl;
-// FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
+    // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
     int required = frames_factory->required_size();
-    kconsole << "CALLED FRAMES FACTORY" << endl;
     int initial_heap_size = 128*KiB;
 
     ramtab_v1::closure_t* rtab;
