@@ -57,35 +57,35 @@ void elf32::program_header_t::dump()
         "PF_EXECUTE",
         "PF_WRITE",
         "PF_READ",
-        "bit 3",
-        "bit 4",
-        "bit 5",
-        "bit 6",
-        "bit 7",
-        "bit 8",
-        "bit 9",
-        "bit 10",
-        "bit 11",
-        "bit 12",
-        "bit 13",
-        "bit 14",
-        "bit 15",
-        "bit 16",
-        "bit 17",
-        "bit 18",
-        "bit 19",
-        "bit 20",
-        "bit 21",
-        "bit 22",
-        "bit 23",
-        "bit 24",
-        "bit 25",
-        "bit 26",
-        "bit 27",
-        "bit 28",
-        "bit 29",
-        "bit 30",
-        "bit 31"
+        "<3>",
+        "<4>",
+        "<5>",
+        "<6>",
+        "<7>",
+        "<8>",
+        "<9>",
+        "<10>",
+        "<11>",
+        "<12>",
+        "<13>",
+        "<14>",
+        "<15>",
+        "<16>",
+        "<17>",
+        "<18>",
+        "<19>",
+        "<20>",
+        "<21>",
+        "<22>",
+        "<23>",
+        "<24>",
+        "<25>",
+        "<26>",
+        "<27>",
+        "<28>",
+        "<29>",
+        "<30>",
+        "<31>"
     };
 
     kconsole << "------------------------------------------------------------------------" << endl
@@ -109,7 +109,7 @@ void elf32::section_header_t::dump(const char* shstrtab)
         "SHF_WRITE",
         "SHF_ALLOC",
         "SHF_EXECINSTR",
-        "bit 3",
+        "<3>",
         "SHF_MERGE",
         "SHF_STRINGS",
         "SHF_INFO_LINK",
@@ -117,27 +117,27 @@ void elf32::section_header_t::dump(const char* shstrtab)
         "SHF_OS_NONCONFORMING",
         "SHF_GROUP",
         "SHF_TLS",
-        "bit 11",
-        "bit 12",
-        "bit 13",
-        "bit 14",
-        "bit 15",
-        "bit 16",
-        "bit 17",
-        "bit 18",
-        "bit 19",
-        "bit 20",
-        "bit 21",
-        "bit 22",
-        "bit 23",
-        "bit 24",
-        "bit 25",
-        "bit 26",
-        "bit 27",
-        "bit 28",
-        "bit 29",
-        "bit 30",
-        "bit 31"
+        "<11>",
+        "<12>",
+        "<13>",
+        "<14>",
+        "<15>",
+        "<16>",
+        "<17>",
+        "<18>",
+        "<19>",
+        "<20>",
+        "<21>",
+        "<22>",
+        "<23>",
+        "<24>",
+        "<25>",
+        "<26>",
+        "<27>",
+        "<28>",
+        "<29>",
+        "<30>",
+        "<31>"
     };
     // 0 .group        00000008  00000000  00000000  00000034  2**2
     // CONTENTS, READONLY, EXCLUDE, GROUP, LINK_ONCE_DISCARD
@@ -331,11 +331,14 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                 // if (closure_name && (symname == closure_name)) {
                 //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (before)" << endl; 
                 // }
+
                 V(kconsole << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value);
                 symbol->value += module.section_header(symbol->shndx)->vaddr;
+
                 // if (closure_name && (symname == closure_name)) {
                 //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (after)" << endl;
                 // }
+
                 V(kconsole << ", new value " << symbol->value << endl);
             }
         }
@@ -357,7 +360,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else
     {
-        // Symbol is a pointer to closure structure.
+        // Symbol is a pointer to closure structure. -- FIXME: right now we treat it as structure itself to make root_domain module loading easier
+        // root_domain should also export a closure to be uniform with other modules.
+        // module_loader will dereference pseudo-pointer to closure for now... 
         address_t entry = module.find_symbol(closure_name);//reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
         kconsole << " +-- Returning closure pointer " << entry << endl;
         return reinterpret_cast<void*>(module.find_symbol(closure_name));
