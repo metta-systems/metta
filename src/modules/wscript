@@ -2,12 +2,19 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    bld.add_subdirs('interrupt_dispatcher')
-    bld.add_subdirs('portal_manager')
-    bld.add_subdirs('scheduler')
-    bld.add_subdirs('security_server')
-    bld.add_subdirs('trader')
-    bld.add_subdirs('vm_server')
+    complib = bld.new_task_gen('cxx', 'staticlib')
+    complib.source = 'module-entry.cpp heap_new.cpp'
+    complib.env = bld.env_of_name('KERNEL_ENV').copy()
+    complib.includes = '. ../runtime ../runtime/stl ../interfaces ../kernel/generic ../kernel/arch/x86 ../kernel/platform/pc99'
+    complib.target = 'component_support'
+
+    bld.add_subdirs('root_domain')
+    bld.add_subdirs('frames_mod')
+    bld.add_subdirs('mmu_mod')
+    bld.add_subdirs('heap_mod')
+    bld.add_subdirs('stretch_allocator_mod')
+    bld.add_subdirs('stretch_table_mod')
+    bld.add_subdirs('stretch_driver_mod')
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

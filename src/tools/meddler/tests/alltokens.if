@@ -1,0 +1,49 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Parser test 1: correctly formed input file.
+local interface test_module_v1 extends test_v1
+{
+    type card32 address;
+
+    record dictent {
+        string key;
+        string value;
+    }
+
+    enum { A, B, C } alpha_beta;
+    array dictent[0xa] ten_entries;
+    sequence<dictent> entries;
+    set<alpha_beta> alpha_flags;
+    range A .. C alpha_range; # A limitation in lexer disallows writing A..C currently.
+
+    exception failure
+    {
+        string name;
+        int32 value;
+    }
+
+    # Creates the initial "MMU".
+    create(int32 size)
+        returns (test_v1& test, ramtab_v1& ramtab, memory_v1.address free)
+        raises (memory_v1.failure);
+
+    test_returns()
+        returns (int simple, test_v1& ref, int simple2);
+
+    idempotent set_flag();
+
+    terminate() never returns;
+
+    # Finish the initialisation of the MMU.
+    finish_init(test_v1& test, frames_allocator_v1& frames, heap_v1& heap, stretch_allocator_v1& sysalloc)
+        raises (failure);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

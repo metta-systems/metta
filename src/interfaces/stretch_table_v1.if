@@ -1,0 +1,39 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# A "stretch table" is a partial map from "stretch"es to page width information (for mapping) and "stretch_drivers".
+# A typical implementation might use a hash table.
+
+local interface stretch_table_v1
+{
+    # There is no internal concurrency control in a "stretch_table_v1".
+    # Clients must ensure that conflicting operations are never
+    # executed concurrently. "get" is a reader, while "put" and 
+    # "remove" are writers.
+
+    # If "str" $\in$ "dom(self)" then set "pwidth := pw[str]" and 
+    # "sdriver := sdriver[str]" and return "True";
+    # otherwise return "False", leaving OUT params unchanged.
+    get(stretch_v1& stretch, out card32 page_width, out stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # If the stretch already was in the table, update its page_width and stretch_driver and return true.
+    # Otherwise, insert it in the table and return false.
+    put(stretch_v1& stretch, card32 page_width, stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # If "str" $\in$ "dom(self)" then set "pwidth := pw[str]", 
+    # "sdriver := self[str]", remove "str" from "dom(self)" and 
+    # return "True"; otherwise return "False", leaving OUT params
+    # unchanged. 
+    remove(stretch_v1& stretch, out card32 page_width, out stretch_driver_v1& stretch_driver) returns (boolean result);
+
+    # Free the current "stretch_table".
+    destroy();
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

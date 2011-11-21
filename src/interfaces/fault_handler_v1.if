@@ -1,0 +1,25 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# A "FaultHandler" is a user-specified object which overrides
+# the default stretch driver implementation for a given type
+# of memory fault. 
+
+local interface fault_handler_v1
+{
+    # The "Handle" operation is called when some type of fault 
+    # occurs on a virtual address within a stretch managed by
+    # this driver; these faults should be recoverable (at least
+    # potentially). Generally the "reason" for the fault will not 
+    # be "PAGE", though this is not ruled out.
+    handle(stretch_v1& stretch, memory_v1.address virt, memory_v1.fault reason)
+        returns (boolean success);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

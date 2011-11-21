@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -39,6 +39,10 @@ public:
     class mmap_entry_t;
     struct modinfo_t;
 
+    //==================================================================================================================
+    // multiboot mmap_t
+    //==================================================================================================================
+
     class mmap_t
     {
     public:
@@ -54,25 +58,46 @@ public:
         mmap_entry_t* addr;
     } PACKED;
 
+    //==================================================================================================================
+    // multiboot mmap entry
+    //==================================================================================================================
+
     class mmap_entry_t
     {
     public:
         enum entry_type_e {
+            // standard BIOS memory types
             free = 1,
+            reserved = 2,
+            acpi_reclaimable = 3,
+            acpi_nvs = 4, // non-volatile storage
+            bad_memory = 5, // unusable
+            disabled = 6,
+            // end of standard memory types
+            non_free = 99, //something arbitrary for now.
             bootinfo = 111
         };
 
-        uint64_t address() const { return base_addr; }
-        uint64_t size() const    { return length; }
-        uint32_t type() const    { return type_; }
-        bool     is_free() const { return type_ == 1; }
+        inline uint64_t address() const { return base_addr; }
+        inline uint64_t start()   const { return base_addr; }
+        inline uint64_t end()     const { return base_addr + length - 1; }
+        inline uint64_t size()    const { return length; }
+        inline uint32_t type()    const { return type_; }
+        inline bool     is_free() const { return type_ == 1; }
 
-        void     set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
-        void     set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
+        inline void set_entry_size(uint32_t new_size) { entry_size = new_size - 4; }
+        inline void set_region(uint64_t new_addr, uint64_t new_length, entry_type_e new_type)
         {
             base_addr = new_addr;
             length = new_length;
             type_ = new_type;
+        }
+        inline void set_free(bool free)
+        {
+            if (free)
+                type_ = entry_type_e::free;
+            else
+                type_ = entry_type_e::non_free;
         }
 
     private:
@@ -83,6 +108,10 @@ public:
 
         friend class multiboot_t::mmap_t;
     } PACKED;
+
+    //==================================================================================================================
+    // multiboot header
+    //==================================================================================================================
 
     /*!
      * Boot information passed in by multiboot loader.
@@ -127,7 +156,13 @@ public:
         uint32_t vbe_interface_len;
     } PACKED;
 
-    /*! Information about a boot module. */
+    //==================================================================================================================
+    // multiboot module info
+    //==================================================================================================================
+
+    /*!
+     * Information about a boot module.
+     */
     struct modinfo_t
     {
         uint32_t mod_start; /*!< Module start address in memory. */
@@ -135,6 +170,10 @@ public:
         const char* str;    /*!< Pointer to module name as C string. */
         uint32_t reserved;
     } PACKED;
+
+    //==================================================================================================================
+    // multiboot_t public methods
+    //==================================================================================================================
 
     multiboot_t(header_t* h = NULL)
         : header(NULL)
@@ -200,7 +239,7 @@ public:
     }
     inline address_t symtab_end() const
     {
-        return symtab ? (address_t)symtab->addr + symtab->size : 0;
+        return symtab ? (address_t)symtab->vaddr + symtab->size : 0;
     }
     inline elf32::section_header_t* strtab_start() const
     {
@@ -208,7 +247,7 @@ public:
     }
     inline address_t strtab_end() const
     {
-        return strtab ? (address_t)strtab->addr + strtab->size : 0;
+        return strtab ? (address_t)strtab->vaddr + strtab->size : 0;
     }
 
     inline bool is_elf() const { return flags_set(FLAG_ELF); }
@@ -217,7 +256,7 @@ public:
     inline bool has_mmap_info() const { return flags_set(FLAG_MMAP); }
     mmap_t* memory_map() const;
 
-    static multiboot_t* prepare();
+    static multiboot_t* prepare(); // used by loader to retrieve multiboot header
     const char* cmdline() { return header->cmdline; }
 
 private:

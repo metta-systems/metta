@@ -1,0 +1,42 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Nemesis uses "Event"s and "Channel"s as the abstraction for
+# communication betweeen virtual processors. This interface defines
+# the basic types (including exceptions) for the "Events" and
+# associated interfaces.
+
+local interface event_v1
+{
+    #===================================================================================================================
+    # Types
+    #===================================================================================================================
+
+    # An event count is a monotonically increasing value of type "Val"
+    # associated with a domain.  An event count is identified within its
+    # domain by a "Count".
+
+    type card64 val;
+    type card64 count; # Opaque
+
+    # Each end of an inter-domain communication ("IDC") channel has one
+    # one or more "(rx, tx)" pairs of event counts connected to corresponding
+    # pairs at the peer domain.
+
+    record pair {
+        count rx;
+        count tx;
+    }
+    sequence<pair> pairs;
+
+    # Threads can order their actions by waiting on counts for values obtained from a \emph{sequencer}.
+    type card64 sequencer; # Opaque
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

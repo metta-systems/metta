@@ -46,6 +46,8 @@ __STL_BEGIN_NAMESPACE
 // the differences between SGI-style allocators and standard-conforming
 // allocators.
 
+extern void do_checkpoint(const char* chk);
+
 #ifdef __STL_USE_STD_ALLOCATORS
 
 // Base class for ordinary allocators.
@@ -58,7 +60,9 @@ public:
 
   _Vector_alloc_base(const allocator_type& __a)
     : _M_data_allocator(__a), _M_start(0), _M_finish(0), _M_end_of_storage(0) 
-  {}
+  {
+      do_checkpoint(__PRETTY_FUNCTION__);
+  }
   
 protected:
   allocator_type _M_data_allocator;
@@ -67,7 +71,9 @@ protected:
   _Tp* _M_end_of_storage;
 
   _Tp* _M_allocate(size_t __n)
-    { return _M_data_allocator.allocate(__n); }
+    { 
+        do_checkpoint(__PRETTY_FUNCTION__);
+        return _M_data_allocator.allocate(__n); }
   void _M_deallocate(_Tp* __p, size_t __n)
     { if (__p) _M_data_allocator.deallocate(__p, __n); }
 };
@@ -107,8 +113,16 @@ struct _Vector_base
           _Base;
   typedef typename _Base::allocator_type allocator_type;
 
+#ifdef __STL_HAS_NAMESPACES
+  using _Base::_M_allocate;
+  using _Base::_M_deallocate;
+  using _Base::_M_start;
+  using _Base::_M_finish;
+  using _Base::_M_end_of_storage;
+#endif /* __STL_HAS_NAMESPACES */
   _Vector_base(const allocator_type& __a) : _Base(__a) {}
   _Vector_base(size_t __n, const allocator_type& __a) : _Base(__a) {
+      do_checkpoint(__PRETTY_FUNCTION__);
     _M_start = _M_allocate(__n);
     _M_finish = _M_start;
     _M_end_of_storage = _M_start + __n;
@@ -118,7 +132,7 @@ struct _Vector_base
 };    
 
 #else /* __STL_USE_STD_ALLOCATORS */
-
+/* start killing off non-std code...
 template <class _Tp, class _Alloc> 
 class _Vector_base {
 public:
@@ -148,7 +162,7 @@ protected:
   void _M_deallocate(_Tp* __p, size_t __n) 
     { _M_data_allocator::deallocate(__p, __n); }
 };
-
+*/
 #endif /* __STL_USE_STD_ALLOCATORS */
 
 template <class _Tp, class _Alloc = __STL_DEFAULT_ALLOCATOR(_Tp) >
@@ -175,8 +189,8 @@ public:
   allocator_type get_allocator() const { return _Base::get_allocator(); }
 
 #ifdef __STL_CLASS_PARTIAL_SPECIALIZATION
-  typedef reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef reverse_iterator<iterator> reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator> reverse_iterator;
 #else /* __STL_CLASS_PARTIAL_SPECIALIZATION */
   typedef reverse_iterator<const_iterator, value_type, const_reference, 
                            difference_type>  const_reverse_iterator;
@@ -237,7 +251,9 @@ public:
 #endif /* __STL_THROW_RANGE_ERRORS */
 
   explicit vector(const allocator_type& __a = allocator_type())
-    : _Base(__a) {}
+    : _Base(__a) {
+        do_checkpoint(__PRETTY_FUNCTION__);
+    }
 
   vector(size_type __n, const _Tp& __value,
          const allocator_type& __a = allocator_type()) 
@@ -248,9 +264,22 @@ public:
     : _Base(__n, allocator_type())
     { _M_finish = uninitialized_fill_n(_M_start, __n, _Tp()); }
 
-  vector(const vector<_Tp, _Alloc>& __x) 
+  vector(const vector<_Tp, _Alloc>& __x, const allocator_type& alloc)
+    : _Base(__x.size(), alloc)
+    { _M_finish = uninitialized_copy(__x.begin(), __x.end(), _M_start); }
+
+//  template <bool is_Lakos_allocator>
+  vector(const vector<_Tp, _Alloc>& __x)
+    : _Base(__x.size(), allocator_type())
+    { _M_finish = uninitialized_copy(__x.begin(), __x.end(), _M_start); }
+
+  // Specialize for old-style allocators.
+//uses_lakos_allocator<vector<_Type,_Alloc>>
+/*  template <>
+  vector(const vector<_Tp, _Alloc>& __x)<false>
     : _Base(__x.size(), __x.get_allocator())
     { _M_finish = uninitialized_copy(__x.begin(), __x.end(), _M_start); }
+*/
 
 #ifdef __STL_MEMBER_TEMPLATES
   // Check whether it's an integral type.  If so, it's not an iterator.
@@ -355,6 +384,7 @@ public:
     __STD::swap(_M_start, __x._M_start);
     __STD::swap(_M_finish, __x._M_finish);
     __STD::swap(_M_end_of_storage, __x._M_end_of_storage);
+    // TODO: implement BDE-allocator swap
   }
 
   iterator insert(iterator __position, const _Tp& __x) {
@@ -854,6 +884,9 @@ vector<_Tp, _Alloc>::insert(iterator __position,
 }
 
 #endif /* __STL_MEMBER_TEMPLATES */
+
+template <typename _Type, typename _Alloc>
+struct uses_lakos_allocator<vector<_Type,_Alloc>> : is_lakos_allocator<_Alloc> {};
 
 #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
 #pragma reset woff 1174

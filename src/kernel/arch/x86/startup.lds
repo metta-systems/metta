@@ -1,10 +1,11 @@
 SECTIONS
 {
-    PAGE_SIZE = 0x1000;
+    PAGE_SIZE = 4096;
 
     . =  0; /* This is relocatable executable, it will be relocated to appropriate position in memory. */
     .text ALIGN (4) :
     {
+        _kickstart_begin = .; /* FIXME: all this begin-end symbols stuff is fragile. */
         *(.text*)
         *(.rodata*)
         /* global static initializers */

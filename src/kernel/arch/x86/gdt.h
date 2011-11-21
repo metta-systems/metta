@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -123,11 +123,13 @@ public:
     inline void setup_standard_entries()
     {
         entries[0].set_null();
+        entries[idx(KERNEL_TS)].set_sys((uint32_t)&tss, sizeof(tss)-1, gdt_entry_t::tss, 3);
         entries[idx(KERNEL_CS)].set_seg(0, ~0, gdt_entry_t::code, 0);
         entries[idx(KERNEL_DS)].set_seg(0, ~0, gdt_entry_t::data, 0);
-        entries[idx(USER_CS)].set_seg(0, ~0, gdt_entry_t::code, 3);
-        entries[idx(USER_DS)].set_seg(0, ~0, gdt_entry_t::data, 3);
-//         entries[idx(0x28)].set_sys(&tss, sizeof(tss)-1, gdt_entry_t::tss, 3);
+        entries[idx(  USER_CS)].set_seg(0, ~0, gdt_entry_t::code, 3);
+        entries[idx(  USER_DS)].set_seg(0, ~0, gdt_entry_t::data, 3);
+        entries[idx(  PRIV_CS)].set_seg(0, ~0, gdt_entry_t::code, 0);
+        entries[idx(  PRIV_DS)].set_seg(0, ~0, gdt_entry_t::data, 0);
     }
     inline void install()
     {
@@ -144,10 +146,10 @@ public:
     }
 
 private:
-    uint16_t  limit PACKED;
-    uint32_t  base  PACKED;
+    uint16_t    limit PACKED;
+    uint32_t    base  PACKED;
     tss_t       tss;
-    gdt_entry_t entries[6] ALIGNED(16);
+    gdt_entry_t entries[GDT_ENTRIES+1] ALIGNED(16);
 };
 
 // kate: indent-width 4; replace-tabs on;

@@ -1,3 +1,4 @@
+ENTRY(_start)
 SECTIONS
 {
     . =  0x100000;
@@ -20,13 +21,10 @@ SECTIONS
     _kickstart_end = .;
 
     /* Strip unnecessary stuff */
-    /DISCARD/ : { *(.comment .note* .eh_frame .dtors) }
+    /DISCARD/ : { 
+        *(.comment .note* .eh_frame .dtors) 
+    }
 }
-
-/*
-TODO: use ld script to assemble and relink all the used modules to right addresses:
-should be possible with a bit of LD voodoo.
-*/
 
 /*
 // kate: indent-width 4; replace-tabs on;

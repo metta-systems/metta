@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -94,66 +94,72 @@ interrupt_descriptor_table_t& interrupt_descriptor_table_t::instance()
     return interrupts_table;
 }
 
+#define IDT_ENTRY(n, type) \
+    idt_entries[n].set(KERNEL_CS, isr##n, idt_entry_t::type, 3)
+
+#define IRQ_ENTRY(n, m) \
+    idt_entries[n].set(KERNEL_CS, irq##m, idt_entry_t::interrupt, 3)
+
 void interrupt_descriptor_table_t::install()
 {
     limit = sizeof(idt_entries)-1;
     base = (address_t)&idt_entries;
 
     // DPL is 3 to allow kernel isrs to work in user-mode.
-    idt_entries[0].set(KERNEL_CS, isr0, idt_entry_t::interrupt, 3);
-    idt_entries[1].set(KERNEL_CS, isr1, idt_entry_t::interrupt, 3);
-    idt_entries[2].set(KERNEL_CS, isr2, idt_entry_t::interrupt, 3);
-    idt_entries[3].set(KERNEL_CS, isr3, idt_entry_t::trap, 3);
-    idt_entries[4].set(KERNEL_CS, isr4, idt_entry_t::trap, 3);
-    idt_entries[5].set(KERNEL_CS, isr5, idt_entry_t::interrupt, 3);
-    idt_entries[6].set(KERNEL_CS, isr6, idt_entry_t::interrupt, 3);
-    idt_entries[7].set(KERNEL_CS, isr7, idt_entry_t::interrupt, 3);
-    idt_entries[8].set(KERNEL_CS, isr8, idt_entry_t::interrupt, 3);
-    idt_entries[9].set(KERNEL_CS, isr9, idt_entry_t::interrupt, 3);
-    idt_entries[10].set(KERNEL_CS, isr10, idt_entry_t::interrupt, 3);
-    idt_entries[11].set(KERNEL_CS, isr11, idt_entry_t::interrupt, 3);
-    idt_entries[12].set(KERNEL_CS, isr12, idt_entry_t::interrupt, 3);
-    idt_entries[13].set(KERNEL_CS, isr13, idt_entry_t::interrupt, 3);
-    idt_entries[14].set(KERNEL_CS, isr14, idt_entry_t::interrupt, 3);
-    idt_entries[15].set(KERNEL_CS, isr15, idt_entry_t::interrupt, 3);
-    idt_entries[16].set(KERNEL_CS, isr16, idt_entry_t::interrupt, 3);
-    idt_entries[17].set(KERNEL_CS, isr17, idt_entry_t::interrupt, 3);
-    idt_entries[18].set(KERNEL_CS, isr18, idt_entry_t::interrupt, 3);
-    idt_entries[19].set(KERNEL_CS, isr19, idt_entry_t::interrupt, 3);
+    IDT_ENTRY(0, interrupt);
+    IDT_ENTRY(1, interrupt);
+    IDT_ENTRY(2, interrupt);
+    IDT_ENTRY(3, trap);
+    IDT_ENTRY(4, trap);
+    IDT_ENTRY(5, interrupt);
+    IDT_ENTRY(6, interrupt);
+    IDT_ENTRY(7, interrupt);
+    IDT_ENTRY(8, interrupt);
+    IDT_ENTRY(9, interrupt);
+    IDT_ENTRY(10, interrupt);
+    IDT_ENTRY(11, interrupt);
+    IDT_ENTRY(12, interrupt);
+    IDT_ENTRY(13, interrupt);
+    IDT_ENTRY(14, interrupt);
+    IDT_ENTRY(15, interrupt);
+    IDT_ENTRY(16, interrupt);
+    IDT_ENTRY(17, interrupt);
+    IDT_ENTRY(18, interrupt);
+    IDT_ENTRY(19, interrupt);
     // Nothing useful defined on intel below this line
-    idt_entries[20].set(KERNEL_CS, isr20, idt_entry_t::interrupt, 3);
-    idt_entries[21].set(KERNEL_CS, isr21, idt_entry_t::interrupt, 3);
-    idt_entries[22].set(KERNEL_CS, isr22, idt_entry_t::interrupt, 3);
-    idt_entries[23].set(KERNEL_CS, isr23, idt_entry_t::interrupt, 3);
-    idt_entries[24].set(KERNEL_CS, isr24, idt_entry_t::interrupt, 3);
-    idt_entries[25].set(KERNEL_CS, isr25, idt_entry_t::interrupt, 3);
-    idt_entries[26].set(KERNEL_CS, isr26, idt_entry_t::interrupt, 3);
-    idt_entries[27].set(KERNEL_CS, isr27, idt_entry_t::interrupt, 3);
-    idt_entries[28].set(KERNEL_CS, isr28, idt_entry_t::interrupt, 3);
-    idt_entries[29].set(KERNEL_CS, isr29, idt_entry_t::interrupt, 3);
-    idt_entries[30].set(KERNEL_CS, isr30, idt_entry_t::interrupt, 3);
-    idt_entries[31].set(KERNEL_CS, isr31, idt_entry_t::interrupt, 3);
+    IDT_ENTRY(20, interrupt);
+    IDT_ENTRY(21, interrupt);
+    IDT_ENTRY(22, interrupt);
+    IDT_ENTRY(23, interrupt);
+    IDT_ENTRY(24, interrupt);
+    IDT_ENTRY(25, interrupt);
+    IDT_ENTRY(26, interrupt);
+    IDT_ENTRY(27, interrupt);
+    IDT_ENTRY(28, interrupt);
+    IDT_ENTRY(29, interrupt);
+    IDT_ENTRY(30, interrupt);
+    IDT_ENTRY(31, interrupt);
 
     reprogram_pic();
 
     // 32-47 are IRQs.
     // DPL is 3 so that interrupts can happen from user mode.
-    idt_entries[32].set(KERNEL_CS, irq0, idt_entry_t::interrupt, 3);
-    idt_entries[33].set(KERNEL_CS, irq1, idt_entry_t::interrupt, 3);
-    idt_entries[34].set(KERNEL_CS, irq2, idt_entry_t::interrupt, 3);
-    idt_entries[35].set(KERNEL_CS, irq3, idt_entry_t::interrupt, 3);
-    idt_entries[36].set(KERNEL_CS, irq4, idt_entry_t::interrupt, 3);
-    idt_entries[37].set(KERNEL_CS, irq5, idt_entry_t::interrupt, 3);
-    idt_entries[38].set(KERNEL_CS, irq6, idt_entry_t::interrupt, 3);
-    idt_entries[39].set(KERNEL_CS, irq7, idt_entry_t::interrupt, 3);
-    idt_entries[40].set(KERNEL_CS, irq8, idt_entry_t::interrupt, 3);
-    idt_entries[41].set(KERNEL_CS, irq9, idt_entry_t::interrupt, 3);
-    idt_entries[42].set(KERNEL_CS, irq10, idt_entry_t::interrupt, 3);
-    idt_entries[43].set(KERNEL_CS, irq11, idt_entry_t::interrupt, 3);
-    idt_entries[44].set(KERNEL_CS, irq12, idt_entry_t::interrupt, 3);
-    idt_entries[45].set(KERNEL_CS, irq13, idt_entry_t::interrupt, 3);
-    idt_entries[46].set(KERNEL_CS, irq14, idt_entry_t::interrupt, 3);
-    idt_entries[47].set(KERNEL_CS, irq15, idt_entry_t::interrupt, 3);
+    IRQ_ENTRY(32, 0);
+    IRQ_ENTRY(33, 1);
+    IRQ_ENTRY(34, 2);
+    IRQ_ENTRY(35, 3);
+    IRQ_ENTRY(36, 4);
+    IRQ_ENTRY(37, 5);
+    IRQ_ENTRY(38, 6);
+    IRQ_ENTRY(39, 7);
+    IRQ_ENTRY(40, 8);
+    IRQ_ENTRY(41, 9);
+    IRQ_ENTRY(42, 10);
+    IRQ_ENTRY(43, 11);
+    IRQ_ENTRY(44, 12);
+    IRQ_ENTRY(45, 13);
+    IRQ_ENTRY(46, 14);
+    IRQ_ENTRY(47, 15);
 
     asm volatile("lidtl %0\n" :: "m"(*this));
 }

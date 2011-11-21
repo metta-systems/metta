@@ -1,14 +1,14 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
 
-#include "panic.h"
+#include "types.h"
 
 #define endl console_t::eol
 
@@ -28,7 +28,10 @@ enum Color {
     LIGHTRED,
     LIGHTMAGENTA,
     YELLOW,
-    WHITE
+    WHITE,
+    // Special colors
+    WARNING = YELLOW,
+    ERROR = LIGHTRED
 };
 
 /*!
@@ -62,7 +65,7 @@ public:
     inline void print(unsigned char n) { print_byte(n); }
     inline void print(unsigned int n) { print_hex(n); }
     inline void print(void *p) { print((unsigned int)p); }
-    inline void print(unsigned long long n) { print_hex8(n); }
+    inline void print(uint64_t n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
     /*template<typename T, typename... Args>
     void print(const char* str, T value, Args... args);*/
@@ -73,6 +76,7 @@ public:
 
 protected:
     console_t();
+    virtual ~console_t();
 };
 
 // Define stream io on console.
@@ -97,6 +101,19 @@ inline console_t& operator << (console_t& con, int data)
 inline console_t& operator << (console_t& con, unsigned int data)
 {
     con.print_hex(data);
+    return con;
+}
+
+inline console_t& operator << (console_t& con, uint64_t data)
+{
+    con.print_hex8(data);
+    return con;
+}
+
+// needs to depend on sizeof(ulong)
+inline console_t& operator << (console_t& con, unsigned long data)
+{
+    con.print_hex8(data);
     return con;
 }
 

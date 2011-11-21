@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 
 // The kernel debugger.
 class debugger_t
@@ -31,11 +32,11 @@ public:
     **/
     static address_t backtrace(int n);
 
-    /**
-    * Print a full backtrace from the current location. (Or, if @p n is specified,
-    * up to n stack frames.
-    **/
-    static void print_backtrace(address_t base_pointer = 0, int n = 0);
+    /*!
+     * Print a full backtrace from the start location EIP and following the stack frames starting at EBP.
+     * (Or, if @p n is specified, up to n stack frames.)
+     */
+    static void print_backtrace(address_t base_pointer = 0, address_t eip = 0, int n = 0);
 
     /**
     * Prints first @p n words from the stack
@@ -46,6 +47,11 @@ public:
      * Prints [checkpoint] followed by checkpoint name from @p str and then waits for Enter keypress.
      */
     static void checkpoint(const char* str);
+    
+    /*!
+     * Trigger a cpu breakpoint. Will cause a magic trap under bochs.
+     */
+    static void breakpoint();
 };
 
 // Helpers for easier debugging in Bochs
@@ -72,6 +78,8 @@ inline void bochs_break()
     x86_cpu_t::outw(0x8A00,0x8A00);
     x86_cpu_t::outw(0x8A00,0x8AE0);
 }
+
+void bochs_magic_trap()  ALWAYS_INLINE;
 
 //traps into debug console (add "magic_break: enabled=1" to bochs config)
 inline void bochs_magic_trap()

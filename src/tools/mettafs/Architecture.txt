@@ -1,0 +1,32 @@
+Files are blobs of data stored in extents.
+Files have a multitude of properties, ranging from standard name, ctime, mtime, atime, access rights, to completely custom tags.
+
+Standard properties are stored into an inode-type record for quick summary, but timing information is also stored in tags with minute precision.
+
+Representing semantic data about files requires directed graph with typed edges. However, in current implementation the structure is flat and the
+files relate only by means of common tag/attribute.
+
+Tags are stored in a separate patricia trie - shortening the common prefixes. Every tag's data area contains a list of object IDs of objects that
+have this tag. This list is best stored in an own b-tree itself, to provide faster lookups, insertions and deletions.
+
+Tag intersection or union is therefore an operation of getting objid lists for all involved tags and performing intersection or union on them.
+
+prefixed.name.of.tag: [objids]
+
+files are referenced by their objids:
+
+objid: [extents]
+
+An ontology defines relations between tags. It may be used to verify correctness of assigned properties and to emulate full semantic network
+structure (typed edges) without actually implementing them at file level (i.e. relations at the file level "part of a project" "owned by user" etc
+are easier expressed with just assigning a tag, while actual semantic value of having or not having such tag can be expressed in ontology).
+
+Expected sizes:
+Number of Files :   773,272
+
+I would estimate about 1,000,000 files with 20-50 tags each, up to 50,000,000 properties.
+
+
+A hypergraph (where edge can point to more than two nodes and even other edges, called atoms) is a certainly interesting approach, excercised 
+by HyperGraphDB (Java, LGPL).
+

@@ -1,0 +1,47 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# The heap module provides four classes of "heap".  Three are
+# currently single-threaded; no locking is provided at all.  Locking
+# can be added with a fourth class.
+#
+# A "heap" can be created in an addressable region of memory, within
+# an existing "heap", or completely filling a "stretch". The size for
+# a stretch-based "heap" is determined by the size of the "stretch".
+# A locked heap can be created from an existing "heap".
+#
+# All calls raise "heap_v1.no_memory" if there is insufficient memory
+# to create the heap.
+
+local interface heap_module_v1
+{
+    # At start-of-day, it may be convenient to create a heap which runs
+    # directly in a provided addressable region. "create_raw" creates such
+    # a heap. The caller must ensure at least "size" bytes are
+    # available, starting at "where".
+
+    create_raw(memory_v1.address where, memory_v1.size size)
+        returns (heap_v1& heap)
+        raises (heap_v1.no_memory);
+
+    # "Where" returns the start address and size of the given heap. It
+    # is particularly useful for raw heaps which we hope to upgrade
+    # to 'real' heaps via realize.
+
+    where(heap_v1& heap)
+        returns (memory_v1.address address, memory_v1.size size);
+
+    # A raw or physical heap can be promoted to a 'real' one if we have
+    # managed to get hold of a stretch which maps onto its start
+    # address and length.
+
+    realize(heap_v1& heap, stretch_v1& stretch)
+        returns (heap_v1& heap);
+}
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

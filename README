@@ -20,3 +20,7 @@ For experimental building with clang first copy waftools/clang.py to
 Then you can try to build:
 
  $ ./waf
+
+
+You are free to contribute and remember: if you don't, somebody else will.
+Their name will remain in history forever, yours will fade away.
