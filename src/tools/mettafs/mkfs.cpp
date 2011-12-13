@@ -7,11 +7,19 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "block_device.h"
+#include "block_cache.h"
 #include <uuid/uuid.h>
 #include "superblock.h"
 #include "memutils.h"
 #include "fourcc.h"
 #include "macros.h"
+#include <stdio.h>
+
+extern "C" void panic(const char* message, const char* file, uint32_t line)
+{
+    printf("%s\n", message);
+    exit(-1);
+}
 
 const int sectorsize = 4096;
 const int nodesize = 4096;
@@ -40,6 +48,7 @@ int make_fs(block_device_t& dev, size_t num_bytes, const char* label)
     super.leaf_size = leafsize;
     super.checksum_type = CHECKSUM_TYPE_SHA1;
     super.root_level = 1;
+    calc_checksum(super);
 //     dev_item_t dev_item;        // [123]
     memutils::copy_string(super.label, label, sizeof(super.label));
 
@@ -57,6 +66,7 @@ int main(int argc, char** argv)
     const char* fname = argv[1];
     int create = atoi(argv[2]);
     size_t size = atoi(argv[3]);
+    block_cache_t cache(256);
     block_device_t dev(fname, create);
 
     make_fs(dev, size, "test_fs");
