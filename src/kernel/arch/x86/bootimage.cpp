@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -33,7 +33,7 @@ bootimage_t::bootimage_t(const char* name, address_t start, address_t _end)
 bool bootimage_t::valid()
 {
     header_t* header = reinterpret_cast<header_t*>(location);
-    return header->magic == FourCC<'B','I','M','G'>::value and header->version == 1;
+    return header->magic == four_cc<'B','I','M','G'>::value and header->version == 1;
 }
 
 #if BOOTIMAGE_DEBUG

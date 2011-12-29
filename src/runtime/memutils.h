@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -12,6 +12,8 @@
 
 /*!
  * @brief Memory utilities similar to standard libc operations.
+ * @todo Quite unoptimized at the moment, memory ops should be significantly slow.
+ * Easy optimization would be __builtin_memcpy() and friends.
  */
 namespace memutils {
 
@@ -24,7 +26,42 @@ namespace memutils {
  *
  * @warning Do not use fill_memory() to access IO space, use fill_io_memory() instead.
  */
-void* fill_memory(void* dest, int value, size_t count);
+inline void* fill_memory(void* dest, int value, size_t count)
+{
+    char *xs = reinterpret_cast<char*>(dest);
+    while (count--)
+    {
+        switch (count & 3)
+        {
+            case 3:
+                *xs++ = value;
+                --count;
+            case 2:
+                *xs++ = value;
+                --count;
+            case 1:
+                *xs++ = value;
+                --count;
+            default:
+                *xs++ = value;
+        }
+    }
+    return dest;
+}
+
+/*!
+ * Clear a region of memory. Usually sets given area to zero, but a debug implementation might want to clear with
+ * a known pattern or do something else.
+ * @param[out] dest  Pointer to the start of the area.
+ * @param[in]  count The size of the area.
+ * @return           Pointer to the start of the area.
+ *
+ * @warning Do not use clear_memory() to access IO space, use fill_io_memory() with a value of 0 instead.
+ */
+inline void* clear_memory(void* dest, size_t count)
+{
+    return fill_memory(dest, 0, count);
+}
 
 /*!
  * Copy one area of memory to another.
@@ -36,7 +73,20 @@ void* fill_memory(void* dest, int value, size_t count);
  * @warning You should not use this function to access IO space, use copy_memory_to_io()
  * or copy_memory_from_io() instead.
  */
-void* copy_memory(void* dest, const void* src, size_t count);
+inline void* copy_memory(void* dest, const void* src, size_t count)
+{
+    char *tmp = reinterpret_cast<char*>(dest);
+    const char *s = reinterpret_cast<const char*>(src);
+
+    while (count--)
+        *tmp++ = *s++;
+    return dest;
+}
+
+inline address_t copy_memory(address_t dest, address_t src, size_t count)
+{
+    return reinterpret_cast<address_t>(copy_memory(reinterpret_cast<void*>(dest), reinterpret_cast<const void*>(src), count));
+}
 
 /*!
  * Copy one area of memory to another.
@@ -47,16 +97,39 @@ void* copy_memory(void* dest, const void* src, size_t count);
  *
  * Unlike copy_memory(), this function copes with overlapping areas.
  */
-void* move_memory(void* dest, const void* src, size_t count);
+inline void* move_memory(void* dest, const void* src, size_t count)
+{
+    char *tmp;
+    const char *s;
+
+    if (dest <= src) {
+        copy_memory(dest, src, count);
+    } else {
+        tmp = reinterpret_cast<char*>(dest) + count;
+        s = reinterpret_cast<const char*>(src) + count;
+        while (count--)
+            *--tmp = *--s;
+    }
+    return dest;
+}
 
 /*!
  * Compare two regions of memory.
  * @param[in]  left  First memory region.
  * @param[in]  right Second memory region.
  * @param[in]  count Number of bytes to compare.
- * @return           @c true if memory regions are equal, @c false otherwise.
+ * @return     @c true if memory regions are equal, @c false otherwise.
  */
-bool is_memory_equal(const void* left, const void* right, size_t count);
+inline bool is_memory_equal(const void* left, const void* right, size_t count)
+{
+    const char* ltmp = reinterpret_cast<const char*>(left);
+    const char* rtmp = reinterpret_cast<const char*>(right);
+
+    while (count--)
+        if (*ltmp++ != *rtmp++)
+            return false;
+    return true;
+}
 
 /*!
  * Compare two regions of memory.
@@ -65,7 +138,19 @@ bool is_memory_equal(const void* left, const void* right, size_t count);
  * @param[in]  count Number of bytes to compare.
  * @return     result of lexicographical memory compare, -1 if left is less than right, 0 if they are equal or 1 if left is greater than right.
  */
-int memory_difference(const void* left, const void* right, size_t count);
+inline int memory_difference(const void* left, const void* right, size_t count)
+{
+    signed char __res;
+
+    const char* ltmp = reinterpret_cast<const char*>(left);
+    const char* rtmp = reinterpret_cast<const char*>(right);
+
+    while (count--)
+        if ((__res = *ltmp++ - *rtmp++) != 0)
+            return __res;
+
+    return 0;
+}
 
 /*!
  * Compare two null-terminated strings.
@@ -73,14 +158,35 @@ int memory_difference(const void* left, const void* right, size_t count);
  * @param[in] s2 Another string
  * @return true if @c s1 equals @c s2, false if strings are different.
  */
-bool is_string_equal(const char *s1, const char *s2);
+inline bool is_string_equal(const char *s1, const char *s2)
+{
+    signed char __res;
+
+    if (!s1 && !s2)
+        return true;
+    if (!s1 || !s2)
+        return false;
+
+    while (1) {
+        if ((__res = *s1 - *s2++) != 0 || !*s1++)
+            break;
+    }
+    return __res == 0;
+}
 
 /*!
  * Return size of a null-terminated string.
  * @param[in] s  Null-terminated string.
  * @returns      String length in bytes.
  */
-size_t string_length(const char *s);
+inline size_t string_length(const char *s)
+{
+    size_t len = 0;
+    if (s)
+        while (*s++)
+            len++;
+    return len;
+}
 
 /*!
  * Copy one string to another location.
@@ -89,7 +195,18 @@ size_t string_length(const char *s);
  * @param[in]  max_length Maximum number of bytes to copy, unlimited if 0.
  * @return           Pointer to the start of the destination string.
  */
-char* copy_string(char* dest, const char* src, size_t max_length = 0);
+inline char* copy_string(char* dest, const char* src, size_t max_length = 0)
+{
+    if (!src || !dest)
+        return 0;
+    size_t src_length = string_length(src) + 1;
+    size_t length = max_length == 0 ? src_length
+                  : max_length < src_length ?
+                  max_length
+                  : src_length;
+    copy_memory(dest, src, length);
+    return dest;
+}
 
 } // namespace memutils
 

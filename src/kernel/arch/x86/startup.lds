@@ -1,6 +1,6 @@
 SECTIONS
 {
-    PAGE_SIZE = 4K;
+    PAGE_SIZE = 4096;
 
     . =  0; /* This is relocatable executable, it will be relocated to appropriate position in memory. */
     .text ALIGN (4) :

@@ -35,10 +35,12 @@
 #include <string>
 #include <stdexcept>    // for invalid_argument, out_of_range, overflow_error
 
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS 
 #include <iostream>
 #else
 #include <iostream.h>   // for istream, ostream
+#endif
 #endif
 
 #define __BITS_PER_WORD (CHAR_BIT*sizeof(unsigned long))
@@ -841,6 +843,7 @@ inline bitset<_Nb> operator^(const bitset<_Nb>& __x, const bitset<_Nb>& __y) {
   return __result;
 }
 
+#ifdef __STL_USE_IOSTREAMS
 #ifdef __STL_USE_NEW_IOSTREAMS
 
 template <class _CharT, class _Traits, size_t _Nb>
@@ -939,6 +942,7 @@ ostream& operator<<(ostream& __os, const bitset<_Nb>& __x) {
 }
 
 #endif /* __STL_USE_NEW_IOSTREAMS */
+#endif /* __STL_USE_IOSTREAMS */
 
 // ------------------------------------------------------------
 // Lookup tables for find and count operations.

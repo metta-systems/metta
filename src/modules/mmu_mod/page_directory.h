@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -51,6 +51,10 @@ inline int pte_entry(void* virt)
 class page_t
 {
 public:
+    // TODO: enum page_width { width_4k, width_4m, width = width_4k };
+    static const uint32_t width_4kib   = 12;
+    static const uint32_t width_4mib   = 22;
+
     // CPU-agnostic page flags.
     static const flags_t kernel_mode   = 0x01;
     static const flags_t writable      = 0x02;
@@ -59,7 +63,8 @@ public:
     static const flags_t cache_disable = 0x10;
     static const flags_t copy_on_write = 0x20;
     static const flags_t swapped       = 0x40;
-
+    static const flags_t global        = 0x80;
+//TODO: add page sizes, 1kb, 4kb, 1mb, 4mb
     page_t() {}
 
     // Predicates

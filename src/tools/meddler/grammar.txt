@@ -1,75 +1,37 @@
-TODO: needs declaration might be not needed, since we will use fully-qualified module ids and its possible to derive
-needs module names from there...
+TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not bound to a closure
+ - what would be implemented semantics for such methods though?
 
-// EBNF
+'extends' in a syntax sugar only - it allows to avoid repeating the whole interface declaration if two versions only
+extend one another. Interface versions v1 and v2 do not have to have extends relationship. The IS_A relation does not apply.
 
-Const = HexNumber | OctNumber | DecNumber | BinNumber ;
-ID = [A-Za-z] { [A-Za-z0-9_] } ;
-qualifiedID = ID.ID ;
-IDs = ID | qualifiedID , { "," , ID | qualifiedID } ;
-IDorConst = ID | Const;
-IDlist = ID { "," , ID } ;
-builtinType = "int8" | "int16" | "int32" | "int64" | "octet" | "card16" | "card32" | "card64" | "float" | "double" | "boolean";
-typeID = ID | qualifiedID | builtinType ;
-module = intf+ ;
-intf = ["local"] ["final"] "interface" ID ["extends" ID] "{" body "}" ;
-body = { needs | exception | typedef | method } ;
-needs = { "needs" IDs ";" } ;
-fields = typeID , ID , ";" ;
-exception = "exception" ID "{" {fields} "}" ;
-arrayType = typeID ID ("[" rangeType "]")+ ;
-recordType = "record" "{" fields+ "}" ID ;
-typedef =
-    "set" , "{" , IDlist , "}" , ID |
-    "range" , IDorConst , ".." , IDorConst , ID |
-    typeID , ID |
-    "sequence" , "<" , typeID , ">" , ID |
-    arrayType |
-    recordType ;
-arg_spec = typeID , ID , { "," , ID } ;
-args = arg_spec , { "," , arg_spec } ;
-return_spec = "returns" , "(" , {args} , ")" | "never" , "returns" ;
-method = ["idempotent"] , ID , "(" , {args} , ")" , return_spec , "raises" , IDs , ";" ;
-
-// Example code
-
-interface context_v1
-{
-    needs heap;
-    sequence<string> names;
-    list() returns (names nl) raises heap.no_memory;
-}
-
-local interface type_system_v1 extends context_v1
-{
-    type.code alias;
-
-    enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
-          ShortInteger, Integer, LongInteger,
-          Real, LongReal,
-          String,
-          Octet, Char,
-          Address, Word } predefined;
-    set<predefined> predef_flags;
-    range 0..15 hexnibble;
-
-    cardinal array_index;
-    record { array_index n; alias tc; } array;
-
-    exception not_found { string name; }
-    exception bad_code { alias code; }
-    exception incompatible {}
-
-    info(alias tc, out type_v1.any rep) returns (interface_v1& scope) raises bad_code;
-
-    size(alias tc) returns (heap_v1.size s) raises bad_code;
-
-    name(alias tc) returns (type_v1.name name) raises bad_code;
-
-    is_type(alias sub, super) returns (boolean result) raises bad_code;
-
-    narrow(type_v1.any a, alias tc) returns (type_v1.val v) raises incompatible;
-
-    unalias(alias tc) returns (alias base) raises bad_code;
-}
-
+/*!
+ * BNF of the grammar.
+ *
+ * module ::= full_interface_decl
+ * full_interface_decl ::= local_interface_decl | final_interface_decl | interface_decl
+ * local_interface_decl ::= 'local' (final_interface_decl | interface_decl)
+ * final_interface_decl ::= 'final' (local_interface_decl | interface_decl)
+ * interface_decl ::= 'interface' id ['extends' id] '{' interface_body '}'
+ * interface_body ::= (exception | typealias | full_method_decl)*
+ * exception ::= 'exception' id '{' field_list '}'
+ * field_list ::= (var_decl ';')*
+ * typealias ::= enumdef | setdef | rangedef | typedef | sequencedef | arraydef | recorddef
+ * enumdef ::= 'enum' '{' id_list '}' id ';'
+ * setdef ::= 'set' '<' typeid '>' id ';'
+ * rangedef ::= 'range' id '..' id id ';'
+ * typedef ::= 'type' id id ';'
+ * sequencedef ::= 'sequence' '<' typeid '>' id ';'
+ * arraydef ::= 'array' typeid '[' range ']' id ';'
+ * recorddef ::= 'record' id '{' field_list '}'
+ * full_method_decl ::= idempotent_method_decl | method_decl
+ * idempotent_method_decl ::= 'idempotent' method_decl
+ * method_decl ::= id argument_list ['returns' argument_list|'never' 'returns'] ['raises' id_list] ';'
+ * argument_list ::= '(' [ argument (',' argument)* ] ')'
+ * argument ::= ['in'|'out'|'inout'] var_decl
+ * id_list ::= '(' [ id (',' id)* ] ')'
+ * var_decl ::= typeid [reference] id
+ * reference ::= '&'
+ * typeid ::= id | builtin_type
+ * id ::= [A-Za-z]([A-Za-z0-9_.])*
+ * builtin_type ::= 'int8' | 'int16' | 'int32' | 'int64' | 'octet' | 'card16' | 'card32' | 'card64' | 'float' | 'double' | 'boolean'
+ */

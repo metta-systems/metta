@@ -16,7 +16,7 @@
 
 #include "memutils.h"
 // #include <string.h> //FIXME: stdlib dep!
-// #include <wchar.h>
+#include <wchar.h>
 
 #ifdef __STL_USE_IOSTREAMS
 #if defined(__STL_USE_NEW_IOSTREAMS) && !defined(__SGI_STL_IOSFWD)

@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "types.h"
@@ -33,7 +41,7 @@ public:
 
 private:
     gpregs_t regs;
-    uint32_t pervasives;
+    pervasives_v1::rec* pervasives;
     uint32_t flags;
     uint32_t cs, ds;
     uint32_t fpregs[27]; // FPU registers
@@ -50,7 +58,7 @@ void continuation_t::activate()
     // restore pervasives pointer
     if (flags & F_PERV_VALID)
     {
-        INFO_PAGE.pervasives = (void*)pervasives;
+        INFO_PAGE.pervasives = pervasives;
     }
     // restore FPU registers
     if (flags & F_FPU_VALID)
@@ -62,3 +70,6 @@ void continuation_t::activate()
     // iret
     asm_activate(&regs, cs, ds);
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

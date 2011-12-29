@@ -1,0 +1,81 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Type system provides reflection on types available in the system.
+#
+#
+# Much like Modula-3 types.
+#
+# Ordinal types:
+#
+# enum { id_1, id_2, id_3 } E;
+# set<enum> S;
+# range id_1..id_2 R;
+# int8
+# int16
+# int32
+# int64
+# octet
+# card16
+# card32
+# card64
+#
+# Floating point types:
+#
+# float
+# double
+#
+# Array types:
+#
+# type V[range][range]; # e.g. octet bytes[128][1..2];
+#
+# Record types:
+#
+# record { type field = default; type field = default } id;
+#
+
+local interface type_system_v1 extends naming_context_v1
+{
+    type types.code alias;
+
+    enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
+          ShortInteger, Integer, LongInteger,
+          Real, LongReal,
+          String,
+          Octet, Char,
+          Address, Word } predefined;
+
+    type cardinal tc_array_index;
+    record tc_array { array_index n; alias tc; }
+#     cardinal bit_set;//?
+#     enum_v1& enum;
+#     alias    set;
+#     alias    ref;
+#     interface_v1& iref;
+#     alias    sequence;
+#     struct&  struct;
+#     choice&  choice;
+
+    exception bad_code { alias code; }
+    exception incompatible {}
+
+    info(alias tc, out types.any rep) returns (interface_v1& scope) raises (bad_code);
+
+    size(alias tc) returns (heap_v1.size s) raises (bad_code);
+
+    name(alias tc) returns (types.name name) raises (bad_code);
+
+    is_type(alias sub, alias super) returns (boolean result) raises (bad_code);
+
+    narrow(types.any a, alias tc) returns (types.val v) raises (incompatible);
+
+    unalias(alias tc) returns (alias base) raises (bad_code);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

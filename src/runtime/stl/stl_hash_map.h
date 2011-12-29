@@ -94,6 +94,7 @@ public:
 
 public:
   hash_map() : _M_ht(100, hasher(), key_equal(), allocator_type()) {}
+  explicit hash_map(const allocator_type& __a) : _M_ht(100, hasher(), key_equal(), __a) {}
   explicit hash_map(size_type __n)
     : _M_ht(__n, hasher(), key_equal(), allocator_type()) {}
   hash_map(size_type __n, const hasher& __hf)

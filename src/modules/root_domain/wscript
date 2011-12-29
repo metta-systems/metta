@@ -2,21 +2,9 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    rdom = bld.new_task_gen('cxx', 'program')
-    rdom.source = 'entry.cpp root_domain.cpp ../../interfaces/frames_module_interface.cpp ../../interfaces/mmu_module_interface.cpp'.split()
-    rdom.env = bld.env_of_name('KERNEL_ENV').copy()
-    rdom.env.append_unique('LINKFLAGS', ['-r']); # Components are relocatable
-    rdom.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,root_domain.map'])
-    rdom.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99'
-    rdom.uselib_local = 'component_support platform minruntime kernel common'
-    rdom.target = 'root_domain.comp'
-
-    bld.new_task_gen(
-        source = 'root_domain.comp',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'module nm undef check',
-        after = 'cxx_link'
-    )
+    mod = bld.setup_module_build(bld, 'root_domain')
+    mod.source = 'entry.cpp root_domain.cpp'.split()
+    mod.idl_source = 'all_idl'
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

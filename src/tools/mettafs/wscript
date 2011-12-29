@@ -4,7 +4,7 @@
 def build(bld):
     mkfs = bld.new_task_gen('cxx', 'program')
     mkfs.name = 'mkmettafs'
-    mkfs.source = 'mkfs.cpp block_device.cpp'
+    mkfs.source = 'mkfs.cpp block_device.cpp block_cache.cpp'
     mkfs.env = bld.env_of_name('TOOLS_ENV').copy()
     mkfs.includes = '. ../../kernel/generic ../../runtime ../../kernel/arch/x86' # only for fourcc.h
     mkfs.uselib_local = 'toolruntime'

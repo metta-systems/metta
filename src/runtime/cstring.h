@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -29,7 +29,7 @@ struct string_utf8_trait
 
 struct string_utf16_trait
 {
-    typedef uint32_t code_point;
+    typedef uint32_t code_point; // should be uint16_t for utf16, i think
 
     size_t get_sequence_length(const char data) const;
     code_point get_code_point(const char* data) const;
@@ -41,19 +41,21 @@ class string_t
 public:
     typedef typename string_type_trait::code_point code_point;
 
-    string_t() : size(0), data(0) {}
-    string_t(const char* data);
+    string_t() : data(0), size(0) {}
+    string_t(const char* data) : data(const_cast<char*>(data)), size(~0) {} // calculate size lazily..
 
-    size_t length() { return size; }
+    size_t length() const { ++length_ncalls; if (size == ~0UL) size = memutils::string_length(data); return size; }
 
     bool operator ==(const string_t<string_type_trait>& other) const;
     bool operator ==(const string_t<string_type_trait>::code_point* other) const;
 
 private:
     char*  data;
-    size_t size;
+    mutable size_t size;
     size_t cp_length;
 
+    static size_t length_ncalls;
+    static size_t operator_eq_ncalls;
 /*    struct data
     {
         atomic_count ref;
@@ -71,23 +73,22 @@ private:
 };
 
 template<class string_type_trait>
-string_t<string_type_trait>::string_t(const char* data)
-    : data(const_cast<char*>(data))
-    , size(memutils::string_length(data))
+bool string_t<string_type_trait>::operator ==(const string_t<string_type_trait>& other) const
 {
+    return (length() == other.length()) && memutils::is_memory_equal(data, other.data, length());
 }
 
 template<class string_type_trait>
-bool string_t<string_type_trait>::operator ==(const string_t<string_type_trait>& other) const
-{
-    return (size == other.size) && memutils::is_memory_equal(data, other.data, size);
-}
+size_t string_t<string_type_trait>::length_ncalls = 0;
+template<class string_type_trait>
+size_t string_t<string_type_trait>::operator_eq_ncalls = 0;
 
 template<class string_type_trait>
 bool string_t<string_type_trait>::operator ==(const string_t<string_type_trait>::code_point* other) const
 {
-    // FIXME: use string_type_trait::str_length
-    return (size == memutils::string_length(other)) && memutils::is_memory_equal(data, other, size);
+    // FIXME: use string_type_trait::str_length TODO: looks like this is a bottleneck for elf-loader!
+    ++operator_eq_ncalls;
+    return (length() == memutils::string_length(other)) && memutils::is_memory_equal(data, other, length());
 }
 
 typedef string_t<string_ascii_trait> cstring_t;

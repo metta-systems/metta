@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -31,7 +31,7 @@ default_console_t::default_console_t()
 
 void default_console_t::clear()
 {
-    memutils::fill_memory((void*)(videoram), 0, LINE_PITCH*LINE_COUNT);
+    memutils::clear_memory((void*)videoram, LINE_PITCH*LINE_COUNT);
     locate(0,0);
     attr = 0x07;
 }
@@ -113,7 +113,7 @@ void default_console_t::print_byte(unsigned char n)
 }
 
 /*! Print hexadecimal integer */
-void default_console_t::print_hex(unsigned int n)
+void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
     for(int i = 4; i > 0; i--)
