@@ -171,6 +171,16 @@ std::vector<cache_block_t*> block_cache_t::get_blocks(size_t nblocks, size_t blo
 	return ret;
 }
 
+size_t block_cache_t::byte_read(deviceno_t device, off_t byte_offset, void* data, size_t nbytes)
+{
+	return -1;
+}
+
+size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const void* data, size_t nbytes)
+{
+	return -1;
+}
+
 /*!
  * @returns number of blocks successfully read.
  */

@@ -86,4 +86,8 @@ public:
 
 	size_t cached_read(deviceno_t device, block_device_t::blockno_t block_n, void* data, size_t nblocks, size_t block_size);
 	size_t cached_write(deviceno_t device, block_device_t::blockno_t block_n, const void* data, size_t nblocks, size_t block_size);
+
+	// helper functions for the vfs layer, they will figure out the block size themselves
+	size_t byte_read(deviceno_t device, off_t byte_offset, void* data, size_t nbytes);
+	size_t byte_write(deviceno_t device, off_t byte_offset, const void* data, size_t nbytes);
 };
