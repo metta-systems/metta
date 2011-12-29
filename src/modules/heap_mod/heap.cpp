@@ -189,6 +189,8 @@ void heap_t::coalesce_move_blocks(int32_t index)
         if (new_index != free_block->index)
         {
             *ptr = free_block->next;
+            new_index = OTHER_INDEX; // FIXME: hack to make get_new_block_internal find this block even if it's in
+            // a smaller free list than "all sizes"... redo this properly
             free_block->next = blocks[new_index];
             blocks[new_index] = free_block;
             free_block->index = new_index;
@@ -249,6 +251,8 @@ heap_t::heap_rec_t* heap_t::get_new_block(size_t size, int index)
 
     if ((new_free_block = get_new_block_internal(size, index)))
         return new_free_block;
+
+    // TODO: grow heap if still no space (by approx size + half the current size: flesh out the right numbers)
 
     return 0;
 }
@@ -465,6 +469,7 @@ void heap_t::check_integrity()
             next_header = NULL;
     }
     //TODO: check free-lists
+    //TODO: add block checksums for debug heap - should be an instance parameter!
     kconsole << "<= Heap: completed heap check." << endl;
 #endif
 }
