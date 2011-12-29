@@ -7,31 +7,21 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "block_device.h"
+#include "block_device_mapper.h"
 #include "block_cache.h"
 #include <uuid/uuid.h>
 #include "superblock.h"
 #include "memutils.h"
 #include "fourcc.h"
 #include "macros.h"
-#include <stdio.h>
+#include <iostream>
+#include <cassert>
 
 // block_cache_t calls block device by a given id (via read_blocks and write_blocks)
 // block_device_mapper_t transforms I/O requests from block_cache_t into calls on appropriate device
 // block_device_t is uncached
 // VFS layer can then read and write device blocks via the cache layer, 
 // VFS -> block_cache -> device_mapper -> block_device
-
-class block_device_mapper_t
-{
-    block_cache_t* cache;
-
-public:
-    block_device_mapper_t() {}
-    void map_device(block_device_t&, const char*) {}
-    deviceno_t resolve_device(const char*) const { return -1; }
-    void set_cache(block_cache_t& c) { cache = &c; }
-    block_cache_t& get_cache() const { return *cache; }
-};
 
 class vfs_t
 {
@@ -40,7 +30,12 @@ class vfs_t
 public:
     vfs_t() : device_mapper() {}
 
-    void set_cache(block_cache_t& cache) { device_mapper.set_cache(cache); }
+    void set_cache(block_cache_t& cache)
+    {
+        cache.set_device_mapper(device_mapper);
+        device_mapper.set_cache(cache);
+    }
+
     deviceno_t mount(block_device_t& dev, const char* name)
     {
         device_mapper.map_device(dev, name); // atomically assign an unique device id
@@ -49,8 +44,7 @@ public:
 
     bool unmount(const char* name)
     {
-        // return device_mapper.flush_cache(mounted(name));
-        return true;
+        return device_mapper.unmap_device(mounted(name));
     }
 
     deviceno_t mounted(const char* name)
@@ -58,13 +52,13 @@ public:
         return device_mapper.resolve_device(name);        
     }
 
-    size_t read(deviceno_t device, off_t byte_offset, void* buffer, size_t size)
+    size_t read(deviceno_t device, off_t byte_offset, char* buffer, size_t size)
     {
         // LOCK
         block_cache_t& cache = device_mapper.get_cache();
         return cache.byte_read(device, byte_offset, buffer, size);
     }
-    size_t write(deviceno_t device, off_t byte_offset, void* buffer, size_t size)
+    size_t write(deviceno_t device, off_t byte_offset, const char* buffer, size_t size)
     {
         // LOCK
         block_cache_t& cache = device_mapper.get_cache();
@@ -78,6 +72,7 @@ static vfs_t vfs;
 const int sectorsize = 4096;
 const int nodesize = 4096;
 const int leafsize = 4096;
+const int BLOCK_SIZE = 4096;
 
 /*
  * fs super
@@ -132,7 +127,7 @@ int make_fs(deviceno_t device, size_t num_bytes, const char* label)
 //     dev_item_t dev_item;        // [123]
     memutils::copy_string(super.label, label, sizeof(super.label));
 
-    vfs.write(device, 0, &super, sizeof(super));
+    vfs.write(device, 0, reinterpret_cast<const char*>(&super), BLOCK_SIZE); //sizeof(super));
 
     // generate first root of roots tree
 
@@ -151,7 +146,7 @@ int main(int argc, char** argv)
     int create = atoi(argv[2]);
     size_t size = atoi(argv[3]);
     block_cache_t cache(256);
-    block_device_t dev(fname, create);
+    block_device_t dev(fname, create, BLOCK_SIZE);
     //block_device_t dev(fname, create, sectorsize, size / sectorsize);
 
     vfs.set_cache(cache);

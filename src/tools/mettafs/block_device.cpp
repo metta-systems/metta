@@ -23,7 +23,12 @@ block_device_t::block_device_t(const std::string& name, bool create, blocksize_t
 
 block_device_t::~block_device_t()
 {
-    delete storageFile;
+    close();
+}
+
+void block_device_t::close()
+{
+    delete storageFile; // TODO: no matching open()
 }
 
 /*!
@@ -50,7 +55,7 @@ block_device_t::blockno_t block_device_t::pos()
 /*!
  * Read and write functions operate on whole blocks of specific size.
  */
-block_device_t::blocksize_t block_device_t::read_block(block_device_t::blockno_t block, char* buffer, size_t bufSize)
+block_device_t::blocksize_t block_device_t::read_block(block_device_t::blockno_t block, char* buffer, block_device_t::blocksize_t bufSize)
 {
     storageFile->seekg(block * blockSize);
     if (bufSize % blockSize)
