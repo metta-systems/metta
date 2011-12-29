@@ -1,27 +1,28 @@
 #include "block_cache.h"
+#include "block_device_mapper.h"
 #include "panic.h"
 #include <string.h> // memcpy
 #include <cstdio>
 #include <cassert>
+#include <iostream> // debug
 
 //=====================================================================================================================
 // System-dependent functions to read and write blocks for now...
 //=====================================================================================================================
 
-size_t block_cache_t::read_blocks(deviceno_t device, block_device_t::blockno_t block_n, void* data, size_t nblocks, size_t block_size)
+void block_cache_t::set_device_mapper(block_device_mapper_t& mapper)
 {
-	// FIXME: replace with accesses to block_device_t
-	lseek(device, block_n * block_size, SEEK_SET);
-	ssize_t ret = read(device, data, nblocks * block_size);
-	return (ret == -1) ? 0 : (ret / block_size);
+	device_mapper = &mapper;
 }
 
-size_t block_cache_t::write_blocks(deviceno_t device, block_device_t::blockno_t block_n, const void* data, size_t nblocks, size_t block_size)
+size_t block_cache_t::read_blocks(deviceno_t device, block_device_t::blockno_t block_n, char* data, size_t nblocks, size_t block_size)
 {
-	// FIXME: replace with accesses to block_device_t
-	lseek(device, block_n * block_size, SEEK_SET);
-	ssize_t ret = write(device, data, nblocks * block_size);
-	return (ret == -1) ? 0 : (ret / block_size);
+	return device_mapper->read(device, block_n, data, nblocks * block_size);
+}
+
+size_t block_cache_t::write_blocks(deviceno_t device, block_device_t::blockno_t block_n, const char* data, size_t nblocks, size_t block_size)
+{
+	return device_mapper->write(device, block_n, data, nblocks * block_size);
 }
 
 //=====================================================================================================================
@@ -171,14 +172,32 @@ std::vector<cache_block_t*> block_cache_t::get_blocks(size_t nblocks, size_t blo
 	return ret;
 }
 
-size_t block_cache_t::byte_read(deviceno_t device, off_t byte_offset, void* data, size_t nbytes)
+void block_cache_t::set_device_block_size(deviceno_t dev, size_t block_size)
+{
+	device_block_sizes[dev] = block_size;
+}
+
+size_t block_cache_t::get_block_size(deviceno_t dev)
+{
+	return device_block_sizes[dev];
+}
+
+size_t block_cache_t::byte_read(deviceno_t device, off_t byte_offset, char* data, size_t nbytes)
 {
 	return -1;
 }
 
-size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const void* data, size_t nbytes)
+size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const char* data, size_t nbytes)
 {
-	return -1;
+	// find the block size for device
+	// then do a cached_write
+	size_t block_size = get_block_size(device);
+	// For now assume precise block-addressing; in reality for added flexibility byte_writes should allow uneven positions and sizes.
+	assert(block_size);
+	assert((byte_offset % block_size) == 0);
+	assert((nbytes % block_size) == 0);
+	return write_blocks(device, byte_offset / block_size, data, nbytes / block_size, block_size); // write directly to disk for now, no buffering
+	// return cached_write(device, byte_offset / block_size, data, nbytes / block_size, block_size);
 }
 
 /*!
