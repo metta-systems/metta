@@ -29,6 +29,7 @@ block_device_t::~block_device_t()
 void block_device_t::close()
 {
     delete storageFile; // TODO: no matching open()
+    storageFile = 0;
 }
 
 /*!
