@@ -20,7 +20,7 @@
 // block_cache_t calls block device by a given id (via read_blocks and write_blocks)
 // block_device_mapper_t transforms I/O requests from block_cache_t into calls on appropriate device
 // block_device_t is uncached
-// VFS layer can then read and write device blocks via the cache layer, 
+// VFS layer can then read and write device blocks via the cache layer,
 // VFS -> block_cache -> device_mapper -> block_device
 
 class vfs_t
@@ -49,7 +49,7 @@ public:
 
     deviceno_t mounted(const char* name)
     {
-        return device_mapper.resolve_device(name);        
+        return device_mapper.resolve_device(name);
     }
 
     size_t read(deviceno_t device, off_t byte_offset, char* buffer, size_t size)
@@ -88,10 +88,17 @@ const int BLOCK_SIZE = 4096;
  * +-objid+4 etcetc
  */
 
-void calc_checksum(fs_superblock_t& super)
+struct btree_node_header_t : public btree_block_header_t
 {
-    // TODO: calc proper SHA1 checksum over sb
-    super.checksum_type = CHECKSUM_TYPE_SHA1;
+
+};
+
+void calc_checksum(btree_header_common_t& node, size_t bytes)
+{
+    memutils::fill_memory(node.checksum, 0, sizeof(node.checksum));
+/*    SHA256_Init(&ctx);
+    SHA256_Update(&ctx, (void *)&node, bytes);
+    SHA256_Final(node.checksum, &ctx);*/
 }
 
 extern "C" void panic(const char* message, const char* file, uint32_t line)
@@ -100,13 +107,12 @@ extern "C" void panic(const char* message, const char* file, uint32_t line)
     exit(-1);
 }
 
-int make_fs(deviceno_t device, size_t num_bytes, const char* label)
+int create_fs(deviceno_t device, size_t num_bytes, const char* label)
 {
     fs_superblock_t super;
+    memutils::fill_memory(&super, 0, sizeof(super));
 
     num_bytes = (num_bytes / sectorsize) * sectorsize;
-
-    memutils::fill_memory(&super, 0, sizeof(super));
 
     super.version = 1;
 //     uint8_t   checksum[CHECKSUM_SIZE];  // [  4] block data checksum
@@ -123,13 +129,28 @@ int make_fs(deviceno_t device, size_t num_bytes, const char* label)
     super.leaf_size = leafsize;
     super.checksum_type = CHECKSUM_TYPE_SHA1;
     super.root_level = 1;
-    calc_checksum(super);
 //     dev_item_t dev_item;        // [123]
     memutils::copy_string(super.label, label, sizeof(super.label));
 
+    calc_checksum(super, sizeof(super));
     vfs.write(device, 0, reinterpret_cast<const char*>(&super), BLOCK_SIZE); //sizeof(super));
 
     // generate first root of roots tree
+    btree_node_header_t root_node;
+    memutils::fill_memory(&root_node, 0, sizeof(root_node));
+    root_node.version = 1;
+    memutils::copy_memory(root_node.fsid, super.fsid, sizeof(root_node.fsid));
+    root_node.block_offset = 1*sectorsize;             // which block this node is supposed to live in
+    root_node.level = 1;
+    root_node.generation = 1;
+    uuid_generate(root_node.chunk_tree_uuid);
+    root_node.owner = 0;
+    root_node.numItems = 9999;
+    calc_checksum(root_node, sizeof(root_node));
+
+    // stuff some nodes right next to the root node to make it load faster.
+
+    vfs.write(device, BLOCK_SIZE, reinterpret_cast<const char*>(&root_node), BLOCK_SIZE); //sizeof(root_node));
 
     return 1;
 }
@@ -147,16 +168,19 @@ int main(int argc, char** argv)
     size_t size = atoi(argv[3]);
     block_cache_t cache(256);
     block_device_t dev(fname, create, BLOCK_SIZE);
-    //block_device_t dev(fname, create, sectorsize, size / sectorsize);
 
     vfs.set_cache(cache);
     deviceno_t device = vfs.mount(dev, "arbitrary_name");
- 
-    //vfs.write(device, buffer, offset, size);
 
-    make_fs(device, size, "test_fs");
+    std::cerr << "Unwritten blocks before: " << cache.unwritten_blocks() << std::endl;
+
+    create_fs(device, size, "test_fs");
+
+    std::cerr << "Unwritten blocks after: " << cache.unwritten_blocks() << std::endl;
 
     vfs.unmount("arbitrary_name");
+    std::cerr << "Unwritten blocks after unmount: " << cache.unwritten_blocks() << std::endl;
+    return 0;
 }
 
 // kate: indent-width 4; replace-tabs on;
