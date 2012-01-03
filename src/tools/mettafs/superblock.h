@@ -26,6 +26,8 @@
 
 #include "types.h"
 
+typedef uint64_t fs_location_t; // All addressing is made using 64-bit byte offsets, so the FS is totally block-size agnostic.
+
 /*!
  * Structure common to several block headers in FS, including superblock and node/leaf block headers.
  */
@@ -40,7 +42,7 @@ struct btree_header_common_t
     uint32_t  version;                  // [  0] block format version (for fs live migration)
     uint8_t   checksum[CHECKSUM_SIZE];  // [  4] block data checksum
     uint8_t   fsid[FS_UUID_SIZE];       // [ 36] parent filesystem id
-    uint64_t  block_offset;             // [ 52] which block this node is supposed to live in
+    fs_location_t  block_offset;        // [ 52] which block this node is supposed to live in
 
     uint64_t  flags;                    // [ 60] not related to validity, but matches generic header format for different trees.
 }; // 68 bytes
@@ -71,7 +73,7 @@ class fs_superblock_t : public btree_header_common_t
 public:
     uint64_t magic;             // [ 68] 'MeTTaFS1' in network (big-engian) order
     uint64_t generation;        // [ 76]
-    uint64_t root;              // [ 84] location of "root of roots" tree
+    fs_location_t root;         // [ 84] location of "root of roots" tree
 
     uint64_t total_bytes;       // [ 92]
     uint64_t bytes_used;        // [100]
