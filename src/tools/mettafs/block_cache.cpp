@@ -7,7 +7,7 @@
 #include <iostream> // debug
 
 //=====================================================================================================================
-// System-dependent functions to read and write blocks for now...
+// System-dependent functions to actually read and write blocks.
 //=====================================================================================================================
 
 void block_cache_t::set_device_mapper(block_device_mapper_t& mapper)
@@ -66,6 +66,10 @@ void cache_block_t::link_at_mru(cache_block_list_t* parent)
 		parent->mru->next_mru = this;
 	}
 	parent->mru = this;
+        if (!parent->lru)
+        {
+            parent->lru = this;
+        }
 }
 
 // Link at LRU side.
@@ -86,6 +90,10 @@ void cache_block_t::link_at_lru(cache_block_list_t* parent)
 		parent->lru->prev_lru = this;
 	}
 	parent->lru = this;
+        if (!parent->mru)
+        {
+            parent->mru = this;
+        }
 }
 
 void cache_block_t::unlink(cache_block_list_t* parent)
@@ -94,7 +102,7 @@ void cache_block_t::unlink(cache_block_list_t* parent)
 		prev_lru->next_mru = next_mru;
 	if (next_mru)
 		next_mru->prev_lru = prev_lru;
-	
+
 	if (parent->lru == this)
 		parent->lru = parent->lru->next_mru;
 	if (parent->mru == this)
@@ -127,6 +135,43 @@ cache_block_t* block_cache_t::block_lookup(deviceno_t device, block_device_t::bl
 		return (*it).second;
 	}
 	return NULL;
+}
+
+/*!
+ * Write out all cached blocks for device dev.
+ */
+bool block_cache_t::flush(deviceno_t dev)
+{
+    cache_block_t* blk = blocks.lru;
+    cache_block_t* prev_blk = 0;
+    while (blk) {
+        if (blk->is_busy() || (blk->device != dev)) {
+            std::cerr << "NOT flushing block " << blk->block_num << " because busy? " << blk->is_busy() << ", or wrong dev? " << (blk->device != dev) << std::endl;
+            blk = blk->next_mru;
+            continue;
+        }
+
+        std::cerr << "Flushing block " << blk->block_num << " of device " << dev << std::endl;
+
+        if (write_blocks(dev, blk->block_num, blk->data, 1, blk->block_size) != blk->block_size)
+            return false;
+
+        prev_blk = blk;
+        blk = blk->next_mru;
+        prev_blk->unlink(&blocks);
+    }
+    return true;
+}
+
+size_t block_cache_t::unwritten_blocks()
+{
+    size_t n = 0;
+    cache_block_t* blk = blocks.lru;
+    while (blk) {
+        ++n;
+        blk = blk->next_mru;
+    }
+    return n;
 }
 
 /*!
@@ -196,8 +241,8 @@ size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const cha
 	assert(block_size);
 	assert((byte_offset % block_size) == 0);
 	assert((nbytes % block_size) == 0);
-	return write_blocks(device, byte_offset / block_size, data, nbytes / block_size, block_size); // write directly to disk for now, no buffering
-	// return cached_write(device, byte_offset / block_size, data, nbytes / block_size, block_size);
+//	return write_blocks(device, byte_offset / block_size, data, nbytes / block_size, block_size); // write directly to disk for now, no buffering
+	return cached_write(device, byte_offset / block_size, data, nbytes / block_size, block_size);
 }
 
 /*!
@@ -225,7 +270,7 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
 			}
 			block_n++;
 			nblocks--;
-			buffer += block_size;	
+			buffer += block_size;
 		}
 		return actually_read;
 	}
@@ -284,12 +329,14 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
 
 size_t block_cache_t::cached_write(deviceno_t device, block_device_t::blockno_t block_n, const void* data, size_t nblocks, size_t block_size)
 {
-	cache_block_t* entry(0);
-	char* buffer = static_cast<char*>(const_cast<void*>(data));
+        cache_block_t* entry(0);
+        char* buffer = static_cast<char*>(const_cast<void*>(data));
 
-	while (nblocks)
-	{
-		entry = block_lookup(device, block_n);
+        std::cerr << "cached_write(dev " << device << ", block " << block_n << ", nblocks " << nblocks << ", block_size " << block_size << std::endl;
+
+        while (nblocks)
+        {
+                entry = block_lookup(device, block_n);
 		if (entry)
 		{
 			assert(entry->block_size == block_size);
@@ -298,6 +345,8 @@ size_t block_cache_t::cached_write(deviceno_t device, block_device_t::blockno_t 
 			memcpy(entry->data, buffer, block_size); // FIXME: replace this with a visitor pattern?
 
 			entry->set_dirty();
+                        entry->device = device;
+                        entry->block_num = block_n;
 
 			// Add block back at the start of the MRU list.
 			entry->link_at_mru(&blocks);
@@ -306,10 +355,21 @@ size_t block_cache_t::cached_write(deviceno_t device, block_device_t::blockno_t 
 		{
 			// Block is not found in the cache, create a new one (potentially pushing older blocks out of cache).
 			auto ents = get_blocks(1, block_size);
-			// entry = new cache_block_t(device, block_n, block_size);
-			// memcpy(entry->data, buffer, block_size); // FIXME: replace this with a visitor pattern?
-			// entry->set_dirty();
-			// add_new_block(entry);
+
+                        if (ents.size() < 1)
+                            PANIC("get_blocks failed");
+
+                        std::cerr << "New blocks allocated: " << ents.size() << std::endl;
+
+                        entry = ents[0];
+			memcpy(entry->data, buffer, block_size);
+
+			entry->set_dirty();
+                        entry->device = device;
+                        entry->block_num = block_n;
+
+			// Add block back at the start of the MRU list.
+			entry->link_at_mru(&blocks);
 		}
 
 		block_n++;

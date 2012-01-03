@@ -18,7 +18,7 @@ typedef uint32_t deviceno_t;
 struct cache_block_list_t
 {
 	cache_block_t* mru;
-	cache_block_t* lru;	
+	cache_block_t* lru;
 };
 
 class cache_block_t
@@ -43,6 +43,7 @@ public:
 
 	void set_dirty() { dirty = true; }
 	bool is_usable() { return !dirty && !busy/* && !locked*/; }
+        bool is_busy() const { return busy; }
 	size_t size() { return block_size; }
 
 	void link_at_mru(cache_block_list_t* parent);
@@ -99,7 +100,7 @@ public:
 	/*!
 	 * Finish all remaining operations on cache for device dev.
 	 */
-	bool flush(deviceno_t dev) { return true; }
+	bool flush(deviceno_t dev);
 
 	size_t cached_read(deviceno_t device, block_device_t::blockno_t block_n, void* data, size_t nblocks, size_t block_size);
 	size_t cached_write(deviceno_t device, block_device_t::blockno_t block_n, const void* data, size_t nblocks, size_t block_size);
@@ -107,4 +108,7 @@ public:
 	// helper functions for the vfs layer, they will figure out the block size themselves
 	size_t byte_read(deviceno_t device, off_t byte_offset, char* data, size_t nbytes);
 	size_t byte_write(deviceno_t device, off_t byte_offset, const char* data, size_t nbytes);
+
+        // debug stuff
+        size_t unwritten_blocks();
 };

@@ -30,3 +30,17 @@ I would estimate about 1,000,000 files with 20-50 tags each, up to 50,000,000 pr
 A hypergraph (where edge can point to more than two nodes and even other edges, called atoms) is a certainly interesting approach, excercised 
 by HyperGraphDB (Java, LGPL).
 
+
+
+objids are in a b+tree(s)
+objid refers to a blob with either file contents or tags
+
+
+superblock[pointer to root tree]
+root tree[root node of b+tree of objids]
+objids are keys, values are pointers to blocks
+version 1: do not use deduping, simply store blocks sequentially.
+for version 2:
+blocks are checksummed, checksum defines block location = (checksum%nblocks)+1
+what to do with collisions?
+
