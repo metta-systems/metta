@@ -8,7 +8,7 @@ def build(bld):
     mkfs.env = bld.env_of_name('TOOLS_ENV').copy()
     mkfs.includes = '. ../../kernel/generic ../../runtime ../../kernel/arch/x86' # only for fourcc.h
     mkfs.uselib_local = 'toolruntime'
-    mkfs.uselib = 'UUID'
+    mkfs.uselib = 'UUID OPENSSL'
     mkfs.target = 'mkmettafs'
 
 # kate: indent-width 4; replace-tabs on;
