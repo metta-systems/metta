@@ -17,6 +17,18 @@
 #include <iostream>
 #include <cassert>
 
+// SHA256 from openssl
+#include <openssl/sha.h>
+
+//raiser/btrfs style blocks:
+
+// use 4096 kb block size (or even 64kb?)
+// fill it up from two sides
+// left is keys, right is values
+
+// keys are fixed-size, hash id plus a block offset and size of the value
+//
+
 // block_cache_t calls block device by a given id (via read_blocks and write_blocks)
 // block_device_mapper_t transforms I/O requests from block_cache_t into calls on appropriate device
 // block_device_t is uncached
@@ -69,10 +81,10 @@ public:
 static vfs_t vfs;
 
 
-const int sectorsize = 4096;
-const int nodesize = 4096;
-const int leafsize = 4096;
-const int BLOCK_SIZE = 4096;
+static const int sectorsize = 4096;
+static const int nodesize = 4096;
+static const int leafsize = 4096;
+static const int BLOCK_SIZE = 4096;
 
 /*
  * fs super
@@ -86,19 +98,21 @@ const int BLOCK_SIZE = 4096;
  * +-objid+2 tag list item
  * +-objid+3 file extents item
  * +-objid+4 etcetc
+ *
+ *
+ * root: objid -> metadata lists mapping
+ * extents: objid -> blocklist mapping
+ *   extents are hashed, extents tree id is hash of hashes for faster calculation of updates. all extents are stored
+ *   in a list together with the hashes/ids.
  */
-
-struct btree_node_header_t : public btree_block_header_t
-{
-
-};
 
 void calc_checksum(btree_header_common_t& node, size_t bytes)
 {
+    SHA256_CTX ctx;
     memutils::fill_memory(node.checksum, 0, sizeof(node.checksum));
-/*    SHA256_Init(&ctx);
+    SHA256_Init(&ctx);
     SHA256_Update(&ctx, (void *)&node, bytes);
-    SHA256_Final(node.checksum, &ctx);*/
+    SHA256_Final(node.checksum, &ctx);
 }
 
 extern "C" void panic(const char* message, const char* file, uint32_t line)
@@ -136,7 +150,7 @@ int create_fs(deviceno_t device, size_t num_bytes, const char* label)
     vfs.write(device, 0, reinterpret_cast<const char*>(&super), BLOCK_SIZE); //sizeof(super));
 
     // generate first root of roots tree
-    btree_node_header_t root_node;
+    fs_node_t root_node;
     memutils::fill_memory(&root_node, 0, sizeof(root_node));
     root_node.version = 1;
     memutils::copy_memory(root_node.fsid, super.fsid, sizeof(root_node.fsid));
