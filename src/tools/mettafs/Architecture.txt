@@ -27,7 +27,7 @@ Number of Files :   773,272
 I would estimate about 1,000,000 files with 20-50 tags each, up to 50,000,000 properties.
 
 
-A hypergraph (where edge can point to more than two nodes and even other edges, called atoms) is a certainly interesting approach, excercised 
+A hypergraph (where edge can point to more than two nodes and even other edges, called atoms) is a certainly interesting approach, excercised
 by HyperGraphDB (Java, LGPL).
 
 
@@ -43,4 +43,10 @@ version 1: do not use deduping, simply store blocks sequentially.
 for version 2:
 blocks are checksummed, checksum defines block location = (checksum%nblocks)+1
 what to do with collisions?
+
+
+operations we need to be able to perform (and fast):
+- find blob given its hash
+- find blob given a (set of) tag(s)
+- find all or most recent versions of a blob (extents versioning should be easy to index)
 
