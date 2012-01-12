@@ -193,6 +193,7 @@ def configure(conf):
     #conf.env.append_unique('LINKFLAGS', ['-m32'])
     # set uselib
     conf.env.LIB_UUID = 'uuid'
+    conf.env.LIB_OPENSSL = 'ssl'
     conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
@@ -269,7 +270,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -321,7 +322,7 @@ def build(bld):
     kickstart.uselib_local = 'common platform minruntime'# kernel
 
     # Launcher
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     # TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
@@ -336,7 +337,7 @@ def build(bld):
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
     # It includes interrupt handlers and some minimal syscall processing.
-    
+
     # TODO: add nucleus_* code here, initialize glue before kernel startup??
     glue = bld.new_task_gen('cxx', 'program')
     glue.target = 'glue.sys'

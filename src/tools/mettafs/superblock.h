@@ -25,6 +25,7 @@
 #pragma once
 
 #include "types.h"
+#include "macros.h"
 
 typedef uint64_t fs_location_t; // All addressing is made using 64-bit byte offsets, so the FS is totally block-size agnostic.
 
@@ -45,7 +46,7 @@ struct btree_header_common_t
     fs_location_t  block_offset;        // [ 52] which block this node is supposed to live in
 
     uint64_t  flags;                    // [ 60] not related to validity, but matches generic header format for different trees.
-}; // 68 bytes
+} PACKED; // 68 bytes
 
 /*!
  * every tree block (node or leaf) starts with this header.
@@ -63,7 +64,7 @@ public:
     uint8_t chunk_tree_uuid[TREE_UUID_SIZE]; // [ 77]
     uint64_t owner;                          // [ 93]
     uint32_t numItems;                       // [101]
-}; // 105 bytes
+} PACKED; // 105 bytes
 
 /*!
  * Filesystem superblock.
@@ -85,9 +86,58 @@ public:
 //     dev_item_t dev_item;        // [123]
     char label[256];            // [???] filesystem label
     // TODO: add root trees links? see "root" above.
-}; // 379+ bytes
+} PACKED; // 379+ bytes
 
 static const uint16_t CHECKSUM_TYPE_SHA1 = 1;
+
+struct fs_ondisk_key_t {
+	uint64_t objectid;
+	uint8_t type;
+	uint64_t offset;
+} PACKED;
+
+struct fs_key_t {
+	uint64_t objectid;
+	uint8_t type;
+	uint64_t offset;
+} PACKED;
+
+
+/*
+ * A leaf is full of items. offset and size tell us where to find
+ * the item in the leaf (relative to the start of the data area)
+ */
+struct fs_item_t {
+	fs_ondisk_key_t key;
+	uint32_t offset;
+	uint32_t size;
+} PACKED;
+
+/*
+ * leaves have an item area and a data area:
+ * [item0, item1....itemN] [free space] [dataN...data1, data0]
+ *
+ * The data is separate from the items to get the keys closer together
+ * during searches.
+ */
+struct fs_leaf_t : public btree_block_header_t
+{
+    fs_item_t items[];
+} PACKED;
+
+/*
+ * all non-leaf blocks are nodes, they hold only keys and pointers to
+ * other blocks
+ */
+struct fs_key_ptr_t {
+	fs_ondisk_key_t key;
+	uint64_t blockptr;
+	uint64_t generation;
+} PACKED;
+
+struct fs_node_t : public btree_block_header_t {
+	fs_key_ptr_t ptrs[];
+} PACKED;
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
