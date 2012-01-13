@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, Task, Options, Configure, Utils, misc
+import os, sys, Task, Options, Configure, Utils, misc
 Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
@@ -17,11 +17,13 @@ include_dirs = 'kernel kernel/generic runtime'.split()
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
-#-fvisibility-inlines-hidden -fvisibility=hidden
-cflags = []
+cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
+
+# Lion has deprecated some OpenSSL stuff we use.
+flags += ['-Wno-deprecated-declarations']
 
 # Change default waf behaviour wrt extensions.
 def change_ext(self, ext):
@@ -168,6 +170,15 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
+    if os.environ.has_key('CROSS_CC'):
+        conf.env['CC'] = os.environ['CROSS_CC']
+        conf.env['LINK_CC'] = os.environ['CROSS_CC']
+    if os.environ.has_key('CROSS_CXX'):
+        conf.env['CXX'] = os.environ['CROSS_CXX']
+        conf.env['LINK_CXX'] = os.environ['CROSS_CXX']
+    conf.env.append_unique('CCFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('LINKFLAGS', ['-m32'])
 
     # Config for building system apps
     conf.setenv('APP_ENV')
@@ -183,18 +194,23 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    #conf.env['CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['CXX'] = '/Developer/usr/bin/g++'
-    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    #conf.env.append_unique('CCFLAGS', ['-m32'])
-    #conf.env.append_unique('CXXFLAGS', ['-m32'])
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
-    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    if os.environ.has_key('HOST_CC'):
+        conf.env['CC'] = os.environ['HOST_CC']
+        conf.env['LINK_CC'] = os.environ['HOST_CC']
+    if os.environ.has_key('HOST_CXX'):
+        conf.env['CXX'] = os.environ['HOST_CXX']
+        conf.env['LINK_CXX'] = os.environ['HOST_CXX']
+
     # set uselib
     conf.env.LIB_UUID = 'uuid'
-    conf.env.LIB_OPENSSL = 'ssl'
-    conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
+
+    if sys.platform == 'darwin':
+        conf.env.LIB_OPENSSL = 'crypto'
+    else:
+        conf.env.LIB_OPENSSL = 'ssl'
+
+    conf.env.LIBPATH_LLVM = '/Users/berkus/Tools/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
@@ -209,6 +225,7 @@ def configure(conf):
 
 def build(bld):
     arch = Options.options.arch
+    bld.add_subdirs("tools/mettafs")
 
     # Tool to parse interface files.
     # Build it first so that we can transform interface defitions to code during build.
@@ -224,7 +241,6 @@ def build(bld):
     meddler.post()
     bld.add_group()
 
-    bld.add_subdirs("tools/mettafs")
 
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']

@@ -1,7 +1,7 @@
 #include "block_cache.h"
 #include "block_device_mapper.h"
 #include "panic.h"
-#include <string.h> // memcpy
+#include "memutils.h"
 #include <cstdio>
 #include <cassert>
 #include <iostream> // debug
@@ -22,7 +22,7 @@ size_t block_cache_t::read_blocks(deviceno_t device, block_device_t::blockno_t b
 
 size_t block_cache_t::write_blocks(deviceno_t device, block_device_t::blockno_t block_n, const char* data, size_t nblocks, size_t block_size)
 {
-	return device_mapper->write(device, block_n, data, nblocks * block_size);
+    return device_mapper->write(device, block_n, data, nblocks * block_size);
 }
 
 //=====================================================================================================================
@@ -39,6 +39,7 @@ cache_block_t::cache_block_t(deviceno_t dev, block_device_t::blockno_t block_n, 
 	, prev_lru(0)
 {
 	data = new char [size];
+    assert(data);
 }
 
 cache_block_t::~cache_block_t()
@@ -96,7 +97,7 @@ void cache_block_t::link_at_lru(cache_block_list_t* parent)
         }
 }
 
-void cache_block_t::unlink(cache_block_list_t* parent)
+void cache_block_t::unlink_from(cache_block_list_t* parent)
 {
 	if (prev_lru)
 		prev_lru->next_mru = next_mru;
@@ -158,7 +159,9 @@ bool block_cache_t::flush(deviceno_t dev)
 
         prev_blk = blk;
         blk = blk->next_mru;
-        prev_blk->unlink(&blocks);
+        prev_blk->unlink_from(&blocks);
+        cache[std::make_pair(dev, prev_blk->block_num)] = 0;
+        delete prev_blk;
     }
     return true;
 }
@@ -207,7 +210,7 @@ std::vector<cache_block_t*> block_cache_t::get_blocks(size_t nblocks, size_t blo
 				blk = blk->next_mru;
 				continue;
 			}
-			blk->unlink(&blocks);
+			blk->unlink_from(&blocks);
 			ret.push_back(blk);
 			--nblocks;
 			break;
@@ -241,7 +244,6 @@ size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const cha
 	assert(block_size);
 	assert((byte_offset % block_size) == 0);
 	assert((nbytes % block_size) == 0);
-//	return write_blocks(device, byte_offset / block_size, data, nbytes / block_size, block_size); // write directly to disk for now, no buffering
 	return cached_write(device, byte_offset / block_size, data, nbytes / block_size, block_size);
 }
 
@@ -266,7 +268,7 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
 			{
 				assert(entry->block_size == block_size);
 				if (entry->dirty)
-					memcpy(entry->data, buffer, block_size); // Update read data with cache data (e.g. dirty blocks).
+					memutils::copy_memory(entry->data, buffer, block_size); // Update read data with cache data (e.g. dirty blocks).
 			}
 			block_n++;
 			nblocks--;
@@ -283,8 +285,8 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
 		{
 			assert(entry->block_size == block_size);
 			// Block is found in cache.
-			entry->unlink(&blocks); // Remove it from the list it is in, because it's going to be modified.
-			memcpy(buffer, entry->data, block_size); // FIXME: replace this with a visitor pattern?
+			entry->unlink_from(&blocks); // Remove it from the list it is in, because it's going to be modified.
+			memutils::copy_memory(buffer, entry->data, block_size); // FIXME: replace this with a visitor pattern?
 			// Add block back at the start of the MRU list.
 			entry->link_at_mru(&blocks);
 
@@ -329,53 +331,57 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
 
 size_t block_cache_t::cached_write(deviceno_t device, block_device_t::blockno_t block_n, const void* data, size_t nblocks, size_t block_size)
 {
-        cache_block_t* entry(0);
-        char* buffer = static_cast<char*>(const_cast<void*>(data));
+    cache_block_t* entry(0);
+    char* buffer = static_cast<char*>(const_cast<void*>(data));
+    size_t written = 0;
 
-        std::cerr << "cached_write(dev " << device << ", block " << block_n << ", nblocks " << nblocks << ", block_size " << block_size << std::endl;
+    std::cerr << "cached_write(dev " << device << ", block " << block_n << ", nblocks " << nblocks << ", block_size " << block_size << ")" << std::endl;
 
-        while (nblocks)
-        {
-                entry = block_lookup(device, block_n);
+    while (nblocks)
+    {
+        entry = block_lookup(device, block_n);
 		if (entry)
 		{
 			assert(entry->block_size == block_size);
-			// Block is found in cache.
-			entry->unlink(&blocks); // Remove it from the list it is in, because it's going to be modified.
-			memcpy(entry->data, buffer, block_size); // FIXME: replace this with a visitor pattern?
+			std::cerr << "Block is found in the cache." << std::endl;
+			entry->unlink_from(&blocks); // Remove it from the list it is in, because it's going to be modified.
+			memutils::copy_memory(entry->data, buffer, block_size); // FIXME: replace this with a visitor pattern?
 
 			entry->set_dirty();
-                        entry->device = device;
-                        entry->block_num = block_n;
+			entry->device = device;
+			entry->block_num = block_n;
 
 			// Add block back at the start of the MRU list.
 			entry->link_at_mru(&blocks);
+			cache[std::make_pair(device, block_n)] = entry;
 		}
 		else
 		{
 			// Block is not found in the cache, create a new one (potentially pushing older blocks out of cache).
 			auto ents = get_blocks(1, block_size);
 
-                        if (ents.size() < 1)
-                            PANIC("get_blocks failed");
+            if (ents.size() < 1)
+                PANIC("get_blocks failed");
 
-                        std::cerr << "New blocks allocated: " << ents.size() << std::endl;
+            std::cerr << "New blocks allocated: " << ents.size() << std::endl;
 
-                        entry = ents[0];
-			memcpy(entry->data, buffer, block_size);
+            entry = ents[0];
+			memutils::copy_memory(entry->data, buffer, block_size);
 
 			entry->set_dirty();
-                        entry->device = device;
-                        entry->block_num = block_n;
+            entry->device = device;
+            entry->block_num = block_n;
 
 			// Add block back at the start of the MRU list.
 			entry->link_at_mru(&blocks);
+            cache[std::make_pair(device, block_n)] = entry;
 		}
 
 		block_n++;
 		nblocks--;
 		buffer += block_size;
+        written += block_size;
 	}
 
-	return 0;
+	return written;
 }

@@ -81,10 +81,10 @@ public:
 static vfs_t vfs;
 
 
-static const int sectorsize = 4096;
+static const int sectorsize = 4096; // device-dependent, 512 bytes for HDD, 128K for MTD and so on
 static const int nodesize = 4096;
-static const int leafsize = 4096;
-static const int BLOCK_SIZE = 4096;
+static const int leafsize = 4096; // can easily be 64K or more
+static const int BLOCK_SIZE = 4096; // logical sector size
 
 /*
  * fs super
@@ -106,65 +106,70 @@ static const int BLOCK_SIZE = 4096;
  *   in a list together with the hashes/ids.
  */
 
-void calc_checksum(btree_header_common_t& node, size_t bytes)
+void calc_checksum(btree_header_common_t* node, size_t bytes)
 {
     SHA256_CTX ctx;
-    memutils::fill_memory(node.checksum, 0, sizeof(node.checksum));
+    memutils::fill_memory(node->checksum, 0, sizeof(node->checksum));
     SHA256_Init(&ctx);
-    SHA256_Update(&ctx, (void *)&node, bytes);
-    SHA256_Final(node.checksum, &ctx);
+    SHA256_Update(&ctx, node, bytes);
+    SHA256_Final(node->checksum, &ctx);
 }
 
 extern "C" void panic(const char* message, const char* file, uint32_t line)
 {
-    printf("%s\n", message);
+    printf("%s (%s:%d)\n", message, file, line);
     exit(-1);
 }
 
 int create_fs(deviceno_t device, size_t num_bytes, const char* label)
 {
-    fs_superblock_t super;
-    memutils::fill_memory(&super, 0, sizeof(super));
+    char buffer[BLOCK_SIZE];
+    uint8_t fsid[btree_header_common_t::FS_UUID_SIZE];
 
     num_bytes = (num_bytes / sectorsize) * sectorsize;
 
-    super.version = 1;
-//     uint8_t   checksum[CHECKSUM_SIZE];  // [  4] block data checksum
-    uuid_generate(super.fsid);
-    super.block_offset = 0;             // which block this node is supposed to live in
-    super.flags = 0;                    // [ 60] not related to validity, but matches generic header format for different trees.
-    super.magic = Magic64BE<'M','e','T','T','a','F','S','1'>::value;
-    super.generation = 1;
-    super.root = 1 * sectorsize;              // [ 84] location of "root of roots" tree
-    super.total_bytes = num_bytes;
-    super.bytes_used = 0;
-    super.sector_size = sectorsize;
-    super.node_size = nodesize;
-    super.leaf_size = leafsize;
-    super.checksum_type = CHECKSUM_TYPE_SHA1;
-    super.root_level = 1;
-//     dev_item_t dev_item;        // [123]
-    memutils::copy_string(super.label, label, sizeof(super.label));
+    uuid_generate(fsid);
 
-    calc_checksum(super, sizeof(super));
-    vfs.write(device, 0, reinterpret_cast<const char*>(&super), BLOCK_SIZE); //sizeof(super));
+    fs_superblock_t* super = reinterpret_cast<fs_superblock_t*>(buffer);
+    memutils::fill_memory(buffer, 0, sizeof(buffer));
+
+    super->version = 1;
+    memutils::copy_memory(super->fsid, fsid, sizeof(super->fsid));
+    super->block_offset = 0;             // which block this node is supposed to live in
+    super->flags = 0;                    // [ 60] not related to validity, but matches generic header format for different trees.
+    super->magic = Magic64BE<'M','e','T','T','a','F','S','1'>::value;
+    super->generation = 1;
+    super->root = 1 * sectorsize;              // [ 84] location of "root of roots" tree
+    super->total_bytes = num_bytes;
+    super->bytes_used = 0;
+    super->sector_size = sectorsize;
+    super->node_size = nodesize;
+    super->leaf_size = leafsize;
+    super->checksum_type = CHECKSUM_TYPE_SHA256;
+    super->root_level = 1;
+//     dev_item_t dev_item;        // [123]
+    memutils::copy_string(super->label, label, sizeof(super->label));
+    calc_checksum(super, BLOCK_SIZE);
+
+    vfs.write(device, 0, buffer, BLOCK_SIZE);
 
     // generate first root of roots tree
-    fs_node_t root_node;
-    memutils::fill_memory(&root_node, 0, sizeof(root_node));
-    root_node.version = 1;
-    memutils::copy_memory(root_node.fsid, super.fsid, sizeof(root_node.fsid));
-    root_node.block_offset = 1*sectorsize;             // which block this node is supposed to live in
-    root_node.level = 1;
-    root_node.generation = 1;
-    uuid_generate(root_node.chunk_tree_uuid);
-    root_node.owner = 0;
-    root_node.numItems = 9999;
-    calc_checksum(root_node, sizeof(root_node));
+    fs_node_t* root_node = reinterpret_cast<fs_node_t*>(buffer);
+    memutils::fill_memory(buffer, 0, sizeof(buffer));
+
+    root_node->version = 1;
+    memutils::copy_memory(root_node->fsid, fsid, sizeof(root_node->fsid));
+    root_node->block_offset = 1*sectorsize;             // which block this node is supposed to live in
+    root_node->level = 1;
+    root_node->generation = 1;
+    uuid_generate(root_node->chunk_tree_uuid);
+    root_node->owner = 0;
+    root_node->numItems = 0;
+    calc_checksum(root_node, BLOCK_SIZE);
 
     // stuff some nodes right next to the root node to make it load faster.
 
-    vfs.write(device, BLOCK_SIZE, reinterpret_cast<const char*>(&root_node), BLOCK_SIZE); //sizeof(root_node));
+    vfs.write(device, BLOCK_SIZE, buffer, BLOCK_SIZE);
 
     return 1;
 }
