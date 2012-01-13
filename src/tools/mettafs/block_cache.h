@@ -48,7 +48,7 @@ public:
 
 	void link_at_mru(cache_block_list_t* parent);
 	void link_at_lru(cache_block_list_t* parent);
-	void unlink(cache_block_list_t* parent);
+	void unlink_from(cache_block_list_t* parent);
 };
 
 class block_device_mapper_t;

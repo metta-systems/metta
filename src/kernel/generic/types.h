@@ -15,7 +15,7 @@
 #undef NULL
 #endif
 
-#define NULL 0
+#define NULL 0L
 
 #if __Metta__
 typedef uint32_t size_t;  // 32 bits build...
@@ -26,9 +26,8 @@ typedef ptrdiff_t offset_t;
 #include <unistd.h>
 #endif
 
-//typedef uint32_t uintptr_t;
+typedef uint32_t addr32_t; // This is for tool support on 64 bits hosts.
 
-typedef uint32_t addr_t;
 typedef uintptr_t address_t;          //!< Virtual address type.
 typedef uintptr_t physical_address_t; //!< Physical address type. Used in physical memory allocation.
 //typedef uint32_t hash_t;

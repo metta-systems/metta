@@ -10,6 +10,7 @@
 #include "macros.h"
 #include <fstream>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
@@ -23,11 +24,15 @@ block_device_t::block_device_t(const std::string& name, bool create, blocksize_t
 
 block_device_t::~block_device_t()
 {
-    close();
+    if (storageFile)
+        close();
 }
 
 void block_device_t::close()
 {
+    assert(storageFile);
+    assert(storageFile->good());
+    storageFile->close();
     delete storageFile; // TODO: no matching open()
     storageFile = 0;
 }
@@ -56,16 +61,16 @@ block_device_t::blockno_t block_device_t::pos()
 /*!
  * Read and write functions operate on whole blocks of specific size.
  */
-block_device_t::blocksize_t block_device_t::read_block(block_device_t::blockno_t block, char* buffer, block_device_t::blocksize_t bufSize)
+block_device_t::blocksize_t block_device_t::read_block(block_device_t::blockno_t block, char* buffer, block_device_t::blocksize_t bytes)
 {
-    storageFile->seekg(block * blockSize);
-    if (bufSize % blockSize)
+    if (bytes % blockSize)
     {
         std::cerr << "block read of non-block size buffer" << std::endl;
         return 0;
     }
-    storageFile->read(buffer, bufSize);
-    return bufSize;
+    storageFile->seekg(block * blockSize);
+    storageFile->read(buffer, bytes);
+    return bytes;
 }
 
 void block_device_t::write_block(block_device_t::blockno_t block, const char* buffer, block_device_t::blocksize_t bytes)

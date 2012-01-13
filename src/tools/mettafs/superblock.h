@@ -34,7 +34,7 @@ typedef uint64_t fs_location_t; // All addressing is made using 64-bit byte offs
  */
 struct btree_header_common_t
 {
-    static const int CHECKSUM_SIZE = 32;
+    static const int CHECKSUM_SIZE = 32; // can accomodate up to SHA-256 (256 bits of chksum)
     static const int FS_UUID_SIZE = 16;
     static const int TREE_UUID_SIZE = 16;
     /*!
@@ -88,7 +88,12 @@ public:
     // TODO: add root trees links? see "root" above.
 } PACKED; // 379+ bytes
 
-static const uint16_t CHECKSUM_TYPE_SHA1 = 1;
+// default supported SHA-2 checksum mode:
+static const uint16_t CHECKSUM_TYPE_SHA256 = 1;
+// checksumming should be done on whole blocks? unused space should always be set to zero in this case
+// this could make things significantly slower; another downside is that we need checksums of only
+// the actual payload in some cases. but FS block checksums can be different from the payload checksums
+// in the extents tree.
 
 struct fs_ondisk_key_t {
 	uint64_t objectid;
