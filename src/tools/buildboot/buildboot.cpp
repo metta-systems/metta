@@ -347,10 +347,10 @@ bool module_info::write_module_header(file& out, uintptr_t& data_offset, int in_
 
     int name_s_a = name.size() + 1;
 
-    data_offset += 24; /*sizeof(output mod)*/
+    data_offset += SIZEOF_ONDISK_MODULE;
 
     mod.tag = bootimage_n::kind_module;
-    mod.length = sizeof(mod) + name_s_a + ns_size + in_size;
+    mod.length = SIZEOF_ONDISK_MODULE + name_s_a + ns_size + in_size;
     mod.address = data_offset + name_s_a + ns_size;
     mod.size = in_size;
     mod.name = (const char*)data_offset;
@@ -370,10 +370,10 @@ bool module_info::write_root_domain_header(file& out, uintptr_t& data_offset, in
 
     int name_s_a = name.size() + 1;
 
-    data_offset += 28; /*sizeof(output rdom)*/
+    data_offset += SIZEOF_ONDISK_ROOT_DOMAIN;
 
     rdom.tag = bootimage_n::kind_root_domain;
-    rdom.length = 28/*sizeof(output rdom)*/ + name_s_a + ns_size + in_size;
+    rdom.length = SIZEOF_ONDISK_ROOT_DOMAIN + name_s_a + ns_size + in_size;
     rdom.address = data_offset + name_s_a + ns_size;
     rdom.size = in_size;
     rdom.name = (const char*)data_offset;
@@ -390,7 +390,7 @@ bool module_info::write_root_domain_header(file& out, uintptr_t& data_offset, in
 
 bool module_info::write(file& out, uintptr_t& data_offset)
 {
-    size_t header_size = name == "root_domain" ? sizeof(bootimage_n::root_domain_t) : sizeof(bootimage_n::module_t);
+    size_t header_size = name == "root_domain" ? SIZEOF_ONDISK_ROOT_DOMAIN : SIZEOF_ONDISK_MODULE;
     file in_data(file_name, ios::in | ios::binary);
     size_t in_size = in_data.size();
 

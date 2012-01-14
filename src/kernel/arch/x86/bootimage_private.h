@@ -60,10 +60,14 @@ struct module_t : public namespace_t
     address_t local_namespace_offset;
 };
 
+#define SIZEOF_ONDISK_MODULE 24
+
 struct root_domain_t : public module_t
 {
     uintptr_t entry_point;
 };
+
+#define SIZEOF_ONDISK_ROOT_DOMAIN 28
 
 struct namespace_entry_t
 {
