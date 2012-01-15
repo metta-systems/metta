@@ -1,0 +1,119 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+# Several parts of a Metta system need to associate string names
+# with objects in some context.  Trading, file directory services,
+# local name space management, and environments for machine booting
+# and domain initialisation are all examples.  The "naming_context" interface
+# provides a general abstraction for this purpose.
+
+# A "naming_context" is a partial map from arc-names to "type.any"s
+# (arbitrary values tagged with their type codes). An arc-name is a non-empty
+# string which does not contain either of the separator characters defined
+# below.
+#
+# A naming network of arbitrary topology can be built by registering
+# one "context" in another.  For convenience, the procedures in the
+# "context" interface interpret pathnames.  Pathnames have the
+# syntax:
+#
+# Pathname  = ArcName { Separator ArcName }
+# Separator = '.'
+# ArcName   = [^.] { [^.] }
+
+local interface naming_context_v1
+{
+    #
+    # Exceptions
+    #
+
+    # "naming_context" operations may raise various exceptions:
+
+    exception not_found { string name; }
+    # May be raised when no binding for an arc-name exists.
+
+    exception not_context {}
+    # Raised when mapping an arc in a pathname produces a non-"context" result.
+
+    exception exists {}
+    # Raised when a binding for an arc-name already exists.
+
+    exception denied {}
+    # Raised when the requested access to a context is denied.
+
+    #
+    # Operations
+    #
+
+    # The following type is used for listing names in a context:
+    sequence<string> names;
+
+    # List all available names in a current context.
+    list() returns (names nl) raises (heap_v1.no_memory);
+
+    # "get" maps pathnames to objects relative to the current context.
+    #
+    # Let "arc" be the first arc-name in "name".  If "arc" is not bound
+    # in the current context, return "false".  Otherwise, if "arc" and
+    # "name" are equal,  set "obj := map[name]" and return "true".
+    #
+    # Otherwise, "name" is a pathname and "arc" should be bound to a
+    # "naming_context".  Let "next_cx" be "map[arc]".  If "next_cx" is not a
+    # "type.any" for a "naming_context", raise the "not_context" exception.
+    # Otherwise, let "rest" be the result of removing the first arc-name
+    # and separator from "name", and return the result of invoking
+    # "get(rest, obj)" on "next_cx".
+    get(string name, out type.any obj) returns (bool present) raises (not_context, denied);
+
+    # "Add" binds an object to a pathname relative to the current context.
+    #
+    # If "name" is a pure arc-name, then if it is not bound in the
+    # current context, set "map[name]" to "obj" and return.  If it is
+    # bound, raise "exists".
+    #
+    # Otherwise, "name" is a pathname; in this case, recursively call
+    # "add(rest, obj)" on "next_cx" after checking that the first "arc"
+    # of "name" is bound to a "type.any" for a "naming_context", as for "get".
+    # If "arc" is not bound to anything, raise "not_found". If "arc" is
+    # bound but not to a context, raise "not_context".
+    add(string name, in type.any obj) returns () raises (exists, not_context, not_found, denied);
+
+    # "Remove" deletes the binding for a pathname relative to the current
+    # context.
+    #
+    # If "name" is a pure arc-name, and is bound in this context then
+    # remove the binding for "map[name]".  If "name" is pure and is not
+    # bound then raise "not_found". Otherwise, recurse as for "add".
+    #
+    # Although the semantics of "get", "add" and "remove" for the case
+    # of pathnames have been defined recursively, implementations may
+    # choose to interpret more than one arc-name in each call.  This
+    # potentially avoids the creation of "Context"s for internal nodes
+    # in a naming graph, but raises the question of what happens when
+    # a name denoting such an internal context is presented to be
+    # resolved.
+    remove(string name) returns () raises (not_context, not_found, denied);
+
+    # "Dup" duplicates the context graph rooted at the current context
+    # in the "Heap" "h", applying the translations "xl".
+    #
+    # Each "(name, val)" binding in the current context is copied to
+    # the new context as "(name, xl [val])".  If "xl" is "NULL" or
+    # "val" $\not\in$ "dom(xl)", the original binding is copied unchanged
+    # except that subcontexts are recursively duplicated and "STRING"s
+    # are copied to "h".  In the future, a different copying policy for large
+    # values may be employed.
+    duplicate(heap_v1& h, word_table_v1& xlat) returns (naming_context_v1& copy) raises (heap_v1.no_memory, denied);
+
+    # Finally, "Destroy" disposes of the current context.
+    destroy() returns () raises (denied);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

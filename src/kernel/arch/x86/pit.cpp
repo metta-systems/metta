@@ -1,6 +1,15 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #include "cpu.h"
 #include "infopage.h"
-#include "timer_impl.h"
+#include "timer_v1_interface.h"
+#include "timer_v1_impl.h"
 #include "default_console.h"
 
 // Based on http://wiki.osdev.org/Programmable_Interval_Timer
@@ -44,27 +53,27 @@ static void init_pit(int hz)
     x86_cpu_t::outb(PIT_CH0, (divisor >> 8) & 0xff);
 }
 
-struct timer_state : information_page_t
+struct timer_v1::state_t : information_page_t
 {
 };
 
 // Timer ops.
-static time_ns read(timer_closure* self)
+static time_v1::ns read(timer_v1::closure_t* self)
 {
-    return self->state->now;
+    return self->d_state->now;
 }
 
-static void set(timer_closure* self, time_ns time)
+static void arm(timer_v1::closure_t* self, time_v1::ns time)
 {
-    self->state->alarm = time;
+    self->d_state->alarm = time;
 }
 
-static time_ns clear(timer_closure* /*self*/, time_ns* /*itime*/)
+static time_v1::ns clear(timer_v1::closure_t* /*self*/, time_v1::ns* /*itime*/)
 {
     return 0;
 }
 
-static void enable(timer_closure* /*self*/)
+static void enable(timer_v1::closure_t* /*self*/, uint32_t /*sirq*/)
 {
     kconsole << "timer.enable()" << endl;
 //     interrupt_descriptor_table_t::instance().set_interrupt(?, ?);
@@ -72,21 +81,28 @@ static void enable(timer_closure* /*self*/)
 
 // Timer closure set up.
 
-static timer_ops ops = {
+static const timer_v1::ops_t ops = 
+{
     read,
-    set,
+    arm,
     clear,
     enable
 };
 
 // Timer state is in the infopage.
-static timer_closure timer;// = { methods: &ops, state: INFO_PAGE_ADDR };
+static timer_v1::closure_t timer =
+{
+    &ops,
+    reinterpret_cast<timer_v1::state_t*>(information_page_t::ADDRESS)
+};
 
-timer_closure* init_timer()
+timer_v1::closure_t* init_timer()
 {
     kconsole << "Initializing interrupt timer." << endl;
     init_pit(100);
-    timer.methods = &ops;
-    timer.state = reinterpret_cast<timer_state*>(INFO_PAGE_ADDR);
     return &timer;
 }
+
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

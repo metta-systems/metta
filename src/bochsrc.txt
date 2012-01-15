@@ -6,7 +6,11 @@ megs: 128
 mouse: enabled=0
 magic_break: enabled=1
 port_e9_hack: enabled=1
-display_library: carbon
+display_library: nogui
+#term
+#nogui
+#x
+#carbon
 #x, options="gui_debug"
 #config_interface: wx
 debugger_log: debugger.log

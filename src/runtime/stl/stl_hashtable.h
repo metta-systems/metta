@@ -257,6 +257,7 @@ public:
       _M_buckets(__a),
       _M_num_elements(0)
   {
+      do_checkpoint(__PRETTY_FUNCTION__);
     _M_initialize_buckets(__n);
   }
 
@@ -271,6 +272,7 @@ public:
       _M_buckets(__a),
       _M_num_elements(0)
   {
+      do_checkpoint(__PRETTY_FUNCTION__);
     _M_initialize_buckets(__n);
   }
 
@@ -1044,6 +1046,9 @@ void hashtable<_Val,_Key,_HF,_Ex,_Eq,_All>
   }
   __STL_UNWIND(clear());
 }
+
+template <class _Val, class _Key, class _HashFcn, class _ExtractKey, class _EqualKey, class _Alloc>
+struct uses_lakos_allocator<hashtable<_Val,_Key,_HashFcn,_ExtractKey,_EqualKey,_Alloc>> : is_lakos_allocator<_Alloc> {};
 
 __STL_END_NAMESPACE
 

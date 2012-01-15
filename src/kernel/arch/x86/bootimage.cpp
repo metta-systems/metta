@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,6 +10,8 @@
 #include "bootimage_private.h"
 #include "default_console.h"
 #include "memutils.h"
+#include "panic.h"
+#include "config.h"
 
 using namespace bootimage_n;
 
@@ -56,10 +58,15 @@ static void dump_rootdom(root_domain_t* dom, address_t location)
 
 static info_t find_entry(address_t location, address_t end, kind_e kind, const char* name)
 {
+    ASSERT(sizeof(header_t)==8);
+
     info_t info;
     info.generic = reinterpret_cast<char*>(location + sizeof(header_t));
     while (info.generic < (char*)end)
     {
+#if BOOTIMAGE_DEBUG
+        kconsole << "location " << (address_t)info.generic << " moving by " << info.rec->length << endl;
+#endif
         if (info.rec->tag == kind)
         {
 #if BOOTIMAGE_DEBUG
@@ -74,9 +81,6 @@ static info_t find_entry(address_t location, address_t end, kind_e kind, const c
                 return info;
             }
         }
-#if BOOTIMAGE_DEBUG
-        kconsole << "location " << (address_t)info.generic << " moving by " << info.rec->length << endl;
-#endif
         info.generic += info.rec->length;
     }
     info.generic = 0;

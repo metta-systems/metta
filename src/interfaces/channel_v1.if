@@ -1,0 +1,70 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Events are transmitted between virtual processors over event
+# channels.  User code does not normally manipulate channels; instead,
+# it uses associated event counts via its user-level scheduler.  The
+# "Channel" interface defines the channel-related types used by lower
+# levels.
+
+local interface channel_v1
+{
+    #===================================================================================================================
+    # Types
+    #===================================================================================================================
+
+    # An event channel is a (tx, rx) pair of endpoints.  Endpoints
+    # are stored in per-domain memory at the kernel level.
+    # An endpoint is identified within its domain by an "Endpoint".
+    
+    type card32 endpoint; # Opaque
+
+    # An "Endpoint" is either the receive ("RX") end or the transmit
+    # ("TX") end of a channel.
+
+    type endpoint rx;
+    type endpoint tx;
+    enum { rx, tx } endpoint_type;
+
+    # An endpoint is either "Free" or allocated.  A newly
+    # allocated endpoint is in state "Local".  While its
+    # channel is open, the endpoint is in state "Connected".
+    # An endpoint of a closed channel is in state "Dead".
+    #
+    # An endpoint makes transitions between these states as a result
+    # of actions by the binder.
+
+    enum { free, local_, connected, dead } state_e;
+
+    # For inter-domain communication ("IDC"), it is often useful to have
+    # pairs of channels, one in each direction.  Each domain holds one or
+    # one or more "(rx, tx)" pairs of endpoints connected to corresponding
+    # pairs at the peer domain.
+
+    record pair {
+        rx receiver;
+        tx sender;
+    }
+    sequence<pair> pairs;
+
+    #===================================================================================================================
+    # Exceptions
+    #===================================================================================================================
+
+    # Raised when "ep" does not denote an "Endpoint" or has an inappropriate polarity (endpoint_type).
+    exception invalid { endpoint ep; }
+
+    # Raised by operations encountering an unexpected state "st" for an endpoint "ep".
+    exception bad_state { endpoint ep; state_e state; }
+
+    # Raised when no further endpoint slots are available at "dom".
+    exception no_slots { domain_v1.id domain; }
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

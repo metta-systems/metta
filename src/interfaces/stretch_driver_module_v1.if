@@ -1,0 +1,123 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+#
+# Constructor module for stretch_driver_v1.
+#
+local interface stretch_driver_module_v1
+{
+    # This interface has a number of "create_*" methods which may be used
+    # to create StretchDrivers of various kinds. In all such methods,
+    # failure due to lack of resources or whatever is signalled by
+    # the returns of a NULL value.
+    #
+    # In all cases, the creation of a StretchDriver requires a
+    # "heap", for the internal allocation of state, and a "strtab", 
+    # which maps stretches to StretchDrivers and page widths. 
+    #
+
+    # "create_null" creates a stretch driver with no underlying 
+    # resources (apart from the heap) and hence no means 
+    # with which to map \emph{anything}. 
+    # It is hence of limited use in the general case, but 
+    # may be applied to stretches which are owned by ``the
+    # system'' and which are guaranteed never to be unmapped.  
+    create_null(heap_v1& heap, stretch_table_v1& strtab)
+        returns (stretch_driver_v1& driver);
+
+    # "create_nailed" creates a stretch driver which will use
+    # the resources described by "pmem" and "pmalloc" in 
+    # order to map the stretches it is given to manage. 
+    #
+    # The "pmem" parameter, which may be NULL, specifies a 
+    # a set of physical memory regions which have been allocated
+    # by the caller for the use of this stretch driver. 
+    #
+    # The "pmalloc" parameter, which may be NULL, specifies
+    # a means whereby this stretch driver may request some 
+    # additional physical memory. It is expected to be one of:
+    #
+    #     * a reference to a "Frames" interface (frame_allocator_v1&)
+    #     * an IDCOffer for a "Frames" interface (idc_offer_v1&)
+    #     * the fully qualified name of one of the above (string)
+    #
+    # This is intended to be flexible. 
+    # 
+    # The nailed stretch driver maps every page underlying the
+    # stretches it is given to manage at "Bind" time, and unmaps
+    # the pages when "Remove" is called. Hence it does not expect
+    # to take any page faults, nor other recoverable faults. 
+    # Nonetheless, it \emph{is} able to deal with explicit mapping
+    # calls when, for example, a caller wishes to ensure that a 
+    # given page is mapped.
+
+    create_nailed(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab, 
+                  memory_v1.physmem_desc pmem, types.any pmalloc)
+        returns (stretch_driver_v1& driver);
+
+    # "create_physical" creates a stretch driver which will use
+    # the resources described by "pmem" and "pmalloc" in 
+    # order to map the stretches it is given to manage.
+    # 
+    # The "pmem" and "pmalloc" parameters have the same meaning as
+    # described above for the "create_nailed" method.
+    # 
+    # The physical stretch driver behaves rather differently than
+    # the nailed one, however. No special operations occur at
+    # "Bind" time (apart from the registration of the stretch to
+    # the driver) and hence its client stretches will generally be
+    # without physical backing initially. A page of any of these 
+    # stretches may cause a page fault; the physical stretch driver
+    # will map some physical memory underneath this on demand. 
+    
+    create_physical(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab, 
+                  memory_v1.physmem_desc pmem, types.any pmalloc)
+        returns (stretch_driver_v1& driver);
+
+    # "create_paged" creates a stretch driver which uses the resources
+    # described by "pmem" and "swap" in order to map the stretches 
+    # it is given to manage. 
+    # 
+    # The "pmem" parameter describes the fixed amount of physical
+    # memory this driver has to operate with. There must be at
+    # least one physical frame specified (i.e. "pmem" cannot be 
+    # NULL in this case). 
+    # 
+    # When the stretch driver's physical memory is exhausted, it  
+    # will evict pages to a backing store described by "swap".
+    # It is expected that "swap" is one of:
+    #
+    #     * a reference to a "USDCtl" interface (IREF USDCtl)
+    #     * an IDCOffer for a "USDCtl" interface (IREF IDCOffer) 
+    #     * a reference to a "FileIO" interface (IREF FileIO)
+    #     * an IDCOffer for a "FileIO" interface (IREF IOOffer) 
+    #     * the fully qualified name of one of the above (STRING)
+    #
+    # In the case that "swap" is a partition, the stretch driver 
+    # will verify it is of the correct type, and bind to it, ending
+    # up with a "FileIO". In the case "swap" is a file (i.e. a
+    # "FileIO" or offer for one), then this will be used as the 
+    # backing store. 
+    #
+    # When communicating across the "FileIO", the driver expects 
+    # to be able to use any of the virtual addresses ranged by 
+    # "iostr"; hence this should be mapped with the appropriate
+    # permissions (RW) into any other protection domains which 
+    # need to access it. (This is only necessary when a pre-bound
+    # "FileIO" is passed in; in any other case, the stretch driver
+    # will perform the appropriate mapping itself on bind, and 
+    # hence "iostr" may be NULL.)  
+
+    create_paged(vcpu_v1& vp, heap_v1& heap, stretch_table_v1& strtab,
+                 time_v1& time, memory_v1.physmem_desc pmem,
+                 stretch_v1& iostr, types.any swap)
+        returns (stretch_driver_v1& driver);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

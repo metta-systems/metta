@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include <iostream>
@@ -17,16 +25,17 @@ class lexer_t
     token::kind cur_kind; // lookahead
     token::kind next_kind;
     unsigned token_val;
+	bool verbose;
 
 public:
-    lexer_t();//, SourceMgr &SM
-    explicit lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);//, SourceMgr &SM
+    lexer_t(bool be_verbose);//, SourceMgr &SM
+    explicit lexer_t(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym, bool be_verbose);//, SourceMgr &SM
     void init(const llvm::MemoryBuffer *StartBuf, symbol_table_t* sym);
 
     token::kind lex()
     {
         cur_kind = get_token();
-        L(std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
+        L(if(verbose) std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
         return cur_kind;
     }
 
@@ -85,3 +94,6 @@ private:
     int get_next_char();
     void skip_line_comment();
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

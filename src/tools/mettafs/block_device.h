@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include <string>
@@ -19,6 +27,8 @@ public:
     block_device_t(const std::string& storageFile, bool create = false, blocksize_t blockSize = 0, blockno_t numBlocks = 0);
     virtual ~block_device_t();
 
+    void close();
+
     /*!
      * Return time in nanoseconds it would take to seek from current block position to seekTo.
      */
@@ -27,10 +37,12 @@ public:
     void seek(blockno_t block);
     blockno_t pos();
 
+    blocksize_t block_size() { return blockSize; }
+
     /*!
      * Read and write functions operate on whole blocks of specific size.
      */
-    blocksize_t read_block(blockno_t block, char* buffer);
+    blocksize_t read_block(blockno_t block, char* buffer, blocksize_t bufSize);
     void write_block(blockno_t block, const char* buffer, blocksize_t bytes);
 
 private:
@@ -40,3 +52,6 @@ private:
     blockno_t numBlocks;
 };
 
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

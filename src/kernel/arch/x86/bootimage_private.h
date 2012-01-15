@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -60,10 +60,14 @@ struct module_t : public namespace_t
     address_t local_namespace_offset;
 };
 
+#define SIZEOF_ONDISK_MODULE 24
+
 struct root_domain_t : public module_t
 {
     uintptr_t entry_point;
 };
+
+#define SIZEOF_ONDISK_ROOT_DOMAIN 28
 
 struct namespace_entry_t
 {
@@ -88,3 +92,6 @@ union info_t
 };
 
 }
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

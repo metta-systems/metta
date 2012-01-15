@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 #pragma once
 
 #include "lexer.h"
@@ -14,6 +22,7 @@ class parser_t
     symbol_table_t symbols;
     AST::node_t* parse_tree; friend class Meddler;
     llvm::SourceMgr& source_mgr;
+	bool verbose;
 //     llvm::TypeSymbolTable types;
 
     void populate_symbol_table();
@@ -22,13 +31,14 @@ class parser_t
     bool parse_interface_body();
     bool parse_exception();
     bool parse_method();
-    bool parse_method_returns(AST::method_t& m);
-    bool parse_method_raises(AST::method_t& m);
-    bool parse_var_decl(AST::var_decl_t& to_get);
+    bool parse_method_returns(AST::method_t* m);
+    bool parse_method_raises(AST::method_t* m);
+    bool parse_type_decl(AST::alias_t& to_get);
+    bool parse_var_decl(AST::alias_t& to_get);
     bool parse_field_list(AST::node_t* parent);
     bool parse_field(AST::node_t* parent);
-    bool parse_argument_list(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
-    bool parse_argument(std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
+    bool parse_argument_list(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
+    bool parse_argument(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_id_list(std::vector<std::string>& ids, token::kind delim);
 
     bool parse_enum_type_alias();
@@ -39,10 +49,14 @@ class parser_t
     bool parse_record_type_alias();
     bool parse_type_alias();
 
+	void configure_type(AST::alias_t& to_get);
     void reportError(std::string msg);
 
 public:
-    parser_t(llvm::SourceMgr& sm);
+    parser_t(llvm::SourceMgr& sm, bool be_verbose);
     void init(const llvm::MemoryBuffer *F);
     bool run();
 };
+
+// kate: indent-width 4; replace-tabs on;
+// vim: set et sw=4 ts=4 sts=4 cino=(4 :

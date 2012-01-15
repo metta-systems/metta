@@ -1,0 +1,26 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+local interface ramtab_v1
+{
+    enum { unused, mapped, nailed } state;
+    
+    # "size" returns the total number of frames handled by this interface.
+    size() returns (memory_v1.size max_frame_number);
+    # "base" returns the base address of the ramtab. 
+    base() returns (memory_v1.address base);
+
+    # "put" sets the owner, width, and state of a given physical frame.
+    put(memory_v1.size phys_frame_number, card32 owner, card32 frame_width, state st);
+
+    # "get" reads the owner, width, and state of a given physical frame.
+    get(memory_v1.size phys_frame_number) returns (card32 owner, card32 frame_width, state st);
+}
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

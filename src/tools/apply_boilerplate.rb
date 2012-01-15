@@ -5,14 +5,14 @@
 #
 # Part of Metta OS. Check http://metta.exquance.com for latest version.
 #
-# Copyright 2007 - 2010, Stanislav Karchebnyy <berkus@exquance.com>
+# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
 #
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
 require 'find'
 
-exclude_dirs = ['./_build_', './runtime/stl']
+exclude_dirs = ['./_build_', './runtime/stl', './tools/meddler/llvm']
 no_license = ['./runtime/MersenneTwister.h']
 
 class Array
@@ -30,7 +30,7 @@ exts = {
     '.s'=>[license.gsub(/^\/\//,";"), modelines.gsub(/^\/\//,";")],
     '.rb'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")],
     '.lua'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")],
-    '.if'=>[license.gsub(/^\/\//,"--"), modelines.gsub(/^\/\//,"--")]
+    '.if'=>[license.gsub(/^\/\//,"#"), modelines.gsub(/^\/\//,"#")]
 }
 
 ok_count = 0

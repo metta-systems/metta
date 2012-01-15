@@ -40,5 +40,5 @@ cp $BUILDDIR/tools/mkbootimg/menu.lst.cd   iso/boot/grub/menu.lst
 cp $BUILDDIR/kickstart.sys      iso/kickstart
 cp $BUILDDIR/kernel-startup.sys iso/kernel-startup
 cp $BUILDDIR/init.img           iso/system-bootimage
-mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -o $CDISO iso
+mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -input-charset utf-8 -o $CDISO iso
 rm -rf iso
