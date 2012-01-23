@@ -1,0 +1,18 @@
+local interface exception_support_v1
+{
+    ## An exception "E" declared in the \MIDDL\ interface "I" is identified
+    ## by the string "I_E".  An "Id" encodes this string in some
+    ## unspecified fashion.
+
+    type memory_v1.address id;
+
+    ## When an exception is raised, it may be accompanied by some
+    ## arguments stored in an argument record whose address is
+    ## given by an "Args".
+
+    type memory_v1.address args;
+
+    ## Language-level "RAISE" statements translate into calls of "Raise".
+
+    raise(id i, args a, string filename, card32 lineno, string funcname) never returns;
+}
