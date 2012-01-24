@@ -34,6 +34,7 @@
 #include "map_string_address_v1_interface.h"
 #include "type_system_factory_v1_interface.h"
 #include "type_system_f_v1_interface.h"
+#include "nemesis/exception_system_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -289,11 +290,11 @@ static void init_type_system(bootimage_t& bootimg)
     //TODO: type system, meta-interface
 
     /* Get an Exception System */
-/*    kconsole << " + Bringing up exceptions" << endl;
-    auto xcp_factory = load_module<exceptions_module_v1_closure>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
+    kconsole << " + Bringing up exceptions" << endl;
+    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
     ASSERT(xcp_factory);
-	exceptions = xcp_factory->create();
-	PVS(xcp) = exceptions;*/
+	PVS(exceptions) = xcp_factory->create();
+    // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
