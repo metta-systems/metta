@@ -286,25 +286,29 @@ static void init_mem(bootimage_t& bootimg)
 
 static void init_type_system(bootimage_t& bootimg)
 {
-    //TODO: exceptions
     //TODO: type system, meta-interface
 
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
-    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
+    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
     ASSERT(xcp_factory);
 	PVS(exceptions) = xcp_factory->create();
+    ASSERT(PVS(exceptions));
     // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
-    auto lctmod = load_module<map_card64_address_v1::closure_t>(bootimg, "safe_card64table_mod", "exported_map_card64_address_v1_rootdom");
+    auto lctmod = load_module<map_card64_address_v1::closure_t>(bootimg, "safe_card64table_mod", "exported_map_card64_address_rootdom");
+    ASSERT(lctmod);
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-    auto strmod = load_module<map_string_address_v1::closure_t>(bootimg, "stringtable_mod", "exported_map_string_address_v1_rootdom");
+    auto strmod = load_module<map_string_address_v1::closure_t>(bootimg, "stringtable_mod", "exported_map_string_address_rootdom");
+    ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_module_v1_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_module_rootdom");
+    ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
+    ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
 

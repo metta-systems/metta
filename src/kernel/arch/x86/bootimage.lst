@@ -20,4 +20,4 @@ heap_mod:modules/heap_mod/heap_mod.comp
 stretch_allocator_mod:modules/stretch_allocator_mod/stretch_allocator_mod.comp
 stretch_table_mod:modules/stretch_table_mod/stretch_table_mod.comp
 stretch_driver_mod:modules/stretch_driver_mod/stretch_driver_mod.comp
-
+exceptions_mod:modules/exceptions_mod/exceptions_mod.comp
