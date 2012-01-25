@@ -398,7 +398,7 @@ def build(bld):
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
-            print "posting "+tg.target
+            #print "posting "+tg.target
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
