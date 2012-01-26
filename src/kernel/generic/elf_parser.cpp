@@ -405,7 +405,7 @@ address_t elf_parser_t::find_symbol(cstring_t str)
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
-        // FIXME: we use symbol_table->offset here and ->vaddr above, unify both these to ->vaddr
+        // FIXME: we use symbol_table->offset here and ->vaddr in the function above, unify both these to ->vaddr
         // This would require copying elf file's symbol and string table somewhere in area allocated by module_loader.
         symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
 
