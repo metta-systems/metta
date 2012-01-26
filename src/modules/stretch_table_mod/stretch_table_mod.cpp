@@ -22,7 +22,6 @@
 #include "stretch_v1_interface.h"
 #include "heap_v1_interface.h"
 #include "hash_map"
-#include "memory"
 #include "functional"
 
 struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
