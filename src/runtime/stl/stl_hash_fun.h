@@ -83,6 +83,12 @@ __STL_TEMPLATE_NULL struct hash<long> {
 __STL_TEMPLATE_NULL struct hash<unsigned long> {
   size_t operator()(unsigned long __x) const { return __x; }
 };
+__STL_TEMPLATE_NULL struct hash<long long> {
+  size_t operator()(long long __x) const { return __x; }
+};
+__STL_TEMPLATE_NULL struct hash<unsigned long long> {
+  size_t operator()(unsigned long long __x) const { return __x; }
+};
 
 __STL_END_NAMESPACE
 

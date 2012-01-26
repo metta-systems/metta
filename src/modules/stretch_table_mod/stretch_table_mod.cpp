@@ -10,6 +10,7 @@
 #include "stretch_table_module_v1_impl.h"
 #include "default_console.h"
 #include "heap_new.h"
+#include "heap_allocator.h"
 
 //======================================================================================================================
 // stretch_table_v1 implementation
@@ -23,36 +24,6 @@
 #include "hash_map"
 #include "memory"
 #include "functional"
-
-namespace std {
-void do_checkpoint(const char* chk)
-{
-    kconsole << chk << endl;
-}
-}
-
-class heap_allocator_implementation : public std::allocator_implementation
-{
-    heap_v1::closure_t* heap;
-public:
-    typedef size_t size_type;
-
-    heap_allocator_implementation(heap_v1::closure_t* h) : heap(h) 
-    {
-        kconsole << "** heap_allocator_impl: ctor this " << this << ", heap " << h << endl;
-    }
-
-    void* allocate(size_type __n, void* = 0)
-    {
-        kconsole << "** heap_allocator_impl: allocate " << __n << endl;
-        return reinterpret_cast<void*>(heap->allocate(__n));
-    }
-    void deallocate(void* __p)
-    { 
-        kconsole << "** heap_allocator_impl: deallocate " << __p << endl;
-        heap->free(reinterpret_cast<memory_v1::address>(__p));
-    }
-};
 
 struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
 {
@@ -141,7 +112,7 @@ static const stretch_table_v1::ops_t stretch_table_v1_methods =
 static stretch_table_v1::closure_t* create(stretch_table_module_v1::closure_t* self, heap_v1::closure_t* heap)
 {
     stretch_table_v1::state_t* new_state = new(heap) stretch_table_v1::state_t;
-    auto heap_alloc = new(heap) heap_allocator_implementation(heap);
+    auto heap_alloc = new(heap) std::heap_allocator_implementation(heap);
 
     new_state->heap = heap;
     new_state->stretches = new(heap) stretch_map(heap_alloc);
@@ -154,7 +125,7 @@ static stretch_table_v1::closure_t* create(stretch_table_module_v1::closure_t* s
 
 static const stretch_table_module_v1::ops_t stretch_table_module_v1_methods =
 {
-    create
+    create 
 };
 
 static const stretch_table_module_v1::closure_t clos =

@@ -51,7 +51,7 @@ def process_idl_source(self):
     #print "Task includes "
     for i in self.to_list(self.includes):
         self.env.append_unique('IDL_INC',i)
-        print i
+        #print "task include "+i
 
     for x in self.to_list(self.idl_source):
         #print "Adding "+x+" to list"
