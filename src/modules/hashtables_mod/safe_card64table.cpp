@@ -71,7 +71,7 @@ static void dispose(map_card64_address_v1::closure_t* self) // RENAME to destroy
 	//TODO: delete self
 }
 
-struct map_card64_address_v1::ops_t map_methods =
+static struct map_card64_address_v1::ops_t map_methods =
 {
 	get,
 	put,
@@ -96,16 +96,16 @@ map_card64_address_factory_v1_create(map_card64_address_factory_v1::closure_t* s
 	return state->closure;
 }
 
-struct map_card64_address_factory_v1::ops_t methods =
+static struct map_card64_address_factory_v1::ops_t methods =
 {
 	map_card64_address_factory_v1_create
 };
 
-struct map_card64_address_factory_v1::closure_t clos =
+static struct map_card64_address_factory_v1::closure_t card_clos =
 {
 	&methods,
 	NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(map_card64_address_factory, v1, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(map_card64_address_factory, v1, card_clos);
 

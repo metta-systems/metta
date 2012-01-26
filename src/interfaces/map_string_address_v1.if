@@ -25,7 +25,7 @@ local interface map_string_address_v1
     remove(key k, out value v) returns (boolean b);
 
     ## Return the number of entries in "self" (ie. "|dom(self)|").
-    size() returns (cardinal size);
+    size() returns (card32 size);
 
     ## Return an iterator for "self".
 #    iterate() returns (map_string_address_iterator& i);

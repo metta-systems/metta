@@ -1,6 +1,6 @@
 #pragma once
 
-#include "memory"
+#include <memory>
 #include "heap_v1_interface.h"
 
 namespace std {
@@ -27,5 +27,7 @@ public:
         heap->free(reinterpret_cast<memory_v1::address>(__p));
     }
 };
+
+inline void do_checkpoint(const char* chk) {} // for debugging the allocators.
 
 } // namespace std
