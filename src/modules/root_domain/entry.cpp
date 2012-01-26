@@ -31,7 +31,7 @@
 #include "stretch_table_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
 #include "map_card64_address_factory_v1_interface.h"
-#include "map_string_address_v1_interface.h"
+#include "map_string_address_factory_v1_interface.h"
 #include "type_system_factory_v1_interface.h"
 #include "type_system_f_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
@@ -297,17 +297,17 @@ static void init_type_system(bootimage_t& bootimg)
     // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
     kconsole <<  " + Bringing up type system" << endl;
-    kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
+    kconsole <<  " +-- getting safe_card64table_mod..." << endl;
     auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-    auto strmod = load_module<map_string_address_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_rootdom");
+    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_module_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-    auto ts = ts_factory->create(PVS(heap), lctmod->create(PVS(heap))/*mm?*/, strmod);
+    auto ts = ts_factory->create(PVS(heap), lctmod->create(PVS(heap))/*mm?*/, strmod->create(PVS(heap))/*mm?*/);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
