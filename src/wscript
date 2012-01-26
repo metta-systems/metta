@@ -37,7 +37,6 @@ def set_options(opt):
     # arm-metta
 
     opt.tool_options('module_template', tooldir='waftools')
-
     opt.tool_options('compiler_cc compiler_cxx')
 
     # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
@@ -78,10 +77,9 @@ def configure(conf):
 
     conf.check_tool('yasm misc ar if2code', tooldir='waftools')
 
-    #conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+    conf.find_program('nm',var='NM')
 
     # TODO: try to use yasm, but allow fallback to NASM
-    # Ditto for llvm
     if clang:
         conf.check_tool('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_flags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
@@ -381,19 +379,8 @@ def build(bld):
     #kickstart.target = 'kickstart.sys'
     #kickstart.uselib_local = 'platform common kernel runtime'
 
-    bld.new_task_gen(
-        source = 'kernel-startup.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (kernel-startup)',
-        after = 'cxx_link'
-    )
-
-    bld.new_task_gen(
-        source = 'glue.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (glue)',
-        after = 'cxx_link'
-    )
+    undef_check(bld, 'kernel-startup.sys')
+    undef_check(bld, 'glue.sys')
 
     #Check and add all output modules.
     nm = []
