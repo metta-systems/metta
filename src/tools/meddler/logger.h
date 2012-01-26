@@ -8,11 +8,13 @@
 //
 #pragma once
 
-#ifndef NDEBUG
+#include "config.h"
+
+#if TOOLS_DEBUG && MEDDLER_DEBUG
 #define L(...) __VA_ARGS__
 #else
 #define L(...)
-#endif
+#endif // TOOLS_DEBUG && MEDDLER_DEBUG
 
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

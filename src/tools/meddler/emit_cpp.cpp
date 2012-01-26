@@ -117,17 +117,17 @@ static std::string replace_dots(std::string input)
  */
 static std::string emit_type(alias_t& type)
 {
-	cout << "** EMITTING TYPE ** "; type.dump("");
+	L(cout << "** EMITTING TYPE ** "; type.dump(""));
 
     std::string result = type.type();
     if (type.is_builtin_type())
     {
-		cout << "EMITTING BUILTIN TYPE " << result << endl;
+		L(cout << "EMITTING BUILTIN TYPE " << result << endl);
         result = map_type(type.unqualified_name());
-		cout << " AS " << result << endl;
+		L(cout << " AS " << result << endl);
         if (result.empty())
         {
-			cout << "Error: Unknown mapping for builtin type " << type.type() << endl;
+			cerr << "Error: Unknown mapping for builtin type " << type.type() << endl;
 			result = type.type();
 		}
 	}
@@ -135,18 +135,18 @@ static std::string emit_type(alias_t& type)
 	if (type.is_interface_reference())
 	{
 		result = type.unqualified_name(); // we need first part of the name?!?
-		cout << "EMITTING INTERFACE REFERENCE " << result << endl;
+		L(cout << "EMITTING INTERFACE REFERENCE " << result << endl);
 	}
 	else
 	if (type.is_local_type())
 	{
 		result = replace_dots(type.type());
-		cout << "EMITTING LOCAL TYPE " << result << endl;
+		L(cout << "EMITTING LOCAL TYPE " << result << endl);
 	}
 	else
 	{
 		result = replace_dots(type.type());
-		cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl;
+		L(cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl);
     }
 
 	if (type.is_interface_reference())
