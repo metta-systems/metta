@@ -1,0 +1,4 @@
+local interface map_card64_address_factory_v1
+{
+    create(heap_v1& heap) returns (map_card64_address_v1& map) raises (heap_v1.no_memory);
+}
