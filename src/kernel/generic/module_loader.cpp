@@ -209,6 +209,8 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     kconsole << __FUNCTION__ << ": loading module at " << section_base << endl;
 
+    // this_loaded_module.code_start = *d_last_available_address;
+
 /*    if (module.program_header_count() > 0)
     {
         // Load using program headers (usually simpler and faster).
