@@ -304,7 +304,7 @@ static void init_type_system(bootimage_t& bootimg)
     auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_module_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
     auto ts = ts_factory->create(PVS(heap), lctmod->create(PVS(heap))/*mm?*/, strmod->create(PVS(heap))/*mm?*/);
