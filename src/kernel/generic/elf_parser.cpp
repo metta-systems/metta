@@ -176,6 +176,8 @@ size_t elf_parser_t::string_entries_count() const
     section_header_t* _strtab = section_string_table();
     if (!_strtab)
         return 0;
+    if (!_strtab->entsize)
+        return 0;
     return _strtab->size / _strtab->entsize;
 }
 
@@ -190,6 +192,8 @@ size_t elf_parser_t::symbol_entries_count() const
 {
     section_header_t* _symtab = section_symbol_table();
     if (!_symtab)
+        return 0;
+    if (!_symtab->entsize)
         return 0;
     return _symtab->size / _symtab->entsize;
 }
