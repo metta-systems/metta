@@ -214,6 +214,15 @@ static void init_mem(bootimage_t& bootimg)
     auto stretch_driver_mod = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
     ASSERT(stretch_driver_mod);
 
+    // === WORKAROUND ===
+    // To avoid overwriting memory with further loaded modules, preload them here.
+    // This will go away after a proper module loader mod is implemented.
+    load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
+    load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
+    load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
+    //load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
+    // === END WORKAROUND ===
+
     size_t modules_size;
     address_t modules_base = bi->used_modules_memory(&modules_size);
     bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
@@ -304,10 +313,14 @@ static void init_type_system(bootimage_t& bootimg)
     auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_factory_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-    auto ts = ts_factory->create(PVS(heap), lctmod->create(PVS(heap))/*mm?*/, strmod->create(PVS(heap))/*mm?*/);
+    auto lct = lctmod->create(PVS(heap));
+    ASSERT(lct);
+    auto str = strmod->create(PVS(heap));
+    ASSERT(str);
+    auto ts = ts_factory->create(PVS(heap), lct, str);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
