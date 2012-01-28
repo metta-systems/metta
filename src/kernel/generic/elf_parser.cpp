@@ -26,6 +26,8 @@
 #define V(s)
 #endif
 
+#include "symbol_table_finder.h"
+
 using namespace elf32;
 
 //======================================================================================================================
@@ -349,86 +351,15 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
     return true;
 }
 
-// TODO: use debugging info if present
 cstring_t elf_parser_t::find_symbol(address_t addr, address_t* symbol_start)
 {
-//     section_header_t* debug_table = section_header(".debug_frame");
-
-    address_t max = 0;
-    symbol_t* fallback_symbol = 0;
-    section_header_t* symbol_table = section_symbol_table();
-    if (!symbol_table)
-        return NULL;
-
-    for (unsigned int i = 0; i < symbol_entries_count(); i++)
-    {
-        symbol_t* symbol = reinterpret_cast<symbol_t*>(symbol_table->vaddr + i * symbol_table->entsize);
-
-        if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
-        {
-            const char* c = strtab_pointer(section_string_table(), symbol->name);
-
-            if (symbol_start)
-                *symbol_start = symbol->value;
-            return c;
-        }
-
-        if (symbol->value > max && symbol->value <= addr)
-        {
-            max = symbol->value;
-            fallback_symbol = symbol;
-        }
-    }
-
-    // Search for symbol with size failed, now take a wild guess.
-    // Use a biggest symbol value less than addr (if found).
-    if (fallback_symbol)
-    {
-        const char* c = strtab_pointer(section_string_table(), fallback_symbol->name);
-
-        if (symbol_start)
-            *symbol_start = fallback_symbol->value;
-        return c;
-    }
-
-    if (symbol_start)
-        *symbol_start = 0;
-    return NULL;
+    return symbol_table_finder_t(start(), symtab, strtab).find_symbol(addr, symbol_start);
 }
 
 // Find symbol str in symbol table and return its absolute address.
 address_t elf_parser_t::find_symbol(cstring_t str)
 {
-    section_header_t* symbol_table = section_symbol_table();
-    if (!symbol_table)
-        return 0;
-
-    V(kconsole << symbol_entries_count() << " symbols to consider." << endl);
-    V(kconsole << "Symbol table @ " << start() + symbol_table->offset << endl);
-    V(kconsole << "BSS          @ " << start() + section_header(".bss")->offset << endl);
-
-    for (unsigned int i = 0; i < symbol_entries_count(); i++)
-    {
-        // FIXME: we use symbol_table->offset here and ->vaddr in the function above, unify both these to ->vaddr
-        // This would require copying elf file's symbol and string table somewhere in area allocated by module_loader.
-        symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
-
-        const char* c = strtab_pointer(section_string_table(), symbol->name);
-        V(kconsole << "Looking at symbol " << c << " @ " << symbol << endl);
-        if (str == c)
-        {
-            if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
-            {
-                return section_header(symbol->shndx)->vaddr; //offset + start();
-            }
-            else
-            {
-                return /*section_header(symbol->shndx)->offset +*/ symbol->value /*+ start()*/;
-            }
-        }
-    }
-
-    return 0;
+    return symbol_table_finder_t(start(), symtab, strtab).find_symbol(str);
 }
 
 //TODO:

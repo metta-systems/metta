@@ -27,6 +27,8 @@
 #define V(s)
 #endif
 
+#include "symbol_table_finder.h"
+
 /*!
  * @class module_loader_t
  *
@@ -38,7 +40,7 @@ struct module_descriptor_t
 {
     uint32_t magic;        // 'MDUL'
     char name[32];         // name of the module
-    address_t code_start;  // start of module code
+    address_t code_start;  // start of module code, currently abused as symbol lookup address base.
     size_t    code_size;
     address_t data_start;
     size_t    data_size;
@@ -49,7 +51,7 @@ struct module_descriptor_t
     address_t strtab_start; // address of string table for name lookups
     address_t debug_start;  // start of debugging info tables};
     module_descriptor_t* previous;
-    // [76] bytes on 32 bits platform.
+    // [80] bytes on 32 bits platform.
 
     inline module_descriptor_t()
         : magic(four_cc<'M','D','U','L'>::value)
@@ -162,116 +164,13 @@ static bool module_already_loaded(address_t from, cstring_t name, module_descrip
     return false;    
 }
 
-/*!
- * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets) find symbol by either name or value.
- */
-class symbol_table_finder_t
-{
-    address_t base;
-    elf32::section_header_t* symbol_table;
-    elf32::section_header_t* string_table;
-
-public:
-    symbol_table_finder_t(address_t base_, elf32::section_header_t* symtab_, elf32::section_header_t* strtab_)
-        : base(base_)
-        , symbol_table(symtab_)
-        , string_table(strtab_)
-    {
-        ASSERT(symbol_table);
-        ASSERT(string_table);
-
-        D(kconsole << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table << endl);
-    }
-
-    cstring_t find_symbol(address_t addr, address_t* symbol_start)
-    {
-        address_t max = 0;
-        elf32::symbol_t* fallback_symbol = 0;
-        size_t n_entries = symbol_table->size / symbol_table->entsize;
-
-        for (size_t i = 0; i < n_entries; i++)
-        {
-            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
-
-            if ((addr >= symbol->value) && (addr < symbol->value + symbol->size))
-            {
-                const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
-
-                if (symbol_start)
-                    *symbol_start = symbol->value;
-                return c;
-            }
-
-            if (symbol->value > max && symbol->value <= addr)
-            {
-                max = symbol->value;
-                fallback_symbol = symbol;
-            }
-        }
-
-        // Search for symbol with size failed, now take a wild guess.
-        // Use a biggest symbol value less than addr (if found).
-        if (fallback_symbol)
-        {
-            const char* c = reinterpret_cast<const char*>(base + string_table->offset + fallback_symbol->name);
-
-            if (symbol_start)
-                *symbol_start = fallback_symbol->value;
-            return c;
-        }
-
-        if (symbol_start)
-            *symbol_start = 0;
-        return NULL;
-    }
-
-    // Find symbol str in symbol table and return its absolute address.
-    address_t find_symbol(cstring_t str)
-    {
-        size_t n_entries = symbol_table->size / symbol_table->entsize;
-        V(kconsole << n_entries << " symbols to consider." << endl);
-        V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
-        V(kconsole << "String table @ " << base + string_table->offset << endl);
-
-        for (size_t i = 0; i < n_entries; i++)
-        {
-            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
-            const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
-
-            V(kconsole << "Looking at symbol " << c << " @ " << symbol << endl);
-            if (str == c)
-            {
-                if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
-                {
-                    PANIC("FINDING SECTION NAMES UNSUPPORTED!");
-                    return 0;
-                    // return section_header(symbol->shndx)->vaddr; //offset + start();
-                }
-                else
-                {
-                    return symbol->value;
-                }
-            }
-        }
-
-        return 0;
-    }
-};
 
 /*!
  * Load data from ELF file into a predefined location, relocate it and return entry point address or
  * a closure location (if closure_name is not null).
  *
- * TODO: move this code to elf_parser_t, as it's a natural part of ELF loading.
- */
-/*
  * Maintain a list of module descriptors as a pointer to last descriptor. (single-linked list)
  * Last module descriptor is always at *d_last_available_address minus sizeof(module_descriptor_t).
- *
- * Changes necessary for module loader:
- * - load loadable sections and allocate bss.
- * - load stringtable and symtable (right after or before the code/data)
- * - build a module descriptor with pointers to code, data, bss, strtab, symtab, link to previous module descriptor.
  */
 void* module_loader_t::load_module(const char* name, elf_parser_t& module, const char* closure_name)
 {
@@ -290,7 +189,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         address_t entry = reinterpret_cast<address_t>(*(void**)(finder.find_symbol(closure_name)));
         kconsole << " +-- Returning closure pointer " << entry << endl;
-        return *(void**)(finder.find_symbol(closure_name));
+        return *(void**)finder.find_symbol(closure_name);
     }
 
     module_descriptor_t* previous_loaded_module = reinterpret_cast<module_descriptor_t*>(*d_last_available_address - sizeof(module_descriptor_t));
@@ -452,6 +351,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
         PANIC("Do not know how to load ELF file!");
 
     // Update symbols values.
+    // This code patches our loaded copy of the symbol table, not the original!
     if (symbol_table)
     {
         for (size_t i = 0; i < module.symbol_entries_count(); i++)
@@ -474,11 +374,16 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     this_loaded_module.code_start = module.start(); //FIXME: wrong, we just abuse this field for now to store "base"
 
+    // Prepare new module descriptor and put it into right memory location.
+    // TODO: verify that we have enough free space before page end.
+    address_t prev_address = *d_last_available_address;
     *d_last_available_address = page_align_up(*d_last_available_address);
+    size_t free_space = *d_last_available_address - prev_address;
+    ASSERT(free_space >= sizeof(this_loaded_module));
     memutils::copy_string(this_loaded_module.name, name, sizeof(this_loaded_module.name));
     this_loaded_module.previous = previous_loaded_module;
     memutils::copy_memory(*d_last_available_address - sizeof(this_loaded_module), address_t(&this_loaded_module), sizeof(this_loaded_module));
-    kconsole << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module) << endl;
+    D(kconsole << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module) << endl);
 
     if (!closure_name)
     {
@@ -488,13 +393,6 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else
     {
-        {
-            address_t entry1 = reinterpret_cast<address_t>(*(void**)(module.find_symbol("exported_map_card64_address_factory_rootdom")));
-            address_t entry2 = reinterpret_cast<address_t>(*(void**)(module.find_symbol("exported_map_string_address_factory_rootdom")));
-            kconsole << " ####  exported_map_card64_address_factory_rootdom = " << entry1 << endl;
-            kconsole << " ####  exported_map_string_address_factory_rootdom = " << entry2 << endl;
-        }
-
         // Symbol is a pointer to closure structure.
         address_t entry = reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
         kconsole << " +-- Returning closure pointer " << entry << endl;
