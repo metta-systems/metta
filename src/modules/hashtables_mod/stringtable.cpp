@@ -101,11 +101,11 @@ static struct map_string_address_factory_v1::ops_t methods =
 	map_string_address_factory_v1_create
 };
 
-static struct map_string_address_factory_v1::closure_t str_clos =
+static struct map_string_address_factory_v1::closure_t clos =
 {
 	&methods,
 	NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(map_string_address_factory, v1, str_clos);
+EXPORT_CLOSURE_TO_ROOTDOM(map_string_address_factory, v1, clos);
 
