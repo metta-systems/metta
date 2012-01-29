@@ -1,0 +1,7 @@
+local interface type_system_factory_v1
+{
+    ## Return a "TypeSystemF" allocated in "h".
+	create(heap_v1& h, map_card64_address_v1& cardmap, map_string_address_v1& stringmap)
+		returns (type_system_f_v1& ts)
+		raises (heap_v1.no_memory);
+}

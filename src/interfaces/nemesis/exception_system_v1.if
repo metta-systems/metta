@@ -1,0 +1,13 @@
+## This is an exception system factory.
+local interface exception_system_v1
+{
+    ## "create" creates a new "exception_support" interface. This is really a
+    ## holder for the exception handler chain. The result of this call
+    ## should really be placed in a "Pervasives" record for it to be
+    ## useful.
+
+    ## Create an exception environment using the pervasive
+    ## "Heap". This heap will also be used by the environment during
+    ## the handling of exceptions. 
+    create() returns (exception_support_setjmp_v1& instance) raises (heap_v1.no_memory);
+}

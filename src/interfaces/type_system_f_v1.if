@@ -1,0 +1,12 @@
+## Type system "friends" interface - with access to some privileged capabilities like registering new types.
+## Available only to root domain and bootstrap code.
+
+local interface type_system_f_v1 extends type_system_v1
+{
+	type memory_v1.address interface_info; ## really an "(Intf_st*)" from "TypeSystem_st.h"
+
+	exception name_clash {}
+	exception type_code_clash {}
+
+	register_interface(interface_info intf) raises (name_clash, type_code_clash);
+}

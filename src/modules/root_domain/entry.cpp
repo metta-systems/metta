@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "default_console.h"
+#include "any.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
@@ -29,6 +30,11 @@
 #include "stretch_table_module_v1_interface.h"
 #include "stretch_table_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
+#include "map_card64_address_factory_v1_interface.h"
+#include "map_string_address_factory_v1_interface.h"
+#include "type_system_factory_v1_interface.h"
+#include "type_system_f_v1_interface.h"
+#include "nemesis/exception_system_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -189,15 +195,15 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + init_mem" << endl;
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
-    // Load modules used for booting before we overwrite them.
+    // For address space randomization we should load modules as we go, for simplicity we load them all here.
     auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
 
-    auto mmu_mod = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
-    ASSERT(mmu_mod); // mmu_factory
+    auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    ASSERT(mmu_factory); // mmu_factory
 
-    auto heap_mod = load_module<heap_module_v1::closure_t>(bootimg, "heap_mod", "exported_heap_module_rootdom");
-    ASSERT(heap_mod); // heap_factory
+    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_mod", "exported_heap_module_rootdom");
+    ASSERT(heap_factory);
 
     auto stretch_allocator_mod = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
     ASSERT(stretch_allocator_mod);
@@ -221,7 +227,7 @@ static void init_mem(bootimage_t& bootimg)
     memory_v1::address next_free;
 
     kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
-    auto mmu = mmu_mod->create(required + initial_heap_size, &rtab, &next_free);
+    auto mmu = mmu_factory->create(required + initial_heap_size, &rtab, &next_free);
 
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
@@ -229,7 +235,7 @@ static void init_mem(bootimage_t& bootimg)
     auto frames = frames_factory->create(rtab, next_free);
 
     kconsole << " + Creating heap" << endl;
-    auto heap = heap_mod->create_raw(next_free + required, initial_heap_size);
+    auto heap = heap_factory->create_raw(next_free + required, initial_heap_size);
     PVS(heap) = heap;
 
     frames_factory->finish_init(frames, heap);
@@ -264,7 +270,7 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " + Creating nailed stretch allocator" << endl;
     auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap);//yikes!
 
-    mmu_mod->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
+    mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
     kconsole << " + Creating stretch table" << endl;
     auto strtab = stretch_table_mod->create(heap);
@@ -275,106 +281,113 @@ static void init_mem(bootimage_t& bootimg)
     // Create the initial address space; returns a pdom for root domain.
     kconsole << " + Creating initial address space." << endl;
     auto root_domain_pdid = create_address_space(frames, mmu);
-    map_initial_heap(heap_mod, heap, initial_heap_size, root_domain_pdid);
+    map_initial_heap(heap_factory, heap, initial_heap_size, root_domain_pdid);
 }
 
-static void init_type_system(bootimage_t& /*bootimg*/)
+static void init_type_system(bootimage_t& bootimg)
 {
-#if 0
+    //TODO: type system, meta-interface
+
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
-    exceptions_module_v1_closure* xcp_mod;
-    xcp_mod = load_module<exceptions_module_v1_closure>(bootimg, "exceptions_mod", "exported_exceptions_module_v1_rootdom");
-    ASSERT(xcp_mod);
+    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
+    ASSERT(xcp_factory);
+	PVS(exceptions) = xcp_factory->create();
+    ASSERT(PVS(exceptions));
+    // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
-	exceptions = xcp_mod->create();
-	Pervasives(xcp) = exceptions;
     kconsole <<  " + Bringing up type system" << endl;
-    kconsole <<  " +-- getting safelongcardtable_mod..." << endl;
-//    lctmod = load_module<longcardtable_module_v1_closure>(bootimg, "longcardtable_mod", "exported_longcardtable_module_v1_rootdom");
+    kconsole <<  " +-- getting safe_card64table_mod..." << endl;
+    auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
+    ASSERT(lctmod);
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-//    strmod = load_module<stringtable_module_v1_closure>(bootimg, "stringtable_mod", "exported_stringtable_module_v1_rootdom");
+    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
+    ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-//    tsmod = load_module<typesystem_module_v1_closure>(bootimg, "typesystem_mod", "exported_typesystem_module_v1_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_typesystem_module_rootdom");
+    ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-//    ts = tsmod->create(Pvs(heap), lctmod, strmod);
-//    kconsole <<  " +-- done: ts is at " << ts << endl;
-//    Pvs(types) = (TypeSystem_clp)ts;
+    auto ts = ts_factory->create(PVS(heap), lctmod->create(PVS(heap))/*mm?*/, strmod->create(PVS(heap))/*mm?*/);
+    ASSERT(ts);
+    kconsole <<  " +-- done: ts is at " << ts << endl;
+    PVS(types) = ts;
 
     /* Preload any types in the boot image */
-/*    {
-        TypeSystemF_IntfInfo *info;
+    {
+        type_system_f_v1::interface_info* info;
 
-        kconsole << " +++ registering interfaces\n"));
-        info = (TypeSystemF_IntfInfo)lookup("Types");
+        kconsole << " +++ registering interfaces" << endl;
+        info = (type_system_f_v1::interface_info*)0;//lookup("Types");
         while(*info) {
-            TypeSystemF->RegisterIntf(ts, *info);
+            ts->register_interface(*info);
             info++;
         }
-    }*/
-#endif
+    }
 }
 
-static void init_namespaces(bootimage_t& /*bm*/)
+static void init_namespaces(bootimage_t& bootimg)
 {
-#if 0
+    //TODO: module namespaces
+    //TODO: context
+    //TODO: IDC stubs
+
     /* Build initial name space */
     kconsole <<  " + Building initial name space: ";
 
     /* Build root context */
-    kconsole <<  "<root>, ";
-    context_module_v1_closure* context_mod;
-    context_mod = load_module<context_module_v1_closure>(bootimg, "context_mod", "exported_context_module_rootdom");
-    ASSERT(context_mod);
-
-	root = context_mod->create_context(heap, Pvs(types));
-/*    ContextMod = lookup("ContextModCl");
-    root = ContextMod$NewContext(ContextMod, heap, Pvs(types) );
-    Pvs(root)  = root;
+    kconsole <<  "Root, ";
+#if 0
+    auto context_factory = load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
+    ASSERT(context_factory);
+	auto root = context_factory->create_context(heap, PVS(types));
+    ASSERT(root);
+    PVS(root)  = root;
 
     kconsole <<  "modules, ";
     {
-        Context_clp mods = ContextMod$NewContext(ContextMod, heap, Pvs(types));
-        ANY_DECL(mods_any, Context_clp, mods);
+        auto mods = context_factory->create_context(heap, PVS(types));
+        DECLARE_ANY(mods_any, context_v1_closure, mods);
         char *cur_name;
         addr_t cur_val;
 
-        Context$Add(root,"modules",&mods_any);
+        root->add("modules", &mods_any);
 
-        set_namespace(nexusprimal->namespc, "modules");
+        // TODO: make namespace iterator, init named namespace from bootimg and run over all of its entries.
+
+        set_namespace(nexusprimal->namespc, "modules");//set_namespace affects what lookup_next will return below...
         while((cur_name=lookup_next(&cur_val))!=NULL)
         {
-            TRC_CTX(eprintf("\n\tadding %p with name %s", cur_val, cur_name));
-            Context$Add(mods, cur_name, cur_val);
+            D(kconsole << endl << "adding " << cur_val << " with name " << cur_name);
+            mods->add(cur_name, cur_val);
         }
-        TRC_CTX(eprintf("\n"));
+        D(kconsole << endl);
     }
 
     kconsole <<  "blob, ";
     {
-        Context_clp blobs= ContextMod$NewContext(ContextMod, heap, Pvs(types));
-        ANY_DECL(blobs_any, Context_clp, blobs);
+        auto blobs = context_factory->create_context(heap, PVS(types));
+        DECLARE_ANY(blobs_any, context_v1_closure, blobs);
         Type_Any b_any;
         char *cur_name;
         addr_t cur_val;
 
-        Context$Add(root, "blob", &blobs_any);
+        root->add("blob", &blobs_any);
 
         set_namespace(nexusprimal->namespc, "blob");
         while((cur_name=lookup_next(&cur_val))!=NULL)
         {
-            TRC_CTX(eprintf("\n\tadding %p with name %s", cur_val, cur_name));
+            D(kconsole << endl << "adding " << cur_val << " with name " << cur_name);
             ANY_INIT(&b_any, RdWrMod_Blob, cur_val);
-            Context$Add(blobs, cur_name, &b_any);
+            blobs->add(cur_name, &b_any);
         }
-        TRC_CTX(eprintf("\n"));
+        D(kconsole << endl);
     }
 
     kconsole <<  "proc, ";
     {
-        Context_clp proc = ContextMod$NewContext(ContextMod, heap, Pvs(types));
-        Context_clp domains = ContextMod$NewContext(ContextMod, heap, Pvs(types));
-        Context_clp cmdline = ContextMod$NewContext(ContextMod, heap, Pvs(types));
+        auto proc = context_factory->create_context(heap, PVS(types));
+        auto domains = context_factory->create_context(heap, PVS(types));
+        auto cmdline = context_factory->create_context(heap, PVS(types));
         ANY_DECL(tmpany, Context_clp, proc);
         ANY_DECL(domany, Context_clp, domains);
         ANY_DECL(cmdlineany,Context_clp,cmdline);
@@ -383,19 +396,19 @@ static void init_namespaces(bootimage_t& /*bm*/)
         ANY_DECL(identany, string_t, ident);
         Context$Add(root, "proc", &tmpany);
         Context$Add(proc, "domains", &domany);
-        Context$Add(proc, "kst", &kstany);
+        Context$Add(proc, "kernel_state", &kstany);
         Context$Add(proc, "cmdline", &cmdlineany);
-        Context$Add(proc, "k_ident", &identany);
+        Context$Add(proc, "kernel_ident", &identany);
 #ifdef INTEL
         parse_cmdline(cmdline, ((kernel_st *)kst)->command_line);
 #endif
     }
 
-    kconsole <<  "pvs, ";
+    kconsole <<  "pervasives, ";
     {
         Type_Any any;
-        if (Context$Get(root,"modules>PvsContext",&any)) {
-            Context$Add(root,"pvs",&any);
+        if (root->get("modules.PvsContext",&any)) {
+            root->add("pervasives",&any);
         } else {
             eprintf ("NemesisPrimal: WARNING: >pvs not created\n");
         }
@@ -403,35 +416,36 @@ static void init_namespaces(bootimage_t& /*bm*/)
 
     kconsole <<  "symbols, ";
     {
-        Context_clp tmp = ContextMod$NewContext(ContextMod, heap, Pvs(types) );
-        ANY_DECL(tmpany,Context_clp,tmp);
-        Context$Add(root,"symbols",&tmpany);
+        auto syms = context_factory->create_context(heap, PVS(types));
+        DECLARE_ANY(syms_any, context_v1_closure, syms);
+        root->add("symbols", syms_any);
     }
-*/
+
     /* Build system services context */
-/*    kconsole <<  "sys, ";
+    kconsole <<  "sys, ";
     {
-        Context_clp sys = ContextMod$NewContext(ContextMod, heap, Pvs(types) );
-        ANY_DECL(sys_any,Context_clp,sys);
-        ANY_DECL(salloc_any, StretchAllocator_clp, salloc);
-        ANY_DECL(sysalloc_any, StretchAllocator_clp, sysalloc);
-        ANY_DECL(ts_any, TypeSystem_clp, Pvs(types));
-        ANY_DECL(ffany, FramesF_clp, framesF);
-        ANY_DECL(strtab_any, StretchTbl_clp, strtab);
-        Context$Add(root, "sys", &sys_any);
-        Context$Add(sys, "StretchAllocator", &salloc_any);
-        Context$Add(sys, "SysAlloc", &sysalloc_any);
-        Context$Add(sys, "TypeSystem", &ts_any);
-        Context$Add(sys, "FramesF", &ffany);
-        Context$Add(sys, "StretchTable", &strtab_any);
+        auto sys = context_factory->create_context(heap, PVS(types));
+        DECLARE_ANY(sys_any, context_v1_closure, sys);
+        DECLARE_ANY(salloc_any, stretch_allocator_v1_closure, salloc);
+        DECLARE_ANY(sysalloc_any, system_stretch_allocator_v1_closure, sysalloc);
+        DECLARE_ANY(ts_any, typesystem_v1_closure, PVS(types));
+        DECLARE_ANY(frames_any, frame_v1_closure, framesF);
+        DECLARE_ANY(strtab_any, stretch_table_v1_closure, strtab);
+
+        root->add("sys", &sys_any);
+        sys->add("stretch_allocator", &salloc_any);
+        sys->add("system_allocator", &sysalloc_any);
+        sys->add("typesystem", &ts_any);
+        sys->add("frames_allocator", &frames_any);
+        sys->add("stretch_table", &strtab_any);
     }
-*/
+
     /* IDC stub context */
 /*    kconsole <<  "IDC stubs, ";
     {
         Closure_clp stubs_register;
         Context_clp stubs =
-        ContextMod$NewContext(ContextMod, heap, Pvs(types) );
+        ContextMod$NewContext(ContextMod, heap, PVS(types) );
 
         // Create the stubs context
         CX_ADD("stubs", stubs, Context_clp);
@@ -454,7 +468,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
     /* Boot domains/programs context */
 /*    kconsole <<  "progs." << endl;
     {
-        Context_clp progs= ContextMod$NewContext(ContextMod, heap, Pvs(types));
+        Context_clp progs= ContextMod$NewContext(ContextMod, heap, PVS(types));
         ANY_DECL(progs_any,Context_clp,progs);
         ProtectionDomain_ID prog_pdid;
         BootDomain_InfoSeq *boot_seq;
@@ -465,7 +479,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
 
         Context$Add(root,"progs",&progs_any);
 
-        boot_seq = SEQ_NEW(BootDomain_InfoSeq, 0, Pvs(heap));
+        boot_seq = SEQ_NEW(BootDomain_InfoSeq, 0, PVS(heap));
         ANY_INIT(&boot_seq_any, BootDomain_InfoSeq, boot_seq);
 */
         /* Iterate through progs in nexus and add appropriately... */
@@ -484,7 +498,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
                  ** add the info in the 'progs' context s.t. we can get at
                  ** it from the Nemesis domain (for Builder$NewThreaded)
                  */
-/*                nemesis_info= Heap$Malloc(Pvs(heap), sizeof(BootDomain_Info));
+/*                nemesis_info= Heap$Malloc(PVS(heap), sizeof(BootDomain_Info));
                 if(!nemesis_info) {
                     eprintf("NemesisPrimal: out of memory. urk. death.\n");
                     ntsc_halt();
@@ -556,7 +570,7 @@ static void init_namespaces(bootimage_t& /*bm*/)
                  ** domain, without affecting any other domains.
                  */
 /*                TRC_PRG(eprintf("Creating program's environment context.\n"));
-                cur_info->priv_root = ContextMod$NewContext(ContextMod, heap, Pvs(types));
+                cur_info->priv_root = ContextMod$NewContext(ContextMod, heap, PVS(types));
 
                 // XXX what are the other fields of cur_prog->name _for_ ??
                 set_namespace((namespace_entry *)cur_prog->name->naddr, NULL);
@@ -635,13 +649,16 @@ static void init_namespaces(bootimage_t& /*bm*/)
 
 static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
 {
+    //TODO: domain manager
+    //TODO: VCPU
+    //TODO: nucleus syscalls
     /* Find the Virtual Processor module */
 /*    vp = NAME_FIND("modules>VP", VP_clp);
     kconsole << " + got VP   at %p\n", vp));
 
     Time = NAME_FIND("modules>Time", Time_clp);
     kconsole << " + got Time at %p\n", Time));
-    Pvs(time)= Time;
+    PVS(time)= Time;
 */
     /* IM: init the wall-clock time values of the PIP */
 /*    INFO_PAGE.prev_sched_time = NOW();
@@ -693,7 +710,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
         ntsc_halt();
     }
 
-    Pvs(vp) = vp = DomainMgr$NewDomain(dommgr, Nemesis, &nemesis_pdid,
+    PVS(vp) = vp = DomainMgr$NewDomain(dommgr, Nemesis, &nemesis_pdid,
                                     nemesis_info->nctxts,
                                     nemesis_info->neps,
                                     nemesis_info->nframes,

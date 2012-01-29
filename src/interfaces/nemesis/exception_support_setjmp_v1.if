@@ -1,0 +1,25 @@
+## As an interim measure, exceptions are currently implemented with
+## some macros defined in "exceptions.h".  These macros use "setjmp" to
+## save state when establishing a handler block, and "longjmp"
+## to restore it when entering a handler.
+
+local interface exception_support_setjmp_v1 extends exception_support_v1
+{
+    ## A handler block is established by calling "PushContext"
+    ## with the address of a handler context in the current
+    ## stack frame.  When control leaves the block, the handler
+    ## is removed with "PopContext".
+
+    type memory_v1.address context;
+
+    raise(exception_support_v1.id i, exception_support_v1.args a, string filename, card32 lineno, string funcname) never returns;##TEMP##
+
+    push_context(context ctx);
+    pop_context(context ctx, string filename, card32 lineno, string funcname);
+
+    ## Space for exception arguments is allocated on a heap known
+    ## to the implementation with "AllocArgs".  It is freed during
+    ## processing of "Raise" and "PopContext" calls.
+
+    allocate_args(memory_v1.size size) returns (exception_support_v1.args a); #raises heap_v1.no_memory?
+}

@@ -176,6 +176,8 @@ size_t elf_parser_t::string_entries_count() const
     section_header_t* _strtab = section_string_table();
     if (!_strtab)
         return 0;
+    if (!_strtab->entsize)
+        return 0;
     return _strtab->size / _strtab->entsize;
 }
 
@@ -190,6 +192,8 @@ size_t elf_parser_t::symbol_entries_count() const
 {
     section_header_t* _symtab = section_symbol_table();
     if (!_symtab)
+        return 0;
+    if (!_symtab->entsize)
         return 0;
     return _symtab->size / _symtab->entsize;
 }
@@ -405,7 +409,7 @@ address_t elf_parser_t::find_symbol(cstring_t str)
 
     for (unsigned int i = 0; i < symbol_entries_count(); i++)
     {
-        // FIXME: we use symbol_table->offset here and ->vaddr above, unify both these to ->vaddr
+        // FIXME: we use symbol_table->offset here and ->vaddr in the function above, unify both these to ->vaddr
         // This would require copying elf file's symbol and string table somewhere in area allocated by module_loader.
         symbol_t* symbol = reinterpret_cast<symbol_t*>(start() + symbol_table->offset + i * symbol_table->entsize);
 

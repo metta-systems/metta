@@ -1,0 +1,35 @@
+# Maps string to a memory_v1.address type.
+
+## There is no internal concurrency control in a "map_string_address".
+## Clients must ensure that conflicting operations are never
+## executed concurrently.  "get", "size" and "iterate" are readers,
+## while "put" and "remove" are writers.
+
+local interface map_string_address_v1
+{
+	type string key;
+	type memory_v1.address value;
+
+	# Use a base interface for defining these methods? E.g. with types "key" and "value", then extend this interface here...
+
+    ## If "k" $\in$ "dom(self)" then set "v := self[k]" and return "True";
+    ## otherwise return "False", leaving "v" unchanged.
+	get(key k, out value v) returns (boolean b);
+
+    ## Return "k" $\in$ "dom(self)" and set "self[k] := v".
+	put(key k, value v) returns (boolean b);
+
+    ## If "k" $\in$ "dom(self)" then set "v := self[k]", remove "k" from
+    ## "dom(self)" and return "True"; otherwise return "False", leaving
+    ## "v" unchanged.
+    remove(key k, out value v) returns (boolean b);
+
+    ## Return the number of entries in "self" (ie. "|dom(self)|").
+    size() returns (card32 size);
+
+    ## Return an iterator for "self".
+#    iterate() returns (map_string_address_iterator& i);
+
+    ## Free the current "map_string_address".
+    dispose();
+}

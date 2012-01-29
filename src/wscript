@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, Task, Options, Configure, Utils, misc
+import os, sys, Task, Options, Configure, Utils, misc
 Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
@@ -17,11 +17,13 @@ include_dirs = 'kernel kernel/generic runtime'.split()
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
-#-fvisibility-inlines-hidden -fvisibility=hidden
-cflags = []
+cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
+
+# Lion has deprecated some OpenSSL stuff we use.
+flags += ['-Wno-deprecated-declarations']
 
 # Change default waf behaviour wrt extensions.
 def change_ext(self, ext):
@@ -35,7 +37,6 @@ def set_options(opt):
     # arm-metta
 
     opt.tool_options('module_template', tooldir='waftools')
-
     opt.tool_options('compiler_cc compiler_cxx')
 
     # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
@@ -76,10 +77,9 @@ def configure(conf):
 
     conf.check_tool('yasm misc ar if2code', tooldir='waftools')
 
-    #conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+    conf.find_program('nm',var='NM')
 
     # TODO: try to use yasm, but allow fallback to NASM
-    # Ditto for llvm
     if clang:
         conf.check_tool('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_flags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
@@ -126,8 +126,9 @@ def configure(conf):
     conf.define('ELF_RELOC_DEBUG_V', 0)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
-    conf.define('TOOLS_DEBUG', 1)
     conf.define('RAMTAB_DEBUG', 0)
+    conf.define('TOOLS_DEBUG', 1) # Overarching tools debugging enabler, disable to turn off all tools debugging prints.
+    conf.define('MEDDLER_DEBUG', 0) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
@@ -168,6 +169,15 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
+    if os.environ.has_key('CROSS_CC'):
+        conf.env['CC'] = os.environ['CROSS_CC']
+        conf.env['LINK_CC'] = os.environ['CROSS_CC']
+    if os.environ.has_key('CROSS_CXX'):
+        conf.env['CXX'] = os.environ['CROSS_CXX']
+        conf.env['LINK_CXX'] = os.environ['CROSS_CXX']
+    conf.env.append_unique('CCFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('LINKFLAGS', ['-m32'])
 
     # Config for building system apps
     conf.setenv('APP_ENV')
@@ -183,17 +193,23 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    #conf.env['CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['CXX'] = '/Developer/usr/bin/g++'
-    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    #conf.env.append_unique('CCFLAGS', ['-m32'])
-    #conf.env.append_unique('CXXFLAGS', ['-m32'])
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
-    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    if os.environ.has_key('HOST_CC'):
+        conf.env['CC'] = os.environ['HOST_CC']
+        conf.env['LINK_CC'] = os.environ['HOST_CC']
+    if os.environ.has_key('HOST_CXX'):
+        conf.env['CXX'] = os.environ['HOST_CXX']
+        conf.env['LINK_CXX'] = os.environ['HOST_CXX']
+
     # set uselib
     conf.env.LIB_UUID = 'uuid'
-    conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
+
+    if sys.platform == 'darwin':
+        conf.env.LIB_OPENSSL = 'crypto'
+    else:
+        conf.env.LIB_OPENSSL = 'ssl'
+
+    conf.env.LIBPATH_LLVM = '/Users/berkus/Tools/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
@@ -223,8 +239,18 @@ def build(bld):
     meddler.post()
     bld.add_group()
 
+    bld.add_subdirs("tools/mettafs")
+
     # List interfaces sorted alphabetically.
-    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']
+    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
+                       'frames_module_v1', 'heap_module_v1', 'heap_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
+                       'map_string_address_v1', 'map_string_address_factory_v1', 'memory_v1', 
+                       'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 
+                       'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 
+                       'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 
+                       'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',
+                       # Temporary interfaces "borrowed" from Nemesis
+                       'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1']
 
     # Now generate interface files.
     # Use name to reference sources. Could just reference by source file name?
@@ -233,7 +259,6 @@ def build(bld):
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
     bld.add_subdirs("modules")
-    #bld.add_subdirs("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
@@ -268,7 +293,7 @@ def build(bld):
     platform.target = 'platform'
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -320,7 +345,7 @@ def build(bld):
     kickstart.uselib_local = 'common platform minruntime'# kernel
 
     # Launcher
-    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+    # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
     # TODO: post-process linked modules with symbol checker
     # TODO: put elf manipulation code to libgaladriel
     startup = bld.new_task_gen('cxx', 'program')
@@ -335,7 +360,7 @@ def build(bld):
     # Glue code
     # Glue code is the only ring0 privileged part of the system.
     # It includes interrupt handlers and some minimal syscall processing.
-    
+
     # TODO: add nucleus_* code here, initialize glue before kernel startup??
     glue = bld.new_task_gen('cxx', 'program')
     glue.target = 'glue.sys'
@@ -355,25 +380,14 @@ def build(bld):
     #kickstart.target = 'kickstart.sys'
     #kickstart.uselib_local = 'platform common kernel runtime'
 
-    bld.new_task_gen(
-        source = 'kernel-startup.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (kernel-startup)',
-        after = 'cxx_link'
-    )
-
-    bld.new_task_gen(
-        source = 'glue.sys',
-        rule = 'nm -u ${SRC[0].abspath(env)}',
-        name = 'nm undef check (glue)',
-        after = 'cxx_link'
-    )
+    undef_check(bld, 'kernel-startup.sys')
+    undef_check(bld, 'glue.sys')
 
     #Check and add all output modules.
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
-            print "posting "+tg.target
+            #print "posting "+tg.target
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 
