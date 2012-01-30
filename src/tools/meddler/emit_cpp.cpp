@@ -158,6 +158,19 @@ static std::string emit_type(alias_t& type)
     return result;
 }
 
+void interface_t::emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix)
+{
+    // First, emit parent interfaces methods, starting from the deepest parent.
+    if (parent)
+        parent->emit_methods_impl_h(s, indent_prefix);
+
+    // Then, emit own methods.
+    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
+    {
+        m->emit_impl_h(s, indent_prefix + "    ");
+    });
+}
+
 void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
     s << indent_prefix << "#pragma once" << std::endl << std::endl;
@@ -181,14 +194,24 @@ void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
           << indent_prefix << "    struct ops_t" << std::endl
           << indent_prefix << "    {" << std::endl;
 
-        std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
-        {
-            m->emit_impl_h(s, indent_prefix + "    ");
-        });
+        emit_methods_impl_h(s, indent_prefix);
 
         s << indent_prefix << "    };" << std::endl
           << indent_prefix << "}" << std::endl;
     }
+}
+
+void interface_t::emit_methods_interface_h(std::ostringstream& s, std::string indent_prefix)
+{
+    // First, emit parent interfaces methods, starting from the deepest parent.
+    if (parent)
+        parent->emit_methods_interface_h(s, indent_prefix);
+
+    // Then, emit own methods.
+    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
+    {
+        m->emit_interface_h(s, indent_prefix + "        ");
+    });
 }
 
 void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
@@ -251,15 +274,25 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
       << indent_prefix << "        " << name() << "::state_t* d_state;" << std::endl << std::endl;
 
     // Methods (part of closure_t).
-    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
-    {
-        m->emit_interface_h(s, indent_prefix + "        ");
-    });
+    emit_methods_interface_h(s, indent_prefix);
 
     s << indent_prefix << "    };" << std::endl;
 
     s << indent_prefix << "}" << std::endl;
 
+}
+
+void interface_t::emit_methods_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+{
+    // First, emit parent interfaces methods, starting from the deepest parent.
+    if (parent)
+        parent->emit_methods_interface_cpp(s, indent_prefix);
+
+    // Then, emit own methods.
+    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
+    {
+        m->emit_interface_cpp(s, indent_prefix);
+    });
 }
 
 // Currently no need to generate interface.cpp if there are no methods.
@@ -273,10 +306,7 @@ void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
         s << indent_prefix << "namespace " << name() << std::endl
           << indent_prefix << "{" << endl << endl;
 
-        std::for_each(methods.begin(), methods.end(), [&s, indent_prefix](method_t* m)
-        {
-            m->emit_interface_cpp(s, indent_prefix);
-        });
+        emit_methods_interface_cpp(s, indent_prefix);
 
         s << indent_prefix << "}" << endl;
     }
