@@ -128,7 +128,7 @@ def configure(conf):
     conf.define('DWARF_DEBUG', 0)
     conf.define('RAMTAB_DEBUG', 0)
     conf.define('TOOLS_DEBUG', 1) # Overarching tools debugging enabler, disable to turn off all tools debugging prints.
-    conf.define('MEDDLER_DEBUG', 0) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
+    conf.define('MEDDLER_DEBUG', 1) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
@@ -244,8 +244,8 @@ def build(bld):
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
                        'frames_module_v1', 'heap_module_v1', 'heap_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
-                       'map_string_address_v1', 'map_string_address_factory_v1', 'memory_v1', 
-                       'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 
+                       'map_string_address_v1', 'map_string_address_factory_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 
+                       'naming_context_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1',
                        'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 
                        'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 
                        'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',
@@ -253,8 +253,12 @@ def build(bld):
                        'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1']
 
     # Now generate interface files.
-    # Use name to reference sources. Could just reference by source file name?
-    bld(source = map(lambda d: 'interfaces/'+d+'.if', interface_files), name = 'all_idl')
+    ifbld = bld(
+        source = map(lambda d: 'interfaces/'+d+'.if', interface_files), 
+        name = 'all_idl', # This name is used by components to express dependency.
+        after = 'meddler'
+    )
+    ifbld.env.append_unique('IDL_INC', ['../interfaces', '../interfaces/nemesis']) # TODO: make if2code produce relative paths properly!!
 
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
