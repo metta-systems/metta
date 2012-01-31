@@ -20,7 +20,7 @@ class parser_t
     bool is_local, is_final, is_idempotent; // TODO: move to private class parser_state_t
     lexer_t lex;
     symbol_table_t symbols;
-    AST::node_t* parse_tree; friend class Meddler;
+    AST::interface_t* parse_tree; friend class Meddler; // it is actually an interface. make it so.
     llvm::SourceMgr& source_mgr;
 	bool verbose;
 //     llvm::TypeSymbolTable types;
@@ -56,6 +56,10 @@ public:
     parser_t(llvm::SourceMgr& sm, bool be_verbose);
     void init(const llvm::MemoryBuffer *F);
     bool run();
+
+    std::string parent_interface(); // do we need to parse the parent interface?
+
+    bool link_to_parent(parser_t* parent_parser) { parse_tree->parent = parent_parser->parse_tree;  return true; }
 };
 
 // kate: indent-width 4; replace-tabs on;

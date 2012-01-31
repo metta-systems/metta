@@ -190,9 +190,9 @@ public:
 	parameter_t(node_t* parent) : alias_t(parent), direction(inout) {}
     virtual void dump(std::string indent_prefix);
     virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
-    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
-    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
-    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class exception_t : public node_t
@@ -216,9 +216,23 @@ public:
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
     virtual bool add_exception(exception_t*);
-    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix);
-    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
-    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
+
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+    {
+        emit_impl_h(s, indent_prefix, false);
+    }
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+    {
+        emit_interface_h(s, indent_prefix, false);
+    }
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+    {
+        emit_interface_cpp(s, indent_prefix, false);
+    }
+
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
@@ -233,7 +247,7 @@ public:
 class interface_t : public node_t
 {
 public:
-    interface_t(std::string nm, bool is_local, bool is_final) : node_t(0, nm), local(is_local), final(is_final) {}
+    interface_t(std::string nm, bool is_local, bool is_final) : node_t(0, nm), local(is_local), final(is_final), parent(0) {}
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
     virtual bool add_imported_type(alias_t);
@@ -248,9 +262,14 @@ public:
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix);
 
+    void emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    void emit_methods_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    void emit_methods_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+
     bool local;
     bool final;
-    std::string base;
+    std::string base;         //  > base interface
+    interface_t* parent;      // /
     std::vector<alias_t*>     imported_types;//added to this list when we see an unknown fully qualified identifier in var_decls.
 	// builtin identifiers should resolve to known types in list.
 	// unqualified identifiers should resolve to the following list:

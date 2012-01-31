@@ -14,7 +14,7 @@
 }*/
 
 static void 
-exception_support_setjmp_v1_raise(exception_support_setjmp_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
+exception_support_setjmp_v1_raise(exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
 {
 	
 }
