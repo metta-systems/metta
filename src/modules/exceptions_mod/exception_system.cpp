@@ -6,6 +6,7 @@
 #include "infopage.h"
 #include "default_console.h"
 #include "module_interface.h"
+#include "heap_new.h"
 #include <setjmp.h>
 
 /*static internal_raise()
@@ -45,7 +46,8 @@ static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_meth
 	exception_support_setjmp_v1_allocate_args
 };
 
-static exception_support_setjmp_v1::closure_t* exception_system_v1_create(exception_system_v1::closure_t* self)
+static exception_support_setjmp_v1::closure_t* 
+exception_system_v1_create(exception_system_v1::closure_t* self)
 {
 	kconsole << " ** Exception system - create" << endl;
 
@@ -55,9 +57,8 @@ static exception_support_setjmp_v1::closure_t* exception_system_v1_create(except
 	 * directly.
 	 */
 
-	exception_support_setjmp_v1::closure_t* cl;
-	
-	if (!(cl = reinterpret_cast<exception_support_setjmp_v1::closure_t*>(PVS(heap)->allocate(sizeof(*cl)))))
+	exception_support_setjmp_v1::closure_t* cl = new(PVS(heap)) exception_support_setjmp_v1::closure_t;
+	if (!cl)
 	{
 		kconsole << " + FAILED to get memory for exception system." << endl;
 		return 0; // Not much point in raising an exception here.
