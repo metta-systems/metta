@@ -1,7 +1,8 @@
-0. Make exceptions work.
-0.5. Add bootimage namespace introspection and iteration (bootimage_namespace_t?)
-1. Finish typesystem loading.
-2. Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data...
-3. Finish introspection and write a command line tool to interactively explore type system.
-4. Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
-5. OS block cache - write tests.
+* Make meddler type emission fully qualify names of parent interface types in ancestor types.
+* Make exceptions work.
+* Add bootimage namespace introspection and iteration (bootimage_namespace_t?)
+* Finish typesystem loading.
+* Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data...
+* Finish introspection and write a command line tool to interactively explore type system.
+* Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
+* OS block cache - write tests.
