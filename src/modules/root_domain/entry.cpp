@@ -30,6 +30,7 @@
 #include "stretch_table_module_v1_interface.h"
 #include "stretch_table_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
+#include "map_card64_address_v1_interface.h"
 #include "map_card64_address_factory_v1_interface.h"
 #include "map_string_address_factory_v1_interface.h"
 #include "type_system_factory_v1_interface.h"
@@ -320,6 +321,14 @@ static void init_type_system(bootimage_t& bootimg)
     ASSERT(lct);
     auto str = strmod->create(PVS(heap));
     ASSERT(str);
+
+    // lct test
+    // for (int i = 0; i < 1000; ++i)
+    // {
+    //     if (!lct->put(i, i))
+    //         kconsole << "Putting " << i << " into lct failed!" << endl;
+    // }
+
     auto ts = ts_factory->create(PVS(heap), lct, str);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
