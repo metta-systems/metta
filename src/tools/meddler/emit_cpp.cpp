@@ -408,8 +408,7 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
         return_value_type = emit_type(*returns.front(), fully_qualify_types);
     }
 
-    s << indent_prefix << return_value_type
-      << " " << parent_interface << "::closure_t::" << name() << "(";
+    s << indent_prefix << return_value_type << "  closure_t::" << name() << "(";
 
     bool first = true;
     std::for_each(params.begin(), params.end(), [&s, &first, fully_qualify_types](parameter_t* param)
@@ -439,7 +438,9 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
       << indent_prefix << "    ";
     if (return_value_type != "void")
         s << "return ";
-    s << "d_methods->" << name() << "(this";
+    s << "d_methods->" << name() << "(";
+
+    s << "reinterpret_cast<" << get_root()->name() << "::closure_t*>(this)"; // butt-ugly, indeed
 
     std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
     {

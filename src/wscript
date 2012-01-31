@@ -259,6 +259,8 @@ def build(bld):
         after = 'meddler'
     )
     ifbld.env.append_unique('IDL_INC', ['../interfaces', '../interfaces/nemesis']) # TODO: make if2code produce relative paths properly!!
+    # bld.add_manual_dependency('meddler', 'all_idl')
+    # bld.add_manual_dependency('all_idl', 'meddler')
 
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
