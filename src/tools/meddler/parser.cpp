@@ -136,15 +136,22 @@ bool parser_t::run()
 {
     lex.lex(); // prime the parser
     bool ret = parse_top_level_entities();
-	if (verbose)
-	{
-    	symbols.dump();
-    	if (ret)
-        	std::cout << "** PARSE SUCCESS" << std::endl;
-    	else
-        	std::cout << "** PARSE FAILURE" << std::endl;
-	}
+    if (verbose)
+    {
+        symbols.dump();
+        if (ret)
+            std::cout << "** PARSE SUCCESS" << std::endl;
+        else
+            std::cout << "** PARSE FAILURE" << std::endl;
+    }
     return ret;
+}
+
+std::string parser_t::parent_interface()
+{
+    if (!parse_tree)
+        return "<not known yet>"; // trick: return non-null string to make Meddler attempt a parse!
+    return parse_tree->base;
 }
 
 #define D() L(if(verbose) std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
@@ -216,10 +223,6 @@ bool parser_t::parse_interface()
                 return false;
             }
             node->set_parent(lex.current_token());
-            // Now, we need to stop parsing current file, find the parent interface and parse it first, to populate all necessary tables before continuing with this one.
-            // So, push current parsing context into a stack, get a fresh new one and repeat, recursively if necessary
-            // then merge whatever types, exceptions and methods from parent interfaces into this one and continue.
-            // FIXME: need to only add methods to the list?
         }
 
         if (!lex.expect(token::lbrace))
