@@ -15,13 +15,16 @@ class if2code(Task.Task):
     verbose = False
     def run(self):
         cwd = self.inputs[0].parent.bldpath(self.env)
+        incd = [self.inputs[0].parent.srcpath(self.env)]
         #print "includes:"
         for i in self.env.IDL_INC:
-            print "include "+i
+            #print "include "+i
+            incd = incd + [i]
+
         if (self.verbose):
-            cmd = '%s -v %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, cwd)
+            cmd = '%s -v %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, ' -I'.join(incd))
         else:
-            cmd = '%s %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, cwd)
+            cmd = '%s %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, ' -I'.join(incd))
 
         #print "Running "+cmd
         return self.exec_command(cmd)
