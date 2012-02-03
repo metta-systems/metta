@@ -10,7 +10,7 @@ local interface exception_support_setjmp_v1 extends exception_support_v1
     ## stack frame.  When control leaves the block, the handler
     ## is removed with "PopContext".
 
-    type memory_v1.address context;
+    type opaque context; ## Add opaque builtin type, it means something entirely user-defined and can be used only by local interfaces.
 
     push_context(context ctx);
     pop_context(context ctx, string filename, card32 lineno, string funcname);

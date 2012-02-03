@@ -1,0 +1,8 @@
+* Add bootimage namespace introspection and iteration (bootimage_namespace_t?)
+* Finish typesystem loading.
+* Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data...
+* Finish introspection and write a command line tool to interactively explore type system.
+* Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
+* OS block cache - write tests.
+* waf - upgrade to 1.6.10
+* waf - make if2code depend on meddler changes

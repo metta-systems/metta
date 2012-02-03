@@ -22,3 +22,4 @@ stretch_table_mod:modules/stretch_table_mod/stretch_table_mod.comp
 stretch_driver_mod:modules/stretch_driver_mod/stretch_driver_mod.comp
 exceptions_mod:modules/exceptions_mod/exceptions_mod.comp
 hashtables_mod:modules/hashtables_mod/hashtables_mod.comp
+typesystem_mod:modules/typesystem_mod/typesystem_mod.comp

@@ -41,6 +41,7 @@ static string map_type(string type)
         type_map["double"] = "double";
         type_map["boolean"] = "bool";
         type_map["string"] = "const char*";
+        type_map["opaque"] = "void*";
         type_map_built = true;
     }
 

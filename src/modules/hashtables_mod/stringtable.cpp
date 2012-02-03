@@ -13,6 +13,7 @@
 #include "default_console.h"
 #include "heap_allocator.h"
 #include "hash_map"
+#include "heap_new.h"
 
 typedef std::allocator<std::pair<map_string_address_v1::key, map_string_address_v1::value>> card64_table_heap_allocator;
 
@@ -27,7 +28,7 @@ typedef std::hash_map<
 
 struct map_string_address_v1::state_t
 {
-	map_string_address_v1::closure_t* closure;
+	map_string_address_v1::closure_t closure;
 	heap_v1::closure_t* heap;
 	card64table_t* table;
 };
@@ -92,8 +93,8 @@ map_string_address_factory_v1_create(map_string_address_factory_v1::closure_t* s
 	// TODO: if (!state) raise Exception
 	state->heap = heap;
 	state->table = new(heap) card64table_t(heap_alloc);
-	closure_init(state->closure, &map_methods, state);
-	return state->closure;
+	closure_init(&state->closure, &map_methods, state);
+	return &state->closure;
 }
 
 static struct map_string_address_factory_v1::ops_t methods =

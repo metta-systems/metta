@@ -14,6 +14,7 @@
 #include "memory.h"
 #include "new.h"
 #include "default_console.h"
+#include "exceptions.h"
 
 //======================================================================================================================
 // heap_v1 implementation
@@ -28,7 +29,10 @@ struct heap_v1::state_t
 static memory_v1::address heap_v1_allocate(heap_v1::closure_t* self, memory_v1::size size)
 {
     lockable_scope_lock_t lock(*self->d_state->heap);
-    return reinterpret_cast<memory_v1::address>(self->d_state->heap->allocate(size));
+    auto res = self->d_state->heap->allocate(size);
+    if (!res)
+        OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL);
+    return reinterpret_cast<memory_v1::address>(res);
 }
 
 static void heap_v1_free(heap_v1::closure_t* self, memory_v1::address ptr)

@@ -22,6 +22,8 @@ flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
 
+gcc_debug_flag = ['-###']
+
 # Lion has deprecated some OpenSSL stuff we use.
 flags += ['-Wno-deprecated-declarations']
 
@@ -93,6 +95,8 @@ def configure(conf):
         linkflags += ['--gc-sections', '--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
+    #flags += gcc_debug_flag
+
     cxxflags = cflags
 
     # Set up common environment variables
@@ -128,7 +132,7 @@ def configure(conf):
     conf.define('DWARF_DEBUG', 0)
     conf.define('RAMTAB_DEBUG', 0)
     conf.define('TOOLS_DEBUG', 1) # Overarching tools debugging enabler, disable to turn off all tools debugging prints.
-    conf.define('MEDDLER_DEBUG', 1) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
+    conf.define('MEDDLER_DEBUG', 0) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
