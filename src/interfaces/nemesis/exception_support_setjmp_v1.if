@@ -19,5 +19,5 @@ local interface exception_support_setjmp_v1 extends exception_support_v1
     ## to the implementation with "AllocArgs".  It is freed during
     ## processing of "Raise" and "PopContext" calls.
 
-    allocate_args(memory_v1.size size) returns (exception_support_v1.args a); #raises heap_v1.no_memory?
+    allocate_args(memory_v1.size size) returns (exception_support_v1.args a) raises (heap_v1.no_memory);
 }
