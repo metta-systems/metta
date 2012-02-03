@@ -10,8 +10,9 @@
 #include "exceptions.h"
 #include "panic.h"
 
-// x86 definition of return address in current frame.
-// #define RA() ((address_t)__builtin_return_address(0))
+//=====================================================================================================================
+// setjmp()-based exception system.
+//=====================================================================================================================
 
 static void 
 internal_raise(bool initial_raise, exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
@@ -19,28 +20,7 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 	xcp_context_t* ctx;
 	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
 
-	// TRC (word_t *wargs = (word_t *) args;
-	// eprintf ("ExnSetjmpMod_Raise: vpp=%x ra=%x exc=%s args=%x\n",
-	// 	 Pvs(vp), RA(), id, args);
-	// if (args) 
-	// eprintf ("  args: %x %x %x %x\n",
-	// 	 wargs[0], wargs[1], wargs[2], wargs[3]);            
-	// )
-
 	ctx = *handlers;
-
-	// #ifdef __arm
-	// #  define r_ra reg[r_pc]
-	// #endif
-	// TRC (
-	// for (; ctx; ctx = ctx->up)
-	//   eprintf ("ExnSetjmpMod_Raise: --> ctx=%x ra=%x\n",
-	// 	   ctx, ((jmp_buf_t *) &ctx->jmp[0])->r_ra);
-	// ctx = *handlers;
-	// )
-	// #ifdef __arm
-	// #  undef r_ra
-	// #endif
 
 	while (ctx && ctx->state != xcp_none)
 	{
@@ -52,8 +32,8 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 			 * up the stack than that exception. Thus its argument
 			 * record is unreachable and must be freed.
 			 */
-			// FREE( ctx->exn_args );
-			// ctx->exn_args = BADPTR;
+			// FREE( ctx->args );
+			// ctx->args = BADPTR;
 		}
 		ctx = ctx->up;
 	}
@@ -111,17 +91,48 @@ exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t*
 	*handlers = ctx;
 }
 
+/* precondition: ctx.state = none or active */
 static void 
-exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context ctx, const char* filename, uint32_t lineno, const char* funcname)
+exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c, const char* filename, uint32_t lineno, const char* funcname)
 {
-	kconsole << "__ exception_support_setjmp_v1::pop_context" << endl;	
+	xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
+	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
+	xcp_state_t prev_state = ctx->state;
+
+	kconsole << "__ exception_support_setjmp_v1::pop_context " << ctx << ", prev_state " << prev_state << endl;	
+
+	/* set state to popped so that OS_FINALLY only pops once in normal case */
+	ctx->state = xcp_popped;
+
+	/* pop the context */
+	*handlers = ctx->up;
+
+	if (prev_state == xcp_active)
+	{
+		/* Exception was active, so propagate it up. */
+		internal_raise(false, reinterpret_cast<exception_support_v1::closure_t*>(self), (exception_support_v1::id)ctx->name, ctx->args, filename, lineno, funcname);
+		/* NOTREACHED */
+	}
+	else if (ctx->args)
+	{
+		// FREE( ctx->args );
+		// ctx->args = BADPTR;
+	}
 }
 
 static exception_support_v1::args 
 exception_support_setjmp_v1_allocate_args(exception_support_setjmp_v1::closure_t* self, memory_v1::size size)
 {
-	kconsole << "__ exception_support_setjmp_v1::allocate_args" << endl;
-	return 0;
+	kconsole << "__ exception_support_setjmp_v1::allocate_args " << size << endl;
+	address_t res = PVS(heap)->allocate(size);
+
+	// if (!res)
+	// {
+	// 	OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL); // hmm wait, the heap will throw that itself! no need for this check
+	// 	PANIC("NOTREACHED");
+	// }
+
+	return res;
 }
 
 static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_methods =
@@ -132,6 +143,10 @@ static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_meth
 	exception_support_setjmp_v1_allocate_args
 };
 
+//=====================================================================================================================
+// The Factory
+//=====================================================================================================================
+
 static exception_support_setjmp_v1::closure_t* 
 exception_system_v1_create(exception_system_v1::closure_t* self)
 {
@@ -140,7 +155,7 @@ exception_system_v1_create(exception_system_v1::closure_t* self)
 	exception_support_setjmp_v1::closure_t* cl = new(PVS(heap)) exception_support_setjmp_v1::closure_t;
 	if (!cl)
 	{
-		kconsole << " + FAILED to get memory for exception system." << endl;
+		kconsole << " + FAILED to get memory for exception system. This is quite fatal." << endl;
 		return 0; // Not much point in raising an exception here.
 	}
 

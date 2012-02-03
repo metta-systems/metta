@@ -29,22 +29,6 @@ enum xcp_state_t
 };
 
 /*!
- * Define "routine" to determine if two exceptions match.
- *
- * Effectively just strcmp(), but can't use the stack (at least, not much).
- */
-#define xcp_matches(e1,e2) \
-({						\
-    char *s=e1, *d=e2;				\
-    while(*s == *d && *s != 0 && *d != 0)	\
-    {						\
-	s++;					\
-	d++;					\
-    }						\
-    (*s == 0 && *d == 0)? 1 : 0;		\
-})
-
-/*!
  * Exception handling context record.
  *
  * A context block is allocated in the current stack frame for each
@@ -71,6 +55,22 @@ struct xcp_context_t
 #define xcp_rec_alloc(size)    PVS(exceptions)->allocate_args(size)
 #define xcp_setjmp(buf)        (__builtin_setjmp(buf))
 #define xcp_longjmp(buf, j)    (__builtin_longjmp(buf, j))
+
+/*!
+ * Define "routine" to determine if two exceptions match.
+ *
+ * Effectively just strcmp(), but can't use the stack (at least, not much).
+ */
+#define xcp_matches(e1,e2) \
+({						\
+    const char *s=e1, *d=e2;				\
+    while(*s == *d && *s != 0 && *d != 0)	\
+    {						\
+	s++;					\
+	d++;					\
+    }						\
+    (*s == 0 && *d == 0)? 1 : 0;		\
+})
 
 // Exception handling macros.
 // Use these when writing server code.
