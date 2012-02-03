@@ -130,6 +130,7 @@ void parser_t::populate_symbol_table()
     symbols.insert("double", token::_builtin_type);
     symbols.insert("boolean", token::_builtin_type);
     symbols.insert("string", token::_builtin_type);
+    symbols.insert("opaque", token::_builtin_type);
 }
 
 bool parser_t::run()
