@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "parser.h"
+#include "logger.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -47,15 +48,15 @@ public:
 
     bool add_source(string file)
     {
-        cout << "### Adding file " << file << endl;
+        L(cout << "### Adding file " << file << endl);
         unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc());
         if (bufn == ~0U)
             return false;
-        cout << "### Parsing file " << file << endl;
+        L(cout << "### Parsing file " << file << endl);
         parser_t* parser = new parser_t(sm, verbose);
-        cout << "### Initing parser" << endl;
+        L(cout << "### Initing parser" << endl);
         parser->init(sm.getMemoryBuffer(bufn));
-        cout << "### Adding parser to stack" << endl;
+        L(cout << "### Adding parser to stack" << endl);
         parser_stack.push_back(parser);
         return true;
     }
@@ -66,7 +67,7 @@ public:
 
         bool res = true;
         do {
-            cout << "### Running parse" << endl;
+            L(cout << "### Running parse" << endl);
             res &= parser_stack.at(parser_stack.size()-1)->run();
 
             // Since parent interfaces can only "extend" current interface, we put them into parent interfaces list of current interface
@@ -74,17 +75,17 @@ public:
             // interface.
             if (parser_stack.size() > 1) 
             {
-                cout << "### Linking interface to parent" << endl;
+                L(cout << "### Linking interface to parent" << endl);
                 parser_stack.at(parser_stack.size()-2)->link_to_parent(parser_stack.at(parser_stack.size()-1));
             }
             if (res && (parser_stack.at(parser_stack.size()-1)->parent_interface() != ""))
             {
-                cout << "### Adding another interface file" << endl;
+                L(cout << "### Adding another interface file" << endl);
                 add_source(parser_stack.at(parser_stack.size()-1)->parent_interface() + ".if");
             }
-            cout << "### Running another round" << endl;
+            L(cout << "### Running another round" << endl);
         } while (res && (parser_stack.at(parser_stack.size()-1)->parent_interface() != ""));
-        cout << "### Finished parsing!" << endl;
+        L(cout << "### Finished parsing!" << endl);
         return res;
     }
 
@@ -93,11 +94,11 @@ public:
         ostringstream impl_h, interface_h, interface_cpp, filename;
         parser_t& parser = *parser_stack[0];
 
-        cout << "### Emitting impl_h" << endl;
+        L(cout << "### Emitting impl_h" << endl);
         parser.parse_tree->emit_impl_h(impl_h, "");
-        cout << "### Emitting interface_h" << endl;
+        L(cout << "### Emitting interface_h" << endl);
         parser.parse_tree->emit_interface_h(interface_h, "");
-        cout << "### Emitting interface_cpp" << endl;
+        L(cout << "### Emitting interface_cpp" << endl);
         parser.parse_tree->emit_interface_cpp(interface_cpp, "");
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
