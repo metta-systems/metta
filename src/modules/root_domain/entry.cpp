@@ -36,6 +36,7 @@
 #include "type_system_factory_v1_interface.h"
 #include "type_system_f_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
+#include "exceptions.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -305,6 +306,18 @@ static void init_type_system(bootimage_t& bootimg)
 	PVS(exceptions) = xcp_factory->create();
     ASSERT(PVS(exceptions));
     // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
+
+    // Check exception handling via too big heap allocation (easiest)
+    kconsole << "__ Testing exceptions" << endl;
+    OS_TRY {
+        auto res = PVS(heap)->allocate(128*1024*1024);
+        ASSERT(res);
+    }
+    // OS_CATCH("heap_v1.no_memory") {
+    OS_CATCH_ALL {
+        kconsole << "__ Handled heap_v1.no_memory exception, yippie!" << endl;
+    }
+    OS_ENDTRY
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safe_card64table_mod..." << endl;
