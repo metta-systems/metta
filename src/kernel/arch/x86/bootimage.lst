@@ -12,6 +12,8 @@ glue:glue.sys
 root_domain:modules/root_domain/root_domain.comp
 name.sp>value
 name.sp2>value2
+namespace_test>some long string value for testing it!
+root_domain.nested.nsp>namespace nests
 
 # other modules
 frames_mod:modules/frames_mod/frames_mod.comp

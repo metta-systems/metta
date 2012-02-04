@@ -129,6 +129,7 @@ filebinio& operator << (filebinio& io, bootimage_n::root_domain_t& dom)
 
 filebinio& operator << (filebinio& io, bootimage_n::namespace_entry_t& ent)
 {
+    io.write32le(LIMIT32(ent.tag));
     io.write32le(LIMIT32(ent.name_off));
     io.write32le(LIMIT32(ent.value_int));
     return io;
@@ -179,14 +180,14 @@ bool stringtable_t::write(file& out, uintptr_t& data_offset) const
 // namespace entry value
 //======================================================================================================================
 
+// is this struct needed? just use namespace_entry_t?
 struct param
 {
-    enum { integer, string, sym } tag;
-    //union {
+    enum { integer = 1, string, symbol } tag;
+    // can't have a union here, because members of std::map need to have default ctor.
     int int_val;
     std::string string_val;
     void* sym_val;
-    //};
 };
 
 //======================================================================================================================
@@ -247,25 +248,42 @@ module_namespace1_t::module_namespace1_t(module_info::ns_map namespace_entries)
     for(auto entry : namespace_entries)
     {
         namespace_entry_t e;
+        e.tag = entry.second.tag;
         e.name_off = string_table.append(entry.first);
-        e.value = entry.second.sym_val;
+        switch (e.tag)
+        {
+            case param::integer:
+                e.value_int = entry.second.int_val;
+                break;
+            case param::string:
+                e.value_int = string_table.append(entry.second.string_val);
+                break;
+            case param::symbol:
+                e.value = entry.second.sym_val;
+                break;
+        }
         entries.push_back(e);
     }
 }
 
 size_t module_namespace1_t::size() const
 {
-    return entries.size() * 8/*sizeof(output namespace_entry_t)*/ + string_table.size();
+    return 4 + entries.size() * SIZEOF_ONDISK_NAMESPACE_ENTRY + string_table.size();
 }
 
 bool module_namespace1_t::write(file& out, uintptr_t& data_offset)
 {
     D(cout << "Writing " << entries.size() << " namespace entries" << endl);
     filebinio io(out);
-    data_offset += entries.size() * 8;//sizeof(output namespace_entry_t);
+
+    io.write32le(LIMIT32(entries.size()));
+
+    data_offset += 4 + entries.size() * SIZEOF_ONDISK_NAMESPACE_ENTRY;
     for(auto entry : entries)
     {
-        entry.name_off += data_offset;
+        entry.name_off += data_offset; // Turn into a global bootimage file position.
+        if (entry.tag == param::string)
+            entry.value_int += data_offset; // Adjust offset for string namespace entries too.
         io << entry;
     }
     string_table.write(out, data_offset);
@@ -289,6 +307,7 @@ bool module_info::add_ns_entry(std::string key, param val, bool override)
 bool module_info::add_ns_entry(std::string key, int val)
 {
     param p;
+    p.tag = param::integer;
     p.int_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -296,6 +315,7 @@ bool module_info::add_ns_entry(std::string key, int val)
 bool module_info::add_ns_entry(std::string key, std::string val)
 {
     param p;
+    p.tag = param::string;
     p.string_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -303,6 +323,7 @@ bool module_info::add_ns_entry(std::string key, std::string val)
 bool module_info::add_ns_entry(std::string key, void* val)
 {
     param p;
+    p.tag = param::symbol;
     p.sym_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -310,6 +331,7 @@ bool module_info::add_ns_entry(std::string key, void* val)
 void module_info::override_ns_entry(std::string key, int val)
 {
     param p;
+    p.tag = param::integer;
     p.int_val = val;
     add_ns_entry(key, p, true);
 }
@@ -317,6 +339,7 @@ void module_info::override_ns_entry(std::string key, int val)
 void module_info::override_ns_entry(std::string key, std::string val)
 {
     param p;
+    p.tag = param::string;
     p.string_val = val;
     add_ns_entry(key, p, true);
 }
@@ -324,6 +347,7 @@ void module_info::override_ns_entry(std::string key, std::string val)
 void module_info::override_ns_entry(std::string key, void* val)
 {
     param p;
+    p.tag = param::symbol;
     p.sym_val = val;
     add_ns_entry(key, p, true);
 }
