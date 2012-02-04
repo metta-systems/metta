@@ -339,12 +339,12 @@ static void init_type_system(bootimage_t& bootimg)
     kconsole <<  "   +-- str " << str << endl;
     ASSERT(str);
 
-    kconsole <<  "   +-- testing lct" << endl;
-    for (int i = 0; i < 1000; ++i)
-    {
-        if (!lct->put(i, i))
-            kconsole << "Putting " << i << " into lct failed!" << endl;
-    }
+    // kconsole <<  "   +-- testing lct" << endl;
+    // for (int i = 0; i < 1000; ++i)
+    // {
+    //     if (!lct->put(i, i))
+    //         kconsole << "Putting " << i << " into lct failed!" << endl;
+    // }
 
     kconsole <<  " +-- creating ts" << endl;
     auto ts = ts_factory->create(PVS(heap), lct, str);
