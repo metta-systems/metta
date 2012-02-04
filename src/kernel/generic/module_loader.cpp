@@ -390,7 +390,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     memutils::copy_memory(*d_last_available_address - sizeof(this_loaded_module), address_t(&this_loaded_module), sizeof(this_loaded_module));
     D(kconsole << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module) << endl);
 
-    print_module_map();
+    D(print_module_map());
 
     if (!closure_name)
     {
