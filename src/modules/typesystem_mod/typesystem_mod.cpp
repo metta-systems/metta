@@ -3,6 +3,10 @@
 #include "type_system_factory_v1_interface.h"
 #include "type_system_factory_v1_impl.h"
 
+//=====================================================================================================================
+// The Factory
+//=====================================================================================================================
+
 static type_system_f_v1::closure_t* create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h, map_card64_address_v1::closure_t* cardmap, map_string_address_v1::closure_t* stringmap)
 {
 	return 0;

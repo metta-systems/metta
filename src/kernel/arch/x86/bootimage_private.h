@@ -71,6 +71,7 @@ struct root_domain_t : public module_t
 
 struct namespace_entry_t
 {
+    int tag; // type discriminator
     union {
         const char* name;
         address_t name_off;
@@ -80,6 +81,8 @@ struct namespace_entry_t
         uintptr_t value_int;
     };
 };
+
+#define SIZEOF_ONDISK_NAMESPACE_ENTRY 12
 
 union info_t
 {
