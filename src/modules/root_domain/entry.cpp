@@ -318,9 +318,6 @@ static void init_type_system(bootimage_t& bootimg)
     }
     OS_ENDTRY
 
-    extern void print_module_map();
-    print_module_map();
-
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safe_card64table_mod..." << endl;
     auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
