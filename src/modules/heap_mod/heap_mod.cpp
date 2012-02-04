@@ -15,6 +15,7 @@
 #include "new.h"
 #include "default_console.h"
 #include "exceptions.h"
+#include "panic.h"
 
 //======================================================================================================================
 // heap_v1 implementation
@@ -28,15 +29,40 @@ struct heap_v1::state_t
 
 static memory_v1::address heap_v1_allocate(heap_v1::closure_t* self, memory_v1::size size)
 {
+#if !SMP
+    ASSERT(!self->d_state->heap->has_lock());
+#endif
     lockable_scope_lock_t lock(*self->d_state->heap);
-    auto res = self->d_state->heap->allocate(size);
-    if (!res)
-        OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL);
+    void* res = 0;
+
+    // This mega-ugly is here because we behave differently before and after the exceptions module is instantiated...
+    if (PVS(exceptions))
+    {
+        OS_TRY {
+            res = self->d_state->heap->allocate(size);
+        }
+        OS_FINALLY {
+            lock.unlock();
+        }
+        OS_ENDTRY
+
+        if (!res)
+            OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL);
+    }
+    else
+    {
+        // Cannot RAISE here at all!
+        res = self->d_state->heap->allocate(size);
+    }
+
     return reinterpret_cast<memory_v1::address>(res);
 }
 
 static void heap_v1_free(heap_v1::closure_t* self, memory_v1::address ptr)
 {
+#if !SMP
+    ASSERT(!self->d_state->heap->has_lock());
+#endif
     lockable_scope_lock_t lock(*self->d_state->heap);
     self->d_state->heap->free(reinterpret_cast<void*>(ptr));
 }
