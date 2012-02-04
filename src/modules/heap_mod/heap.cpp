@@ -13,7 +13,7 @@
 #include "panic.h"
 //#include "config.h" // for HEAP_DEBUG
 
-#define HEAP_DEBUG 1
+#define HEAP_DEBUG 0
 
 /*!
  * @class heap_t
@@ -31,7 +31,7 @@
 static inline size_t BLOCK_ALIGN(size_t _x) { return ((_x)+WORD_SIZE) & -(WORD_SIZE); }
 #define _S(_x) (_x * WORD_SIZE)
 
-/* Size of minimum fragment: this should be heaprec + all_sizes[0] */
+/* Size of minimum fragment: this should be sizeof(heap_rec_t) + all_sizes[0] */
 #define MIN_FRAG (sizeof(heap_rec_t) + _S(1))
 
 #define SMALL_LIMIT _S(16)
@@ -259,10 +259,14 @@ heap_t::heap_rec_t* heap_t::get_new_block(size_t size, int index)
 
 void *heap_t::allocate(size_t size)
 {
+#if HEAP_DEBUG
+    kconsole << "before assert(has_lock)" << endl;
+#endif
     ASSERT(has_lock());
 #if HEAP_DEBUG
-//    kconsole << "Heap check before allocate(" << size << ")" << endl;
-//    check_integrity();
+    kconsole << "after assert(has_lock)" << endl;
+    kconsole << "Heap check before allocate(" << size << ")" << endl;
+    check_integrity();
 #endif
     int index;
     heap_rec_t* free_block;
@@ -289,8 +293,8 @@ void *heap_t::allocate(size_t size)
     next_block(free_block)->prev = HEAP_MAGIC;
 
 #if HEAP_DEBUG
-//    kconsole << "Heap check after allocate(" << size << ")" << endl;
-//    check_integrity();
+    kconsole << "Heap check after allocate(" << size << ")" << endl;
+    check_integrity();
 #endif
 
     kconsole << "heap_t::allocate("<<size<<") returning "<<(free_block+1)<<endl;
@@ -301,8 +305,8 @@ void heap_t::free(void *p)
 {
     ASSERT(has_lock());
 #if HEAP_DEBUG
-//    kconsole << "Heap check before free(" << p << ")" << endl;
-//    check_integrity();
+    kconsole << "Heap check before free(" << p << ")" << endl;
+    check_integrity();
 #endif
     heap_rec_t* to_free;
     heap_rec_t* nextblock;
@@ -323,8 +327,8 @@ void heap_t::free(void *p)
     nextblock->prev = to_free->size;
     
 #if HEAP_DEBUG
-//    kconsole << "Heap check after free(" << p << ")" << endl;
-//    check_integrity();
+    kconsole << "Heap check after free(" << p << ")" << endl;
+    check_integrity();
 #endif
 }
 

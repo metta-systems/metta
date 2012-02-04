@@ -10,6 +10,7 @@
 
 #include "atomic.h"
 #include "types.h"
+#include "default_console.h"//debug
 
 //! A class that implements a spinlock/binary semaphore.
 class lockable_t
@@ -25,6 +26,7 @@ public:
         while (atomic_ops::tas(&lock_value, new_val) == 1)
         {
             // Do nothing. Could notify scheduler here.
+            kconsole << "object already locked, spinning!" << endl;
         }
         // We got the lock, return.
     }
@@ -72,6 +74,11 @@ public:
         lockable.lock();
     }
     ~scope_lock_t()
+    {
+        lockable.unlock();
+    }
+    // Manually release the lock (for Nemesis exception support we need to do some stuff manually...)
+    void unlock()
     {
         lockable.unlock();
     }

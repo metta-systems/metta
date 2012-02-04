@@ -310,14 +310,16 @@ static void init_type_system(bootimage_t& bootimg)
     // Check exception handling via too big heap allocation (easiest)
     kconsole << "__ Testing exceptions" << endl;
     OS_TRY {
-        auto res = PVS(heap)->allocate(128*1024*1024);
-        ASSERT(res);
+        auto res = PVS(heap)->allocate(1024*1024*1024);
+        ASSERT(res); // Should not execute this!
     }
-    // OS_CATCH("heap_v1.no_memory") {
-    OS_CATCH_ALL {
+    OS_CATCH("heap_v1.no_memory") {
         kconsole << "__ Handled heap_v1.no_memory exception, yippie!" << endl;
     }
     OS_ENDTRY
+
+    extern void print_module_map();
+    print_module_map();
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safe_card64table_mod..." << endl;
@@ -330,18 +332,21 @@ static void init_type_system(bootimage_t& bootimg)
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-    auto lct = lctmod->create(PVS(heap));
+    auto lct = lctmod->create(PVS(heap)); //<<-- hang here
+    kconsole <<  "   +-- lct " << lct << endl;
     ASSERT(lct);
     auto str = strmod->create(PVS(heap));
+    kconsole <<  "   +-- str " << str << endl;
     ASSERT(str);
 
-    // lct test
+    // kconsole <<  "   +-- testing lct" << endl;
     // for (int i = 0; i < 1000; ++i)
     // {
     //     if (!lct->put(i, i))
     //         kconsole << "Putting " << i << " into lct failed!" << endl;
     // }
 
+    kconsole <<  " +-- creating ts" << endl;
     auto ts = ts_factory->create(PVS(heap), lct, str);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
