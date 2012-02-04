@@ -90,7 +90,7 @@ map_card64_address_factory_v1_create(map_card64_address_factory_v1::closure_t* s
 {
 	map_card64_address_v1::state_t* state = new(heap) map_card64_address_v1::state_t;
     auto heap_alloc = new(heap) std::heap_allocator_implementation(heap); // FIXME: a mem leak!
-	// TODO: if (!state) raise Exception
+	// TODO: if (!state) raise Exception -- heap will raise no_memory itself!
 	state->heap = heap;
 	state->table = new(heap) card64table_t(heap_alloc);
 	closure_init(&state->closure, &map_methods, state);
