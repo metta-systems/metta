@@ -847,6 +847,12 @@ extern "C" void _start()
 
     INFO_PAGE.pervasives = &pervasives;
 
+    // Namespace test:
+    bootimage_t::namespace_t namesp;
+    bootimage.find_root_domain(&namesp);
+    namesp.dump_all_keys();
+    // End namespace test.
+
     init_mem(bootimage);
     init_type_system(bootimage);
     init_namespaces(bootimage);

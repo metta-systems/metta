@@ -71,7 +71,7 @@ struct root_domain_t : public module_t
 
 struct namespace_entry_t
 {
-    int tag; // type discriminator
+    enum tag_t { integer = 1, string, symbol } tag; // type discriminator
     union {
         const char* name;
         address_t name_off;
