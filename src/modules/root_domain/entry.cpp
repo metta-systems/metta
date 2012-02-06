@@ -851,6 +851,11 @@ extern "C" void _start()
     bootimage_t::namespace_t namesp;
     bootimage.find_root_domain(&namesp);
     namesp.dump_all_keys();
+    cstring_t str;
+    if (namesp.get_string("namespace_test", str))
+    {
+        kconsole << "Namespace get success, result: " << str << endl;
+    }
     // End namespace test.
 
     init_mem(bootimage);
