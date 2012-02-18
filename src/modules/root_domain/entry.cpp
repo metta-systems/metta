@@ -329,32 +329,21 @@ static void init_type_system(bootimage_t& bootimg)
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-    auto lct = lctmod->create(PVS(heap)); //<<-- hang here
-    kconsole <<  "   +-- lct " << lct << endl;
-    ASSERT(lct);
-    auto str = strmod->create(PVS(heap));
-    kconsole <<  "   +-- str " << str << endl;
-    ASSERT(str);
-
-    // kconsole <<  "   +-- testing lct" << endl;
-    // for (int i = 0; i < 1000; ++i)
-    // {
-    //     if (!lct->put(i, i))
-    //         kconsole << "Putting " << i << " into lct failed!" << endl;
-    // }
-
-    kconsole <<  " +-- creating ts" << endl;
-    auto ts = ts_factory->create(PVS(heap), lct, str);
+    auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
 
     /* Preload any types in the boot image */
+    bootimage_t::namespace_t namesp;
+    bootimg.find_root_domain(&namesp);
+    void* val;
+    if (namesp.get_symbol("Types", val))
     {
         type_system_f_v1::interface_info* info;
 
         kconsole << " +++ registering interfaces" << endl;
-        info = (type_system_f_v1::interface_info*)0;//lookup("Types");
+        info = (type_system_f_v1::interface_info*)val;
         while(*info) {
             ts->register_interface(*info);
             info++;
@@ -851,6 +840,11 @@ extern "C" void _start()
     bootimage_t::namespace_t namesp;
     bootimage.find_root_domain(&namesp);
     namesp.dump_all_keys();
+    cstring_t str;
+    if (namesp.get_string("namespace_test", str))
+    {
+        kconsole << "Namespace get success, result: " << str << endl;
+    }
     // End namespace test.
 
     init_mem(bootimage);
