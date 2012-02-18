@@ -7,7 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #pragma once
-
+#if 0
 #include "cstring.h"
 
 // Module namespace represents a namespace for module, a kind of environment.
@@ -28,6 +28,6 @@ address_t module_namespace_t::lookup(cstring_t /*name*/)
 {
     return 0;
 }
-
+#endif
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

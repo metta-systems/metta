@@ -1,0 +1,17 @@
+local interface exception_v1 extends naming_context_v1
+{
+    ## The procedures inherited from "Context" map the names of each of
+    ## the exception parameters to a "Type.Any" for the type code of the
+    ## parameter. The sequence returned by the "List" method contains
+    ## the parameters in the order in which they were declared.
+
+    ## An operation is provided to return other information about an
+    ## exception - the name, interface, and number of parameters: 
+
+    info() returns (string name, interface_v1& i, card32 n_args);
+
+    ## Finally, a data type is defined for the list of exceptions
+    ## returned by other interfaces.
+
+    sequence<exception_v1&> list;
+}

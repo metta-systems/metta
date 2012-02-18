@@ -1,0 +1,7 @@
+local interface test2 extends test1
+{
+  type card32 test;
+
+  doodle();
+}
+

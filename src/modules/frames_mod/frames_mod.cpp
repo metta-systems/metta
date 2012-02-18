@@ -67,35 +67,35 @@ struct frames_module_v1::state_t
 // All the forward function mumbo-jumbo is just because we cannot forward-declare a static const struct in C++.
 //======================================================================================================================
 
-static memory_v1::address system_frame_allocator_v1_allocate(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width);
-static memory_v1::address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr);
-static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr);
-static void system_frame_allocator_v1_free(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes);
-static void system_frame_allocator_v1_destroy(system_frame_allocator_v1::closure_t* self);
+static memory_v1::address system_frame_allocator_v1_allocate(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width);
+static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr);
+static uint32_t system_frame_allocator_v1_query(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr);
+static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes);
+static void system_frame_allocator_v1_destroy(frame_allocator_v1::closure_t* self);
 
 static memory_v1::address frame_allocator_v1_allocate(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width)
 {
-    return system_frame_allocator_v1_allocate(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), bytes, frame_width);
+    return system_frame_allocator_v1_allocate(self, bytes, frame_width);
 }
 
 static memory_v1::address frame_allocator_v1_allocate_range(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr)
 {
-    return system_frame_allocator_v1_allocate_range(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), bytes, frame_width, start, attr);
+    return system_frame_allocator_v1_allocate_range(self, bytes, frame_width, start, attr);
 }
 
 static uint32_t frame_allocator_v1_query(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr)
 {
-    return system_frame_allocator_v1_query(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), addr, attr);
+    return system_frame_allocator_v1_query(self, addr, attr);
 }
 
 static void frame_allocator_v1_free(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes)
 {
-    system_frame_allocator_v1_free(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self), addr, bytes);
+    system_frame_allocator_v1_free(self, addr, bytes);
 }
 
 static void frame_allocator_v1_destroy(frame_allocator_v1::closure_t* self)
 {
-    system_frame_allocator_v1_destroy(reinterpret_cast<system_frame_allocator_v1::closure_t*>(self));
+    system_frame_allocator_v1_destroy(self);
 }
 
 static const frame_allocator_v1::ops_t frame_allocator_v1_methods =
@@ -320,7 +320,7 @@ static frames_module_v1::state_t* alloc_range(system_frame_allocator_v1::closure
 // system_frame_allocator_v1 implementation
 //======================================================================================================================
 
-static memory_v1::address system_frame_allocator_v1_allocate_range(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr)
+static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width, memory_v1::address start, memory_v1::attrs attr)
 {
     frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
     frames_module_v1::state_t* cur_state;
@@ -396,12 +396,12 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(system_frame_
     return start;
 }
 
-static memory_v1::address system_frame_allocator_v1_allocate(system_frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width)
+static memory_v1::address system_frame_allocator_v1_allocate(frame_allocator_v1::closure_t* self, memory_v1::size bytes, uint32_t frame_width)
 {
     return system_frame_allocator_v1_allocate_range(self, bytes, frame_width, ANY_ADDRESS, memory_v1::attrs_regular);
 }
 
-static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr)
+static uint32_t system_frame_allocator_v1_query(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::attrs* attr)
 {
     frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
     frames_module_v1::state_t* state = client_state->module_state;
@@ -418,7 +418,7 @@ static uint32_t system_frame_allocator_v1_query(system_frame_allocator_v1::closu
     return cur_state->frame_width;
 }
 
-static void system_frame_allocator_v1_free(system_frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes)
+static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, memory_v1::address addr, memory_v1::size bytes)
 {
     frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(self->d_state);
     frames_module_v1::state_t* cur_state = get_region(client_state->module_state, addr);
@@ -549,7 +549,7 @@ static void system_frame_allocator_v1_free(system_frame_allocator_v1::closure_t*
     }*/
 }
 
-static void system_frame_allocator_v1_destroy(system_frame_allocator_v1::closure_t* self)
+static void system_frame_allocator_v1_destroy(frame_allocator_v1::closure_t* self)
 {
     PANIC("frames_mod: destroy is not implemented!");
 }

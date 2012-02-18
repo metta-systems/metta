@@ -9,7 +9,10 @@
 #pragma once
 
 #include "types.h"
+#include "cstring.h"
 #include "module_namespace.h"
+
+namespace bootimage_n { class namespace_entry_t; }
 
 /*!
  * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces
@@ -34,11 +37,29 @@ public:
         size_t    size;
     };
 
+    class namespace_t
+    {
+        address_t base;
+        uint32_t n_entries;
+        bootimage_n::namespace_entry_t* entries;
+    public:
+        namespace_t() {}
+        namespace_t(address_t b, void* ptr) { set(b, ptr); }
+        void set(address_t base, void* loc);
+
+        // find an entry in the namespace with key key and return it's int value
+        bool get_int(cstring_t key, int& value);
+        bool get_string(cstring_t key, cstring_t& value);
+        bool get_symbol(cstring_t key, void*& value);
+
+        void dump_all_keys();
+    };
+
     bootimage_t(const char* name, address_t start, address_t end);
 
-    modinfo_t find_root_domain(module_namespace_t* namesp);
+    modinfo_t find_root_domain(namespace_t* namesp);
     modinfo_t find_module(const char* name);
-    modinfo_t find_namespace(const char* name);
+    // namespace_t find_namespace(const char* name); // find namespace for module named name
 
     bool valid();
 
@@ -46,6 +67,7 @@ private:
     address_t location;
     address_t end;
 };
- 
+
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

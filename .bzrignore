@@ -17,3 +17,6 @@ Debug
 ./docs/mockups/java/bin/*
 .kdev_include_paths
 *.sublime-workspace
+*.sublime-project
+.DS_Store
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, Task, Options, Configure, Utils, misc
+import os, sys, Task, Options, Configure, Utils, misc
 Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
@@ -17,11 +17,15 @@ include_dirs = 'kernel kernel/generic runtime'.split()
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime/stl']
 
-#-fvisibility-inlines-hidden -fvisibility=hidden
-cflags = []
+cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
+
+gcc_debug_flag = ['-###']
+
+# Lion has deprecated some OpenSSL stuff we use.
+flags += ['-Wno-deprecated-declarations']
 
 # Change default waf behaviour wrt extensions.
 def change_ext(self, ext):
@@ -35,7 +39,6 @@ def set_options(opt):
     # arm-metta
 
     opt.tool_options('module_template', tooldir='waftools')
-
     opt.tool_options('compiler_cc compiler_cxx')
 
     # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
@@ -76,10 +79,9 @@ def configure(conf):
 
     conf.check_tool('yasm misc ar if2code', tooldir='waftools')
 
-    #conf.env['LINK_CXX'] = 'i686-elf-ld' # Gold mucks up the resulting ELF files so that GRUB cannot load them.
+    conf.find_program('nm',var='NM')
 
     # TODO: try to use yasm, but allow fallback to NASM
-    # Ditto for llvm
     if clang:
         conf.check_tool('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_flags += ['-ccc-host-triple', 'i686-pc-linux-gnu']
@@ -96,9 +98,7 @@ def configure(conf):
         # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    #conf.env.append_unique('CROSS_PREFIX', '/opt/crossgcc/bin/i586-elf-')
-    #conf.env['COMPILER_CC'] = conf.env['CROSS_PREFIX'].join()+'gcc'
-    #conf.env['COMPILER_CXX'] = conf.env['CROSS_PREFIX'].join()+'g++'
+    #flags += gcc_debug_flag
 
     cxxflags = cflags
 
@@ -135,8 +135,9 @@ def configure(conf):
     conf.define('ELF_RELOC_DEBUG_V', 0)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
-    conf.define('TOOLS_DEBUG', 1)
     conf.define('RAMTAB_DEBUG', 0)
+    conf.define('TOOLS_DEBUG', 1) # Overarching tools debugging enabler, disable to turn off all tools debugging prints.
+    conf.define('MEDDLER_DEBUG', 0) # Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG.
     conf.define('CONFIG_COMPORT', 0)
     conf.define('CONFIG_COMSPEED', 115200)
     conf.define('CONFIG_X86_PSE', 1)
@@ -177,6 +178,15 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
+    if os.environ.has_key('CROSS_CC'):
+        conf.env['CC'] = os.environ['CROSS_CC']
+        conf.env['LINK_CC'] = os.environ['CROSS_CC']
+    if os.environ.has_key('CROSS_CXX'):
+        conf.env['CXX'] = os.environ['CROSS_CXX']
+        conf.env['LINK_CXX'] = os.environ['CROSS_CXX']
+    conf.env.append_unique('CCFLAGS', ['-m32'])
+    conf.env.append_unique('CXXFLAGS', ['-m32'])
+    conf.env.append_unique('LINKFLAGS', ['-m32'])
 
     # Config for building system apps
     conf.setenv('APP_ENV')
@@ -192,38 +202,36 @@ def configure(conf):
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV')
-    #conf.env['CC'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-gcc', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
-    #conf.env['CXX'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-g++', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
-    #conf.env['LINK_CC'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-gcc', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
-    #conf.env['LINK_CXX'] = ['/opt/crossgcc/bin/i386-apple-darwin11.2.0-g++', '-isysroot /Developer/SDKs/MacOSX10.7.sdk/usr']
-    # conf.env.append_unique('CCFLAGS', ['-m32'])
-    # conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env['CC'] = ['/usr/bin/gcc']
-    conf.env['CXX'] = ['/usr/bin/g++']
-    conf.env['LINK_CC'] = ['/usr/bin/gcc']
-    conf.env['LINK_CXX'] = ['/usr/bin/g++']
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
-    # conf.env.append_unique('LINKFLAGS', ['-m32'])
+    if os.environ.has_key('HOST_CC'):
+        conf.env['CC'] = os.environ['HOST_CC']
+        conf.env['LINK_CC'] = os.environ['HOST_CC']
+    if os.environ.has_key('HOST_CXX'):
+        conf.env['CXX'] = os.environ['HOST_CXX']
+        conf.env['LINK_CXX'] = os.environ['HOST_CXX']
+
     # set uselib
     conf.env.LIB_UUID = 'uuid'
-    conf.env.LIBPATH_LLVM = '/home/berkus/Hobby/llvm/build/lib/'
-    #conf.env.LIBPATH_LLVM = '/Users/berkus/Hobby/llvm/build/lib/'
+
+    if sys.platform == 'darwin':
+        conf.env.LIB_OPENSSL = 'crypto'
+    else:
+        conf.env.LIB_OPENSSL = 'ssl'
+
+    conf.env.LIBPATH_LLVM = '/Users/berkus/Tools/lib/'
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
-    # These are HOST_TESTS_ENV actually.
-    conf.setenv('TEST_ENV')
-    conf.env['CC'] = ['/usr/bin/gcc']
-    conf.env['CXX'] = ['/usr/bin/g++']
-    conf.env['LINK_CC'] = ['/usr/bin/gcc']
-    conf.env['LINK_CXX'] = ['/usr/bin/g++']
-    # conf.env['CC'] = '/Developer/usr/bin/gcc'
-    # conf.env['CXX'] = '/Developer/usr/bin/g++'
-    # conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    # conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    # conf.env.append_unique('CCFLAGS', ['-m32'])
-    # conf.env.append_unique('CXXFLAGS', ['-m32'])
-    # conf.env.append_unique('LINKFLAGS', ['-m32'])
+    # conf.env.SOMEVAR = Utils.h_file('meddler')
+
+    #conf.setenv('TEST_ENV')
+    #conf.env['CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['CXX'] = '/Developer/usr/bin/g++'
+    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
+    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
+    #conf.env.append_unique('CCFLAGS', ['-m32'])
+    #conf.env.append_unique('CXXFLAGS', ['-m32'])
+    #conf.env.append_unique('LINKFLAGS', ['-m32'])
 
 def build(bld):
     arch = Options.options.arch
@@ -243,21 +251,32 @@ def build(bld):
     meddler.post()
     bld.add_group()
 
+    bld.add_subdirs("tools/mettafs")
+
     # List interfaces sorted alphabetically.
-    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 'frames_module_v1', 'heap_module_v1', 'heap_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 'vcpu_v1']
+    interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
+                       'frames_module_v1', 'heap_module_v1', 'heap_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
+                       'map_string_address_v1', 'map_string_address_factory_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 
+                       'naming_context_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1',
+                       'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 
+                       'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 
+                       'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',
+                       # Temporary interfaces "borrowed" from Nemesis
+                       'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1']
 
     # Now generate interface files.
-    # Use name to reference sources. Could just reference by source file name?
-    bld(
+    ifbld = bld(
         source = map(lambda d: 'interfaces/'+d+'.if', interface_files), 
-        name = 'all_idl',
-#FIXME: dependency on meddler        after = 'meddler'
+        name = 'all_idl', # This name is used by components to express dependency.
+        after = 'meddler'
     )
+    ifbld.env.append_unique('IDL_INC', ['../interfaces', '../interfaces/nemesis']) # TODO: make if2code produce relative paths properly!!
+    # bld.add_manual_dependency('meddler', 'all_idl')
+    # bld.add_manual_dependency('all_idl', 'meddler')
 
     # Make bootimage components.
     bld.setup_module_build = setup_module_build
     bld.add_subdirs("modules")
-    #bld.add_subdirs("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
@@ -296,7 +315,7 @@ def build(bld):
     bld.add_subdirs('kernel/platform/'+Options.options.platform)
 
     libkernel = bld.new_task_gen('cxx', 'staticlib')
-    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split()) + ['kernel/arch/shared/bootinfo.cpp'] #cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp 
+    libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split())#cpu.cpp  + ['kernel/generic/stretch_driver.cpp'] # TODO: This should be in arch/x86/ too. x86_frame_allocator.cpp x86_protection_domain.cpp
     libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
     libkernel.includes = libkernel.env['INCLUDE_DIRS']
     libkernel.target = 'kernel'
@@ -323,6 +342,12 @@ def build(bld):
     slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
+    stltest = bld.new_task_gen('cxx', 'program')
+    stltest.source = 'tests/stl_include_test.cpp'
+    stltest.env = bld.env_of_name('KERNEL_ENV').copy()
+    stltest.includes = stltest.env['INCLUDE_DIRS']
+    stltest.target = 'stltest'
+
     #parsedwarf = bld.new_task_gen('cxx', 'program')
     #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
     #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
@@ -347,80 +372,52 @@ def build(bld):
         # Initial loader
         kickstart = bld.new_task_gen('cxx', 'program')
         kickstart.target = 'kickstart.sys'
-        kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp', 'kernel/arch/shared/bootinfo.cpp']
+        kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
         kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
         kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
         kickstart.includes = kickstart.env['INCLUDE_DIRS']
-        kickstart.uselib_local = 'common platform minruntime debug'# kernel
+        kickstart.uselib_local = 'common platform minruntime'# kernel
 
         # Launcher
-        # FIXME: ld doesn't report unresolved symbols for -r apps? WTF 
+        # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
         # TODO: post-process linked modules with symbol checker
         # TODO: put elf manipulation code to libgaladriel
         startup = bld.new_task_gen('cxx', 'program')
         startup.target = 'kernel-startup.sys'
-        startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
-        startup.source += ['kernel/arch/'+arch+'/startup.s']
+        startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
         startup.env = bld.env_of_name('KERNEL_ENV').copy()
         startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
         startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
         startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-        startup.uselib_local = 'common platform kernel minruntime debug'# interfaces
+        startup.uselib_local = 'common platform kernel minruntime'# interfaces
 
         # Glue code
         # Glue code is the only ring0 privileged part of the system.
         # It includes interrupt handlers and some minimal syscall processing.
+
         # TODO: add nucleus_* code here, initialize glue before kernel startup??
-        # glue = bld.new_task_gen('cxx', 'program')
-        # glue.target = 'glue.sys'
-        # glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
-        # glue.env = bld.env_of_name('KERNEL_ENV').copy()
-        # glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
-        # glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
-        # glue.includes = glue.env['INCLUDE_DIRS']
-        # glue.uselib_local = 'common kernel minruntime platform'
+        glue = bld.new_task_gen('cxx', 'program')
+        glue.target = 'glue.sys'
+        glue.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
+        glue.env = bld.env_of_name('KERNEL_ENV').copy()
+        glue.env.append_unique('LINKFLAGS', ['-r']) # glue is relocatable.
+        glue.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,glue.map'])
+        glue.includes = glue.env['INCLUDE_DIRS']
+        glue.uselib_local = 'common kernel minruntime platform'
 
-        bld.new_task_gen(
-            source = 'kickstart.sys',
-            rule = 'nm -u ${SRC[0].abspath(env)}',
-            name = 'nm undef check (kickstart)',
-            after = 'cxx_link'
-        )
-
-        bld.new_task_gen(
-            source = 'kernel-startup.sys',
-            rule = 'nm -u ${SRC[0].abspath(env)}',
-            name = 'nm undef check (kernel-startup)',
-            after = 'cxx_link'
-        )
-
-        # bld.new_task_gen(
-        #     source = 'glue.sys',
-        #     rule = 'nm -u ${SRC[0].abspath(env)}',
-        #     name = 'nm undef check (glue)',
-        #     after = 'cxx_link'
-        # )
+        undef_check(bld, 'kernel-startup.sys')
+        undef_check(bld, 'glue.sys')
 
     if platform == 'hosted':
         # Generate a single executable to run whole OS as an application.
         hosted = bld.new_task_gen('cxx', 'program')
         hosted.target = 'mettanode'
 
-    #kickstart = bld.new_task_gen('cxx', 'program')
-    #kickstart.source = map(lambda f: 'kernel/arch/' + arch + '/' + f, 'kickstart.cpp isr.cpp idt.cpp interrupt.s'.split()) + ['kernel/platform/pc99/loader.s']
-    ## isr.cpp interrupt.s initfs.cpp c++boot.cpp kickstart.lds
-    #kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-    #kickstart.env.append_unique('LINKFLAGS', ['-T', '../kernel/arch/'+arch+'/kickstart.lds', '-Wl,-Map,kickstart.map'])
-    #kickstart.includes = kickstart.env['INCLUDE_DIRS']
-    #kickstart.target = 'kickstart.sys'
-    #kickstart.uselib_local = 'platform common kernel runtime'
-
-
     #Check and add all output modules.
     nm = []
     for tg in bld.all_task_gen:
         if tg.target.endswith('.comp'):
-            print "posting "+tg.target
+            #print "posting "+tg.target
             tg.post()
             nm.append(tg.link_task.outputs[0].relpath_gen(bld.path))
 

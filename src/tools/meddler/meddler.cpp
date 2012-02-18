@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "parser.h"
+#include "logger.h"
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -32,11 +33,12 @@ outputDirectory("o", cl::Prefix, cl::desc("Output path"), cl::value_desc("direct
 class Meddler
 {
     llvm::SourceMgr sm;
-    parser_t parser;
+    bool verbose;
+    vector<parser_t*> parser_stack;
     vector<string> include_dirs;
 
 public:
-    Meddler(bool verbose) : sm(), parser(sm, verbose) {}
+    Meddler(bool verbose_) : sm(), verbose(verbose_) {}
 
     void set_include_dirs(vector<string> dirs)
     {
@@ -44,26 +46,59 @@ public:
         sm.setIncludeDirs(include_dirs);
     }
 
-    /* TODO: create corresponding parser and add to queue */
     bool add_source(string file)
     {
+        L(cout << "### Adding file " << file << endl);
         unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc());
         if (bufn == ~0U)
             return false;
-        parser.init(sm.getMemoryBuffer(bufn));
+        L(cout << "### Parsing file " << file << endl);
+        parser_t* parser = new parser_t(sm, verbose);
+        L(cout << "### Initing parser" << endl);
+        parser->init(sm.getMemoryBuffer(bufn));
+        L(cout << "### Adding parser to stack" << endl);
+        parser_stack.push_back(parser);
         return true;
     }
 
     bool parse()
     {
-        return parser.run();
+        assert(parser_stack.size() > 0);
+
+        bool res = true;
+        do {
+            L(cout << "### Running parse" << endl);
+            res &= parser_stack.at(parser_stack.size()-1)->run();
+
+            // Since parent interfaces can only "extend" current interface, we put them into parent interfaces list of current interface
+            // after parsing and consult them during emit phase for matching types, exceptions and methods - they are considered LOCAL to this
+            // interface.
+            if (parser_stack.size() > 1) 
+            {
+                L(cout << "### Linking interface to parent" << endl);
+                parser_stack.at(parser_stack.size()-2)->link_to_parent(parser_stack.at(parser_stack.size()-1));
+            }
+            if (res && (parser_stack.at(parser_stack.size()-1)->parent_interface() != ""))
+            {
+                L(cout << "### Adding another interface file" << endl);
+                add_source(parser_stack.at(parser_stack.size()-1)->parent_interface() + ".if");
+            }
+            L(cout << "### Running another round" << endl);
+        } while (res && (parser_stack.at(parser_stack.size()-1)->parent_interface() != ""));
+        L(cout << "### Finished parsing!" << endl);
+        return res;
     }
 
     bool emit(const string& output_dir)
     {
         ostringstream impl_h, interface_h, interface_cpp, filename;
+        parser_t& parser = *parser_stack[0];
+
+        L(cout << "### Emitting impl_h" << endl);
         parser.parse_tree->emit_impl_h(impl_h, "");
+        L(cout << "### Emitting interface_h" << endl);
         parser.parse_tree->emit_interface_h(interface_h, "");
+        L(cout << "### Emitting interface_cpp" << endl);
         parser.parse_tree->emit_interface_cpp(interface_cpp, "");
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";

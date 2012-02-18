@@ -1,0 +1,7 @@
+local interface test1
+{
+  type card32 alias;
+
+  dooo(alias i) returns (alias o);
+}
+

@@ -15,16 +15,21 @@ class if2code(Task.Task):
     verbose = False
     def run(self):
         cwd = self.inputs[0].parent.bldpath(self.env)
+        incd = [self.inputs[0].parent.srcpath(self.env)]
         #print "includes:"
         for i in self.env.IDL_INC:
-            print "include "+i
+            #print "include "+i
+            incd = incd + [i]
+
         if (self.verbose):
-            cmd = '%s -v %s -o%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
+            cmd = '%s -v %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, ' -I'.join(incd))
         else:
-            cmd = '%s %s -o%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd)
+            cmd = '%s %s -o%s -I%s' % (self.env.MEDDLER, self.inputs[0].abspath(), cwd, ' -I'.join(incd))
 
         #print "Running "+cmd
         return self.exec_command(cmd)
+
+# if2code.vars.append('SOMEVAR') # MAGIC
 
 @extension('.if')
 def compile_idl(self, node):
@@ -51,7 +56,7 @@ def process_idl_source(self):
     #print "Task includes "
     for i in self.to_list(self.includes):
         self.env.append_unique('IDL_INC',i)
-        print i
+        #print "task include "+i
 
     for x in self.to_list(self.idl_source):
         print "Adding "+x+" to list"

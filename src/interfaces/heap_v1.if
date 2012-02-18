@@ -8,8 +8,11 @@
 #
 local interface heap_v1
 {
+    exception no_memory {}
+
     allocate(memory_v1.size size)
-        returns (memory_v1.address ptr);
+        returns (memory_v1.address ptr)
+        raises (no_memory);
     free(memory_v1.address ptr);
 
     # "Check" causes sanity checks to be performed on the heap block

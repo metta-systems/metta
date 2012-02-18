@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "cstring.h"
 
 #ifndef endl
 #define endl console_t::eol
@@ -139,6 +140,12 @@ inline console_t& operator << (console_t& con, unsigned char data)
 inline console_t& operator << (console_t& con, const void* data)
 {
     con.print_hex((uint32_t)data);
+    return con;
+}
+
+inline console_t& operator << (console_t& con, const cstring_t& data)
+{
+    con.print_str(data.c_str());
     return con;
 }
 

@@ -1,4 +1,5 @@
-timeout 1
+hiddenmenu
+timeout 0
 
 title Metta
     root (@ROOT@)

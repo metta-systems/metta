@@ -66,7 +66,7 @@ local interface type_system_v1 extends naming_context_v1
 
     info(alias tc, out types.any rep) returns (interface_v1& scope) raises (bad_code);
 
-    size(alias tc) returns (heap_v1.size s) raises (bad_code);
+    size(alias tc) returns (memory_v1.size s) raises (bad_code);
 
     name(alias tc) returns (types.name name) raises (bad_code);
 

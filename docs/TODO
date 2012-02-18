@@ -1,0 +1,61 @@
+* Add bootimage namespace iteration (bootimage_t::namespace_t::iterator?)
+
+* Finish typesystem loading.
+  - enter all available interfaces and types
+  - meta-interface describes built-in types as well as keeps reference to all other added types
+
+* Implement IDC mechanism.
+
+* Finish introspection and write a command line tool to interactively explore type system.
+
+* Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
+* Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
+
+* Assocfs:
+  - OS block cache - write tests.
+  - write b+tree handler
+
+* write more unit-tests for all these modules!
+
+* waf - upgrade to 1.6.10
+* waf - make if2code depend on meddler changes
+
+* We need a simple application to start coding from the user perspective.
+  Something simple, single focused and immensely mettaish. Ideas?
+
+-----------------------------------------------------------------------------------------------------------------------
+
+* System components:
+  scheduler
+  protection domains
+  memory manager √
+  usermode
+
+  UP √
+  SMP
+  NUMA
+
+* Nucleus (privileged core) - TODO: cleanly separate this code into a specialized component
+  IRQ stubs
+  privileged instructions
+  limited set of syscalls for performing privileged instructions - TODO: make a list now
+
+* Drivers
+  keyboard (PS/2, usb support needs more drivers)
+  PCI
+  ACPI (using acpica port?)
+  display
+  network
+
+* Services
+  typesystem
+  events
+  IDC
+  exceptions √
+
+* Applications
+  test shell
+  child
+  memory inspector
+  symbolic debugger
+

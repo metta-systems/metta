@@ -168,6 +168,7 @@ public:
      * Return memory occupied by already loaded and relocated modules.
      */
     address_t used_modules_memory(size_t* size);
+    address_t module_load_end() const { return last_available_module_address; } // where the last loaded module ends
 
     // Load module ELF file by number.
     bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);

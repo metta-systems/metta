@@ -49,9 +49,9 @@ const uint32_t ALIGN = 4;
 // helper functions
 //======================================================================================================================
 
-filebinio& operator << (filebinio& io, vector<char> stringtable)
+filebinio& operator << (filebinio& io, const std::string& str)
 {
-    io.write(stringtable.data(), stringtable.size());
+    io.write(str.c_str(), str.size() + 1);
     return io;
 }
 
@@ -62,12 +62,77 @@ static int needed_align(size_t pos)
     return 0;
 }
 
-static void align_output(file& out, int& data_offset)
+static void align_output(file& out, uintptr_t& data_offset)
 {
     size_t pos = out.write_pos();
     for (int i = 0; i < needed_align(pos); i++)
         out.write("\0", 1);
     data_offset += needed_align(pos);
+}
+
+//======================================================================================================================
+// We want to be able to save headers from bootimage_private header on a 64-bits host system and have them suitable
+// for use by a 32-bits target. Instead of fiddling with structure sizes we define writer helpers to output these
+// structures to a storage file.
+//======================================================================================================================
+
+#define LIMIT32(x) (uintptr_t(x) & 0xffffffffu)
+
+filebinio& operator << (filebinio& io, bootimage_n::header_t& h)
+{
+    io.write32le(h.magic);
+    io.write32le(h.version);
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::rec_t& r)
+{
+    io.write32le(r.tag);
+    io.write32le(r.length);
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::glue_code_t& gc)
+{
+    io << static_cast<rec_t&>(gc);
+    io.write32le(LIMIT32(gc.text));
+    io.write32le(LIMIT32(gc.data));
+    io.write32le(LIMIT32(gc.bss));
+    io.write32le(LIMIT32(gc.text_size));
+    io.write32le(LIMIT32(gc.data_size));
+    io.write32le(LIMIT32(gc.bss_size));
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::namespace_t& ns)
+{
+    io << static_cast<rec_t&>(ns);
+    io.write32le(LIMIT32(ns.address));
+    io.write32le(LIMIT32(ns.size));
+    io.write32le(LIMIT32(ns.name));
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::module_t& mod)
+{
+    io << static_cast<namespace_t&>(mod);
+    io.write32le(LIMIT32(mod.local_namespace_offset));
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::root_domain_t& dom)
+{
+    io << static_cast<module_t&>(dom);
+    io.write32le(LIMIT32(dom.entry_point));
+    return io;
+}
+
+filebinio& operator << (filebinio& io, bootimage_n::namespace_entry_t& ent)
+{
+    io.write32le(LIMIT32(ent.tag));
+    io.write32le(LIMIT32(ent.name_off));
+    io.write32le(LIMIT32(ent.value_int));
+    return io;
 }
 
 //======================================================================================================================
@@ -81,7 +146,7 @@ public:
 
     uint32_t append(const std::string& addend);
     size_t size() const;
-    bool write(file& out, int& data_offset) const;
+    bool write(file& out, uintptr_t& data_offset) const;
 
 private:
     vector<char> table;
@@ -104,7 +169,7 @@ size_t stringtable_t::size() const
     return table.size();
 }
 
-bool stringtable_t::write(file& out, int& data_offset) const
+bool stringtable_t::write(file& out, uintptr_t& data_offset) const
 {
     out.write(&table[0], table.size());
     data_offset += table.size();
@@ -115,9 +180,11 @@ bool stringtable_t::write(file& out, int& data_offset) const
 // namespace entry value
 //======================================================================================================================
 
+// is this struct needed? just use namespace_entry_t?
 struct param
 {
-    enum { integer, string, sym } tag;
+    namespace_entry_t::tag_t tag;
+    // can't have a union here, because members of std::map need to have default ctor.
     int int_val;
     std::string string_val;
     void* sym_val;
@@ -147,7 +214,7 @@ public:
     void dump();
 
     // Write out module information together with the namespace and file data.
-    bool write(file& out, int& data_offset);
+    bool write(file& out, uintptr_t& data_offset);
 
 private:
     std::string name;
@@ -155,8 +222,8 @@ private:
     ns_map namespace_entries;
 
     bool add_ns_entry(std::string key, param val, bool override);
-    bool write_root_domain_header(file& out, int& data_offset, int in_size, int ns_size);
-    bool write_module_header(file& out, int& data_offset, int in_size, int ns_size);
+    bool write_root_domain_header(file& out, uintptr_t& data_offset, int in_size, int ns_size);
+    bool write_module_header(file& out, uintptr_t& data_offset, int in_size, int ns_size);
 };
 
 //======================================================================================================================
@@ -168,7 +235,7 @@ class module_namespace1_t
 public:
     module_namespace1_t(module_info::ns_map namespace_entries);
 
-    bool write(file& out, int& data_offset);
+    bool write(file& out, uintptr_t& data_offset);
     size_t size() const;
 
 private:
@@ -178,31 +245,46 @@ private:
 
 module_namespace1_t::module_namespace1_t(module_info::ns_map namespace_entries)
 {
-    typedef std::pair<std::string, param> entry_type;
-    BOOST_FOREACH(entry_type entry, namespace_entries) // host gcc can't do 'auto' on mac
+    for(auto entry : namespace_entries)
     {
         namespace_entry_t e;
+        e.tag = entry.second.tag;
         e.name_off = string_table.append(entry.first);
-        e.value = entry.second.sym_val;
+        switch (e.tag)
+        {
+            case namespace_entry_t::integer:
+                e.value_int = entry.second.int_val;
+                break;
+            case namespace_entry_t::string:
+                e.value_int = string_table.append(entry.second.string_val);
+                break;
+            case namespace_entry_t::symbol:
+                e.value = entry.second.sym_val;
+                break;
+        }
         entries.push_back(e);
     }
 }
 
 size_t module_namespace1_t::size() const
 {
-    return entries.size() * 8/*sizeof(namespace_entry_t)*/ + string_table.size();
+    return 4 + entries.size() * SIZEOF_ONDISK_NAMESPACE_ENTRY + string_table.size();
 }
 
-bool module_namespace1_t::write(file& out, int& data_offset)
+bool module_namespace1_t::write(file& out, uintptr_t& data_offset)
 {
     D(cout << "Writing " << entries.size() << " namespace entries" << endl);
     filebinio io(out);
-    data_offset += entries.size() * 8;//sizeof(namespace_entry_t);
-    BOOST_FOREACH(bootimage_n::namespace_entry_t entry, entries)
+
+    io.write32le(LIMIT32(entries.size()));
+
+    data_offset += 4 + entries.size() * SIZEOF_ONDISK_NAMESPACE_ENTRY;
+    for(auto entry : entries)
     {
-        io.write32le(entry.name_off + data_offset);
-//         io.write32le(entry.tag);
-        io.write32le(entry.value_int);
+        entry.name_off += data_offset; // Turn into a global bootimage file position.
+        if (entry.tag == namespace_entry_t::string)
+            entry.value_int += data_offset; // Adjust offset for string namespace entries too.
+        io << entry;
     }
     string_table.write(out, data_offset);
     return true;
@@ -225,6 +307,7 @@ bool module_info::add_ns_entry(std::string key, param val, bool override)
 bool module_info::add_ns_entry(std::string key, int val)
 {
     param p;
+    p.tag = namespace_entry_t::integer;
     p.int_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -232,6 +315,7 @@ bool module_info::add_ns_entry(std::string key, int val)
 bool module_info::add_ns_entry(std::string key, std::string val)
 {
     param p;
+    p.tag = namespace_entry_t::string;
     p.string_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -239,6 +323,7 @@ bool module_info::add_ns_entry(std::string key, std::string val)
 bool module_info::add_ns_entry(std::string key, void* val)
 {
     param p;
+    p.tag = namespace_entry_t::symbol;
     p.sym_val = val;
     return add_ns_entry(key, p, false);
 }
@@ -246,6 +331,7 @@ bool module_info::add_ns_entry(std::string key, void* val)
 void module_info::override_ns_entry(std::string key, int val)
 {
     param p;
+    p.tag = namespace_entry_t::integer;
     p.int_val = val;
     add_ns_entry(key, p, true);
 }
@@ -253,6 +339,7 @@ void module_info::override_ns_entry(std::string key, int val)
 void module_info::override_ns_entry(std::string key, std::string val)
 {
     param p;
+    p.tag = namespace_entry_t::string;
     p.string_val = val;
     add_ns_entry(key, p, true);
 }
@@ -260,6 +347,7 @@ void module_info::override_ns_entry(std::string key, std::string val)
 void module_info::override_ns_entry(std::string key, void* val)
 {
     param p;
+    p.tag = namespace_entry_t::symbol;
     p.sym_val = val;
     add_ns_entry(key, p, true);
 }
@@ -277,56 +365,56 @@ void module_info::dump()
 //             --------+                |          |
 //            --------------------------+          |
 //           --------------------------------------+
-bool module_info::write_module_header(file& out, int& data_offset, int in_size, int ns_size)
+bool module_info::write_module_header(file& out, uintptr_t& data_offset, int in_size, int ns_size)
 {
     bootimage_n::module_t mod;
 
     int name_s_a = name.size() + 1;
 
-    data_offset += sizeof(mod);
+    data_offset += SIZEOF_ONDISK_MODULE;
 
     mod.tag = bootimage_n::kind_module;
-    mod.length = sizeof(mod) + name_s_a + ns_size + in_size;
+    mod.length = SIZEOF_ONDISK_MODULE + name_s_a + ns_size + in_size;
     mod.address = data_offset + name_s_a + ns_size;
     mod.size = in_size;
     mod.name = (const char*)data_offset;
     mod.local_namespace_offset = ns_size ? data_offset + name_s_a : 0;
 
-    out.write(&mod, sizeof(mod));
-    out.write(name.c_str(),  name.size() + 1);
+    filebinio io(out);
+    io << mod << name;
 
     data_offset += name.size() + 1;
 
     return true;
 }
 
-bool module_info::write_root_domain_header(file& out, int& data_offset, int in_size, int ns_size)
+bool module_info::write_root_domain_header(file& out, uintptr_t& data_offset, int in_size, int ns_size)
 {
     bootimage_n::root_domain_t rdom;
 
     int name_s_a = name.size() + 1;
 
-    data_offset += sizeof(rdom);
+    data_offset += SIZEOF_ONDISK_ROOT_DOMAIN;
 
     rdom.tag = bootimage_n::kind_root_domain;
-    rdom.length = sizeof(rdom) + name_s_a + ns_size + in_size;
+    rdom.length = SIZEOF_ONDISK_ROOT_DOMAIN + name_s_a + ns_size + in_size;
     rdom.address = data_offset + name_s_a + ns_size;
     rdom.size = in_size;
     rdom.name = (const char*)data_offset;
     rdom.local_namespace_offset = ns_size ? data_offset + name_s_a : 0;
     rdom.entry_point = 0xefbeadde;
 
-    out.write(&rdom, sizeof(rdom));
-    out.write(name.c_str(),  name.size() + 1);
+    filebinio io(out);
+    io << rdom << name;
 
     data_offset += name.size() + 1;
 
     return true;
 }
 
-bool module_info::write(file& out, int& data_offset)
+bool module_info::write(file& out, uintptr_t& data_offset)
 {
-    size_t header_size = name == "root_domain" ? sizeof(bootimage_n::root_domain_t) : sizeof(bootimage_n::module_t);
+    size_t header_size = name == "root_domain" ? SIZEOF_ONDISK_ROOT_DOMAIN : SIZEOF_ONDISK_MODULE;
     file in_data(file_name, ios::in | ios::binary);
     size_t in_size = in_data.size();
 
@@ -456,6 +544,14 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
             reader.putback(nsline);
             break;
         }
+        // TODO
+        // Add a symbol namespace syntax: [Symbol] means to take address of C symbol named Symbol and add it as val.
+        // Needs parsing the module file with an elf parser...
+        // e.g.
+        // typesystem_mod:typesystem_mod.comp
+        // [Types]
+        // would pick a C symbol Types from the typesystem_mod.comp and put its address into the namespace...
+
         string key = nsline.substr(0, pos);
         string val = nsline.substr(pos+1);
         D(cerr << "parse_module_lines: nsp " << key << " with " << val << endl);
@@ -465,15 +561,12 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
 }
 
 /*
-!! namespace mapping can be a module name or module symbol name, fully qualified, or an integer or string constant.
+!! namespace mapping could be a module name or module symbol name, fully qualified, or an integer or string constant.
 */
 int main(int argc, char** argv)
 {
     if (argc != 4)
         throw runtime_error("usage: buildboot base-path components.lst init.img");
-
-    if (sizeof(bootimage_n::root_domain_t) != 28)
-        throw runtime_error("sizeof(root_domain) record is invalid!");
 
     std::string prefix(argv[1]);
     std::string input(argv[2]);
@@ -492,11 +585,13 @@ int main(int argc, char** argv)
             parse_module_lines(modules, reader, prefix);
         }
 
-        int data_offset = 0;//sizeof(header);
+        uintptr_t data_offset = 0;//sizeof(header);
 
-        io.write32le(four_cc<'B', 'I', 'M', 'G'>::value);
-        io.write32le(version);
-        data_offset += 8; // sizeof(bootimage_n::header_t)
+        bootimage_n::header_t hdr;
+        hdr.magic = four_cc<'B', 'I', 'M', 'G'>::value;
+        hdr.version = version;
+        io << hdr;
+        data_offset += 8; // sizeof(output bootimage_n::header_t)
 
         BOOST_FOREACH(module_info& mod, modules)
         {
