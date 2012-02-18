@@ -29,6 +29,8 @@ class if2code(Task.Task):
         #print "Running "+cmd
         return self.exec_command(cmd)
 
+# if2code.vars.append('SOMEVAR') # MAGIC
+
 @extension('.if')
 def compile_idl(self, node):
     #print "compile_idl()"

@@ -217,6 +217,8 @@ def configure(conf):
     conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
+    # conf.env.SOMEVAR = Utils.h_file('meddler')
+
     #conf.setenv('TEST_ENV')
     #conf.env['CC'] = '/Developer/usr/bin/gcc'
     #conf.env['CXX'] = '/Developer/usr/bin/g++'
