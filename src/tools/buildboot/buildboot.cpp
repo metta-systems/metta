@@ -544,6 +544,14 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
             reader.putback(nsline);
             break;
         }
+        // TODO
+        // Add a symbol namespace syntax: [Symbol] means to take address of C symbol named Symbol and add it as val.
+        // Needs parsing the module file with an elf parser...
+        // e.g.
+        // typesystem_mod:typesystem_mod.comp
+        // [Types]
+        // would pick a C symbol Types from the typesystem_mod.comp and put its address into the namespace...
+
         string key = nsline.substr(0, pos);
         string val = nsline.substr(pos+1);
         D(cerr << "parse_module_lines: nsp " << key << " with " << val << endl);
