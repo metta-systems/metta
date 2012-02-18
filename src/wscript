@@ -331,6 +331,12 @@ def build(bld):
     slebtest.target = 'slebtest'
     #slebtest.uselib_local = 'toolruntime common'
 
+    stltest = bld.new_task_gen('cxx', 'program')
+    stltest.source = 'tests/stl_include_test.cpp'
+    stltest.env = bld.env_of_name('KERNEL_ENV').copy()
+    stltest.includes = stltest.env['INCLUDE_DIRS']
+    stltest.target = 'stltest'
+
     #parsedwarf = bld.new_task_gen('cxx', 'program')
     #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
     #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
