@@ -16,9 +16,7 @@ debugger.log
 Debug
 ./docs/mockups/java/bin/*
 .kdev_include_paths
+*.sublime-workspace
+*.sublime-project
 .DS_Store
-kernel-startup.sublime-project
-typesystem.sublime-project
-typesystem.sublime-workspace
-meddler.sublime-project
-meddler.sublime-workspace
+

@@ -31,7 +31,7 @@
 #ifndef __SGI_STL_INTERNAL_TEMPBUF_H
 #define __SGI_STL_INTERNAL_TEMPBUF_H
 
-#include <climits>
+#include <limits.h> //was: climits
 
 __STL_BEGIN_NAMESPACE
 

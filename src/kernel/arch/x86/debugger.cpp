@@ -19,7 +19,7 @@ void debugger_t::dump_memory(address_t start, size_t size)
 
     while (size > 0)
     {
-        kconsole.print((unsigned int)ptr);
+        kconsole.print(ptr);
         kconsole.print("  ");
         run = size < 16 ? size : 16;
         for(int i = 0; i < run; i++)

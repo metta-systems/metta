@@ -11,6 +11,7 @@
 //======================================================================================================================
 // Dummy entry point for components.
 // Will panic because entry point is not meant to be called, components are entered through an interface closure.
+// Defined as weak, because root_domain component defines it's own _start atm - this is to be changed.
 //======================================================================================================================
 
 extern "C" void _start()

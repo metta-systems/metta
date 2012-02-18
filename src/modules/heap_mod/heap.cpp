@@ -467,6 +467,7 @@ void heap_t::check_integrity()
         }
         
         last_header = this_header;
+        UNUSED(last_header);
         this_header = next_header;
         next_header = next_block(this_header);
         if (next_header >= end)

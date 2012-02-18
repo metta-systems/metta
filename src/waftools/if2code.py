@@ -59,7 +59,7 @@ def process_idl_source(self):
         #print "task include "+i
 
     for x in self.to_list(self.idl_source):
-        #print "Adding "+x+" to list"
+        print "Adding "+x+" to list"
         y = self.bld.name_to_obj(x, self.env)
         y.post()
 

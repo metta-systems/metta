@@ -4,7 +4,7 @@
 # glue module specifies main module
 # module paths are relative to base path given to mkbootimage
 
-glue:glue.sys
+#glue:glue.sys
 
 # root_domain performs startup construction
 # namespace for root_domain will be amended to include references to all the following modules too
@@ -17,7 +17,7 @@ root_domain.nested.nsp>namespace nests
 
 # other modules
 frames_mod:modules/frames_mod/frames_mod.comp
-mmu_mod:modules/mmu_mod/mmu_mod.comp
+mmu_mod:modules/platform/pc99/mmu_mod/mmu_mod.comp
 heap_mod:modules/heap_mod/heap_mod.comp
 stretch_allocator_mod:modules/stretch_allocator_mod/stretch_allocator_mod.comp
 stretch_table_mod:modules/stretch_table_mod/stretch_table_mod.comp

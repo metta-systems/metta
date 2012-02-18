@@ -56,6 +56,7 @@ void null_bind(stretch_driver_v1::closure_t* self, stretch_v1::closure_t* stretc
         memory_v1::address base;
         memory_v1::size size;
         base = stretch->info(&size);
+        UNUSED(base);
         if (size & ((1UL << page_width) - 1))
         {
             kconsole << "Not properly aligned size " << size << endl;

@@ -260,6 +260,7 @@ struct _STL_SAME_TYPE_ERROR {
   static void
   __type_X_not_same_as_type_Y(_TypeX , _TypeY ) { 
     __check_equal<_TypeX> t1 = __check_equal<_TypeY>();
+    (void)t1; // UNUSED
   }
 };
 
