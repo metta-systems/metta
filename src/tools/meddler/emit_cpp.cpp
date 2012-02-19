@@ -463,6 +463,16 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
       << indent_prefix << "}" << std::endl << std::endl;
 }
 
+// TODO:
+// Once exception support in the kernel is established,
+// emit exceptions into a nested namespace under "name_v1" i.e.
+// namespace name_v1 { namespace exceptions { class xcp1; class xcp2; } }
+// FQN would be name_v1::exceptions::no_memory for example.
+// Other variant is to emit them directly in name_v1, this is shorter but
+// less clean I think.
+// "raises" corresponds directly to C++ throw() method specification - but
+// it should not be used, see http://stackoverflow.com/questions/88573/should-i-use-an-exception-specifier-in-c
+// for explanation why. Also http://www.gotw.ca/publications/mill22.htm
 void exception_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
 {
 }

@@ -1,0 +1,10 @@
+Single address space system - pointers can be passed freely between domains without any translation. Memory protection
+implemented via MMU. Support only single synchronization primitive - the event. All other primitives are built upon
+this type by the userspace libraries. Minimal privileged-mode core. Only the IRQ handlers and privileged MMU 
+instructions are in this core.
+
+Loader:
+- load nucleus.
+- install IDT and setup syscalls. (what to do with security checks there? some syscalls are privileged)
+- load kernel startup modules and jump to ring3 bootstrap sequence.
+

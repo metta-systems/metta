@@ -61,12 +61,14 @@ public:
 };*/
 
 /*!
+ * @class bootinfo_t
  * Provides access to boot info page structures.
  *
  * Common way of accessing it is to create an instance of bootinfo_t using placement new at the location
  * of bootinfo_t::ADDRESS, e.g.:
  * bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
  * Then you can add items or query items.
+ * Boot info page is limited to a native page size (4Kb by default) to simplify memory allocation.
  */
 class bootinfo_t
 {

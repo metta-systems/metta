@@ -53,7 +53,10 @@
 // #include <stddef.h>
 // #include <stdlib.h>
 // #include <string.h>
-#include <assert.h> //FIXME: stdlib dep!
+#if STL_DEBUG_ALLOC_USING_ASSERTS
+#include <assert.h>
+#endif // STL_DEBUG_ALLOC_USING_ASSERTS
+
 #ifndef __RESTRICT
 #  define __RESTRICT
 #endif
@@ -204,6 +207,7 @@ public:
       { _Alloc::deallocate(__p, sizeof (_Tp)); }
 };
 
+#if STL_DEBUG_ALLOC_USING_ASSERTS
 // Allocator adaptor to check size arguments for debugging.
 // Reports errors using assert.  Checking can be disabled with
 // NDEBUG, but it's far better to just use the underlying allocator
@@ -246,6 +250,7 @@ public:
   }
 
 };
+#endif // STL_DEBUG_ALLOC_USING_ASSERTS
 
 
 # ifdef __USE_MALLOC
@@ -708,6 +713,7 @@ inline bool operator!=(const allocator<_T1>&, const allocator<_T2>&)
   return false;
 }
 
+#if STL_DEBUG_ALLOC_USING_ASSERTS
 template <class _Alloc>
 inline bool operator==(const debug_alloc<_Alloc>&,
                        const debug_alloc<_Alloc>&) {
@@ -721,6 +727,7 @@ inline bool operator!=(const debug_alloc<_Alloc>&,
   return false;
 }
 #endif /* __STL_FUNCTION_TMPL_PARTIAL_ORDER */
+#endif /* STL_DEBUG_ALLOC_USING_ASSERTS */
 
 template <typename _Alloc>
 struct is_lakos_allocator : __false_type {};

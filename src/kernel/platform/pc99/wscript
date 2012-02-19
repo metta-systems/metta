@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import Options
+
+def build(bld):
+    arch = Options.options.arch
+    platform = bld.new_task_gen('cxx', 'staticlib')
+    platform.source = map(lambda d: d, 'multiboot.cpp default_console.cpp'.split())
+    platform.env = bld.env_of_name('KERNEL_ENV').copy()
+    platform.includes = map(lambda d: '../../../'+d, platform.env['INCLUDE_DIRS'])
+    platform.target = 'platform'
+
+# kate: indent-width 4; replace-tabs on;
+# vim: set et sw=4 ts=4 sts=4 cino=(4 :

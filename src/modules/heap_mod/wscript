@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build(bld, 'heap_mod')
+    mod = bld.setup_module_build(bld, 'heap_mod', '..')
     mod.source = 'heap_mod.cpp heap.cpp'
 
 # kate: indent-width 4; replace-tabs on;

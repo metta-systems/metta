@@ -38,6 +38,9 @@
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
 
+// temp for calls debug
+#include "frames_module_v1_impl.h"
+
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
 // startup module from which root_domain starts also has a namespace called "default_namespace"
@@ -63,7 +66,8 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
-    return bi->get_module_loader().load_module(module_name, loader, clos);
+    void** closure_ptr = reinterpret_cast<void**>(bi->get_module_loader().load_module(module_name, loader, clos));
+    return *closure_ptr; // FIXME: little discrepancy due to root_domain using the same load_module() to find its own entry point.
     /* FIXME: Skip dependencies for now */
 }
 
@@ -229,7 +233,7 @@ static void init_mem(bootimage_t& bootimg)
     address_t modules_base = bi->used_modules_memory(&modules_size);
     bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
 
-// FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
+    // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
     int required = frames_factory->required_size();
     int initial_heap_size = 128*KiB;
@@ -329,32 +333,21 @@ static void init_type_system(bootimage_t& bootimg)
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
-    auto lct = lctmod->create(PVS(heap)); //<<-- hang here
-    kconsole <<  "   +-- lct " << lct << endl;
-    ASSERT(lct);
-    auto str = strmod->create(PVS(heap));
-    kconsole <<  "   +-- str " << str << endl;
-    ASSERT(str);
-
-    // kconsole <<  "   +-- testing lct" << endl;
-    // for (int i = 0; i < 1000; ++i)
-    // {
-    //     if (!lct->put(i, i))
-    //         kconsole << "Putting " << i << " into lct failed!" << endl;
-    // }
-
-    kconsole <<  " +-- creating ts" << endl;
-    auto ts = ts_factory->create(PVS(heap), lct, str);
+    auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
 
     /* Preload any types in the boot image */
+    bootimage_t::namespace_t namesp;
+    bootimg.find_root_domain(&namesp);
+    void* val;
+    if (namesp.get_symbol("Types", val))
     {
         type_system_f_v1::interface_info* info;
 
         kconsole << " +++ registering interfaces" << endl;
-        info = (type_system_f_v1::interface_info*)0;//lookup("Types");
+        info = (type_system_f_v1::interface_info*)val;
         while(*info) {
             ts->register_interface(*info);
             info++;
@@ -825,7 +818,7 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
  * Image bootup starts executing without paging and with full ring0 rights.
  */
 
-extern "C" void _start()
+extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 

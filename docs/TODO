@@ -1,11 +1,14 @@
-* Add bootimage namespace introspection and iteration (bootimage_namespace_t?)
+* Add bootimage namespace iteration (bootimage_t::namespace_t::iterator?)
 
 * Finish typesystem loading.
   - enter all available interfaces and types
   - meta-interface describes built-in types as well as keeps reference to all other added types
 
-* Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
+* Implement IDC mechanism.
+
 * Finish introspection and write a command line tool to interactively explore type system.
+
+* Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
 * Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
 
 * Assocfs:
@@ -32,7 +35,7 @@
   SMP
   NUMA
 
-* Glue (privileged core) - TODO: cleanly separate this code into a specialized component
+* Nucleus (privileged core) - TODO: cleanly separate this code into a specialized component
   IRQ stubs
   privileged instructions
   limited set of syscalls for performing privileged instructions - TODO: make a list now

@@ -25,7 +25,7 @@ root_domain_t::root_domain_t(bootimage_t& img)
         PANIC("Invalid root_domain ELF image!");
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    entry_point = (address_t)bi->get_module_loader().load_module("root_domain", elf, NULL);
+    entry_point = (address_t)bi->get_module_loader().load_module("root_domain", elf, "module_entry");
 }
 
 address_t root_domain_t::entry()

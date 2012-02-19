@@ -1,3 +1,4 @@
+ENTRY(_start)
 SECTIONS
 {
     PAGE_SIZE = 4096;
