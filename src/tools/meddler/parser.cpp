@@ -85,7 +85,7 @@ void parser_t::init(const llvm::MemoryBuffer *F)
 
 void parser_t::reportError(std::string msg)
 {
-    source_mgr.PrintMessage(lex.current_loc(), llvm::Twine(msg), "error", true);
+    source_mgr.PrintMessage(lex.current_loc(), llvm::SourceMgr::DK_Error, llvm::Twine(msg));
 }
 
 #define PARSE_ERROR(x) do { \

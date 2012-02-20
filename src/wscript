@@ -219,7 +219,8 @@ def configure(conf):
         conf.env.LIB_OPENSSL = 'ssl'
 
     conf.env.LIBPATH_LLVM = '/Users/berkus/Tools/lib/'
-    conf.env.STATICLIB_LLVM = ['LLVMSupport', 'LLVMSystem']
+    conf.env.CPPPATH_LLVM = '/Users/berkus/Tools/include/'
+    conf.env.STATICLIB_LLVM = ['LLVMSupport'] #, 'LLVMSystem']
     conf.env.LIB_LLVM = 'pthread'
 
     # conf.env.SOMEVAR = Utils.h_file('meddler')
