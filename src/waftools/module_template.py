@@ -15,16 +15,18 @@ def undef_check(bld, filename):
         after = 'cxx_link'
     )
 
-def setup_module_build(bld, name):
+def setup_module_build(bld, name, prefix):
+    if prefix: prefix = prefix + '/'
+    arch = Options.options.arch
+    platform = Options.options.platform
     mod = bld.new_task_gen('cxx', 'program')
     mod.target = name+'.comp'
     mod.env = bld.env_of_name('KERNEL_ENV').copy()
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     if platform != 'hosted':
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.includes = '. ../../runtime ../../runtime/stl ../../interfaces ../../kernel/api ../../kernel/generic ../../kernel/arch/x86 ../../kernel/platform/pc99 ../../modules'
-    mod.uselib_local = 'component_support interfaces kernel platform common runtime'
+    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
+    mod.uselib_local = 'component_support interfaces kernel platform common runtime debug'
     undef_check(bld, name+'.comp')
     return mod
 

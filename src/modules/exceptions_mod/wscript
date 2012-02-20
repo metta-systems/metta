@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build(bld, 'exceptions_mod')
+    mod = bld.setup_module_build(bld, 'exceptions_mod', '..')
     mod.source = ['exception_system.cpp']
 
 # kate: indent-width 4; replace-tabs on;
