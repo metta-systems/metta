@@ -49,7 +49,8 @@ public:
     bool add_source(string file)
     {
         L(cout << "### Adding file " << file << endl);
-        unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc());
+        std::string full_path;
+        unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc(), full_path);
         if (bufn == ~0U)
             return false;
         L(cout << "### Parsing file " << file << endl);
