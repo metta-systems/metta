@@ -87,7 +87,6 @@ void elf32::section_header_t::dump(const char* shstrtab)
         "SHF_WRITE", "SHF_ALLOC", "SHF_EXECINSTR", "bit 3", "SHF_MERGE", "SHF_STRINGS", "SHF_INFO_LINK", "SHF_LINK_ORDER", 
         "SHF_OS_NONCONFORMING", "SHF_GROUP", "SHF_TLS", "bit 11", "bit 12", "bit 13", "bit 14", "bit 15", "bit 16", "bit 17", "bit 18", 
         "bit 19", "bit 20", "bit 21", "bit 22", "bit 23", "bit 24", "bit 25", "bit 26", "bit 27", "bit 28", "bit 29", "bit 30", "bit 31"
->>>>>>> MERGE-SOURCE
     };
     // 0 .group        00000008  00000000  00000000  00000034  2**2
     // CONTENTS, READONLY, EXCLUDE, GROUP, LINK_ONCE_DISCARD
@@ -405,38 +404,20 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     if (!closure_name)
     {
-<<<<<<< TREE
-        address_t entry = module.get_entry_point();
-		kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl;
-        return (void*)(entry + section_base - start);
-=======
         address_t entry = this_loaded_module.entry_point;
 		D(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
         return (void*)(entry);
->>>>>>> MERGE-SOURCE
     }
     else
     {
-<<<<<<< TREE
-        // Symbol is a pointer to closure structure. -- FIXME: right now we treat it as structure itself to make root_domain module loading easier
-        // root_domain should also export a closure to be uniform with other modules.
-        // module_loader will dereference pseudo-pointer to closure for now... 
-        address_t entry = module.find_symbol(closure_name);//reinterpret_cast<address_t>(*(void**)(module.find_symbol(closure_name)));
-=======
         // Symbol is a pointer to closure structure.
         symbol_table_finder_t finder(this_loaded_module.load_base,
             reinterpret_cast<elf32::section_header_t*>(this_loaded_module.symtab_start),
             reinterpret_cast<elf32::section_header_t*>(this_loaded_module.strtab_start));
 
         address_t entry = reinterpret_cast<address_t>(*(void**)(finder.find_symbol(closure_name)));
->>>>>>> MERGE-SOURCE
         kconsole << " +-- Returning closure pointer " << entry << endl;
-<<<<<<< TREE
-        return reinterpret_cast<void*>(module.find_symbol(closure_name));
-        // return *(void**)(module.find_symbol(closure_name));
-=======
         return *(void**)finder.find_symbol(closure_name);
->>>>>>> MERGE-SOURCE
     }
 }
 
