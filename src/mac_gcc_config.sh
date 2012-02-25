@@ -1,1 +1,11 @@
-CC=gcc-4.6 CXX=g++-4.6 CROSS_CC=i686-elf-gcc CROSS_CXX=i686-elf-g++ AR=i686-elf-ar RANLIB=i686-elf-ranlib NM=i686-elf-nm ./waf configure
+PATH=~/Tools/crossgcc/bin:$PATH \
+CC=x86_64-apple-darwin11.3.0-gcc-4.6 \
+CXX=x86_64-apple-darwin11.3.0-g++-4.6 \
+CPP=cpp-4.6 \
+CROSS_CC=i686-pc-elf-gcc \
+CROSS_CXX=i686-pc-elf-g++ \
+AS=i686-pc-elf-as \
+AR=i686-pc-elf-ar \
+RANLIB=i686-pc-elf-ranlib \
+NM=i686-pc-elf-nm \
+./waf configure
