@@ -174,9 +174,10 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
 
-        address_t entry = reinterpret_cast<address_t>(*(void**)(finder.find_symbol(closure_name)));
-        kconsole << " +-- Returning closure pointer " << entry << endl;
-        return *(void**)finder.find_symbol(closure_name);
+        address_t symbol = finder.find_symbol(closure_name);
+        address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
+        kconsole << " +-- Returning closure symbol " << symbol << ", pointer " << entry << endl;
+        return reinterpret_cast<void*>(symbol);
     }
 
     module_descriptor_t* previous_loaded_module = reinterpret_cast<module_descriptor_t*>(*d_last_available_address - sizeof(module_descriptor_t));
@@ -415,9 +416,10 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             reinterpret_cast<elf32::section_header_t*>(this_loaded_module.symtab_start),
             reinterpret_cast<elf32::section_header_t*>(this_loaded_module.strtab_start));
 
-        address_t entry = reinterpret_cast<address_t>(*(void**)(finder.find_symbol(closure_name)));
-        kconsole << " +-- Returning closure pointer " << entry << endl;
-        return *(void**)finder.find_symbol(closure_name);
+        address_t symbol = finder.find_symbol(closure_name);
+        address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
+        kconsole << " +-- Returning closure symbol " << symbol << ", pointer " << entry << endl;
+        return reinterpret_cast<void*>(symbol);//entry);
     }
 }
 

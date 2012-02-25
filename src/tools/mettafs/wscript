@@ -6,7 +6,7 @@ def build(bld):
     mkfs.name = 'mkmettafs'
     mkfs.source = 'mkfs.cpp block_device.cpp block_cache.cpp block_device_mapper.cpp'
     mkfs.env = bld.env_of_name('TOOLS_ENV').copy()
-    mkfs.includes = '. ../../kernel/generic ../../runtime ../../kernel/arch/x86' # only for fourcc.h
+    mkfs.includes = map(lambda d: '../../'+d, mkfs.env.INCLUDE_DIRS)
     mkfs.uselib_local = 'toolruntime'
     mkfs.uselib = 'UUID OPENSSL'
     mkfs.target = 'mkmettafs'
