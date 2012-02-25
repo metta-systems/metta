@@ -1,6 +1,7 @@
 #pragma once
 
 #include "panic.h"
+#include "default_console.h"
 
 /*!
  * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets) find symbol by either name or value.
