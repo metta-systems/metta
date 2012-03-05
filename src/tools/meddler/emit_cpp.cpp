@@ -174,7 +174,7 @@ void interface_t::emit_methods_impl_h(std::ostringstream& s, std::string indent_
     });
 }
 
-void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "#pragma once" << std::endl << std::endl;
 
@@ -217,7 +217,7 @@ void interface_t::emit_methods_interface_h(std::ostringstream& s, std::string in
     });
 }
 
-void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "#pragma once" << std::endl << std::endl
       << indent_prefix << "#include \"module_interface.h\"" << std::endl;
@@ -310,7 +310,7 @@ void interface_t::emit_methods_interface_cpp(std::ostringstream& s, std::string 
 }
 
 // Currently no need to generate interface.cpp if there are no methods.
-void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
     if (methods.size() > 0)
     {
@@ -473,16 +473,16 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
 // "raises" corresponds directly to C++ throw() method specification - but
 // it should not be used, see http://stackoverflow.com/questions/88573/should-i-use-an-exception-specifier-in-c
 // for explanation why. Also http://www.gotw.ca/publications/mill22.htm
-void exception_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void exception_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void exception_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void exception_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef int xcp_" << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
@@ -491,19 +491,19 @@ void alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
 }
 
-void alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
 
-void alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
 
-void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << emit_type(*this);
     s << " " << name();
@@ -533,42 +533,42 @@ void parameter_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
     s << " " << name();
 }
 
-void type_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void type_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void type_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void type_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 	s << indent_prefix << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
 }
 
-void type_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void type_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void sequence_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void sequence_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void sequence_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void sequence_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef int " << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void sequence_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void sequence_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void array_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void array_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
 }
 
-void array_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void array_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void array_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void array_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
@@ -577,24 +577,24 @@ void set_alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 	s << indent_prefix << "#include \"set_t.h\"" << std::endl;
 }
 
-void set_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void set_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void set_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void set_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef set_t<" << /*FIXME:? emit_*/type() << "> " << name() << ";" << endl;
 }
 
-void set_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void set_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void record_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void record_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void record_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void record_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 	s << indent_prefix << "struct " << replace_dots(name()) << endl
 	  << indent_prefix << "{" << endl;
@@ -606,15 +606,15 @@ void record_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_
     s << indent_prefix << "};" << endl;
 }
 
-void record_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void record_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void enum_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void enum_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void enum_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void enum_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "enum " << replace_dots(name()) << endl
       << indent_prefix << "{" << endl;
@@ -625,20 +625,20 @@ void enum_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_pr
     s << indent_prefix << "};" << endl;
 }
 
-void enum_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void enum_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void range_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix)
+void range_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
-void range_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix)
+void range_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef int " << replace_dots(name()) << ";" << endl; //TEMP hack
 }
 
-void range_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix)
+void range_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
 
