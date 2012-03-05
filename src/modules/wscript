@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import Options
+from waflib import Options
 
 def build(bld):
     arch = Options.options.arch

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build(bld, 'frames_mod', '..')
+    mod = bld.setup_module_build('frames_mod', '..')
     mod.source = ['frames_mod.cpp']
     
 # kate: indent-width 4; replace-tabs on;
