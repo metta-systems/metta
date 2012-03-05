@@ -1,10 +1,10 @@
 #
 # Bootimage construction script
 #
-# glue module specifies main module
+# nucleus specifies ring0 module
 # module paths are relative to base path given to mkbootimage
 
-#glue:glue.sys
+nucleus:nucleus.sys
 
 # root_domain performs startup construction
 # namespace for root_domain will be amended to include references to all the following modules too

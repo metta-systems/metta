@@ -275,6 +275,7 @@ extern "C" void kernel_startup()
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
+// TODO: this goes into nucleus .init.code
     global_descriptor_table_t gdt;
     kconsole << "Created GDT." << endl;
     interrupt_descriptor_table_t::instance().install();
