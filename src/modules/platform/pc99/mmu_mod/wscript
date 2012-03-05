@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build(bld, 'mmu_mod', '../../..')
+    mod = bld.setup_module_build('mmu_mod', '../../..')
     mod.source = 'mmu_mod.cpp page_directory.cpp'
 
 # kate: indent-width 4; replace-tabs on;
