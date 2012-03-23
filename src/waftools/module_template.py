@@ -10,7 +10,7 @@ def options(opt):
 # Environment: TARGET
 @conf
 def undef_check(bld, filename):
-    bld.new_task_gen(
+    bld(
         source = filename,
         rule = bld.env['NM']+' -u ${SRC[0].abspath(env)}',
         name = 'nm undef check ('+filename+')',
@@ -22,14 +22,15 @@ def setup_module_build(bld, name, prefix):
     if prefix: prefix = prefix + '/'
     arch = Options.options.arch
     platform = Options.options.platform
-    mod = bld.new_task_gen('cxx', 'program')
+
+    mod = bld(features='cxx')
     mod.target = name+'.comp'
-    mod.env = bld.env_of_name('KERNEL_ENV').copy()
+    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
+    mod.use = 'component_support interfaces kernel platform common runtime debug'
+    mod.env = bld.all_envs['KERNEL_ENV']
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     if platform != 'hosted':
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
-    mod.uselib_local = 'component_support interfaces kernel platform common runtime debug'
     # bld.undef_check(name+'.comp')
     bld.all_task_gen += [mod]
     return mod

@@ -12,6 +12,7 @@ top = '.'
 out = '_build_'
 
 include_dirs = 'kernel kernel/generic runtime'.split()
+libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include/'
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
@@ -22,7 +23,8 @@ flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
 
-gcc_debug_flag = ['-###']
+# gcc_debug_flag = ['-###']
+gcc_debug_flag = ['-v']
 
 # Lion has deprecated some OpenSSL stuff we use.
 flags += ['-Wno-deprecated-declarations']
@@ -88,13 +90,13 @@ def configure(conf):
 
     if clang:
         conf.load('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        extra_cross_flags += ['-ccc-host-triple', 'i686-pc-elf']
+        extra_cross_flags += ['-target', 'i686-pc-elf']
         extra_cross_cxxflags = ['-std=c++0x']
         linkflags = '-nostdlib'.split()
         # with Clang use libc++ from LLVM project.
-        conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
-        conf.env.INCLUDES_LIBCXX = '/usr/local/include/c++/v1/'
-        conf.env.STLIB_LIBCXX = ['c++']
+        # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
+        # conf.env.INCLUDES_LIBCXX = libcxx_header_dir
+        # conf.env.STLIB_LIBCXX = ['c++']
     else:
         conf.load('compiler_c')
         conf.load('compiler_cxx') # FIXME: gcc detection per-config for x-compile?
@@ -105,28 +107,10 @@ def configure(conf):
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
     # flags += gcc_debug_flag
+    # extra_cross_flags += ['-no-canonical-prefixes]
+    extra_cross_flags += ['-gcc-toolchain', '/Users/berkus/Tools/crossgcc']
 
     cxxflags = cflags
-
-    # Set up common environment variables
-    conf.env.append_unique('CCFLAGS', cflags + flags)
-    conf.env.append_unique('CXXFLAGS', cxxflags + flags)
-    conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
-    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
-
-    conf.env['variant'] = arch + '-' + platform + '-' + build
-
-    # Base template env
-    conf.env.set_variant(conf.env['variant'])
-    conf.set_env_name('ENV', conf.env)
-    conf.setenv('ENV') # Activate the environment
-    conf.env.append_unique('INCLUDE_DIRS', include_dirs)
-    conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
-    # Set arch-specific include paths
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
-    # Append shared includes after, so we could override in arch-specific ones.
-    conf.env.append_unique('INCLUDE_DIRS', 'kernel/arch/shared kernel/platform/shared'.split())
 
     # Generate config.h
     # *_V options generate huge amount of output, beware.
@@ -153,18 +137,6 @@ def configure(conf):
     conf.define('CONFIG_IOAPIC', 1)
     conf.write_config_header('kernel/config.h')
 
-    # Copy template env to specific ones
-    conf.set_env_name('KERNEL_ENV', conf.env.copy())
-    conf.set_env_name('APP_ENV', conf.env.copy())
-    conf.set_env_name('TOOLS_ENV', conf.env.copy())
-    conf.set_env_name('TEST_ENV', conf.env.copy())
-
-    # Config for running tests
-    conf.setenv('TEST_ENV')
-    conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
-    conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
-
     # Flag that we're building under/for Metta.
     # Value is metta release number, monotonically increasing with each public release.
     metta_flag = "__Metta__=1"
@@ -172,9 +144,41 @@ def configure(conf):
     # --gc-sections ruins everything - TODO: add attribute(section, used) to custom sections!
     kernel_linkflags = [] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
 
+    # ENVIRONMENT
+
+    # Set up common environment variables
+    conf.env.append_unique('CCFLAGS', cflags + flags)
+    conf.env.append_unique('CXXFLAGS', cxxflags + flags)
+    conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
+    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
+
+    conf.env['variant'] = arch + '-' + platform + '-' + build
+
+    # Base template env
+    # conf.env.set_variant(conf.env['variant'])
+    # conf.set_env_name('ENV', conf.env)
+    # conf.setenv('ENV') # Activate the environment
+    conf.env.append_unique('INCLUDE_DIRS', include_dirs)
+    conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
+    # Set arch-specific include paths
+    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
+    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
+    # Append shared includes after, so we could override in arch-specific ones.
+    conf.env.append_unique('INCLUDE_DIRS', 'kernel/arch/shared kernel/platform/shared'.split())
+
+    # Copy template env to specific ones
+    env_base = conf.env
+
+    # Config for running tests
+    conf.setenv('TEST_ENV', env_base)
+    conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
+    conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
+
     # Config for building kernel
-    conf.setenv('KERNEL_ENV')
+    conf.setenv('KERNEL_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
     conf.env.append_unique('CDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
@@ -195,8 +199,9 @@ def configure(conf):
     conf.env.append_unique('LINKFLAGS', ['-m32'])
 
     # Config for building system apps
-    conf.setenv('APP_ENV')
+    conf.setenv('APP_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
+    conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
     conf.env.append_unique('CDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', metta_flag)
     conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
@@ -207,7 +212,7 @@ def configure(conf):
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
 
     # Use host cc for building tools and local tests - do we need target tests as well?
-    conf.setenv('TOOLS_ENV')
+    conf.setenv('TOOLS_ENV', env_base)
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
     if os.environ.has_key('HOST_CC'):
         conf.env['CC'] = os.environ['HOST_CC']
@@ -216,7 +221,7 @@ def configure(conf):
         conf.env['CXX'] = os.environ['HOST_CXX']
         conf.env['LINK_CXX'] = os.environ['HOST_CXX']
 
-    # set uselib
+    # set uselib for TOOLS_ENV
     conf.env.STLIB_UUID = 'uuid'
 
     if sys.platform == 'darwin':
@@ -250,11 +255,11 @@ def build(bld):
         source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split()),
         use = 'LLVM'# LIBCXX'
     )
-    meddler.env = bld.env_of_name('TOOLS_ENV').copy()
+    meddler.env = bld.all_envs['TOOLS_ENV']
     meddler.defines = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS']
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
 
-    bld.add_group()
+    # bld.add_group()
 
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
@@ -265,25 +270,26 @@ def build(bld):
                        'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 
                        'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',
                        # Temporary interfaces "borrowed" from Nemesis
-                       # 'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1'
+                       'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1'
                        ]
 
     # Now generate interface files.
     interfaces = bld.stlib(
-        source = map(lambda d: 'interfaces/'+d+'.if', interface_files), 
+        source = map(lambda d: 'interfaces/'+d+'.if', interface_files),
+        includes = ['../interfaces',  '../interfaces/nemesis'], # TODO: make meddle produce relative paths properly!!
         target = 'interfaces',
-        features = 'cxx'
+        features = 'cxx',
+        use = 'LIBCXX'
     )
-    interfaces.env.append_unique('IDL_INC', ['../interfaces', '../interfaces/nemesis']) # TODO: make meddle produce relative paths properly!!
-    interfaces.env = bld.env_of_name('KERNEL_ENV').copy()
-    interfaces.includes = interfaces.env['INCLUDE_DIRS']
+    interfaces.env = bld.all_envs['KERNEL_ENV']
+    interfaces.includes += interfaces.env['INCLUDE_DIRS'] # For building the C part
 
     # bld.add_manual_dependency('meddler', 'all_idl')
     # bld.add_manual_dependency('all_idl', meddler)
 
     # Make bootimage components.
-    # bld.all_task_gen = []
-    # bld.add_subdirs("modules")
+    bld.all_task_gen = []
+    bld.add_subdirs("modules")
     # bld.add_subdirs("tools/mettafs")
 
     # Common libraries

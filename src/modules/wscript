@@ -6,11 +6,12 @@ def build(bld):
     arch = Options.options.arch
     platform = Options.options.platform
 
-    complib = bld.new_task_gen('cxx', 'staticlib')
-    complib.source = 'module-entry.cpp heap_new.cpp'
-    complib.env = bld.env_of_name('KERNEL_ENV').copy()
-    complib.includes = ['.', '../runtime', '../runtime/stl', '../interfaces', '../kernel/generic', '../kernel/arch/'+arch, '../kernel/arch/shared', '../kernel/platform/'+platform, '../kernel/platform/shared']
-    complib.target = 'component_support'
+    complib = bld.stlib(
+        source = 'module-entry.cpp heap_new.cpp',
+        includes = ['.', '../runtime', '../runtime/stl', '../interfaces', '../kernel/generic', '../kernel/arch/'+arch, '../kernel/arch/shared', '../kernel/platform/'+platform, '../kernel/platform/shared'],
+        target = 'component_support'
+    )
+    complib.env = bld.all_envs['KERNEL_ENV']
 
     bld.add_subdirs('platform/shared')
     bld.add_subdirs('platform/'+platform+'/mmu_mod')
