@@ -85,6 +85,7 @@ def configure(conf):
 
     conf.load('yasm', tooldir='waftools')
     conf.load('meddle', tooldir='waftools')
+    conf.load('ar')
 
     conf.find_program('nm',var='NM')
 
@@ -172,17 +173,16 @@ def configure(conf):
     # Config for running tests
     conf.setenv('TEST_ENV', env_base)
     conf.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    conf.env.append_unique('CXXDEFINES', ['UNIT_TESTS'])
+    conf.env.append_unique('DEFINES', ['UNIT_TESTS'])
     conf.env['LIB_TEST'] = 'boost_unit_test_framework' # set uselib
 
     # Config for building kernel
     conf.setenv('KERNEL_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
     conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
-    conf.env.append_unique('CDEFINES', metta_flag)
-    conf.env.append_unique('CXXDEFINES', metta_flag)
-    conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('CXXDEFINES', stl_defines)
+    conf.env.append_unique('DEFINES', metta_flag)
+    conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
+    conf.env.append_unique('DEFINES', stl_defines)
     conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
     conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
@@ -202,10 +202,9 @@ def configure(conf):
     conf.setenv('APP_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
     conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
-    conf.env.append_unique('CDEFINES', metta_flag)
-    conf.env.append_unique('CXXDEFINES', metta_flag)
-    conf.env.append_unique('CXXDEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('CXXDEFINES', stl_defines)
+    conf.env.append_unique('DEFINES', metta_flag)
+    conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
+    conf.env.append_unique('DEFINES', stl_defines)
     conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
     conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
