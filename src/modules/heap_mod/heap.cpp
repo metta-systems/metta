@@ -47,7 +47,7 @@ const memory_v1::size heap_t::all_sizes[heap_t::COUNT] =
     _S(85),  _S(102), _S(122), _S(146), _S(175), _S(210), _S(252),  _S(302),
     _S(362), _S(434), _S(521), _S(625), _S(750), _S(900), _S(1080), _S(1296),
     
-    ~0
+    ~0U
 };
 
 inline heap_t::heap_rec_t* heap_t::prev_block(heap_rec_t* rec)
