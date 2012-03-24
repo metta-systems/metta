@@ -295,12 +295,12 @@ def build(bld):
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
-    # libdebug = bld.stlib(
-    #     source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split()),
-    #     target = 'debug'
-    # )
-    # libdebug.env = bld.all_envs['KERNEL_ENV'].derive()
-    # libdebug.includes = libdebug.env['INCLUDE_DIRS']
+    libdebug = bld.stlib(
+        source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split()),
+        target = 'debug',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    libdebug.includes = libdebug.env.INCLUDE_DIRS
 
     # runtime = bld.new_task_gen('cxx', 'staticlib')
     # runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split())
