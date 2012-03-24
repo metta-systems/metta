@@ -16,9 +16,9 @@ class meddle(Task):
     def run(self):
         cwd = self.outputs[0].parent.bldpath()
         incd = [self.inputs[1].parent.bldpath()]
-        print "includes:"
-        for i in self.env.IDL_INC:
-            print "include "+i
+        # print "includes:"
+        for i in self.env.INCLUDES:
+            # print "include "+i
             incd = incd + [i]
 
         if (self.verbose):
@@ -26,7 +26,7 @@ class meddle(Task):
         else:
             cmd = '%s %s -o%s -I%s' % (self.inputs[0].abspath(), self.inputs[1].abspath(), cwd, ' -I'.join(incd))
 
-        print "Running "+cmd
+        # print "Running "+cmd
         return self.exec_command(cmd)
 
 @extension('.if')

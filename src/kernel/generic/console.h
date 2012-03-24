@@ -95,11 +95,11 @@ inline console_t& operator << (console_t& con, const char* data)
     return con;
 }
 
-inline console_t& operator << (console_t& con, int data)
-{
-    con.print_int(data);
-    return con;
-}
+// inline console_t& operator << (console_t& con, int data)
+// {
+//     con.print_int(data);
+//     return con;
+// }
 
 inline console_t& operator << (console_t& con, int32_t data)
 {
@@ -107,11 +107,11 @@ inline console_t& operator << (console_t& con, int32_t data)
     return con;
 }
 
-inline console_t& operator << (console_t& con, unsigned int data)
-{
-    con.print_hex(data);
-    return con;
-}
+// inline console_t& operator << (console_t& con, unsigned int data)
+// {
+//     con.print_hex(data);
+//     return con;
+// }
 
 inline console_t& operator << (console_t& con, uint32_t data)
 {

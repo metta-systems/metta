@@ -53,8 +53,8 @@ struct xcp_context_t
 #define xcp_push_context(ctx)  PVS(exceptions)->push_context(ctx)
 #define xcp_pop_context(ctx)   PVS(exceptions)->pop_context(ctx, __FILE__, __LINE__, __FUNCTION__)
 #define xcp_rec_alloc(size)    PVS(exceptions)->allocate_args(size)
-#define xcp_setjmp(buf)        (__builtin_setjmp(buf))
-#define xcp_longjmp(buf, j)    (__builtin_longjmp(buf, j))
+#define xcp_setjmp(buf)        (__builtin_setjmp(reinterpret_cast<void**>(buf)))
+#define xcp_longjmp(buf, j)    (__builtin_longjmp(reinterpret_cast<void**>(buf), j))
 
 /*!
  * Define "routine" to determine if two exceptions match.

@@ -1,28 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from waflib import Options
+import os
 
 def build(bld):
     arch = Options.options.arch
     platform = Options.options.platform
 
-    complib = bld.new_task_gen('cxx', 'staticlib')
-    complib.source = 'module-entry.cpp heap_new.cpp'
-    complib.env = bld.env_of_name('KERNEL_ENV').copy()
-    complib.includes = ['.', '../runtime', '../runtime/stl', '../interfaces', '../kernel/generic', '../kernel/arch/'+arch, '../kernel/arch/shared', '../kernel/platform/'+platform, '../kernel/platform/shared']
-    complib.target = 'component_support'
+    complib = bld.stlib(
+        source = 'module-entry.cpp heap_new.cpp',
+        target = 'component_support',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    complib.gen_incpaths('../')
 
-    bld.add_subdirs('platform/shared')
-    bld.add_subdirs('platform/'+platform+'/mmu_mod')
-    bld.add_subdirs('root_domain')
-    bld.add_subdirs('frames_mod')
-    bld.add_subdirs('heap_mod')
-    bld.add_subdirs('stretch_allocator_mod')
-    bld.add_subdirs('stretch_table_mod')
-    bld.add_subdirs('stretch_driver_mod')
-    bld.add_subdirs('exceptions_mod')
-    bld.add_subdirs('hashtables_mod')
-    bld.add_subdirs('typesystem_mod')
+    bld.recurse('platform/shared')
+    bld.recurse('platform/'+platform+'/mmu_mod')
+    bld.recurse('root_domain')
+    bld.recurse('frames_mod')
+    bld.recurse('heap_mod')
+    bld.recurse('stretch_allocator_mod')
+    bld.recurse('stretch_table_mod')
+    bld.recurse('stretch_driver_mod')
+    bld.recurse('exceptions_mod')
+    bld.recurse('hashtables_mod')
+    bld.recurse('typesystem_mod')
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

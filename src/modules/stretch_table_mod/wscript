@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build('stretch_table_mod', '..')
-    mod.source = 'stretch_table_mod.cpp'
+    mod = bld.setup_module_build('stretch_table_mod', '..', 'stretch_table_mod.cpp')
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
