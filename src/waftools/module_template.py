@@ -39,5 +39,6 @@ def setup_module_build(bld, name, prefix, sources):
         # mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds'])
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
     bld.undef_check(mod.target)
-    bld.all_task_gen += [mod]
+    node = bld.path.find_or_declare(mod.target)
+    bld.all_comp_targets += [node.bldpath()]
     return mod

@@ -1,7 +1,8 @@
 #!/bin/sh
 # Script taken from Pedigree and slightly modified
 
-BUILDDIR=../../_build_/x86-pc99-release
+BUILDDIR=../../_build_
+#x86-pc99-release
 #FLOPPY=$BUILDDIR/metta.fd0
 CDISO=$BUILDDIR/metta.iso
 

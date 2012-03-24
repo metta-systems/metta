@@ -273,7 +273,7 @@ def build(bld):
     interfaces.includes += interfaces.env['INCLUDE_DIRS'] # For building the C part
 
     # Make bootimage components.
-    bld.all_task_gen = []
+    bld.all_comp_targets = []
     bld.recurse("modules")
 
     # Common libraries
@@ -440,36 +440,37 @@ def build(bld):
 
     #Check and add all output modules.
     nm = []
-    for tg in bld.all_task_gen:
-        nm.append(tg.target)
+    for tg in bld.all_comp_targets:
+        nm.append(tg)
 
     print "All outputs: "+", ".join(nm)
 
     # target_variant = Options.options.arch + '-' + Options.options.platform + '-' + Options.options.build
     # print "Target variant: "+target_variant
 
-    # bld(
-    #     source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
-    #     target = 'init.img',
-    #     # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
-    #     rule = '${SRC[0].abspath(env)} ./ ${SRC[1].abspath(env)} ${TGT}',
-    #     name = 'init.img',
-    #     depends_on = 'buildboot'
-    # )
+    bld(
+        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
+        target = 'init.img',
+        # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
+        rule = '${SRC[0].abspath()} ./ ${SRC[1].abspath()} ${TGT}',
+        name = 'init.img',
+        depends_on = 'buildboot'
+    )
 
-    # bld.new_task_gen('subst',
-    #     source = 'tools/mkbootimg/menu.lst.in',
-    #     target = 'tools/mkbootimg/menu.lst.cd',
-    #     dict = {'ROOT': 'cd'}
-    # )
+    bld(
+        features = 'subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.cd',
+        ROOT = 'cd'
+    )
 
-    # bld(
-    #     source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
-    #     target = 'metta.iso',
-    #     rule = './images.sh',
-    #     cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-    #     after = 'init.img'
-    # )
+    bld(
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        target = 'metta.iso',
+        rule = './images.sh',
+        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+        after = 'init.img'
+    )
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
