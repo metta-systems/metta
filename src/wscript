@@ -11,15 +11,15 @@ VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
 top = '.'
 out = '_build_'
 
-include_dirs = 'kernel kernel/generic runtime'.split()
-libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include/'
+include_dirs = 'kernel kernel/generic kernel/api runtime'.split()
+libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split()
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime', 'runtime/stl']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O0 -g -ffunction-sections -fdata-sections -pipe -Wall -Wextra -Werror'.split()
+flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra'.split() # -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
 
@@ -141,7 +141,7 @@ def configure(conf):
     # Flag that we're building under/for Metta.
     # Value is metta release number, monotonically increasing with each public release.
     metta_flag = "__Metta__=1"
-    kernel_flags = '-fno-strict-aliasing -ffreestanding'.split() # -nostdinc
+    kernel_flags = '-fno-strict-aliasing -ffreestanding -nostdinc'.split()
     # --gc-sections ruins everything - TODO: add attribute(section, used) to custom sections!
     kernel_linkflags = [] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
 
@@ -153,7 +153,7 @@ def configure(conf):
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
     conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
-    conf.env['variant'] = arch + '-' + platform + '-' + build
+    # conf.env['variant'] = arch + '-' + platform + '-' + build
 
     # Base template env
     # conf.env.set_variant(conf.env['variant'])
@@ -252,11 +252,13 @@ def build(bld):
     meddler = bld.program(
         target = 'meddler',
         source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split()),
-        use = 'LLVM'# LIBCXX'
+        use = 'LLVM', # LIBCXX'
+        env = bld.all_envs['TOOLS_ENV']   
     )
-    meddler.env = bld.all_envs['TOOLS_ENV']
+    meddler.env = bld.all_envs['TOOLS_ENV'].derive()
     meddler.defines = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS']
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
+    meddler.use = 'LLVM'
 
     # bld.add_group()
 
@@ -280,7 +282,7 @@ def build(bld):
         features = 'cxx',
         use = 'LIBCXX'
     )
-    interfaces.env = bld.all_envs['KERNEL_ENV']
+    interfaces.env = bld.all_envs['KERNEL_ENV'].derive()
     interfaces.includes += interfaces.env['INCLUDE_DIRS'] # For building the C part
 
     # bld.add_manual_dependency('meddler', 'all_idl')
@@ -288,16 +290,17 @@ def build(bld):
 
     # Make bootimage components.
     bld.all_task_gen = []
-    bld.add_subdirs("modules")
-    # bld.add_subdirs("tools/mettafs")
+    bld.recurse("modules")
+    bld.recurse("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
-    # libdebug = bld.new_task_gen('cxx', 'staticlib')
-    # libdebug.source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split())
-    # libdebug.env = bld.env_of_name('KERNEL_ENV').copy()
+    # libdebug = bld.stlib(
+    #     source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split()),
+    #     target = 'debug'
+    # )
+    # libdebug.env = bld.all_envs['KERNEL_ENV'].derive()
     # libdebug.includes = libdebug.env['INCLUDE_DIRS']
-    # libdebug.target = 'debug'
 
     # runtime = bld.new_task_gen('cxx', 'staticlib')
     # runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split())

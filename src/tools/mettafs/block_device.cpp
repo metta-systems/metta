@@ -19,7 +19,7 @@ block_device_t::block_device_t(const std::string& name, bool create, blocksize_t
     , blockSize(bs)
     , numBlocks(numBlocks)
 {
-    storageFile = new fstream(storageFileName, create ? ios::out|ios::trunc|ios::binary : ios::out|/*ios::nocreate|*/ios::binary);
+    storageFile = new fstream(storageFileName.c_str(), create ? ios::out|ios::trunc|ios::binary : ios::out|/*ios::nocreate|*/ios::binary);
 }
 
 block_device_t::~block_device_t()

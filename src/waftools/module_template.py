@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from waflib.Configure import conf
 from waflib import Options, Utils
+import os
 
 def options(opt):
     pass
@@ -25,9 +26,16 @@ def setup_module_build(bld, name, prefix):
 
     mod = bld(features='cxx')
     mod.target = name+'.comp'
-    mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
+    mod.env = bld.all_envs['KERNEL_ENV'].derive()
+    incs = []
+    for x in mod.env.INCLUDE_DIRS:
+        if os.path.isabs(x):
+            incs.append(x)
+        else:
+            incs.append(prefix+'../'+x)
+    mod.includes = incs + ['.', prefix]
+    # mod.includes = ['.', prefix+'../runtime', prefix+'../runtime/stl', prefix+'../interfaces', prefix+'../kernel/api', prefix+'../kernel/generic', prefix+'../kernel/arch/'+arch, prefix+'../kernel/platform/'+platform, prefix+'../kernel/arch/shared', prefix+'../kernel/platform/shared', prefix]
     mod.use = 'component_support interfaces kernel platform common runtime debug'
-    mod.env = bld.all_envs['KERNEL_ENV']
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     if platform != 'hosted':
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
