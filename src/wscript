@@ -21,7 +21,7 @@ stl_include_dirs = ['runtime', 'runtime/stl']
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra'.split() # -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
-flags += ['-Wno-unused-variable', '-Wno-unused-parameter']
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
 
 # gcc_debug_flag = ['-###']
 gcc_debug_flag = ['-v']
@@ -107,7 +107,7 @@ def configure(conf):
         # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    # flags += gcc_debug_flag
+    flags += gcc_debug_flag
     # extra_cross_flags += ['-no-canonical-prefixes]
     extra_cross_flags += ['-gcc-toolchain', '/Users/berkus/Tools/crossgcc']
 
@@ -143,7 +143,7 @@ def configure(conf):
     metta_flag = "__Metta__=1"
     kernel_flags = '-fno-strict-aliasing -ffreestanding -nostdinc'.split()
     # --gc-sections ruins everything - TODO: add attribute(section, used) to custom sections!
-    kernel_linkflags = [] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
+    kernel_linkflags = ['-target', 'i686-pc-elf'] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
 
     # ENVIRONMENT
 
@@ -260,8 +260,6 @@ def build(bld):
     meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
     meddler.use = 'LLVM'
 
-    # bld.add_group()
-
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
                        'frames_module_v1', 'heap_module_v1', 'heap_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
@@ -285,9 +283,6 @@ def build(bld):
     interfaces.env = bld.all_envs['KERNEL_ENV'].derive()
     interfaces.includes += interfaces.env['INCLUDE_DIRS'] # For building the C part
 
-    # bld.add_manual_dependency('meddler', 'all_idl')
-    # bld.add_manual_dependency('all_idl', meddler)
-
     # Make bootimage components.
     bld.all_task_gen = []
     bld.recurse("modules")
@@ -302,39 +297,45 @@ def build(bld):
     )
     libdebug.includes = libdebug.env.INCLUDE_DIRS
 
-    # runtime = bld.new_task_gen('cxx', 'staticlib')
-    # runtime.source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split())
-    # if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
-    # runtime.env = bld.env_of_name('KERNEL_ENV').copy()
-    # runtime.includes = runtime.env['INCLUDE_DIRS']
-    # runtime.target = 'runtime'
+    runtime = bld.stlib(
+        source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()),
+        target = 'runtime',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
+    runtime.includes = runtime.env.INCLUDE_DIRS
 
-    # minruntime = bld.new_task_gen('cxx', 'staticlib')
-    # minruntime.source = map(lambda d: 'runtime/' + d + '.cpp', 'dummy_delete memutils cstring'.split())
-    # if platform != 'hosted': minruntime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support'.split())
-    # minruntime.env = bld.env_of_name('KERNEL_ENV').copy()
-    # minruntime.includes = minruntime.env['INCLUDE_DIRS']
-    # minruntime.target = 'minruntime'
+    minruntime = bld.stlib(
+        source = map(lambda d: 'runtime/' + d + '.cpp', 'dummy_delete memutils cstring'.split()),
+        target = 'minruntime',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    if platform != 'hosted': minruntime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support'.split())
+    minruntime.includes = minruntime.env.INCLUDE_DIRS
 
-    # toolruntime = bld.new_task_gen('cxx', 'staticlib')
-    # toolruntime.source = 'runtime/memutils.cpp runtime/cstring.cpp'.split()
-    # toolruntime.env = bld.env_of_name('TOOLS_ENV').copy()
-    # toolruntime.includes = include_dirs
-    # toolruntime.target = 'toolruntime'
+#@FIXME: toolruntime should build with host toolchain and host bitness! (now mismatches -m32 with -m64 for linking... by using wrong AR)
+    toolruntime = bld.stlib(
+        source = 'runtime/memutils.cpp runtime/cstring.cpp'.split(),
+        target = 'toolruntime',
+        env = bld.all_envs['TOOLS_ENV'].derive(),
+        includes = include_dirs
+    )
 
-    # commons = bld.new_task_gen('cxx', 'staticlib')
-    # commons.source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser console module_loader'.split())
-    # commons.env = bld.env_of_name('KERNEL_ENV').copy()
-    # commons.includes = commons.env['INCLUDE_DIRS']
-    # commons.target = 'common'
+    commons = bld.stlib(
+        source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser console module_loader'.split()),
+        target = 'common',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    commons.includes = commons.env.INCLUDE_DIRS
 
-    # bld.add_subdirs('kernel/platform/'+Options.options.platform)
+    bld.recurse('kernel/platform/'+Options.options.platform)
 
-    # libkernel = bld.new_task_gen('cxx', 'staticlib')
-    # libkernel.source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split()) + ['kernel/arch/shared/bootinfo.cpp']
-    # libkernel.env = bld.env_of_name('KERNEL_ENV').copy()
-    # libkernel.includes = libkernel.env['INCLUDE_DIRS']
-    # libkernel.target = 'kernel'
+    libkernel = bld.stlib(
+        source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split()) + ['kernel/arch/shared/bootinfo.cpp'],
+        target = 'kernel',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    libkernel.includes = libkernel.env.INCLUDE_DIRS
 
     # Tests
 #    tests = bld.new_task_gen('cxx', 'program')
@@ -357,21 +358,30 @@ def build(bld):
     # stltest.includes = stltest.env['INCLUDE_DIRS']
     # stltest.target = 'stltest'
 
-    #parsedwarf = bld.new_task_gen('cxx', 'program')
-    #parsedwarf.source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split())
-    #parsedwarf.env = bld.env_of_name('TOOLS_ENV').copy()
-    #parsedwarf.includes = parsedwarf.env['INCLUDE_DIRS']
-    #parsedwarf.target = 'parsedwarf'
-    #parsedwarf.uselib_local = 'toolruntime common'
+    # toolcommons = bld.stlib(
+    #     source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser'.split()),
+    #     target = 'toolcommon',
+    #     env = bld.all_envs['TOOLS_ENV'].derive()
+    # )
+    # toolcommons.includes = toolcommons.env.INCLUDE_DIRS
+
+    # parsedwarf = bld.program(
+    #     source = map(lambda f: 'tools/parsedwarf/'+f+'.cpp', 'parsedwarf form_reader datarepr dwarf_info dwarf_parser dwarf_aranges dwarf_abbrev dwarf_lines'.split()),
+    #     target = 'parsedwarf',
+    #     use = 'toolruntime toolcommon'
+    # )
+    # parsedwarf.env = bld.all_envs['TOOLS_ENV'].derive()
+    # parsedwarf.includes = parsedwarf.env.INCLUDE_DIRS
 
     # Tool to build bootimage.
-    # buildboot = bld.new_task_gen('cxx', 'program')
-    # buildboot.target = 'buildboot'
-    # buildboot.source = 'tools/buildboot/buildboot.cpp'
-    # buildboot.env = bld.env_of_name('TOOLS_ENV').copy()
-    # buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
+    buildboot = bld.program(
+        source = 'tools/buildboot/buildboot.cpp',
+        target = 'buildboot',
+        env = bld.all_envs['TOOLS_ENV'].derive()
+    )
+    buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
     # buildboot.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
-    # buildboot.includes = buildboot.env['INCLUDE_DIRS']
+    buildboot.includes = buildboot.env.INCLUDE_DIRS
 
     ################################
     # FINAL OUTPUTS
@@ -436,36 +446,37 @@ def build(bld):
         # hosted.target = 'mettanode'
 
     #Check and add all output modules.
-    # nm = []
-    # for tg in bld.all_task_gen:
-    #     nm.append(tg.target)
+    nm = []
+    for tg in bld.all_task_gen:
+        nm.append(tg.target)
 
-    # print "All outputs: "+", ".join(nm)
+    print "All outputs: "+", ".join(nm)
 
     # target_variant = Options.options.arch + '-' + Options.options.platform + '-' + Options.options.build
     # print "Target variant: "+target_variant
 
-    # bld.new_task_gen(
-    #     source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
-    #     target = 'init.img',
-    #     rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
-    #     name = 'init.img',
-    #     depends_on = 'buildboot'
-    # )
+    bld(
+        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
+        target = 'init.img',
+        # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
+        rule = '${SRC[0].abspath(env)} ./ ${SRC[1].abspath(env)} ${TGT}',
+        name = 'init.img',
+        depends_on = 'buildboot'
+    )
 
-    # bld.new_task_gen('subst',
-    #     source = 'tools/mkbootimg/menu.lst.in',
-    #     target = 'tools/mkbootimg/menu.lst.cd',
-    #     dict = {'ROOT': 'cd'}
-    # )
+    bld.new_task_gen('subst',
+        source = 'tools/mkbootimg/menu.lst.in',
+        target = 'tools/mkbootimg/menu.lst.cd',
+        dict = {'ROOT': 'cd'}
+    )
 
-    # bld.new_task_gen(
-    #     source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
-    #     target = 'metta.iso',
-    #     rule = './images.sh',
-    #     cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-    #     after = 'init.img'
-    # )
+    bld(
+        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        target = 'metta.iso',
+        rule = './images.sh',
+        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+        after = 'init.img'
+    )
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

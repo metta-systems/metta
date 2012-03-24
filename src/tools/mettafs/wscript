@@ -5,7 +5,7 @@ def build(bld):
     mkfs = bld.program(
     	name = 'mkmettafs',
     	source = 'mkfs.cpp block_device.cpp block_cache.cpp block_device_mapper.cpp',
-    	use = 'toolruntime UUID OPENSSL',
+    	use = 'UUID OPENSSL',
     	target = 'mkmettafs',
 	    env = bld.all_envs['TOOLS_ENV'].derive()
 	)
