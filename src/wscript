@@ -85,6 +85,7 @@ def configure(conf):
 
     conf.load('yasm', tooldir='waftools')
     conf.load('meddle', tooldir='waftools')
+    conf.load('genpaths', tooldir='waftools')
     conf.load('ar')
 
     conf.find_program('nm',var='NM')
@@ -107,7 +108,7 @@ def configure(conf):
         # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
         linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    flags += gcc_debug_flag
+    # flags += gcc_debug_flag
     # extra_cross_flags += ['-no-canonical-prefixes]
     extra_cross_flags += ['-gcc-toolchain', '/Users/berkus/Tools/crossgcc']
 
@@ -151,7 +152,7 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
-    conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
+    # conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     # conf.env['variant'] = arch + '-' + platform + '-' + build
 
@@ -198,17 +199,10 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', ['-m32'])
     conf.env.append_unique('LINKFLAGS', ['-m32'])
 
+    env_kernel = conf.env
+
     # Config for building system apps
-    conf.setenv('APP_ENV', env_base)
-    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
-    conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
-    conf.env.append_unique('DEFINES', metta_flag)
-    conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
-    conf.env.append_unique('DEFINES', stl_defines)
-    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
-    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
-    conf.env.append_unique('CXXFLAGS', kernel_flags)
-    conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
+    conf.setenv('APP_ENV', env_kernel)
 
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV', env_base)
@@ -230,17 +224,12 @@ def configure(conf):
 
     conf.env.STLIBPATH_LLVM = '/Users/berkus/Tools/clang/lib/'
     conf.env.INCLUDES_LLVM = '/Users/berkus/Tools/clang/include/'
-    conf.env.STLIB_LLVM = ['LLVMSupport'] #, 'LLVMSystem']
+    conf.env.STLIB_LLVM = ['LLVMSupport']
     conf.env.LIB_LLVM = 'pthread'
 
-    #conf.setenv('TEST_ENV')
-    #conf.env['CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['CXX'] = '/Developer/usr/bin/g++'
-    #conf.env['LINK_CC'] = '/Developer/usr/bin/gcc'
-    #conf.env['LINK_CXX'] = '/Developer/usr/bin/g++'
-    #conf.env.append_unique('CCFLAGS', ['-m32'])
-    #conf.env.append_unique('CXXFLAGS', ['-m32'])
-    #conf.env.append_unique('LINKFLAGS', ['-m32'])
+    env_host_tests = conf.env
+
+    conf.setenv('TEST_ENV', env_host_tests)
 
 def build(bld):
     arch = Options.options.arch
@@ -286,7 +275,6 @@ def build(bld):
     # Make bootimage components.
     bld.all_task_gen = []
     bld.recurse("modules")
-    bld.recurse("tools/mettafs")
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
@@ -345,12 +333,13 @@ def build(bld):
 #    tests.uselib = 'TEST'
 #    tests.target = 'testrunner'
 
-    # slebtest = bld.new_task_gen('cxx', 'program')
-    # slebtest.source = 'tests/slebtest.cpp'
-    # slebtest.env = bld.env_of_name('TEST_ENV').copy()
-    # slebtest.includes = slebtest.env['INCLUDE_DIRS']
-    # slebtest.target = 'slebtest'
-    #slebtest.uselib_local = 'toolruntime common'
+    slebtest = bld.program(
+        source = 'tests/slebtest.cpp',
+        target = 'slebtest',
+        env = bld.all_envs['TEST_ENV'].derive(),
+        use = 'toolruntime toolcommon'
+    )
+    slebtest.gen_incpaths('')
 
     # stltest = bld.new_task_gen('cxx', 'program')
     # stltest.source = 'tests/stl_include_test.cpp'
@@ -373,6 +362,9 @@ def build(bld):
     # parsedwarf.env = bld.all_envs['TOOLS_ENV'].derive()
     # parsedwarf.includes = parsedwarf.env.INCLUDE_DIRS
 
+    # Tools
+    bld.recurse("tools/mettafs")
+
     # Tool to build bootimage.
     buildboot = bld.program(
         source = 'tools/buildboot/buildboot.cpp',
@@ -380,7 +372,6 @@ def build(bld):
         env = bld.all_envs['TOOLS_ENV'].derive()
     )
     buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
-    # buildboot.env.append_unique('LINKFLAGS', '-lstdc++') # hm, why is this needed?
     buildboot.includes = buildboot.env.INCLUDE_DIRS
 
     ################################
@@ -428,18 +419,19 @@ def build(bld):
         # It includes interrupt handlers and some minimal syscall processing.
         # TODO: add nucleus_* code here, initialize glue before kernel startup??
 
-        # nucleus = bld.new_task_gen('cxx', 'program')
-        # nucleus.target = 'nucleus.sys'
-        # nucleus.source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split())
-        # nucleus.env = bld.env_of_name('KERNEL_ENV').copy()
-        # nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
-        # nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,nucleus.map'])
-        # nucleus.includes = nucleus.env['INCLUDE_DIRS']
-        # nucleus.uselib_local = 'common kernel minruntime platform debug'
+        nucleus = bld.program(
+            target = 'nucleus.sys',
+            source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()),
+            use = 'common kernel minruntime platform debug',
+            env = bld.all_envs['KERNEL_ENV'].derive()
+        )
+        nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
+        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,nucleus.map'])
+        nucleus.gen_incpaths('')
 
-        # bld.undef_check(kickstart.target)
-        # bld.undef_check(startup.target)
-        # bld.undef_check(nucleus.target)
+        bld.undef_check(kickstart.target)
+        bld.undef_check(startup.target)
+        bld.undef_check(nucleus.target)
 
     # if platform == 'hosted':
         # Generate a single executable to run whole OS as an application.

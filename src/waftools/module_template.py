@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from waflib.Configure import conf
-from waflib import Options, Utils
+from waflib import Options #, Utils
 import os
 
 def options(opt):
@@ -30,18 +30,14 @@ def setup_module_build(bld, name, prefix, sources):
         use = 'component_support interfaces kernel platform common runtime debug',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
-    incs = []
-    for x in mod.env.INCLUDE_DIRS:
-        if os.path.isabs(x):
-            incs.append(x)
-        else:
-            incs.append(prefix+'../'+x)
-    mod.includes = incs + ['.', prefix]
+    mod.gen_incpaths(prefix+'../')
+    mod.includes.append('.')
+    mod.includes.append(prefix)
+
     mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
     if platform != 'hosted':
         # mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds'])
         mod.env.append_unique('LINKFLAGS', ['-T', '../modules/component.lds', '-Wl,-Map,'+name+'.map'])
-    # bld.undef_check(name+'.comp')
-    print "***** mod features", mod.features 
+    bld.undef_check(mod.target)
     bld.all_task_gen += [mod]
     return mod

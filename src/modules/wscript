@@ -9,17 +9,10 @@ def build(bld):
 
     complib = bld.stlib(
         source = 'module-entry.cpp heap_new.cpp',
-        # includes = ['.', '../runtime', '../runtime/stl', '../interfaces', '../kernel/generic', '../kernel/arch/'+arch, '../kernel/arch/shared', '../kernel/platform/'+platform, '../kernel/platform/shared'],
         target = 'component_support',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
-    incs = []
-    for x in complib.env.INCLUDE_DIRS:
-        if os.path.isabs(x):
-            incs.append(x)
-        else:
-            incs.append('../'+x)
-    complib.includes = incs
+    complib.gen_incpaths('../')
 
     bld.recurse('platform/shared')
     bld.recurse('platform/'+platform+'/mmu_mod')
