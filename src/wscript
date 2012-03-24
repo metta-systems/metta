@@ -387,7 +387,7 @@ def build(bld):
     # FINAL OUTPUTS
     ################################
 
-    # if platform != 'hosted':
+    if platform != 'hosted':
         # Initial loader.
         # Initial loader provides boot sequence abstraction for the kernel.
         # It may also choose which kernel to boot depending on the environment.
@@ -399,28 +399,29 @@ def build(bld):
         # The rest of the loading is done by the root domain.
         ################################################################################################
 
-        # kickstart = bld.new_task_gen('cxx', 'program')
-        # kickstart.target = 'kickstart.sys'
-        # kickstart.source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp']
-        # kickstart.env = bld.env_of_name('KERNEL_ENV').copy()
-        # kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
-        # kickstart.includes = kickstart.env['INCLUDE_DIRS']
-        # kickstart.uselib_local = 'common platform minruntime debug kernel'
+        kickstart = bld.program(
+            target = 'kickstart.sys',
+            source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp'],
+            use = 'common platform minruntime debug kernel',
+            env = bld.all_envs['KERNEL_ENV'].derive()
+        )
+        kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
+        kickstart.includes = kickstart.env.INCLUDE_DIRS
 
-        # Launcher (@todo rename to kickstart..)
+        # Launcher
         # Launcher pulls in all necessary modules from the bootimage, and as such is not actually required - the initial loader can do that?
 
-        # FIXME: ld doesn't report unresolved symbols for -r apps? WTF
-        # TODO: post-process linked modules with symbol checker
+        # FIXME: ld doesn't report unresolved symbols for -r apps
         # TODO: put elf manipulation code to libgaladriel
-        # startup = bld.new_task_gen('cxx', 'program')
-        # startup.target = 'kernel-startup.sys'
-        # startup.source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp']
-        # startup.env = bld.env_of_name('KERNEL_ENV').copy()
-        # startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-        # startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-        # startup.includes = startup.env['INCLUDE_DIRS'] + ['modules/root_domain']
-        # startup.uselib_local = 'common platform kernel minruntime debug'# interfaces
+        startup = bld.program(
+            target = 'kernel-startup.sys',
+            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
+            use = 'common platform kernel minruntime debug',# interfaces
+            env = bld.all_envs['KERNEL_ENV'].derive()
+        )
+        startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
+        startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
+        startup.includes = startup.env.INCLUDE_DIRS + ['modules/root_domain']
 
         # Privileged mode ring0 nucleus.
         # Nucleus is the only ring0 privileged part of the system.
@@ -455,28 +456,28 @@ def build(bld):
     # target_variant = Options.options.arch + '-' + Options.options.platform + '-' + Options.options.build
     # print "Target variant: "+target_variant
 
-    bld(
-        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
-        target = 'init.img',
-        # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
-        rule = '${SRC[0].abspath(env)} ./ ${SRC[1].abspath(env)} ${TGT}',
-        name = 'init.img',
-        depends_on = 'buildboot'
-    )
+    # bld(
+    #     source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
+    #     target = 'init.img',
+    #     # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
+    #     rule = '${SRC[0].abspath(env)} ./ ${SRC[1].abspath(env)} ${TGT}',
+    #     name = 'init.img',
+    #     depends_on = 'buildboot'
+    # )
 
-    bld.new_task_gen('subst',
-        source = 'tools/mkbootimg/menu.lst.in',
-        target = 'tools/mkbootimg/menu.lst.cd',
-        dict = {'ROOT': 'cd'}
-    )
+    # bld.new_task_gen('subst',
+    #     source = 'tools/mkbootimg/menu.lst.in',
+    #     target = 'tools/mkbootimg/menu.lst.cd',
+    #     dict = {'ROOT': 'cd'}
+    # )
 
-    bld(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
-        target = 'metta.iso',
-        rule = './images.sh',
-        cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
-        after = 'init.img'
-    )
+    # bld(
+    #     source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+    #     target = 'metta.iso',
+    #     rule = './images.sh',
+    #     cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
+    #     after = 'init.img'
+    # )
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :
