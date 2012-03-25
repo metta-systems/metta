@@ -24,5 +24,10 @@ extern "C" void* memcpy(void* dest, const void* src, size_t count)
     return memutils::copy_memory(dest, src, count);
 }
 
+extern "C" void* memset(void *dest, int value, size_t count)
+{
+	return memutils::fill_memory(dest, value, count);
+}
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :
