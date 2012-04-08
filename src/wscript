@@ -22,6 +22,7 @@ cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -mno-mmx -mno-sse -mno-3dnow'.split() # -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
+flags += ['--trace-includes']
 
 # gcc_debug_flag = ['-###']
 gcc_debug_flag = ['-v']
@@ -286,7 +287,7 @@ def build(bld):
     libdebug.includes = libdebug.env.INCLUDE_DIRS
 
     runtime = bld.stlib(
-        source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()),
+        source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()) + ['runtime/setjmp.s'],
         target = 'runtime',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
