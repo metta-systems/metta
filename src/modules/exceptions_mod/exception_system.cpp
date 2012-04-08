@@ -58,6 +58,10 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 
 	kconsole << "raise: longjmp to context " << ctx << endl;
 
+	kconsole << "raise: jmp_buf words" << endl;
+	for (size_t x = 0; x < _JBLEN; ++x)
+		kconsole << "word " << x << ": " << ctx->jmp[x] << endl;
+
 	xcp_longjmp (ctx->jmp, 1);
 }
 

@@ -19,9 +19,10 @@ stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_
 stl_include_dirs = ['runtime', 'runtime/stl']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra'.split() # -Werror'
+flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -mno-mmx -mno-sse -mno-3dnow'.split() # -Werror'
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
+flags += ['--trace-includes']
 
 # gcc_debug_flag = ['-###']
 gcc_debug_flag = ['-v']
@@ -286,7 +287,7 @@ def build(bld):
     libdebug.includes = libdebug.env.INCLUDE_DIRS
 
     runtime = bld.stlib(
-        source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()),
+        source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()) + ['runtime/setjmp.s'],
         target = 'runtime',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
@@ -421,12 +422,12 @@ def build(bld):
 
         nucleus = bld.program(
             target = 'nucleus.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()),
+            source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s init_nucleus.cpp'.split()), # startup.s is temporary!
             use = 'common kernel minruntime platform debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
-        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,nucleus.map'])
+        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
         nucleus.gen_incpaths('')
 
         bld.undef_check(kickstart.target)
@@ -435,15 +436,16 @@ def build(bld):
 
     # if platform == 'hosted':
         # Generate a single executable to run whole OS as an application.
-        # hosted = bld.new_task_gen('cxx', 'program')
-        # hosted.target = 'mettanode'
+        # hosted = bld.program(
+            # target = 'mettanode'
+        # )
 
     #Check and add all output modules.
     nm = []
     for tg in bld.all_comp_targets:
         nm.append(tg)
 
-    print "All outputs: "+", ".join(nm)
+    # print "All outputs: "+", ".join(nm)
 
     # target_variant = Options.options.arch + '-' + Options.options.platform + '-' + Options.options.build
     # print "Target variant: "+target_variant
