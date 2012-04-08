@@ -19,10 +19,10 @@ stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_
 stl_include_dirs = ['runtime', 'runtime/stl']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -mno-mmx -mno-sse -mno-3dnow'.split() # -Werror'
+flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
-flags += ['--trace-includes']
+# flags += ['--trace-includes']
 
 # gcc_debug_flag = ['-###']
 gcc_debug_flag = ['-v']
@@ -407,7 +407,7 @@ def build(bld):
         # TODO: put elf manipulation code to libgaladriel
         startup = bld.program(
             target = 'kernel-startup.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
+            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp init_nucleus.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
             use = 'common platform kernel minruntime debug',# interfaces
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
