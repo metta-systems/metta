@@ -11,6 +11,7 @@
 #include "types.h"
 #include "segs.h"
 #include "tss.h"
+#include "macros.h"
 
 class gdt_entry_t
 {
