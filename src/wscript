@@ -12,7 +12,7 @@ top = '.'
 out = '_build_'
 
 include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
-libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split()
+system_header_dir = map(lambda d: '-isystem' + d, '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
@@ -98,7 +98,7 @@ def configure(conf):
         linkflags = '-nostdlib'.split()
         # with Clang use libc++ from LLVM project.
         # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
-        # conf.env.INCLUDES_LIBCXX = libcxx_header_dir
+        # conf.env.INCLUDES_LIBCXX = system_header_dir
         # conf.env.STLIB_LIBCXX = ['c++']
     else:
         conf.load('compiler_c')
@@ -181,12 +181,12 @@ def configure(conf):
     # Config for building kernel
     conf.setenv('KERNEL_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
-    conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
+    # conf.env.append_unique('INCLUDE_DIRS', system_header_dir)
     conf.env.append_unique('DEFINES', metta_flag)
     conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('DEFINES', stl_defines)
-    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
-    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
+    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags + system_header_dir)
+    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags + system_header_dir)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
