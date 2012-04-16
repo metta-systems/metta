@@ -11,7 +11,7 @@ VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
 top = '.'
 out = '_build_'
 
-include_dirs = 'kernel kernel/generic kernel/api runtime'.split()
+include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
 libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split()
 
 # Local SGI STL instance.
@@ -407,7 +407,7 @@ def build(bld):
         # TODO: put elf manipulation code to libgaladriel
         startup = bld.program(
             target = 'kernel-startup.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp init_nucleus.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
+            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
             use = 'common platform kernel minruntime debug',# interfaces
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
@@ -421,13 +421,13 @@ def build(bld):
         # TODO: add nucleus_* code here, initialize glue before kernel startup??
 
         nucleus = bld.program(
-            target = 'nucleus.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s init_nucleus.cpp'.split()), # startup.s is temporary!
+            target = 'nucleus.sys',# isr.cpp pit.cpp continuation.s
+            source = map(lambda f: 'nucleus/x86/' + f, 'idt.cpp isr.cpp interrupt.s init_nucleus.cpp nucleus.cpp'.split()),
             use = 'common kernel minruntime platform debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
-        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
+        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../nucleus/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
         nucleus.gen_incpaths('')
 
         bld.undef_check(kickstart.target)

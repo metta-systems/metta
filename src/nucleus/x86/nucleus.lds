@@ -1,4 +1,4 @@
-ENTRY(_init)
+ENTRY(nucleus_init)
 SECTIONS
 {
     . =  0; /* This is relocatable executable, it will be relocated to appropriate position in memory. */

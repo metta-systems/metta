@@ -71,13 +71,13 @@ dummy_handler_t all_exceptions_handler;
 
 /*!
  * Initialize single core system tables, interrupt handler stubs and syscall interface.
+ * TODO: this goes into nucleus .init.code - as this code runs once and then can be dumped.
  */
-extern "C" void nucleus_init()
+extern "C" INIT_ONLY void nucleus_init()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
-// TODO: this goes into nucleus .init.code - as this code runs once and then can be dumped.
     global_descriptor_table_t gdt;
     kconsole << "Created GDT." << endl;
     interrupt_descriptor_table().install();

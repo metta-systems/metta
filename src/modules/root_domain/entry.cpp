@@ -815,7 +815,7 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
 //======================================================================================================================
 
 /*!
- * Image bootup starts executing without paging and with full ring0 rights.
+ * Image bootup starts executing without paging and with ring3 rights.
  */
 
 extern "C" void module_entry()

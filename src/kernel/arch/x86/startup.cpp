@@ -22,6 +22,7 @@
 #include "root_domain.h"
 #include "registers.h"
 #include "new.h"
+#include "segs.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -253,7 +254,7 @@ extern "C" void kernel_startup()
     gpregs.ebx = 0;
     gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
     new_context.set_gpregs(gpregs);
-    new_context.set_entry(root_dom.entry());//FIXME: depends on gpregs being set before this call!
+    new_context.set_entry(root_dom.entry(), KERNEL_CS, KERNEL_DS);//FIXME: depends on gpregs being set before this call!
     // -- THIS IS WHERE RING0 ENDS --
     new_context.activate(); // we have a liftoff! root domain executes in ring3 just like everybody else.
 

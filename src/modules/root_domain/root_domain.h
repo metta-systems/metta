@@ -23,7 +23,6 @@ public:
     // module_namespace_t get_namespace() const { return ns; }
 
 private:
-    elf_parser_t elf;
     address_t entry_point;
     // module_namespace_t ns;
 };
