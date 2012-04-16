@@ -212,7 +212,7 @@ extern "C" void kernel_startup()
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
-    nucleus_init();
+    // nucleus_init();
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;

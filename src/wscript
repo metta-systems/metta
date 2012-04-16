@@ -385,40 +385,34 @@ def build(bld):
         # It may also choose which kernel to boot depending on the environment.
 
         ################################################################################################
-        # It sets up a necessary environment (for example device trees),
+        # Launcher.
+        #
+        # Launcher sets up a necessary environment (for example device trees),
         # pulls a necessary version of the nucleus from the boot image, initializes it,
         # pulls a right copy of root domain from the boot image and passes control to it.
         # The rest of the loading is done by the root domain.
         ################################################################################################
 
-        kickstart = bld.program(
-            target = 'kickstart.sys',
-            source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp'],
-            use = 'common platform minruntime debug kernel',
+        launcher = bld.program(
+            target = 'launcher.sys',
+            source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
+                + ['launcher/loader.cpp', 'kernel/arch/x86/bootinfo.cpp'],
+            # source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp continuation.s'.split()) 
+            # + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
+            use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
-        kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
-        kickstart.includes = kickstart.env.INCLUDE_DIRS
+        launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
+        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99']
+        # startup.includes = startup.env.INCLUDE_DIRS + ['modules/root_domain']
 
-        # Launcher
-        # Launcher pulls in all necessary modules from the bootimage, and as such is not actually required - the initial loader can do that?
-
-        # FIXME: ld doesn't report unresolved symbols for -r apps
-        # TODO: put elf manipulation code to libgaladriel
-        startup = bld.program(
-            target = 'kernel-startup.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
-            use = 'common platform kernel minruntime debug',# interfaces
-            env = bld.all_envs['KERNEL_ENV'].derive()
-        )
-        startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-        startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-        startup.includes = startup.env.INCLUDE_DIRS + ['modules/root_domain']
-
+        ################################################################################################
+        # Nucleus.
+        #
         # Privileged mode ring0 nucleus.
         # Nucleus is the only ring0 privileged part of the system.
         # It includes interrupt handlers and some minimal syscall processing.
-        # TODO: add nucleus_* code here, initialize glue before kernel startup??
+        ################################################################################################
 
         nucleus = bld.program(
             target = 'nucleus.sys',# isr.cpp pit.cpp continuation.s
@@ -430,8 +424,7 @@ def build(bld):
         nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../nucleus/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
         nucleus.gen_incpaths('')
 
-        bld.undef_check(kickstart.target)
-        bld.undef_check(startup.target)
+        bld.undef_check(launcher.target)
         bld.undef_check(nucleus.target)
 
     # if platform == 'hosted':
@@ -467,7 +460,7 @@ def build(bld):
     )
 
     bld(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        source = 'launcher.sys nucleus.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
         target = 'metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
