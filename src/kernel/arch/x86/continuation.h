@@ -9,6 +9,8 @@
 #pragma once
 
 #include "types.h"
+#include "pervasives_v1_interface.h"
+#include "infopage.h"
 
 // continuation (it records the state of the running computation at the point where it takes off).
 class continuation_t
