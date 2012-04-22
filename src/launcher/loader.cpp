@@ -11,11 +11,11 @@
 #include "default_console.h"
 
 /*!
- * Main kickstart loader function. Parses through all loader formats to find a valid one.
+ * Main launcher entry point. Parses through all loader formats to find a valid one.
  */
-extern "C" void loader()
+extern "C" void launcher() NEVER_RETURNS
 {
-    kconsole << "loader()\n";
+    kconsole << "Launcher started.\n";
     loader_format_t* format = NULL;
 
     for (size_t n = 0; loader_formats[n].probe; ++n)
@@ -32,19 +32,19 @@ extern "C" void loader()
         PANIC("No valid loader format found.");
     }
 
-    kconsole << format->name << " init()\n";
-    address_t entry = format->init();
+    kconsole << format->name << " preparing.\n";
+    address_t entry = format->prepare();
 
     if (!entry)
-        PANIC("kernel not found!");
+        PANIC("Boot sequence not found!");
 
     // Flush caches (some archs don't like code in their D-cache).
     flush_cache();
 
-    kconsole << "Launching kernel at " << entry << endl;
+    kconsole << "Launching boot sequence at " << entry << endl;
     launch_kernel(entry);
 
-    PANIC("Kernel launch failed!");
+    PANIC("Boot sequence launch failed!");
 }
 
 // kate: indent-width 4; replace-tabs on;

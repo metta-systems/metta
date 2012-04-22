@@ -15,6 +15,8 @@
 #include "default_console.h"
 #include "debugger.h"
 #include "module_loader.h"
+#include "bootimage.h"
+#include "root_domain.h"
 
 /*!
  * Check if a valid multiboot info structure is present.
@@ -69,24 +71,51 @@ bool mbi_probe()
 // this will copy only needed code and data (e.g. booting without "debug" will not copy debug infos)
 //*****************************************************************************************************************
 
+extern "C" void arch_prepare();
+
 /*!
  * Init function that understands multiboot info structure.
  *
  * The procedure goes as follows:
  * - We have mbi inside the bootinfo page already.
- * - ELF-load the kernel module.
+ * - ELF-load the proper nucleus module.
+ * - initialize it and mark memory as used.
+ * - ELF-load the root-domain bootstrapper.
+ * - return entry point of root-domain kick-off sequence. -- TODO, this means root_domain starts in ring0, we better launch it in ring3 directly. - launch_kernel() may switch to ring3
  * @return entry point for the kernel.
  */
-address_t mbi_init()
+address_t mbi_prepare()
 {
-    kconsole << "mbi_init()" << endl;
     multiboot_t* mbi = multiboot_t::prepare();
 
-    // Load and relocate kernel-startup elf.
-    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    elf_parser_t elf(mbi->module(0)->mod_start);
+    // Run architecture-dependent part of the bootstrap, used to be kernel_startup() in startup.cpp
+    arch_prepare();
 
-    return (address_t)bi->get_module_loader().load_module("kernel_boot", elf, NULL);
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+
+    address_t start, end;
+    const char* name;
+    if (!bi->get_module(1, start, end, name))
+    {
+        PANIC("Bootimage not found!");
+    }
+
+    bootimage_t bootimage(name, start, end);
+    // bootimage_t bootimage(mbi->module(0)->mod_start);
+
+    // Load and relocate nucleus.
+    elf_parser_t elf(bootimage.find_module("nucleus").start);
+    void (*nucleus_init)();
+    nucleus_init = (void (*)())bi->get_module_loader().load_module("nucleus", elf, "nucleus_init");
+    nucleus_init();
+
+    // Load and relocate root domain bootstrapper.
+    root_domain_t root_dom(bootimage);
+//     kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
+
+    // Return bootstrapper's entry point address.
+    // return (address_t)bi->get_module_loader().load_module("root_domain", elf, NULL);
+    return root_dom.entry();
 }
 
 // kate: indent-width 4; replace-tabs on;

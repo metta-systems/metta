@@ -10,7 +10,7 @@
 ; jump to loader() in loader.cpp to do all the dirty job.
 ;
 global _start                          ; making entry point visible to linker
-extern loader
+extern launcher
 extern multiboot_info
 extern multiboot_flags
 
@@ -32,8 +32,8 @@ _start:
     mov esp, initial_stack
     xor ebp, ebp                       ; make base pointer NULL here so we know
                                        ; where to stop a backtrace.
-    call loader                        ; call startup loader code
-                                       ; loader should not return
+    call launcher                      ; call launcher code, should not return
+
     cli
     jmp short $                        ; halt machine should startup code return
 

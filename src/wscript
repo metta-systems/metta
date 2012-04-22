@@ -21,7 +21,7 @@ stl_include_dirs = ['runtime', 'runtime/stl']
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
-flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 # flags += ['--trace-includes']
 
 # gcc_debug_flag = ['-###']
@@ -389,22 +389,22 @@ def build(bld):
         #
         # Launcher sets up a necessary environment (for example device trees),
         # pulls a necessary version of the nucleus from the boot image, initializes it,
-        # pulls a right copy of root domain from the boot image and passes control to it.
+        # pulls a right copy of root domain from the boot image and passes control to it, switching to ring3 along the way.
+        # The privileged execution ends with the launcher and the nucleus.
         # The rest of the loading is done by the root domain.
         ################################################################################################
 
         launcher = bld.program(
             target = 'launcher.sys',
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
-                + ['launcher/loader.cpp', 'kernel/arch/x86/bootinfo.cpp'],
-            # source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp continuation.s'.split()) 
-            # + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
+                + ['launcher/loader.cpp', 'modules/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
+                + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
+            # + map(lambda f: ]) + ['interfaces/timer_v1_interface.cpp'],startup.s
             use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
-        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99']
-        # startup.includes = startup.env.INCLUDE_DIRS + ['modules/root_domain']
+        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99', 'modules/root_domain']
 
         ################################################################################################
         # Nucleus.

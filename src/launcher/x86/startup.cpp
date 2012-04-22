@@ -12,17 +12,12 @@
 
 #include "default_console.h"
 #include "bootinfo.h"
-#include "bootimage.h"
 #include "infopage.h"
 #include "frames_module_v1_interface.h"
 #include "timer_v1_interface.h"
-#include "continuation.h"
 #include "cpu.h"
 #include "c++ctors.h"
-#include "root_domain.h"
-#include "registers.h"
 #include "new.h"
-#include "segs.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -197,8 +192,16 @@ static void prepare_infopage()
 }
 
 extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
-static continuation_t new_context;
-extern "C" void nucleus_init();
+// static continuation_t new_context;
+// extern "C" void nucleus_init();
+
+class func_logging_aid_t
+{
+    const char* name;
+public:
+    func_logging_aid_t(const char* _name) : name(_name) { kconsole << name << " {" << endl; }
+    ~func_logging_aid_t() { kconsole << "} " << name << endl; }
+};
 
 /*!
  * Get the system going.
@@ -207,24 +210,15 @@ extern "C" void nucleus_init();
  *
  * TODO: relate Pistachio SMP startup routines here.
  */
-extern "C" void kernel_startup()
+extern "C" void arch_prepare()
 {
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
-    // nucleus_init();
+    func_logging_aid_t aid("arch_prepare");
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-
-    address_t start, end;
-    const char* name;
-    if (!bi->get_module(1, start, end, name))
-    {
-        PANIC("Bootimage not found!");
-    }
-
-    bootimage_t bootimage(name, start, end);
 
     parse_cmdline(bi);
     prepare_infopage(); // <-- init domain info page
@@ -235,31 +229,13 @@ extern "C" void kernel_startup()
 //    int ramtop = 16*MiB;
     bi->append_vmap(0, 0, 16*MiB);//min(16*MiB, ramtop));
 
-    timer_v1::closure_t* timer = init_timer();
-    timer->enable(0); // enable timer interrupts
-    kconsole << "Timer interrupt enabled." << endl;
+    // timer_v1::closure_t* timer = init_timer();
+    // timer->enable(0); // enable timer interrupts
+    // kconsole << "Timer interrupt enabled." << endl;
+
+    // FPU should be enabled here orly?
     x86_cpu_t::enable_fpu();
     kconsole << "FPU enabled." << endl;
-
-//    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
-
-    root_domain_t root_dom(bootimage);
-
-//     kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
-
-    // Create an execution context and activate it.
-    continuation_t::gpregs_t gpregs;
-    gpregs.esp = read_stack_pointer();
-    gpregs.eax = 0;
-    gpregs.ebx = 0;
-    gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
-    new_context.set_gpregs(gpregs);
-    new_context.set_entry(root_dom.entry(), KERNEL_CS, KERNEL_DS);//FIXME: depends on gpregs being set before this call!
-    // -- THIS IS WHERE RING0 ENDS --
-    new_context.activate(); // we have a liftoff! root domain executes in ring3 just like everybody else.
-
-    /* Never reached */
-    PANIC("root domain returned!");
 }
 
 // kate: indent-width 4; replace-tabs on;
