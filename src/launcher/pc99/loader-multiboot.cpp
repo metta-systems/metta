@@ -95,7 +95,7 @@ address_t mbi_prepare()
 
     address_t start, end;
     const char* name;
-    if (!bi->get_module(1, start, end, name))
+    if (!bi->get_module(0, start, end, name))
     {
         PANIC("Bootimage not found!");
     }
