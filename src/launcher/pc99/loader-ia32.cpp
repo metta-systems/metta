@@ -48,7 +48,7 @@ void launch_kernel(address_t entry)
     gpregs.ebx = 0;
     gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
     new_context.set_gpregs(gpregs);
-    new_context.set_entry(entry, KERNEL_CS, KERNEL_DS);//FIXME: depends on gpregs being set before this call!
+    new_context.set_entry(entry, USER_CS, USER_DS);//FIXME: depends on gpregs being set before this call!
     // -- THIS IS WHERE RING0 ENDS --
     new_context.activate(); // we have a liftoff! root domain executes in ring3 just like everybody else.
 
