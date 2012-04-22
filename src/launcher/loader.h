@@ -30,9 +30,11 @@ public:
 
     /*!
      * Initialize everything according to loader format.
-     * @returns entry point for kernel.
+     * This function will parse sysimage, install nucleus, load necessary pre-boot environment 
+     * and return an entry point address to jump to for continuing the boot sequence.
+     * @returns entry point for boot sequence.
      */
-    address_t (*init)(void);
+    address_t (*prepare)(void);
 };
 
 #define NULL_LOADER { "null", NULL, NULL }

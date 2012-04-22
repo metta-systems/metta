@@ -107,5 +107,7 @@ private:
     interrupt_service_routine_t* interrupt_routines[48];
 } PACKED;
 
+inline interrupt_descriptor_table_t& interrupt_descriptor_table() { return interrupt_descriptor_table_t::instance(); }
+
 // kate: indent-width 4; replace-tabs on;
 // vim: set et sw=4 ts=4 sts=4 cino=(4 :

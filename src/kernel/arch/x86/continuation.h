@@ -9,7 +9,8 @@
 #pragma once
 
 #include "types.h"
-#include "segs.h"
+#include "pervasives_v1_interface.h"
+#include "infopage.h"
 
 // continuation (it records the state of the running computation at the point where it takes off).
 class continuation_t
@@ -29,7 +30,7 @@ public:
 
     continuation_t() : flags(0) {}
 
-    void set_entry(uint32_t entry, uint32_t new_cs = KERNEL_CS, uint32_t new_ds = KERNEL_DS)
+    void set_entry(uint32_t entry, uint32_t new_cs, uint32_t new_ds)
     {
         regs.eip = entry;
         cs = new_cs;

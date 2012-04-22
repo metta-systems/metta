@@ -815,12 +815,14 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
 //======================================================================================================================
 
 /*!
- * Image bootup starts executing without paging and with full ring0 rights.
+ * Image bootup starts executing without paging and with ring3 rights.
  */
 
 extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
+
+//    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     kconsole << " + image bootup entry!" << endl;
 

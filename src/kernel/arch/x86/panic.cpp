@@ -30,11 +30,15 @@ void panic_assert(const char* desc, const char* file, uint32_t line)
     halt();
 }
 
+// x86-specific
 void halt()
 {
     x86_cpu_t::disable_interrupts();
+    // x86_cpu_t::enable_interrupts();
     // Halt by going into an infinite loop.
-    while(1) {}
+    while(1) {
+        // asm volatile ("hlt");
+    }
 }
 
 // kate: indent-width 4; replace-tabs on;

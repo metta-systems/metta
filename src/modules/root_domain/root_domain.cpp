@@ -20,6 +20,7 @@ root_domain_t::root_domain_t(bootimage_t& img)
     bootimage_t::modinfo_t mi = img.find_root_domain(0); //&ns);
     kconsole << "Root domain at " << (unsigned)mi.start << ", size " << int(mi.size) << " bytes." << endl;
 
+    elf_parser_t elf;
     elf.parse(mi.start);
     if (!elf.is_valid())
         PANIC("Invalid root_domain ELF image!");

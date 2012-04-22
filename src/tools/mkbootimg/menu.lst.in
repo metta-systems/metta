@@ -1,26 +1,32 @@
 hiddenmenu
 timeout 0
 
+#
+# launcher is loaded by grub and started
+# sysimage is loaded as a separate module
+# nucleus is inside a bootimage - launcher may pick a special version, for example 32 vs 64 bit version of nucleus and install it
+#
+# launcher installs and protects nucleus in a privileged zone
+# <at this point syscalls should already work>
+# it then loads root domain module from bootimage and starts it in ring3
+#
+
 title Metta
     root (@ROOT@)
-    kernel /kickstart
-    module /kernel-startup
-    module /system-bootimage
+    kernel /launcher
+    module /sysimage
 
-title Metta [debug output]
-    root (@ROOT@)
-    kernel /kickstart debug
-    module /kernel-startup
-    module /system-bootimage
-
-title Metta 32-bit only
-    root (@ROOT@)
-    kernel /kickstart no64
-    module /kernel-startup
-    module /system-bootimage
-
-title Metta 32-bit only [debug output]
-    root (@ROOT@)
-    kernel /kickstart no64 debug
-    module /kernel-startup
-    module /system-bootimage
+#title Metta [debug output]
+#    root (@ROOT@)
+#    kernel /launcher debug
+#    module /sysimage
+#
+#title Metta 32-bit only
+#    root (@ROOT@)
+#    kernel /launcher no64
+#    module /sysimage
+#
+#title Metta 32-bit only [debug output]
+#    root (@ROOT@)
+#    kernel /launcher no64 debug
+#    module /sysimage

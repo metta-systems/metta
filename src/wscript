@@ -11,18 +11,18 @@ VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
 top = '.'
 out = '_build_'
 
-include_dirs = 'kernel kernel/generic kernel/api runtime'.split()
-libcxx_header_dir = '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split()
+include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
+system_header_dir = map(lambda d: '-isystem' + d, '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
 # Local SGI STL instance.
 stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_include_dirs = ['runtime', 'runtime/stl']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -mno-mmx -mno-sse -mno-3dnow'.split() # -Werror'
+flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
-flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init']
-flags += ['--trace-includes']
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
+# flags += ['--trace-includes']
 
 # gcc_debug_flag = ['-###']
 gcc_debug_flag = ['-v']
@@ -98,7 +98,7 @@ def configure(conf):
         linkflags = '-nostdlib'.split()
         # with Clang use libc++ from LLVM project.
         # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
-        # conf.env.INCLUDES_LIBCXX = libcxx_header_dir
+        # conf.env.INCLUDES_LIBCXX = system_header_dir
         # conf.env.STLIB_LIBCXX = ['c++']
     else:
         conf.load('compiler_c')
@@ -181,12 +181,12 @@ def configure(conf):
     # Config for building kernel
     conf.setenv('KERNEL_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
-    conf.env.append_unique('INCLUDE_DIRS', libcxx_header_dir)
+    # conf.env.append_unique('INCLUDE_DIRS', system_header_dir)
     conf.env.append_unique('DEFINES', metta_flag)
     conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('DEFINES', stl_defines)
-    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags)
-    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags)
+    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags + system_header_dir)
+    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags + system_header_dir)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
     conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
@@ -385,53 +385,46 @@ def build(bld):
         # It may also choose which kernel to boot depending on the environment.
 
         ################################################################################################
-        # It sets up a necessary environment (for example device trees),
+        # Launcher.
+        #
+        # Launcher sets up a necessary environment (for example device trees),
         # pulls a necessary version of the nucleus from the boot image, initializes it,
-        # pulls a right copy of root domain from the boot image and passes control to it.
+        # pulls a right copy of root domain from the boot image and passes control to it, switching to ring3 along the way.
+        # The privileged execution ends with the launcher and the nucleus.
         # The rest of the loading is done by the root domain.
         ################################################################################################
 
-        kickstart = bld.program(
-            target = 'kickstart.sys',
-            source = map(lambda f: 'kernel/platform/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split()) + ['kernel/generic/loader.cpp', 'kernel/arch/x86/bootinfo.cpp'],
-            use = 'common platform minruntime debug kernel',
+        launcher = bld.program(
+            target = 'launcher.sys',
+            source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
+                + ['launcher/loader.cpp', 'modules/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
+                + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
+            # + map(lambda f: ]) + ['interfaces/timer_v1_interface.cpp'],startup.s
+            use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
-        kickstart.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/platform/pc99/loader.lds', '-Wl,-Map,kickstart.map'])
-        kickstart.includes = kickstart.env.INCLUDE_DIRS
+        launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
+        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99', 'modules/root_domain']
 
-        # Launcher
-        # Launcher pulls in all necessary modules from the bootimage, and as such is not actually required - the initial loader can do that?
-
-        # FIXME: ld doesn't report unresolved symbols for -r apps
-        # TODO: put elf manipulation code to libgaladriel
-        startup = bld.program(
-            target = 'kernel-startup.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'startup.s startup.cpp idt.cpp interrupt.s isr.cpp pit.cpp continuation.s'.split()) + map(lambda f: 'modules/root_domain/' + f, ['root_domain.cpp']) + ['interfaces/timer_v1_interface.cpp'],
-            use = 'common platform kernel minruntime debug',# interfaces
-            env = bld.all_envs['KERNEL_ENV'].derive()
-        )
-        startup.env.append_unique('LINKFLAGS', ['-r']) # Kernel startup is relocatable.
-        startup.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/startup.lds', '-Wl,-Map,startup.map'])
-        startup.includes = startup.env.INCLUDE_DIRS + ['modules/root_domain']
-
+        ################################################################################################
+        # Nucleus.
+        #
         # Privileged mode ring0 nucleus.
         # Nucleus is the only ring0 privileged part of the system.
         # It includes interrupt handlers and some minimal syscall processing.
-        # TODO: add nucleus_* code here, initialize glue before kernel startup??
+        ################################################################################################
 
         nucleus = bld.program(
-            target = 'nucleus.sys',
-            source = map(lambda f: 'kernel/arch/x86/' + f, 'idt.cpp interrupt.s isr.cpp pit.cpp continuation.s init_nucleus.cpp'.split()), # startup.s is temporary!
+            target = 'nucleus.sys',# isr.cpp pit.cpp continuation.s
+            source = map(lambda f: 'nucleus/x86/' + f, 'idt.cpp isr.cpp interrupt.s init_nucleus.cpp nucleus.cpp'.split()),
             use = 'common kernel minruntime platform debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
-        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../kernel/arch/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
+        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../nucleus/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
         nucleus.gen_incpaths('')
 
-        bld.undef_check(kickstart.target)
-        bld.undef_check(startup.target)
+        bld.undef_check(launcher.target)
         bld.undef_check(nucleus.target)
 
     # if platform == 'hosted':
@@ -467,7 +460,7 @@ def build(bld):
     )
 
     bld(
-        source = 'kickstart.sys kernel-startup.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        source = 'launcher.sys nucleus.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
         target = 'metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),

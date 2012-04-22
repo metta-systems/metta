@@ -12,7 +12,7 @@
 #include "cstring.h"
 #include "module_namespace.h"
 
-namespace bootimage_n { class namespace_entry_t; }
+namespace bootimage_n { struct namespace_entry_t; }
 
 /*!
  * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces

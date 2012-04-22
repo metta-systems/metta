@@ -15,7 +15,7 @@
 #define ALWAYS_INLINE       __attribute__((always_inline))
 #define PACKED              __attribute__((__packed__))
 #define ALIGNED(poweroftwo) __attribute__((aligned (poweroftwo)))
-#define SECTION(sect)       __attribute__((section(sect)))
+#define SECTION(sect)       __attribute__((section(sect))) // add used attr
 #define NEVER_RETURNS       __attribute__((noreturn))
 // Uncommon optimization: functions that can be optimized out:
 // Note that a function that has pointer arguments and examines the data
