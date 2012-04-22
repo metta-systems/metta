@@ -69,6 +69,8 @@ general_fault_handler_t gpf_handler;
 invalid_opcode_handler_t iop_handler;
 dummy_handler_t all_exceptions_handler;
 
+static global_descriptor_table_t gdt; // FIXME: use a singleton accessor like for interrupt_descriptor_table?
+
 /*!
  * Initialize single core system tables, interrupt handler stubs and syscall interface.
  * TODO: this goes into nucleus .init.code - as this code runs once and then can be dumped.
@@ -78,8 +80,9 @@ extern "C" INIT_ONLY void nucleus_init()
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
-    global_descriptor_table_t gdt;
+    gdt.install();
     kconsole << "Created GDT." << endl;
+
     interrupt_descriptor_table().install();
     interrupt_descriptor_table().set_isr_handler(0x0, &all_exceptions_handler);
     interrupt_descriptor_table().set_isr_handler(0x1, &all_exceptions_handler);

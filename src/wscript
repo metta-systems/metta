@@ -437,6 +437,7 @@ def build(bld):
     nm = []
     for tg in bld.all_comp_targets:
         nm.append(tg)
+    nm.append(nucleus.target)
 
     # print "All outputs: "+", ".join(nm)
 

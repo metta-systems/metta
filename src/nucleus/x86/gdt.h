@@ -108,14 +108,12 @@ inline void gdt_entry_t::set_sys(uint32_t base, uint32_t limit, segtype_e type, 
 class global_descriptor_table_t
 {
 public:
-    inline global_descriptor_table_t()
+    inline global_descriptor_table_t() // TODO: specify number of entries for per-CPU data segment (gs) descriptors
     {
         setup_standard_entries();
 
         limit = sizeof(entries)-1;
         base = (address_t)&entries;
-
-        install();
     }
     inline int idx(int sel)
     {

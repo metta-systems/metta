@@ -829,7 +829,7 @@ extern "C" void module_entry()
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;
     const char* name;
-    if (!bi->get_module(1, start, end, name))
+    if (!bi->get_module(0, start, end, name))
     {
         PANIC("Bootimage not found! in image bootup");
     }
