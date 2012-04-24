@@ -124,7 +124,7 @@ def configure(conf):
     conf.define('CONFIG_DEBUG_SYMBOLS', 1)
     conf.define('HEAP_DEBUG', 1)
     conf.define('MEMORY_DEBUG', 1)
-    conf.define('ELF_LOADER_DEBUG', 1)
+    conf.define('ELF_LOADER_DEBUG', 0)
     conf.define('ELF_RELOC_DEBUG_V', 0)
     conf.define('BOOTIMAGE_DEBUG', 0)
     conf.define('DWARF_DEBUG', 0)
@@ -399,7 +399,7 @@ def build(bld):
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
                 + ['launcher/loader.cpp', 'modules/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
-            # + map(lambda f: ]) + ['interfaces/timer_v1_interface.cpp'],startup.s
+            # + map(lambda f: ]) + ['interfaces/timer_v1_interface.cpp']
             use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
@@ -461,7 +461,7 @@ def build(bld):
     )
 
     bld(
-        source = 'launcher.sys nucleus.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
+        source = 'launcher.sys init.img tools/mkbootimg/images.sh tools/mkbootimg/menu.lst.cd',
         target = 'metta.iso',
         rule = './images.sh',
         cwd = bld.path.find_dir('tools/mkbootimg').abspath(),
