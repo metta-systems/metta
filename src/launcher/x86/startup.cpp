@@ -192,8 +192,6 @@ static void prepare_infopage()
 }
 
 extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
-// static continuation_t new_context;
-// extern "C" void nucleus_init();
 
 class func_logging_aid_t
 {

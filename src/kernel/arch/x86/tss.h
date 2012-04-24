@@ -13,7 +13,8 @@ struct tss_t
     uint16_t   link;
     uint16_t   link_unused;
 
-    uint32_t   esp0;
+    // For syscalls, you must set up SS0:ESP0 to point to a ring0 kernel stack for handling interrupts.
+    uint32_t*  esp0; // 4 bytes ESP0 value
     uint16_t   ss0;
     uint16_t   ss0_unused;
 

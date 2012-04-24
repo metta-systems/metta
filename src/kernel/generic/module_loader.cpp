@@ -292,15 +292,15 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                 {
                     D(kconsole << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr << endl);
                     memutils::clear_memory((void*)sh.vaddr, sh.size);
-                    // Adjust module end address (the above is only for non-bss sections).
-                    if (sh.vaddr + sh.size > *d_last_available_address)
-                        *d_last_available_address = sh.vaddr + sh.size;
                 }
                 else
                 {
                     D(kconsole << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr << endl);
                     memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                 }
+                // Adjust module end address.
+                if (sh.vaddr + sh.size > *d_last_available_address)
+                    *d_last_available_address = sh.vaddr + sh.size;
             }
         });
 

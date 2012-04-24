@@ -46,6 +46,8 @@ extern "C"
     void isr30();
     void isr31();
 
+    void isr99();
+
     void irq0 ();
     void irq1 ();
     void irq2 ();
@@ -98,47 +100,47 @@ interrupt_descriptor_table_t& interrupt_descriptor_table_t::instance()
     idt_entries[n].set(KERNEL_CS, isr##n, idt_entry_t::type, 3)
 
 #define IRQ_ENTRY(n, m) \
-    idt_entries[n].set(KERNEL_CS, irq##m, idt_entry_t::interrupt, 3)
+    idt_entries[n].set(KERNEL_CS, irq##m, idt_entry_t::interrupt_gate, 0)
 
 void interrupt_descriptor_table_t::install()
 {
     limit = sizeof(idt_entries)-1;
     base = (address_t)&idt_entries;
 
-    // DPL is 3 to allow kernel isrs to work in user-mode.
-    IDT_ENTRY(0, interrupt);
-    IDT_ENTRY(1, interrupt);
-    IDT_ENTRY(2, interrupt);
-    IDT_ENTRY(3, trap);
-    IDT_ENTRY(4, trap);
-    IDT_ENTRY(5, interrupt);
-    IDT_ENTRY(6, interrupt);
-    IDT_ENTRY(7, interrupt);
-    IDT_ENTRY(8, interrupt);
-    IDT_ENTRY(9, interrupt);
-    IDT_ENTRY(10, interrupt);
-    IDT_ENTRY(11, interrupt);
-    IDT_ENTRY(12, interrupt);
-    IDT_ENTRY(13, interrupt);
-    IDT_ENTRY(14, interrupt);
-    IDT_ENTRY(15, interrupt);
-    IDT_ENTRY(16, interrupt);
-    IDT_ENTRY(17, interrupt);
-    IDT_ENTRY(18, interrupt);
-    IDT_ENTRY(19, interrupt);
+    // DPL is 3 to allow kernel isrs to work in user-mode. -- ??
+    IDT_ENTRY(0, interrupt_gate);
+    IDT_ENTRY(1, interrupt_gate);
+    IDT_ENTRY(2, interrupt_gate);
+    IDT_ENTRY(3, trap_gate);
+    IDT_ENTRY(4, trap_gate);
+    IDT_ENTRY(5, interrupt_gate);
+    IDT_ENTRY(6, interrupt_gate);
+    IDT_ENTRY(7, interrupt_gate);
+    IDT_ENTRY(8, interrupt_gate);
+    IDT_ENTRY(9, interrupt_gate);
+    IDT_ENTRY(10, interrupt_gate);
+    IDT_ENTRY(11, interrupt_gate);
+    IDT_ENTRY(12, interrupt_gate);
+    IDT_ENTRY(13, interrupt_gate);
+    IDT_ENTRY(14, interrupt_gate);
+    IDT_ENTRY(15, interrupt_gate);
+    IDT_ENTRY(16, interrupt_gate);
+    IDT_ENTRY(17, interrupt_gate);
+    IDT_ENTRY(18, interrupt_gate);
+    IDT_ENTRY(19, interrupt_gate);
     // Nothing useful defined on intel below this line
-    IDT_ENTRY(20, interrupt);
-    IDT_ENTRY(21, interrupt);
-    IDT_ENTRY(22, interrupt);
-    IDT_ENTRY(23, interrupt);
-    IDT_ENTRY(24, interrupt);
-    IDT_ENTRY(25, interrupt);
-    IDT_ENTRY(26, interrupt);
-    IDT_ENTRY(27, interrupt);
-    IDT_ENTRY(28, interrupt);
-    IDT_ENTRY(29, interrupt);
-    IDT_ENTRY(30, interrupt);
-    IDT_ENTRY(31, interrupt);
+    IDT_ENTRY(20, interrupt_gate);
+    IDT_ENTRY(21, interrupt_gate);
+    IDT_ENTRY(22, interrupt_gate);
+    IDT_ENTRY(23, interrupt_gate);
+    IDT_ENTRY(24, interrupt_gate);
+    IDT_ENTRY(25, interrupt_gate);
+    IDT_ENTRY(26, interrupt_gate);
+    IDT_ENTRY(27, interrupt_gate);
+    IDT_ENTRY(28, interrupt_gate);
+    IDT_ENTRY(29, interrupt_gate);
+    IDT_ENTRY(30, interrupt_gate);
+    IDT_ENTRY(31, interrupt_gate);
 
     reprogram_pic();
 
@@ -160,6 +162,8 @@ void interrupt_descriptor_table_t::install()
     IRQ_ENTRY(45, 13);
     IRQ_ENTRY(46, 14);
     IRQ_ENTRY(47, 15);
+
+    IDT_ENTRY(99, interrupt_gate);
 
     asm volatile("lidtl %0\n" :: "m"(*this));
 }

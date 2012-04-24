@@ -105,8 +105,7 @@ address_t mbi_prepare()
 
     // Load and relocate nucleus.
     elf_parser_t elf(bootimage.find_module("nucleus").start);
-    void (*nucleus_init)();
-    nucleus_init = (void (*)())bi->get_module_loader().load_module("nucleus", elf, "nucleus_init");
+    void (*nucleus_init)() = reinterpret_cast<void (*)()>(bi->get_module_loader().load_module("nucleus", elf, "nucleus_init"));
     nucleus_init();
 
     // Load and relocate root domain bootstrapper.

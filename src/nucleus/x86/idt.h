@@ -19,8 +19,9 @@ class idt_entry_t
 public:
     enum type_e
     {
-        interrupt = 6,
-        trap = 7
+        task_gate = 5,
+        interrupt_gate = 14,
+        trap_gate = 15
     };
 
     void set(uint16_t segsel, void (*handler_address)(), type_e type, int dpl);
@@ -30,15 +31,14 @@ private:
     union {
         uint32_t raw[2];
         struct {
-            uint32_t offset_low  : 16;
-            uint32_t sel         : 16;
-            uint32_t res0        :  8;
-            uint32_t type        :  3;
-            uint32_t datasize    :  1;
-            uint32_t res1        :  1;
+            uint16_t offset_low;
+            uint16_t sel;
+            uint8_t  unused0;
+            uint32_t type        :  4;
+            uint32_t storage_seg :  1;
             uint32_t dpl         :  2;
             uint32_t present     :  1;
-            uint32_t offset_high : 16;
+            uint16_t offset_high;
         } d PACKED;
     } x;
 } PACKED;
@@ -53,6 +53,9 @@ private:
 **/
 inline void idt_entry_t::set(uint16_t segsel, void (*handler_address)(), type_e type, int dpl)
 {
+    /* clear all fields */
+    x.raw[0] = x.raw[1] = 0;
+
     x.d.offset_low  = ((uint32_t)handler_address      ) & 0xFFFF;
     x.d.offset_high = ((uint32_t)handler_address >> 16) & 0xFFFF;
     x.d.sel = segsel;
@@ -61,10 +64,6 @@ inline void idt_entry_t::set(uint16_t segsel, void (*handler_address)(), type_e 
 
     /* set constant values */
     x.d.present = 1;  /* present */
-    x.d.datasize = 1; /* size is 32 */
-
-    /* clear reserved fields */
-    x.d.res0 = x.d.res1 = 0;
 };
 
 class interrupt_service_routine_t;
@@ -103,8 +102,9 @@ private:
     uint16_t limit;
     uint32_t base;
 
-    idt_entry_t                  idt_entries[48] ALIGNED(8);
-    interrupt_service_routine_t* interrupt_routines[48];
+    static const int n_entries = 256;
+    idt_entry_t                  idt_entries[n_entries] ALIGNED(8);
+    interrupt_service_routine_t* interrupt_routines[n_entries];
 } PACKED;
 
 inline interrupt_descriptor_table_t& interrupt_descriptor_table() { return interrupt_descriptor_table_t::instance(); }

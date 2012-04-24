@@ -70,6 +70,9 @@ ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
 
+; syscall gate
+ISR_NOERRCODE 99
+
 IRQ   0,    32
 IRQ   1,    33
 IRQ   2,    34
@@ -93,7 +96,6 @@ IRQ  15,    47
 ; up kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 isr_common_stub:
-    cli
     pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
     xor eax, eax
@@ -116,14 +118,12 @@ isr_common_stub:
 
     popa                     ; Pops edi,esi,ebp...
     add esp, 8     ; Cleans up the pushed error code and pushed ISR number
-    sti
     iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; This is our common IRQ stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
 irq_common_stub:
-    cli
     pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
     xor eax, eax
@@ -146,7 +146,6 @@ irq_common_stub:
 
     popa                     ; Pops edi,esi,ebp...
     add esp, 8     ; Cleans up the pushed error code and pushed ISR number
-    sti
     iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; kate: indent-width 4; replace-tabs on;
