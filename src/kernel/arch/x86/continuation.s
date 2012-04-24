@@ -8,6 +8,8 @@
 ;
 global asm_activate
 
+; FIXME: doesn't set fs and gs - potential security hole!
+
 ; void asm_activate(gpregs_t* gpregs, uint32_t cs, uint32_t ds)
 ; [ESP+4] = ptr
 asm_activate:

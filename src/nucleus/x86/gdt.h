@@ -129,19 +129,23 @@ public:
         entries[idx(  USER_DS)].set_seg(0, ~0, gdt_entry_t::data, 3);
         entries[idx(  PRIV_CS)].set_seg(0, ~0, gdt_entry_t::code, 0);
         entries[idx(  PRIV_DS)].set_seg(0, ~0, gdt_entry_t::data, 0);
+
+        // TODO: Move this stack to a per-cpu structure.
+        tss.ss0 = KERNEL_DS;
+        tss.esp0 = intr_kernel_stack + 1024;
     }
     inline void install()
     {
         asm volatile("lgdtl %0\n\t"
+        "ltr %%ax\n\t"
         "ljmp %1, $reload_segments\n\t"
         "reload_segments:\n\t"
-        "movl %2, %%eax\n\t"
-        "movl %%eax, %%ds\n\t"
-        "movl %%eax, %%es\n\t"
-        "movl %%eax, %%fs\n\t"
-        "movl %%eax, %%gs\n\t"
-        "movl %%eax, %%ss"
-        :: "m"(*this), "i"(KERNEL_CS), "i"(KERNEL_DS));
+        "movl %%ecx, %%ds\n\t"
+        "movl %%ecx, %%es\n\t"
+        "movl %%ecx, %%fs\n\t"
+        "movl %%ecx, %%gs\n\t"
+        "movl %%ecx, %%ss"
+        :: "m"(*this), "i"(KERNEL_CS), "a"(KERNEL_TS), "c"(KERNEL_DS));
     }
 
 private:
@@ -149,6 +153,7 @@ private:
     uint32_t    base  PACKED;
     tss_t       tss;
     gdt_entry_t entries[GDT_ENTRIES+1] ALIGNED(16);
+    uint32_t    intr_kernel_stack[1024]; // 4Kb kernel stack for interrupt handling
 };
 
 // kate: indent-width 4; replace-tabs on;

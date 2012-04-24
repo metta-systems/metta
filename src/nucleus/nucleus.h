@@ -17,41 +17,28 @@
 
 namespace nucleus
 {
-    inline void syscall(int syscall_no)
-    {
-        if (syscall_no == 0x90)
-            debugger_t::breakpoint();
-        else
-            PANIC("Syscall unimplemented!");
-    }
-
-    template <typename T1, typename T2>
-    inline void syscall(int syscall_no, T1 arg1, T2 arg2)
-    {
-        UNUSED(arg2);
-        if (syscall_no == 0x80)
-            ia32_mmu_t::set_active_pagetable(arg1);
-        else
-            PANIC("Syscall unimplemented!");
-    }
-
     //==================================================================================================================
     // actual syscalls
     //==================================================================================================================
     
     inline void write_pdbr(address_t pdba_phys, address_t pdba_virt)
     {
-        syscall(0x80, pdba_phys, pdba_virt);
+        kconsole << "calling write_pdbr syscall" << endl;
+        asm volatile ("int $99" :: "a"(1), "b"(pdba_phys), "c"(pdba_virt));
+        kconsole << "returned from write_pdbr syscall" << endl;
     }
     
     inline int protect(protection_domain_v1::id dom_id, address_t start_page, size_t n_pages, stretch_v1::rights access)
     {
+        kconsole << "calling protect syscall" << endl;
+        asm volatile ("int $99" :: "a"(2), "b"(dom_id), "c"(n_pages), "d"(start_page), "S"(access));
+        kconsole << "returned from protect syscall" << endl;
         return 0;
     }
 
     inline void debug_stop()
     {
-        syscall(0x90);
+        debugger_t::breakpoint();
     }
 }
 

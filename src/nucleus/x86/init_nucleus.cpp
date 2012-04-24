@@ -65,9 +65,27 @@ public:
     }
 };
 
+class first_syscall_handler_t : public interrupt_service_routine_t
+{
+public:
+    virtual void run(registers_t* regs)
+    {
+        if (regs->eax == 1)
+        {
+            kconsole << "syscall(0x01): write_pdbr" << endl;
+            ia32_mmu_t::set_active_pagetable(regs->ebx);
+        }
+        else
+        {
+            kconsole << "unknown syscall " << regs->eax << endl;            
+        }
+    }
+};
+
 general_fault_handler_t gpf_handler;
 invalid_opcode_handler_t iop_handler;
 dummy_handler_t all_exceptions_handler;
+first_syscall_handler_t syscall_handler;
 
 static global_descriptor_table_t gdt; // FIXME: use a singleton accessor like for interrupt_descriptor_table?
 
@@ -116,5 +134,7 @@ extern "C" INIT_ONLY void nucleus_init()
     interrupt_descriptor_table().set_isr_handler(0x1d, &all_exceptions_handler);
     interrupt_descriptor_table().set_isr_handler(0x1e, &all_exceptions_handler);
     interrupt_descriptor_table().set_isr_handler(0x1f, &all_exceptions_handler);
+
+    interrupt_descriptor_table().set_isr_handler(99, &syscall_handler);
     kconsole << "Created IDT." << endl;
 }
