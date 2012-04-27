@@ -37,6 +37,7 @@
 #include "type_system_f_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
+#include "closure_interface.h"
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
@@ -227,6 +228,7 @@ static void init_mem(bootimage_t& bootimg)
     load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
     load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     //load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
+    load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -677,8 +679,12 @@ static void init_namespaces(bootimage_t& bootimg)
 #endif
 }
 
-static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
+static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 {
+    auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+    ASSERT(pciscan);
+    pciscan->apply();
+
     //TODO: domain manager
     //TODO: VCPU
     //TODO: nucleus syscalls

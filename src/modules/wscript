@@ -25,6 +25,7 @@ def build(bld):
     bld.recurse('exceptions_mod')
     bld.recurse('hashtables_mod')
     bld.recurse('typesystem_mod')
+    bld.recurse('pcibus')
 
 # kate: indent-width 4; replace-tabs on;
 # vim: set et sw=4 ts=4 sts=4 cino=(4 :

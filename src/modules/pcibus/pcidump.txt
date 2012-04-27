@@ -1,0 +1,27 @@
+[PCI  ] 440FX Host bridge present at device 0, function 0
+[PCI  ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
+[PCI  ] PIIX3 PCI IDE controller present at device 1, function 1
+[PCI  ] ACPI Controller present at device 1, function 3
+[PCI  ] Experimental USB UHCI present at device 1, function 2
+
+[BIOS ] PCI: bus=0 devfn=0x00: vendor_id=0x8086 device_id=0x1237 class=0x0600
+[BIOS ] PCI: bus=0 devfn=0x08: vendor_id=0x8086 device_id=0x7000 class=0x0601
+[BIOS ] PCI: bus=0 devfn=0x09: vendor_id=0x8086 device_id=0x7010 class=0x0101
+[BIOS ] PCI: bus=0 devfn=0x0a: vendor_id=0x8086 device_id=0x7020 class=0x0c03
+[BIOS ] PCI: bus=0 devfn=0x0b: vendor_id=0x8086 device_id=0x7113 class=0x0680
+
+PCI device: bus 0, slot 0, func 0, vendor 32902, device 4663, class 6, subclass 0, header type 00
+  Single function device, standard header.
+  Class ID: Bridge Device
+PCI device: bus 0, slot 1, func 0, vendor 32902, device 28672, class 6, subclass 1, header type 80
+  Multifunction device, standard header.
+  Class ID: Bridge Device
+PCI device: bus 0, slot 1, func 1, vendor 32902, device 28688, class 1, subclass 1, header type 00
+  Single function device, standard header.
+  Class ID: Mass Storage Controller
+PCI device: bus 0, slot 1, func 2, vendor 32902, device 28704, class 12, subclass 3, header type 00
+  Single function device, standard header.
+  Class ID: Serial Bus Controllers
+PCI device: bus 0, slot 1, func 3, vendor 32902, device 28947, class 6, subclass 128, header type 00
+  Single function device, standard header.
+  Class ID: Bridge Device

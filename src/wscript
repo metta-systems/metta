@@ -286,6 +286,7 @@ def build(bld):
     )
     libdebug.includes = libdebug.env.INCLUDE_DIRS
 
+    # Runtime is C++ runtime support library, it has no other dependencies.
     runtime = bld.stlib(
         source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()) + ['runtime/setjmp.s'],
         target = 'runtime',
@@ -294,6 +295,7 @@ def build(bld):
     if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
     runtime.includes = runtime.env.INCLUDE_DIRS
 
+    # Minruntime is a version of runtime with dynamic memory allocation replaced with dummy implementation.
     minruntime = bld.stlib(
         source = map(lambda d: 'runtime/' + d + '.cpp', 'dummy_delete memutils cstring'.split()),
         target = 'minruntime',
