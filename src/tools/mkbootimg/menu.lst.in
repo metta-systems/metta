@@ -16,17 +16,17 @@ title Metta
     kernel /launcher
     module /sysimage
 
-#title Metta [debug output]
-#    root (@ROOT@)
-#    kernel /launcher debug
-#    module /sysimage
-#
-#title Metta 32-bit only
-#    root (@ROOT@)
-#    kernel /launcher no64
-#    module /sysimage
-#
-#title Metta 32-bit only [debug output]
-#    root (@ROOT@)
-#    kernel /launcher no64 debug
-#    module /sysimage
+title Metta [debug output]
+    root (@ROOT@)
+    kernel /launcher debug
+    module /sysimage
+
+title Metta 32-bit only
+    root (@ROOT@)
+    kernel /launcher no64
+    module /sysimage
+
+title Metta 32-bit only [debug output]
+    root (@ROOT@)
+    kernel /launcher no64 debug
+    module /sysimage

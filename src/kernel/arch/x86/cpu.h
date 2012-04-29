@@ -29,15 +29,23 @@ public:
     /*!
      * Write a word out to the specified port.
      */
-    static inline void outw(uint16_t port, uint16_t value)
+    static inline void outw(uint16_t port, uint16_t value) ALWAYS_INLINE
     {
         asm volatile ("outw %0, %1" :: "a" (value), "dN" (port));
     }
 
     /*!
+     * Write a dword out to the specified port.
+     */
+    static inline void outl(uint16_t port, uint32_t value) ALWAYS_INLINE
+    {
+        asm volatile ("outl %0, %1" :: "a" (value), "dN" (port));
+    }
+
+    /*!
      * Read a byte in from the specified port.
      */
-    static inline uint8_t inb(uint16_t port)
+    static inline uint8_t inb(uint16_t port) ALWAYS_INLINE
     {
         uint8_t ret;
         asm volatile("inb %1, %0" : "=a" (ret) : "dN" (port));
@@ -47,7 +55,7 @@ public:
     /*!
      * Read a word in from the specified port.
      */
-    static inline uint16_t inw(uint16_t port)
+    static inline uint16_t inw(uint16_t port) ALWAYS_INLINE
     {
         uint16_t ret;
         asm volatile ("inw %1, %0" : "=a" (ret) : "dN" (port));
@@ -55,9 +63,19 @@ public:
     }
 
     /*!
+     * Read a dword in from the specified port.
+     */
+    static inline uint32_t inl(uint16_t port) ALWAYS_INLINE
+    {
+        uint32_t ret;
+        asm volatile ("inl %1, %0" : "=a" (ret) : "dN" (port));
+        return ret;
+    }
+
+    /*!
      * Read internal CPU 64-bit clock (timestamp counter).
      */
-    static inline uint64_t rdtsc()
+    static inline uint64_t rdtsc() ALWAYS_INLINE
     {
         uint64_t ret;
         asm volatile("rdtsc" : "=A"(ret));
@@ -67,7 +85,7 @@ public:
     /*!
      * Write machine-specific register.
      */
-    static inline void wrmsr(uint32_t index, uint64_t value)
+    static inline void wrmsr(uint32_t index, uint64_t value) ALWAYS_INLINE
     {
         asm volatile("wrmsr" :: "A" (value), "c" (index));
     }
@@ -134,7 +152,7 @@ public:
         }
     }
 
-    static inline void cpuid(uint32_t func, uint32_t* eax, uint32_t* ebx, uint32_t* ecx, uint32_t* edx)
+    static inline void cpuid(uint32_t func, uint32_t* eax, uint32_t* ebx, uint32_t* ecx, uint32_t* edx) ALWAYS_INLINE
     {
         asm volatile ("cpuid"
                       : "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx)
@@ -142,7 +160,7 @@ public:
     }
 
     /* Clear TS bit so we don't trap on FPU instructions. */
-    static inline void enable_fpu()
+    static inline void enable_fpu() ALWAYS_INLINE
     {
         asm volatile ("clts");
     }

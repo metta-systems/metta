@@ -286,6 +286,7 @@ def build(bld):
     )
     libdebug.includes = libdebug.env.INCLUDE_DIRS
 
+    # Runtime is C++ runtime support library, it has no other dependencies.
     runtime = bld.stlib(
         source = map(lambda d: 'runtime/' + d + '.cpp', 'memutils cstring'.split()) + ['runtime/setjmp.s'],
         target = 'runtime',
@@ -294,6 +295,7 @@ def build(bld):
     if platform != 'hosted': runtime.source += map(lambda d: 'runtime/' + d + '.cpp', 'g++support stdlib newdelete'.split())
     runtime.includes = runtime.env.INCLUDE_DIRS
 
+    # Minruntime is a version of runtime with dynamic memory allocation replaced with dummy implementation.
     minruntime = bld.stlib(
         source = map(lambda d: 'runtime/' + d + '.cpp', 'dummy_delete memutils cstring'.split()),
         target = 'minruntime',
@@ -399,7 +401,6 @@ def build(bld):
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
                 + ['launcher/loader.cpp', 'modules/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
-            # + map(lambda f: ]) + ['interfaces/timer_v1_interface.cpp']
             use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
@@ -415,7 +416,7 @@ def build(bld):
         ################################################################################################
 
         nucleus = bld.program(
-            target = 'nucleus.sys',# isr.cpp pit.cpp continuation.s
+            target = 'nucleus.sys',
             source = map(lambda f: 'nucleus/x86/' + f, 'idt.cpp isr.cpp interrupt.s init_nucleus.cpp nucleus.cpp'.split()),
             use = 'common kernel minruntime platform debug',
             env = bld.all_envs['KERNEL_ENV'].derive()

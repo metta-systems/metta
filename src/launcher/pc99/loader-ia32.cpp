@@ -51,8 +51,6 @@ void launch_kernel(address_t entry)
     new_context.set_entry(entry, USER_CS, USER_DS);//FIXME: depends on gpregs being set before this call!
     // -- THIS IS WHERE RING0 ENDS --
     new_context.activate(); // we have a liftoff! root domain executes in ring3 just like everybody else.
-
-    // __asm__ __volatile__ ("jmp *%0" : : "r"(entry));
 }
 
 // kate: indent-width 4; replace-tabs on;

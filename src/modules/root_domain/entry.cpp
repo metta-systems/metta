@@ -37,6 +37,7 @@
 #include "type_system_f_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
+#include "closure_interface.h"
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
@@ -227,6 +228,7 @@ static void init_mem(bootimage_t& bootimg)
     load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
     load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
     //load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
+    load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -677,8 +679,12 @@ static void init_namespaces(bootimage_t& bootimg)
 #endif
 }
 
-static NEVER_RETURNS void start_root_domain(bootimage_t& /*bm*/)
+static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 {
+    auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+    ASSERT(pciscan);
+    pciscan->apply();
+
     //TODO: domain manager
     //TODO: VCPU
     //TODO: nucleus syscalls
@@ -815,16 +821,14 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
 //======================================================================================================================
 
 /*!
- * Image bootup starts executing without paging and with ring3 rights.
+ * Image bootup starts executing with identity-mapped paging and with ring3 rights.
  */
 
 extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 
-//    kconsole << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
-
-    kconsole << " + image bootup entry!" << endl;
+    kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;
