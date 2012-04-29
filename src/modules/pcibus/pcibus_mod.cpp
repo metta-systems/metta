@@ -3,6 +3,9 @@
 #include "closure_impl.h"
 #include "default_console.h"
 
+// temporary testing
+#include "../../devices/network/ne2000_pci/ne2k.h"
+
 static const char* class2string(int class_id)
 {
 	switch(class_id)
@@ -59,6 +62,12 @@ void pci_bus_device_t::dump()
 // implement interface closure
 //====
 
+// pci bus probing will merely record device and vendor ids present on pci bus and its topology
+// vendors and device ids are recorded into a pcibus lookup table
+// later when device drivers are probing they will use this table to look up if device they support is actually present
+// in this case they will attempt the device initialization and mark this device as driven in the pcibus table
+// pcibus_scan table of entries [vendor_id, device_id, has_driver, driver_id?]
+
 static void
 entry(closure::closure_t* self)
 {
@@ -69,26 +78,18 @@ entry(closure::closure_t* self)
 
 				if (dev.is_present())
 				{
-					// kconsole << "PCI device PRESENT!" << endl;
 					dev.dump();
+
+					if ((dev.vendor() == 0x10ec) && (dev.device() == 0x8029))
+					{
+						ne2k ne;
+						ne.configure(&dev);
+						ne.init();
+					}
 				}
-				// else
-					// break;
-
-                // if ( pci->get_info(pci, bus, slot, func, &info ) < 0 ) break;
-                // kprintf ("PCI   : bus:%d slot:%d func:%d  device:%X vendor:%X class:%d:%d\n",
-                //          bus, slot, func, info.device_id, info.vendor_id, info.class_code, info.subclass_code );
-
-                // Do stuff here
             }
-            // if ( func==0 ) break;
         }
     }
-
-//===============
-
-
-
 };
 
 static const closure::ops_t methods =

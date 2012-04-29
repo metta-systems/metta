@@ -49,18 +49,26 @@ class pci_bus_device_t
 public:
 	pci_bus_device_t(uint16_t _bus, uint16_t _slot, uint16_t _func) : bus(_bus), slot(_slot), func(_func)
 	{
-		uint32_t vendor_device = pci_bus_t::read_config_space(bus, slot, func, 0x0);
+		uint32_t vendor_device = read_config_space(0x0);
 		vendor_id = vendor_device & 0xffff;
 		device_id = (vendor_device >> 16) & 0xffff;
-		uint32_t class_subclass = pci_bus_t::read_config_space(bus, slot, func, 0x8);
+		uint32_t class_subclass = read_config_space(0x8);
 		class_and_subclass = (class_subclass >> 16) & 0xffff;
-		uint32_t header = pci_bus_t::read_config_space(bus, slot, func, 0xc);
+		uint32_t header = read_config_space(0xc);
 		header_type = (header >> 16) & 0xff;
 	}
 
 	inline bool is_present()
 	{
 		return vendor_id != 0xffff;
+	}
+
+	inline uint16_t vendor() { return vendor_id; }
+	inline uint16_t device() { return device_id; }
+
+	inline uint32_t read_config_space(uint16_t offset)
+	{
+		return pci_bus_t::read_config_space(bus, slot, func, offset);
 	}
 
 	void dump();
