@@ -10,8 +10,8 @@
 //
 #include "isr.h"
 #include "idt.h"
-#include "cpu.h"
 #include "default_console.h"
+#include "pic.h"
 
 extern "C"
 {
@@ -36,9 +36,6 @@ void isr_handler(registers_t regs)
     }
 }
 
-// IRQ8 and above should be acknowledged to the slave controller, too.
-#define SLAVE_IRQ 40
-
 /*!
 * Handles a hardware interrupt request.
 * This is architecture specific!
@@ -54,15 +51,7 @@ void irq_handler(registers_t regs)
         isr->run(&regs);
     }
 
-    // Send an EOI (end of interrupt) signal to the PICs.
-    if (regs.int_no >= SLAVE_IRQ)
-    {
-        // If this interrupt involved the slave.
-        // Send reset signal to slave.
-        x86_cpu_t::outb(0xA0, 0x20);
-    }
-    // Send reset signal to master.
-    x86_cpu_t::outb(0x20, 0x20);
+    ia32_pic_t::eoi(regs.int_no-32);
 }
 
 // kate: indent-width 4; replace-tabs on;

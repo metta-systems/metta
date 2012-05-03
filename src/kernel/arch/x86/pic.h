@@ -13,7 +13,8 @@ class ia32_pic_t
 		PIC_ICW1_INIT = 0x10,
 		PIC_ICW1_ICW4 = 0x01,
 		PIC_INITIALIZE = (PIC_ICW1_INIT|PIC_ICW1_ICW4),
-		ICW4_8086 = 0x01
+		ICW4_8086 = 0x01,
+		PIC_EOI = 0x20
 	};
 
 public:
@@ -92,5 +93,19 @@ public:
 	    uint8_t value = x86_cpu_t::inb(port) | (1 << offset);
 	    x86_cpu_t::outb(port, value);
 	    kconsole << "IRQ" << irq_line << " disabled." << endl;
+	}
+
+    // Send an EOI (end of interrupt) signal to the PICs.
+	static inline void eoi(int irq_line)
+	{
+		// IRQ8 and above should be acknowledged to the slave controller, too.
+	    if (irq_line >= 8)
+	    {
+	        // If this interrupt involved the slave.
+	        // Send reset signal to slave.
+	        x86_cpu_t::outb(PIC_SLAVE_COMMAND, PIC_EOI);
+	    }
+	    // Send reset signal to master.
+	    x86_cpu_t::outb(PIC_MASTER_COMMAND, PIC_EOI);
 	}
 };
