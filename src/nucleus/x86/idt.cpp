@@ -9,6 +9,7 @@
 #include "idt.h"
 #include "cpu.h"
 #include "segs.h"
+#include "pic.h"
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 extern "C"
@@ -66,30 +67,6 @@ extern "C"
     void irq15();
 }
 
-// Remap the irq table so that IRQ interrupts start at MASTER_VEC
-static inline void reprogram_pic() // FIXME: move to ia32_pic_t
-{
-#define PICM 0x20
-#define PICS 0xA0
-#define ICW1 0x11
-#define PICMI 0x21
-#define PICSI 0xA1
-#define MASTER_VEC 0x20
-#define SLAVE_VEC  0x28
-#define ICW4 0x01
-
-    x86_cpu_t::outb(PICM, ICW1);
-    x86_cpu_t::outb(PICS, ICW1);
-    x86_cpu_t::outb(PICMI, MASTER_VEC);
-    x86_cpu_t::outb(PICSI, SLAVE_VEC);
-    x86_cpu_t::outb(PICMI, 4);
-    x86_cpu_t::outb(PICSI, 2);
-    x86_cpu_t::outb(PICMI, ICW4);
-    x86_cpu_t::outb(PICSI, ICW4);
-    x86_cpu_t::outb(PICMI, 0xff);//0?
-    x86_cpu_t::outb(PICSI, 0xff);//0?
-}
-
 interrupt_descriptor_table_t& interrupt_descriptor_table_t::instance()
 {
     static interrupt_descriptor_table_t interrupts_table;
@@ -101,6 +78,10 @@ interrupt_descriptor_table_t& interrupt_descriptor_table_t::instance()
 
 #define IRQ_ENTRY(n, m) \
     idt_entries[n].set(KERNEL_CS, irq##m, idt_entry_t::interrupt_gate, 0)
+
+// Start vectors offsets
+#define MASTER_VEC 0x20
+#define SLAVE_VEC  0x28
 
 void interrupt_descriptor_table_t::install()
 {
@@ -142,7 +123,8 @@ void interrupt_descriptor_table_t::install()
     IDT_ENTRY(30, interrupt_gate);
     IDT_ENTRY(31, interrupt_gate);
 
-    reprogram_pic();
+    ia32_pic_t::reprogram_pic(MASTER_VEC, SLAVE_VEC);
+    ia32_pic_t::disable_irq(0); // disable timer to avoid spam for now
 
     // 32-47 are IRQs.
     // DPL is 3 so that interrupts can happen from user mode.
