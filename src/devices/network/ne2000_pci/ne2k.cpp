@@ -7,9 +7,6 @@
 
 using namespace ne2k_card;
 
-// #define INIT_PAGE 1
-// #define STOP_PAGE 0
-
 // Packet ring buffer offsets (from tyndur)
 #define PAGE_TX     0x40
 #define PAGE_RX     0x50
@@ -138,9 +135,7 @@ void ne2k::init()
 	reg_write(TRANSMIT_CONFIGURATION_BANK0_W, TRANSMIT_CONFIGURATION_NORMAL_OPERATION); // 11
 	// Now the NIC is ready to receive and transmit.
 
-	ia32_pic_t::enable_irq(9); //part of cascade?
 	ia32_pic_t::enable_irq(irq);
-	ia32_pic_t::print_masks();
 
 	kconsole << "Finished initializing NE2000 with MAC " << my_mac[0] << ":" << my_mac[1] << ":" << my_mac[2] << ":" << my_mac[3] << ":" << my_mac[4] << ":" << my_mac[5] << "." << endl;
 }
