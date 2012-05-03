@@ -46,7 +46,8 @@ void launch_kernel(address_t entry)
     gpregs.esp = read_stack_pointer();
     gpregs.eax = 0;
     gpregs.ebx = 0;
-    gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
+    // gpregs.eflags = 0x03002; /* Flags for root domain: interrupts disabled, IOPL=3 (program can use IO ports) */
+    gpregs.eflags = 0x03202; /* Flags for testing: interrupts enabled, IOPL=3 (program can use IO ports) */
     new_context.set_gpregs(gpregs);
     new_context.set_entry(entry, USER_CS, USER_DS);//FIXME: depends on gpregs being set before this call!
     // -- THIS IS WHERE RING0 ENDS --
