@@ -76,6 +76,17 @@ public:
             ia32_mmu_t::set_active_pagetable(regs->ebx);
         }
         else
+        if (regs->eax == 2)
+        {
+            kconsole << "syscall(0x01): protect" << endl;
+        }
+        else
+        if (regs->eax == 3)
+        {
+            kconsole << "syscall(0x01): install IRQ handler" << endl;
+            interrupt_descriptor_table().set_irq_handler(regs->ebx, reinterpret_cast<interrupt_service_routine_t*>(regs->ecx));
+        }
+        else
         {
             kconsole << "unknown syscall " << regs->eax << endl;            
         }
