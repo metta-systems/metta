@@ -12,13 +12,14 @@
 #include "mmu.h"
 #include "debugger.h"
 #include "panic.h"
+#include "isr.h"
 #include "protection_domain_v1_interface.h"
 #include "stretch_v1_interface.h"
 
 namespace nucleus
 {
     //==================================================================================================================
-    // actual syscalls
+    // privileged syscalls - only TCB components may use these
     //==================================================================================================================
     
     inline void write_pdbr(address_t pdba_phys, address_t pdba_virt)
@@ -39,6 +40,17 @@ namespace nucleus
     inline void debug_stop()
     {
         debugger_t::breakpoint();
+    }
+
+    //==================================================================================================================
+    // privileged syscalls - only drivers may use these
+    // privilege checks are performed via tokens, which authorized drivers posess from their parent.
+    //==================================================================================================================
+    inline void install_irq_handler(int irq, interrupt_service_routine_t* handler)
+    {
+        kconsole << "calling install_irq_handler syscall" << endl;
+        asm volatile ("int $99" :: "a"(3), "b"(irq), "c"(handler));
+        kconsole << "returned from install_irq_handler syscall" << endl;        
     }
 }
 

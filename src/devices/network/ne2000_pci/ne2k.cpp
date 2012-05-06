@@ -4,6 +4,7 @@
 #include "pci_bus.h"
 #include "cpu.h"
 #include "pic.h"
+#include "nucleus.h"
 
 using namespace ne2k_card;
 
@@ -13,28 +14,45 @@ using namespace ne2k_card;
 #define PAGE_STOP   0x80
 
 
-// static void irq_handler(ne2k* card)
-// {
-// 	card->handler();
-// }
+void ne2k::irq_handler::run(registers_t*)
+{
+	parent->handle_irq();
+}
 
-// void ne2k::handler()
-// {
-// 	reason = reg_read(INTERRUPT_STATUS_BANK0_RW);
+void ne2k::handle_irq()
+{
+	uint8_t reason = reg_read(INTERRUPT_STATUS_BANK0_RW);
 
-// 	if (reason & INTERRUPT_STATUS_OVERWRITE_WARNING)
-// 		overflow();
+	if (reason & INTERRUPT_STATUS_OVERWRITE_WARNING)
+	{
+		overflow();
+		reason &= ~INTERRUPT_STATUS_OVERWRITE_WARNING;
+	}
 
-// 	if (reason & INTERRUPT_STATUS_RECEIVE_ERROR)
-// 		receive_error();
-// 	if (reason & INTERRUPT_STATUS_PACKET_RECEIVED)
-// 		packet_received();
+	if (reason & INTERRUPT_STATUS_RECEIVE_ERROR)
+	{
+		receive_error();
+		reason &= ~INTERRUPT_STATUS_RECEIVE_ERROR;
+	}
+	if (reason & INTERRUPT_STATUS_PACKET_RECEIVED)
+	{
+		packet_received();
+		reason &= INTERRUPT_STATUS_PACKET_RECEIVED;
+	}
 
-// 	if (reason & INTERRUPT_STATUS_TRANSMIT_ERROR)
-// 		transmit_error();
-// 	if (reason & INTERRUPT_STATUS_PACKET_TRANSMITTED)
-// 		packet_transmitted();
-// }
+	if (reason & INTERRUPT_STATUS_TRANSMIT_ERROR)
+	{
+		transmit_error();
+		reason &= ~INTERRUPT_STATUS_TRANSMIT_ERROR;
+	}
+	if (reason & INTERRUPT_STATUS_PACKET_TRANSMITTED)
+	{
+		packet_transmitted();
+		reason &= ~INTERRUPT_STATUS_PACKET_TRANSMITTED;
+	}
+
+	reg_write(INTERRUPT_STATUS_BANK0_RW, reason); // Clear all interrupt reasons that we've handled above.
+}
 
 void ne2k::reg_write(int regno, int value)
 {
@@ -68,7 +86,7 @@ void ne2k::configure(pci_bus_device_t* card)
 	irq = intr & 0xff;
 	kconsole << "This ne2k uses irq line " << irq << endl;
 
-	// irq_manager.set_handler(irq, irq_handler, this);
+	nucleus::install_irq_handler(irq, &handler);
 }
 
 // ne2k card initialization sequence
@@ -143,5 +161,41 @@ void ne2k::init()
 // Handle packet receive overflow.
 void ne2k::overflow()
 {
-
+	kconsole << "Receive buffer overflow." << endl;
 }
+
+void ne2k::receive_error()
+{
+	kconsole << "Receive error." << endl;
+}
+
+void ne2k::packet_received()
+{
+	kconsole << "Packet received." << endl;
+}
+
+void ne2k::transmit_error()
+{
+	kconsole << "Transmit error." << endl;
+}
+
+void ne2k::packet_transmitted()
+{
+	kconsole << "Packet transmitted." << endl;
+}
+
+void ne2k::send_packet(buffer_t buf)
+{
+	// Copy buf to DMA area... skip it for now
+
+	// Set up TX page register, trigger send.	
+}
+
+
+
+
+
+
+
+
+
