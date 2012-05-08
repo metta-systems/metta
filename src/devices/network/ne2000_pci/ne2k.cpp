@@ -58,9 +58,14 @@ void ne2k::handle_irq()
         reg_write(INTERRUPT_STATUS_BANK0_RW, handled_reasons); // Clear all interrupt reasons that we've handled above.
 }
 
-void ne2k::reg_write(int regno, int value)
+void ne2k::reg_write(int regno, uint8_t value)
 {
     x86_cpu_t::outb(port_base + regno, value);
+}
+
+void ne2k::reg_write_word(int regno, uint16_t value)
+{
+    x86_cpu_t::outw(port_base + regno, value);
 }
 
 uint8_t ne2k::reg_read(int regno)
@@ -255,17 +260,41 @@ void ne2k::packet_transmitted()
 }
 
 /*
- * Packet must be properly prepared ethernet packet.
+ * buf must contain properly prepared ethernet packet.
  * Source and destination addresses, length and type should be filled in the preamble.
  * CRC will be added by the card.
  */
-void ne2k::send_packet(buffer_t buf)
+void ne2k::send_packet(void* buf, uint16_t size)
 {
-    // Copy buf to DMA area... skip it for now
+    // Send the length/address for this write
+    reg_write(REMOTE_START_ADDRESS0_BANK0_W, 0);
+    reg_write(REMOTE_START_ADDRESS1_BANK0_W, PAGE_TX);
+    reg_write(REMOTE_BYTE_COUNT0_BANK0_W, (size > 64) ? (size & 0xff) : 64);
+    reg_write(REMOTE_BYTE_COUNT1_BANK0_W, size >> 8);
+    reg_write(COMMAND_BANK012_RW, COMMAND_BANK0|COMMAND_REMOTEDMA_WRITE|COMMAND_START);
+    // Write to the NIC
+    uint16_t *p = (uint16_t*)buf;
+    size_t i;
+    for(i = 0; (i + 1) < size; i += 2) {
+        reg_write_word(DATA_PORT_BANK012_RW, p[i/2]);
+    }
+    // Handle odd bytes
+    if(size & 1) {
+        reg_write(DATA_PORT_BANK012_RW, p[i/2]);
+        i++;
+    }
+    // Pad to 64 bytes, if needed
+    for(; i < 64; i += 2) {
+        reg_write_word(DATA_PORT_BANK012_RW, 0);
+    }
+    // Await the transfer completion and then transmit
+    while(!(reg_read(INTERRUPT_STATUS_BANK0_RW) & INTERRUPT_STATUS_REMOTEDMA_COMPLETE));
+    reg_write(INTERRUPT_STATUS_BANK0_RW, INTERRUPT_STATUS_REMOTEDMA_COMPLETE);
 
-    // Set up TX page register, packet size, trigger send.
-    reg_write(TRANSMIT_BYTE_COUNT0_BANK0_W, 0);
-    reg_write(TRANSMIT_BYTE_COUNT1_BANK0_W, 0);
+    reg_write(TRANSMIT_BYTE_COUNT0_BANK0_W, (size > 64) ? (size & 0xff) : 64);
+    reg_write(TRANSMIT_BYTE_COUNT1_BANK0_W, size >> 8);
+    reg_write(TRANSMIT_PAGE_START_ADDRESS_BANK0_W, PAGE_TX);
+    reg_write(COMMAND_BANK012_RW, COMMAND_BANK0|COMMAND_REMOTEDMA_ABORT|COMMAND_TRANSMIT_PACKET|COMMAND_START);
 }
 
 

@@ -5,21 +5,13 @@
 
 class pci_bus_device_t;
 
-// Simple packet wrapper.
-class buffer_t
-{
-	void* ptr;
-	size_t size;
-public:
-	buffer_t(void* _ptr, size_t _size) : ptr(_ptr), size(_size) {}
-};
-
 class ne2k
 {
 	uint16_t port_base;
 	uint16_t irq;
 
-	void reg_write(int regno, int value);
+	void reg_write(int regno, uint8_t value);
+	void reg_write_word(int regno, uint16_t value);
 	uint8_t reg_read(int regno);
 	uint16_t reg_read_word(int regno);
 
@@ -45,5 +37,5 @@ public:
 	void packet_received();
 	void transmit_error();
 	void packet_transmitted();
-	void send_packet(buffer_t buf);
+	void send_packet(void* buf, uint16_t length);
 };
