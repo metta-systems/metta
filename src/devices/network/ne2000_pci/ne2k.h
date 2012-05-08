@@ -21,6 +21,7 @@ class ne2k
 
 	void reg_write(int regno, int value);
 	uint8_t reg_read(int regno);
+	uint16_t reg_read_word(int regno);
 
 	class irq_handler : public interrupt_service_routine_t
 	{
@@ -31,6 +32,7 @@ class ne2k
 	};
 
 	irq_handler handler;
+	uint8_t next_packet;
 
 public:
 	ne2k() : handler(this) {}

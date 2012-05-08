@@ -685,6 +685,8 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
     ASSERT(pciscan);
     pciscan->apply();
 
+    while(1) {}
+
     //TODO: domain manager
     //TODO: VCPU
     //TODO: nucleus syscalls
