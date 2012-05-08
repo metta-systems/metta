@@ -85,6 +85,13 @@ entry(closure::closure_t* self)
 						ne2k ne;
 						ne.configure(&dev);
 						ne.init();
+
+						// Send a nice hello world to everyone
+						uint8_t hello[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+							               0xb0, 0xc4, 0x20, 0x00, 0x00, 0x00,
+							               0x00, 0x10,
+							               'H', 'e', 'l', 'l', 'o', ' ', 'n', 'e', 't', ' ', 'w', 'o', 'r', 'l', 'd', '!'};
+						ne.send_packet(hello, sizeof(hello));
 					}
 				}
             }
