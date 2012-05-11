@@ -3,7 +3,7 @@
 #include "types.h"
 #include "isr.h"
 
-class pci_bus_device_t;
+class pci_device_t;
 
 class ne2k
 {
@@ -29,7 +29,7 @@ class ne2k
 public:
 	ne2k() : handler(this) {}
 
-	void configure(pci_bus_device_t* card);
+	void configure(pci_device_t* card);
 	void init();
 	void handle_irq();
 	void overflow();

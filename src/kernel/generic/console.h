@@ -59,6 +59,7 @@ public:
     virtual void print_unprintable(char ch) = 0;
     virtual void print_byte(unsigned char n) = 0;
     virtual void print_hex(uint32_t n) = 0;
+    virtual void print_hex2(uint16_t n) = 0;
     virtual void print_hex8(uint64_t n) = 0;
     virtual void print_str(const char *s) = 0;
 
@@ -67,6 +68,7 @@ public:
     inline void print(char ch) { print_char(ch); }
     inline void print(unsigned char n) { print_byte(n); }
     inline void print(uint32_t n) { print_hex(n); }
+    inline void print(uint16_t n) { print_hex2(n); }
     inline void print(void *p) { print((uint32_t)p); }
     inline void print(uint64_t n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
@@ -116,6 +118,12 @@ inline console_t& operator << (console_t& con, int32_t data)
 inline console_t& operator << (console_t& con, uint32_t data)
 {
     con.print_hex(data);
+    return con;
+}
+
+inline console_t& operator << (console_t& con, uint16_t data)
+{
+    con.print_hex2(data);
     return con;
 }
 

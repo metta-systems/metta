@@ -81,11 +81,11 @@ uint16_t ne2k::reg_read_word(int regno)
 #define BAR0 0x10
 #define INTERRUPT 0x3c
 
-void ne2k::configure(pci_bus_device_t* card)
+void ne2k::configure(pci_device_t* card)
 {
     // read PCI BARs and figure out our base address and IRQ
     uint32_t bar0 = card->read_config_space(BAR0);
-    uint32_t intr = card->read_config_space(INTERRUPT);
+    uint32_t intr = card->read_config_space(INTERRUPT);//replace with card->interrupt_line
 
     if (bar0 & 1)
     {
@@ -96,6 +96,7 @@ void ne2k::configure(pci_bus_device_t* card)
     {
         kconsole << "WARNING: This device doesn't use I/O, cannot support it yet." << endl;
         port_base = 0xffff;
+        return;
     }
     irq = intr & 0xff;
     kconsole << "This ne2k uses irq line " << irq << endl;
@@ -110,7 +111,7 @@ void ne2k::init()
     reg_write(COMMAND_BANK012_RW, COMMAND_BANK0|COMMAND_REMOTEDMA_ABORT|COMMAND_STOP); // 1
     reg_write(DATA_CONFIGURATION_BANK0_W, DATA_CONFIGURATION_NON_LOOPBACK_SELECT |
                                           DATA_CONFIGURATION_WORD_TRANSFER_SELECT |
-                                          DATA_CONFIGURATION_AUTO_INITIALIZE_REMOTE |
+                                          DATA_CONFIGURATION_AUTO_INITIALIZE_REMOTE | // bochs doesn't support?? [NE2K ] DCR write - AR set ???
                                           DATA_CONFIGURATION_FIFO_THRESHOLD_1WORD); // 2
     reg_write(REMOTE_BYTE_COUNT0_BANK0_W, 0); // 3
     reg_write(REMOTE_BYTE_COUNT1_BANK0_W, 0); // 3

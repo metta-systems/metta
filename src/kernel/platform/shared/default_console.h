@@ -41,6 +41,7 @@ public:
     virtual void print_unprintable(char ch);
     virtual void print_byte(unsigned char n);
     virtual void print_hex(uint32_t n);
+    virtual void print_hex2(uint16_t n);
     virtual void print_hex8(uint64_t n);
     virtual void print_str(const char *s);
 

@@ -33,9 +33,10 @@ static const char* class2string(int class_id)
 	}
 }
 
-void pci_bus_device_t::dump()
+void pci_device_t::dump()
 {
-	kconsole << "PCI device: bus " << bus << ", slot " << slot << ", func " << func << ", vendor " << vendor_id << ", device " << device_id << ", class " << (class_and_subclass >> 8) << ", subclass " << (class_and_subclass & 0xff) << ", header type " << header_type << endl;
+	kconsole << "PCI device: bus " << bus << ", slot " << slot << ", func " << function << ", vendor " << vendor_id << ", device " << device_id << ", class " << base_class << ", subclass " << sub_class << ", header type " << header_type << endl;
+	kconsole << "ProgIF " << prog_iface << ", revision " << revision << ", cache line size " << cache_line_size << ", subsys vendor " << subsys_vendor << ", subsys id " << subsys_id << ", INT# line " << interrupt_line << ", INT# pin " << interrupt_pin << endl;
 	if (header_type & 0x80)
 		kconsole << "  Multifunction device";
 	else
@@ -55,7 +56,7 @@ void pci_bus_device_t::dump()
 			kconsole << ", unknown header type." << endl;
 			break;
 	}
-	kconsole << "  Class ID: " << class2string(class_and_subclass >> 8) << endl;
+	kconsole << "  Class ID: " << class2string(base_class) << endl;
 }
 
 //====
@@ -74,7 +75,7 @@ entry(closure::closure_t* self)
     for ( unsigned int bus=0; bus<256; bus++ ) {
         for ( unsigned int slot=0; slot<32; slot++ ) {
             for ( unsigned int func=0; func<7; func++ ) {
-				pci_bus_device_t dev(bus, slot, func);
+				pci_device_t dev(bus, slot, func);
 
 				if (dev.is_present())
 				{

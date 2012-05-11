@@ -116,8 +116,17 @@ void default_console_t::print_byte(unsigned char n)
 void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
-    for(int i = 4; i > 0; i--)
-        print_byte((n >> (i-1)*8) & 0xFF);
+    print_byte((n >> 24) & 0xff);
+    print_byte((n >> 16) & 0xff);
+    print_byte((n >> 8) & 0xff);
+    print_byte(n & 0xff);
+}
+
+void default_console_t::print_hex2(uint16_t n)
+{
+    print_str("0x");
+    print_byte((n >> 8) & 0xff);
+    print_byte(n & 0xff);
 }
 
 /*! Print 64 bit hex integer */
