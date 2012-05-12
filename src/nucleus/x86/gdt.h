@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -155,6 +155,3 @@ private:
     gdt_entry_t entries[GDT_ENTRIES+1] ALIGNED(16);
     uint32_t    intr_kernel_stack[1024]; // 4Kb kernel stack for interrupt handling
 };
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :

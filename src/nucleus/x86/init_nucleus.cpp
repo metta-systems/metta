@@ -1,3 +1,11 @@
+//
+// Part of Metta OS. Check http://metta.exquance.com for latest version.
+//
+// Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
+//
+// Distributed under the Boost Software License, Version 1.0.
+// (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+//
 // Nucleus is the privileged part of the whole system.
 // It contains privileged tables like GDT and IDT on x86, as well as interrupt handler stubs and their management.
 #include "gdt.h"

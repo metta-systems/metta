@@ -178,6 +178,3 @@ inline void ia32_mmu_t::set_active_pagetable(physical_address_t page_dir_physica
 // {
 //     set_active_pagetable(pdom.physical_page_directory);
 // }
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :
