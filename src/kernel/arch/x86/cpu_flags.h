@@ -67,6 +67,3 @@
 #define X86_FLAGS_VIF     (1 << 19)       /* virtual interrupt flag       */
 #define X86_FLAGS_VIP     (1 << 20)       /* virtual interrupt pending    */
 #define X86_FLAGS_ID      (1 << 21)       /* CPUID flag                   */
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,19 +1,19 @@
 #!/usr/bin/env ruby
 #
-# Apply license and modeline changes to text source files.
-# Run as tools/apply_boilerplate.rb
-#
 # Part of Metta OS. Check http://metta.exquance.com for latest version.
 #
-# Copyright 2007 - 2011, Stanislav Karchebnyy <berkus@exquance.com>
+# Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
 #
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
+# Apply license and modeline changes to text source files.
+# Run as tools/apply_boilerplate.rb
+#
 require 'find'
 
 exclude_dirs = ['./_build_', './runtime/stl', './tools/meddler/llvm']
-no_license = ['./runtime/MersenneTwister.h']
+no_license = ['./runtime/MersenneTwister.h', './kernel/generic/range_list.h', './kernel/arch/x86/cpu_flags.h', './kernel/arch/x86/mmu.h']
 
 class Array
     def do_not_has?(path)
@@ -22,7 +22,7 @@ class Array
 end
 
 license = IO.readlines('tools/license_header').join
-modelines = IO.readlines('tools/modelines.txt').join
+modelines = ''
 exts = {
     '.cpp'=>[license, modelines],
     '.c'=>[license, modelines],
@@ -49,10 +49,6 @@ Find.find('./') do |f|
             content = lic + content
             modified = true
         end
-        if content.index(mod).nil?
-            content = content + mod
-            modified = true
-        end
         if modified
             File.open(f+".new", "w") do |out|
                 out.write content
@@ -77,6 +73,3 @@ unless modified_files.empty?
     puts "Modified files:"
     modified_files.each { |f| puts f }
 end
-
-# kate: indent-width 4; replace-tabs on;
-# vim: set et sw=4 ts=4 sts=4 cino=(4 :
