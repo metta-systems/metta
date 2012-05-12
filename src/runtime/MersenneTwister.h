@@ -460,6 +460,3 @@ inline MTRand& MTRand::operator=( const MTRand& o )
 //      - Revised twist() operator to work on ones'-complement machines
 //      - Fixed reload() function to work when N and M are unsigned
 //      - Added copy constructor and copy operator from Salvador Espana
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :

@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2010, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2010 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -82,6 +82,3 @@ bool dwarf_debug_aranges_t::lookup(address_t target_pc, size_t& info_offset)
     DPRINT(" requested 0x%x not contained in any range\n", target_pc);
     return false;
 }
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :
