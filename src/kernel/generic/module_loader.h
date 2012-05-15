@@ -12,7 +12,7 @@
 
 class bootinfo_t;
 
-/*!
+/**
  * Loads components from initramfs to predefined memory area and relocates them.
  * Constructor receives addresses of last_available_address field from
  * inside bootinfo page.
@@ -27,7 +27,7 @@ public:
         , d_last_available_address(last_available_address)
     {}
 
-    /*!
+    /**
      * @returns pointer to given closure.
      */
     void* load_module(const char* name, elf_parser_t& module, const char* closure_name);

@@ -37,7 +37,7 @@ void block_device_t::close()
     storageFile = 0;
 }
 
-/*!
+/**
  * Return time in nanoseconds it would take to seek from current block position to seekTo.
  */
 int block_device_t::seek_time(blockno_t seekTo)
@@ -58,7 +58,7 @@ block_device_t::blockno_t block_device_t::pos()
     return 0;
 }
 
-/*!
+/**
  * Read and write functions operate on whole blocks of specific size.
  */
 block_device_t::blocksize_t block_device_t::read_block(block_device_t::blockno_t block, char* buffer, block_device_t::blocksize_t bytes)

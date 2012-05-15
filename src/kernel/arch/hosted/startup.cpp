@@ -76,7 +76,7 @@ static void prepare_infopage()
 extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 static continuation_t new_context;
 
-/*!
+/**
  * Get the system going.
  *
  * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.

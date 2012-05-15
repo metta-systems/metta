@@ -425,7 +425,7 @@ static const stretch_allocator_v1::ops_t stretch_allocator_v1_nailed_methods =
 // system_stretch_allocator_v1 methods
 //======================================================================================================================
 
-/*!
+/**
  * create_nailed() is used to create a 'special' stretch allocator for use by the system code for page tables,
  * protection domains, dcbs, etc.
  * On alphas, 'special' means that the stretches are all allocated from a 4GB region of memory;
@@ -487,7 +487,7 @@ stretch_allocator_v1::closure_t* system_stretch_allocator_v1_create_nailed(syste
     return &client_state->closure;
 }
 
-/*!
+/**
  * create_over() is a special stretch creation method which currently is restricted to the system_stretch_allocator.
  * It provides the same functions as create_at() with the additional ability to deal with virtual memory regions which
  * have already been allocated: in this case a stretch is created over the existing region and the mappings updated

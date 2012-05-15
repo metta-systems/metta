@@ -73,7 +73,7 @@ void default_console_t::newline()
     print_char(eol);
 }
 
-/*! Print decimal integer */
+/** Print decimal integer */
 void default_console_t::print_int(int n)
 {
     if (n == 0)
@@ -102,7 +102,7 @@ void default_console_t::print_int(int n)
     }
 }
 
-/*! Print hexadecimal byte */
+/** Print hexadecimal byte */
 void default_console_t::print_byte(unsigned char n)
 {
     const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
@@ -112,7 +112,7 @@ void default_console_t::print_byte(unsigned char n)
     print_char(c);
 }
 
-/*! Print hexadecimal integer */
+/** Print hexadecimal integer */
 void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
@@ -129,7 +129,7 @@ void default_console_t::print_hex2(uint16_t n)
     print_byte(n & 0xff);
 }
 
-/*! Print 64 bit hex integer */
+/** Print 64 bit hex integer */
 void default_console_t::print_hex8(unsigned long long n)
 {
     print_str("0x");
@@ -181,7 +181,7 @@ static void init_serial(void)
 
 #endif  /* CONFIG_COMPORT */
 
-/*! Print a single character */
+/** Print a single character */
 void default_console_t::print_char(char ch)
 {
 #if defined(CONFIG_COMPORT)
@@ -237,7 +237,7 @@ void default_console_t::print_unprintable(char ch)
     print_char(ch);
 }
 
-/*! Wait for Enter key press and release on keyboard */
+/** Wait for Enter key press and release on keyboard */
 void default_console_t::wait_ack()
 {
     uint8_t keycode;
@@ -260,7 +260,7 @@ void default_console_t::wait_ack()
         x86_cpu_t::outb(0x21, x86_cpu_t::inb(0x21) & 0xfd); // unmask it now without changing other flags
 }
 
-/*! Print string without formatting */
+/** Print string without formatting */
 void default_console_t::print_str(const char *str)
 {
     char *b = (char *)str;

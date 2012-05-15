@@ -10,7 +10,7 @@
 
 #include "types.h"
 
-/*!
+/**
  * Use gcc atomic builtins (gcc 4.1+).
  *
  * See http://lists.boost.org/Archives/boost/2006/11/113380.php for ideas on how to make this a nice template.
@@ -19,14 +19,14 @@
  * See http://www.gelato.unsw.edu.au/lxr/source/Documentation/atomic_ops.txt
  * for better names for the methods and memory barrier constraints.
  *
- * TODO: error out if not compiling with GCC
- * FIXME: I know these methods have silly names.
- * FIXME: GCC builtins are implemented only on x86? Check.
+ * @todo Error out if not compiling with GCC.
+ * @todo I know these methods have silly names.
+ * @todo GCC builtins are implemented only on x86? Check.
  */
 class atomic_ops
 {
 public:
-    /*!
+    /**
      * This is a full memory barrier.
      */
     static inline void membar()
@@ -34,7 +34,7 @@ public:
         __sync_synchronize();
     }
 
-    /*!
+    /**
      * An atomic exchange operation. It writes value into @p *lock, and returns the previous contents of @p *lock.
      * Use carefully, as the only allowed @p new_val could be 1.
      * NB: This is not a full barrier, but rather an acquire barrier.
@@ -44,7 +44,7 @@ public:
         return __sync_lock_test_and_set(lock, new_val);
     }
 
-    /*!
+    /**
      * Releases the lock acquired by __sync_lock_test_and_set. Normally this means writing the constant 0 to @p *lock.
      * NB: This is not a full barrier, but rather a release barrier.
      */
@@ -53,7 +53,7 @@ public:
         __sync_lock_release(lock);
     }
 
-    /*!
+    /**
      * Atomic compare and swap. If the current value of @c *lock is @c old_val, then write @c new_val into @c *lock.
      * @return the contents of @c *lock before the operation.
      */
@@ -62,7 +62,7 @@ public:
         return __sync_val_compare_and_swap(lock, old_val, new_val);
     }
 
-    /*!
+    /**
      * Atomic compare and swap. If the current value of @c *lock is @c old_val, then write @c new_val into @c *lock.
      * @return true if the comparison is successful and @c new_val was written.
      */
@@ -74,7 +74,7 @@ public:
     // Prefix and postfix increments/decrements implemented as atomic ops.
     // (Since GCC provides them, anyway)
 
-    /*!
+    /**
      * Fetch and add.
      * @return the value that had previously been in memory.
      */
@@ -83,7 +83,7 @@ public:
         return __sync_fetch_and_add(lock, inc);
     }
 
-    /*!
+    /**
      * Add and then fetch.
      * @return the new value.
      */
@@ -92,7 +92,7 @@ public:
         return __sync_add_and_fetch(lock, inc);
     }
 
-    /*!
+    /**
      * Fetch and sub.
      * @return the value that had previously been in memory.
      */
@@ -101,7 +101,7 @@ public:
         return __sync_fetch_and_sub(lock, inc);
     }
 
-    /*!
+    /**
      * Sub and then fetch.
      * @return the new value.
      */

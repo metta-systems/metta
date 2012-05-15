@@ -10,14 +10,6 @@
 //
 #include "memutils.h"
 
-// Stupid GCC generates memmove() in some iterator assignments in advance_ex instead of inlining (doh)
-#if __Metta__ && defined(__GNUC__)
-extern "C" void* memmove(void* dest, const void* src, size_t count)
-{
-    return memutils::move_memory(dest, src, count);
-}
-#endif
-
 // stdlib compat for compiler
 extern "C" void* memcpy(void* dest, const void* src, size_t count) 
 { 

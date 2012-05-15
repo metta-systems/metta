@@ -12,13 +12,17 @@
 #include "types.h"
 #include "default_console.h"//debug
 
-//! A class that implements a spinlock/binary semaphore.
+/**
+ * A class that implements a spinlock/binary semaphore.
+ */
 class lockable_t
 {
 public:
     inline lockable_t() : lock_value(0) {}
 
-    //! Spin until we get the lock.
+    /**
+     * Spin until we get the lock.
+     */
     inline void lock()
     {
         uint32_t new_val = 1;
@@ -31,7 +35,10 @@ public:
         // We got the lock, return.
     }
 
-    //! Spin once.
+    /**
+     * Spin once.
+     * @return true is lock was obtained, false if lock was not obtained.
+     */
     inline bool try_lock()
     {
         uint32_t new_val = 1;
@@ -47,6 +54,9 @@ public:
         return lock_value;
     }
 
+    /**
+     * Atomically release the lock.
+     */
     inline void unlock()
     {
         atomic_ops::release(&lock_value);
@@ -56,8 +66,9 @@ private:
     uint32_t lock_value; //!< The actual lock variable.
 };
 
-/*!
+/**
  * Scoped lock for locking lockable objects.
+ * type_t must implement interface methods lock() and unlock().
  */
 template <class type_t>
 class scope_lock_t
@@ -84,4 +95,7 @@ public:
     }
 };
 
+/**
+ * Spinlock scoped lock object.
+ */
 typedef scope_lock_t<lockable_t> lockable_scope_lock_t;

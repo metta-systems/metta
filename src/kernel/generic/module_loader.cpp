@@ -30,7 +30,7 @@
 
 #include "symbol_table_finder.h"
 
-/*!
+/**
  * @class module_loader_t
  *
  * Load modules into last_load_address, allocate ST_ALLOC sections, copy only ST_LOAD sections
@@ -90,9 +90,9 @@ void elf32::section_header_t::dump(const char* shstrtab)
     };
     // 0 .group        00000008  00000000  00000000  00000034  2**2
     // CONTENTS, READONLY, EXCLUDE, GROUP, LINK_ONCE_DISCARD
-    //word_t  link;          /*!< Index of another section */
-    //word_t  info;          /*!< Additional section information */
-    //word_t  entsize;       /*!< Entry size if section holds table */
+    //word_t  link;          /**< Index of another section */
+    //word_t  info;          /**< Additional section information */
+    //word_t  entsize;       /**< Entry size if section holds table */
 
     kconsole << "------------------------------------------------------------------------" << endl
              << "Section header" << endl
@@ -153,7 +153,7 @@ static bool module_already_loaded(address_t from, cstring_t name, module_descrip
 }
 
 
-/*!
+/**
  * Load data from ELF file into a predefined location, relocate it and return entry point address or
  * a closure location (if closure_name is not null).
  *

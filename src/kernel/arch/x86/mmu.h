@@ -38,6 +38,9 @@
 #include "ia32.h"
 // #include "x86_protection_domain.h"
 
+/**
+ * MMU control for Intel 32 bit.
+ */
 class ia32_mmu_t
 {
 public:
@@ -57,7 +60,7 @@ public:
 //     static void set_active_pagetable(x86_protection_domain_t& pdom);
 };
 
-/*!
+/**
  * Flushes the tlb
  *
  * @param global specifies whether global TLB entries are also flushed
@@ -81,16 +84,19 @@ inline void ia32_mmu_t::flush_page_directory(bool global)
                     : "i" (~IA32_CR4_PGE), "i" (IA32_CR4_PGE));
 }
 
-/*!
+/**
  * Flushes the TLB entry for a linear address
  *
- * @param virt linear address
+ * @param linear linear address
  */
-inline void ia32_mmu_t::flush_page_directory_entry(address_t virt)
+inline void ia32_mmu_t::flush_page_directory_entry(address_t linear)
 {
-    asm volatile ("invlpg (%0)\n" :: "r"(virt));
+    asm volatile ("invlpg (%0)\n" :: "r"(linear));
 }
 
+/**
+ * Set a flag in CR0.
+ */
 inline void ia32_cr0_set(uint32_t flag)
 {
     uint32_t dummy;
@@ -101,6 +107,9 @@ inline void ia32_cr0_set(uint32_t flag)
                   : "ir"(flag));
 }
 
+/**
+ * Set a flag in CR4.
+ */
 inline void ia32_cr4_set(uint32_t flag)
 {
     uint32_t dummy;
@@ -111,7 +120,7 @@ inline void ia32_cr4_set(uint32_t flag)
                   : "ir"(flag));
 }
 
-/*!
+/**
  * Enables extended page size (4M) support for IA32
  */
 inline void ia32_mmu_t::enable_4mb_pages()
@@ -119,7 +128,7 @@ inline void ia32_mmu_t::enable_4mb_pages()
     ia32_cr4_set(IA32_CR4_PSE);
 }
 
-/*!
+/**
  * Enables global page support for IA32
  */
 inline void ia32_mmu_t::enable_global_pages()
@@ -127,7 +136,7 @@ inline void ia32_mmu_t::enable_global_pages()
     ia32_cr4_set(IA32_CR4_PGE);
 }
 
-/*!
+/**
  * Enables paged mode for IA32
  */
 inline void ia32_mmu_t::enable_paged_mode()
@@ -135,6 +144,9 @@ inline void ia32_mmu_t::enable_paged_mode()
     asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
 }
 
+/**
+ * Check if paging is enabled.
+ */
 inline bool ia32_mmu_t::paged_mode_enabled()
 {
     uint32_t cr0;
@@ -142,7 +154,7 @@ inline bool ia32_mmu_t::paged_mode_enabled()
     return (cr0 & IA32_CR0_PG) != 0;
 }
 
-/*!
+/**
  * @returns the linear address of the last pagefault
  */
 inline address_t ia32_mmu_t::get_pagefault_address()
@@ -152,7 +164,7 @@ inline address_t ia32_mmu_t::get_pagefault_address()
     return faulting_address;
 }
 
-/*!
+/**
  * Get the active page table
  *
  * @returns the physical base address of the currently active page directory
@@ -164,7 +176,7 @@ inline physical_address_t ia32_mmu_t::get_active_pagetable()
     return ret;
 }
 
-/*!
+/**
  * Sets the active page table
  *
  * @param page_dir_physical page directory physical base address

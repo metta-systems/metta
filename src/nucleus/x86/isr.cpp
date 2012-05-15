@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// TODO: this will go into interrupt_dispatcher
+/// @todo This should go into interrupt_dispatcher.
 //
 #include "isr.h"
 #include "idt.h"
@@ -19,12 +19,12 @@ extern "C"
     void irq_handler(registers_t regs);
 }
 
-/*!
-* Handles a software interrupt/CPU exception.
-* This is architecture specific!
-* It gets called from our asm interrupt handler stub.
-* TODO: implement handling from usermode.
-*/
+/**
+ * Handles a software interrupt/CPU exception.
+ * This is architecture specific!
+ * It gets called from our asm interrupt handler stub.
+ * @todo Implement handling from usermode.
+ */
 void isr_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received interrupt: " << regs.int_no << endl;
@@ -36,11 +36,11 @@ void isr_handler(registers_t regs)
     }
 }
 
-/*!
-* Handles a hardware interrupt request.
-* This is architecture specific!
-* It gets called from our asm hardware interrupt handler stub.
-*/
+/**
+ * Handles a hardware interrupt request.
+ * This is architecture specific!
+ * It gets called from our asm hardware interrupt handler stub.
+ */
 void irq_handler(registers_t regs)
 {
     kconsole << YELLOW << "Received irq: " << regs.int_no-32 << endl;

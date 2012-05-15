@@ -62,7 +62,7 @@ void default_console_t::newline()
     print_char(eol);
 }
 
-/*! Print decimal integer */
+/** Print decimal integer */
 void default_console_t::print_int(int n)
 {
     if (n == 0)
@@ -91,7 +91,7 @@ void default_console_t::print_int(int n)
     }
 }
 
-/*! Print hexadecimal byte */
+/** Print hexadecimal byte */
 void default_console_t::print_byte(unsigned char n)
 {
     const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
@@ -101,7 +101,7 @@ void default_console_t::print_byte(unsigned char n)
     print_char(c);
 }
 
-/*! Print hexadecimal integer */
+/** Print hexadecimal integer */
 void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
@@ -109,7 +109,7 @@ void default_console_t::print_hex(uint32_t n)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
 
-/*! Print 64 bit hex integer */
+/** Print 64 bit hex integer */
 void default_console_t::print_hex8(unsigned long long n)
 {
     print_str("0x");
@@ -117,7 +117,7 @@ void default_console_t::print_hex8(unsigned long long n)
         print_byte((n >> (i-1)*8) & 0xFF);
 }
 
-/*! Print a single character */
+/** Print a single character */
 void default_console_t::print_char(char ch)
 {
     switch (ch)
@@ -144,14 +144,14 @@ void default_console_t::print_unprintable(char ch)
     print_char(ch);
 }
 
-/*! Wait for Enter key press and release on keyboard */
+/** Wait for Enter key press and release on keyboard */
 void default_console_t::wait_ack()
 {
     char buf[32];
     cin >> buf;
 }
 
-/*! Print string without formatting */
+/** Print string without formatting */
 void default_console_t::print_str(const char *str)
 {
     char *b = (char *)str;

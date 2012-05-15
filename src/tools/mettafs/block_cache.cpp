@@ -128,7 +128,7 @@ block_cache_t::~block_cache_t()
 {
 }
 
-/*!
+/**
  * Find the block in the cache.
  * Assumes all necessary locks are held (acts as internal worker function).
  * If block is busy doing I/O will wait a certain amount of time (not implemented for single-threaded test).
@@ -146,7 +146,7 @@ cache_block_t* block_cache_t::block_lookup(deviceno_t device, block_device_t::bl
 	return NULL;
 }
 
-/*!
+/**
  * Write out all cached blocks for device dev.
  */
 bool block_cache_t::flush(deviceno_t dev)
@@ -185,7 +185,7 @@ size_t block_cache_t::unwritten_blocks()
     return n;
 }
 
-/*!
+/**
  * Blocks we are trying to get may be either busy, locked or dirty. In either case, we cannot discard them and reuse for anything.
  * We also need to keep track that the blocks we've taken are of correct size, and if not - reallocate them.
  */
@@ -255,7 +255,7 @@ size_t block_cache_t::byte_write(deviceno_t device, off_t byte_offset, const cha
 	return cached_write(device, byte_offset / block_size, data, nbytes / block_size, block_size);
 }
 
-/*!
+/**
  * @returns number of blocks successfully read.
  */
 size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t block_n, void* data, size_t nblocks, size_t block_size)

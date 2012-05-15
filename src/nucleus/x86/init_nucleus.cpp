@@ -6,8 +6,10 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Nucleus is the privileged part of the whole system.
-// It contains privileged tables like GDT and IDT on x86, as well as interrupt handler stubs and their management.
+/**
+ * Nucleus is the privileged part of the whole system.
+ * It contains privileged tables like GDT and IDT on x86, as well as interrupt handler stubs and their management.
+ */
 #include "gdt.h"
 #include "idt.h"
 #include "isr.h"
@@ -108,7 +110,7 @@ first_syscall_handler_t syscall_handler;
 
 static global_descriptor_table_t gdt; // FIXME: use a singleton accessor like for interrupt_descriptor_table?
 
-/*!
+/**
  * Initialize single core system tables, interrupt handler stubs and syscall interface.
  * TODO: this goes into nucleus .init.code - as this code runs once and then can be dumped.
  */

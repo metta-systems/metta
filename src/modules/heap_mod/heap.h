@@ -15,19 +15,19 @@
 //At least sizeof(heap_t)+3*sizeof(heap_t::heap_rec_t)
 #define HEAP_MIN_SIZE (256)
 
-/*!
-* Implements a heap. The algorithm is based on dlmalloc and uses tagged
-* areas plus free blocks lists (sorted by allocation size).
-* Every free or allocated area (block) has a header and footer around it.
-* The footer has a pointer to the header, with the header also containing
-* size information.
-*/
+/**
+ * Implements a heap. The algorithm is based on dlmalloc and uses tagged
+ * areas plus free blocks lists (sorted by allocation size).
+ * Every free or allocated area (block) has a header and footer around it.
+ * The footer has a pointer to the header, with the header also containing
+ * size information.
+ */
 class heap_t : public lockable_t
 {
 public:
     inline heap_t() : lockable_t() {}
 
-    /*!
+    /**
      * Create a new Heap, with start address @a start, initial size @a end minus @a start,
      * and expanding up to a maximum address of @a max.
      */
@@ -39,30 +39,30 @@ public:
 
     void init(address_t start, address_t end);//, heap_v1_closure* heap_closure);
 
-    /*!
+    /**
      * Allocates a contiguous region of memory @a size in size.
      * @return start address of the allocated memory block.
      */
     void* allocate(size_t size);
 
-    /*!
+    /**
      * Releases a block allocated with @a allocate.
      * Releasing a NULL pointer is safe and has no effect.
      */
     void free(void* p);
 
-    /*!
+    /**
      * Reallocate memory block starting at @a ptr to be of size @a size.
      * @return start address of the memory block.
      */
     void* realloc(void* ptr, size_t size);
 
-    /*!
+    /**
      * Tries to detect buffer overruns by walking the heap and checking magic numbers.
      */
     void check_integrity();
 
-    /*!
+    /**
      * @return the current heap size. For analysis purposes.
      */
     inline size_t size()
@@ -71,13 +71,13 @@ public:
     }
 
 private:
-    /*!
+    /**
      * Increase the size of the heap, by requesting pages to be allocated.
      * Heap size increases from @a size to the nearest page boundary above @a new_size.
      */
     void expand(size_t new_size);
 
-    /*!
+    /**
      * Decrease the size of the heap, by requesting pages to be deallocated.
      * Heap size decreases from @a size to the nearest page boundary above @a new_size.
      * @returns the new size (end_address minus start_address) which is not guaranteed to be the
@@ -116,11 +116,11 @@ private:
     heap_rec_t* blocks[COUNT];
     heap_rec_t* null_malloc;
 
-    /*!
+    /**
      * The start of our allocated space.
      */
     address_t start_address;
-    /*!
+    /**
      * The end of our currently allocated space. May be expanded if heap type supports it.
      */
     address_t end_address;

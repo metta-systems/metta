@@ -11,24 +11,24 @@
 #include "types.h"
 #include "macros.h"
 
-/*!
+/**
  * A particular type of loader format (e.g. multiboot-compliant loader).
  */
 class loader_format_t
 {
 public:
-    /*!
+    /**
      * String describing current loader format.
      */
     const char* name;
 
-    /*!
+    /**
      * Detect if a valid loader format of this particular type is present.
      * @returns true if format found, false otherwise.
      */
     bool (*probe)(void);
 
-    /*!
+    /**
      * Initialize everything according to loader format.
      * This function will parse sysimage, install nucleus, load necessary pre-boot environment 
      * and return an entry point address to jump to for continuing the boot sequence.
@@ -39,7 +39,7 @@ public:
 
 #define NULL_LOADER { "null", NULL, NULL }
 
-/*!
+/**
  * NULL_LOADER-terminated array of loader formats.
  */
 extern loader_format_t loader_formats[];

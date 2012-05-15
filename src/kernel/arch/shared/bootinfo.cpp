@@ -18,7 +18,9 @@
 // internal structures
 //======================================================================================================================
 
-/*!
+/**
+ * @class bootinfo_t
+ * <pre>
  * boot info page layout
  * -------------------- START of page
  * 4 bytes magic (0xbeefdea1)
@@ -28,6 +30,7 @@
  * then a list of bootrec_t subtypes
  * (free space)
  * -------------------- END of page
+ * </pre>
  *
  * bootrec subtypes:
  * size is the size of the entire record, including bootrec_t header (so, cur + size will equal start of next record).
@@ -396,15 +399,17 @@ address_t bootinfo_t::find_usable_physical_memory_top()
 	return top;
 }
 
-/*!
+/**
  * Find usable memory range of given size above the low memory (which means 1Mb mark on x86).
  *
+ * <pre>
  *   |+++++++++++++++++++++++|  |++++++++++++| |+++++++++++++| free base
  *             |---||----|      |----|                   |---| non-free overlay
  *   |++++++++|           |++|        |++++++| |++++++++|      resulting map
  *                              ^
  *   ^                          +-LOWER_BOUND
  *   +-first_range_start
+ * </pre>
  */
 address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
 {
@@ -467,7 +472,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
     return first_range;
 }
 
-/*!
+/**
  * Find an entry containing given address range (start, start + size).
  *
  * Four variants:
@@ -482,7 +487,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
  * ?? @returns n_way == 1 if entry is split in two parts, beginning is used
  * @returns n_way == 2 if entry is split in two parts, end is used
  * @returns n_way == 3 if entry is split in three parts
- * FIXME: magic numbers.
+ * @todo Remove magic numbers.
  */
 multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size_t size, int& n_way)
 {
@@ -515,17 +520,17 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
     return ret;
 }
 
-/*!
+/**
  * Use memory (start, start + size) from a given range, this will cause a split of found range into 2 or 3 regions, 
  * one or two of which will remain free, and one will be marked occupied. Will perform various consistency checks 
  * and add new regions to bootinfo_t memory map.
  *
  * @returns false if memory could not be used.
  * @returns true if memory map is updated successfully.
+ * @todo Also add used memory to VMAP?
+ * @todo Calls to use_memory should not augment original entries, should just put used regions on top as an overlay
+ * this would help frames mod initialisation to build proper physical frame regions.
  */
-// TODO: also add used memory to VMAP?
-// FIXME: use_memory should not augment original entries, should just put used regions on top as an overlay
-// this would help frames mod initialisation to build proper physical frame regions.
 bool bootinfo_t::use_memory(address_t start, size_t size)
 {
 	multiboot_t::mmap_entry_t temp_entry;

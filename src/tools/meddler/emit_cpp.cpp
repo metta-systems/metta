@@ -19,7 +19,7 @@ using namespace std;
 namespace AST
 {
 
-/*!
+/**
  * Map IDL builtin types to C++ emitter types.
  */
 static string map_type(string type)
@@ -51,7 +51,7 @@ static string map_type(string type)
         return string();
 }
 
-/*!
+/**
  * If a given type needs include directive, return one, otherwise return empty string.
  */
 /*static std::string needs_include(string type)
@@ -113,7 +113,7 @@ static std::string replace_dots(std::string input)
     return input;
 }
 
-/*!
+/**
  * Generate a qualified name for a given var decl type.
  */
 static std::string emit_type(alias_t& type, bool fully_qualify_type = false)

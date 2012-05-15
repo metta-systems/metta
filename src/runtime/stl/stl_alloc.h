@@ -738,7 +738,7 @@ struct uses_lakos_allocator : __false_type {};
 template <typename _Type>
 struct is_lakos_allocator<allocator<_Type>> : __true_type {};
 
-/*!
+/**
 // Another allocator adaptor: _Alloc_traits.  This serves two
 // purposes.  First, make it possible to write containers that can use
 // either SGI-style allocators or standard-conforming allocator.

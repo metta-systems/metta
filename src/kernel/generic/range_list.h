@@ -11,7 +11,7 @@
 // #include "stl/list"
 #include "default_console.h"
 
-/*!
+/**
  * This class manages a list of ranges. It automatically merges adjacent entries in the list.
  *
  * @param[in] type_t integer type the range start and length are encoded with.
@@ -50,7 +50,7 @@ public:
     // 
     // inline range_list_t() : ranges() {}
 
-    /*!
+    /**
      * Construct with a preexisting range.
      * @param[in] start  beginning of the range.
      * @param[in] length length of the range.
@@ -61,7 +61,7 @@ public:
     //     ranges.push_back(new range_t(start, length));
     // }
 
-    /*! Deep-copy constructor. */
+    /** Deep-copy constructor. */
 //     range_list_t(const range_list_t& other)
 //         : ranges()
 //     {
@@ -76,7 +76,7 @@ public:
 //             ranges.push_back(new range_t(r->start, r->length));*/
 //     }
 
-    /*! Deep-copy assignment operator. */
+    /** Deep-copy assignment operator. */
 //     range_list_t& operator =(const range_list_t& other)
 //     {
 //         clear();
@@ -91,10 +91,10 @@ public:
 //         return *this;
 //     }
 
-    /*! Destructor frees the list. */
+    /** Destructor frees the list. */
     // ~range_list_t() { clear(); }
 
-    /*!
+    /**
      * Allocate a range of a specific size. Pick a first-fit region.
      * @param[in,out] start The beginning address of the allocated range.
      * @param[in] length The requested length.
@@ -123,7 +123,7 @@ public:
     //     return false;
     // }
 
-    /*!
+    /**
      * Allocate a range of specific size and beginning address.
      * @param[in] start The beginning address.
      * @param[in] length The length.
@@ -167,7 +167,7 @@ public:
     //     return false;
     // }
 
-    /*!
+    /**
      * Allocate a range of specific size and beginning address, with overlapping allowed.
      * @param[in] start The beginning address.
      * @param[in] length The length.
@@ -210,7 +210,7 @@ public:
     //     }
     // }
 
-    /*!
+    /**
      * Free a range.
      * @param[in] start Beginning address of the range.
      * @param[in] length Length of the range.
@@ -259,7 +259,7 @@ public:
     //     ranges.clear();
     // }
 
-    /*!
+    /**
      * Get the number of ranges in the list.
      * @return the number of ranges in the list.
      */

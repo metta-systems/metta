@@ -8,6 +8,9 @@
 //
 #pragma once
 
+/**
+ * @brief NE2000 NIC related registers.
+ */
 namespace ne2k_card
 {
 

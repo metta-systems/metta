@@ -14,7 +14,7 @@
 
 namespace bootimage_n { struct namespace_entry_t; }
 
-/*!
+/**
  * Bootimage is similar to Nemesis' nexus - it contains information about modules, dependencies, namespaces
  * and everything else required for successful startup.
  *

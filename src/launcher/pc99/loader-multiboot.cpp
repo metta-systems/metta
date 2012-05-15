@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Loader version that supports multiboot specification.
+// Loader with multiboot specification support.
 //
 #include "multiboot.h"
 #include "bootinfo.h"
@@ -18,7 +18,7 @@
 #include "bootimage.h"
 #include "root_domain.h"
 
-/*!
+/**
  * Check if a valid multiboot info structure is present.
  */
 bool mbi_probe()
@@ -73,7 +73,7 @@ bool mbi_probe()
 
 extern "C" void arch_prepare();
 
-/*!
+/**
  * Init function that understands multiboot info structure.
  *
  * The procedure goes as follows:
@@ -110,9 +110,7 @@ address_t mbi_prepare()
 
     // Load and relocate root domain bootstrapper.
     root_domain_t root_dom(bootimage);
-//     kconsole << "+ root_domain entry @ 0x" << root_dom.entry() << endl;
 
     // Return bootstrapper's entry point address.
-    // return (address_t)bi->get_module_loader().load_module("root_domain", elf, NULL);
     return root_dom.entry();
 }

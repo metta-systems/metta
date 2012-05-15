@@ -9,6 +9,7 @@
 #pragma once
 
 #include "types.h"
+#include "panic.h"
 #include "cstring.h"
 
 #ifndef endl
@@ -37,7 +38,7 @@ enum Color {
     ERROR = LIGHTRED
 };
 
-/*!
+/**
  * Abstract base class for console output.
  */
 class console_t
@@ -72,8 +73,8 @@ public:
     inline void print(void *p) { print((uint32_t)p); }
     inline void print(uint64_t n) { print_hex8(n); }
     inline void print(const char* str) { print_str(str); }
-    /*template<typename T, typename... Args>
-    void print(const char* str, T value, Args... args);*/
+    template<typename T, typename... Args>
+    void print(const char* str, T value, Args... args);
 
     virtual void wait_ack() = 0;
 
@@ -157,8 +158,6 @@ inline console_t& operator << (console_t& con, const cstring_t& data)
     return con;
 }
 
-/*doesn't work with clang
-
 template<typename T, typename... Args>
 void console_t::print(const char* str, T value, Args... args)
 {
@@ -173,4 +172,4 @@ void console_t::print(const char* str, T value, Args... args)
         print(*str++);
     }
     PANIC("console: extra arguments provided to print");
-}*/
+}

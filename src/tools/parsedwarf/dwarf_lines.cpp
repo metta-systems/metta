@@ -10,7 +10,7 @@
 #include "local_panic.h"
 #include "dwarf_debug.h"
 
-/*!
+/**
  * @returns true if program line is complete and can be added to matrix, false otherwise.
  */
 bool lineprogram_regs_t::execute(address_t from, size_t& offset)

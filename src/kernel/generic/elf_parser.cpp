@@ -43,7 +43,7 @@ elf_parser_t::program_iterator::program_iterator(program_header_t* entry, progra
 
 program_header_t& elf_parser_t::program_iterator::operator *()
 {
-    return *ptr; // FIXME: dereferencing end() will fault
+    return *ptr; /// @todo Dereferencing end() will fault.
 }
 
 void elf_parser_t::program_iterator::operator ++()
@@ -67,7 +67,7 @@ elf_parser_t::section_iterator::section_iterator(section_header_t* entry, sectio
 
 section_header_t& elf_parser_t::section_iterator::operator *()
 {
-    return *ptr; // FIXME: dereferencing end() will fault
+    return *ptr; /// @todo Dereferencing end() will fault.
 }
 
 void elf_parser_t::section_iterator::operator ++(int)
@@ -242,7 +242,7 @@ if (x) { \
 #undef ERROR_RETURN_ON
 }
 
-/*!
+/**
  * Parse ELF program image, finding corresponding sections.
  */
 bool elf_parser_t::parse(address_t start)
@@ -263,6 +263,9 @@ bool elf_parser_t::is_relocatable() const
 //         || section_header_by_type(SHT_RELA) != 0);
 }
 
+/**
+ * Relocate elf module to specified load address.
+ */
 bool elf_parser_t::relocate_to(address_t load_address)
 {
     section_header_t* shstrtab = section_shstring_table();
@@ -304,6 +307,9 @@ bool elf_parser_t::relocate_to(address_t load_address)
     return true;
 }
 
+/**
+ * Apply single relocation to symbol.
+ */
 bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_header_t* target_sect, address_t load_address)
 {
     V(section_header_t* shstrtab = section_shstring_table());

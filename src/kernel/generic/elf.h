@@ -6,125 +6,126 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// ELF file format structure definitions.
-// According to Portable Formats Specification, version 1.2
-//
 #pragma once
 
 #include "types.h"
 #include "macros.h"
 
+/**
+ * @brief ELF file format structure definitions.
+ *
+ * According to Portable Formats Specification, version 1.2
+ */
 namespace elf32
 {
 
-
-/*!
+/**
  * ELF data types
  */
-typedef uint32_t  addr_t;  /*!< 4 bytes/4 align/unsigned */
-typedef uint16_t  half_t;  /*!< 2 bytes/2 align/unsigned */
-typedef uint32_t  off_t;   /*!< 4 bytes/4 align/unsigned */
-typedef  int32_t  sword_t; /*!< 4 bytes/4 align/signed   */
-typedef uint32_t  word_t;  /*!< 4 bytes/4 align/unsigned */
-typedef  uint8_t  byte_t;  /*!< 1 byte /1 align/unsigned */
+typedef uint32_t  addr_t;  /**< 4 bytes/4 align/unsigned */
+typedef uint16_t  half_t;  /**< 2 bytes/2 align/unsigned */
+typedef uint32_t  off_t;   /**< 4 bytes/4 align/unsigned */
+typedef  int32_t  sword_t; /**< 4 bytes/4 align/signed   */
+typedef uint32_t  word_t;  /**< 4 bytes/4 align/unsigned */
+typedef  uint8_t  byte_t;  /**< 1 byte /1 align/unsigned */
 
 
-/*!
+/**
  * ELF file Header
  */
 struct header_t
 {
     word_t  magic;
-    byte_t  elfclass;       /*!< File class */
-    byte_t  data;           /*!< Data encoding */
-    byte_t  hdrversion;     /*!< File version */
+    byte_t  elfclass;       /**< File class */
+    byte_t  data;           /**< Data encoding */
+    byte_t  hdrversion;     /**< File version */
     byte_t  padding[9];
-    half_t  type;           /*!< Identifies object file type */
-    half_t  machine;        /*!< Specifies required architecture */
-    word_t  version;        /*!< Identifies object file version */
-    addr_t  entry;          /*!< Entry point virtual address */
-    off_t   phoff;          /*!< Program header table file offset */
-    off_t   shoff;          /*!< Section header table file offset */
-    word_t  flags;          /*!< Processor-specific flags */
-    half_t  ehsize;         /*!< ELF header size in bytes */
-    half_t  phentsize;      /*!< Program header table entry size */
-    half_t  phnum;          /*!< Program header table entry count */
-    half_t  shentsize;      /*!< Section header table entry size */
-    half_t  shnum;          /*!< Section header table entry count */
-    half_t  shstrndx;       /*!< Section header string table index */
+    half_t  type;           /**< Identifies object file type */
+    half_t  machine;        /**< Specifies required architecture */
+    word_t  version;        /**< Identifies object file version */
+    addr_t  entry;          /**< Entry point virtual address */
+    off_t   phoff;          /**< Program header table file offset */
+    off_t   shoff;          /**< Section header table file offset */
+    word_t  flags;          /**< Processor-specific flags */
+    half_t  ehsize;         /**< ELF header size in bytes */
+    half_t  phentsize;      /**< Program header table entry size */
+    half_t  phnum;          /**< Program header table entry count */
+    half_t  shentsize;      /**< Section header table entry size */
+    half_t  shnum;          /**< Section header table entry count */
+    half_t  shstrndx;       /**< Section header string table index */
 } PACKED;
 
 /* header.magic */
-#define ELF_MAGIC  0x464c457f    /*!< ASCII "ELF",0x7F */
+#define ELF_MAGIC  0x464c457f    /**< ASCII "ELF",0x7F */
 
 /* header.elfclass */
-#define ELF_CLASS_NONE 0x00      /*!< Invalid class  */
-#define ELF_CLASS_32   0x01      /*!< 32 bit objects */
-#define ELF_CLASS_64   0x02      /*!< 64 bit objects */
+#define ELF_CLASS_NONE 0x00      /**< Invalid class  */
+#define ELF_CLASS_32   0x01      /**< 32 bit objects */
+#define ELF_CLASS_64   0x02      /**< 64 bit objects */
 
 /* header.data */
-#define ELF_DATA_NONE  0x00      /*!< Invalid data encoding   */
-#define ELF_DATA_2LSB  0x01      /*!< LSB (Intel) encoding    */
-#define ELF_DATA_2MSB  0x02      /*!< MSB (Motorola) encoding */
+#define ELF_DATA_NONE  0x00      /**< Invalid data encoding   */
+#define ELF_DATA_2LSB  0x01      /**< LSB (Intel) encoding    */
+#define ELF_DATA_2MSB  0x02      /**< MSB (Motorola) encoding */
 
 /* header.type */
-#define ET_NONE    0x0000        /*!< No type     */
-#define ET_REL     0x0001        /*!< Relocatable */
-#define ET_EXEC    0x0002        /*!< Executable  */
-#define ET_DYN     0x0003        /*!< Shared      */
-#define ET_CORE    0x0004        /*!< Core        */
-#define ET_LOPROC  0xff00        /*!< Processor-specific start */
-#define ET_HIPROC  0xffff        /*!< Processor-specific end */
+#define ET_NONE    0x0000        /**< No type     */
+#define ET_REL     0x0001        /**< Relocatable */
+#define ET_EXEC    0x0002        /**< Executable  */
+#define ET_DYN     0x0003        /**< Shared      */
+#define ET_CORE    0x0004        /**< Core        */
+#define ET_LOPROC  0xff00        /**< Processor-specific start */
+#define ET_HIPROC  0xffff        /**< Processor-specific end */
 
 /* header.machine */
-#define EM_NONE  0x0000          /*!< No machine     */
-#define EM_M32   0x0001          /*!< AT&T WE32100   */
-#define EM_SPARC 0x0002          /*!< SPARC          */
-#define EM_386   0x0003          /*!< x86            */
-#define EM_68K   0x0004          /*!< Motorola 68000 */
-#define EM_88K   0x0005          /*!< Motorola 88000 */
-#define EM_860   0x0007          /*!< Intel 80860    */
-#define EM_MIPS  0x0008          /*!< MIPS RS3000 big-endian    */
-#define EM_MIPS_RS4_BE 0x000a    /*!< MIPS RS4000 big-endian */
+#define EM_NONE  0x0000          /**< No machine     */
+#define EM_M32   0x0001          /**< AT&T WE32100   */
+#define EM_SPARC 0x0002          /**< SPARC          */
+#define EM_386   0x0003          /**< x86            */
+#define EM_68K   0x0004          /**< Motorola 68000 */
+#define EM_88K   0x0005          /**< Motorola 88000 */
+#define EM_860   0x0007          /**< Intel 80860    */
+#define EM_MIPS  0x0008          /**< MIPS RS3000 big-endian    */
+#define EM_MIPS_RS4_BE 0x000a    /**< MIPS RS4000 big-endian */
 
 /* header.version */
-#define EV_NONE        0         /*!< Invalid version */
-#define EV_CURRENT     1         /*!< Current version */
+#define EV_NONE        0         /**< Invalid version */
+#define EV_CURRENT     1         /**< Current version */
 
 
-/*!
+/**
  * Section header entry.
  */
 struct section_header_t
 {
-    word_t  name;          /*!< Section name, index in section string table */
-    word_t  type;          /*!< Type of section */
-    word_t  flags;         /*!< Miscellaneous section attributes */
-    addr_t  vaddr;         /*!< Section virtual addr at execution */
-    off_t   offset;        /*!< Section file offset */
-    word_t  size;          /*!< Size of section in bytes */
-    word_t  link;          /*!< Index of another section */
-    word_t  info;          /*!< Additional section information */
-    word_t  addralign;     /*!< Section alignment */
-    word_t  entsize;       /*!< Entry size if section holds table */
+    word_t  name;          /**< Section name, index in section string table */
+    word_t  type;          /**< Type of section */
+    word_t  flags;         /**< Miscellaneous section attributes */
+    addr_t  vaddr;         /**< Section virtual addr at execution */
+    off_t   offset;        /**< Section file offset */
+    word_t  size;          /**< Size of section in bytes */
+    word_t  link;          /**< Index of another section */
+    word_t  info;          /**< Additional section information */
+    word_t  addralign;     /**< Section alignment */
+    word_t  entsize;       /**< Entry size if section holds table */
 
     /* section_header.flags */
     /* http://www.sco.com/developers/gabi/2003-12-17/ch4.sheader.html */
-#define SHF_WRITE             0x00000001 /* The section contains data that should be writable during process execution. */
-#define SHF_ALLOC             0x00000002 /* The section occupies memory during process execution. */
-#define SHF_EXECINSTR         0x00000004 /* The section contains executable machine instructions. */
-#define SHF_MERGE             0x00000010 /* Section may be merged. */
-#define SHF_STRINGS           0x00000020 /* Section contains strings. */
-#define SHF_INFO_LINK         0x00000040 /* The sh_info field of this section header holds a section header table index. */
-#define SHF_LINK_ORDER        0x00000080 /* Special ordering requirements. */
-#define SHF_OS_NONCONFORMING  0x00000100 /* OS-specific processing required. */
-#define SHF_GROUP             0x00000200 /* This section is a member (perhaps the only one) of a section group.
-                                            The section must be referenced by a section of type SHT_GROUP.
-                                            The SHF_GROUP flag may be set only for sections contained in relocatable
-                                            objects (objects with the ELF header e_type member set to ET_REL). */
-#define SHF_TLS               0x00000400 /* Section contains TLS data. */
-#define SHF_MASKOS            0x0ff00000 /* OS-specific semantics. */
-#define SHF_MASKPROC          0xf0000000 /* Processor-specific semantics. */
+#define SHF_WRITE             0x00000001 /**< The section contains data that should be writable during process execution. */
+#define SHF_ALLOC             0x00000002 /**< The section occupies memory during process execution. */
+#define SHF_EXECINSTR         0x00000004 /**< The section contains executable machine instructions. */
+#define SHF_MERGE             0x00000010 /**< Section may be merged. */
+#define SHF_STRINGS           0x00000020 /**< Section contains strings. */
+#define SHF_INFO_LINK         0x00000040 /**< The sh_info field of this section header holds a section header table index. */
+#define SHF_LINK_ORDER        0x00000080 /**< Special ordering requirements. */
+#define SHF_OS_NONCONFORMING  0x00000100 /**< OS-specific processing required. */
+#define SHF_GROUP             0x00000200 /**< This section is a member (perhaps the only one) of a section group.
+                                              The section must be referenced by a section of type SHT_GROUP.
+                                              The SHF_GROUP flag may be set only for sections contained in relocatable
+                                              objects (objects with the ELF header e_type member set to ET_REL). */
+#define SHF_TLS               0x00000400 /**< Section contains TLS data. */
+#define SHF_MASKOS            0x0ff00000 /**< OS-specific semantics. */
+#define SHF_MASKPROC          0xf0000000 /**< Processor-specific semantics. */
 
     bool is_writable()    { return (flags & SHF_WRITE) != 0; }
     bool is_allocatable() { return (flags & SHF_ALLOC) != 0; }
@@ -133,7 +134,7 @@ struct section_header_t
     void dump(const char* shstrtab);
 } PACKED;
 
-/* predefined section table indices */
+/** Predefined section table indices */
 #define SHN_UNDEF     0x0000
 #define SHN_LORESERVE 0xff00
 #define SHN_LOPROC    0xff00
@@ -144,16 +145,16 @@ struct section_header_t
 
 /* section_header.type */
 #define SHT_NULL      0x00000000
-#define SHT_PROGBITS  0x00000001 /*!< The data is contained in program file */
-#define SHT_SYMTAB    0x00000002 /*!< Symbol table */
-#define SHT_STRTAB    0x00000003 /*!< String table */
+#define SHT_PROGBITS  0x00000001 /**< The data is contained in program file */
+#define SHT_SYMTAB    0x00000002 /**< Symbol table */
+#define SHT_STRTAB    0x00000003 /**< String table */
 #define SHT_RELA      0x00000004
-#define SHT_HASH      0x00000005 /*!< Symbol hash table */
-#define SHT_DYNAMIC   0x00000006 /*!< Dynamic linking information */
+#define SHT_HASH      0x00000005 /**< Symbol hash table */
+#define SHT_DYNAMIC   0x00000006 /**< Dynamic linking information */
 #define SHT_NOTE      0x00000007
-#define SHT_NOBITS    0x00000008 /*!< The data is not contained in program file */
+#define SHT_NOBITS    0x00000008 /**< The data is not contained in program file */
 #define SHT_REL       0x00000009
-#define SHT_SHLIB     0x0000000a /*!< Reserved with unspecified semantics */
+#define SHT_SHLIB     0x0000000a /**< Reserved with unspecified semantics */
 #define SHT_DYNSYM    0x0000000b
 /* GNU extensions */
 #define SHT_INIT_ARRAY      0x0000000e
@@ -169,20 +170,20 @@ struct section_header_t
 #define SHT_LOUSER    0x80000000
 #define SHT_HIUSER    0xffffffff
 
-/*!
+/**
  * Symbol Table entry.
  */
 struct symbol_t
 {
-    word_t  name;          /*!< Symbol name, index into string table */
-    addr_t  value;         /*!< Symbol value */
-    word_t  size;          /*!< Size occupied by this symbol */
-    byte_t  info;          /*!< Symbol type and binding */
-    byte_t  other;         /*!< This member currently holds 0 and has no defined meaning. */
-    half_t  shndx;         /*!< Section index this symbol belongs to */
+    word_t  name;          /**< Symbol name, index into string table */
+    addr_t  value;         /**< Symbol value */
+    word_t  size;          /**< Size occupied by this symbol */
+    byte_t  info;          /**< Symbol type and binding */
+    byte_t  other;         /**< This member currently holds 0 and has no defined meaning. */
+    half_t  shndx;         /**< Section index this symbol belongs to */
 } PACKED;
 
-/* Symbol Table index: first/undefined entry */
+/** Symbol Table index: first/undefined entry */
 #define STN_UNDEF 0x0000
 
 /* symbol.info manipulation macros */
@@ -207,7 +208,7 @@ struct symbol_t
 #define STT_HIPROC  0xf
 
 
-/*!
+/**
  * Relocation Entries
  */
 struct rel_t
@@ -243,19 +244,19 @@ struct rela_t
 #define R_386_GOTPC     0x0a
 
 
-/*!
+/**
  * Program Header entry.
  */
 struct program_header_t
 {
-    word_t  type;           /*!< Program section type */
-    off_t   offset;         /*!< File offset */
-    addr_t  vaddr;          /*!< Execution virtual address */
-    addr_t  paddr;          /*!< Execution physical address */
-    word_t  filesz;         /*!< Size in file */
-    word_t  memsz;          /*!< Size in memory */
-    word_t  flags;          /*!< Section flags */
-    word_t  align;          /*!< Section alignment */
+    word_t  type;           /**< Program section type */
+    off_t   offset;         /**< File offset */
+    addr_t  vaddr;          /**< Execution virtual address */
+    addr_t  paddr;          /**< Execution physical address */
+    word_t  filesz;         /**< Size in file */
+    word_t  memsz;          /**< Size in memory */
+    word_t  flags;          /**< Section flags */
+    word_t  align;          /**< Section alignment */
 
     void dump();
 };
@@ -278,7 +279,7 @@ struct program_header_t
 #define PF_MASKPROC 0xf0000000
 
 
-/*!
+/**
  * Dynamic linking info
  */
 struct dyn_t
@@ -323,7 +324,7 @@ struct dyn_t
 #define DT_HIPROC   0x7fffffff
 
 
-/*! Symbol Hash table hashing function */
+/** Symbol Hash table hashing function */
 inline uint32_t elf_hash(const char* name)
 {
     uint32_t h = 0, g;

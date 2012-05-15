@@ -10,14 +10,14 @@
 
 #include "types.h"
 
-/*!
+/**
  * @brief Memory utilities similar to standard libc operations.
  * @todo Quite unoptimized at the moment, memory ops should be significantly slow.
  * Easy optimization would be __builtin_memcpy() and friends.
  */
 namespace memutils {
 
-/*!
+/**
  * Fill a region of memory with the given value.
  * @param[out] dest  Pointer to the start of the area.
  * @param[in]  value The byte to fill the area with
@@ -49,7 +49,7 @@ inline void* fill_memory(void* dest, int value, size_t count)
     return dest;
 }
 
-/*!
+/**
  * Clear a region of memory. Usually sets given area to zero, but a debug implementation might want to clear with
  * a known pattern or do something else.
  * @param[out] dest  Pointer to the start of the area.
@@ -63,7 +63,7 @@ inline void* clear_memory(void* dest, size_t count)
     return fill_memory(dest, 0, count);
 }
 
-/*!
+/**
  * Copy one area of memory to another.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from
@@ -88,7 +88,7 @@ inline address_t copy_memory(address_t dest, address_t src, size_t count)
     return reinterpret_cast<address_t>(copy_memory(reinterpret_cast<void*>(dest), reinterpret_cast<const void*>(src), count));
 }
 
-/*!
+/**
  * Copy one area of memory to another.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from
@@ -113,7 +113,7 @@ inline void* move_memory(void* dest, const void* src, size_t count)
     return dest;
 }
 
-/*!
+/**
  * Compare two regions of memory.
  * @param[in]  left  First memory region.
  * @param[in]  right Second memory region.
@@ -131,7 +131,7 @@ inline bool is_memory_equal(const void* left, const void* right, size_t count)
     return true;
 }
 
-/*!
+/**
  * Compare two regions of memory.
  * @param[in]  left  First memory region.
  * @param[in]  right Second memory region.
@@ -152,7 +152,7 @@ inline int memory_difference(const void* left, const void* right, size_t count)
     return 0;
 }
 
-/*!
+/**
  * Compare two null-terminated strings.
  * @param[in] s1 One string
  * @param[in] s2 Another string
@@ -174,7 +174,7 @@ inline bool is_string_equal(const char *s1, const char *s2)
     return __res == 0;
 }
 
-/*!
+/**
  * Return size of a null-terminated string.
  * @param[in] s  Null-terminated string.
  * @returns      String length in bytes.
@@ -188,7 +188,7 @@ inline size_t string_length(const char *s)
     return len;
 }
 
-/*!
+/**
  * Copy one string to another location.
  * @param[out] dest  Where to copy to
  * @param[in]  src   Where to copy from
@@ -209,7 +209,3 @@ inline char* copy_string(char* dest, const char* src, size_t max_length = 0)
 }
 
 } // namespace memutils
-
-// #if __Metta__ && defined(__GNUC__)
-// extern "C" void* memmove(void* dest, const void* src, size_t count);
-// #endif

@@ -11,7 +11,7 @@
 #include "types.h"
 #include "ia32.h"
 
-/*!
+/**
  * Round down address to a nearest frame width.
  */
 inline address_t phys_frame_number(address_t addr)
@@ -19,7 +19,7 @@ inline address_t phys_frame_number(address_t addr)
     return addr >> FRAME_WIDTH;
 }
 
-/*!
+/**
  * Roundup a value "size" up to an integral number of frames of width "frame_width".
  * @return Number of frames.
  */
@@ -35,7 +35,7 @@ inline T size_in_whole_pages(T size_in_bytes)
     return size_in_whole_frames(size_in_bytes, PAGE_WIDTH);
 }
 
-/*!
+/**
  * Roundup a value "size" up to an integral number of frames of width "frame_width".
  * @return Number of bytes.
  */
@@ -45,7 +45,7 @@ inline S align_to_frame_width(S size, W frame_width)
     return (size + (1 << frame_width) - 1) & ~((1UL << frame_width) - 1);
 }
 
-/*!
+/**
  * Convert "bytes" into a number of frames of logical width "frame_width".
  */
 inline size_t bytes_to_log_frames(size_t bytes, size_t frame_width)
@@ -58,35 +58,45 @@ inline size_t log_frames_to_bytes(size_t frames, size_t frame_width)
     return frames << frame_width;
 }
 
-//! Return bytes needed to align @c addr to next @c size boundary. Size must be power of 2.
+/**
+ * Return bytes needed to align @c addr to next @c size boundary. Size must be power of 2.
+ */
 template <typename T, typename U>
 inline T align_bytes(T addr, U size)
 {
     return (size - (addr & (size - 1))) & (size - 1);
 }
 
-//! Align @c addr up to next @c size boundary and return. Size must be power of 2.
+/**
+ * Align @c addr up to next @c size boundary and return. Size must be power of 2.
+ */
 template <typename T, typename U>
 inline T align_up(T addr, U size)
 {
     return (addr + size - 1) & ~(size - 1);
 }
 
-//! Align @c addr up to next page size boundary and return.
+/**
+ * Align @c addr up to next page size boundary and return.
+ */
 template <typename T>
 inline T page_align_up(T addr)
 {
     return align_up(addr, PAGE_SIZE);
 }
 
-//! Align @c addr down to previous page size boundary and return.
+/**
+ * Align @c addr down to previous page size boundary and return.
+ */
 template <typename T>
 inline T page_align_down(T addr)
 {
     return addr - addr % PAGE_SIZE;
 }
 
-//! Align @c addr down to previous page size boundary and return.
+/**
+ * Align @c addr down to previous page size boundary and return.
+ */
 template <typename T>
 inline T page_align_down(void* addr)
 {
@@ -106,7 +116,9 @@ inline bool is_aligned_to_frame_width(S size, W frame_width)
     return (size & ((1UL << frame_width) - 1)) == 0;
 }
 
-//! Check that @c addr is aligned to page boundary.
+/**
+ * Check that @c addr is aligned to page boundary.
+ */
 template <typename T>
 inline bool is_page_aligned(T addr)
 {

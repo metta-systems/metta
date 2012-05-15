@@ -16,6 +16,9 @@
 #include "protection_domain_v1_interface.h"
 #include "stretch_v1_interface.h"
 
+/**
+ * @brief Privileged system code running in supervisor mode.
+ */
 namespace nucleus
 {
     //==================================================================================================================

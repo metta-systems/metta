@@ -20,7 +20,7 @@ namespace mmu_v1 { struct closure_t; }
 namespace stretch_v1
 {
 
-/*!
+/**
  * State record for a stretch
  * We expose it for the benefit of the MMU code.
  * Would prefer not to, but reckon it's better than exposing SIDs in IDL...
@@ -38,7 +38,7 @@ struct state_t : public dl_link_t<state_t>
     stretch_v1::rights               global_rights;
 };
 
-//! Convenience constant to denote "no rights".
+/** Convenience constant to denote "no rights". */
 const uint32_t right_none = 0;
 
 } // namespace stretch_v1

@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*!
+/**
  * A fixed sized tuple used to identify and sort items in a Btree. The key is broken up into 3 parts: objectid, type,
  * and position. The type field indicates how each of the other two fields should be used, and what to expect to find in
  * the item.
@@ -22,7 +22,7 @@ public:
     uint64_t position; // [  9] The byte offset of start of the given type file data in the fs.
 }; // 17 bytes
 
-/*!
+/**
  * A variable sized structure stored in btree leaves. Items hold different types of data depending on key type.
  *
  * A leaf block is full of items. offset and size tell us where to find
@@ -35,7 +35,7 @@ public:
     uint32_t size;   // [ 21]
 }; // 25 bytes
 
-/*!
+/**
  * A leaf block structure:
  * [block_header] [item0, item1...itemN] [free space] [dataN...data1, data0]
  */
@@ -45,7 +45,7 @@ struct btree_leaf
     btree_item items[]; // header.numItems items
 }; // sb.leaf_size bytes
 
-/*!
+/**
  * All non-leaf blocks are nodes, they hold only keys and pointers to other blocks.
  */
 class btree_key_ptr : public btree_key
@@ -55,7 +55,7 @@ public:
     uint64_t generation;  // [ 25]
 }; // 33 bytes
 
-/*!
+/**
  * A node block structure:
  * [block header] [key_ptr0, key_ptr1...key_ptrN]
  */
@@ -146,7 +146,7 @@ public:
  * if ins_len > 0, nodes and leaves will be split as we walk down the
  * tree.  if ins_len < 0, nodes will be merged as we walk down the tree (if
  * possible)
- */
+ *
 int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
 *root, struct btrfs_key *key, struct btrfs_path *p, int
 ins_len, int cow)
@@ -158,3 +158,4 @@ block = root_block;
 path->nodes[block->level] = block;
 bin_search(block, key, slot);
 path->slots[block->level] = slot;
+*/

@@ -27,7 +27,7 @@ struct stretch_driver_v1::state_t
     // Ma, look, no state!
 };
 
-/*!
+/**
  * Simply contains a bunch of minimal fields.
  */
 struct null_driver_state_t : public stretch_driver_v1::state_t

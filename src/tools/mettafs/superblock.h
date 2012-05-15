@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*!
+/**
  * Mettafs simple prototype.
  *
  * necessary structures:
@@ -29,7 +29,7 @@
 
 typedef uint64_t fs_location_t; // All addressing is made using 64-bit byte offsets, so the FS is totally block-size agnostic.
 
-/*!
+/**
  * Structure common to several block headers in FS, including superblock and node/leaf block headers.
  */
 struct btree_header_common_t
@@ -37,7 +37,7 @@ struct btree_header_common_t
     static const int CHECKSUM_SIZE = 32; // can accomodate up to SHA-256 (256 bits of chksum)
     static const int FS_UUID_SIZE = 16;
     static const int TREE_UUID_SIZE = 16;
-    /*!
+    /**
      * Data needed to verify the validity of the block.
      */
     uint32_t  version;                  // [  0] block format version (for fs live migration)
@@ -48,7 +48,7 @@ struct btree_header_common_t
     uint64_t  flags;                    // [ 60] not related to validity, but matches generic header format for different trees.
 } PACKED; // 68 bytes
 
-/*!
+/**
  * every tree block (node or leaf) starts with this header.
  */
 class btree_block_header_t : public btree_header_common_t
@@ -56,7 +56,7 @@ class btree_block_header_t : public btree_header_common_t
 public:
     uint8_t level;          // [ 68] btree level this block is at
 //     uint8_t align[3];
-    /*!
+    /**
      * Phantom/misplaced writes detection.
      */
     uint64_t generation;                     // [ 69]
@@ -66,7 +66,7 @@ public:
     uint32_t numItems;                       // [101]
 } PACKED; // 105 bytes
 
-/*!
+/**
  * Filesystem superblock.
  */
 class fs_superblock_t : public btree_header_common_t
