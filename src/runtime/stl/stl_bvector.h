@@ -31,6 +31,8 @@
 #ifndef __SGI_STL_INTERNAL_BVECTOR_H
 #define __SGI_STL_INTERNAL_BVECTOR_H
 
+#include "limits.h" // for CHAR_BIT
+
 __STL_BEGIN_NAMESPACE 
 
 static const int __WORD_BIT = int(CHAR_BIT*sizeof(unsigned int));
