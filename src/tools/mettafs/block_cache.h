@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*!
+/**
  * Filesystem block cache.
  *
  * Block cache handles device reads and writes and adds faster access for reading and delayed buffer management for writing.
@@ -72,12 +72,12 @@ class block_cache_t
 	cache_block_list_t blocks; //!< LRU list of blocks.
 	block_device_mapper_t* device_mapper;
 
-	/*!
+	/**
 	 * Perform actual read on physical blocks.
 	 * @return number of blocks successfully read or 0 on failure.
 	 */
 	size_t read_blocks(deviceno_t device, block_device_t::blockno_t block_n, char* data, size_t nblocks, size_t block_size);
-	/*!
+	/**
 	 * Perform actual write on physical blocks.
 	 * @return number of blocks successfully written or 0 on failure.
 	 */
@@ -85,18 +85,18 @@ class block_cache_t
 
 	cache_block_t* block_lookup(deviceno_t device, block_device_t::blockno_t block_n);
 
-	/*!
+	/**
 	 * Obtain a number of blocks by evicting oldest blocks from the cache.
 	 */
 	std::vector<cache_block_t*> get_blocks(size_t nblocks, size_t block_size);
 
-	/*!
+	/**
 	 * Get block size for a given device.
 	 */
 	size_t get_block_size(deviceno_t device);
 
 public:
-	/*!
+	/**
 	 * Create a cache that can store maximum of n_blocks data blocks.
 	 */
 	block_cache_t(size_t n_blocks) : max_blocks(n_blocks), device_mapper(NULL) { blocks.lru = blocks.mru = NULL; }
@@ -105,7 +105,7 @@ public:
 	void set_device_block_size(deviceno_t dev, size_t block_size);
 	void set_device_mapper(block_device_mapper_t& mapper);
 
-	/*!
+	/**
 	 * Finish all remaining operations on cache for device dev.
 	 */
 	bool flush(deviceno_t dev);

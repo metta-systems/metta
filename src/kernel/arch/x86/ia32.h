@@ -26,6 +26,7 @@
 //======================================================================================================================
 
 // Last 4 megs of address space are for recursive page directory
+// @fixme: remove this recursive pd crap.
 #define VIRTUAL_PAGE_TABLES     0xffc00000 // page tables addressable from this base
 #define VIRTUAL_PAGE_DIRECTORY  0xfffff000 // page directory addressable from this base //0xFFBFF000)
 // Next to last 4 megs are for kernel temporary mappings.
@@ -51,16 +52,16 @@ static const size_t    FRAME_WIDTH = 12;
 #define IA32_PAGE_COW            (1<<10)
 
 // CR0 register
-#define IA32_CR0_PE (1 <<  0)   /*!< enable protected mode                                       */
-#define IA32_CR0_WP (1 << 16)   /*!< force write protection on user read only pages for kernel   */
-#define IA32_CR0_AM (1 << 18)   /*!< enable alignment checks                                     */
-#define IA32_CR0_PG (1 << 31)   /*!< enable paging                                               */
+#define IA32_CR0_PE (1 <<  0)   /**< enable protected mode                                       */
+#define IA32_CR0_WP (1 << 16)   /**< force write protection on user read only pages for kernel   */
+#define IA32_CR0_AM (1 << 18)   /**< enable alignment checks                                     */
+#define IA32_CR0_PG (1 << 31)   /**< enable paging                                               */
 
 // CR4 register
-#define IA32_CR4_PSE    (1 << 4)   /*!< page size extensions (enable 4MB pages)       */
-#define IA32_CR4_PAE    (1 << 5)   /*!< physical address extension (enable 2MB pages) */
-#define IA32_CR4_PGE    (1 << 7)   /*!< enable global pages                           */
-#define IA32_CR4_PCE    (1 << 8)   /*!< enable rdpmc in user-mode                     */
+#define IA32_CR4_PSE    (1 << 4)   /**< page size extensions (enable 4MB pages)       */
+#define IA32_CR4_PAE    (1 << 5)   /**< physical address extension (enable 2MB pages) */
+#define IA32_CR4_PGE    (1 << 7)   /**< enable global pages                           */
+#define IA32_CR4_PCE    (1 << 8)   /**< enable rdpmc in user-mode                     */
 
 // Machine-specific registers
 #define X86_MSR_PMCTR0  0xc1

@@ -6,11 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+// @arch: portable
+//
 #include "loader.h"
 #include "panic.h"
 #include "default_console.h"
 
-/*!
+/**
  * Main launcher entry point. Parses through all loader formats to find a valid one.
  */
 extern "C" void launcher() NEVER_RETURNS

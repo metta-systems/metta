@@ -60,13 +60,15 @@ public:
 	iterator rend() const;
 };*/
 
-/*!
+/**
  * @class bootinfo_t
  * Provides access to boot info page structures.
  *
  * Common way of accessing it is to create an instance of bootinfo_t using placement new at the location
  * of bootinfo_t::ADDRESS, e.g.:
+ * <code>
  * bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+ * </code>
  * Then you can add items or query items.
  * Boot info page is limited to a native page size (4Kb by default) to simplify memory allocation.
  */
@@ -81,10 +83,10 @@ class bootinfo_t
     multiboot_t::mmap_entry_t* find_matching_entry(address_t start, size_t size, int& n_way);
 
 public:
-    // Rather arbitrary location for the bootinfo page.
+    /** Rather arbitrary location for the bootinfo page. */
     static void* ADDRESS; // not an enum because of placement new()
 
-    /* Iterator for going over available physical memory map entries. */
+    /** Iterator for going over available physical memory map entries. */
     class mmap_iterator : public std::iterator<std::forward_iterator_tag, multiboot_t::mmap_entry_t>
     {
         address_t start;
@@ -105,7 +107,7 @@ public:
         inline bool operator != (const mmap_iterator& other) { return ptr != other.ptr; }
     };
 
-    /* Iterator for going over available virtual memory mapping entries. */
+    /** Iterator for going over available virtual memory mapping entries. */
     class vmap_iterator : public std::iterator<std::forward_iterator_tag, memory_v1::mapping>
     {
 //        address_t start;
@@ -132,7 +134,7 @@ public:
         const char* name;
     };
 
-    /* Iterator for going over available modules. */
+    /** Iterator for going over available modules. */
     class module_iterator : public std::iterator<std::forward_iterator_tag, module_entry>
     {
         uint64_t mod_start;
@@ -160,17 +162,21 @@ public:
         return (size() + add_size) > PAGE_SIZE; //((free & PAGE_MASK) != ((free + add_size) & PAGE_MASK));
     }
 
-    // NB! Module loader received from this bootinfo will modify it, so do not try to use two modules loaders from
-    // two different bootinfos at once! 
-    // (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
+    /**
+     * NB! Module loader received from this bootinfo will modify it, so do not try to use two modules loaders from
+     * two different bootinfos at once! 
+     * (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
+     */
     module_loader_t get_module_loader();
-    /*!
+
+    /**
      * Return memory occupied by already loaded and relocated modules.
      */
     address_t used_modules_memory(size_t* size);
-    address_t module_load_end() const { return last_available_module_address; } // where the last loaded module ends
+    /** Where the last loaded module ends. */
+    address_t module_load_end() const { return last_available_module_address; }
 
-    // Load module ELF file by number.
+    /** Load module ELF file by number. */
     bool get_module(uint32_t number, address_t& start, address_t& end, const char*& name);
     // Load module by name.
 //     bool get_module(const char* name, module_info_t& mod);
@@ -185,9 +191,9 @@ public:
     module_iterator module_begin();
     module_iterator module_end();
 
-    // Append parts of multiboot header in a format suitable for bootinfo page.
+    /** Append parts of multiboot header in a format suitable for bootinfo page. */
     bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);
-    // Appends modules loaded from the multiboot modules (initrd etc)
+    /** Append modules loaded from the multiboot modules (initrd etc) */
     bool append_module(const char* name, multiboot_t::modinfo_t* mod);
 
     bool append_mmap(multiboot_t::mmap_entry_t* entry);

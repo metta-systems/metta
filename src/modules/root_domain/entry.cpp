@@ -173,7 +173,7 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
     return pdom;
 }
 
-/*!
+/**
  * At startup we created a physical heap; while this is fine, the idea
  * of protection is closely tied to that of stretches. Hence this function
  * maps a stretch over the existing heap.
@@ -822,7 +822,7 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
 // Image bootup entry point
 //======================================================================================================================
 
-/*!
+/**
  * Image bootup starts executing with identity-mapped paging and with ring3 rights.
  */
 

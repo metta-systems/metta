@@ -22,7 +22,7 @@
 #include "domain.h"
 #include "algorithm"
 
-/*!
+/**
  * Frame allocator client record.
  */
 struct frame_allocator_v1::state_t
@@ -47,7 +47,7 @@ struct frame_st
     uint32_t free;
 };
 
-/*!
+/**
  * Frame allocator region record.
  */
 struct frames_module_v1::state_t
@@ -131,7 +131,7 @@ static void mark_frames_used(frame_allocator_v1::state_t* client_state, frames_m
     }
 }
 
-/*!
+/**
  * After allocation, update predecessors free frames info.
  */
 static void alloc_update_free_predecessors(frames_module_v1::state_t* cur_state, address_t first_frame)

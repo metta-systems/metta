@@ -113,7 +113,7 @@ static memory_v1::address heap_module_v1_where(heap_module_v1::closure_t* self, 
     return 0;
 }
 
-/*!
+/**
  * Realize is used to turn a 'raw' heap into a stretch-based one, and requires that the given stretch maps exactly over
  * the frames of the original heap.
  */

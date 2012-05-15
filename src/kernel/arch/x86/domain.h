@@ -10,11 +10,12 @@
 
 #include "doubly_linked_list.h"
 
-/*
+/**
 DCB is taken mostly verbatim from Nemesis, here's the original diagram:
 
  Structure of a Nemesis DCB:
 
+<pre>
 ---->+------------------------------------------------+	0x0000
      |                                                |
      |  dcb_ro: read-only to the user domain.         |
@@ -22,7 +23,7 @@ DCB is taken mostly verbatim from Nemesis, here's the original diagram:
      +------------------------------------------------+
      |  VP closure                                    |
      +------------------------------------------------+
-     |            <padding>                           |
+     |             padding                            |
      +------------------------------------------------+ 0x2000 (page) XXX
      |                                                |
      |  dcb_rw: read/writeable by user domain         |
@@ -35,6 +36,7 @@ DCB is taken mostly verbatim from Nemesis, here's the original diagram:
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      |                                                |
      +------------------------------------------------+
+</pre>
 */
 
 struct region_list_t : public dl_link_t<region_list_t>
@@ -46,7 +48,10 @@ struct region_list_t : public dl_link_t<region_list_t>
 
 struct dcb_rw_t;
 struct ramtab_entry_t; // defined by mmu_mod
-     
+
+/**
+ * Read-only part of domain control block.
+ */
 struct dcb_ro_t
 {
     dcb_rw_t* rw;
@@ -56,12 +61,15 @@ struct dcb_ro_t
     region_list_t memory_region_list;
 };
 
+/**
+ * Domain-writable part of domain control block.
+ */
 struct dcb_rw_t
 {
     dcb_ro_t* ro;
 };
 
-/*!
+/**
  * Protection domains are implemented as arrays of 4-bit elements, indexed by stretch id.
  */
 typedef uint16_t  sid_t;

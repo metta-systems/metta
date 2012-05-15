@@ -4,7 +4,7 @@ TODO: add 'unbound' method specifier (similar to 'static' methods in c++) - not 
 'extends' in a syntax sugar only - it allows to avoid repeating the whole interface declaration if two versions only
 extend one another. Interface versions v1 and v2 do not have to have extends relationship. The IS_A relation does not apply.
 
-/*!
+/**
  * BNF of the grammar.
  *
  * module ::= full_interface_decl

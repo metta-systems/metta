@@ -31,7 +31,7 @@ struct dl_link_t
         prev->next = next;
     }
     
-    /*!
+    /**
      * Insert another before this.
      */
     inline void insert_before(_Base* another)
@@ -41,14 +41,14 @@ struct dl_link_t
         prev->next = another;
         prev = another;
     }
-    /*!
+    /**
      * Add another to the tail of the list, which means insert it before us (assuming this is called on list head).
      */
     inline void add_to_tail(_Base* another)
     {
         insert_before(another);
     }
-    /*!
+    /**
      * Insert another after this.
      */
     inline void insert_after(_Base* another)
@@ -58,7 +58,7 @@ struct dl_link_t
         next->prev = another;
         next = another;
     }
-    /*!
+    /**
      * Add another to head of the list, which means insert it after us (assuming this is called on list head).
      */
     inline void add_to_head(_Base* another)

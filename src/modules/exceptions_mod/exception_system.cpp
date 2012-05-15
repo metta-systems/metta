@@ -84,7 +84,7 @@ static void
 exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c)
 {
 	xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
-	/*!
+	/*
 	 * We only need one pointer of state, which points to the first
 	 * context in the current chain. Thus we use the self->d_state pointer directly.
 	 */

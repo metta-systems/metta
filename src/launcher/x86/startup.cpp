@@ -193,6 +193,7 @@ static void prepare_infopage()
 
 extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 
+// @TODO: export to debugger.h?
 class func_logging_aid_t
 {
     const char* name;
@@ -201,12 +202,12 @@ public:
     ~func_logging_aid_t() { kconsole << "} " << name << endl; }
 };
 
-/*!
+/**
  * Get the system going.
  *
  * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.
  *
- * TODO: relate Pistachio SMP startup routines here.
+ * @todo Relate Pistachio SMP startup routines here.
  */
 extern "C" void arch_prepare()
 {
@@ -227,6 +228,7 @@ extern "C" void arch_prepare()
 //    int ramtop = 16*MiB;
     bi->append_vmap(0, 0, 16*MiB);//min(16*MiB, ramtop));
 
+    // @todo Timer interrupt should be enabled by the scheduler module once it installs the timer IRQ handler...
     // timer_v1::closure_t* timer = init_timer();
     // timer->enable(0); // enable timer interrupts
     // kconsole << "Timer interrupt enabled." << endl;

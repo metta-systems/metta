@@ -15,7 +15,7 @@
 
 #define HEAP_DEBUG 0
 
-/*!
+/**
  * @class heap_t
  * XXX be careful not to use memory-allocating kconsole calls inside heap_t
  * as heap methods run with heap locked and asking to malloc from inside heap_t

@@ -6,11 +6,12 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Hosted mmu_mod is relatively more simple compared to other implementations,
-// it only needs to create some bookkeeping structures and maintain them in already
-// allocated memory.
-// The memory map abstraction is supported by the bootinfo page.
-//
+/**
+ * Hosted mmu_mod is relatively more simple compared to other implementations,
+ * it only needs to create some bookkeeping structures and maintain them in already
+ * allocated memory.
+ * The memory map abstraction is supported by the bootinfo page.
+ */
 #include "algorithm"
 #include "default_console.h"
 #include "bootinfo.h"
@@ -72,7 +73,7 @@ typedef uint8_t     l2_info;    /* free or used info for 1K L2 page tables */
 
 struct mmu_v1::state_t
 {
-    shadow_t              l1_shadows[N_L1_TABLES]; /*!< Level 1 shadows (4Mb pages) */
+    shadow_t              l1_shadows[N_L1_TABLES]; /**< Level 1 shadows (4Mb pages) */
 
     mmu_v1::closure_t     mmu_closure;
     ramtab_v1::closure_t  ramtab_closure;
@@ -147,7 +148,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
 {
 }
 
-/*!
+/**
  * Note: update cannot currently modify mappings, and expects that the virtual range contains valid PFNs already.
  */
 static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str, memory_v1::virtmem_desc mem_range, stretch_v1::rights global_rights)

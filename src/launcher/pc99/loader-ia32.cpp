@@ -14,8 +14,8 @@
 #include "segs.h"
 
 /*
-* Functions needed for loader format structure.
-*/
+ * Functions needed for loader format structure.
+ */
 bool mbi_probe();
 address_t mbi_prepare();
 
@@ -33,7 +33,7 @@ void flush_cache()
     __asm__ __volatile__ ("wbinvd");
 }
 
-/*!
+/**
  * Start bootstrapper at its entry point. No preconditions.
  * This function will perform a switch from ring0 to ring3.
  */

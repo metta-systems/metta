@@ -14,10 +14,13 @@
 #include "cpu_flags.h"
 #include "cpu_information.h"
 
+/**
+ * Intel x86 CPU related operations.
+ */
 class x86_cpu_t
 {
 public:
-    /*!
+    /**
      * Write a byte out to the specified port.
      */
     static inline void outb(uint16_t port, uint8_t value) ALWAYS_INLINE
@@ -26,7 +29,7 @@ public:
         asm volatile ("outb %0, %1" :: "a" (value), "dN" (port));
     }
 
-    /*!
+    /**
      * Write a word out to the specified port.
      */
     static inline void outw(uint16_t port, uint16_t value) ALWAYS_INLINE
@@ -34,7 +37,7 @@ public:
         asm volatile ("outw %0, %1" :: "a" (value), "dN" (port));
     }
 
-    /*!
+    /**
      * Write a dword out to the specified port.
      */
     static inline void outl(uint16_t port, uint32_t value) ALWAYS_INLINE
@@ -42,7 +45,7 @@ public:
         asm volatile ("outl %0, %1" :: "a" (value), "dN" (port));
     }
 
-    /*!
+    /**
      * Read a byte in from the specified port.
      */
     static inline uint8_t inb(uint16_t port) ALWAYS_INLINE
@@ -52,7 +55,7 @@ public:
         return ret;
     }
 
-    /*!
+    /**
      * Read a word in from the specified port.
      */
     static inline uint16_t inw(uint16_t port) ALWAYS_INLINE
@@ -62,7 +65,7 @@ public:
         return ret;
     }
 
-    /*!
+    /**
      * Read a dword in from the specified port.
      */
     static inline uint32_t inl(uint16_t port) ALWAYS_INLINE
@@ -72,7 +75,7 @@ public:
         return ret;
     }
 
-    /*!
+    /**
      * Read internal CPU 64-bit clock (timestamp counter).
      */
     static inline uint64_t rdtsc() ALWAYS_INLINE
@@ -82,7 +85,7 @@ public:
         return ret;
     }
 
-    /*!
+    /**
      * Write machine-specific register.
      */
     static inline void wrmsr(uint32_t index, uint64_t value) ALWAYS_INLINE
@@ -90,7 +93,7 @@ public:
         asm volatile("wrmsr" :: "A" (value), "c" (index));
     }
 
-    /*!
+    /**
      * Enable external interrupts.
      */
     static inline void enable_interrupts() ALWAYS_INLINE
@@ -98,7 +101,7 @@ public:
         asm volatile ("sti");
     }
 
-    /*!
+    /**
      * Disable external interrupts.
      */
     static inline void disable_interrupts() ALWAYS_INLINE

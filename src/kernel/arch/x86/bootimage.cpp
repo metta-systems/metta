@@ -77,7 +77,7 @@ void bootimage_t::namespace_t::dump_all_keys()
 // bootimage_t - TODO: use iterators
 //======================================================================================================================
 
-/*!
+/**
  * Internally bootimage has a tagged format with multiple entries one after another.
  * Each entry has a tag, which specifies type of the entry, it's size and extra information depending on type.
  */

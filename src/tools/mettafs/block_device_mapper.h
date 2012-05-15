@@ -12,7 +12,7 @@
 #include <cassert>
 #include "block_cache.h"
 
-/*!
+/**
  * Device mapper can convert between abstract device numbers and actual devices performing I/O.
  */
 class block_device_mapper_t
@@ -43,7 +43,7 @@ public:
     void set_cache(block_cache_t& c) { cache = &c; }
     block_cache_t& get_cache() const { return *cache; }
 
-    /*!
+    /**
      * Perform block read on actual device.
      */
     size_t read(deviceno_t dev, off_t block_no, char* buffer, size_t size)
@@ -53,7 +53,7 @@ public:
         assert(device);
         return device->read_block(block_no, buffer, size);
     }
-    /*!
+    /**
      * Perform block write on actual device.
      */
     size_t write(deviceno_t dev, off_t block_no, const char* buffer, size_t size)

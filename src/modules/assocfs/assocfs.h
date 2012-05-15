@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*!
+/**
  * @brief Associative filesystem.
  *
  * A semantic net with objects and indexed metadata about objects.
@@ -22,14 +22,14 @@ namespace assocfs {
 
 struct superblock_t
 {
-    uint8_t  magic[8]; //!< 'AssocFS.'
+    uint8_t  magic[8]; /**< byte string 'AssocFS.' */
     uint64_t root_tree;
 };
 
 struct block_header_t
 {
-    uint8_t  csum[32]; //!< SHA256 block checksum.
-    uint8_t  fsid[16]; //!< UUID of parent filesystem.
+    uint8_t  csum[32]; /**< SHA256 block checksum. */
+    uint8_t  fsid[16]; /**< UUID of parent filesystem. */
     uint64_t blocknr;
     uint64_t flags;
     char     chunk_tree_uid[16];

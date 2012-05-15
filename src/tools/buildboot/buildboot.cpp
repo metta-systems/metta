@@ -6,9 +6,9 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Read file with image description and create corresponding boot image.
-//
-/*!
+/**
+ * Read file with image description and create corresponding boot image.
+ *
  * Run with:
  * buildboot _build_/x86-pc99-release/modules/ components.lst init.img
  *                                  ^                ^          ^
@@ -152,7 +152,7 @@ private:
     vector<char> table;
 };
 
-/*!
+/**
  * Append 0-terminated string to string table, return starting string offset in table.
  */
 uint32_t stringtable_t::append(const std::string& addend)

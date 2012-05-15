@@ -18,7 +18,9 @@
 #define PDE_ENTRIES 1024
 #define PTE_ENTRIES 1024
 
-//! Get PDE index, 0 to 1023
+/**
+ * Get PDE index, 0 to 1023
+ */
 inline int pde_entry(address_t virt)
 {
     return (virt >> PDE_SHIFT) & PDE_MASK;
@@ -29,7 +31,9 @@ inline int pde_entry(void* virt)
     return pde_entry(reinterpret_cast<address_t>(virt));
 }
 
-//! Get PTE index, 0 to 1023
+/**
+ * Get PTE index, 0 to 1023
+ */
 inline int pte_entry(address_t virt)
 {
     return (virt >> PTE_SHIFT) & PTE_MASK;
@@ -40,7 +44,7 @@ inline int pte_entry(void* virt)
     return pte_entry(reinterpret_cast<address_t>(virt));
 }
 
-/*!
+/**
  * A page is a pointer to a frame.
  *
  * Page constructor does not initialize page_t to any predefined value.
@@ -94,7 +98,7 @@ private:
     uint32_t raw;
 };
 
-/*!
+/**
  * A page table holds 1024 pages
  *
  * Page table constructor does not do any initialization to allow creating
@@ -105,7 +109,7 @@ private:
 // public:
 //     page_table_t() {}
 // 
-//     /*!
+//     /**
 //      * Zero out page table, setting all page frames to not present.
 //      */
 //     void zero()
@@ -124,7 +128,7 @@ private:
 //         return pages[n];
 //     }
 // 
-//     /*!
+//     /**
 //      * Allocate new page table from frame allocator.
 //      */
 //     void* operator new(size_t size, address_t* physical_address);
@@ -133,7 +137,7 @@ private:
 //     page_t pages[1024];
 // };
 
-/*!
+/**
  * Page directory holds 1024 pagetables.
  *
  * Page directory performs initialization in init(), mainly to set up
@@ -151,7 +155,7 @@ private:
 //     void init();
 //     void init(physical_address_t* placement_area);
 // 
-//     /*!
+//     /**
 //      * Returns physical address of PD, for setting PDBR.
 //      */
 //     physical_address_t get_physical()
@@ -162,7 +166,7 @@ private:
 //     void enable_paging();
 //     void disable_paging();
 // 
-//     /*!
+//     /**
 //      * Create mapping from virtual address @p virt to physical frame at @p phys
 //      * with given flags.
 //      *
@@ -171,36 +175,36 @@ private:
 //      */
 //     page_t* create_mapping(address_t virt, address_t phys);
 // 
-//     /*!
+//     /**
 //      * Remove mapping of virtual address @p virt from page directory & tables.
 //      */
 //     void remove_mapping(address_t virt);
 // 
-//     /*!
+//     /**
 //      * @returns true if mapping of virtual address @p virt exists, false otherwise.
 //      */
 //     bool is_mapped(address_t virt);
 // 
-//     /*!
+//     /**
 //      * Obtain mapping information from virtual address @p virt. @p make specifies if
 //      * page table should be created if it doesn't exist yet.
 //      * @returns page table entry if found or created, NULL otherwise.
 //      */
 //     page_t* mapping(address_t virt, bool make = false);
 // 
-//     /*!
+//     /**
 //      * Print a debug dump of page directory.
 //      */
 //     void dump();
 // 
 // protected:
-//     /*!
+//     /**
 //      * Obtain page table corresponding to address @p virt. If @p make is true, create
 //      * page table if it doesn't exist.
 //      */
 //     page_table_t* page_table(address_t virt, bool make);
 // 
-//     /*!
+//     /**
 //      * Pointer to a frame with array of pointers to pagetables, gives their @e physical location,
 //      * for loading into the CR3 register.
 //      */
@@ -209,7 +213,7 @@ private:
 //     address_t* directory_access;
 // 
 // private: friend class stack_frame_allocator_t;//FIXME: page_allocator_t;
-//     /*!
+//     /**
 //      * Set @p phys to be address of the frame for page table for address @p virt.
 //      */
 //     void set_page_table(address_t virt, address_t phys);

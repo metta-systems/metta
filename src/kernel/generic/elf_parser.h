@@ -13,16 +13,16 @@
 #include "cstring.h"
 #include "iterator"
 
-// elf.find_all_symbols().with_prefix("exported_").with_suffix("_rootdom")
-
-/*!
+/**
  * Provides interface to find loadable sections of the elf file
  * (and all other informative sections and lookup aids).
+ *
+ * @todo Implement a fluent interface similar to elf.find_all_symbols().with_prefix("exported_").with_suffix("_rootdom")
  */
 class elf_parser_t
 {
 public:
-    /* Iterator for going over available program headers. */
+    /** Iterator for going over available program headers. */
     class program_iterator : public std::iterator<std::forward_iterator_tag, elf32::program_header_t>
     {
         elf32::program_header_t* ptr;
@@ -36,7 +36,7 @@ public:
         inline bool operator != (const program_iterator& other) { return ptr != other.ptr; }
     };
 
-    /* Iterator for going over available section headers. */
+    /** Iterator for going over available section headers. */
     class section_iterator : public std::iterator<std::forward_iterator_tag, elf32::section_header_t>
     {
         elf32::section_header_t* ptr;
@@ -83,16 +83,16 @@ public:
     inline const char* string_table() const { return strtab_pointer(section_string_table(), 0); }
     elf32::section_header_t* section_symbol_table() const;
 
-    //! Returns the entry point of the executable.
+    /** Returns the entry point of the executable. */
     inline address_t get_entry_point() { return (address_t)header->entry; }
 
     size_t symbol_entries_count() const;
     size_t string_entries_count() const;
 
-    //! Returns true if the parser loaded correctly.
+    /** Returns true if the parser loaded correctly. */
     bool is_valid() const;
 
-    //! Returns true if elf file has relocations.
+    /** Returns true if elf file has relocations. */
     bool is_relocatable() const;
 
     bool relocate_to(address_t load_address);
@@ -102,38 +102,37 @@ public:
     const char* strtab_pointer(elf32::section_header_t* strtab, elf32::word_t name_offset) const;
 
     // ELF Loader part
-    //! Parse an ELF file, generate symbolic information and load code/data segments.
 
-    //! Loads the image file from specified memory location.
-    /*!
-     * 
+    /**
+     * Parse an ELF file, generate symbolic information and load code/data segments.
+     * Loads the image file from specified memory location.
      */
     bool load_image(address_t start, size_t size);
 
-    //! Returns the symbol name for an address.
-    /*!
-     *  Also returns the start address of that symbol in symbol_start if symbol_start is non-NULL.
+    /**
+     * Returns the symbol name for an address.
+     * Also returns the start address of that symbol in symbol_start if symbol_start is non-NULL.
      */
     cstring_t find_symbol(address_t addr, address_t* symbol_start = NULL);
 
-    //! Returns the address of a symbol with name str.
+    /** Returns the address of a symbol with name str. */
     address_t find_symbol(cstring_t str);
 
-    //! Returns the address of the symbol with offset o in the relocation symbol table.
+    /** Returns the address of the symbol with offset o in the relocation symbol table. */
     address_t find_dynamic_symbol_location(address_t o);
 
-    //! Returns a NULL terminated name of the symbol at given offset in the relocation symbol table.
+    /** Returns a NULL terminated name of the symbol at given offset in the relocation symbol table. */
     cstring_t find_dynamic_symbol_name(address_t o);
 
-    //! Gets the address of the global offset table.
+    /** Gets the address of the global offset table. */
     address_t get_global_offset_table();
 
-    //! Returns last location occupied by the elf image in memory.
+    /** Returns last location occupied by the elf image in memory. */
     address_t get_alloc_end();
 
 protected:
 
-    elf32::header_t*         header;          //!< ELF file header.
-    mutable elf32::section_header_t* strtab;  //!< Cache .strtab location to speed up symbol lookup.
-    mutable elf32::section_header_t* symtab;  //!< Cache SHT_SYMTAB location to speed up symbol lookup.
+    elf32::header_t*         header;          /**< ELF file header. */
+    mutable elf32::section_header_t* strtab;  /**< Cache .strtab location to speed up symbol lookup. */
+    mutable elf32::section_header_t* symtab;  /**< Cache SHT_SYMTAB location to speed up symbol lookup. */
 };

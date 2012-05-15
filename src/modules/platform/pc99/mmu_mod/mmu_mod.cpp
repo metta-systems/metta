@@ -68,9 +68,9 @@ typedef uint8_t     l2_info;    /* free or used info for 1K L2 page tables */
 
 struct mmu_v1::state_t
 {
-    page_t                l1_mapping[N_L1_TABLES]; /*!< Level 1 page directory      */
-    shadow_t              l1_shadows[N_L1_TABLES]; /*!< Level 1 shadows (4Mb pages) */
-    page_t                l1_virt[N_L1_TABLES];    /*!< Virtual addresses of L2s    */
+    page_t                l1_mapping[N_L1_TABLES]; /**< Level 1 page directory      */
+    shadow_t              l1_shadows[N_L1_TABLES]; /**< Level 1 shadows (4Mb pages) */
+    page_t                l1_virt[N_L1_TABLES];    /**< Virtual addresses of L2s    */
 
     mmu_v1::closure_t     mmu_closure;
     ramtab_v1::closure_t  ramtab_closure;
@@ -229,7 +229,7 @@ static size_t update4k_pages(mmu_v1::state_t* state, address_t va, size_t n_page
     return i;
 }
 
-/*!
+/**
  * Add a page mapping.
  * va describes the corresponding virtual address.
  * pte contains appropriate physical address (if any) and flags.
@@ -303,7 +303,7 @@ static flags_t control_bits(mmu_v1::state_t* state, stretch_v1::rights rights, m
     if (state->use_global_pages && rights.has(stretch_v1::right_global))
         flags |= page_t::global;
 
-    /*!
+    /**
      * We use the combination of the bits 'no_cache' and 'non_memory' to
      * determine our caching policy as follows:
      *     if no_cache is set, then set the Cache Disable bit.
@@ -471,7 +471,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
     kconsole << __FUNCTION__ << ": added mapped range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << mem_range.page_width) << ")=>[" << pmem.start_addr << ".." << pmem.start_addr + (pmem.n_frames << pmem.frame_width) << "), sid=" << str->d_state->sid << endl;
 }
 
-/*!
+/**
  * Note: update cannot currently modify mappings, and expects that the virtual range contains valid PFNs already.
  */
 static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str, memory_v1::virtmem_desc mem_range, stretch_v1::rights global_rights)

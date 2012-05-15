@@ -44,7 +44,7 @@ private:
 } PACKED;
 
 
-/*!
+/**
 * Set a descriptor entry.
 * @param segsel is code segment selector to run the handler in.
 * @param handler_address is the offset of the handler in KERNEL_CS.

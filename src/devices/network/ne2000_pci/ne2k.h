@@ -13,6 +13,9 @@
 
 class pci_device_t;
 
+/**
+ * NE2000 NIC driver.
+ */
 class ne2k
 {
 	uint16_t port_base;

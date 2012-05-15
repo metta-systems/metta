@@ -11,44 +11,46 @@
 #include "types.h"
 #include "macros.h"
 
-// The kernel debugger.
+/**
+ * The kernel debugger.
+ */
 class debugger_t
 {
 public:
     /**
-    * Dump @p size bytes from a memory region starting at virtual address @p start.
-    **/
+     * Dump @c size bytes from a memory region starting at virtual address @c start.
+     */
     static void dump_memory(address_t start, size_t size);
 
     /**
-    * Given a stack base pointer, follow it, return the next stack base
-    * pointer and also return the instruction pointer it returned to.
-    **/
+     * Given a stack base pointer, follow it, return the next stack base
+     * pointer and also return the instruction pointer it returned to.
+     */
     static address_t backtrace(address_t base_pointer, address_t& return_address);
 
     /**
-    * Given the current stack, follow 'n' backtraces and return the
-    * return address found there.
-    **/
+     * Given the current stack, follow @c n backtraces and return the
+     * return address found there.
+     */
     static address_t backtrace(int n);
 
-    /*!
-     * Print a full backtrace from the start location EIP and following the stack frames starting at EBP.
-     * (Or, if @p n is specified, up to n stack frames.)
+    /**
+     * Print a full backtrace from the start location @c eip and following the stack frames starting at @c base_pointer.
+     * (Or, if @c n is specified, up to @c n stack frames.)
      */
     static void print_backtrace(address_t base_pointer = 0, address_t eip = 0, int n = 0);
 
     /**
-    * Prints first @p n words from the stack
-    **/
+     * Prints first @c n words from the stack
+     */
     static void print_stacktrace(unsigned int n = 64);
 
     /**
-     * Prints [checkpoint] followed by checkpoint name from @p str and then waits for Enter keypress.
+     * Prints [checkpoint] followed by checkpoint name from @c str and then waits for Enter keypress.
      */
     static void checkpoint(const char* str);
     
-    /*!
+    /**
      * Trigger a cpu breakpoint. Will cause a magic trap under bochs.
      */
     static void breakpoint();
@@ -58,13 +60,17 @@ public:
 #if BOCHS_IO_HACKS
 #include "cpu.h"
 
-//outputs a character to the debug console
+/**
+ * Outputs a character to the debug console.
+ */
 inline void bochs_console_print_char(int c)
 {
     x86_cpu_t::outb(0xe9, c);
 }
 
-//outputs a string to the debug console
+/**
+ * Outputs a string to the debug console.
+ */
 inline void bochs_console_print_str(const char* str)
 {
     char *b = (char *)str;
@@ -72,7 +78,10 @@ inline void bochs_console_print_str(const char* str)
         bochs_console_print_char(*b++);
 }
 
-//stops simulation and breaks into the debug console
+/**
+ * Stops simulation and breaks into the debug console.
+ * This is an alternative to bochs_magic_trap.
+ */
 inline void bochs_break()
 {
     x86_cpu_t::outw(0x8A00,0x8A00);
@@ -81,13 +90,17 @@ inline void bochs_break()
 
 void bochs_magic_trap()  ALWAYS_INLINE;
 
-//traps into debug console (add "magic_break: enabled=1" to bochs config)
+/**
+ * Traps into debug console (add "magic_break: enabled=1" to bochs config).
+ */
 inline void bochs_magic_trap()
 {
     asm volatile("xchg %bx, %bx");
 }
 
-//monitor memory area from start to end for writes and reads
+/**
+ * Monitor memory area from start to end for writes and reads.
+ */
 inline void bochs_add_watch_region(address_t start, address_t end)
 {
     x86_cpu_t::outw(0x8A00,0x8A00);

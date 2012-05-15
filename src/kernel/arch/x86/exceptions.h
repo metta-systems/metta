@@ -6,7 +6,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-/*
+/**
  * Metta exceptions support. Quite primitive for now. Mostly borrowed from Nemesis.
  *
  * C++ exceptions must be disabled in the kernel and modules for this to work reliably.
@@ -19,7 +19,7 @@
 #include "registers.h"
 #include "nemesis/exception_support_setjmp_v1_interface.h"
 
-/*!
+/**
  * Exception handling state in the current OS_TRY clause.
  *
  * The state is "none" when no exception has been raised, "active" when
@@ -35,7 +35,7 @@ enum xcp_state_t
 	xcp_popped = 3
 };
 
-/*!
+/**
  * Exception handling context record.
  *
  * A context block is allocated in the current stack frame for each
@@ -63,7 +63,7 @@ struct xcp_context_t
 #define xcp_setjmp(buf)        (__sjljeh_setjmp(buf))
 #define xcp_longjmp(buf, j)    (__sjljeh_longjmp(buf, j))
 
-/*!
+/**
  * Define "routine" to determine if two exceptions match.
  *
  * Effectively just strcmp(), but can't use the stack (at least, not much).
@@ -84,7 +84,7 @@ struct xcp_context_t
 #define OS_RAISE(e, args) PVS(exceptions)->raise(e, args, __FILE__, __LINE__, __FUNCTION__)
 #define OS_RERAISE        PVS(exceptions)->raise(__xcp_ctx.name, __xcp_ctx.args, __FILE__, __LINE__, __FUNCTION__)
 
-/*!
+/**
  * Start a new TRY block, which may contain exception handlers
  *
  *   Allocate a context block on the stack to remember the current
@@ -105,7 +105,7 @@ struct xcp_context_t
 		{
 			/* user's code goes here */
 
-/*!
+/**
  * Define a CATCH(e) clause (or exception handler).
  *
  *   First, end the prior block.  Then, check if the current exception
@@ -114,14 +114,13 @@ struct xcp_context_t
  *   nesting of RERAISE statements, and the state of the current
  *   exception is changed to "handled".
  */
-
 #define OS_CATCH(e) \
 		} \
 		else if (xcp_matches(__xcp_ctx.name, (e))) { \
 			__xcp_ctx.state = xcp_handled;
 			/* user's code goes here */
 
-/*!
+/**
  * Define a CATCH_ALL clause (or "catchall" handler).
  *
  *   First, end the prior block.  Then, unconditionally,
@@ -134,7 +133,7 @@ struct xcp_context_t
 			__xcp_ctx.state = xcp_handled;
 			/* user's code goes here */
 
-/*!
+/**
  * Define a FINALLY clause
  *
  *   This "keyword" starts a FINALLY clause.  It must appear before
@@ -153,8 +152,8 @@ struct xcp_context_t
 		{   /* this is not part of if, this is just a new code block opened. */
 			/* user's code goes here */
 
-/*!
- * End the whole TRY clause
+/**
+ * End the whole TRY clause.
  */
 #define OS_ENDTRY \
 		} \

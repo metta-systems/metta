@@ -10,10 +10,10 @@
 
 #include "types.h"
 
-/*!
-* These are the set of registers that appear when an interrupt is received
-* in kernel mode. The useresp and ss values are missing.
-*/
+/**
+ * These are the set of registers that appear when an interrupt is received
+ * in kernel mode. The useresp and ss values are missing.
+ */
 struct registers_t
 {
     uint32_t ds;                  // Data segment selector (pushed by isr_common_stub)

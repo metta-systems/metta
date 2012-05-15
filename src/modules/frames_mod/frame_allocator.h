@@ -13,7 +13,9 @@
 #include "protection_domain.h"
 #include "stl/map"
 
-/*! Memory allocation resource record, per-domain. */
+/** 
+ * Memory allocation resource record, per-domain.
+ */
 struct memory_resrec_t
 {
     size_t allocated_frames;
@@ -21,7 +23,7 @@ struct memory_resrec_t
     size_t optimistic_frames;
 };
 
-/*!
+/**
  * Frame allocator is a system domain privileged keeper of physical memory frames.
  */
 class frame_allocator_t
@@ -38,23 +40,23 @@ public:
     inline static size_t page_size() { return PAGE_SIZE; }
     inline static size_t page_mask() { return ~(PAGE_SIZE-1); }
 
-    /*!
+    /**
      * Allocate a non-constrained page frame. These kinds of pages can be used to map
      * normal memory into a virtual address space.
      * @return physical address of the page or 0 if no page available.
      */
     virtual physical_address_t allocate_frame() = 0;
 
-    /*!
+    /**
      * Free a page allocated with the allocate_frame() function.
      * @param[in] frame physical address of the page frame.
      */
     virtual void free_frame(physical_address_t frame) = 0;
 
-    /*! Structure containing information about one memory range. */
+    /** Structure containing information about one memory range. */
     struct memory_range_t
     {
-        /*!
+        /**
          * @param[in] virtual_address virtual address of the beginning of the memory region
          * @param[in] physical_address physical address of the beginning of the memory region (or 0)
          * @param[in] size_ size (in bytes) of the memory region
@@ -70,17 +72,17 @@ public:
             , name(name_)
         {}
 
-        /*! Virtual address of the memory region */
+        /** Virtual address of the memory region */
         void* virtual_address;
-        /*! Physical address of the memory region (or 0) */
+        /** Physical address of the memory region (or 0) */
         physical_address_t physical_address;
-        /*! Size (in bytes) of the memory region */
+        /** Size (in bytes) of the memory region */
         size_t size;
-        /*! Pointer to the user-visible name of the memory region */
+        /** Pointer to the user-visible name of the memory region */
         const char* name;
     };
 
-    /*! Allocate a memory range with specific constraints the pages need to fulfill.
+    /** Allocate a memory range with specific constraints the pages need to fulfill.
      * @param[in] range reference to the MemoryRegion object
      * @param[in] num_frames the number of pages to allocate for the MemoryRegion object
      * @param[in] page_constraints the constraints the pages have to fullfill
@@ -105,17 +107,17 @@ protected:
     inline virtual ~frame_allocator_t() {}
 
 private:
-    /*!
+    /**
      * Disable the copy constructor.
      * @note NOT implemented
      */
     frame_allocator_t(const frame_allocator_t&);
-    /*!
+    /**
      * Disable assignment operator.
      * @note Not implemented
      */
     frame_allocator_t& operator =(const frame_allocator_t&);
 
-    /*! Unmaps a memory region - called ONLY from MemoryRegion's destructor. */
+    /** Unmaps a memory region - called ONLY from MemoryRegion's destructor. */
 //     virtual void unmap_range(memory_range_t* range) = 0;
 };
