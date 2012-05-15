@@ -1,0 +1,28 @@
+bootimage is currently simply series of elf modules, which are loaded into memory and relocated. they have bss allocated etc, so from the compact boot image form they are converted into in-memory representation and registered in bootinfo page.
+
+then some memory initialization mumbo-jumbo happens using some of these modules.
+then we create the root namespace context.
+
+now interesting part, scrub all module infos in bootinfo page and enter them into root context "modules" scope.
+from now on the NAME_FIND equivalent should work - modules can be looked up from namespace.
+
+!!NB: Not all modules from bootimage need to enter the modules namespace, some boot-time only may not be needed there??
+
+do we need to keep any namespace info in the bootimage or we can reconstruct it on bootup?
+right now I don't see anything that we would need to store in the bootimage.
+
+
+so very important part of bootstrap are the context_factory and naming_context 
+
+bootimage_t bootimg;
+for_each(bootimg.modules()) {
+	mod = load_module(module); // no need to search closures, but record the symtab/strtab etc anyway.
+	bootinfo_page.add_module(mod);
+}
+// now we can trash the bootimage...
+// lookup loaded modules from bootinfo_page
+// by coincidence, nucleus and root_domain will be loaded this way, too.
+
+for_each(bootinfo_page.modules()) {
+	module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
+}

@@ -23,7 +23,7 @@
 //=====================================================================================================================
 
 static void 
-internal_raise(bool initial_raise, exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
+internal_raise(bool initial_raise, exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname) NEVER_RETURNS
 {
 	xcp_context_t* ctx;
 	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);

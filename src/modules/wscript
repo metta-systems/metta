@@ -14,18 +14,9 @@ def build(bld):
     )
     complib.gen_incpaths('../')
 
-    bld.recurse('platform/shared')
-    bld.recurse('platform/'+platform+'/mmu_mod')
-    bld.recurse('root_domain')
-    bld.recurse('frames_mod')
+    bld.recurse('tcb')
     bld.recurse('heap_mod')
-    bld.recurse('stretch_allocator_mod')
-    bld.recurse('stretch_table_mod')
-    bld.recurse('stretch_driver_mod')
-    bld.recurse('exceptions_mod')
     bld.recurse('hashtables_mod')
-    bld.recurse('typesystem_mod')
+    bld.recurse('stretch_table_mod')
+    bld.recurse('exceptions_mod')
     bld.recurse('pcibus')
-
-# kate: indent-width 4; replace-tabs on;
-# vim: set et sw=4 ts=4 sts=4 cino=(4 :

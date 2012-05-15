@@ -1,30 +1,27 @@
 #
-# Bootimage construction script
+# Bootimage construction script.
+# Module paths are relative to base path given to mkbootimage.
 #
-# nucleus specifies ring0 module
-# module paths are relative to base path given to mkbootimage
 
+# nucleus specifies ring0 module
 nucleus:nucleus.sys
 
 # root_domain performs startup construction
-# namespace for root_domain will be amended to include references to all the following modules too
+root_domain:modules/tcb/root_domain/root_domain.comp
 
-root_domain:modules/root_domain/root_domain.comp
-name.sp>value
-name.sp2>value2
-namespace_test>some long string value for testing it!
-root_domain.nested.nsp>namespace nests
+# TCB modules
+frames_factory:modules/tcb/frames_mod/frames_mod.comp
+mmu_factory:modules/tcb/platform/pc99/mmu_mod/mmu_mod.comp
+stretch_allocator_factory:modules/tcb/stretch_allocator_mod/stretch_allocator_mod.comp
+stretch_driver_factory:modules/tcb/stretch_driver_mod/stretch_driver_mod.comp
+typesystem_factory:modules/tcb/typesystem_mod/typesystem_mod.comp
+##domain_manager_factory:modules/tcb/domain_manager/domain_manager_mod.comp
+# vcpu keeps state in domain's dcb_rw_t, methods are looked up from the relocated vcpu_module closure, creating domain manager only squirrels away the ops pointer..
+##vcpu:modules/vcpu/vcpu_mod.comp
+##time:modules/time/time_mod.comp
 
-# other modules
-frames_mod:modules/frames_mod/frames_mod.comp
-mmu_mod:modules/platform/pc99/mmu_mod/mmu_mod.comp
-heap_mod:modules/heap_mod/heap_mod.comp
-stretch_allocator_mod:modules/stretch_allocator_mod/stretch_allocator_mod.comp
-stretch_table_mod:modules/stretch_table_mod/stretch_table_mod.comp
-stretch_driver_mod:modules/stretch_driver_mod/stretch_driver_mod.comp
-exceptions_mod:modules/exceptions_mod/exceptions_mod.comp
-hashtables_mod:modules/hashtables_mod/hashtables_mod.comp
-typesystem_mod:modules/typesystem_mod/typesystem_mod.comp
-
-# test modules
-pcibus_mod:modules/pcibus/pcibus_mod.comp
+# Common modules
+heap_factory:modules/heap_mod/heap_mod.comp
+stretch_table_factory:modules/stretch_table_mod/stretch_table_mod.comp
+exceptions_factory:modules/exceptions_mod/exceptions_mod.comp
+hashtables_factory:modules/hashtables_mod/hashtables_mod.comp
