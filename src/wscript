@@ -399,13 +399,13 @@ def build(bld):
         launcher = bld.program(
             target = 'launcher.sys',
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
-                + ['launcher/loader.cpp', 'modules/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
+                + ['launcher/loader.cpp', 'modules/tcb/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
             use = 'common platform kernel minruntime debug',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
-        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99', 'modules/root_domain']
+        launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99', 'modules/tcb/root_domain']
 
         ################################################################################################
         # Nucleus.

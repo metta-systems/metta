@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+def build(bld):
+    mod = bld.setup_module_build('mmu_mod', '../../../..', 'mmu_mod.cpp page_directory.cpp')

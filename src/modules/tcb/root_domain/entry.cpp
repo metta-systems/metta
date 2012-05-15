@@ -42,21 +42,24 @@
 // temp for calls debug
 #include "frames_module_v1_impl.h"
 
-// bootimage contains modules and namespaces
-// each module has an associated namespace which defines some module attributes/parameters.
-// startup module from which root_domain starts also has a namespace called "default_namespace"
-// it defines general system attributes and startup configuration.
+/**
+ * @class bootimage_t
+ * bootimage contains modules and namespaces.
+ * Each module has an associated namespace which defines some module attributes/parameters.
+ * Startup module from which root_domain starts also has a namespace called "default_namespace".
+ * Default namespace defines general system attributes and startup configuration.
+ */
 
 static pervasives_v1::rec pervasives;
 
 //======================================================================================================================
-// Look up in root_domain's namespace and load a module by given name, satisfying its dependencies, if possible.
-//======================================================================================================================
 
-/// tagged_t namesp.find(string key)
-
-// with module_loader_t loading any modules twice is safe, and if we track module dependencies then only what is needed
-// will be loaded.
+/**
+ * Look up in root_domain's namespace and load a module by given name, satisfying its dependencies, if possible.
+ * With module_loader_t loading any modules twice is safe, and if we track module dependencies then only what is needed
+ * will be loaded.
+ * @todo tagged_t namesp.find(string key)
+ */
 static void* load_module(bootimage_t& bootimg, const char* module_name, const char* clos)
 {
     bootimage_t::modinfo_t addr = bootimg.find_module(module_name);
@@ -68,8 +71,8 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
     void** closure_ptr = reinterpret_cast<void**>(bi->get_module_loader().load_module(module_name, loader, clos));
-    return *closure_ptr; // FIXME: little discrepancy due to root_domain using the same load_module() to find its own entry point.
-    /* FIXME: Skip dependencies for now */
+    return *closure_ptr; // @todo little discrepancy due to root_domain using the same load_module() to find its own entry point.
+    /** todo Skip dependencies for now. */
 }
 
 template <class closure_type>
@@ -79,14 +82,15 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 }
 
 //======================================================================================================================
-// setup MMU and frame allocator
-//======================================================================================================================
 
+/**
+ * Set up MMU and frame allocator.
+ */
 static protection_domain_v1::id create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
 {
     auto pdom = mmu->create_domain();
 
-    memory_v1::physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
+    memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
     // First we need to map the PIP globally read-only.
     auto str = PVS(stretch_allocator)->create_over(PAGE_SIZE,
@@ -95,11 +99,10 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
 
     /* Map stretches over the boot image */
 
-    // map nucleus glue code
+    // map nucleus code
 
     // map over loaded modules
-    // FIXME: 
-    // should use module_loader module map and map with appropriate rights for text (RX), rodata(R), and bss (RW)...
+    /// @todo Should use module_loader module map and map with appropriate rights for text (RX), rodata(R), and bss (RW)...
                 // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
                 //                      mod->addr, mod->size));
                 // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
@@ -182,7 +185,7 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
 static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
 {
     kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
-    memory_v1::physmem_desc null_pmem; // FIXME: we pass pmems by value in the interface atm... it's not even used!
+    memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
     auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1::rights(stretch_v1::right_read), memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
@@ -277,7 +280,7 @@ static void init_mem(bootimage_t& bootimg)
     auto system_stretch_allocator = stretch_allocator_mod->create(heap, mmu);
     PVS(stretch_allocator) = system_stretch_allocator;
 
-    /*
+    /**
      * We create a 'special' stretch allocator which produces stretches
      * for page tables, protection domains, DCBs, and so forth.
      * What 'special' means will vary from architecture to architecture,
@@ -303,7 +306,7 @@ static void init_mem(bootimage_t& bootimg)
 
 static void init_type_system(bootimage_t& bootimg)
 {
-    //TODO: type system, meta-interface
+    /// @todo Type system, meta-interface.
 
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
@@ -359,9 +362,9 @@ static void init_type_system(bootimage_t& bootimg)
 
 static void init_namespaces(bootimage_t& bootimg)
 {
-    //TODO: module namespaces
-    //TODO: context
-    //TODO: IDC stubs
+    /// @todo Module namespaces.
+    /// @todo Context.
+    /// @todo IDC stubs.
 
     /* Build initial name space */
     kconsole <<  " + Building initial name space: ";
@@ -369,6 +372,10 @@ static void init_namespaces(bootimage_t& bootimg)
     /* Build root context */
     kconsole <<  "Root, ";
 #if 0
+for_each(bootinfo_page.modules()) {
+    module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
+}
+
     auto context_factory = load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
     ASSERT(context_factory);
 	auto root = context_factory->create_context(heap, PVS(types));
@@ -679,17 +686,13 @@ static void init_namespaces(bootimage_t& bootimg)
 #endif
 }
 
+/// @todo Must be a part of kickstarter (code that executes once on startup)?
 static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 {
-    auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
-    ASSERT(pciscan);
-    pciscan->apply();
+    /// @todo Domain manager.
+    /// @todo VCPU.
+    /// @todo Nucleus syscalls?
 
-    while(1) {}
-
-    //TODO: domain manager
-    //TODO: VCPU
-    //TODO: nucleus syscalls
     /* Find the Virtual Processor module */
 /*    vp = NAME_FIND("modules>VP", VP_clp);
     kconsole << " + got VP   at %p\n", vp));
@@ -713,23 +716,10 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
         dmm = NAME_FIND("modules>DomainMgrMod", DomainMgrMod_clp);
         LongCardTblMod = NAME_FIND("modules>LongCardTblMod", LongCardTblMod_clp);
         dommgr = DomainMgrMod$New(dmm, salloc, LongCardTblMod,
-                                framesF, mmu, vp, Time, kst);
+                                framesF, mmu, vp, Time, kst); // only need vp->ops part of the vp for constructing further domains
 
         ANY_INIT(&dommgrany,DomainMgr_clp,dommgr);
         Context$Add(root,"sys>DomainMgr",&dommgrany);
-    }
-
-    kconsole << " + creating Trace module.\n"));
-    {
-        Type_Any any;
-        Trace_clp t;
-        TraceMod_clp tm;
-
-        tm = NAME_FIND("modules>TraceMod", TraceMod_clp);
-        t = TraceMod$New(tm);
-        kst->trace = t;
-        ANY_INIT(&any, Trace_clp, t);
-        Context$Add(root, "sys>Trace", &any);
     }
 */
     kconsole << " + creating first domain." << endl;
@@ -771,7 +761,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
     /* register our vp and pdom with the stretch allocators */
 /*
     //stretch_allocator_mod->finish_init():
-SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
+    SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     SAllocMod$Done(SAllocMod, (StretchAllocatorF_cl *)sysalloc,
                 vp, nemesis_pdid);
 
@@ -790,33 +780,13 @@ SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     kconsole << "*************** ENGAGING PROTECTION ******************\n"));
     MMU$Engage(mmu, VP$ProtDomID(vp));
 
+Up to here the execution might as well be in ring0, with the activation of nemesis domain the cpu may switch to ring3.
+
     kconsole << "NemesisPrimal: Activating Nemesis domain" << endl;
     ntsc_actdom(RO(vp), Activation_Reason_Allocated);
 */
     PANIC("root_domain entry returned!");
 }
-
-//======================================================================================================================
-// load all required modules (mostly drivers)
-//======================================================================================================================
-
-//static void load_modules(UNUSED_ARG bootimage_t& bm, UNUSED_ARG const char* root_module)
-//{
-    // if bootpage contains devtree, we use it in building modules deps
-    // find modules corresponding to devtree entries and add them to deps list
-    // if no devtree present (on x86) we add "probe devices later" entry to bootpage to force
-    // module probing after initial startup.
-
-//     module_loader_t ml;
-//     ml.load_modules("boot");
-    // each module has .modinfo section with entry point and other meta info
-    // plus .modinfo.deps section with module dependencies graph data
-
-    // Load components from bootimage.
-//     kconsole << "opening initfs @ " << bootimage->mod_start << endl;
-//     initfs_t initfs(bootcp->mod_start);
-//     typedef void (*comp_entry)(bootinfo_t bi_page);
-//}
 
 //======================================================================================================================
 // Image bootup entry point
@@ -848,23 +818,8 @@ extern "C" void module_entry()
 
     INFO_PAGE.pervasives = &pervasives;
 
-    // Namespace test:
-    bootimage_t::namespace_t namesp;
-    bootimage.find_root_domain(&namesp);
-    namesp.dump_all_keys();
-    cstring_t str;
-    if (namesp.get_string("namespace_test", str))
-    {
-        kconsole << "Namespace get success, result: " << str << endl;
-    }
-    // End namespace test.
-
     init_mem(bootimage);
     init_type_system(bootimage);
     init_namespaces(bootimage);
     start_root_domain(bootimage);
 }
-// Load the modules.
-// Module "boot" depends on all modules that must be probed at startup.
-// Dependency resolution will bring up modules in an appropriate order.
-//    load_modules(bootimage, "boot");
