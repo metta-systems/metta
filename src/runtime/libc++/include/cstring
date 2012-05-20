@@ -58,13 +58,23 @@ size_t strlen(const char* s);
 */
 
 #include <__config>
+#if !__Metta__
 #include <string.h>
+#endif //!__Metta__
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+#if __Metta__
+
+inline _LIBCPP_INLINE_VISIBILITY void* memcpy(void* dest, const void* src, size_t count) { return __builtin_memcpy(dest, src, count); }
+inline _LIBCPP_INLINE_VISIBILITY void* memmove(void* dest, const void* src, size_t count) { return __builtin_memmove(dest, src, count); }
+inline _LIBCPP_INLINE_VISIBILITY void* memset(void* dest, int value, size_t count) { return __builtin_memset(dest, value, count); }
+
+#else
 
 using ::size_t;
 using ::memcpy;
@@ -106,6 +116,8 @@ using ::strtok;
 using ::memset;
 using ::strerror;
 using ::strlen;
+
+#endif //__Metta__
 
 _LIBCPP_END_NAMESPACE_STD
 

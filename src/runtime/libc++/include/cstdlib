@@ -80,7 +80,9 @@ size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
 */
 
 #include <__config>
+#if !__Metta__
 #include <stdlib.h>
+#endif //!__Metta__
 #ifdef _MSC_VER
 #include "support/win32/locale_win32.h"
 #endif // _MSC_VER
@@ -90,6 +92,8 @@ size_t wcstombs(char* restrict s, const wchar_t* restrict pwcs, size_t n);
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+#if !__Metta__
 
 using ::size_t;
 using ::div_t;
@@ -144,6 +148,8 @@ inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) {return llabs(__x)
 inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) {return  ldiv(__x, __y);}
 inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) {return lldiv(__x, __y);}
 #endif // _MSC_VER
+
+#endif //!__Metta__
 
 _LIBCPP_END_NAMESPACE_STD
 

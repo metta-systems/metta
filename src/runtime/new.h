@@ -17,12 +17,12 @@ void* operator new[](size_t size) throw();
 void  operator delete(void* p) throw();
 void  operator delete[](void* p);
 
-// placement new and delete
-inline void* operator new(size_t, void* place) throw() { return place; }
-inline void* operator new[](size_t, void* place) throw() { return place; }
+// placement new and delete - defined in libc++/include/new
+// inline void* operator new(size_t, void* place) throw() { return place; }
+// inline void* operator new[](size_t, void* place) throw() { return place; }
 
-inline void operator delete(void*, void*) throw() {}
-inline void operator delete[](void*, void*) throw() {}
+// inline void operator delete(void*, void*) throw() {}
+// inline void operator delete[](void*, void*) throw() {}
 
 // stdlib functions to get rid of (used by silly stl!)
 extern "C" void* malloc(size_t size);

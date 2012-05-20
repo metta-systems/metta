@@ -316,7 +316,9 @@ template <class T, size_t N> T* end(T (&array)[N]);
 #include <__config>
 #include <type_traits>
 #include <cstddef>
+#if !_LIBCPP_NO_IOSTREAMS
 #include <iosfwd>
+#endif
 #ifdef _LIBCPP_DEBUG
 #include <cassert>
 #endif
@@ -713,6 +715,7 @@ inserter(_Container& __x, typename _Container::iterator __i)
     return insert_iterator<_Container>(__x, __i);
 }
 
+#if !_LIBCPP_NO_IOSTREAMS
 template <class _Tp, class _CharT = char,
           class _Traits = char_traits<_CharT>, class _Distance = ptrdiff_t>
 class _LIBCPP_VISIBLE istream_iterator
@@ -882,6 +885,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY ostreambuf_iterator& operator++(int) {return *this;}
     _LIBCPP_INLINE_VISIBILITY bool failed() const throw() {return __sbuf_ == 0;}
 };
+#endif //!_LIBCPP_NO_IOSTREAMS
 
 template <class _Iter>
 class _LIBCPP_VISIBLE move_iterator
