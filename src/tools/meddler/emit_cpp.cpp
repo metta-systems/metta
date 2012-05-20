@@ -236,13 +236,13 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
         }
     });
 
-    cout << "### ==== BASE is  === " << base << endl;
+    L(cout << "### ==== BASE is  === " << base << endl);
 
     // Include parent interfaces.
     interface_t* parents = this;
     while (parents->base != "")
     {
-        cout << "### Including base interface " << parents->base << endl;
+        L(cout << "### Including base interface " << parents->base << endl);
         s << indent_prefix << "#include \"" << parents->base << "_interface.h\"" << std::endl;
         parents = parents->parent;
     }
