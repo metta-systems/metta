@@ -589,15 +589,13 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <type_traits>
 #include <typeinfo>
 #include <cstddef>
-#include <cstdint>
+// #include <cstdint>
 #include <new>
 #include <utility>
 #include <limits>
 #include <iterator>
 #include <__functional_base>
-#if !_LIBCPP_NO_IOSTREAMS
-#include <iosfwd>
-#endif
+// #include <iosfwd>
 #include <tuple>
 #include <cstring>
 #if defined(_LIBCPP_NO_EXCEPTIONS)

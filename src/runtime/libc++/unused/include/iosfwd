@@ -87,7 +87,9 @@ typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
 */
 
 #include <__config>
+#if !_LIBCPP_NO_IOSTREAMS
 #include <wchar.h>  // for mbstate_t
+#endif //!_LIBCPP_NO_IOSTREAMS
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -95,10 +97,16 @@ typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if !_LIBCPP_NO_IOSTREAMS
+
 class ios_base;
+
+#endif //!_LIBCPP_NO_IOSTREAMS
 
 template<class _CharT>  struct _LIBCPP_VISIBLE char_traits;
 template<class _Tp>     class _LIBCPP_VISIBLE allocator;
+
+#if !_LIBCPP_NO_IOSTREAMS
 
 template <class _CharT, class _Traits = char_traits<_CharT> >
     class _LIBCPP_VISIBLE basic_ios;
@@ -180,7 +188,12 @@ typedef fpos<mbstate_t>    u16streampos;
 typedef fpos<mbstate_t>    u32streampos;
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
-typedef long long streamoff;        // for char_traits in <string>
+#endif //!_LIBCPP_NO_IOSTREAMS
+
+typedef long long streamoff;           // for char_traits in <string>
+typedef unsigned long long streampos;  // for char_traits in <string>
+typedef unsigned long long u16streampos;  // for char_traits in <string>
+typedef unsigned long long u32streampos;  // for char_traits in <string>
 
 template <class _CharT,             // for <stdexcept>
           class _Traits = char_traits<_CharT>,

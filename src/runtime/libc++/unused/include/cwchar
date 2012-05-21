@@ -104,6 +104,7 @@ size_t wcsrtombs(char* restrict dst, const wchar_t** restrict src, size_t len,
 */
 
 #include <__config>
+#if !__Metta__ // in Metta we don't have support for wchar
 #include <cwctype>
 #include <wchar.h>
 #if _WIN32
@@ -200,5 +201,7 @@ using ::mbsrtowcs;
 using ::wcsrtombs;
 
 _LIBCPP_END_NAMESPACE_STD
+
+#endif //!__Metta__
 
 #endif  // _LIBCPP_CWCHAR

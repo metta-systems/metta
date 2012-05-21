@@ -454,6 +454,8 @@ template <> struct hash<wstring>;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if !_LIBCPP_NO_IOSTREAMS
+
 // fpos
 
 template <class _StateT>
@@ -491,6 +493,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool operator!=(const fpos<_StateT>& __x, const fpos<_StateT>& __y)
     {return streamoff(__x) != streamoff(__y);}
 
+#endif //!_LIBCPP_NO_IOSTREAMS
+
 // char_traits
 
 template <class _CharT>
@@ -500,7 +504,9 @@ struct _LIBCPP_VISIBLE char_traits
     typedef int       int_type;
     typedef streamoff off_type;
     typedef streampos pos_type;
+#if !_LIBCPP_NO_WCHAR
     typedef mbstate_t state_type;
+#endif //!_LIBCPP_NO_WCHAR
 
     _LIBCPP_INLINE_VISIBILITY
     static void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
@@ -625,7 +631,9 @@ struct _LIBCPP_VISIBLE char_traits<char>
     typedef int       int_type;
     typedef streamoff off_type;
     typedef streampos pos_type;
+#if !_LIBCPP_NO_WCHAR
     typedef mbstate_t state_type;
+#endif //!_LIBCPP_NO_WCHAR
 
     _LIBCPP_INLINE_VISIBILITY
     static void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
@@ -670,6 +678,8 @@ struct _LIBCPP_VISIBLE char_traits<char>
     static int_type  eof() _NOEXCEPT
         {return int_type(EOF);}
 };
+
+#if !_LIBCPP_NO_WCHAR
 
 // char_traits<wchar_t>
 
@@ -728,6 +738,8 @@ struct _LIBCPP_VISIBLE char_traits<wchar_t>
         {return int_type(WEOF);}
 };
 
+#endif //!_LIBCPP_NO_WCHAR
+
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 
 template <>
@@ -737,7 +749,9 @@ struct _LIBCPP_VISIBLE char_traits<char16_t>
     typedef uint_least16_t int_type;
     typedef streamoff      off_type;
     typedef u16streampos   pos_type;
+#if !_LIBCPP_NO_WCHAR
     typedef mbstate_t      state_type;
+#endif //!_LIBCPP_NO_WCHAR
 
     _LIBCPP_INLINE_VISIBILITY
     static void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
@@ -857,7 +871,9 @@ struct _LIBCPP_VISIBLE char_traits<char32_t>
     typedef uint_least32_t int_type;
     typedef streamoff      off_type;
     typedef u32streampos   pos_type;
+#if !_LIBCPP_NO_WCHAR
     typedef mbstate_t      state_type;
+#endif //!_LIBCPP_NO_WCHAR
 
     _LIBCPP_INLINE_VISIBILITY
     static void assign(char_type& __c1, const char_type& __c2) _NOEXCEPT
@@ -3888,6 +3904,8 @@ string to_string(float __val);
 string to_string(double __val);
 string to_string(long double __val);
 
+#if !_LIBCPP_NO_WCHAR
+
 int                stoi  (const wstring& __str, size_t* __idx = 0, int __base = 10);
 long               stol  (const wstring& __str, size_t* __idx = 0, int __base = 10);
 unsigned long      stoul (const wstring& __str, size_t* __idx = 0, int __base = 10);
@@ -3907,6 +3925,8 @@ wstring to_wstring(unsigned long long __val);
 wstring to_wstring(float __val);
 wstring to_wstring(double __val);
 wstring to_wstring(long double __val);
+
+#endif //!_LIBCPP_NO_WCHAR
 
 template<class _CharT, class _Traits, class _Allocator>
     const typename basic_string<_CharT, _Traits, _Allocator>::size_type
@@ -3934,6 +3954,8 @@ hash<basic_string<_CharT, _Traits, _Allocator> >::operator()(
 {
     return __do_string_hash(__val.data(), __val.data() + __val.size());
 }
+
+#if !_LIBCPP_NO_IOSTREAMS
 
 template<class _CharT, class _Traits, class _Allocator>
 basic_ostream<_CharT, _Traits>&
@@ -3972,8 +3994,12 @@ getline(basic_istream<_CharT, _Traits>&& __is,
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#endif //!_LIBCPP_NO_IOSTREAMS
+
 extern template class basic_string<char>;
+#if !_LIBCPP_NO_WCHAR
 extern template class basic_string<wchar_t>;
+#endif //!_LIBCPP_NO_WCHAR
 
 extern template
     string

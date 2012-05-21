@@ -73,6 +73,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 inline _LIBCPP_INLINE_VISIBILITY void* memcpy(void* dest, const void* src, size_t count) { return __builtin_memcpy(dest, src, count); }
 inline _LIBCPP_INLINE_VISIBILITY void* memmove(void* dest, const void* src, size_t count) { return __builtin_memmove(dest, src, count); }
 inline _LIBCPP_INLINE_VISIBILITY void* memset(void* dest, int value, size_t count) { return __builtin_memset(dest, value, count); }
+inline _LIBCPP_INLINE_VISIBILITY int memcmp(const void* dest, const void* src, size_t count) { return __builtin_memcmp(dest, src, count); }
+inline _LIBCPP_INLINE_VISIBILITY void *memchr(const void *src, int chr, size_t count) { return __builtin_memchr(src, chr, count); }
+inline _LIBCPP_INLINE_VISIBILITY size_t strlen(const char *s) { return __builtin_strlen(s); }
 
 #else
 

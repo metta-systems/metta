@@ -1,0 +1,43 @@
+#pragma once
+
+#include <__config>
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+_LIBCPP_BEGIN_NAMESPACE_STD
+
+class bde_allocator
+{
+public:
+    typedef size_t size_type;
+
+    virtual void* allocate(size_type bytes) = 0;
+    virtual void deallocate(void* ptr) = 0;
+    virtual ~bde_allocator();
+};
+
+class default_newdelete_bde_allocator : public bde_allocator
+{
+public: 
+    static default_newdelete_bde_allocator* singleton()
+    {
+        do_checkpoint(__PRETTY_FUNCTION__);
+        static default_newdelete_bde_allocator self;
+        return &self;
+    }
+
+    void* allocate(size_type n)
+    {
+        do_checkpoint(__PRETTY_FUNCTION__);
+        return new char[n];
+    }
+    void deallocate(void* p)
+    {
+        do_checkpoint(__PRETTY_FUNCTION__);
+        delete static_cast<char*>(p);
+    }
+};
+
+_LIBCPP_END_NAMESPACE_STD

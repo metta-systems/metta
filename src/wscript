@@ -15,7 +15,7 @@ include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
 system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
 #old stl flags '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
-stl_defines = ['_LIBCPP_NO_IOSTREAMS=1']
+stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
 stl_include_dirs = ['runtime', 'runtime/libc++/include']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']

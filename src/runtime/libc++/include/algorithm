@@ -591,9 +591,10 @@ template <class BidirectionalIterator, class Compare>
 #include <type_traits>
 #include <cstring>
 #include <utility>
-#include <memory>
 #include <iterator>
-#include <cstdlib>
+#include <cstdint>
+#include <memory>
+// #include <cstdlib>
 
 #include <__undef_min_max>
 

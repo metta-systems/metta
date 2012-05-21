@@ -8,7 +8,7 @@
 //
 #include "module_loader.h"
 #include "config.h"
-#include "stl/algorithm"
+#include "algorithm"
 #include "default_console.h"
 #include "memory.h"
 #include "debugger.h"

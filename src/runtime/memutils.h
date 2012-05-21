@@ -181,11 +181,7 @@ inline bool is_string_equal(const char *s1, const char *s2)
  */
 inline size_t string_length(const char *s)
 {
-    size_t len = 0;
-    if (s)
-        while (*s++)
-            len++;
-    return len;
+    return __builtin_strlen(s);
 }
 
 /*!

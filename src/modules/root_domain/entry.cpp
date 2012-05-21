@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <new>
 #include "default_console.h"
 #include "any.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
 #include "bootinfo.h"
-#include "new.h"
 #include "elf_parser.h"
 #include "debugger.h"
 #include "module_loader.h"

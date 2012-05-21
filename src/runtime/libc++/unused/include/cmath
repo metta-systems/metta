@@ -298,6 +298,15 @@ long double    truncl(long double x);
 */
 
 #include <__config>
+#if __Metta__
+
+inline _LIBCPP_INLINE_VISIBILITY float ceil(float x)
+{
+    if (int(x) == x) return x;
+    return int(x+1);
+}
+
+#else
 #include <math.h>
 #include <type_traits>
 
@@ -1671,5 +1680,7 @@ using ::lgamma;
 using ::lgammaf;
 #endif // __sun__
 _LIBCPP_END_NAMESPACE_STD
+
+#endif //__Metta__
 
 #endif  // _LIBCPP_CMATH
