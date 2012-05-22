@@ -384,7 +384,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
 static stretch_allocator_v1::stretch_seq stretch_allocator_v1_nailed_create_list(stretch_allocator_v1::closure_t* self, stretch_allocator_v1::size_seq sizes, stretch_v1::rights access)
 {
     kconsole << __FUNCTION__ << endl;
-    return 0;
+    return 0;//sequence<stretch>
 }
 
 static stretch_v1::closure_t* stretch_allocator_v1_nailed_create_at(stretch_allocator_v1::closure_t* self, memory_v1::size size, stretch_v1::rights access, memory_v1::address start, memory_v1::attrs attr, memory_v1::physmem_desc region)

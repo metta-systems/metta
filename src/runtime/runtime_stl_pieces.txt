@@ -14,26 +14,10 @@ Things needed to fly:
 - vector<T> would be nice to get going
 - string
 
-== sgi stl impl of next_prime ==
 
-// Note: assumes long is at least 32 bits.
-enum { __stl_num_primes = 28 };
-
-static const unsigned long __stl_prime_list[__stl_num_primes] =
-{
-  53ul,         97ul,         193ul,       389ul,       769ul,
-  1543ul,       3079ul,       6151ul,      12289ul,     24593ul,
-  49157ul,      98317ul,      196613ul,    393241ul,    786433ul,
-  1572869ul,    3145739ul,    6291469ul,   12582917ul,  25165843ul,
-  50331653ul,   100663319ul,  201326611ul, 402653189ul, 805306457ul, 
-  1610612741ul, 3221225473ul, 4294967291ul
-};
-
-inline unsigned long __stl_next_prime(unsigned long __n)
-{
-  const unsigned long* __first = __stl_prime_list;
-  const unsigned long* __last = __stl_prime_list + (int)__stl_num_primes;
-  const unsigned long* pos = lower_bound(__first, __last, __n);
-  return pos == __last ? *(__last - 1) : *pos;
-}
-
+1. forward iterators
+2. mkt::min, mkt::max, mkt::for_each
+3. new can be as is
+4. mkt::hash_map
+5. mkt::vector
+6. mkt::string
