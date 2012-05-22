@@ -15,5 +15,6 @@ local interface pervasives_v1
         stretch_driver_v1& stretch_driver;
         type_system_f_v1& types;
         exception_support_setjmp_v1& exceptions;
+        naming_context_v1& root;
     }
 }
