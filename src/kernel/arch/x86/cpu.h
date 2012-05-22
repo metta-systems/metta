@@ -162,6 +162,7 @@ public:
     /* Clear TS bit so we don't trap on FPU instructions. */
     static inline void enable_fpu() ALWAYS_INLINE
     {
+        asm volatile ("fninit");
         asm volatile ("clts");
     }
 
