@@ -15,25 +15,23 @@
 #include "heap_new.h"
 #include "exceptions.h"
 #include "panic.h"
-#include "map"
-#include "string"
+#include <unordered_map>
 
 // required:
 // types.any implementation
 // sequence<> meddler support
 
 // steps:
-// implement sequence<> generation as vector<type>
 // implement types.any and type_system
 // implement naming_context
 
-typedef std::map<std::string, types::any*> context_map;
+typedef std::unordered_map<const char*, types::any*> context_map;
 
 static naming_context_v1::names
 naming_context_v1_list(naming_context_v1::closure_t* self)
 {
 	// return self->state->map.keys();
-	return 0;
+	return naming_context_v1::names();
 }
 
 static bool

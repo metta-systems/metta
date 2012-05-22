@@ -11,6 +11,6 @@ class sequence
 	size_t blen;
 
 public:
-	sequence(int)// silly shadowing ctor for now
+	sequence()// silly shadowing ctor for now
 	{}
 };
