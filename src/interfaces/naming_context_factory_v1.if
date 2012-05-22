@@ -1,0 +1,34 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+# "ContextMod" is an interface to a module implementing
+# general-purpose "Context"s and "MergedContext"s. Not all contexts
+# will be generated in this way: some will be hardwired into the
+# system at build time, others will be provided by remote proxies,
+# filing systems, etc. Contexts which are to be created by domains for
+# their own name space configuration will generally use an interface
+# like this.
+
+local interface naming_context_factory_v1
+{
+    # To build a context generally requires a "Heap" (to get the
+    # storage from) and a "TypeSystem" used internally to determine
+    # whether an object is a subtype of "Context" when trying to
+    # resolve compound pathnames. 
+
+    # Constructs a new naming context.
+    create_context(heap_v1& heap, type_system_v1& type_system)
+        returns (naming_context_v1& context)
+        raises (heap_v1.no_memory);
+
+    # Constructs a new ordered merge of contexts.
+    #create_merged_context(heap_v1& heap, type_system_v1& type_system)
+    #    returns (merged_naming_context_v1& context)
+    #    raises (heap_v1.no_memory);
+}
