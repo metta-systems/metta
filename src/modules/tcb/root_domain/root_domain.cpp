@@ -13,6 +13,7 @@
 #include "default_console.h"
 #include "debugger.h"
 #include "module_loader.h"
+#include "new"
 
 root_domain_t::root_domain_t(bootimage_t& img)
     // : ns(0, 0)

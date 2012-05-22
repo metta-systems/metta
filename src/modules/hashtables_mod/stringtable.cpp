@@ -20,12 +20,12 @@
 #include "heap_v1_interface.h"
 #include "default_console.h"
 #include "heap_allocator.h"
-#include "hash_map"
+#include "unordered_map"
 #include "heap_new.h"
 
 typedef std::allocator<std::pair<map_string_address_v1::key, map_string_address_v1::value>> card64_table_heap_allocator;
 
-typedef std::hash_map<
+typedef std::unordered_map<
 			map_string_address_v1::key, 
 			map_string_address_v1::value, 
 			std::hash<map_string_address_v1::key>, 

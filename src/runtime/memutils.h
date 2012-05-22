@@ -186,6 +186,7 @@ inline size_t string_length(const char *s)
         while (*s++)
             len++;
     return len;
+    // return __builtin_strlen(s); // Causes undefined reference to `strlen'
 }
 
 /**

@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <new>
 #include "default_console.h"
 #include "any.h"
 #include "macros.h"
 #include "c++ctors.h"
 #include "root_domain.h"
 #include "bootinfo.h"
-#include "new.h"
 #include "elf_parser.h"
 #include "debugger.h"
 #include "module_loader.h"
@@ -41,6 +41,7 @@
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
+#include "map_string_address_v1_interface.h"
 
 /**
  * @class bootimage_t
@@ -342,6 +343,16 @@ static void init_type_system(bootimage_t& bootimg)
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
+
+    /* Play with string tables a bit */
+    map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
+    for (int x = 0; x < 100; ++x)
+    {
+        char buf[100];
+        for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
+        buf[99] = 0;
+        strtab->put(buf, x);
+    }
 
     /* Preload any types in the boot image */
     bootimage_t::namespace_t namesp;

@@ -29,7 +29,7 @@ def setup_module_build(bld, name, prefix, sources):
         target = name+'.comp',
         # debug depends on platform
         # runtime doesn't depend on anything
-        use = 'component_support interfaces kernel debug platform common runtime',
+        use = 'component_support interfaces kernel debug platform common c++ runtime',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
     mod.gen_incpaths(prefix+'../')
