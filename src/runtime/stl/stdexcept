@@ -15,6 +15,7 @@
 #define __SGI_STDEXCEPT
 
 #include <stl_exception.h>
+#include "memutils.h"
 
 #if defined(__STL_USE_EXCEPTIONS) || \
     !(defined(_MIPS_SIM) && defined(_ABIO32) && _MIPS_SIM == _ABIO32)
@@ -26,7 +27,7 @@ __STL_BEGIN_NAMESPACE
 class __Named_exception : public __STL_EXCEPTION_BASE {
 public:
   __Named_exception(const string& __str) {
-    strncpy(_M_name, __get_c_string(__str), _S_bufsize);
+    memutils::copy_string(_M_name, __get_c_string(__str), _S_bufsize);
     _M_name[_S_bufsize - 1] = '\0';
   }
   virtual const char* what() const __STL_NOTHROW { return _M_name; }
