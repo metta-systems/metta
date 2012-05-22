@@ -21,6 +21,7 @@ typesystem_factory:modules/tcb/typesystem_mod/typesystem_mod.comp
 ##time:modules/time/time_mod.comp
 
 # Common modules
+context_factory:modules/context_mod/context_mod.comp
 heap_factory:modules/heap_mod/heap_mod.comp
 stretch_table_factory:modules/stretch_table_mod/stretch_table_mod.comp
 exceptions_factory:modules/exceptions_mod/exceptions_mod.comp
