@@ -15,7 +15,7 @@
 #include "heap_new.h"
 #include "exceptions.h"
 #include "panic.h"
-#include <unordered_map>
+#include <zstl/include/ZHashMap.hpp>
 
 // required:
 // types.any implementation
@@ -25,31 +25,42 @@
 // implement types.any and type_system
 // implement naming_context
 
-typedef std::unordered_map<const char*, types::any*> context_map;
+typedef ZHashMap<const char*, types::any> context_map;
+// typedef std::unordered_map<const char*, types::any*> context_map;
+
+struct naming_context_v1::state_t
+{
+	context_map map;
+	heap_v1::closure_t* heap;
+	naming_context_v1::closure_t closure;
+};
 
 static naming_context_v1::names
 naming_context_v1_list(naming_context_v1::closure_t* self)
 {
-	// return self->state->map.keys();
+	ZList<const char*> keys = self->d_state->map.Keys();
 	return naming_context_v1::names();
 }
 
+// This is incomplete, doesn't support compound arc-names.
 static bool
-naming_context_v1_get(naming_context_v1::closure_t *, const char *, types::any *)
+naming_context_v1_get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
 {
-	return false;
+	return self->d_state->map.TryGet(key, *out_value);
 }
 
+// This is incomplete, doesn't support compound arc-names.
 static void
-naming_context_v1_add(naming_context_v1::closure_t *, const char *, types::any)
+naming_context_v1_add(naming_context_v1::closure_t *self, const char *key, types::any value)
 {
-
+	self->d_state->map.Put(key, value);
 }
 
+// This is incomplete, doesn't support compound arc-names.
 static void
-naming_context_v1_remove(naming_context_v1::closure_t *, const char *)
+naming_context_v1_remove(naming_context_v1::closure_t *self, const char *key)
 {
-
+	self->d_state->map.Remove(key);
 }
 
 static void
@@ -76,14 +87,11 @@ naming_context_factory_v1_create_context(naming_context_factory_v1::closure_t* s
 {
 	kconsole << " ** Creating new naming context." << endl;
 
-	naming_context_v1::closure_t* cl = new(PVS(heap)) naming_context_v1::closure_t;
-	if (!cl)
-	{
-		// raise heap no_memory;
-	}
+	naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t;
+	state->heap = heap;
 
-	closure_init(cl, &naming_context_v1_methods, reinterpret_cast<naming_context_v1::state_t*>(0));
-	return cl;
+	closure_init(&state->closure, &naming_context_v1_methods, state);
+	return &state->closure;
 }
 
 static const naming_context_factory_v1::ops_t naming_context_factory_v1_methods =
