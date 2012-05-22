@@ -30,3 +30,8 @@ void operator delete(void*)
 {
     PANIC("Default delete called!");
 }
+
+void operator delete[](void*)
+{
+    PANIC("Default delete called!");
+}

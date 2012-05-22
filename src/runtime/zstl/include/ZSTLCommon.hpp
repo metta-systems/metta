@@ -33,7 +33,8 @@ typedef uint64_t ZHashValue64;
 
 //Default allocation macro used by ZSTL default allocators
 #ifndef ZSTL_NEW
-#define ZSTL_NEW new (std::nothrow)
+#define ZSTL_NEW new
+// #define ZSTL_NEW new (std::nothrow)
 #endif
 
 //Default delete macro used by ZSTL default allocators
@@ -43,7 +44,8 @@ typedef uint64_t ZHashValue64;
 
 //Default array allocation macro used by ZSTL default allocators
 #ifndef ZSTL_NEW_ARRAY
-#define ZSTL_NEW_ARRAY(_type, _size) new (std::nothrow) _type[_size]
+#define ZSTL_NEW_ARRAY(_type, _size) new _type[_size]
+// #define ZSTL_NEW_ARRAY(_type, _size) new (std::nothrow) _type[_size]
 #endif
 
 //Default delete macro used by ZSTL default allocators

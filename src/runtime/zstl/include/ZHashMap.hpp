@@ -22,9 +22,9 @@
 #ifndef _ZHASHMAP_HPP
 #define _ZHASHMAP_HPP
 
-#include <ZSTL/ZPair.hpp>
-#include <ZSTL/ZArray.hpp>
-#include <ZSTL/ZList.hpp>
+#include <zstl/include/ZPair.hpp>
+#include <zstl/include/ZArray.hpp>
+#include <zstl/include/ZList.hpp>
 
 //Default number of buckets
 #ifndef ZHASHMAP_DEFAULT_BUCKETS

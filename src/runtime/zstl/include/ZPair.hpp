@@ -22,7 +22,7 @@
 #ifndef _ZPAIR_HPP
 #define _ZPAIR_HPP
 
-#include <ZSTL/ZSTLCommon.hpp>
+#include <zstl/include/ZSTLCommon.hpp>
 
 /*
 Dynamic tuple implementation.

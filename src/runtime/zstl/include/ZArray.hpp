@@ -36,7 +36,7 @@
 #ifndef _ZARRAY_HPP
 #define _ZARRAY_HPP
 
-#include <ZSTL/ZSTLCommon.hpp>
+#include <zstl/include/ZSTLCommon.hpp>
 
 //When passed as template parameter for N, causes ZArray to use allocator only and not local storage
 #define ZARRAY_USE_ALLOCATOR (1)
@@ -1582,7 +1582,7 @@ ZArray<T, N>& ZArray<T, N>::Resize(size_t _size)
 template <typename T, size_t N>
 ZArray<T, N>& ZArray<T, N>::Resize(size_t _size, const T& _value)
 {
-	int i;
+	size_t i;
 
 	//See if we need more space
 	if (_size > ArrayCapacity)
@@ -1807,7 +1807,7 @@ ZArray<T, N>& ZArray<T, N>::Write(const T* _data, int _index, size_t _count)
 template <typename T, size_t N>
 ZArray<T, N>& ZArray<T, N>::Write(const T _value, int _index, size_t _count)
 {
-	int i;
+	size_t i;
 	int index;
 
 	//Make sure the rest of this isn't pointless
