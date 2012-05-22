@@ -8,8 +8,6 @@
 //
 #pragma once
 
-inline void do_checkpoint(const char* chk) {} // for debugging the allocators.
-
 #include <bde_allocator>
 #include "heap_v1_interface.h"
 

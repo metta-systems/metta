@@ -16,7 +16,7 @@ system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users
 
 #old stl flags '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
-stl_include_dirs = ['runtime', 'runtime/libc++/include']
+stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
@@ -276,6 +276,14 @@ def build(bld):
     # Make bootimage components.
     bld.all_comp_targets = []
     bld.recurse("modules")
+
+    # Target lib++
+    libcxx = bld.stlib(
+        source = 'runtime/libc++/src/hash.cpp',
+        target = 'c++',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    libcxx.includes = libcxx.env.INCLUDE_DIRS
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.

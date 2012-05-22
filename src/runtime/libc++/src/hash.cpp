@@ -123,7 +123,7 @@ const unsigned indices[] =
     209
 };
 
-}
+} // namespace
 
 // Returns:  If n == 0, returns 0.  Else returns the lowest prime number that
 // is greater than or equal to n.
