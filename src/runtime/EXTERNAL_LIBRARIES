@@ -1,3 +1,11 @@
+LLVM standard C++ library
+  svn co http://llvm.org/svn/llvm-project/libcxx/trunk
+
+LLVM C++ ABI implementation library
+  svn co http://llvm.org/svn/llvm-project/libcxxabi/trunk
+
+PathScale C++ ABI implementation library
+  git clone https://github.com/pathscale/libcxxrt.git
+
 C++ exceptions and stack unwinding library
   git clone git://git.sv.gnu.org/libunwind.git
-

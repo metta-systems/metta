@@ -108,7 +108,7 @@ public:
     // name - sequence type name
     sequence_alias_t(node_t* parent, std::string type, std::string base_type) : alias_t(parent, base_type, type) {}
     virtual void dump(std::string indent_prefix);
-    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix);
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);

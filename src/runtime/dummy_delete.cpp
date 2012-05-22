@@ -8,7 +8,7 @@
 //
 // Minimal operator new/delete implementation.
 //
-#include "new.h"
+#include <new>
 #include "macros.h"
 #include "panic.h"
 

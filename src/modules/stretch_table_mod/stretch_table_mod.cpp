@@ -21,7 +21,7 @@
 #include "stretch_driver_v1_interface.h"
 #include "stretch_v1_interface.h"
 #include "heap_v1_interface.h"
-#include "hash_map"
+#include "unordered_map"
 #include "functional"
 
 struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
@@ -50,7 +50,7 @@ struct driver_rec
 };
 
 typedef std::allocator<std::pair<stretch_v1::closure_t*, driver_rec>> stretch_heap_allocator;
-typedef std::hash_map<stretch_v1::closure_t*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
+typedef std::unordered_map<stretch_v1::closure_t*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
 
 struct stretch_table_v1::state_t
 {

@@ -8,12 +8,12 @@
 //
 #pragma once
 
-#include <memory>
+#include <bde_allocator>
 #include "heap_v1_interface.h"
 
 namespace std {
 
-class heap_allocator_implementation : public std::allocator_implementation
+class heap_allocator_implementation : public std::bde_allocator
 {
     heap_v1::closure_t* heap;
 public:
@@ -24,7 +24,7 @@ public:
         kconsole << "** heap_allocator_impl: ctor this " << this << ", heap " << h << endl;
     }
 
-    void* allocate(size_type __n, void* = 0)
+    void* allocate(size_type __n)
     {
         kconsole << "** heap_allocator_impl: allocate " << __n << endl;
         return reinterpret_cast<void*>(heap->allocate(__n));
@@ -35,7 +35,5 @@ public:
         heap->free(reinterpret_cast<memory_v1::address>(__p));
     }
 };
-
-inline void do_checkpoint(const char* chk) {} // for debugging the allocators.
 
 } // namespace std

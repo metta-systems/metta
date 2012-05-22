@@ -17,7 +17,7 @@
 #include "timer_v1_interface.h"
 #include "cpu.h"
 #include "c++ctors.h"
-#include "new.h"
+#include "new"
 
 static void parse_cmdline(bootinfo_t* bi)
 {

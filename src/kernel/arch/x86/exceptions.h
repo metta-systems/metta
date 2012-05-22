@@ -13,8 +13,8 @@
  */
 #pragma once
 
+#include <algorithm> // for std::min
 #include "setjmp.h"
-#include "algorithm"
 #include "infopage.h"
 #include "registers.h"
 #include "nemesis/exception_support_setjmp_v1_interface.h"

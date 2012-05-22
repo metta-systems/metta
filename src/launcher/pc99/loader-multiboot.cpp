@@ -11,7 +11,7 @@
 #include "multiboot.h"
 #include "bootinfo.h"
 #include "elf_parser.h"
-#include "new.h"
+#include "new"
 #include "default_console.h"
 #include "debugger.h"
 #include "module_loader.h"

@@ -8,13 +8,13 @@
 //
 #pragma once
 
+#include <new>
 #include "multiboot.h"
 #include "memory.h"
 #include "memutils.h"
 #include "iterator"
 #include "module_loader.h"
 #include "macros.h"
-#include "new.h"
 #include "memory_v1_interface.h"
 
 // TODO: We need to abstract frames module from the format of bootinfo page,

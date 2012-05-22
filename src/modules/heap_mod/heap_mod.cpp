@@ -6,13 +6,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include <new>
 #include "heap_module_v1_interface.h"
 #include "heap_module_v1_impl.h"
 #include "heap_v1_interface.h"
 #include "heap_v1_impl.h"
 #include "heap.h"
 #include "memory.h"
-#include "new.h"
 #include "default_console.h"
 #include "exceptions.h"
 #include "panic.h"

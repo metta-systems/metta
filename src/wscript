@@ -12,11 +12,11 @@ top = '.'
 out = '_build_'
 
 include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
-system_header_dir = map(lambda d: '-isystem' + d, '/Users/berkus/Hobby/libcxx/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
+system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
-# Local SGI STL instance.
-stl_defines = '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
-stl_include_dirs = ['runtime', 'runtime/stl']
+#old stl flags '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
+stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1', '_LIBCPP_BDE_ALLOCATOR_DEBUG=1']
+stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
@@ -94,7 +94,7 @@ def configure(conf):
     if clang:
         conf.load('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
         extra_cross_flags += ['-target', 'i686-pc-elf']
-        extra_cross_cxxflags = ['-std=c++0x']
+        extra_cross_cxxflags = ['-std=c++11']
         linkflags = '-nostdlib'.split()
         # with Clang use libc++ from LLVM project.
         # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
@@ -276,6 +276,14 @@ def build(bld):
     # Make bootimage components.
     bld.all_comp_targets = []
     bld.recurse("modules")
+
+    # Target lib++
+    libcxx = bld.stlib(
+        source = 'runtime/libc++/src/hash.cpp',
+        target = 'c++',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    libcxx.includes = libcxx.env.INCLUDE_DIRS
 
     # Common libraries
     # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
