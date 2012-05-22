@@ -206,32 +206,32 @@ static void init_mem(bootimage_t& bootimg)
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     // For address space randomization we should load modules as we go, for simplicity we load them all here.
-    auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_factory", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
 
-    auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_factory", "exported_mmu_module_rootdom");
     ASSERT(mmu_factory); // mmu_factory
 
-    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_mod", "exported_heap_module_rootdom");
+    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_factory", "exported_heap_module_rootdom");
     ASSERT(heap_factory);
 
-    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
-    ASSERT(stretch_allocator_mod);
+    auto stretch_allocator_factory = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_factory", "exported_stretch_allocator_module_rootdom");
+    ASSERT(stretch_allocator_factory);
 
-    auto stretch_table_mod = load_module<stretch_table_module_v1::closure_t>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
-    ASSERT(stretch_table_mod);
+    auto stretch_table_factory = load_module<stretch_table_module_v1::closure_t>(bootimg, "stretch_table_factory", "exported_stretch_table_module_rootdom");
+    ASSERT(stretch_table_factory);
 
-    auto stretch_driver_mod = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
-    ASSERT(stretch_driver_mod);
+    auto stretch_driver_factory = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_factory", "exported_stretch_driver_module_rootdom");
+    ASSERT(stretch_driver_factory);
 
     // === WORKAROUND ===
     // To avoid overwriting memory with further loaded modules, preload them here.
     // This will go away after a proper module loader mod is implemented.
-    load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
-    load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
-    load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
-    //load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
-    load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+    load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
+    load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
+    load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
+///    // load_module<context_module_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
+    // load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -277,7 +277,7 @@ static void init_mem(bootimage_t& bootimg)
 #endif
 
     kconsole << " + Creating system stretch allocator" << endl;
-    auto system_stretch_allocator = stretch_allocator_mod->create(heap, mmu);
+    auto system_stretch_allocator = stretch_allocator_factory->create(heap, mmu);
     PVS(stretch_allocator) = system_stretch_allocator;
 
     /**
@@ -293,10 +293,10 @@ static void init_mem(bootimage_t& bootimg)
     mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
     kconsole << " + Creating stretch table" << endl;
-    auto strtab = stretch_table_mod->create(heap);
+    auto strtab = stretch_table_factory->create(heap);
 
     kconsole << " + Creating null stretch driver" << endl;
-    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
+    PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
     kconsole << " + Creating initial address space." << endl;
@@ -760,7 +760,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 
     /* register our vp and pdom with the stretch allocators */
 /*
-    //stretch_allocator_mod->finish_init():
+    //stretch_allocator_factory->finish_init():
     SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     SAllocMod$Done(SAllocMod, (StretchAllocatorF_cl *)sysalloc,
                 vp, nemesis_pdid);
