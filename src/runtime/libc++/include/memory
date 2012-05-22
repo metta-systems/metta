@@ -595,6 +595,9 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <limits>
 #include <iterator>
 #include <bde_allocator>
+#if _LIBCPP_BDE_ALLOCATOR_DEBUG
+    #include "default_console.h"
+#endif //_LIBCPP_BDE_ALLOCATOR_DEBUG
 #include <__functional_base>
 // #include <iosfwd>
 #include <tuple>
@@ -1660,12 +1663,24 @@ public:
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 
     _LIBCPP_INLINE_VISIBILITY allocator(bde_allocator* impl = 0) _NOEXCEPT {
+        do_checkpoint(__PRETTY_FUNCTION__);
         if (impl)
             imp = impl;
         else
             imp = default_newdelete_bde_allocator::singleton();
+#if _LIBCPP_BDE_ALLOCATOR_DEBUG
+        kconsole << "IMP: " << imp << endl;
+        kconsole << "this " << this << ", IMP at " << &imp << endl;
+#endif //_LIBCPP_BDE_ALLOCATOR_DEBUG
     }
-    template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&) _NOEXCEPT {}
+    template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&a) _NOEXCEPT : imp(a.get_implementation()) {
+        do_checkpoint(__PRETTY_FUNCTION__);
+    }
+    bde_allocator* get_implementation() const _NOEXCEPT { return imp; }
+    void swap(allocator& other) _NOEXCEPT {
+        swap(this->imp, other.imp);
+    }
+
     _LIBCPP_INLINE_VISIBILITY pointer address(reference __x) const _NOEXCEPT
         {return _VSTD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const _NOEXCEPT

@@ -41,6 +41,7 @@
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
+#include "map_string_address_v1_interface.h"
 
 // bootimage contains modules and namespaces
 // each module has an associated namespace which defines some module attributes/parameters.
@@ -339,6 +340,16 @@ static void init_type_system(bootimage_t& bootimg)
     ASSERT(ts);
     kconsole <<  " +-- done: ts is at " << ts << endl;
     PVS(types) = ts;
+
+    /* Play with string tables a bit */
+    map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
+    for (int x = 0; x < 100; ++x)
+    {
+        char buf[100];
+        for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
+        buf[99] = 0;
+        strtab->put(buf, x);
+    }
 
     /* Preload any types in the boot image */
     bootimage_t::namespace_t namesp;

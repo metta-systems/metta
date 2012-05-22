@@ -502,15 +502,7 @@ public:
     typedef _VSTD::reverse_iterator<iterator>         reverse_iterator;
     typedef _VSTD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
-    _LIBCPP_INLINE_VISIBILITY
-    vector()
-        _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
-        {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-            __get_db()->__insert_c(this);
-#endif
-        }
-    _LIBCPP_INLINE_VISIBILITY explicit vector(const allocator_type& __a)
+    _LIBCPP_INLINE_VISIBILITY vector(bde_allocator* __a = 0)
         : __base(__a)
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
@@ -519,7 +511,7 @@ public:
     }
     explicit vector(size_type __n);
     vector(size_type __n, const_reference __x);
-    vector(size_type __n, const_reference __x, const allocator_type& __a);
+    vector(size_type __n, const_reference __x, bde_allocator* __a = 0);
     template <class _InputIterator>
         vector(_InputIterator __first, _InputIterator __last,
                typename enable_if<__is_input_iterator  <_InputIterator>::value &&
@@ -548,16 +540,12 @@ public:
     }
 #endif
 
-    vector(const vector& __x);
-    vector(const vector& __x, const allocator_type& __a);
+    vector(const vector& __x, bde_allocator* __a = 0);
     _LIBCPP_INLINE_VISIBILITY
     vector& operator=(const vector& __x);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    vector(vector&& __x)
-        _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value);
-    _LIBCPP_INLINE_VISIBILITY
-    vector(vector&& __x, const allocator_type& __a);
+    vector(vector&& __x, bde_allocator* __a = 0);
     _LIBCPP_INLINE_VISIBILITY
     vector& operator=(vector&& __x)
         _NOEXCEPT_(

@@ -542,28 +542,12 @@ public:
     typedef __hash_local_iterator<__node_pointer>             local_iterator;
     typedef __hash_const_local_iterator<__node_const_pointer> const_local_iterator;
 
-    __hash_table()
-        _NOEXCEPT_(
-            is_nothrow_default_constructible<__bucket_list>::value &&
-            is_nothrow_default_constructible<__first_node>::value &&
-            is_nothrow_default_constructible<__node_allocator>::value &&
-            is_nothrow_default_constructible<hasher>::value &&
-            is_nothrow_default_constructible<key_equal>::value);
-    __hash_table(const hasher& __hf, const key_equal& __eql);
+    __hash_table(bde_allocator* a = 0);
     __hash_table(const hasher& __hf, const key_equal& __eql,
-                 const allocator_type& __a);
-    explicit __hash_table(const allocator_type& __a);
-    __hash_table(const __hash_table& __u);
-    __hash_table(const __hash_table& __u, const allocator_type& __a);
+                 bde_allocator* __a = 0);
+    __hash_table(const __hash_table& __u, bde_allocator* __a = 0);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __hash_table(__hash_table&& __u)
-        _NOEXCEPT_(
-            is_nothrow_move_constructible<__bucket_list>::value &&
-            is_nothrow_move_constructible<__first_node>::value &&
-            is_nothrow_move_constructible<__node_allocator>::value &&
-            is_nothrow_move_constructible<hasher>::value &&
-            is_nothrow_move_constructible<key_equal>::value);
-    __hash_table(__hash_table&& __u, const allocator_type& __a);
+    __hash_table(__hash_table&& __u, bde_allocator* __a = 0);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~__hash_table();
 
@@ -790,33 +774,9 @@ private:
 };
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
-    _NOEXCEPT_(
-        is_nothrow_default_constructible<__bucket_list>::value &&
-        is_nothrow_default_constructible<__first_node>::value &&
-        is_nothrow_default_constructible<hasher>::value &&
-        is_nothrow_default_constructible<key_equal>::value)
-    : __p2_(0),
-      __p3_(1.0f)
-{
-}
-
-template <class _Tp, class _Hash, class _Equal, class _Alloc>
-inline _LIBCPP_INLINE_VISIBILITY
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const hasher& __hf,
-                                                       const key_equal& __eql)
-    : __bucket_list_(nullptr, __bucket_list_deleter()),
-      __p1_(),
-      __p2_(0, __hf),
-      __p3_(1.0f, __eql)
-{
-}
-
-template <class _Tp, class _Hash, class _Equal, class _Alloc>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const hasher& __hf,
                                                        const key_equal& __eql,
-                                                       const allocator_type& __a)
+                                                       bde_allocator* __a)
     : __bucket_list_(nullptr, __bucket_list_deleter(__pointer_allocator(__a), 0)),
       __p1_(__node_allocator(__a)),
       __p2_(0, __hf),
@@ -825,7 +785,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const hasher& __hf,
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const allocator_type& __a)
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(bde_allocator* __a)
     : __bucket_list_(nullptr, __bucket_list_deleter(__pointer_allocator(__a), 0)),
       __p1_(__node_allocator(__a)),
       __p2_(0),
@@ -834,21 +794,8 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const allocator_type& __a
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const __hash_table& __u)
-    : __bucket_list_(nullptr,
-          __bucket_list_deleter(allocator_traits<__pointer_allocator>::
-              select_on_container_copy_construction(
-                  __u.__bucket_list_.get_deleter().__alloc()), 0)),
-      __p1_(allocator_traits<__node_allocator>::
-          select_on_container_copy_construction(__u.__node_alloc())),
-      __p2_(0, __u.hash_function()),
-      __p3_(__u.__p3_)
-{
-}
-
-template <class _Tp, class _Hash, class _Equal, class _Alloc>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const __hash_table& __u,
-                                                       const allocator_type& __a)
+                                                       bde_allocator* __a)
     : __bucket_list_(nullptr, __bucket_list_deleter(__pointer_allocator(__a), 0)),
       __p1_(__node_allocator(__a)),
       __p2_(0, __u.hash_function()),
@@ -859,29 +806,8 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const __hash_table& __u,
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
-        _NOEXCEPT_(
-            is_nothrow_move_constructible<__bucket_list>::value &&
-            is_nothrow_move_constructible<__first_node>::value &&
-            is_nothrow_move_constructible<hasher>::value &&
-            is_nothrow_move_constructible<key_equal>::value)
-    : __bucket_list_(_VSTD::move(__u.__bucket_list_)),
-      __p1_(_VSTD::move(__u.__p1_)),
-      __p2_(_VSTD::move(__u.__p2_)),
-      __p3_(_VSTD::move(__u.__p3_))
-{
-    if (size() > 0)
-    {
-        __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
-        __u.__p1_.first().__next_ = nullptr;
-        __u.size() = 0;
-    }
-}
-
-template <class _Tp, class _Hash, class _Equal, class _Alloc>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
-                                                       const allocator_type& __a)
+                                                       bde_allocator* __a)
     : __bucket_list_(nullptr, __bucket_list_deleter(__pointer_allocator(__a), 0)),
       __p1_(__node_allocator(__a)),
       __p2_(0, _VSTD::move(__u.hash_function())),
