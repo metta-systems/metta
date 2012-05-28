@@ -92,7 +92,7 @@ private:
 	double LoadFactor;
 
 	//The map
-	ZArray< ZList< ZPair<K, V> > > Map;
+	ZArray< ZList< ZPair<K, V> > > Map;//@todo fix allocator passing - needs to forward given allocator to constructed members
 
 	//Resizes and copies the HashMap if we exceed LoadFactor
 	inline void CheckLoadFactor()
@@ -116,6 +116,11 @@ public:
 	Default Constructor.
 	*/
 	ZHashMap();
+
+    /**
+     * Specify allocator to use.
+     */
+	ZHashMap(ZAllocator<ZPair<K,V>>* alloc);
 
 	/*
 	Parameterized Constructor.
@@ -285,6 +290,13 @@ public:
 template <typename K, typename V, typename H>
 ZHashMap<K, V, H>::ZHashMap()
 : ElementCount(0), LoadFactor(ZHASHMAP_DEFAULT_LOADFACTOR), Map(ZHASHMAP_DEFAULT_BUCKETS)
+{
+	Map.Resize(ZHASHMAP_DEFAULT_BUCKETS);
+}
+
+template <typename K, typename V, typename H>
+ZHashMap<K, V, H>::ZHashMap(ZAllocator<ZPair<K,V>>* alloc)
+: ElementCount(0), LoadFactor(ZHASHMAP_DEFAULT_LOADFACTOR), Map(ZHASHMAP_DEFAULT_BUCKETS, alloc)
 {
 	Map.Resize(ZHASHMAP_DEFAULT_BUCKETS);
 }

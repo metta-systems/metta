@@ -69,6 +69,8 @@ typedef uint64_t ZHashValue64;
 //Push used in mergesort (takes list node and ZNew node)
 #define ZSTL_LIST_ELEMENT_PUSH(_l, _n) if (_l == NULL) { _l = _n; } else { _l->Next = _n; _n->Previous = _l; _l = _n; }
 
+#include "ZAllocator.hpp"
+
 /*
 Iterator interface for ZSTL.  Many methods do not care what the underlying container 
 is, and in such cases can use a ZIterator instead of the more specialized iterator 

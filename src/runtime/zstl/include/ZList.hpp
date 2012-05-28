@@ -37,61 +37,6 @@
 
 #include <zstl/include/ZSTLCommon.hpp>
 
-//////////////////////
-/* ZList Allocators */
-//////////////////////
-
-/*
-Allocator for ZList.  Handles allocation of nodes of the templated type.
-
-The template parameter T is the type contained in the list this allocator is for.
-*/
-template <typename T>
-class ZListAllocator
-{
-public:
-	//Virtual Destructor
-	virtual ~ZListAllocator() { }
-
-	/*
-	virtual public ZListAllocator<T>::Allocate
-
-	Allocator function which allocates a ZListNode<T>.
-
-	@return - an allocated ZListNode<T>
-	*/
-	virtual ZListNode<T>* Allocate() = 0;
-
-	/*
-	virtual public ZListAllocator<T>::Clone
-
-	Clone function, which is required to allocate and return a ZNew instance of this
-	type of allocator.
-
-	@return - allocated instance of this type of allocator
-	*/
-	virtual ZListAllocator<T>* Clone() = 0;
-
-	/*
-	virtual public ZListAllocator<T>::Deallocate
-
-	Deallocation function which deallocates a previously allocated ZListNode<T>.
-
-	@param _node - node to deallocate
-	*/
-	virtual void Deallocate(ZListNode<T>* _node) = 0;
-
-	/*
-	virtual public ZListAllocator<T>::Destroy
-
-	Destroy method.  Called when the allocator is no longer needed by the ZList.
-	Heap allocated allocators should delete themselves (suicide).
-
-	@return (void)
-	*/
-	virtual void Destroy() = 0;
-};
-
 ////////////////////
 /* ZList Iterator */
 ////////////////////
@@ -245,14 +190,14 @@ protected:
 	ZListNode<T> EmptyNode;
 
 	//Allocator for the list
-	ZListAllocator<T> *AllocatorInstance;
+	ZAllocator<ZListNode<T>> *AllocatorInstance;
 
 	//Local allocate function
 	inline ZListNode<T>* AllocateNode()
 	{
 		if (AllocatorInstance != NULL)
 		{
-			return AllocatorInstance->Allocate();
+			return AllocatorInstance->Allocate(sizeof(ZListNode<T>));
 		}
 		else
 		{
@@ -335,7 +280,7 @@ public:
 
 	@param _allocator - the allocator to use
 	*/
-	ZList(ZListAllocator<T>* _allocator);
+	ZList(ZAllocator<ZListNode<T>>* _allocator);
 
 	/*
 	Sub-List Constructor.  Constructs a list containing the elements between two given iterators.
@@ -352,7 +297,7 @@ public:
 	@param _end - the iterator at which to end the list (exclusive)
 	@param _allocator - the allocator to use
 	*/
-	ZList(const Iterator& _begin, const Iterator& _end, ZListAllocator<T>* _allocator);
+	ZList(const Iterator& _begin, const Iterator& _end, ZAllocator<ZListNode<T>>* _allocator);
 
 	/*
 	Copy Constructor.  Makes a copy of the list.
@@ -775,7 +720,7 @@ ZList<T>::ZList()
 }
 
 template <typename T>
-ZList<T>::ZList(ZListAllocator<T>* _allocator)
+ZList<T>::ZList(ZAllocator<ZListNode<T>>* _allocator)
 : AllocatorInstance(_allocator)
 {
 	#if !ZSTL_DISABLE_RUNTIME_CHECKS
@@ -804,7 +749,7 @@ ZList<T>::ZList(const Iterator& _begin, const Iterator& _end)
 }
 
 template <typename T>
-ZList<T>::ZList(const Iterator& _begin, const Iterator& _end, ZListAllocator<T>* _allocator)
+ZList<T>::ZList(const Iterator& _begin, const Iterator& _end, ZAllocator<ZListNode<T>>* _allocator)
 : AllocatorInstance(_allocator)
 {
 	typename ZList<T>::Iterator itr;
@@ -824,7 +769,7 @@ ZList<T>::ZList(const Iterator& _begin, const Iterator& _end, ZListAllocator<T>*
 
 template <typename T>
 ZList<T>::ZList(const ZList<T>& _other)
-: AllocatorInstance(_other.AllocatorInstance == NULL ? NULL : _other.AllocatorInstance->Clone())
+: AllocatorInstance(_other.AllocatorInstance == NULL ? NULL : _other.AllocatorInstance->Clone())//@todo check semantics against BDE allocators
 {
 	typename ZList<T>::Iterator itr;
 
@@ -1339,7 +1284,7 @@ ZList<T>& ZList<T>::Swap(ZList<T>& _other)
 {
 	ZListNode<T>* first;
 	ZListNode<T>* last;
-	ZListAllocator<T>* allocator;
+	ZAllocator<ZListNode<T>>* allocator;
 
 	first = First;
 	last = Last->Previous;

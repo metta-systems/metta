@@ -57,63 +57,6 @@
 #define ZARRAY_CAPACITY_RESIZE_FACTOR (1.5)
 #endif
 
-///////////////////////
-/* ZArray Allocators */
-///////////////////////
-
-/*
-ZArray Allocator class.  Used to allocate arrays of a templated type 
-when requested by a ZArray instance.
-
-The template parameter T is the type contained the array this allocator is for.
-*/
-template <typename T>
-class ZArrayAllocator
-{
-public:
-	//Virtual Destructor
-	virtual ~ZArrayAllocator() { }
-
-	/*
-	virtual public ZArrayAllocator<T>::Allocate
-
-	Allocation method.
-
-	@param _size - size of the array to allocate
-	@return - pointer to an array which can store at least _size values
-	*/
-	virtual T* Allocate(size_t _size) = 0;
-
-	/*
-	virtual public ZArrayAllocator<T>::Clone
-
-	Clone method.  Required to return a copy of this allocator.
-	
-	@return - identical allocator
-	*/
-	virtual ZArrayAllocator<T>* Clone() = 0;
-	
-	/*
-	virtual public ZArrayAllocator<T>::Deallocate
-
-	Deallocation method.
-
-	@param _ptr - pointer to previously allocated memory by this allocator
-	@param _size - size of the memory
-	*/
-	virtual void Deallocate(T* _ptr, size_t _size) = 0;
-
-	/*
-	virtual public ZArrayAllocator<T>::Destroy
-
-	Destroy method.  Called when the allocator is no longer needed by the Array.
-	Heap allocated allocators should delete themselves (suicide).
-
-	@return (void)
-	*/
-	virtual void Destroy() = 0;
-};
-
 /////////////////////
 /* ZArray Iterator */
 /////////////////////
@@ -282,7 +225,7 @@ protected:
 	T Local[N];
 
 	//Allocator for the Array
-	ZArrayAllocator<T> *AllocatorInstance;
+	ZAllocator<T> *AllocatorInstance;
 
 	//Makes a call to the allocator, but checks to ensure we aren't local
 	inline void AllocateCheckLocal(size_t _size)
@@ -291,7 +234,7 @@ protected:
 		{
 			//If we haven't been assigned an allocator, use ZSTL_NEW_ARRAY / ZSTL_DELETE_ARRAY
 			if (AllocatorInstance != NULL)
-				Array = AllocatorInstance->Allocate(_size);
+				Array = AllocatorInstance->Allocate(sizeof(T)*_size);
 			else
 				Array = ZSTL_NEW_ARRAY(T, _size);
 
@@ -310,7 +253,7 @@ protected:
 		{
 			if (AllocatorInstance != NULL)
 			{
-				AllocatorInstance->Deallocate(_array, _size);
+				AllocatorInstance->Deallocate(_array);
 			}
 			else
 			{
@@ -390,7 +333,7 @@ public:
 	@param _capacity - the starting capacity of the array
 	@param _allocator - the allocator to allocate storage with
 	*/
-	ZArray(size_t _capacity, ZArrayAllocator<T> *_allocator);
+	ZArray(size_t _capacity, ZAllocator<T> *_allocator);
 
 	/*
 	Copy Constructor.  Makes a deep copy of the array.
@@ -501,7 +444,7 @@ public:
 
 	@return (ZArrayAllocator<T>&) - current allocator instance
 	*/
-	ZArrayAllocator<T>& Allocator() const;
+	ZAllocator<T>& Allocator() const;
 
 	/*
 	public ZArray<T, N>::Allocator
@@ -512,7 +455,7 @@ public:
 	@param _allocator - the new allocator to use
 	@return (void)
 	*/
-	void Allocator(ZArrayAllocator<T> *_allocator);
+	void Allocator(ZAllocator<T> *_allocator);
 
 	/*
 	public ZArray<T, N>::Begin
@@ -951,7 +894,7 @@ ZArray<T, N>::ZArray(size_t _capacity)
 }
 
 template <typename T, size_t N>
-ZArray<T, N>::ZArray(size_t _capacity, ZArrayAllocator<T> *_allocator) 
+ZArray<T, N>::ZArray(size_t _capacity, ZAllocator<T> *_allocator) 
 : ArrayCapacity(_capacity), ArraySize(0), Array(NULL), AllocatorInstance(_allocator)
 {
 	#if !ZSTL_DISABLE_RUNTIME_CHECKS
@@ -1122,14 +1065,14 @@ size_t ZArray<T, N>::AbsoluteIndex(int _index) const
 }
 
 template <typename T, size_t N>
-ZArrayAllocator<T>& ZArray<T, N>::Allocator() const
+ZAllocator<T>& ZArray<T, N>::Allocator() const
 {
 	//Give back the allocator
 	return *AllocatorInstance;
 }
 
 template <typename T, size_t N>
-void ZArray<T, N>::Allocator(ZArrayAllocator<T> *_allocator)
+void ZArray<T, N>::Allocator(ZAllocator<T> *_allocator)
 {
 	T* temp = NULL;
 
@@ -1144,7 +1087,7 @@ void ZArray<T, N>::Allocator(ZArrayAllocator<T> *_allocator)
 		temp = Array;
 
 		//Allocate a new array using
-		Array = AllocatorInstance->Allocate(ArrayCapacity);
+		Array = _allocator->Allocate(ArrayCapacity);
 
 		//Write the data from local
 		Write(temp, 0, ArraySize);
@@ -1688,7 +1631,7 @@ ZArray<T, N>& ZArray<T, N>::Swap(ZArray<T, M>& _other)
 		T* tempArray = ZSTL_NEW_ARRAY(T, ArrayCapacity > _other.ArrayCapacity ? ArrayCapacity : _other.ArrayCapacity);
 		int tempCapacity = _other.ArrayCapacity;
 		int tempSize = _other.ArraySize;
-		ZArrayAllocator<T>* tempAllocator = _other.AllocatorInstance;
+		ZAllocator<T>* tempAllocator = _other.AllocatorInstance;
 
 		//Copy other into the temp array
 		for (i = 0; i < _other.Size(); i++)
@@ -1721,7 +1664,7 @@ ZArray<T, N>& ZArray<T, N>::Swap(ZArray<T, M>& _other)
 		T* tempArray = Array;
 		int tempCapacity = ArrayCapacity;
 		int tempSize = ArraySize;
-		ZArrayAllocator<T>* tempAllocator = AllocatorInstance;
+		ZAllocator<T>* tempAllocator = AllocatorInstance;
 
 		Array = _other.Array;
 		_other.Array = tempArray;
