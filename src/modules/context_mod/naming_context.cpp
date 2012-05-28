@@ -33,12 +33,22 @@ struct naming_context_v1::state_t
 	context_map map;
 	heap_v1::closure_t* heap;
 	naming_context_v1::closure_t closure;
+
+	template<typename T>
+	state_t(ZAllocator<T>* alloc, heap_v1::closure_t* heap_) : map(alloc), heap(heap_) {}
 };
 
 static naming_context_v1::names
 naming_context_v1_list(naming_context_v1::closure_t* self)
 {
 	ZList<const char*> keys = self->d_state->map.Keys();
+
+	ZList<const char*>::Iterator it;
+	for(it = keys.Begin(); it != keys.End(); it++)
+	{
+		kconsole << "Returning naming_context key " << (*it) << endl;
+	}
+
 	return naming_context_v1::names();
 }
 
@@ -82,13 +92,75 @@ static const naming_context_v1::ops_t naming_context_v1_methods =
 // The Factory
 //=====================================================================================================================
 
+template <typename T>
+class MyZAllocator : public ZAllocator<T>
+{
+	heap_v1::closure_t* heap;
+public:
+	MyZAllocator(heap_v1::closure_t* h) : heap(h) {}
+	//Virtual Destructor
+	virtual ~MyZAllocator() { }
+
+	/*
+	virtual public ZListAllocator<T>::Allocate
+
+	Allocator function which allocates a ZListNode<T>.
+
+	@return - an allocated ZListNode<T>
+	*/
+	virtual T* Allocate(size_t bytes)
+	{
+		return reinterpret_cast<T*>(new(heap) char [bytes]);
+	}
+
+	/*
+	virtual public ZListAllocator<T>::Clone
+
+	Clone function, which is required to allocate and return a new instance of this
+	type of allocator.
+
+	@return - allocated instance of this type of allocator
+	*/
+	virtual ZAllocator<T>* Clone()
+	{
+		return new(heap) MyZAllocator<T>(heap);
+	}
+
+	/*
+	virtual public ZListAllocator<T>::Deallocate
+
+	Deallocation function which deallocates a previously allocated ZListNode<T>.
+
+	@param _node - node to deallocate
+	*/
+	virtual void Deallocate(T* _node)
+	{
+		delete(heap) reinterpret_cast<char*>(_node);
+	}
+
+	/*
+	virtual public ZListAllocator<T>::Destroy
+
+	Destroy method.  Called when the allocator is no longer needed by the ZList.
+	Heap allocated allocators should delete themselves (suicide).
+
+	@return (void)
+	*/
+	virtual void Destroy()
+	{
+		delete(heap) this;
+		// Generally I don't know if I'm heap allocated or not, wtf?
+	}
+};
+
+
 static naming_context_v1::closure_t*
 naming_context_factory_v1_create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* heap, type_system_v1::closure_t* type_system)
 {
 	kconsole << " ** Creating new naming context." << endl;
 
-	naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t;
-	state->heap = heap;
+	MyZAllocator<const char*>* alloc = new(heap) MyZAllocator<const char*>();
+	naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
 
 	closure_init(&state->closure, &naming_context_v1_methods, state);
 	return &state->closure;
