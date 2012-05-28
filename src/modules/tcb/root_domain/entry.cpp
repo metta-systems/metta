@@ -35,6 +35,8 @@
 #include "map_string_address_factory_v1_interface.h"
 #include "type_system_factory_v1_interface.h"
 #include "type_system_f_v1_interface.h"
+#include "naming_context_v1_interface.h"
+#include "naming_context_factory_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
 #include "closure_interface.h"
@@ -231,7 +233,7 @@ static void init_mem(bootimage_t& bootimg)
     load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
     load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
-///    // load_module<context_module_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
+    load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
     // load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     // === END WORKAROUND ===
 
@@ -311,7 +313,7 @@ static void init_type_system(bootimage_t& bootimg)
 
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
-    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
+    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
     ASSERT(xcp_factory);
 	PVS(exceptions) = xcp_factory->create();
     ASSERT(PVS(exceptions));
@@ -330,13 +332,13 @@ static void init_type_system(bootimage_t& bootimg)
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safe_card64table_mod..." << endl;
-    auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
+    auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
+    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
@@ -345,30 +347,30 @@ static void init_type_system(bootimage_t& bootimg)
     PVS(types) = ts;
 
     /* Play with string tables a bit */
-    map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
-    for (int x = 0; x < 100; ++x)
-    {
-        char buf[100];
-        for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
-        buf[99] = 0;
-        strtab->put(buf, x);
-    }
+    // map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
+    // for (int x = 0; x < 100; ++x)
+    // {
+    //     char buf[100];
+    //     for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
+    //     buf[99] = 0;
+    //     strtab->put(buf, x);
+    // }
 
     /* Preload any types in the boot image */
-    bootimage_t::namespace_t namesp;
-    bootimg.find_root_domain(&namesp);
-    void* val;
-    if (namesp.get_symbol("Types", val))
-    {
-        type_system_f_v1::interface_info* info;
+    // bootimage_t::namespace_t namesp;
+    // bootimg.find_root_domain(&namesp);
+    // void* val;
+    // if (namesp.get_symbol("Types", val))
+    // {
+    //     type_system_f_v1::interface_info* info;
 
-        kconsole << " +++ registering interfaces" << endl;
-        info = (type_system_f_v1::interface_info*)val;
-        while(*info) {
-            ts->register_interface(*info);
-            info++;
-        }
-    }
+    //     kconsole << " +++ registering interfaces" << endl;
+    //     info = (type_system_f_v1::interface_info*)val;
+    //     while(*info) {
+    //         ts->register_interface(*info);
+    //         info++;
+    //     }
+    // }
 }
 
 static void init_namespaces(bootimage_t& bootimg)
@@ -382,16 +384,25 @@ static void init_namespaces(bootimage_t& bootimg)
 
     /* Build root context */
     kconsole <<  "Root, ";
+
+    auto context_factory = load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
+    ASSERT(context_factory);
+    auto root = context_factory->create_context(PVS(heap), 0);//PVS(types)
+    ASSERT(root);
+    PVS(root)  = root;
+
+    kconsole << "factory created root context" << endl;
+
+    types::any v;
+    root->add("Text", v);
+    root->add("Shmest", v);
+    root->add("Fest", v);
+    root->list();
+
 #if 0
 for_each(bootinfo_page.modules()) {
     module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
 }
-
-    auto context_factory = load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
-    ASSERT(context_factory);
-	auto root = context_factory->create_context(heap, PVS(types));
-    ASSERT(root);
-    PVS(root)  = root;
 
     kconsole <<  "modules, ";
     {
