@@ -24,7 +24,9 @@
 #include "unordered_map"
 #include "functional"
 
-struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
+using namespace std;
+
+struct hash_fn : unary_function<size_t, const stretch_v1::closure_t*>
 {
     size_t operator()(const stretch_v1::closure_t* s) const
     {
@@ -33,7 +35,7 @@ struct hash_fn : std::unary_function<size_t, const stretch_v1::closure_t*>
     }
 };
 
-struct equal_fn : std::binary_function<bool, const stretch_v1::closure_t*, const stretch_v1::closure_t*>
+struct equal_fn : binary_function<bool, const stretch_v1::closure_t*, const stretch_v1::closure_t*>
 {
     bool operator()(stretch_v1::closure_t* a, stretch_v1::closure_t* b) const
     {
@@ -49,8 +51,11 @@ struct driver_rec
     size_t page_width;
 };
 
-typedef std::allocator<std::pair<stretch_v1::closure_t*, driver_rec>> stretch_heap_allocator;
-typedef std::unordered_map<stretch_v1::closure_t*, driver_rec, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
+typedef stretch_v1::closure_t* key_type;
+typedef driver_rec value_type;
+typedef pair<key_type, value_type> pair_type;
+typedef heap_allocator<pair_type> stretch_heap_allocator;
+typedef unordered_map<key_type, value_type, hash_fn, equal_fn, stretch_heap_allocator> stretch_map;
 
 struct stretch_table_v1::state_t
 {
@@ -93,7 +98,7 @@ static bool remove(stretch_table_v1::closure_t* self, stretch_v1::closure_t* str
 static void destroy(stretch_table_v1::closure_t* self)
 {
     kconsole << "Trying to destroy a stretch_table, might not work!" << endl;
-    delete/*(self->state->heap)*/ self->d_state->stretches; //hmmmm, need to use right allocators and stuff..
+    delete self->d_state->stretches;
 }
 
 static const stretch_table_v1::ops_t stretch_table_v1_methods =
@@ -111,10 +116,10 @@ static const stretch_table_v1::ops_t stretch_table_v1_methods =
 static stretch_table_v1::closure_t* create(stretch_table_module_v1::closure_t* self, heap_v1::closure_t* heap)
 {
     stretch_table_v1::state_t* new_state = new(heap) stretch_table_v1::state_t;
-    auto heap_alloc = new(heap) std::heap_allocator_implementation(heap);
+    auto heap_alloc = new(heap) stretch_heap_allocator(heap);
 
     new_state->heap = heap;
-    new_state->stretches = new(heap) stretch_map(heap_alloc);
+    new_state->stretches = new(heap) stretch_map(*heap_alloc);
 
     stretch_table_v1::closure_t* cl = new(heap) stretch_table_v1::closure_t;
     closure_init(cl, &stretch_table_v1_methods, new_state);
