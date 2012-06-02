@@ -13,7 +13,7 @@
 #include "memory.h"
 #include "memutils.h"
 #include "default_console.h"
-#include "debugger.h"
+// #include "debugger.h"
 #include "panic.h"
 
 void* operator new[](size_t size)
@@ -23,6 +23,7 @@ void* operator new[](size_t size)
 
 void* operator new(size_t size)
 {
+	// debugger_t::print_backtrace(0, 0, 0);
     PANIC("Default new called!");
 }
 
@@ -33,5 +34,5 @@ void operator delete(void*)
 
 void operator delete[](void*)
 {
-    PANIC("Default delete called!");
+    PANIC("Default delete[] called!");
 }
