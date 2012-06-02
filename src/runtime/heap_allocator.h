@@ -10,8 +10,9 @@
 
 #include <memory>
 #include "heap_v1_interface.h"
+#include "default_console.h"
 
-namespace std {
+namespace std {// @todo: remove std, since it's a custom allocator?
 
 template <class T>
 class heap_allocator : public std::allocator<T>
