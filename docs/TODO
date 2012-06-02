@@ -17,9 +17,6 @@
 
 * write more unit-tests for all these modules!
 
-* waf - upgrade to 1.6.10
-* waf - make if2code depend on meddler changes
-
 * We need a simple application to start coding from the user perspective.
   Something simple, single focused and immensely mettaish. Ideas?
 
