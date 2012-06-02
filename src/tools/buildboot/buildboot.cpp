@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <boost/foreach.hpp>
 #include "types.h"
 #include "fourcc.h"
 #include "bootimage_private.h"
@@ -593,7 +592,7 @@ int main(int argc, char** argv)
         io << hdr;
         data_offset += 8; // sizeof(output bootimage_n::header_t)
 
-        BOOST_FOREACH(module_info& mod, modules)
+        for (module_info& mod : modules)
         {
             printf("Adding...");
             mod.dump();

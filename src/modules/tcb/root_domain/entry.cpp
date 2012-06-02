@@ -387,7 +387,7 @@ static void init_namespaces(bootimage_t& bootimg)
 
     auto context_factory = load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
     ASSERT(context_factory);
-    auto root = context_factory->create_context(PVS(heap), 0);//PVS(types)
+    auto root = context_factory->create_context(PVS(heap), 0); //PVS(types));
     ASSERT(root);
     PVS(root)  = root;
 
@@ -403,13 +403,34 @@ static void init_namespaces(bootimage_t& bootimg)
     {
         kconsole << "Returned naming_context keys " << x << endl;
     }
+    if (root->get("Fest", &v))
+    {
+        kconsole << "Fest found in naming_context" << endl;
+    }
+    else
+    {
+        kconsole << "Fest NOT found in naming_context" << endl;
+    }
+    kconsole << "######### constructing sub-context (NOT DONE)" << endl;
     kconsole << "######### done with root context" << endl;
 
 #if 0
-for_each(bootinfo_page.modules()) {
-    module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
+// Idealized interface:
+auto module_context = context_factory->create_context(PVS(heap), PVS(types));
+root->add("Modules", module_context); <-- auto converts to types::any
+for (module : bootinfo_page.modules())
+{
+    module_context->add(module.name(), module); // i.e. Root.Modules.FramesFactory
 }
 
+print_tree(PVS(root));// Print whole naming contexts tree by exploiting type information to find sub-contexts.
+
+void print_tree(naming_context_v1::closure* ctx, int indent = 0)
+{
+}
+#endif
+
+#if 0
     kconsole <<  "modules, ";
     {
         auto mods = context_factory->create_context(heap, PVS(types));
