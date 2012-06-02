@@ -548,7 +548,8 @@ void type_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_
 
 void sequence_alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
-    s << indent_prefix << "#include \"sequence.h\"" << std::endl;
+    s << indent_prefix << "#include <vector>" << std::endl;
+    s << indent_prefix << "#include \"heap_allocator.h\"" << std::endl;
 }
 
 void sequence_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
@@ -557,7 +558,7 @@ void sequence_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_pre
 
 void sequence_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
-    s << indent_prefix << "typedef sequence<" << emit_type(*this, true) << "> " << replace_dots(name()) << ";" << endl;
+    s << indent_prefix << "typedef std::vector<" << emit_type(*this, true) << ", std::heap_allocator<" << emit_type(*this, true) << ">> " << replace_dots(name()) << ";" << endl;
 }
 
 void sequence_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
