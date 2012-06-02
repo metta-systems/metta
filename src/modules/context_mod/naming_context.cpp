@@ -15,6 +15,7 @@
 #include "exceptions.h"
 #include "panic.h"
 #include <unordered_map>
+#include "heap_new.h"
 #include "heap_allocator.h"
 
 // required:
@@ -30,7 +31,8 @@ using namespace std;
 typedef const char* key_type;
 typedef types::any value_type;
 typedef pair<key_type, value_type> pair_type;
-typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, heap_allocator<pair_type>> context_map;
+typedef heap_allocator<pair_type> context_allocator;
+typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, context_allocator> context_map;
 
 struct naming_context_v1::state_t
 {
@@ -38,7 +40,7 @@ struct naming_context_v1::state_t
 	heap_v1::closure_t* heap;
 	naming_context_v1::closure_t closure;
 
-	state_t(heap_allocator<pair_type>* alloc, heap_v1::closure_t* heap_) : map(*alloc), heap(heap_) {}
+	state_t(context_allocator* alloc, heap_v1::closure_t* heap_) : map(*alloc), heap(heap_) {}
 };
 
 static naming_context_v1::names
@@ -73,6 +75,7 @@ naming_context_v1_get(naming_context_v1::closure_t *self, const char *key, types
 static void
 naming_context_v1_add(naming_context_v1::closure_t *self, const char *key, types::any value)
 {
+	self->d_state->map.insert(make_pair(key, value));
 	// return self->d_state->table->insert(std::make_pair(k, v)).second;
 	// self->d_state->map.Put(key, value);
 }
@@ -108,7 +111,7 @@ naming_context_factory_v1_create_context(naming_context_factory_v1::closure_t* s
 {
 	kconsole << " ** Creating new naming context." << endl;
 
-	heap_allocator<pair_type>* alloc = new heap_allocator<pair_type>(heap);
+	context_allocator* alloc = new(heap) context_allocator(heap);
 	naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
 
 	closure_init(&state->closure, &naming_context_v1_methods, state);

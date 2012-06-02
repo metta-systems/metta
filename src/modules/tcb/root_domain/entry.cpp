@@ -391,13 +391,16 @@ static void init_namespaces(bootimage_t& bootimg)
     ASSERT(root);
     PVS(root)  = root;
 
-    kconsole << "factory created root context" << endl;
+    kconsole << "######### factory created root context" << endl;
 
     types::any v;
+    kconsole << "######### adding" << endl;
     root->add("Text", v);
     root->add("Shmest", v);
     root->add("Fest", v);
+    kconsole << "######### listing" << endl;
     root->list();
+    kconsole << "######### done with root context" << endl;
 
 #if 0
 for_each(bootinfo_page.modules()) {

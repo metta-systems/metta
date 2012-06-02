@@ -16,9 +16,10 @@ namespace std {
 template <class T>
 class heap_allocator : public std::allocator<T>
 {
-    heap_v1::closure_t* heap;
+    typedef heap_v1::closure_t* state_type;
+    state_type heap;
 public:
-    inline heap_v1::closure_t* get_state() const { return heap; } // accessor for rebind copy ctor
+    inline state_type get_state() const { return heap; } // accessor for rebind copy ctor
 
     typedef size_t                                size_type;
     typedef ptrdiff_t                             difference_type;
@@ -31,42 +32,44 @@ public:
     template <class U> struct rebind {typedef heap_allocator<U> other;};
 
     heap_allocator() throw()
-        : heap(0)
+        : heap(state_type(0xdeadbeef)) // mark non-kosher initialization
     {
-        kconsole << "default constructing heap_allocator" << endl;
+        kconsole << "default constructing heap_allocator at " << this << endl;
     }
 
-    heap_allocator(heap_v1::closure_t* h) throw()
+    explicit heap_allocator(heap_v1::closure_t* h) throw()
         : heap(h)
     {
-        kconsole << "constructing heap_allocator with heap " << heap << endl;
+        kconsole << "constructing heap_allocator at " << this << " with heap " << heap << endl;
     }
 
     heap_allocator(const heap_allocator& other) throw()
         : heap(other.get_state())
     {
-        kconsole << "copy constructing heap_allocator with heap " << heap << endl;
+        kconsole << "copy constructing heap_allocator at " << this << " with heap " << heap << endl;
     }
 
-    template <class U> heap_allocator(const heap_allocator<U>& other) throw()
+    template <class U> 
+    heap_allocator(const heap_allocator<U>& other) throw()
         : heap(other.get_state())
-    {        
-        kconsole << "rebind copy constructing heap_allocator with heap " << heap << endl;
+    {
+        kconsole << "rebind copy constructing heap_allocator at " << this << " with heap " << heap << endl;
     }
 
     ~heap_allocator()
     {
-        kconsole << "destructing heap_allocator" << endl;
+        kconsole << "destructing heap_allocator at " << this << endl;
+        heap = state_type(0xfeeddead);
     }
 
-    pointer allocate(size_type s, std::allocator<void>::const_pointer hint = 0)
+    pointer allocate(size_type __n, std::allocator<void>::const_pointer hint = 0)
     {
-        kconsole << "heap_allocator::allocate " << s << ": from heap " << heap << endl;
-        return reinterpret_cast<pointer>(heap->allocate(s));
+        kconsole << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap << endl;
+        return reinterpret_cast<pointer>(heap->allocate(__n * sizeof(T)));
     }
-    void deallocate(pointer p, size_type n) throw()
+    void deallocate(pointer p, size_type) throw()
     {
-        kconsole << "heap_allocator::deallocate " << n << " @ " << p << ": in heap " << heap << endl;
+        kconsole << "heap_allocator::deallocate @ " << p << " from heap " << heap << endl;
         heap->free(reinterpret_cast<memory_v1::address>(p));
     }
 };
