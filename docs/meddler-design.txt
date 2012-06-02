@@ -17,3 +17,12 @@ to <interface name as namespace>::<type> for C++?
 We check the imported types while parsing field, parameter declarations - if a type is not builtin or fully qualified, it is considered local type, 
 subject to intra-interface resolution, otherwise if type is fully qualified it is regarded as type import and added to interface's 'imported_types' list.
 During code emission inclusion of other interfaces information is resolved (for C++ - by adding #include "importname_interface.h" lines).
+
+
+== Type code generation ==
+
+* need to maintain structural equivalence - types with same structure and methods should generate same code (fingerprint).
+
+For simplicity we require same naming on methods and composite types (but not on field names or method arguments).
+
+interface_name:parent{struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
