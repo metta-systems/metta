@@ -399,7 +399,10 @@ static void init_namespaces(bootimage_t& bootimg)
     root->add("Shmest", v);
     root->add("Fest", v);
     kconsole << "######### listing" << endl;
-    root->list();
+    for (auto x : root->list())
+    {
+        kconsole << "Returned naming_context keys " << x << endl;
+    }
     kconsole << "######### done with root context" << endl;
 
 #if 0
