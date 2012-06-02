@@ -46,10 +46,10 @@ struct naming_context_v1::state_t
 static naming_context_v1::names
 naming_context_v1_list(naming_context_v1::closure_t* self)
 {
-	naming_context_v1::names n;
+	naming_context_v1::names n(context_allocator(self->d_state->heap));
 	for (auto x : self->d_state->map)
 	{
-		// n.push_back(x.first);
+		n.push_back(x.first);
 		kconsole << "Returning naming_context key " << x.first << endl;
 	}
 
