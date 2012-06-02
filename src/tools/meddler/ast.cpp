@@ -18,13 +18,13 @@ namespace AST
  */
 bool interface_t::types_lookup(alias_t& type)
 {
-	bool res = false;
-	std::string tp = type.type();
-	for_each(types.begin(), types.end(), [tp, &res](alias_t* t) {
-		if (t->name() == tp)
-			res = true;
-	});
-	return res;
+    std::string tp = type.type();
+    for (auto t : types)
+    {
+        if (t->name() == tp)
+            return true;
+    }
+    return false;
 }
 
 /**
@@ -32,13 +32,13 @@ bool interface_t::types_lookup(alias_t& type)
  */
 bool interface_t::imported_types_lookup(alias_t& type)
 {
-	bool res = false;
-	std::string tp = type.type();
-	for_each(imported_types.begin(), imported_types.end(), [tp, &res](alias_t* t) {
-		if (t->name() == tp)
-			res = true;
-	});
-	return res;
+    std::string tp = type.type();
+    for (auto t : imported_types)
+    {
+        if (t->name() == tp)
+            return true;
+    }
+    return false;
 }
 
 bool interface_t::add_exception(exception_t* exc)
@@ -138,7 +138,7 @@ void alias_t::dump(std::string indent_prefix)
 void parameter_t::dump(std::string indent_prefix)
 {
     const char* dirs[] = {"in ", "out ", "inout "};
-	std::cout << indent_prefix << dirs[direction]; alias_t::dump("");
+    std::cout << indent_prefix << dirs[direction]; alias_t::dump("");
 }
 
 void interface_t::dump(std::string indent_prefix)
@@ -149,25 +149,25 @@ void interface_t::dump(std::string indent_prefix)
     if (types.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-		std::for_each(types.begin(), types.end(), [indent_prefix](alias_t* a) { a->dump(indent_prefix + "  "); });
+        for (auto a : types) { a->dump(indent_prefix + "  "); }
 
     std::cout << indent_prefix << "+-imported types" << std::endl;
     if (imported_types.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(imported_types.begin(), imported_types.end(), [indent_prefix](alias_t* a) { a->dump(indent_prefix + "  "); });
+        for (auto a : imported_types) { a->dump(indent_prefix + "  "); }
 
     std::cout << indent_prefix << "+-exceptions" << std::endl;
     if (exceptions.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(exceptions.begin(), exceptions.end(), [indent_prefix](exception_t* e) { e->dump(indent_prefix + "  "); });
+        for (auto e : exceptions) { e->dump(indent_prefix + "  "); }
 
     std::cout << indent_prefix << "+-methods" << std::endl;
     if (methods.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(methods.begin(), methods.end(), [indent_prefix](method_t* m) { m->dump(indent_prefix + "  "); });
+        for (auto m : methods) { m->dump(indent_prefix + "  "); }
 }
 
 void exception_t::dump(std::string indent_prefix)
@@ -177,9 +177,9 @@ void exception_t::dump(std::string indent_prefix)
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(fields.begin(), fields.end(), [indent_prefix](alias_t* var){
+        for (auto var : fields) {
             std::cout << indent_prefix << "  "; var->dump(""); std::cout << ";" << std::endl;
-        });
+        }
 }
 
 void record_alias_t::dump(std::string indent_prefix)
@@ -189,9 +189,9 @@ void record_alias_t::dump(std::string indent_prefix)
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(fields.begin(), fields.end(), [indent_prefix](alias_t* var){
+        for (auto var : fields) {
             std::cout << indent_prefix << "  "; var->dump("");
-        });
+        }
 }
 
 void enum_alias_t::dump(std::string indent_prefix)
@@ -201,9 +201,9 @@ void enum_alias_t::dump(std::string indent_prefix)
     if (fields.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(fields.begin(), fields.end(), [indent_prefix](std::string s){
+        for (auto s : fields) {
             std::cout << indent_prefix << "  " << s << std::endl;
-        });
+        }
 }
 
 void range_alias_t::dump(std::string indent_prefix)
@@ -235,7 +235,8 @@ void method_t::dump(std::string indent_prefix)
     if (params.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(params.begin(), params.end(), [indent_prefix](parameter_t* p) { p->dump(indent_prefix + "  "); });
+        for (auto p : params) { p->dump(indent_prefix + "  "); }
+
     if (never_returns)
         std::cout << indent_prefix << "+-never returns" << std::endl;
     else
@@ -244,22 +245,21 @@ void method_t::dump(std::string indent_prefix)
         if (returns.size() == 0)
             std::cout << indent_prefix << "  [empty]" << std::endl;
         else
-            std::for_each(returns.begin(), returns.end(), [indent_prefix](parameter_t* p) { p->dump(indent_prefix + "  "); });
+            for (auto p : returns) { p->dump(indent_prefix + "  "); }
     }
     std::cout << indent_prefix << "+-exceptions" << std::endl;
     if (raises.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(raises.begin(), raises.end(), [indent_prefix](exception_t* e) { e->dump(indent_prefix + "  "); });
+        for (auto e : raises) { e->dump(indent_prefix + "  "); }
 
     std::cout << indent_prefix << "+-unresolved exceptions ids" << std::endl;
     if (raises_ids.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        std::for_each(raises_ids.begin(), raises_ids.end(), [indent_prefix](std::string s)
-        {
+        for (auto s : raises_ids) { 
             std::cout << indent_prefix << "  " << s << std::endl;
-        });
+        }
 }
 
-}
+} // namespace AST
