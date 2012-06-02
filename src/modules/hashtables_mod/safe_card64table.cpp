@@ -23,16 +23,13 @@
 #include "unordered_map"
 #include "heap_new.h"
 
-typedef std::allocator<std::pair<map_card64_address_v1::key, map_card64_address_v1::value>> card64_table_heap_allocator;
+using namespace std;
 
-typedef std::unordered_map<
-			map_card64_address_v1::key, 
-			map_card64_address_v1::value, 
-			std::hash<map_card64_address_v1::key>, 
-			std::equal_to<map_card64_address_v1::key>, 
-			card64_table_heap_allocator>
-
-				card64table_t;
+typedef map_card64_address_v1::key key_type;
+typedef map_card64_address_v1::value value_type;
+typedef pair<key_type, value_type> pair_type;
+typedef heap_allocator<pair_type> card64_table_heap_allocator;
+typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, card64_table_heap_allocator> card64table_t;
 
 struct map_card64_address_v1::state_t
 {
@@ -97,10 +94,10 @@ static map_card64_address_v1::closure_t*
 map_card64_address_factory_v1_create(map_card64_address_factory_v1::closure_t* self, heap_v1::closure_t* heap)
 {
 	map_card64_address_v1::state_t* state = new(heap) map_card64_address_v1::state_t;
-    auto heap_alloc = new(heap) std::heap_allocator_implementation(heap); // FIXME: a mem leak!
+    auto heap_alloc = new(heap) card64_table_heap_allocator(heap); // FIXME: a mem leak!
 	// TODO: if (!state) raise Exception -- heap will raise no_memory itself!
 	state->heap = heap;
-	state->table = new(heap) card64table_t(heap_alloc);
+	state->table = new(heap) card64table_t(*heap_alloc);
 	closure_init(&state->closure, &map_methods, state);
 	return &state->closure;
 }

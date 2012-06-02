@@ -491,6 +491,12 @@ struct _Rb_tree_base
           _Base;
   typedef typename _Base::allocator_type allocator_type;
 
+#ifdef __STL_USE_NAMESPACES
+  using _Base::_M_get_node;
+  using _Base::_M_put_node;
+  using _Base::_M_header;
+#endif /* __STL_USE_NAMESPACES */
+
   _Rb_tree_base(const allocator_type& __a) 
     : _Base(__a) { _M_header = _M_get_node(); }
   ~_Rb_tree_base() { _M_put_node(_M_header); }

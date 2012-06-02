@@ -316,7 +316,6 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 
 #include <__config>
 #include <__hash_table>
-#include <bde_allocator>
 #include <functional>
 #include <stdexcept>
 
@@ -711,13 +710,15 @@ public:
     typedef __hash_map_iterator<typename __table::local_iterator> local_iterator;
     typedef __hash_map_const_iterator<typename __table::const_local_iterator> const_local_iterator;
 
-    unordered_map(bde_allocator* alloc = 0)
-        _NOEXCEPT_(is_nothrow_default_constructible<__table>::value); // = default;
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map()
+        _NOEXCEPT_(is_nothrow_default_constructible<__table>::value)
+        {} // = default;
     explicit unordered_map(size_type __n, const hasher& __hf = hasher(),
                            const key_equal& __eql = key_equal());
     unordered_map(size_type __n, const hasher& __hf,
                   const key_equal& __eql,
-                  bde_allocator* __a = 0);
+                  const allocator_type& __a);
     template <class _InputIterator>
         unordered_map(_InputIterator __first, _InputIterator __last);
     template <class _InputIterator>
@@ -728,13 +729,14 @@ public:
         unordered_map(_InputIterator __first, _InputIterator __last,
                       size_type __n, const hasher& __hf,
                       const key_equal& __eql,
-                      bde_allocator* __a = 0);
+                      const allocator_type& __a);
+    explicit unordered_map(const allocator_type& __a);
     unordered_map(const unordered_map& __u);
-    unordered_map(const unordered_map& __u, bde_allocator* __a = 0);
+    unordered_map(const unordered_map& __u, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_map(unordered_map&& __u)
         _NOEXCEPT_(is_nothrow_move_constructible<__table>::value);
-    unordered_map(unordered_map&& __u, bde_allocator* __a);
+    unordered_map(unordered_map&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_map(initializer_list<value_type> __il);
@@ -742,7 +744,7 @@ public:
                   const hasher& __hf = hasher(), const key_equal& __eql = key_equal());
     unordered_map(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf, const key_equal& __eql,
-                  bde_allocator* __a);
+                  const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     // ~unordered_map() = default;
     _LIBCPP_INLINE_VISIBILITY
@@ -954,7 +956,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
         size_type __n, const hasher& __hf, const key_equal& __eql,
-        bde_allocator* __a)
+        const allocator_type& __a)
     : __table_(__hf, __eql, __a)
 {
     __table_.rehash(__n);
@@ -963,7 +965,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
-        bde_allocator* __a)
+        const allocator_type& __a)
     : __table_(__a)
 {
 }
@@ -991,7 +993,7 @@ template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
         _InputIterator __first, _InputIterator __last, size_type __n,
-        const hasher& __hf, const key_equal& __eql, bde_allocator* __a)
+        const hasher& __hf, const key_equal& __eql, const allocator_type& __a)
     : __table_(__hf, __eql, __a)
 {
     __table_.rehash(__n);
@@ -1001,7 +1003,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
         const unordered_map& __u)
-    : __table_(__u.__table_)//FIXME: pass allocator object if necessary
+    : __table_(__u.__table_)
 {
     __table_.rehash(__u.bucket_count());
     insert(__u.begin(), __u.end());
@@ -1009,7 +1011,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
-        const unordered_map& __u, bde_allocator* __a)
+        const unordered_map& __u, const allocator_type& __a)
     : __table_(__u.__table_, __a)
 {
     __table_.rehash(__u.bucket_count());
@@ -1029,7 +1031,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
-        unordered_map&& __u, bde_allocator* __a)
+        unordered_map&& __u, const allocator_type& __a)
     : __table_(_VSTD::move(__u.__table_), __a)
 {
     if (__a != __u.get_allocator())
@@ -1066,7 +1068,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
         initializer_list<value_type> __il, size_type __n, const hasher& __hf,
-        const key_equal& __eql, bde_allocator* __a)
+        const key_equal& __eql, const allocator_type& __a)
     : __table_(__hf, __eql, __a)
 {
     __table_.rehash(__n);

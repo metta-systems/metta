@@ -23,27 +23,24 @@
 #include "unordered_map"
 #include "heap_new.h"
 
-typedef std::allocator<std::pair<map_string_address_v1::key, map_string_address_v1::value>> card64_table_heap_allocator;
+using namespace std;
 
-typedef std::unordered_map<
-			map_string_address_v1::key, 
-			map_string_address_v1::value, 
-			std::hash<map_string_address_v1::key>, 
-			std::equal_to<map_string_address_v1::key>, 
-			card64_table_heap_allocator>
-
-				card64table_t;
+typedef map_string_address_v1::key key_type;
+typedef map_string_address_v1::value value_type;
+typedef pair<key_type, value_type> pair_type;
+typedef heap_allocator<pair_type> string_table_heap_allocator;
+typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, string_table_heap_allocator> stringtable_t;
 
 struct map_string_address_v1::state_t
 {
 	map_string_address_v1::closure_t closure;
 	heap_v1::closure_t* heap;
-	card64table_t* table;
+	stringtable_t* table;
 };
 
-static bool get(map_string_address_v1::closure_t* self, map_string_address_v1::key k, map_string_address_v1::value* v)
+static bool get(map_string_address_v1::closure_t* self, key_type k, value_type* v)
 {
-    card64table_t::iterator it = self->d_state->table->find(k);
+    stringtable_t::iterator it = self->d_state->table->find(k);
     if (it != self->d_state->table->end())
     {
     	*v = (*it).second;
@@ -59,7 +56,7 @@ static bool put(map_string_address_v1::closure_t* self, map_string_address_v1::k
 
 static bool remove(map_string_address_v1::closure_t* self, map_string_address_v1::key k, map_string_address_v1::value* v)
 {
-    card64table_t::iterator it = self->d_state->table->find(k);
+    stringtable_t::iterator it = self->d_state->table->find(k);
     if (it != self->d_state->table->end())
     {
     	*v = (*it).second;
@@ -97,10 +94,10 @@ static map_string_address_v1::closure_t*
 map_string_address_factory_v1_create(map_string_address_factory_v1::closure_t* self, heap_v1::closure_t* heap)
 {
 	map_string_address_v1::state_t* state = new(heap) map_string_address_v1::state_t;
-    auto heap_alloc = new(heap) std::heap_allocator_implementation(heap); // FIXME: a mem leak!
+    auto heap_alloc = new(heap) string_table_heap_allocator(heap); // FIXME: a mem leak!
 	// TODO: if (!state) raise Exception
 	state->heap = heap;
-	state->table = new(heap) card64table_t(heap_alloc);
+	state->table = new(heap) stringtable_t(*heap_alloc);
 	closure_init(&state->closure, &map_methods, state);
 	return &state->closure;
 }

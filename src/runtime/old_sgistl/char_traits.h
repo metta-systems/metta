@@ -16,7 +16,7 @@
 
 #include "memutils.h"
 // #include <string.h> //FIXME: stdlib dep!
-#include <wchar.h>
+// #include <wchar.h>
 
 #ifdef __STL_USE_IOSTREAMS
 #if defined(__STL_USE_NEW_IOSTREAMS) && !defined(__SGI_STL_IOSFWD)
@@ -132,7 +132,7 @@ public:
   static int compare(const char* __s1, const char* __s2, size_t __n) 
     { return memutils::memory_difference(__s1, __s2, __n); }
 
-  static size_t length(const char* __s) { return strlen(__s); }
+  static size_t length(const char* __s) { return memutils::string_length(__s); }
 
   static void assign(char& __c1, const char& __c2) { __c1 = __c2; }
 
@@ -142,9 +142,9 @@ public:
 
 // Specialization for wchar_t.
 
-__STL_TEMPLATE_NULL class char_traits<wchar_t>
-  : public __char_traits_base<wchar_t, wint_t>
-{};
+// __STL_TEMPLATE_NULL class char_traits<wchar_t>
+//   : public __char_traits_base<wchar_t, wint_t>
+// {};
 
 
 __STL_END_NAMESPACE

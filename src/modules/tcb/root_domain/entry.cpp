@@ -35,6 +35,8 @@
 #include "map_string_address_factory_v1_interface.h"
 #include "type_system_factory_v1_interface.h"
 #include "type_system_f_v1_interface.h"
+#include "naming_context_v1_interface.h"
+#include "naming_context_factory_v1_interface.h"
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
 #include "closure_interface.h"
@@ -207,32 +209,32 @@ static void init_mem(bootimage_t& bootimg)
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     // For address space randomization we should load modules as we go, for simplicity we load them all here.
-    auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_mod", "exported_frames_module_rootdom");
+    auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_factory", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
 
-    auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_mod", "exported_mmu_module_rootdom");
+    auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_factory", "exported_mmu_module_rootdom");
     ASSERT(mmu_factory); // mmu_factory
 
-    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_mod", "exported_heap_module_rootdom");
+    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_factory", "exported_heap_module_rootdom");
     ASSERT(heap_factory);
 
-    auto stretch_allocator_mod = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_mod", "exported_stretch_allocator_module_rootdom"); //stretch_allocator_factory
-    ASSERT(stretch_allocator_mod);
+    auto stretch_allocator_factory = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_factory", "exported_stretch_allocator_module_rootdom");
+    ASSERT(stretch_allocator_factory);
 
-    auto stretch_table_mod = load_module<stretch_table_module_v1::closure_t>(bootimg, "stretch_table_mod", "exported_stretch_table_module_rootdom"); // stretch_table_factory
-    ASSERT(stretch_table_mod);
+    auto stretch_table_factory = load_module<stretch_table_module_v1::closure_t>(bootimg, "stretch_table_factory", "exported_stretch_table_module_rootdom");
+    ASSERT(stretch_table_factory);
 
-    auto stretch_driver_mod = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_mod", "exported_stretch_driver_module_rootdom"); // stretch_driver_factory
-    ASSERT(stretch_driver_mod);
+    auto stretch_driver_factory = load_module<stretch_driver_module_v1::closure_t>(bootimg, "stretch_driver_factory", "exported_stretch_driver_module_rootdom");
+    ASSERT(stretch_driver_factory);
 
     // === WORKAROUND ===
     // To avoid overwriting memory with further loaded modules, preload them here.
     // This will go away after a proper module loader mod is implemented.
-    load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
-    load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
-    load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
-    //load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
-    load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+    load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
+    load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
+    load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
+    load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
+    // load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -278,7 +280,7 @@ static void init_mem(bootimage_t& bootimg)
 #endif
 
     kconsole << " + Creating system stretch allocator" << endl;
-    auto system_stretch_allocator = stretch_allocator_mod->create(heap, mmu);
+    auto system_stretch_allocator = stretch_allocator_factory->create(heap, mmu);
     PVS(stretch_allocator) = system_stretch_allocator;
 
     /**
@@ -294,10 +296,10 @@ static void init_mem(bootimage_t& bootimg)
     mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
     kconsole << " + Creating stretch table" << endl;
-    auto strtab = stretch_table_mod->create(heap);
+    auto strtab = stretch_table_factory->create(heap);
 
     kconsole << " + Creating null stretch driver" << endl;
-    PVS(stretch_driver) = stretch_driver_mod->create_null(heap, strtab);
+    PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
     kconsole << " + Creating initial address space." << endl;
@@ -311,7 +313,7 @@ static void init_type_system(bootimage_t& bootimg)
 
     /* Get an Exception System */
     kconsole << " + Bringing up exceptions" << endl;
-    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_mod", "exported_exception_system_rootdom");
+    auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
     ASSERT(xcp_factory);
 	PVS(exceptions) = xcp_factory->create();
     ASSERT(PVS(exceptions));
@@ -330,13 +332,13 @@ static void init_type_system(bootimage_t& bootimg)
 
     kconsole <<  " + Bringing up type system" << endl;
     kconsole <<  " +-- getting safe_card64table_mod..." << endl;
-    auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_card64_address_factory_rootdom");
+    auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
     kconsole <<  " +-- getting stringtable_mod..." << endl;
-    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_mod", "exported_map_string_address_factory_rootdom");
+    auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
     kconsole <<  " +-- getting typesystem_mod..." << endl;
-    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_mod", "exported_type_system_factory_rootdom");
+    auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
     kconsole <<  " +-- creating a new type system..." << endl;
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
@@ -345,30 +347,30 @@ static void init_type_system(bootimage_t& bootimg)
     PVS(types) = ts;
 
     /* Play with string tables a bit */
-    map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
-    for (int x = 0; x < 100; ++x)
-    {
-        char buf[100];
-        for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
-        buf[99] = 0;
-        strtab->put(buf, x);
-    }
+    // map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
+    // for (int x = 0; x < 100; ++x)
+    // {
+    //     char buf[100];
+    //     for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
+    //     buf[99] = 0;
+    //     strtab->put(buf, x);
+    // }
 
     /* Preload any types in the boot image */
-    bootimage_t::namespace_t namesp;
-    bootimg.find_root_domain(&namesp);
-    void* val;
-    if (namesp.get_symbol("Types", val))
-    {
-        type_system_f_v1::interface_info* info;
+    // bootimage_t::namespace_t namesp;
+    // bootimg.find_root_domain(&namesp);
+    // void* val;
+    // if (namesp.get_symbol("Types", val))
+    // {
+    //     type_system_f_v1::interface_info* info;
 
-        kconsole << " +++ registering interfaces" << endl;
-        info = (type_system_f_v1::interface_info*)val;
-        while(*info) {
-            ts->register_interface(*info);
-            info++;
-        }
-    }
+    //     kconsole << " +++ registering interfaces" << endl;
+    //     info = (type_system_f_v1::interface_info*)val;
+    //     while(*info) {
+    //         ts->register_interface(*info);
+    //         info++;
+    //     }
+    // }
 }
 
 static void init_namespaces(bootimage_t& bootimg)
@@ -382,16 +384,31 @@ static void init_namespaces(bootimage_t& bootimg)
 
     /* Build root context */
     kconsole <<  "Root, ";
+
+    auto context_factory = load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
+    ASSERT(context_factory);
+    auto root = context_factory->create_context(PVS(heap), 0);//PVS(types)
+    ASSERT(root);
+    PVS(root)  = root;
+
+    kconsole << "######### factory created root context" << endl;
+
+    types::any v;
+    kconsole << "######### adding" << endl;
+    root->add("Text", v);
+    root->add("Shmest", v);
+    root->add("Fest", v);
+    kconsole << "######### listing" << endl;
+    for (auto x : root->list())
+    {
+        kconsole << "Returned naming_context keys " << x << endl;
+    }
+    kconsole << "######### done with root context" << endl;
+
 #if 0
 for_each(bootinfo_page.modules()) {
     module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
 }
-
-    auto context_factory = load_module<context_module_v1::closure_t>(bootimg, "context_mod", "exported_context_module_rootdom");
-    ASSERT(context_factory);
-	auto root = context_factory->create_context(heap, PVS(types));
-    ASSERT(root);
-    PVS(root)  = root;
 
     kconsole <<  "modules, ";
     {
@@ -771,7 +788,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 
     /* register our vp and pdom with the stretch allocators */
 /*
-    //stretch_allocator_mod->finish_init():
+    //stretch_allocator_factory->finish_init():
     SAllocMod$Done(SAllocMod, salloc, vp, nemesis_pdid);
     SAllocMod$Done(SAllocMod, (StretchAllocatorF_cl *)sysalloc,
                 vp, nemesis_pdid);

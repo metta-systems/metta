@@ -594,10 +594,6 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <utility>
 #include <limits>
 #include <iterator>
-#include <bde_allocator>
-#if _LIBCPP_BDE_ALLOCATOR_DEBUG
-    #include "default_console.h"
-#endif //_LIBCPP_BDE_ALLOCATOR_DEBUG
 #include <__functional_base>
 // #include <iosfwd>
 #include <tuple>
@@ -1648,7 +1644,6 @@ private:
 template <class _Tp>
 class _LIBCPP_VISIBLE allocator
 {
-    bde_allocator* imp;
 public:
     typedef size_t            size_type;
     typedef ptrdiff_t         difference_type;
@@ -1662,33 +1657,16 @@ public:
 
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 
-    _LIBCPP_INLINE_VISIBILITY allocator(bde_allocator* impl = 0) _NOEXCEPT {
-        do_checkpoint(__PRETTY_FUNCTION__);
-        if (impl)
-            imp = impl;
-        else
-            imp = default_newdelete_bde_allocator::singleton();
-#if _LIBCPP_BDE_ALLOCATOR_DEBUG
-        kconsole << "IMP: " << imp << endl;
-        kconsole << "this " << this << ", IMP at " << &imp << endl;
-#endif //_LIBCPP_BDE_ALLOCATOR_DEBUG
-    }
-    template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&a) _NOEXCEPT : imp(a.get_implementation()) {
-        do_checkpoint(__PRETTY_FUNCTION__);
-    }
-    bde_allocator* get_implementation() const _NOEXCEPT { return imp; }
-    void swap(allocator& other) _NOEXCEPT {
-        swap(this->imp, other.imp);
-    }
-
+    _LIBCPP_INLINE_VISIBILITY allocator() _NOEXCEPT {}
+    template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&) _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY pointer address(reference __x) const _NOEXCEPT
         {return _VSTD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const _NOEXCEPT
         {return _VSTD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
-        {return static_cast<pointer>(imp->allocate(__n * sizeof(_Tp)));}
+        {return static_cast<pointer>(::operator new(__n * sizeof(_Tp)));}
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) _NOEXCEPT
-        {imp->deallocate((void*)__p);}
+        {::operator delete((void*)__p);}
     _LIBCPP_INLINE_VISIBILITY size_type max_size() const _NOEXCEPT
         {return size_type(~0) / sizeof(_Tp);}
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
