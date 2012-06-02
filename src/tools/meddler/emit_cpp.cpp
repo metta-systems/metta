@@ -34,6 +34,10 @@ static uint64_t generate_fingerprint(interface_t* intf)
 
     intf->typecode_representation(out);
 
+    // L(
+        cout << "Typecode representation for interface is:" << endl << out.str() << endl;
+    // );
+
     // Calculate md5
     std::string str = out.str();
     unsigned char hash[MD5_DIGEST_LENGTH];
@@ -59,7 +63,7 @@ static uint64_t generate_fingerprint(interface_t* intf)
     hash[5] ^= hash[15];
 
     /** 
-     * Abuse a trick from fourcc Magic64BE to generate a proper type code :)
+     * Abuse a trick from fourcc Magic64BE to generate a type code :)
      */
     uint64_t type_code = ((((((((((((((uint64_t)hash[0] << 8) | hash[1]) << 8) | hash[2]) << 8) | hash[3]) << 8) | hash[4]) << 8) | hash[5]) << 8) | 0) << 8) | 0;
 
@@ -384,7 +388,21 @@ void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
 
 void interface_t::typecode_representation(std::ostringstream& s)
 {
-    s << "fuble";
+    s << name() << "{";
+
+    if (parent)
+        parent->typecode_representation(s);
+
+    // for (auto t : types)
+    //     t->typecode_representation(s);
+
+    // for (auto e : exceptions)
+    //     e->typecode_representation(s);
+
+    for (auto m : methods)
+        m->typecode_representation(s);
+
+    s << "}";
 }
 
 //=====================================================================================================================
@@ -527,6 +545,18 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
     s << ");" << std::endl
       << indent_prefix << "}" << std::endl << std::endl;
 }
+
+void method_t::typecode_representation(std::ostringstream& s)
+{
+    s << name() << "();";
+}
+
+    // std::vector<parameter_t*> params;
+    // std::vector<parameter_t*> returns;
+    // std::vector<exception_t*> raises;
+    // std::vector<std::string>  raises_ids;
+    // bool idempotent;
+    // bool never_returns; // oneway
 
 //=====================================================================================================================
 // exception_t
