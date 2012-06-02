@@ -279,7 +279,7 @@ def build(bld):
 
     # Target lib++
     libcxx = bld.stlib(
-        source = 'runtime/libc++/src/hash.cpp',
+        source = 'runtime/libc++/src/hash.cpp runtime/libc++/src/vector_inst.cpp',
         target = 'c++',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
