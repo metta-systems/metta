@@ -250,6 +250,8 @@ public:
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
+    virtual void typecode_representation(std::ostringstream& s);
+
     void emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     void emit_methods_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     void emit_methods_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);

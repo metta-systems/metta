@@ -10,14 +10,61 @@
 #include "macros.h"
 #include "logger.h"
 #include <map>
+#include <cassert>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <openssl/md5.h> // for type_code
 
 using namespace std;
 
 namespace AST
 {
+
+/**
+ * Convert current interface into a string similar to
+ * interface_name:parent{struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
+ * and generate a fingerprint code from it.
+ *
+ * We use a classic Nemesis style generation by calculating md5sum, then reducing it from 128 to 48 bit. Low 16 bit are left for (??) information.
+ */
+static uint64_t generate_fingerprint(interface_t* intf)
+{
+    std::ostringstream out;
+
+    intf->typecode_representation(out);
+
+    // Calculate md5
+    std::string str = out.str();
+    unsigned char hash[MD5_DIGEST_LENGTH];
+    assert(MD5_DIGEST_LENGTH == 16);
+
+    MD5((const unsigned char*)str.c_str(), str.length(), hash);
+
+    // Reduce to 48 bit
+    // there's 16 bits of overlap to use up; we put 8 bits at each end
+
+    hash[0] ^= hash[5];
+    hash[1] ^= hash[6];
+    hash[2] ^= hash[7];
+    hash[3] ^= hash[8];
+    hash[4] ^= hash[9];
+    hash[5] ^= hash[10];
+
+    hash[0] ^= hash[10];
+    hash[1] ^= hash[11];
+    hash[2] ^= hash[12];
+    hash[3] ^= hash[13];
+    hash[4] ^= hash[14];
+    hash[5] ^= hash[15];
+
+    /** 
+     * Abuse a trick from fourcc Magic64BE to generate a proper type code :)
+     */
+    uint64_t type_code = ((((((((((((((uint64_t)hash[0] << 8) | hash[1]) << 8) | hash[2]) << 8) | hash[3]) << 8) | hash[4]) << 8) | hash[5]) << 8) | 0) << 8) | 0;
+
+    return type_code;
+}
 
 /**
  * Map IDL builtin types to C++ emitter types.
@@ -69,9 +116,9 @@ static std::vector<std::string> build_forwards(interface_t* intf)
 
     forwards.push_back(intf->name());
 
-    std::for_each(intf->methods.begin(), intf->methods.end(), [&forwards](method_t* m)
+    for (auto m : intf->methods)
     {
-        std::for_each(m->params.begin(), m->params.end(), [&forwards](parameter_t* param)
+        for (auto param : m->params)
         {
             size_t pos;
             if ((pos = param->type().find_first_of('.')) != std::string::npos) //FIXME: is_qualified_name()
@@ -82,9 +129,9 @@ static std::vector<std::string> build_forwards(interface_t* intf)
                     forwards.push_back(decl);
                 }
             }
-        });
+        }
 
-        std::for_each(m->returns.begin(), m->returns.end(), [&forwards](parameter_t* param)
+        for (auto param : m->returns)
         {
             size_t pos;
             if ((pos = param->type().find_first_of('.')) != std::string::npos) //FIXME: is_qualified_name()
@@ -95,8 +142,8 @@ static std::vector<std::string> build_forwards(interface_t* intf)
                     forwards.push_back(decl);
                 }
             }
-        });
-    });
+        }
+    }
 
     return forwards;
 }
@@ -161,6 +208,10 @@ static std::string emit_type(alias_t& type, bool fully_qualify_type = false)
     return result;
 }
 
+//=====================================================================================================================
+// interface_t
+//=====================================================================================================================
+
 void interface_t::emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
 {
     // First, emit parent interfaces methods, starting from the deepest parent.
@@ -168,10 +219,10 @@ void interface_t::emit_methods_impl_h(std::ostringstream& s, std::string indent_
         parent->emit_methods_impl_h(s, indent_prefix, true);
 
     // Then, emit own methods.
-    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix, fully_qualify_types](method_t* m)
+    for (auto m : methods)
     {
         m->emit_impl_h(s, indent_prefix + "    ", fully_qualify_types);
-    });
+    }
 }
 
 void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
@@ -182,10 +233,10 @@ void interface_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, 
     std::vector<std::string> fwd = build_forwards(this);
     if (fwd.size() > 0)
     {
-        std::for_each(fwd.begin(), fwd.end(), [&s, indent_prefix](std::string str)
+        for (auto str : fwd)
         {
             s << indent_prefix << "namespace " << str << " { struct closure_t; }" << endl;
-        });
+        }
         s << std::endl;
     }
 
@@ -211,10 +262,10 @@ void interface_t::emit_methods_interface_h(std::ostringstream& s, std::string in
         parent->emit_methods_interface_h(s, indent_prefix, true);
 
     // Then, emit own methods.
-    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix, fully_qualify_types](method_t* m)
+    for (auto m : methods)
     {
         m->emit_interface_h(s, indent_prefix + "        ", fully_qualify_types);
-    });
+    }
 }
 
 void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool)
@@ -227,14 +278,15 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
     // Instead, make a forward declaration down below..
     std::vector<std::string> interface_included;
 
-    std::for_each(imported_types.begin(), imported_types.end(), [&s, indent_prefix, &interface_included](alias_t* t)
+    for (auto t : imported_types)
     {
+        // @todo not_found algorithm?
         if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
         {
             t->emit_include(s, indent_prefix);
             interface_included.push_back(t->base_name());
         }
-    });
+    }
 
     L(cout << "### ==== BASE is  === " << base << endl);
 
@@ -247,21 +299,20 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
         parents = parents->parent;
     }
 
-    std::for_each(types.begin(), types.end(), [&s, indent_prefix](alias_t* t)
-    {
+    for (auto t : types)
         t->emit_include(s, indent_prefix);
-    });
 
     s << std::endl;
 
     // Forward declarations.
-    std::for_each(imported_types.begin(), imported_types.end(), [&s, indent_prefix, &interface_included](alias_t* t)
+    for (auto t : imported_types)
     {
+        // @todo not_found algorithm if doesn't exist?
         if (t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
         {
             s << indent_prefix << "namespace " << t->base_name() << " { struct closure_t; }" << endl;
         }
-    });
+    }
 
     s << std::endl;
 
@@ -272,11 +323,11 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
       << indent_prefix << "{" << std::endl;
 
     // Type declarations.
-    std::for_each(types.begin(), types.end(), [&s, indent_prefix](alias_t* t)
+    for (auto t : types)
     {
         t->emit_interface_h(s, indent_prefix + "    ");
         s << std::endl;
-    });
+    }
     
     s << std::endl;
 
@@ -292,6 +343,11 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
 
     s << indent_prefix << "    };" << std::endl;
 
+    s << std::endl;
+
+    // Type code.
+    s << indent_prefix << "    const uint64_t type_code = 0x" << hex << generate_fingerprint(this) << "ull;" << endl;
+
     s << indent_prefix << "}" << std::endl;
 
 }
@@ -303,10 +359,10 @@ void interface_t::emit_methods_interface_cpp(std::ostringstream& s, std::string 
         parent->emit_methods_interface_cpp(s, indent_prefix, true);
 
     // Then, emit own methods.
-    std::for_each(methods.begin(), methods.end(), [&s, indent_prefix, fully_qualify_types](method_t* m)
+    for (auto m : methods)
     {
         m->emit_interface_cpp(s, indent_prefix, fully_qualify_types);
-    });
+    }
 }
 
 // Currently no need to generate interface.cpp if there are no methods.
@@ -326,6 +382,15 @@ void interface_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
     }
 }
 
+void interface_t::typecode_representation(std::ostringstream& s)
+{
+    s << "fuble";
+}
+
+//=====================================================================================================================
+// method_t
+//=====================================================================================================================
+
 void method_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
 {
     std::string return_value_type;
@@ -341,11 +406,11 @@ void method_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, boo
 
     s << parent_interface << "::closure_t* self";
 
-    std::for_each(params.begin(), params.end(), [&s, fully_qualify_types](parameter_t* param)
+    for (auto param : params)
     {
         s << ", ";
         param->emit_impl_h(s, "", fully_qualify_types);
-    });
+    }
 
     // TODO: add by-ptr for non-interface returns
     if (returns.size() > 1)
@@ -374,14 +439,14 @@ void method_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix
       << " " << name() << "(";
 
     bool first = true;
-    std::for_each(params.begin(), params.end(), [&s, &first, fully_qualify_types](parameter_t* param)
+    for (auto param : params)
     {
         if (!first)
             s << ", ";
         else
             first = false;
         param->emit_interface_h(s, "", fully_qualify_types);
-    });
+    }
 
     // TODO: add by-ptr for non-interface returns
     if (returns.size() > 1)
@@ -412,14 +477,14 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
     s << indent_prefix << return_value_type << "  closure_t::" << name() << "(";
 
     bool first = true;
-    std::for_each(params.begin(), params.end(), [&s, &first, fully_qualify_types](parameter_t* param)
+    for (auto param : params)
     {
         if (!first)
             s << ", ";
         else
             first = false;
         param->emit_interface_cpp(s, "", fully_qualify_types);
-    });
+    }
 
     // TODO: add by-ptr for non-interface returns
     if (returns.size() > 1)
@@ -443,11 +508,11 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
 
     s << "reinterpret_cast<" << get_root()->name() << "::closure_t*>(this)"; // butt-ugly, indeed
 
-    std::for_each(params.begin(), params.end(), [&s](parameter_t* param)
+    for (auto param : params)
     {
         s << ", ";
 		s << param->name();
-    });
+    }
 
     // TODO: add by-ptr for non-interface returns
     if (returns.size() > 1)
@@ -463,6 +528,10 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
       << indent_prefix << "}" << std::endl << std::endl;
 }
 
+//=====================================================================================================================
+// exception_t
+//=====================================================================================================================
+//
 // TODO:
 // Once exception support in the kernel is established,
 // emit exceptions into a nested namespace under "name_v1" i.e.
@@ -486,6 +555,10 @@ void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
 {
 }
 
+//=====================================================================================================================
+// alias_t
+//=====================================================================================================================
+
 void alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
 	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
@@ -508,6 +581,10 @@ void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefi
     s << indent_prefix << emit_type(*this);
     s << " " << name();
 }
+
+//=====================================================================================================================
+// parameter_t
+//=====================================================================================================================
 
 void parameter_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
 {
@@ -533,6 +610,10 @@ void parameter_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
     s << " " << name();
 }
 
+//=====================================================================================================================
+// type_alias_t
+//=====================================================================================================================
+
 void type_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
@@ -545,6 +626,10 @@ void type_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_pr
 void type_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
+
+//=====================================================================================================================
+// sequence_alias_t
+//=====================================================================================================================
 
 void sequence_alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
@@ -565,6 +650,10 @@ void sequence_alias_t::emit_interface_cpp(std::ostringstream& s, std::string ind
 {
 }
 
+//=====================================================================================================================
+// array_alias_t
+//=====================================================================================================================
+
 void array_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
     s << indent_prefix << "typedef int " << replace_dots(get_root()->name() + "." + name()) << ";" << endl; //TEMP hack
@@ -577,6 +666,10 @@ void array_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_p
 void array_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
+
+//=====================================================================================================================
+// set_alias_t
+//=====================================================================================================================
 
 void set_alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
@@ -596,6 +689,10 @@ void set_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
 {
 }
 
+//=====================================================================================================================
+// record_alias_t
+//=====================================================================================================================
+
 void record_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
@@ -604,17 +701,23 @@ void record_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_
 {
 	s << indent_prefix << "struct " << replace_dots(name()) << endl
 	  << indent_prefix << "{" << endl;
-    std::for_each(fields.begin(), fields.end(), [&s, indent_prefix](alias_t* field)
+
+    for (auto field : fields)
     {
         field->emit_interface_h(s, indent_prefix + "    ");
         s << ";" << endl;
-    });
+    }
+
     s << indent_prefix << "};" << endl;
 }
 
 void record_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
+
+//=====================================================================================================================
+// enum_alias_t
+//=====================================================================================================================
 
 void enum_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
@@ -624,16 +727,22 @@ void enum_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_pr
 {
     s << indent_prefix << "enum " << replace_dots(name()) << endl
       << indent_prefix << "{" << endl;
-    std::for_each(fields.begin(), fields.end(), [&s, indent_prefix, this](std::string field)
+
+    for (auto field : fields)
     {
         s << indent_prefix << "    " << replace_dots(this->name() + "_" + field) << "," << endl;
-    });
+    }
+
     s << indent_prefix << "};" << endl;
 }
 
 void enum_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
 }
+
+//=====================================================================================================================
+// range_alias_t
+//=====================================================================================================================
 
 void range_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
 {
@@ -648,4 +757,4 @@ void range_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent
 {
 }
 
-}
+} // namespace AST
