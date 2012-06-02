@@ -44,7 +44,7 @@ struct naming_context_v1::state_t
 };
 
 static naming_context_v1::names
-naming_context_v1_list(naming_context_v1::closure_t* self)
+list(naming_context_v1::closure_t* self)
 {
 	naming_context_v1::names n(context_allocator(self->d_state->heap));
 	for (auto x : self->d_state->map)
@@ -58,48 +58,51 @@ naming_context_v1_list(naming_context_v1::closure_t* self)
 
 // This is incomplete, doesn't support compound arc-names.
 static bool
-naming_context_v1_get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
+get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
 {
-    // card64table_t::iterator it = self->d_state->table->find(k);
-    // if (it != self->d_state->table->end())
-    // {
-    // 	*v = (*it).second;
-    //     return true;
-    // }
-    // return false;
-
-	return false;//self->d_state->map.TryGet(key, *out_value);
+    context_map::iterator it = self->d_state->map.find(key);
+    if (it != self->d_state->map.end())
+    {
+    	*out_value = (*it).second;
+        return true;
+    }
+    return false;
 }
 
 // This is incomplete, doesn't support compound arc-names.
 static void
-naming_context_v1_add(naming_context_v1::closure_t *self, const char *key, types::any value)
+add(naming_context_v1::closure_t *self, const char *key, types::any value)
 {
 	self->d_state->map.insert(make_pair(key, value));
 	// return self->d_state->table->insert(std::make_pair(k, v)).second;
-	// self->d_state->map.Put(key, value);
 }
 
 // This is incomplete, doesn't support compound arc-names.
 static void
-naming_context_v1_remove(naming_context_v1::closure_t *self, const char *key)
+remove(naming_context_v1::closure_t *self, const char *key)
 {
-	// self->d_state->map.Remove(key);
+    context_map::iterator it = self->d_state->map.find(key);
+    if (it != self->d_state->map.end())
+    {
+        self->d_state->map.erase(it);
+        // return true;
+    }
+    // return false;
 }
 
 static void
-naming_context_v1_destroy(naming_context_v1::closure_t *)
+destroy(naming_context_v1::closure_t* self)
 {
-
+    self->d_state->map.clear();
 }
 
 static const naming_context_v1::ops_t naming_context_v1_methods =
 {
-	naming_context_v1_list,
-	naming_context_v1_get,
-	naming_context_v1_add,
-	naming_context_v1_remove,
-	naming_context_v1_destroy
+	list,
+	get,
+	add,
+	remove,
+	destroy
 };
 
 //=====================================================================================================================
@@ -107,7 +110,7 @@ static const naming_context_v1::ops_t naming_context_v1_methods =
 //=====================================================================================================================
 
 static naming_context_v1::closure_t*
-naming_context_factory_v1_create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* heap, type_system_v1::closure_t* type_system)
+create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* heap, type_system_v1::closure_t* type_system)
 {
 	kconsole << " ** Creating new naming context." << endl;
 
@@ -120,7 +123,7 @@ naming_context_factory_v1_create_context(naming_context_factory_v1::closure_t* s
 
 static const naming_context_factory_v1::ops_t naming_context_factory_v1_methods =
 {
-	naming_context_factory_v1_create_context
+	create_context
 };
 
 static const naming_context_factory_v1::closure_t clos =
