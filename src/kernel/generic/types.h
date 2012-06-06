@@ -18,7 +18,8 @@
 #define NULL 0L
 
 #if __Metta__
-typedef uint32_t size_t;  // 32 bits build...
+typedef __typeof__(sizeof(int)) size_t;
+// typedef uint32_t size_t;  // 32 bits build...
 typedef int32_t  ptrdiff_t;
 typedef ptrdiff_t offset_t;
 #else
