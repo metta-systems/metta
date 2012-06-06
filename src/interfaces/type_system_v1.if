@@ -39,8 +39,34 @@
 # record { type field = default; type field = default } id;
 #
 
+# Maintains all information about the structure of abstract and concrete types in the system.
+# 
+# System typically contains a single instance of the "type_system" interface.
+# This is a "naming_context" in which every type in the system is registered.  
+# The context maps type names to "types.code"s.
+
+# The arc-names registered in the "type_system" context are of the
+# form
+# 
+#    "Foo"       `(for interface types), or`
+#    "Foo.Bar"   `(for concrete types defined in the `"Foo"` interface).`
+# 
+# The "type_system"'s "get" method maps these type names to "types.any"s
+# for the corresponding "types.code"s.
+
 local interface type_system_v1 extends naming_context_v1
 {
+
+    # 
+    # Representing type structures
+    # 
+    # Given a type code, the "info" procedure below can be used to
+    # obtain a "types.any" whose value represents the structure of the
+    # given type. Meddle's types are represented with values of the
+    # following types.  Enumerations, reference types, records and choices are
+    # all represented by instances of corresponding "naming_context" subtypes.
+    # These are described elsewhere.
+
     type types.code alias;
 
     enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
@@ -61,18 +87,60 @@ local interface type_system_v1 extends naming_context_v1
 #     struct&  struct;
 #     choice&  choice;
 
+    # "code" is not a valid type code in this context.
     exception bad_code { alias code; }
+
+    # Raised when a "narrow" operation fails.
     exception incompatible {}
 
-    info(alias tc, out types.any rep) returns (interface_v1& scope) raises (bad_code);
+    # The "info" procedure maps a type code "tc" to information
+    # about the corresponding type.
+    # The "scope" result is a "naming_context" which represents the interface in which the type
+    # is defined; for reference types, this is a distinguished interface
+    # actually called "meta_interface" which notionally defines all interfaces,
+    # including itself.  Finally, the "rep" result represents the type
+    # as described above.
+
+    info(alias tc, out types.any rep) 
+        returns (interface_v1& scope) 
+        raises (bad_code);
+
+    # "size" returns how may bytes an instance of the type occupies in
+    # memory. This is not as straightforward as it sounds, for instance
+    # the "Size" of a "STRING" is one word, and the "Size" of a
+    # "SEQUENCE" is the (fixed) size of the sequence data structure
+    # excluding its elements. It is provided for things like
+    # marshalling code and Monger.
 
     size(alias tc) returns (memory_v1.size s) raises (bad_code);
 
+    # "name" returns the name of the type.
+
     name(alias tc) returns (types.name name) raises (bad_code);
+
+    # The "is_type" procedure tells whether one type is compatible
+    # with another.  Types are compatible if they have the same type
+    # code (note that aliases are \emph{not} compatible), or "sub" is
+    # an interface type which directly or indirectly "extends"
+    # the interface type "super". "bad_code" is raised if one or other
+    # of the type codes does not exist.
 
     is_type(alias sub, alias super) returns (boolean result) raises (bad_code);
 
+    # "narrow" performs a runtime type check:
+    # If "is_type(a.type, tc)", then return "a.val"; otherwise raise
+    # "incompatible".
+
     narrow(types.any a, alias tc) returns (types.val v) raises (incompatible);
+
+    # It may sometimes be convenient (in Monger for example) to
+    # know the type of which a given type is an alias. The "unalias"
+    # operation can be thought of as repeatedly reading the base type
+    # of a given alias, until the base type itself is not an
+    # alias. Given a "types.code", therefore, "unalias" will always return
+    # a "type.code" of a type which is not an alias.
+    # Return the ultimate base type of "tc". If "tc" refers to a type
+    # which is not an alias, "base := a".
 
     unalias(alias tc) returns (alias base) raises (bad_code);
 }

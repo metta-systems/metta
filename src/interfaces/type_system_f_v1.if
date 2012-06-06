@@ -9,6 +9,9 @@
 ## Type system "friends" interface - with access to some privileged capabilities like registering new types.
 ## Available only to root domain and bootstrap code.
 
+# The "type_system_f" interface provides a means for the runtime loader
+# to register new types.
+
 local interface type_system_f_v1 extends type_system_v1
 {
 	type memory_v1.address interface_info; ## really an "(Intf_st*)" from "TypeSystem_st.h"
