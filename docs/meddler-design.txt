@@ -25,4 +25,6 @@ During code emission inclusion of other interfaces information is resolved (for 
 
 For simplicity we require same naming on methods and composite types (but not on field names or method arguments).
 
-interface_name:parent{struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
+interface name and parent interface name below break structural equivalence requirement!
+
+interface_name{parent_interface_name{types;exceptions;methods;}types;exceptions;methods;}
