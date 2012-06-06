@@ -851,6 +851,8 @@ extern "C" void module_entry()
 
     kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
 
+    kconsole << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl << endl;
+
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;
     const char* name;
