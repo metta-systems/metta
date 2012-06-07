@@ -52,7 +52,10 @@ public:
         std::string full_path;
         unsigned bufn = sm.AddIncludeFile(file, llvm::SMLoc(), full_path);
         if (bufn == ~0U)
+        {
+            cerr << "*** Could not load file " << file << ". Please check that you have spelled the interface name correctly and specified all include paths." << endl;
             return false;
+        }
         L(cout << "### Parsing file " << file << endl);
         parser_t* parser = new parser_t(sm, verbose);
         L(cout << "### Initing parser" << endl);
