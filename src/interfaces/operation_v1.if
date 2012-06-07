@@ -1,0 +1,38 @@
+#      Representation of a Meddle operation
+# The "type system" represents each method within a Meddle
+# interface type by an instance of the "operation" interface.
+
+local interface operation_v1 extends naming_context_v1
+{
+    # The procedures inherited from "Context" map the names of each of
+    # the operation fields (arguments and results) to instances of the
+    # "Parameter" data type. The sequence returned by the "List" method
+    # contains the parameters in the order in which they were defined, thus
+    # all those of kind "Result" come after the others.
+
+    # what sort of parameter this is.
+    enum { input, output, in_out, result } param_mode;
+
+    # returned by the context.
+    record parameter { 
+        types.code type_;
+        param_mode mode;
+    }
+
+    # Operations themselves come in three flavours:
+    enum { proc, announcement, no_return } kind;
+
+    # An operation is provided to return miscellaneous information
+    # about an operation:
+
+    # Return the kind of operation, its name and interface, the
+    # number of the operation within the interface, and the
+    # numbers of arguments, results and exceptions respectively.
+    info() 
+        returns (kind k, string name, interface_v1& i, card32 index, card32 a, card32 r, card32 e);
+
+    # Finally, one can obtain a list of exceptions raised by the operation:
+    exceptions(heap_v1& heap)
+        returns (exception_v1.list result)
+        raises (heap_v1.no_memory);
+}
