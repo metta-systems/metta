@@ -72,9 +72,8 @@ local interface type_system_v1 extends naming_context_v1
     enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
           ShortInteger, Integer, LongInteger,
           Real, LongReal,
-          String,
           Octet, Char,
-          Address, Word } predefined;
+          Opaque, String } predefined;
 
     type cardinal tc_array_index;
     record tc_array { array_index n; alias tc; }
@@ -82,7 +81,7 @@ local interface type_system_v1 extends naming_context_v1
 #     enum_v1& enum;
 #     alias    set;
 #     alias    ref;
-#     interface_v1& iref;
+    type interface_v1& iref;
 #     alias    sequence;
 #     struct&  struct;
 #     choice&  choice;
