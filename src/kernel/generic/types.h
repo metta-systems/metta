@@ -38,3 +38,31 @@ typedef uint32_t flags_t;
 //typedef uint32_t uint32_le_t;
 //typedef uint32_t uint32_be_t;
 // etc
+
+//=====================================================================================================================
+// Interface generation support.
+//=====================================================================================================================
+
+/*
+ * Type codes for all predefined types.
+ * Borrowed directly from Nemesis.
+ */
+#define uint8_t__code	(1ull)
+#define uint16_t__code	(2ull)
+#define uint32_t__code	(3ull)
+#define uint64_t__code	(4ull)
+
+#define int8_t__code	(5ull)
+#define int16_t__code	(6ull)
+#define int32_t__code	(7ull)
+#define int64_t__code	(8ull)
+
+#define float__code	(9ull)
+#define double__code	(10ull)
+
+#define bool__code	(11ull)
+
+#define cstring_t__code	(12ull)
+#define voidptr__code	(13ull)
+
+typedef void* voidptr;
