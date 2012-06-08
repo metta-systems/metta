@@ -15,7 +15,7 @@ include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
 system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
 #old stl flags '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
-stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1', '_LIBCPP_BDE_ALLOCATOR_DEBUG=1']
+stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
 stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
@@ -163,6 +163,7 @@ def configure(conf):
     # conf.setenv('ENV') # Activate the environment
     conf.env.append_unique('INCLUDE_DIRS', include_dirs)
     conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
+    conf.env.append_unique('INCLUDE_DIRS', 'interfaces/nemesis')
     # Set arch-specific include paths
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
@@ -250,9 +251,9 @@ def build(bld):
 
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'closure', 'domain_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
-                       'frames_module_v1', 'heap_module_v1', 'heap_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
+                       'frames_module_v1', 'heap_module_v1', 'heap_v1', 'interface_v1', 'map_card64_address_v1', 'map_card64_address_factory_v1', 
                        'map_string_address_v1', 'map_string_address_factory_v1', 'memory_v1', 'mmu_module_v1', 'mmu_v1', 
-                       'naming_context_v1', 'naming_context_factory_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1',
+                       'naming_context_v1', 'naming_context_factory_v1', 'operation_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'stretch_allocator_module_v1',
                        'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 'stretch_table_module_v1', 
                        'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_v1', 'timer_v1', 'types', 
                        'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',

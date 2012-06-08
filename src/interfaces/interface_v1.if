@@ -1,0 +1,26 @@
+#      Presents the structure of a given interface
+# The "TypeSystem" represents \MIDDL\ interface types by instances
+# of the "Interface" interface.
+
+local interface interface_v1 extends naming_context_v1
+{
+    # The procedures inherited from "Context" map the names of each
+    # of the types declared in the interface represented by the current
+    # "Interface" to a "Type.Any" which represents the type in the
+    # manner described in "TypeSystem".  The list returned by the
+    # "List" procedure produces the type names in the order in which
+    # they are declared.
+
+    # Two further operations are defined on interfaces of type
+    # "Interface": 
+
+    # If the interface represented by the current "Interface"
+    # has an immediate supertype, set "yes := True" and "o" to
+    # the supertype's representation.  Otherwise, set "yes := False".
+    extends_() returns (boolean yes, interface_v1& o); # until we fix the parser, this name has to suffer..
+
+    sequence<interface_v1&> needs;
+
+    # Returns other information about the current interface.
+    info() returns (boolean is_local, needs need_list, types.name name, types.code code);
+}

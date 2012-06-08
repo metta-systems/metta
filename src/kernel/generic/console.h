@@ -122,6 +122,12 @@ inline console_t& operator << (console_t& con, uint32_t data)
     return con;
 }
 
+// inline console_t& operator << (console_t& con, size_t data)
+// {
+//     con.print_hex(data);
+//     return con;
+// }
+
 inline console_t& operator << (console_t& con, uint16_t data)
 {
     con.print_hex2(data);
