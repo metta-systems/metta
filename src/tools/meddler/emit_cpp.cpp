@@ -349,8 +349,21 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
 
     s << std::endl;
 
-    // Type code.
-    s << indent_prefix << "    const uint64_t type_code = 0x" << hex << generate_fingerprint(this) << "ull;" << endl;
+    // Type codes.
+    uint64_t fp = generate_fingerprint(this);
+    s << indent_prefix << "    const uint64_t type_code = 0x" << hex << fp << "ull;" << endl;
+
+    int index = 0;
+    for (auto t : types)
+    {
+        ++index;
+        if (index > 0xffff)
+        {
+            s << "#error This interface has too many subtypes, cannot generate type codes. Please split this interface into smaller chunks." << endl;
+            break;
+        }
+        s << indent_prefix << "    const uint64_t " << t->name() << "_type_code = 0x" << hex << fp + index << "ull;" << endl;
+    }
 
     s << indent_prefix << "}" << std::endl;
 
