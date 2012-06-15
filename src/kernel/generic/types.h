@@ -47,22 +47,22 @@ typedef uint32_t flags_t;
  * Type codes for all predefined types.
  * Borrowed directly from Nemesis.
  */
-#define uint8_t__code	(1ull)
-#define uint16_t__code	(2ull)
-#define uint32_t__code	(3ull)
-#define uint64_t__code	(4ull)
+#define octet_type_code     (1ull)
+#define card16_type_code    (2ull)
+#define card32_type_code    (3ull)
+#define card64_type_code    (4ull)
 
-#define int8_t__code	(5ull)
-#define int16_t__code	(6ull)
-#define int32_t__code	(7ull)
-#define int64_t__code	(8ull)
+#define int8_type_code      (5ull)
+#define int16_type_code     (6ull)
+#define int32_type_code     (7ull)
+#define int64_type_code     (8ull)
 
-#define float__code	(9ull)
-#define double__code	(10ull)
+#define float_type_code     (9ull)
+#define double_type_code    (10ull)
 
-#define bool__code	(11ull)
+#define boolean_type_code   (11ull)
 
-#define cstring_t__code	(12ull)
-#define voidptr__code	(13ull)
+#define string_type_code    (12ull)
+#define opaque_type_code    (13ull)
 
 typedef void* voidptr;

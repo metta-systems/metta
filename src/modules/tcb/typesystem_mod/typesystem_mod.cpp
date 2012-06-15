@@ -12,7 +12,7 @@
 #include "type_system_factory_v1_interface.h"
 #include "type_system_factory_v1_impl.h"
 #include "operation_v1_interface.h"
-#include "interface_v1_interface.h"
+#include "interface_v1_state.h"
 #include "interface_v1_impl.h"
 #include "map_card64_address_factory_v1_interface.h"
 #include "map_string_address_factory_v1_interface.h"
@@ -39,111 +39,6 @@ struct type_system_f_v1::state_t
     map_card64_address_v1::closure_t* interfaces_by_typecode;
     map_string_address_v1::closure_t* interfaces_by_name;
 };
-
-/*
- * Parameter type : used in operations
- */
-struct param_t 
-{
-    operation_v1::parameter rep;
-    cstring_t        name;
-};
-
-/*
- * Field type : used in Records, Choices, Enumerations and Exceptions
- */
-struct field_t {
-    types::any   val;
-    cstring_t    name;
-};
-
-/*
- * Enumeration and record type state
- */
-struct EnumRecState_t {
-    size_t   num;
-    field_t *elems;     /* val = enum. value or record type code */
-};
-
-
-/*
- * Choice type state
- */
-struct ChoiceState_t {
-    EnumRecState_t ctx;
-    types::code    disc;      /* discriminator    */
-};
-
-struct ExcRef_t {
-    types::code    intf;
-    uint32_t       num;
-};
-
-/* Exceptions */
-struct Exc_t {
-    EnumRecState_t params;      /* Parameters - must be first   */
-    exception_v1::closure_t cl;            /* Closure for exception        */
-    interface_v1::state_t    *intf;           /* Defining interface           */
-    cstring_t    name;       /* Name of exception        */
-};
-
-/* Operations */
-struct operation_t
-{
-    cstring_t           name;    /* Name of Operation        */
-    operation_v1::kind  kind;    /* Type of Operation        */
-    param_t*            params;  /* Array of parameters      */
-    uint32_t       num_args;    /* How many there are       */
-    uint32_t       num_res; /* How many there are       */
-    uint32_t       proc_num;    /* Procedure number     */
-    ExcRef_t      *exns;        /* Array of exceptions          */       
-    uint32_t       num_excepts; /* Number of exceptions         */
-    operation_v1::closure_t*  cl;      /* Closure for operation    */
-};
-
-
-/* Type within an interface */
-struct type_representation_t
-{
-    types::any                any;        /* Class-specific stuff     */
-    types::any                code;       /* Type code of type, as an any */
-    types::name               name;       /* Name of type         */
-    interface_v1::state_t    *interface;  /* Pointer to defining interface*/
-    memory_v1::size           size;       /* Size of an instance      */
-};
-
-/* Interface itself (also a type, obviously) */
-struct interface_v1::state_t
-{
-    type_representation_t rep;
-    types::code   const *needs;   /* List of needed interfaces    */
-    size_t   num_needs; /* How many of them are there   */
-    type_representation_t   * const *types; /* List of defined types    */
-    size_t   num_types; /* How many of them are there   */
-    bool   local;     /* Is this interface local? */
-    types::code    extends;   /* Supertype, if any        */
-    operation_t  * const *methods; /* Table of methods      */
-    size_t   num_methods;   /* No. of methods we define     */
-    Exc_t    * const *exns; /* Table of exceptions      */
-    size_t   num_excepts;   /* No. of exceptions we define  */
-};
-
-/*
- * Macros for manipulating type codes
- */
-#define TCODE_META_NAME     "meta_interface"
-#define TCODE_MASK      ((types::code) 0xffffull)
-#define TCODE_INTF_CODE(_tc)    ((_tc) & ~TCODE_MASK)
-#define TCODE_IS_INTERFACE(_tc) (!((_tc) & TCODE_MASK))
-
-#define TCODE_VALID_TYPE(_tc,_b) \
-( ((_tc) & TCODE_MASK) <= (_b)->num_types)
-
-#define TCODE_WHICH_TYPE(_tc,_b) \
-    (((_b)->types)[ ((_tc) & TCODE_MASK) - 1 ])
-
-#define TCODE_NONE      0xffffffffffffffffULL
-#define MetaInterface__code 0
 
 //=====================================================================================================================
 // add, remove, dup and destroy methods from naming_context are all nulls.
@@ -283,45 +178,45 @@ interface_v1::closure_t meta_interface_closure =
 // and all interfaces in Metta (including meta_interface itself).
 //=====================================================================================================================
 
-extern interface_v1::state_t meta_interface;
+extern interface_v1::state_t meta_interface; // forward declaration
 
-#define PREDEFINED_TYPE_REP(name,strname,tag) \
-static type_representation_t type_##name##__rep = { \
+#define PREDEFINED_TYPE_REP(typename,idlname,tag) \
+static type_representation_t type_##idlname##_rep = { \
     {  type_system_v1::predefined_type_code, type_system_v1::predefined_##tag }, \
-    {  types::code_type_code, name##__code }, \
-    strname, \
+    {  types::code_type_code, idlname##_type_code }, \
+    #idlname, \
     &meta_interface, \
-    sizeof(name) \
+    sizeof(typename) \
 }
 
-PREDEFINED_TYPE_REP(uint8_t,"octet", Octet);
-PREDEFINED_TYPE_REP(int8_t,"int8", Char);
-PREDEFINED_TYPE_REP(uint16_t,"card16", ShortCardinal);
-PREDEFINED_TYPE_REP(uint32_t,"card32", Cardinal);
-PREDEFINED_TYPE_REP(uint64_t,"card64", LongCardinal);
-PREDEFINED_TYPE_REP(int16_t,"int16", ShortInteger);
-PREDEFINED_TYPE_REP(int32_t,"int32", Integer);
-PREDEFINED_TYPE_REP(int64_t,"int64", LongInteger);
-PREDEFINED_TYPE_REP(float,"float", Real);
-PREDEFINED_TYPE_REP(double,"double", LongReal);
-PREDEFINED_TYPE_REP(bool,"boolean", Boolean);
-PREDEFINED_TYPE_REP(cstring_t,"string", String);
-PREDEFINED_TYPE_REP(voidptr,"opaque", Opaque);
+PREDEFINED_TYPE_REP(uint8_t,octet, Octet);
+PREDEFINED_TYPE_REP(int8_t,int8, Char);
+PREDEFINED_TYPE_REP(uint16_t,card16, ShortCardinal);
+PREDEFINED_TYPE_REP(uint32_t,card32, Cardinal);
+PREDEFINED_TYPE_REP(uint64_t,card64, LongCardinal);
+PREDEFINED_TYPE_REP(int16_t,int16, ShortInteger);
+PREDEFINED_TYPE_REP(int32_t,int32, Integer);
+PREDEFINED_TYPE_REP(int64_t,int64, LongInteger);
+PREDEFINED_TYPE_REP(float,float, Real);
+PREDEFINED_TYPE_REP(double,double, LongReal);
+PREDEFINED_TYPE_REP(bool,boolean, Boolean);
+PREDEFINED_TYPE_REP(cstring_t,string, String);
+PREDEFINED_TYPE_REP(voidptr,opaque, Opaque);
 
 static type_representation_t* const meta_interface__types[] = {
-    &type_uint8_t__rep,
-    &type_uint16_t__rep,
-    &type_uint32_t__rep,
-    &type_uint64_t__rep,
-    &type_int8_t__rep,
-    &type_int16_t__rep,
-    &type_int32_t__rep,
-    &type_int64_t__rep,
-    &type_float__rep,
-    &type_double__rep,
-    &type_bool__rep,
-    &type_cstring_t__rep,
-    &type_voidptr__rep,
+    &type_octet_rep,
+    &type_card16_rep,
+    &type_card32_rep,
+    &type_card64_rep,
+    &type_int8_rep,
+    &type_int16_rep,
+    &type_int32_rep,
+    &type_int64_rep,
+    &type_float_rep,
+    &type_double_rep,
+    &type_boolean_rep,
+    &type_string_rep,
+    &type_opaque_rep,
     (type_representation_t*)0
 };
 
