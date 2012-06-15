@@ -23,7 +23,7 @@ namespace AST
 
 /**
  * Convert current interface into a string similar to
- * interface_name:parent{struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
+ * interface_name{parent_interface{}struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
  * and generate a fingerprint code from it.
  *
  * We use a classic Nemesis style generation by calculating md5sum, then reducing it from 128 to 48 bit. Low 16 bit are left for (??) information.
@@ -34,9 +34,7 @@ static uint64_t generate_fingerprint(interface_t* intf)
 
     intf->typecode_representation(out);
 
-    // L(
-        cout << "Typecode representation for interface is:" << endl << out.str() << endl;
-    // );
+    L(cout << "Typecode representation for interface is:" << endl << out.str() << endl;);
 
     // Calculate md5
     std::string str = out.str();
@@ -212,6 +210,86 @@ static std::string emit_type(alias_t& type, bool fully_qualify_type = false)
     return result;
 }
 
+/**
+ * Generate a qualified name to use as a type code prefix.
+ */
+static std::string emit_type_code_prefix(alias_t& type)
+{
+    std::string result = type.type();
+    if (type.is_builtin_type())
+    {
+        L(cout << "EMITTING BUILTIN TYPE " << result << endl);
+        // Check that mapping built-in type would actually work.
+        result = map_type(type.unqualified_name());
+        L(cout << " AS " << result << endl);
+        if (result.empty())
+        {
+            cerr << "Error: Unknown mapping for builtin type " << type.type() << endl;
+            result = type.type();
+        }
+        else
+            result = type.unqualified_name() + "_"; // Actually assign unmapped, unqualified type name.
+    }
+    else
+    if (type.is_interface_reference())
+    {
+        result = type.unqualified_name() + "::";
+        L(cout << "EMITTING INTERFACE REFERENCE " << result << endl);
+    }
+    else
+    if (type.is_local_type())
+    {
+        result = replace_dots(type.type());
+        result = type.get_root()->name() + "::" + result + "_";
+        L(cout << "EMITTING LOCAL TYPE " << result << endl);
+    }
+    else
+    {
+        result = replace_dots(type.type()) + "_";
+        L(cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl);
+    }
+
+    return result;
+}
+
+/**
+ * Emit all necessary includes. If @c include_interface_refs is true then include interface-only references (not suitable 
+ * for header files, as it creates cyclic dependencies).
+ * @returns List of output includes.
+ */
+static std::vector<std::string> emit_includes(std::ostringstream& s, std::string indent_prefix, interface_t* interface, bool include_interface_refs)
+{
+    std::vector<std::string> interface_included;
+
+    for (auto t : interface->imported_types)
+    {
+        bool include_reference = include_interface_refs ? true : !t->is_interface_reference();
+
+        // @todo not_found algorithm?
+        if (include_reference && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
+        {
+            t->emit_include(s, indent_prefix);
+            interface_included.push_back(t->base_name());
+        }
+    }
+
+    L(cout << "### ==== BASE is  === " << interface->base << endl);
+
+    // Include parent interfaces.
+    interface_t* parents = interface;
+    while (parents->base != "")
+    {
+        L(cout << "### Including base interface " << parents->base << endl);
+        s << indent_prefix << "#include \"" << parents->base << "_interface.h\"" << std::endl;
+        parents = parents->parent;
+    }
+
+    for (auto t : interface->types)
+        t->emit_include(s, indent_prefix);
+
+    return interface_included;
+}
+
 //=====================================================================================================================
 // interface_t
 //=====================================================================================================================
@@ -280,31 +358,7 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
     // Includes.
     // Do not include interface-only references, as it creates cyclic dependencies.
     // Instead, make a forward declaration down below..
-    std::vector<std::string> interface_included;
-
-    for (auto t : imported_types)
-    {
-        // @todo not_found algorithm?
-        if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
-        {
-            t->emit_include(s, indent_prefix);
-            interface_included.push_back(t->base_name());
-        }
-    }
-
-    L(cout << "### ==== BASE is  === " << base << endl);
-
-    // Include parent interfaces.
-    interface_t* parents = this;
-    while (parents->base != "")
-    {
-        L(cout << "### Including base interface " << parents->base << endl);
-        s << indent_prefix << "#include \"" << parents->base << "_interface.h\"" << std::endl;
-        parents = parents->parent;
-    }
-
-    for (auto t : types)
-        t->emit_include(s, indent_prefix);
+    std::vector<std::string> interface_included = emit_includes(s, indent_prefix, this, false);
 
     s << std::endl;
 
@@ -416,6 +470,62 @@ void interface_t::typecode_representation(std::ostringstream& s)
         m->typecode_representation(s);
 
     s << "}";
+}
+
+int interface_t::renumber_methods()
+{
+    int last_method = 0;
+    if (parent)
+        last_method = parent->renumber_methods();
+
+    for (auto m : methods)
+    {
+        m->method_number = last_method;
+        ++last_method;
+    }
+
+    return last_method;
+}
+
+void interface_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "#include \"interface_v1_state.h\"" << endl
+      << indent_prefix << "#include \"" << name() << "_interface.h\"" << std::endl
+      << indent_prefix << "#include \"" << name() << "_impl.h\"" << std::endl;
+
+    emit_includes(s, indent_prefix, this, true);
+
+    s << endl;
+
+    // Emit forward declaration.
+    s << indent_prefix << "extern interface_v1::state_t " << name() << "__intf_typeinfo;" << endl;
+
+    // Emit types, exceptions and operations type defs.
+    for (auto t : types)
+        t->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    for (auto e : exceptions)
+        e->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    for (auto m : methods)
+        m->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    // Now emit the interface typedef itself.
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Interface: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
+
+    if (methods.size() > 0)
+    {
+        s << indent_prefix << "static operation_t* " << name() << "_methods[] = {" << endl;
+        for (auto m : methods)
+            s << indent_prefix << "    &" << m->name() << "_method," << endl;
+        s << indent_prefix << "    NULL" << endl;
+        s << indent_prefix << "};" << endl;
+    }
+
+    s << indent_prefix << "interface_v1::state_t " << name() << "__intf_typeinfo {};" << endl;
 }
 
 //=====================================================================================================================
@@ -561,15 +671,80 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
 
 void method_t::typecode_representation(std::ostringstream& s)
 {
-    s << name() << "();";
+    s << name() << "(";
+    for (auto param : params)
+    {
+        s << param->type() << ";";
+    }
+    for (auto ret : returns)
+    {
+        s << ret->type() << ";";
+    }
+// std::vector<exception_t*> raises;
+// std::vector<std::string>  raises_ids;
+    if (idempotent)
+        s << "idempotent;";
+    if (never_returns)
+        s << "never_returns;";
+    s << ");";
 }
 
-    // std::vector<parameter_t*> params;
-    // std::vector<parameter_t*> returns;
-    // std::vector<exception_t*> raises;
-    // std::vector<std::string>  raises_ids;
-    // bool idempotent;
-    // bool never_returns; // oneway
+void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Operation: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
+
+    size_t n_params = params.size() + returns.size();
+
+    if (n_params > 0)
+    {
+        bool first = true;
+        s << indent_prefix << "static param_t " << name() << "_params[] = {" << endl;
+        for (auto param : params)
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+
+            // describe every param
+            param->emit_typedef_cpp(s, indent_prefix + "    ", fully_qualify_types);
+        }
+        for (auto ret : returns)
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+
+            // describe every return
+            ret->emit_typedef_cpp(s, indent_prefix + "    ", fully_qualify_types);
+        }
+        s << endl << indent_prefix << "};" << endl << endl;
+    }
+
+    // now emit the actual operation description
+    s << indent_prefix << "static operation_t " << name() << "_method = {" << endl
+      << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
+      << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl;
+    if (n_params > 0)
+    {
+        s << indent_prefix << "    " << name() << "_params, /* Parameter list */" << endl;
+    }
+    else
+    {
+        s << indent_prefix << "    NULL, /* Parameter list */" << endl;
+    }
+    s << indent_prefix << "    " << n_params << ", /* Number of arguments */" << endl;
+    s << indent_prefix << "    " << returns.size() << ", /* Number of return values */" << endl;
+    s << indent_prefix << "    " << method_number << ", /* Operation index */" << endl;
+    s << indent_prefix << "    NULL, /* Array of exceptions */" << endl;
+    s << indent_prefix << "    0, /* Number of exceptions */" << endl;
+    s << indent_prefix << "    NULL /* Closure for operation */" << endl;
+    s << indent_prefix << "};" << endl << endl;
+}
 
 //=====================================================================================================================
 // exception_t
@@ -598,13 +773,26 @@ void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
 {
 }
 
+void exception_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Exception: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
+}
+
 //=====================================================================================================================
 // alias_t
 //=====================================================================================================================
 
 void alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
-	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
+    // UWAGA: Very ad-hoc patch, please rework this for real includes.
+    cout << "Emitting include for base alias_t: " << base_name() << endl;
+    if (map_type(base_name()).empty())
+    	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
+    else
+        s << indent_prefix << "#include \"types.h\"" << std::endl;
 }
 
 void alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
@@ -623,6 +811,12 @@ void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefi
 {
     s << indent_prefix << emit_type(*this);
     s << " " << name();
+}
+
+void alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting some alias here, too...." << name() << endl;
+    // should not call this once all subtypes are implemented...
 }
 
 //=====================================================================================================================
@@ -651,6 +845,13 @@ void parameter_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
     if (direction != in)
         s << "*";
     s << " " << name();
+}
+
+void parameter_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    const char* directions[4] = {"input", "output", "in_out", "result"};
+
+    s << indent_prefix << "{ { " << emit_type_code_prefix(*this) << "type_code, operation_v1::param_mode_" << directions[direction] << " }, \"" << name() << "\" }";
 }
 
 //=====================================================================================================================

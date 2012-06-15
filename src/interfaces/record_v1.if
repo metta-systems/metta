@@ -1,0 +1,18 @@
+#      Extension of Context used to represent elements of RECORD
+#      type class 
+# The "TypeSystem" represents \MIDDL\ record types by instances
+# of the "Record" interface.
+
+local interface record_v1 extends naming_context_v1
+{
+    # The "Context" part of this interface maps each of the represented 
+    # record's fields' names to a "Type.Any" for the "Field"
+    # representing the field.  The list returned by the "List"
+    # procedure produces the field names in the order in which they are
+    # declared.
+
+    record field {
+        types.code tc;
+        card32 offset;
+    }
+}

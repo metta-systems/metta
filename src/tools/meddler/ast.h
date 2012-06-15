@@ -47,6 +47,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
 
     virtual void dump(std::string indent_prefix) = 0;
     virtual bool add_field(alias_t*) { return false; }
@@ -81,6 +82,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
 private:
     std::string type_; // use known types! check LLVM's Type/TypeBuilder
@@ -194,6 +196,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class exception_t : public node_t
@@ -205,6 +208,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
     std::vector<alias_t*> fields;
 };
@@ -212,7 +216,14 @@ public:
 class method_t : public node_t
 {
 public:
-	method_t(node_t* parent, std::string name, bool is_idempotent) : node_t(parent, name), idempotent(is_idempotent), never_returns(false) {}
+	method_t(node_t* parent, std::string name, bool is_idempotent)
+        : node_t(parent, name)
+        , idempotent(is_idempotent)
+        , never_returns(false)
+        , parent_interface()
+        , method_number(0)
+    {}
+
     virtual void dump(std::string indent_prefix);
     virtual bool add_parameter(parameter_t*);
     virtual bool add_return(parameter_t*);
@@ -224,6 +235,8 @@ public:
 
     virtual void typecode_representation(std::ostringstream& s);
 
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+
     std::vector<parameter_t*> params;
     std::vector<parameter_t*> returns;
     std::vector<exception_t*> raises;
@@ -232,12 +245,19 @@ public:
     bool never_returns; // oneway
     // generated properties
     std::string parent_interface;
+    int method_number; // index into the interface's method table, set externally by the parser
 };
 
 class interface_t : public node_t
 {
 public:
-    interface_t(std::string nm, bool is_local, bool is_final) : node_t(0, nm), local(is_local), final(is_final), parent(0) {}
+    interface_t(std::string nm, bool is_local, bool is_final)
+        : node_t(0, nm)
+        , local(is_local)
+        , final(is_final)
+        , parent(0)
+    {}
+
     virtual bool add_method(method_t*);
     virtual bool add_exception(exception_t*);
     virtual bool add_imported_type(alias_t);
@@ -254,9 +274,17 @@ public:
 
     virtual void typecode_representation(std::ostringstream& s);
 
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+
     void emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     void emit_methods_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     void emit_methods_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+
+    /**
+     * Call before generating typedefs cpp to renumber methods through all inheritance chain.
+     * @returns index for the next subsequent method (after the last method in this interface).
+     */
+    int renumber_methods();
 
     bool local;
     bool final;

@@ -34,7 +34,7 @@ def process_src(self, node):
 	tg = self.bld.get_tgen_by_name('meddler')
 	comp = tg.tasks[-1].outputs[0]
 	tsk = self.create_task('meddle', [comp, node], 
-		[node.change_ext('_interface.cpp'), node.change_ext('_interface.h'), node.change_ext('_impl.h')]) # Use node.name.replace instead of change_ext?
+		[node.change_ext('_interface.cpp'), node.change_ext('_interface.h'), node.change_ext('_impl.h'), node.change_ext('_typedefs.cpp')]) # Use node.name.replace instead of change_ext?
 	self.source.extend(tsk.outputs)
 
 # Added _interface.h and _impl.h files need not be processed.

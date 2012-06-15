@@ -75,8 +75,8 @@ local interface type_system_v1 extends naming_context_v1
           Octet, Char,
           Opaque, String } predefined;
 
-    type cardinal tc_array_index;
-    record tc_array { array_index n; alias tc; }
+#    type card32 tc_array_index;
+#    record tc_array { array_index n; alias tc; }
 #     cardinal bit_set;//?
 #     enum_v1& enum;
 #     alias    set;

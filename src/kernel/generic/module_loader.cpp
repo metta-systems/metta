@@ -390,6 +390,11 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     address_t prev_address = *d_last_available_address;
     *d_last_available_address = page_align_up(*d_last_available_address);
     size_t free_space = *d_last_available_address - prev_address;
+    if (free_space < sizeof(this_loaded_module))
+    {
+        *d_last_available_address = page_align_up((*d_last_available_address)+1);
+    }
+    free_space = *d_last_available_address - prev_address;
     ASSERT(free_space >= sizeof(this_loaded_module));
     memutils::copy_string(this_loaded_module.name, name, sizeof(this_loaded_module.name));
     this_loaded_module.previous = previous_loaded_module->magic == four_cc<'M','D','U','L'>::value ? previous_loaded_module : 0;
