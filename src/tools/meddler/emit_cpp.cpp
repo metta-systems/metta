@@ -23,7 +23,7 @@ namespace AST
 
 /**
  * Convert current interface into a string similar to
- * interface_name:parent{struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
+ * interface_name{parent_interface{}struct_name{field_type1;field_type2};method_signature(in_type1;in_type2):(out_type1;out_type2);}
  * and generate a fingerprint code from it.
  *
  * We use a classic Nemesis style generation by calculating md5sum, then reducing it from 128 to 48 bit. Low 16 bit are left for (??) information.
@@ -34,9 +34,7 @@ static uint64_t generate_fingerprint(interface_t* intf)
 
     intf->typecode_representation(out);
 
-    // L(
-        cout << "Typecode representation for interface is:" << endl << out.str() << endl;
-    // );
+    L(cout << "Typecode representation for interface is:" << endl << out.str() << endl;);
 
     // Calculate md5
     std::string str = out.str();
@@ -254,6 +252,44 @@ static std::string emit_type_code_prefix(alias_t& type)
     return result;
 }
 
+/**
+ * Emit all necessary includes. If @c include_interface_refs is true then include interface-only references (not suitable 
+ * for header files, as it creates cyclic dependencies).
+ * @returns List of output includes.
+ */
+static std::vector<std::string> emit_includes(std::ostringstream& s, std::string indent_prefix, interface_t* interface, bool include_interface_refs)
+{
+    std::vector<std::string> interface_included;
+
+    for (auto t : interface->imported_types)
+    {
+        bool include_reference = include_interface_refs ? true : !t->is_interface_reference();
+
+        // @todo not_found algorithm?
+        if (include_reference && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
+        {
+            t->emit_include(s, indent_prefix);
+            interface_included.push_back(t->base_name());
+        }
+    }
+
+    L(cout << "### ==== BASE is  === " << interface->base << endl);
+
+    // Include parent interfaces.
+    interface_t* parents = interface;
+    while (parents->base != "")
+    {
+        L(cout << "### Including base interface " << parents->base << endl);
+        s << indent_prefix << "#include \"" << parents->base << "_interface.h\"" << std::endl;
+        parents = parents->parent;
+    }
+
+    for (auto t : interface->types)
+        t->emit_include(s, indent_prefix);
+
+    return interface_included;
+}
+
 //=====================================================================================================================
 // interface_t
 //=====================================================================================================================
@@ -322,31 +358,7 @@ void interface_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
     // Includes.
     // Do not include interface-only references, as it creates cyclic dependencies.
     // Instead, make a forward declaration down below..
-    std::vector<std::string> interface_included;
-
-    for (auto t : imported_types)
-    {
-        // @todo not_found algorithm?
-        if (!t->is_interface_reference() && (std::find(interface_included.begin(), interface_included.end(), t->base_name()) == interface_included.end()))
-        {
-            t->emit_include(s, indent_prefix);
-            interface_included.push_back(t->base_name());
-        }
-    }
-
-    L(cout << "### ==== BASE is  === " << base << endl);
-
-    // Include parent interfaces.
-    interface_t* parents = this;
-    while (parents->base != "")
-    {
-        L(cout << "### Including base interface " << parents->base << endl);
-        s << indent_prefix << "#include \"" << parents->base << "_interface.h\"" << std::endl;
-        parents = parents->parent;
-    }
-
-    for (auto t : types)
-        t->emit_include(s, indent_prefix);
+    std::vector<std::string> interface_included = emit_includes(s, indent_prefix, this, false);
 
     s << std::endl;
 
@@ -478,7 +490,12 @@ int interface_t::renumber_methods()
 void interface_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
 {
     s << indent_prefix << "#include \"interface_v1_state.h\"" << endl
-      << endl;
+      << indent_prefix << "#include \"" << name() << "_interface.h\"" << std::endl
+      << indent_prefix << "#include \"" << name() << "_impl.h\"" << std::endl;
+
+    emit_includes(s, indent_prefix, this, true);
+
+    s << endl;
 
     // Emit forward declaration.
     s << indent_prefix << "extern interface_v1::state_t " << name() << "__intf_typeinfo;" << endl;
@@ -723,9 +740,9 @@ void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix
     s << indent_prefix << "    " << n_params << ", /* Number of arguments */" << endl;
     s << indent_prefix << "    " << returns.size() << ", /* Number of return values */" << endl;
     s << indent_prefix << "    " << method_number << ", /* Operation index */" << endl;
-    // ExcRef_t      *exns;        /* Array of exceptions          */       
-    // uint32_t       num_excepts; /* Number of exceptions         */
-    // operation_v1::closure_t*  cl;      /* Closure for operation    */
+    s << indent_prefix << "    NULL, /* Array of exceptions */" << endl;
+    s << indent_prefix << "    0, /* Number of exceptions */" << endl;
+    s << indent_prefix << "    NULL /* Closure for operation */" << endl;
     s << indent_prefix << "};" << endl << endl;
 }
 
@@ -770,7 +787,12 @@ void exception_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_pre
 
 void alias_t::emit_include(std::ostringstream& s, std::string indent_prefix)
 {
-	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
+    // UWAGA: Very ad-hoc patch, please rework this for real includes.
+    cout << "Emitting include for base alias_t: " << base_name() << endl;
+    if (map_type(base_name()).empty())
+    	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << std::endl;
+    else
+        s << indent_prefix << "#include \"types.h\"" << std::endl;
 }
 
 void alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool)
