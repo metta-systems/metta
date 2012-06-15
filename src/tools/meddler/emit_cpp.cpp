@@ -212,6 +212,48 @@ static std::string emit_type(alias_t& type, bool fully_qualify_type = false)
     return result;
 }
 
+/**
+ * Generate a qualified name to use as a type code prefix.
+ */
+static std::string emit_type_code_prefix(alias_t& type)
+{
+    std::string result = type.type();
+    if (type.is_builtin_type())
+    {
+        L(cout << "EMITTING BUILTIN TYPE " << result << endl);
+        // Check that mapping built-in type would actually work.
+        result = map_type(type.unqualified_name());
+        L(cout << " AS " << result << endl);
+        if (result.empty())
+        {
+            cerr << "Error: Unknown mapping for builtin type " << type.type() << endl;
+            result = type.type();
+        }
+        else
+            result = type.unqualified_name() + "_"; // Actually assign unmapped, unqualified type name.
+    }
+    else
+    if (type.is_interface_reference())
+    {
+        result = type.unqualified_name() + "::";
+        L(cout << "EMITTING INTERFACE REFERENCE " << result << endl);
+    }
+    else
+    if (type.is_local_type())
+    {
+        result = replace_dots(type.type());
+        result = type.get_root()->name() + "::" + result + "_";
+        L(cout << "EMITTING LOCAL TYPE " << result << endl);
+    }
+    else
+    {
+        result = replace_dots(type.type()) + "_";
+        L(cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl);
+    }
+
+    return result;
+}
+
 //=====================================================================================================================
 // interface_t
 //=====================================================================================================================
@@ -418,6 +460,57 @@ void interface_t::typecode_representation(std::ostringstream& s)
     s << "}";
 }
 
+int interface_t::renumber_methods()
+{
+    int last_method = 0;
+    if (parent)
+        last_method = parent->renumber_methods();
+
+    for (auto m : methods)
+    {
+        m->method_number = last_method;
+        ++last_method;
+    }
+
+    return last_method;
+}
+
+void interface_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "#include \"interface_v1_state.h\"" << endl
+      << endl;
+
+    // Emit forward declaration.
+    s << indent_prefix << "extern interface_v1::state_t " << name() << "__intf_typeinfo;" << endl;
+
+    // Emit types, exceptions and operations type defs.
+    for (auto t : types)
+        t->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    for (auto e : exceptions)
+        e->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    for (auto m : methods)
+        m->emit_typedef_cpp(s, indent_prefix, fully_qualify_types);
+
+    // Now emit the interface typedef itself.
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Interface: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
+
+    if (methods.size() > 0)
+    {
+        s << indent_prefix << "static operation_t* " << name() << "_methods[] = {" << endl;
+        for (auto m : methods)
+            s << indent_prefix << "    &" << m->name() << "_method," << endl;
+        s << indent_prefix << "    NULL" << endl;
+        s << indent_prefix << "};" << endl;
+    }
+
+    s << indent_prefix << "interface_v1::state_t " << name() << "__intf_typeinfo {};" << endl;
+}
+
 //=====================================================================================================================
 // method_t
 //=====================================================================================================================
@@ -561,15 +654,80 @@ void method_t::emit_interface_cpp(std::ostringstream& s, std::string indent_pref
 
 void method_t::typecode_representation(std::ostringstream& s)
 {
-    s << name() << "();";
+    s << name() << "(";
+    for (auto param : params)
+    {
+        s << param->type() << ";";
+    }
+    for (auto ret : returns)
+    {
+        s << ret->type() << ";";
+    }
+// std::vector<exception_t*> raises;
+// std::vector<std::string>  raises_ids;
+    if (idempotent)
+        s << "idempotent;";
+    if (never_returns)
+        s << "never_returns;";
+    s << ");";
 }
 
-    // std::vector<parameter_t*> params;
-    // std::vector<parameter_t*> returns;
-    // std::vector<exception_t*> raises;
-    // std::vector<std::string>  raises_ids;
-    // bool idempotent;
-    // bool never_returns; // oneway
+void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Operation: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
+
+    size_t n_params = params.size() + returns.size();
+
+    if (n_params > 0)
+    {
+        bool first = true;
+        s << indent_prefix << "static param_t " << name() << "_params[] = {" << endl;
+        for (auto param : params)
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+
+            // describe every param
+            param->emit_typedef_cpp(s, indent_prefix + "    ", fully_qualify_types);
+        }
+        for (auto ret : returns)
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+
+            // describe every return
+            ret->emit_typedef_cpp(s, indent_prefix + "    ", fully_qualify_types);
+        }
+        s << endl << indent_prefix << "};" << endl << endl;
+    }
+
+    // now emit the actual operation description
+    s << indent_prefix << "static operation_t " << name() << "_method = {" << endl
+      << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
+      << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl;
+    if (n_params > 0)
+    {
+        s << indent_prefix << "    " << name() << "_params, /* Parameter list */" << endl;
+    }
+    else
+    {
+        s << indent_prefix << "    NULL, /* Parameter list */" << endl;
+    }
+    s << indent_prefix << "    " << n_params << ", /* Number of arguments */" << endl;
+    s << indent_prefix << "    " << returns.size() << ", /* Number of return values */" << endl;
+    s << indent_prefix << "    " << method_number << ", /* Operation index */" << endl;
+    // ExcRef_t      *exns;        /* Array of exceptions          */       
+    // uint32_t       num_excepts; /* Number of exceptions         */
+    // operation_v1::closure_t*  cl;      /* Closure for operation    */
+    s << indent_prefix << "};" << endl << endl;
+}
 
 //=====================================================================================================================
 // exception_t
@@ -596,6 +754,14 @@ void exception_t::emit_interface_h(std::ostringstream& s, std::string indent_pre
 
 void exception_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool)
 {
+}
+
+void exception_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "//=====================================================================================================================" << endl
+      << indent_prefix << "// Exception: " << name() << endl
+      << indent_prefix << "//=====================================================================================================================" << endl
+      << endl;
 }
 
 //=====================================================================================================================
@@ -625,6 +791,12 @@ void alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefi
     s << " " << name();
 }
 
+void alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting some alias here, too...." << name() << endl;
+    // should not call this once all subtypes are implemented...
+}
+
 //=====================================================================================================================
 // parameter_t
 //=====================================================================================================================
@@ -651,6 +823,13 @@ void parameter_t::emit_interface_cpp(std::ostringstream& s, std::string indent_p
     if (direction != in)
         s << "*";
     s << " " << name();
+}
+
+void parameter_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    const char* directions[4] = {"input", "output", "in_out", "result"};
+
+    s << indent_prefix << "{ { " << emit_type_code_prefix(*this) << "type_code, operation_v1::param_mode_" << directions[direction] << " }, \"" << name() << "\" }";
 }
 
 //=====================================================================================================================

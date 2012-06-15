@@ -95,7 +95,7 @@ public:
 
     bool emit(const string& output_dir)
     {
-        ostringstream impl_h, interface_h, interface_cpp, filename;
+        ostringstream impl_h, interface_h, interface_cpp, typedefs_cpp, filename;
         parser_t& parser = *parser_stack[0];
 
         L(cout << "### Emitting impl_h" << endl);
@@ -104,6 +104,9 @@ public:
         parser.parse_tree->emit_interface_h(interface_h, "");
         L(cout << "### Emitting interface_cpp" << endl);
         parser.parse_tree->emit_interface_cpp(interface_cpp, "");
+        L(cout << "### Emitting type definitions cpp" << endl);
+        parser.parse_tree->renumber_methods();
+        parser.parse_tree->emit_typedef_cpp(typedefs_cpp, "");
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
         ofstream of(filename.str().c_str(), ios::out|ios::trunc);
@@ -120,6 +123,12 @@ public:
         filename << output_dir << "/" << parser.parse_tree->name() << "_interface.cpp";
         of.open(filename.str().c_str(), ios::out|ios::trunc);
         of << interface_cpp.str();
+        of.close();
+
+        filename.str("");
+        filename << output_dir << "/" << parser.parse_tree->name() << "_typedefs.cpp";
+        of.open(filename.str().c_str(), ios::out|ios::trunc);
+        of << typedefs_cpp.str();
         of.close();
 
         return true;
