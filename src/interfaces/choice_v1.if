@@ -1,0 +1,22 @@
+#      Extension of Context used to represent elements of CHOICE type class
+# The "TypeSystem" represents \MIDDL\ choice types by instances
+# of the "Choice" interface.
+
+local interface choice_v1 extends naming_context_v1
+{
+    # The Context part of this interface provides an ordered list of
+    # choice fields. The name of the element is the name of the field;
+    # the referent is a "Field", defined below.  The order that the fields
+    # are returned by "Context.List" corresponds to their order in the
+    # type definition.
+
+    record field {
+        enum_v1.value n;
+        types.code tc;
+    }
+
+    # One extra operation is provided:
+
+    # Return the type code of the base type of the choice.
+    base() returns (types.code tc);
+}

@@ -1,0 +1,14 @@
+#      Extension of Context used to represent elements of enumeration
+#      type class 
+# The "TypeSystem" represents \MIDDL\ enumeration types by instances
+# of the "Enum" interface.
+
+local interface enum_v1 extends naming_context_v1
+{
+    # The "Context" part of this interface maps each of the enumeration's
+    # elements' names (as strings) to the corresponding "Enum.Value".
+    # The list provided by "Context.List" gives the element names
+    # in the order defined by the enumeration type.
+
+    type card32 value;
+}
