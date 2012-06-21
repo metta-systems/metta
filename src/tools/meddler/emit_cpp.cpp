@@ -694,6 +694,8 @@ void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix
     s << indent_prefix << "//=====================================================================================================================" << endl
       << indent_prefix << "// Operation: " << name() << endl
       << indent_prefix << "//=====================================================================================================================" << endl
+      << endl
+      << indent_prefix << "namespace {" << endl
       << endl;
 
     size_t n_params = params.size() + returns.size();
@@ -701,7 +703,7 @@ void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix
     if (n_params > 0)
     {
         bool first = true;
-        s << indent_prefix << "static param_t " << name() << "_params[] = {" << endl;
+        s << indent_prefix << "param_t " << name() << "_params[] = {" << endl;
         for (auto param : params)
         {
             if (first)
@@ -725,8 +727,17 @@ void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix
         s << endl << indent_prefix << "};" << endl << endl;
     }
 
+    s << indent_prefix << "extern operation_t " << name() << "_method;" << endl << endl; // forward declaration
+
+    // emit the closure
+    s << indent_prefix << "operation_v1::closure_t " << name() << "_method_closure = {" << endl
+      << indent_prefix << "    nullptr, /* Will be patched to &operation_ops */" << endl
+      << indent_prefix << "    reinterpret_cast<operation_v1::state_t*>(&" << name() << "_method)," << endl
+      << indent_prefix << "};" << endl
+      << endl;
+
     // now emit the actual operation description
-    s << indent_prefix << "static operation_t " << name() << "_method = {" << endl
+    s << indent_prefix << "operation_t " << name() << "_method = {" << endl
       << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
       << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl;
     if (n_params > 0)
@@ -737,13 +748,14 @@ void method_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix
     {
         s << indent_prefix << "    NULL, /* Parameter list */" << endl;
     }
-    s << indent_prefix << "    " << n_params << ", /* Number of arguments */" << endl;
-    s << indent_prefix << "    " << returns.size() << ", /* Number of return values */" << endl;
+    s << indent_prefix << "    " << n_params - returns.size() << ", /* Number of arguments */" << endl;
+    s << indent_prefix << "    " << returns.size() << ", /* Number of results */" << endl;
     s << indent_prefix << "    " << method_number << ", /* Operation index */" << endl;
     s << indent_prefix << "    NULL, /* Array of exceptions */" << endl;
     s << indent_prefix << "    0, /* Number of exceptions */" << endl;
-    s << indent_prefix << "    NULL /* Closure for operation */" << endl;
+    s << indent_prefix << "    &" << name() << "_method_closure /* Closure for operation */" << endl;
     s << indent_prefix << "};" << endl << endl;
+    s << indent_prefix << "} // anon namespace" << endl << endl;
 }
 
 //=====================================================================================================================
