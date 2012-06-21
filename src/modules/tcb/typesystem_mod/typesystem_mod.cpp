@@ -16,6 +16,8 @@
 #include "interface_v1_impl.h"
 #include "map_card64_address_factory_v1_interface.h"
 #include "map_string_address_factory_v1_interface.h"
+#include "map_card64_address_v1_interface.h"
+#include "map_string_address_v1_interface.h"
 #include "heap_new.h"
 #include "default_console.h"
 #include "exceptions.h"
@@ -39,6 +41,8 @@ struct type_system_f_v1::state_t
     map_card64_address_v1::closure_t* interfaces_by_typecode;
     map_string_address_v1::closure_t* interfaces_by_name;
 };
+
+extern interface_v1::state_t meta_interface; // forward declaration
 
 //=====================================================================================================================
 // add, remove, dup and destroy methods from naming_context are all nulls.
@@ -122,6 +126,19 @@ static void
 type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_system_f_v1::interface_info intf)
 {
     kconsole << "register_interface" << endl;
+    interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf);
+    address_t dummy;
+
+    if (self->d_state->interfaces_by_name->get(iface->rep.name, &dummy))
+        OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", NULL);
+
+    if (self->d_state->interfaces_by_typecode->get(iface->rep.code.value, &dummy))
+        OS_RAISE((exception_support_v1::id)"type_system_f_v1.type_code_clash", NULL);
+
+    self->d_state->interfaces_by_name->put(iface->rep.name, intf);
+    self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
+
+    meta_interface.num_types += 1;
 }
 
 static type_system_f_v1::ops_t typesystem_ops = 
@@ -177,8 +194,6 @@ interface_v1::closure_t meta_interface_closure =
 // Definition of types in the 'mythical' interface meta_interface which defines all predefined Meddle types 
 // and all interfaces in Metta (including meta_interface itself).
 //=====================================================================================================================
-
-extern interface_v1::state_t meta_interface; // forward declaration
 
 #define PREDEFINED_TYPE_REP(typename,idlname,tag) \
 static type_representation_t type_##idlname##_rep = { \
