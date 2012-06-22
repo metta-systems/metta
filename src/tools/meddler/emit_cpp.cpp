@@ -499,7 +499,7 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
     s << endl;
 
     // Emit forward declaration.
-    s << indent_prefix << "extern interface_v1::state_t " << name() << "__intf_typeinfo;" << endl;
+    s << indent_prefix << "extern interface_v1::state_t " << name() << "__intf_typeinfo;" << endl << endl;
 
     // Emit types, exceptions and operations type defs.
     for (auto t : types)
@@ -517,6 +517,15 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
       << indent_prefix << "//=====================================================================================================================" << endl
       << endl
       << indent_prefix << "namespace {" << endl << endl;
+
+    if (types.size() > 0)
+    {
+        s << indent_prefix << "type_representation_t* " << name() << "_types[] = {" << endl;
+        for (auto t : types)
+            s << indent_prefix << "    &" << t->name() << "_type_rep," << endl;
+        s << indent_prefix << "    NULL" << endl;
+        s << indent_prefix << "};" << endl << endl;
+    }
 
     if (methods.size() > 0)
     {
@@ -548,8 +557,8 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
       << indent_prefix << "    }, // end representation" << endl
       << indent_prefix << "    NULL, /* Needs */" << endl
       << indent_prefix << "    0, /* Number of needs */" << endl
-      << indent_prefix << "    NULL, /* Types */" << endl
-      << indent_prefix << "    0, /* Number of types */" << endl
+      << indent_prefix << "    "; if (types.size() > 0) s << name() << "_types"; else s << "NULL"; s << ", /* Types */" << endl
+      << indent_prefix << "    " << types.size() << ", /* Number of types */" << endl
       << indent_prefix << "    " << (local ? "true" : "false") << ", /* Is this interface local? */" << endl
       << indent_prefix << "    "; if (parent) s << parent->name() << "::type_code"; else s << "0"; s << ", /* Supertype */" << endl
       << indent_prefix << "    "; if (methods.size() > 0) s << name() << "_methods"; else s << "NULL"; s << ", /* Table of methods */" << endl
@@ -770,23 +779,16 @@ void method_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool ful
     // now emit the actual operation description
     s << indent_prefix << "operation_t " << name() << "_method = {" << endl
       << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
-      << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl;
-    if (n_params > 0)
-    {
-        s << indent_prefix << "    " << name() << "_params, /* Parameter list */" << endl;
-    }
-    else
-    {
-        s << indent_prefix << "    NULL, /* Parameter list */" << endl;
-    }
-    s << indent_prefix << "    " << params.size() << ", /* Number of arguments */" << endl;
-    s << indent_prefix << "    " << returns.size() << ", /* Number of results */" << endl;
-    s << indent_prefix << "    " << method_number << ", /* Operation index */" << endl;
-    s << indent_prefix << "    NULL, /* Array of exceptions */" << endl;
-    s << indent_prefix << "    0, /* Number of exceptions */" << endl;
-    s << indent_prefix << "    &" << name() << "_method_closure /* Closure for operation */" << endl;
-    s << indent_prefix << "};" << endl << endl;
-    s << indent_prefix << "} // anon namespace" << endl << endl;
+      << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl
+      << indent_prefix << "    "; if (n_params > 0) s << name() << "_params"; else s << "NULL"; s << ", /* Parameter list */" << endl
+      << indent_prefix << "    " << params.size() << ", /* Number of arguments */" << endl
+      << indent_prefix << "    " << returns.size() << ", /* Number of results */" << endl
+      << indent_prefix << "    " << method_number << ", /* Operation index */" << endl
+      << indent_prefix << "    NULL, /* Array of exceptions */" << endl
+      << indent_prefix << "    0, /* Number of exceptions */" << endl
+      << indent_prefix << "    &" << name() << "_method_closure /* Closure for operation */" << endl
+      << indent_prefix << "};" << endl << endl
+      << indent_prefix << "} // anon namespace" << endl << endl;
 }
 
 //=====================================================================================================================
@@ -858,8 +860,7 @@ void alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)
 
 void alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
 {
-    s << indent_prefix << "// emitting some alias here, too...." << name() << endl;
-    // should not call this once all subtypes are implemented...
+    s << "#error alias_t::emit_typedef_cpp() is called." << endl;
 }
 
 //=====================================================================================================================
@@ -914,6 +915,13 @@ void type_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bo
 {
 }
 
+void type_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting type alias here, too...." << name() << endl;
+
+    //type alias is simple - just emit the code for the base type
+}
+
 //=====================================================================================================================
 // sequence_alias_t
 //=====================================================================================================================
@@ -937,6 +945,11 @@ void sequence_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix
 {
 }
 
+void sequence_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting sequence alias here, too...." << name() << endl;
+}
+
 //=====================================================================================================================
 // array_alias_t
 //=====================================================================================================================
@@ -952,6 +965,11 @@ void array_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, boo
 
 void array_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)
 {
+}
+
+void array_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting array alias here, too...." << name() << endl;
 }
 
 //=====================================================================================================================
@@ -974,6 +992,11 @@ void set_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
 
 void set_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)
 {
+}
+
+void set_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting set alias here, too...." << name() << endl;
 }
 
 //=====================================================================================================================
@@ -1002,6 +1025,11 @@ void record_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, 
 {
 }
 
+void record_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting record alias here, too...." << name() << endl;
+}
+
 //=====================================================================================================================
 // enum_alias_t
 //=====================================================================================================================
@@ -1027,6 +1055,11 @@ void enum_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bo
 {
 }
 
+void enum_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting enum alias here, too...." << name() << endl;
+}
+
 //=====================================================================================================================
 // range_alias_t
 //=====================================================================================================================
@@ -1042,6 +1075,11 @@ void range_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, boo
 
 void range_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)
 {
+}
+
+void range_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "// emitting range alias here, too...." << name() << endl;
 }
 
 } // namespace AST

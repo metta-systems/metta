@@ -101,6 +101,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class sequence_alias_t : public alias_t
@@ -114,6 +115,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class array_alias_t : public alias_t
@@ -127,6 +129,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
     int count;
 };
@@ -142,6 +145,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class record_alias_t : public alias_t
@@ -156,6 +160,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class enum_alias_t : public alias_t
@@ -170,6 +175,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 class range_alias_t : public alias_t
@@ -183,6 +189,7 @@ public:
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
 // Represents both method arguments and returns.
