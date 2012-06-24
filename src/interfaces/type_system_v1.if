@@ -69,22 +69,23 @@ local interface type_system_v1 extends naming_context_v1
 
     type types.code alias;
 
-    enum { Boolean, ShortCardinal, Cardinal, LongCardinal,
-          ShortInteger, Integer, LongInteger,
-          Real, LongReal,
+    enum { Boolean, Card16, Card32, Card64,
+          Int16, Int32, Int64,
+          Float, Double,
           Octet, Char,
           Opaque, String } predefined;
 
 #    type card32 tc_array_index;
 #    record tc_array { array_index n; alias tc; }
 #     cardinal bit_set;//?
-#     enum_v1& enum;
-#     alias    set;
 #     alias    ref;
-    type interface_v1& iref;
-#     alias    sequence;
-#     struct&  struct;
 #     choice&  choice;
+
+    type enum_v1& enum_;
+    type interface_v1& iref;
+    type alias    sequence_;
+    type alias    set_;
+    type record_v1& record_;
 
     # "code" is not a valid type code in this context.
     exception bad_code { alias code; }

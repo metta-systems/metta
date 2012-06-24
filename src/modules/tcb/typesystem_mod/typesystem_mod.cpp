@@ -206,14 +206,14 @@ static type_representation_t type_##idlname##_rep = { \
 
 PREDEFINED_TYPE_REP(uint8_t,octet, Octet);
 PREDEFINED_TYPE_REP(int8_t,int8, Char);
-PREDEFINED_TYPE_REP(uint16_t,card16, ShortCardinal);
-PREDEFINED_TYPE_REP(uint32_t,card32, Cardinal);
-PREDEFINED_TYPE_REP(uint64_t,card64, LongCardinal);
-PREDEFINED_TYPE_REP(int16_t,int16, ShortInteger);
-PREDEFINED_TYPE_REP(int32_t,int32, Integer);
-PREDEFINED_TYPE_REP(int64_t,int64, LongInteger);
-PREDEFINED_TYPE_REP(float,float, Real);
-PREDEFINED_TYPE_REP(double,double, LongReal);
+PREDEFINED_TYPE_REP(uint16_t,card16, Card16);
+PREDEFINED_TYPE_REP(uint32_t,card32, Card32);
+PREDEFINED_TYPE_REP(uint64_t,card64, Card64);
+PREDEFINED_TYPE_REP(int16_t,int16, Int16);
+PREDEFINED_TYPE_REP(int32_t,int32, Int32);
+PREDEFINED_TYPE_REP(int64_t,int64, Int64);
+PREDEFINED_TYPE_REP(float,float, Float);
+PREDEFINED_TYPE_REP(double,double, Double);
 PREDEFINED_TYPE_REP(bool,boolean, Boolean);
 PREDEFINED_TYPE_REP(cstring_t,string, String);
 PREDEFINED_TYPE_REP(voidptr,opaque, Opaque);

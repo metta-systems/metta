@@ -95,9 +95,14 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
 
     memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
+    set_t<stretch_v1::right> r(stretch_v1::right_read);
+    r.add(stretch_v1::right_global);
+    stretch_v1::rights rr;
+    rr.value = r;
+
     // First we need to map the PIP globally read-only.
     auto str = PVS(stretch_allocator)->create_over(PAGE_SIZE,
-            stretch_v1::rights(stretch_v1::right_read).add(stretch_v1::right_global),
+            rr,
             information_page_t::ADDRESS, memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
     /* Map stretches over the boot image */
@@ -190,7 +195,12 @@ static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closu
     kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
     memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
-    auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1::rights(stretch_v1::right_read), memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
+    set_t<stretch_v1::right> r;
+    r.add(stretch_v1::right_read);
+    stretch_v1::rights rr;
+    rr.value = r;
+
+    auto str = PVS(stretch_allocator)->create_over(initial_heap_size, rr, memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
     auto real_heap = heap_mod->realize(heap, str);
 
@@ -200,7 +210,9 @@ static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closu
     }
 
     // Map our heap as local read/write
-    str->set_rights(root_domain_pdid, stretch_v1::rights(stretch_v1::right_read).add(stretch_v1::right_write));
+    r.add(stretch_v1::right_write);
+    rr.value = r;
+    str->set_rights(root_domain_pdid, rr);
 }
 
 static void init_mem(bootimage_t& bootimg)
