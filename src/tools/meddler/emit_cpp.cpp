@@ -524,19 +524,33 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
     if (types.size() > 0)
     {
         s << indent_prefix << "type_representation_t* " << name() << "_types[] = {" << endl;
+        bool first = true;
         for (auto t : types)
-            s << indent_prefix << "    &" << t->name() << "_type_rep," << endl;
-        s << indent_prefix << "    NULL" << endl;
-        s << indent_prefix << "};" << endl << endl;
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+            s << indent_prefix << "    &" << t->name() << "_type_rep";
+        }
+        s << endl
+          << indent_prefix << "};" << endl << endl;
     }
 
     if (methods.size() > 0)
     {
         s << indent_prefix << "operation_t* " << name() << "_methods[] = {" << endl;
+        bool first = true;
         for (auto m : methods)
-            s << indent_prefix << "    &" << m->name() << "_method," << endl;
-        s << indent_prefix << "    NULL" << endl;
-        s << indent_prefix << "};" << endl << endl;
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+            s << indent_prefix << "    &" << m->name() << "_method";
+        }
+        s << endl
+          << indent_prefix << "};" << endl << endl;
     }
 
     // emit the closure
@@ -558,15 +572,15 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
       << indent_prefix << "        nullptr, /* Will be patched to meta_interface */" << endl
       << indent_prefix << "        sizeof(" << name() << "::closure_t*)" << endl
       << indent_prefix << "    }, // end representation" << endl
-      << indent_prefix << "    NULL, /* Needs */" << endl
+      << indent_prefix << "    nullptr, /* Needs */" << endl
       << indent_prefix << "    0, /* Number of needs */" << endl
-      << indent_prefix << "    "; if (types.size() > 0) s << name() << "_types"; else s << "NULL"; s << ", /* Types */" << endl
+      << indent_prefix << "    "; if (types.size() > 0) s << name() << "_types"; else s << "nullptr"; s << ", /* Types */" << endl
       << indent_prefix << "    " << types.size() << ", /* Number of types */" << endl
       << indent_prefix << "    " << (local ? "true" : "false") << ", /* Is this interface local? */" << endl
       << indent_prefix << "    "; if (parent) s << parent->name() << "::type_code"; else s << "0"; s << ", /* Supertype */" << endl
-      << indent_prefix << "    "; if (methods.size() > 0) s << name() << "_methods"; else s << "NULL"; s << ", /* Table of methods */" << endl
+      << indent_prefix << "    "; if (methods.size() > 0) s << name() << "_methods"; else s << "nullptr"; s << ", /* Table of methods */" << endl
       << indent_prefix << "    " << methods.size() << ", /* Number of methods */" << endl
-      << indent_prefix << "    NULL, /* Exceptions */" << endl
+      << indent_prefix << "    nullptr, /* Exceptions */" << endl
       << indent_prefix << "    0, /* Number of exceptions */" << endl
       << indent_prefix << "};" << endl << endl;
 }
@@ -781,11 +795,11 @@ void method_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool ful
     s << indent_prefix << "operation_t " << name() << "_method = {" << endl
       << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
       << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl
-      << indent_prefix << "    "; if (n_params > 0) s << name() << "_params"; else s << "NULL"; s << ", /* Parameter list */" << endl
+      << indent_prefix << "    "; if (n_params > 0) s << name() << "_params"; else s << "nullptr"; s << ", /* Parameter list */" << endl
       << indent_prefix << "    " << params.size() << ", /* Number of arguments */" << endl
       << indent_prefix << "    " << returns.size() << ", /* Number of results */" << endl
       << indent_prefix << "    " << method_number << ", /* Operation index */" << endl
-      << indent_prefix << "    NULL, /* Array of exceptions */" << endl
+      << indent_prefix << "    nullptr, /* Array of exceptions */" << endl
       << indent_prefix << "    0, /* Number of exceptions */" << endl
       << indent_prefix << "    &" << name() << "_method_closure /* Closure for operation */" << endl
       << indent_prefix << "};" << endl << endl;
@@ -1083,7 +1097,7 @@ void record_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bo
     }
     s << indent_prefix << "};" << endl << endl;
 
-    s << indent_prefix << "EnumRecState_t " << name() << "_state_rec = {" << endl
+    s << indent_prefix << "enum_rec_state_t " << name() << "_state_rec = {" << endl
       << indent_prefix << "    " << fields.size() << ", /* Number of fields */" << endl
       << indent_prefix << "    " << name() << "_fields" << endl
       << indent_prefix << "};" << endl << endl;
@@ -1145,7 +1159,7 @@ void enum_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool
     }
     s << indent_prefix << "};" << endl << endl;
 
-    s << indent_prefix << "EnumRecState_t " << name() << "_state_rec = {" << endl
+    s << indent_prefix << "enum_rec_state_t " << name() << "_state_rec = {" << endl
       << indent_prefix << "    " << fields.size() << ", /* Number of enum elements */" << endl
       << indent_prefix << "    " << name() << "_elems" << endl
       << indent_prefix << "};" << endl << endl;
