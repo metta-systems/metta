@@ -43,6 +43,15 @@ typedef uint32_t flags_t;
 // Interface generation support.
 //=====================================================================================================================
 
+// Template struct that types::any will reference. @todo this is a special case because of braindead 32 bits compiler/linker misunderstanding. LLVM patch?
+struct any {
+    uint64_t type_;
+    union {
+        uint64_t value;
+        void*    ptr32value; // this is used to assign from 32-bits ptrs statically.
+    };
+};
+
 /*
  * Type codes for all predefined types.
  * Borrowed directly from Nemesis.

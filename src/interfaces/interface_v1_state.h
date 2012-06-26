@@ -5,6 +5,7 @@
 
 //=====================================================================================================================
 // Interface representation data structures.
+// These structures must be statically-constructible (i.e. only PODs and pointers).
 //=====================================================================================================================
 
 /**
@@ -12,16 +13,16 @@
  */
 struct param_t 
 {
-    operation_v1::parameter rep;
-    cstring_t        name;
+    operation_v1::parameter  rep;
+    const char*              name;
 };
 
 /**
  * Field type: used in Records, Choices, Enumerations and Exceptions.
  */
 struct field_t {
-    types::any   val;
-    cstring_t    name;
+    types::any   value;
+    const char*  name;
 };
 
 /**
@@ -37,8 +38,8 @@ struct enum_rec_state_t
  * Choice type state
  */
 struct ChoiceState_t {
-    enum_rec_state_t ctx;
-    types::code    disc;      /* discriminator    */
+    enum_rec_state_t  ctx;
+    types::code       disc;      /* discriminator    */
 };
 
 struct ExcRef_t {
@@ -51,7 +52,7 @@ struct Exc_t {
     enum_rec_state_t         params;     /* Parameters - must be first  */
     exception_v1::closure_t  closure;    /* Closure for exception       */
     interface_v1::state_t*   intf;       /* Defining interface          */
-    cstring_t                name;       /* Name of exception           */
+    const char*              name;       /* Name of exception           */
 };
 
 /**
@@ -59,7 +60,7 @@ struct Exc_t {
  */
 struct operation_t
 {
-    cstring_t                 name;        /**< Name of Operation      */
+    const char*               name;        /**< Name of Operation      */
     operation_v1::kind        kind;        /**< Type of Operation      */
     param_t*                  params;      /**< Array of parameters    */
     uint32_t                  num_args;    /**< How many there are     */

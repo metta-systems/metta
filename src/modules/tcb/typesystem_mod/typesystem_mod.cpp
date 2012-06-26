@@ -302,8 +302,8 @@ static interface_v1::closure_t meta_interface_closure =
 
 #define PREDEFINED_TYPE_REP(typename,idlname,tag) \
 static type_representation_t type_##idlname##_rep = { \
-    {  type_system_v1::predefined_type_code, type_system_v1::predefined_##tag }, \
-    {  types::code_type_code, idlname##_type_code }, \
+    {  type_system_v1::predefined_type_code, { type_system_v1::predefined_##tag } }, \
+    {  types::code_type_code, { idlname##_type_code } }, \
     #idlname, \
     &meta_interface, \
     sizeof(typename) \
@@ -344,11 +344,11 @@ static type_representation_t* const meta_interface__types[] =
 interface_v1::state_t meta_interface =
 {
     { // representation
-        { type_system_v1::iref_type_code, (types::val)&meta_interface_closure },  // any & cl.ptr
-        { types::code_type_code, meta_interface_type_code },                      // Type Code
-        TCODE_META_NAME,                                                          // Textual name
-        &meta_interface,                                                          // Scope
-        sizeof(interface_v1::closure_t*)                                          // Size
+        { type_system_v1::iref_type_code, { .ptr32value = &meta_interface_closure } },  // any & cl.ptr
+        { types::code_type_code, { meta_interface_type_code } },                        // Type Code
+        TCODE_META_NAME,                                                                // Textual name
+        &meta_interface,                                                                // Scope
+        sizeof(interface_v1::closure_t*)                                                // Size
     }, // end representation
     nullptr,                    // Needs list
     0,                          // No. of needs
