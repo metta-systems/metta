@@ -49,6 +49,8 @@ public:
     bool operator ==(const string_t<string_type_trait>& other) const;
     bool operator ==(const string_t<string_type_trait>::code_point* other) const;
 
+    typename string_type_trait::code_point operator [](int idx) const { return data[idx]; }
+
     const char* c_str() const { return data; } // meh, bad idea, make something better for console output
 
 private:
