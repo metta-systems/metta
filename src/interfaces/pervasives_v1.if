@@ -13,7 +13,7 @@ local interface pervasives_v1
         heap_v1& heap;
         system_stretch_allocator_v1& stretch_allocator; # FIXME: don't expose system_ part though!
         stretch_driver_v1& stretch_driver;
-        type_system_f_v1& types;
+        type_system_v1& types; # It's actually a type_system_f but only a couple select drivers can access it.
         exception_support_setjmp_v1& exceptions;
         naming_context_v1& root;
     }
