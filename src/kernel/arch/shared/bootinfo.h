@@ -13,9 +13,10 @@
 #include "memory.h"
 #include "memutils.h"
 #include "iterator"
-#include "module_loader.h"
 #include "macros.h"
 #include "memory_v1_interface.h"
+
+class module_loader_t;
 
 // TODO: We need to abstract frames module from the format of bootinfo page,
 // so we add a type for memory_map and make it hide the fact that it uses the bootinfo_page
