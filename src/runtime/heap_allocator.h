@@ -35,42 +35,42 @@ public:
     heap_allocator() throw()
         : heap(state_type(0xdeadbeef)) // mark non-kosher initialization
     {
-        kconsole << "default constructing heap_allocator at " << this << endl;
+        V(kconsole << "default constructing heap_allocator at " << this << endl);
     }
 
     explicit heap_allocator(heap_v1::closure_t* h) throw()
         : heap(h)
     {
-        kconsole << "constructing heap_allocator at " << this << " with heap " << heap << endl;
+        V(kconsole << "constructing heap_allocator at " << this << " with heap " << heap << endl);
     }
 
     heap_allocator(const heap_allocator& other) throw()
         : heap(other.get_state())
     {
-        kconsole << "copy constructing heap_allocator at " << this << " with heap " << heap << endl;
+        V(kconsole << "copy constructing heap_allocator at " << this << " with heap " << heap << endl);
     }
 
     template <class U> 
     heap_allocator(const heap_allocator<U>& other) throw()
         : heap(other.get_state())
     {
-        kconsole << "rebind copy constructing heap_allocator at " << this << " with heap " << heap << endl;
+        V(kconsole << "rebind copy constructing heap_allocator at " << this << " with heap " << heap << endl);
     }
 
     ~heap_allocator()
     {
-        kconsole << "destructing heap_allocator at " << this << endl;
+        V(kconsole << "destructing heap_allocator at " << this << endl);
         heap = state_type(0xfeeddead);
     }
 
     pointer allocate(size_type __n, std::allocator<void>::const_pointer hint = 0)
     {
-        kconsole << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap << endl;
+        D(kconsole << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap << endl);
         return reinterpret_cast<pointer>(heap->allocate(__n * sizeof(T)));
     }
     void deallocate(pointer p, size_type) throw()
     {
-        kconsole << "heap_allocator::deallocate @ " << p << " from heap " << heap << endl;
+        D(kconsole << "heap_allocator::deallocate @ " << p << " from heap " << heap << endl);
         heap->free(reinterpret_cast<memory_v1::address>(p));
     }
 };

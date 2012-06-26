@@ -11,24 +11,24 @@
 
 void* operator new(size_t size, heap_v1::closure_t* heap) throw()
 {
-    kconsole<<__PRETTY_FUNCTION__<<" size "<<size<<", heap "<<heap<<endl;
+    V(kconsole<<__PRETTY_FUNCTION__<<" size "<<size<<", heap "<<heap<<endl);
     return reinterpret_cast<void*>(heap->allocate(size));
 }
 
 void* operator new[](size_t size, heap_v1::closure_t* heap) throw()
 {
-    kconsole<<__PRETTY_FUNCTION__<<" size "<<size<<", heap "<<heap<<endl;
+    V(kconsole<<__PRETTY_FUNCTION__<<" size "<<size<<", heap "<<heap<<endl);
     return reinterpret_cast<void*>(heap->allocate(size));
 }
 
 void operator delete(void* p, heap_v1::closure_t* heap) throw()
 {
-    kconsole<<__PRETTY_FUNCTION__<<" p "<<p<<", heap "<<heap<<endl;
+    V(kconsole<<__PRETTY_FUNCTION__<<" p "<<p<<", heap "<<heap<<endl);
     heap->free(reinterpret_cast<memory_v1::address>(p));
 }
 
 void operator delete[](void* p, heap_v1::closure_t* heap) throw()
 {
-    kconsole<<__PRETTY_FUNCTION__<<" p "<<p<<", heap "<<heap<<endl;
+    V(kconsole<<__PRETTY_FUNCTION__<<" p "<<p<<", heap "<<heap<<endl);
     heap->free(reinterpret_cast<memory_v1::address>(p));
 }
