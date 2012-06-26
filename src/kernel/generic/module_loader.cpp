@@ -14,6 +14,7 @@
 #include "debugger.h"
 #include "panic.h"
 #include "fourcc.h"
+#include "infopage.h"
 #include "bootinfo.h" // for print_module_map()
 
 #if ELF_LOADER_DEBUG
@@ -152,6 +153,112 @@ static bool module_already_loaded(address_t from, cstring_t name, module_descrip
     return false;    
 }
 
+// List names of all loaded modules so far.
+module_loader_t::strvec
+module_loader_t::loaded_module_names()
+{
+    strvec out(strvec_alloc(PVS(heap)));
+
+    module_descriptor_t* module = reinterpret_cast<module_descriptor_t*>(*d_last_available_address - sizeof(module_descriptor_t));
+    while (module)
+    {
+        if (module->magic != four_cc<'M','D','U','L'>::value)
+        {
+            // kconsole << "*** No valid signature found." << endl;
+            break;
+        }
+        out.push_back(module->name);
+        module = module->previous;
+    }
+    return out;
+}
+
+module_symbols_t::symmap
+symbol_table_finder_t::all_symbols()
+{
+    module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
+
+    size_t n_entries = symbol_table->size / symbol_table->entsize;
+    V(kconsole << "All symbols: " << n_entries << endl);
+    V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
+    V(kconsole << "String table @ " << base + string_table->offset << endl);
+
+    for (size_t i = 0; i < n_entries; i++)
+    {
+        elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
+        const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
+
+        symbols.insert(std::make_pair(c, symbol));
+    }
+
+    return symbols;
+}
+
+module_symbols_t
+module_loader_t::symtab_for(const char* name)
+{
+    module_descriptor_t* out_mod;
+
+    if (!module_already_loaded(*d_last_available_address, name, out_mod))
+    {
+        D(kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl);
+        return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
+    }
+
+    symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
+    return finder.all_symbols();
+}
+
+static bool starts_with(const cstring_t& str, const char* prefix)
+{
+    uint32_t i = 0;
+    while (prefix[i] && i < str.length() && str[i] == prefix[i])
+        ++i;
+    if (i < str.length() && str[i] == prefix[i])
+       return true;
+    return false;
+}
+
+static bool ends_with(const cstring_t& str, const cstring_t& suffix)
+{
+    if (str.length() < suffix.length())
+        return false;
+
+    uint32_t i = 1;
+    while (i <= suffix.length() && str[str.length()-i] == suffix[suffix.length()-i])
+        ++i;
+    if (i <= suffix.length() && str[str.length()-i] == suffix[suffix.length()-i])
+       return true;
+    return false;
+}
+
+module_symbols_t::symvec
+module_symbols_t::starting_with(const char* prefix)
+{
+    symvec out(symvec_alloc(PVS(heap)));
+    for (auto e : symtab)
+    {
+        if (starts_with(e.first, prefix))
+        {
+            out.push_back(e.second);
+        }
+    }
+    return out;
+}
+
+module_symbols_t::symvec
+module_symbols_t::ending_with(const char* suffix)
+{
+    symvec out(symvec_alloc(PVS(heap)));
+    for (auto e : symtab)
+    {
+        if (ends_with(e.first, suffix))
+        {
+            out.push_back(e.second);
+        }
+    }
+    return out;
+}
 
 /**
  * Load data from ELF file into a predefined location, relocate it and return entry point address or
@@ -397,7 +504,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     free_space = *d_last_available_address - prev_address;
     ASSERT(free_space >= sizeof(this_loaded_module));
     memutils::copy_string(this_loaded_module.name, name, sizeof(this_loaded_module.name));
-    this_loaded_module.previous = previous_loaded_module->magic == four_cc<'M','D','U','L'>::value ? previous_loaded_module : 0;
+    this_loaded_module.previous = (previous_loaded_module->magic == four_cc<'M','D','U','L'>::value) ? previous_loaded_module : 0;
     this_loaded_module.entry_point = module.get_entry_point() + section_base - start; // make absolute address of entry point
 
     this_loaded_module.loaded_size = *d_last_available_address - this_loaded_module.load_base; // full size including metadata and descriptor

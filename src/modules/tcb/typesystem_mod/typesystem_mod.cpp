@@ -11,6 +11,8 @@
 #include "type_system_f_v1_impl.h"
 #include "type_system_factory_v1_interface.h"
 #include "type_system_factory_v1_impl.h"
+#include "enum_v1_interface.h"
+#include "record_v1_interface.h"
 #include "operation_v1_interface.h"
 #include "interface_v1_state.h"
 #include "interface_v1_impl.h"
@@ -21,6 +23,7 @@
 #include "heap_new.h"
 #include "default_console.h"
 #include "exceptions.h"
+#include "debugger.h"
 
 /**
  * @defgroup typecode Type code
@@ -37,9 +40,9 @@
 
 struct type_system_f_v1::state_t
 {
-    type_system_f_v1::closure_t closure;
-    map_card64_address_v1::closure_t* interfaces_by_typecode;
-    map_string_address_v1::closure_t* interfaces_by_name;
+    type_system_f_v1::closure_t        closure;
+    map_card64_address_v1::closure_t*  interfaces_by_typecode;
+    map_string_address_v1::closure_t*  interfaces_by_name;
 };
 
 extern interface_v1::state_t meta_interface; // forward declaration
@@ -51,14 +54,14 @@ extern interface_v1::state_t meta_interface; // forward declaration
 static void
 shared_add(naming_context_v1::closure_t*, const char*, types::any)
 {
-    OS_RAISE((exception_support_v1::id)"naming_context_v1.denied", NULL);
+    OS_RAISE((exception_support_v1::id)"naming_context_v1.denied", 0);
     return;
 }
 
 static void
 shared_remove(naming_context_v1::closure_t*, const char*)
 { 
-    OS_RAISE((exception_support_v1::id)"naming_context_v1.denied", NULL);
+    OS_RAISE((exception_support_v1::id)"naming_context_v1.denied", 0);
     return; 
 }
 
@@ -95,12 +98,53 @@ type_system_v1_info(type_system_v1::closure_t* self, type_system_v1::alias tc, t
 static memory_v1::size
 type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
-    return 0;
+    interface_v1::state_t* iface = nullptr;
+
+    /* Check the type code refers to a valid interface */
+    if (!reinterpret_cast<type_system_f_v1::state_t*>(self->d_state)->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE (tc))
+        return iface->rep.size;
+  
+    /* Check that within the given interface this is a valid type */
+    if (!TCODE_VALID_TYPE (tc, iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    return TCODE_WHICH_TYPE(tc, iface)->size;
 }
 
 static types::name
 type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+
+    //     TypeSystem_st *st   = (TypeSystem_st *) self->st;
+    // Intf_st   *b    = NULL;
+    // Type_Name      name = NULL;
+    // TypeRep_t     *tr;
+
+    // /* Check the type code refers to a valid interface */
+    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (tc), (addr_t*)&b))
+    // RAISE_TypeSystem$BadCode(tc);
+
+    // /* Deal with the case where the type code refers to an interface type */
+    // if (TCODE_IS_INTERFACE (tc)) {
+    // name = strdup(b->rep.name);
+    // if(!name) RAISE_Heap$NoMemory();
+    // return name;
+    // }
+
+    // /* Check that within the given interface this is a valid type */
+    // if (! TCODE_VALID_TYPE (tc, b))
+    // RAISE_TypeSystem$BadCode (tc);
+
+    // tr = TCODE_WHICH_TYPE (tc, b);
+    // name = strdup(tr->name);
+    // if(!name) RAISE_Heap$NoMemory();
+
+    // return name;
+
     return types::name();
 }
 
@@ -122,23 +166,72 @@ type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc
     return type_system_v1::alias();
 }
 
+/*
+ * Method suites for all type representation which include a closure.
+ */ 
+extern interface_v1::ops_t interface_ops;
+extern operation_v1::ops_t operation_ops;
+extern exception_v1::ops_t exception_ops;
+extern record_v1::ops_t    record_ops;
+extern enum_v1::ops_t      enum_ops;
+// extern choice_v1::ops_t    choice_ops;
+
 static void
 type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_system_f_v1::interface_info intf)
 {
-    kconsole << "register_interface" << endl;
-    interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf);
+    interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf); // @todo do we need to convert this back and forth?
     address_t dummy;
 
+    kconsole << "register_interface '" << iface->rep.name << "' {" << endl;
+
     if (self->d_state->interfaces_by_name->get(iface->rep.name, &dummy))
-        OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", NULL);
+        OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", 0);
 
     if (self->d_state->interfaces_by_typecode->get(iface->rep.code.value, &dummy))
-        OS_RAISE((exception_support_v1::id)"type_system_f_v1.type_code_clash", NULL);
+        OS_RAISE((exception_support_v1::id)"type_system_f_v1.type_code_clash", 0);
+
+    if (iface != &meta_interface) // meta_interface needs no patching, it's all set up.
+    {
+        address_t clos_ptr;
+        size_t i;
+
+        /* Fill in operation tables of closures */
+        reinterpret_cast<interface_v1::closure_t*>(iface->rep.any.value)->d_methods = &interface_ops;
+
+        /* Types */
+        for (i = 0; i < iface->num_types; i++)
+        {
+            clos_ptr = iface->types[i]->any.value;
+            switch (iface->types[i]->any.type_)
+            {
+                // case type_system_v1::choice_type_code:
+                //     reinterpret_cast<choice_v1::closure_t*>(clos_ptr)->d_methods = &choice_ops;
+                //     break;
+                case type_system_v1::enum__type_code:
+                    reinterpret_cast<enum_v1::closure_t*>(clos_ptr)->d_methods = &enum_ops;
+                    break;
+                case type_system_v1::record__type_code:
+                    reinterpret_cast<record_v1::closure_t*>(clos_ptr)->d_methods = &record_ops;
+                    break;
+            }
+        }
+
+        /* Operations */
+        for (i = 0; i < iface->num_methods; i++) {
+            iface->methods[i]->closure->d_methods = &operation_ops;
+        }
+
+        /* Exceptions */
+        for (i = 0; i < iface->num_exns; i++) {
+            iface->exns[i]->closure.d_methods = &exception_ops;
+        }
+    }
 
     self->d_state->interfaces_by_name->put(iface->rep.name, intf);
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
 
-    meta_interface.num_types += 1;
+    meta_interface.num_types += 1; // @todo this will cause type traversal to go off-the-board
+    kconsole << "register_interface }" << endl;
 }
 
 static type_system_f_v1::ops_t typesystem_ops = 
@@ -161,33 +254,45 @@ static type_system_f_v1::ops_t typesystem_ops =
 // Meta-interface
 //=====================================================================================================================
 
+static naming_context_v1::names
+meta_interface_list(naming_context_v1::closure_t* self)
+{
+    return naming_context_v1::names();
+}
+
 static bool
-interface_v1_extends(interface_v1::closure_t* self, interface_v1::closure_t** o)
+meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
     return false;
 }
 
 static bool
-interface_v1_info(interface_v1::closure_t* self, interface_v1::needs* need_list, types::name* name, types::code* code)
+meta_interface_v1_extends(interface_v1::closure_t* self, interface_v1::closure_t** o)
+{
+    return false;
+}
+
+static bool
+meta_interface_v1_info(interface_v1::closure_t* self, interface_v1::needs* need_list, types::name* name, types::code* code)
 {
     return false;
 }
 
 static interface_v1::ops_t meta_ops =
 {
-    type_system_v1_list,
-    type_system_v1_get,
+    meta_interface_list,
+    meta_interface_get,
     shared_add,
     shared_remove,
     shared_destroy,
-    interface_v1_extends,
-    interface_v1_info
+    meta_interface_v1_extends,
+    meta_interface_v1_info
 };
 
-interface_v1::closure_t meta_interface_closure =
+static interface_v1::closure_t meta_interface_closure =
 {
     &meta_ops,
-    NULL
+    nullptr
 };
 
 //=====================================================================================================================
@@ -197,13 +302,14 @@ interface_v1::closure_t meta_interface_closure =
 
 #define PREDEFINED_TYPE_REP(typename,idlname,tag) \
 static type_representation_t type_##idlname##_rep = { \
-    {  type_system_v1::predefined_type_code, type_system_v1::predefined_##tag }, \
-    {  types::code_type_code, idlname##_type_code }, \
+    {  type_system_v1::predefined_type_code, { type_system_v1::predefined_##tag } }, \
+    {  types::code_type_code, { idlname##_type_code } }, \
     #idlname, \
     &meta_interface, \
     sizeof(typename) \
 }
 
+// @todo When meddler is fixed to accept octet and other types as identifiers, we'll remove the tag part from this.
 PREDEFINED_TYPE_REP(uint8_t,octet, Octet);
 PREDEFINED_TYPE_REP(int8_t,int8, Char);
 PREDEFINED_TYPE_REP(uint16_t,card16, Card16);
@@ -218,7 +324,8 @@ PREDEFINED_TYPE_REP(bool,boolean, Boolean);
 PREDEFINED_TYPE_REP(cstring_t,string, String);
 PREDEFINED_TYPE_REP(voidptr,opaque, Opaque);
 
-static type_representation_t* const meta_interface__types[] = {
+static type_representation_t* const meta_interface__types[] =
+{
     &type_octet_rep,
     &type_card16_rep,
     &type_card32_rep,
@@ -231,43 +338,42 @@ static type_representation_t* const meta_interface__types[] = {
     &type_double_rep,
     &type_boolean_rep,
     &type_string_rep,
-    &type_opaque_rep,
-    (type_representation_t*)0
-};
-
-static types::code const meta_interface__needs[] = {
-    TCODE_NONE
+    &type_opaque_rep
 };
 
 interface_v1::state_t meta_interface =
 {
-    {
-    { type_system_v1::iref_type_code, (types::val)&meta_interface_closure },    // any & cl.ptr
-    { types::code_type_code, MetaInterface__code }, // Type Code    
-    TCODE_META_NAME,                            // Textual name
-    &meta_interface,                            // Scope
-    sizeof(interface_v1::closure_t*)            // Size
-    },
-    meta_interface__needs, // Needs list
-    0,                     // No. of needs
-    meta_interface__types, // Types list
-    14,                    // No. of types
-    true,                  // Local flag
+    { // representation
+        { type_system_v1::iref_type_code, { .ptr32value = &meta_interface_closure } },  // any & cl.ptr
+        { types::code_type_code, { meta_interface_type_code } },                        // Type Code
+        TCODE_META_NAME,                                                                // Textual name
+        &meta_interface,                                                                // Scope
+        sizeof(interface_v1::closure_t*)                                                // Size
+    }, // end representation
+    nullptr,                    // Needs list
+    0,                          // No. of needs
+    meta_interface__types,      // Types list
+    13,                         // No. of types
+    true,                       // Local flag
     interface_v1::type_code,    // Supertype
-    NULL, // Methods
-    0,
-    NULL, // Exceptions
-    0
+    nullptr,                    // Methods
+    0,                          // No. of methods
+    nullptr,                    // Exceptions
+    0                           // No. of exceptions
 };
 
 //=====================================================================================================================
 // The Factory
 //=====================================================================================================================
 
+#include "c++ctors.h"
+
 static type_system_f_v1::closure_t* 
 create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h, 
        map_card64_address_factory_v1::closure_t* cardmap, map_string_address_factory_v1::closure_t* stringmap)
 {
+    run_global_ctors(); // since meta_interface is in BSS (wtf?), we need to initialize it.
+
     type_system_f_v1::state_t* state = new(h) type_system_f_v1::state_t;
     closure_init(&state->closure, &typesystem_ops, state);
 
@@ -275,8 +381,9 @@ create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h,
     state->interfaces_by_name = stringmap->create(h);
 
     state->closure.register_interface(reinterpret_cast<type_system_f_v1::interface_info>(&meta_interface));
-    /* The meta-interface closure is of type "interface_v1" but has different methods 
-     * since it's state record is type_system state rather than Intf_st. 
+    /*
+     * The meta-interface closure is of type "interface_v1" but has different methods
+     * since it's state record is type_system state rather than interface_v1::state.
      */
     meta_interface_closure.d_state = reinterpret_cast<interface_v1::state_t*>(state);
 
@@ -291,7 +398,7 @@ static type_system_factory_v1::ops_t methods =
 static type_system_factory_v1::closure_t clos =
 {
     &methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(type_system_factory, v1, clos);

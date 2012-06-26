@@ -84,6 +84,12 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
     return static_cast<closure_type*>(load_module(bootimg, module_name, clos));
 }
 
+static module_symbols_t symbols_in(const char* module_name)
+{
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+    return bi->get_module_loader().symtab_for(module_name);
+}
+
 //======================================================================================================================
 
 /**
@@ -217,7 +223,10 @@ static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closu
 
 static void init_mem(bootimage_t& bootimg)
 {
-    kconsole << " + init_mem" << endl;
+    kconsole << "=================" << endl
+             << "   Init memory" << endl
+             << "=================" << endl;
+
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
     // For address space randomization we should load modules as we go, for simplicity we load them all here.
@@ -246,7 +255,9 @@ static void init_mem(bootimage_t& bootimg)
     load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
-    // load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+#if PCIBUS_TEST
+    load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+#endif
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -266,10 +277,16 @@ static void init_mem(bootimage_t& bootimg)
 
     kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
 
-    kconsole << " + Creating frame allocator" << endl;
+    kconsole << "==============================" << endl
+             << "   Creating frame allocator" << endl
+             << "==============================" << endl;
+
     auto frames = frames_factory->create(rtab, next_free);
 
-    kconsole << " + Creating heap" << endl;
+    kconsole << "===================" << endl
+             << "   Creating heap" << endl
+             << "===================" << endl;
+
     auto heap = heap_factory->create_raw(next_free + required, initial_heap_size);
     PVS(heap) = heap;
 
@@ -291,7 +308,10 @@ static void init_mem(bootimage_t& bootimg)
     kconsole << " done." << endl;
 #endif
 
-    kconsole << " + Creating system stretch allocator" << endl;
+    kconsole << "=======================================" << endl
+             << "   Creating system stretch allocator" << endl
+             << "=======================================" << endl;
+
     auto system_stretch_allocator = stretch_allocator_factory->create(heap, mmu);
     PVS(stretch_allocator) = system_stretch_allocator;
 
@@ -302,7 +322,10 @@ static void init_mem(bootimage_t& bootimg)
      * but it will typcially imply at least that the stretches will
      * be backed by phyiscal memory on creation.
      */
-    kconsole << " + Creating nailed stretch allocator" << endl;
+    kconsole << "=======================================" << endl
+             << "   Creating nailed stretch allocator" << endl
+             << "=======================================" << endl;
+
     auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap);//yikes!
 
     mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
@@ -311,20 +334,25 @@ static void init_mem(bootimage_t& bootimg)
     auto strtab = stretch_table_factory->create(heap);
 
     kconsole << " + Creating null stretch driver" << endl;
+
     PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
-    kconsole << " + Creating initial address space." << endl;
+    kconsole << "====================================" << endl
+             << "   Creating initial address space" << endl
+             << "====================================" << endl;
+
     auto root_domain_pdid = create_address_space(frames, mmu);
     map_initial_heap(heap_factory, heap, initial_heap_size, root_domain_pdid);
 }
 
 static void init_type_system(bootimage_t& bootimg)
 {
-    /// @todo Type system, meta-interface.
-
     /* Get an Exception System */
-    kconsole << " + Bringing up exceptions" << endl;
+    kconsole << "============================" << endl
+             << "   Bringing up exceptions" << endl
+             << "============================" << endl;
+
     auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
     ASSERT(xcp_factory);
 	PVS(exceptions) = xcp_factory->create();
@@ -342,45 +370,58 @@ static void init_type_system(bootimage_t& bootimg)
     }
     OS_ENDTRY
 
-    kconsole <<  " + Bringing up type system" << endl;
-    kconsole <<  " +-- getting safe_card64table_mod..." << endl;
+    kconsole << "=============================" << endl
+             << "   Bringing up type system" << endl
+             << "=============================" << endl;
+
+    kconsole <<  " + getting safe_card64table_mod..." << endl;
     auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
-    kconsole <<  " +-- getting stringtable_mod..." << endl;
+
+    kconsole <<  " + getting stringtable_mod..." << endl;
     auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
-    kconsole <<  " +-- getting typesystem_mod..." << endl;
+
+    kconsole <<  " + getting typesystem_mod..." << endl;
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
-    kconsole <<  " +-- creating a new type system..." << endl;
+
+    kconsole <<  " + creating a new type system..." << endl;
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
     ASSERT(ts);
-    kconsole <<  " +-- done: ts is at " << ts << endl;
-    PVS(types) = ts;
+    PVS(types) = reinterpret_cast<type_system_v1::closure_t*>(ts);
+    kconsole <<  " + done: ts is at " << ts << endl;
 
     /* Play with string tables a bit */
     // map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
     // for (int x = 0; x < 100; ++x)
     // {
     //     char buf[100];
-    //     for (int y = 0; y < 99; ++y) buf[y] = 'A' + y;
+    //     for (int y = 0; y < 99; ++y) buf[y] += y;
     //     buf[99] = 0;
     //     strtab->put(buf, x);
     // }
 
     /* Preload any types in the boot image */
-    // bootimage_t::namespace_t namesp;
-    // bootimg.find_root_domain(&namesp);
-    // void* val;
-    // if (namesp.get_symbol("Types", val))
-    // {
-    //     type_system_f_v1::interface_info* info;
+    kconsole << " +++ registering interfaces" << endl;
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+    for (auto& module : bi->get_module_loader().loaded_module_names())
+    {
+        kconsole << " +++ from module " << module << endl;
+        auto symbols = symbols_in(module).ending_with("__intf_typeinfo");
+        for (auto& symbol : symbols)
+        {
+            ts->register_interface(symbol->value);//reinterpret_cast<type_system_f_v1::interface_info>
+        }
+    }
 
-    //     kconsole << " +++ registering interfaces" << endl;
-    //     info = (type_system_f_v1::interface_info*)val;
-    //     while(*info) {
-    //         ts->register_interface(*info);
-    //         info++;
+    // Idealized interface:
+    // for (auto& module : bootinfo_page.modules())
+    // {
+    //     symbols = module.find_symbols().ending_with("__intf_typeinfo");
+    //     for (auto& symbol : symbols)
+    //     {
+    //         ts->register_interface(symbol.value);//reinterpret_cast<type_system_f_v1::interface_info>
     //     }
     // }
 }
@@ -392,14 +433,16 @@ static void init_namespaces(bootimage_t& bootimg)
     /// @todo IDC stubs.
 
     /* Build initial name space */
-    kconsole <<  " + Building initial name space: ";
+    kconsole << "=================================" << endl
+             << "   Building initial name space" << endl
+             << "=================================" << endl;
 
     /* Build root context */
     kconsole <<  "Root, ";
 
     auto context_factory = load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
     ASSERT(context_factory);
-    auto root = context_factory->create_context(PVS(heap), 0); //PVS(types));
+    auto root = context_factory->create_context(PVS(heap), PVS(types));
     ASSERT(root);
     PVS(root)  = root;
 
@@ -750,6 +793,13 @@ void print_tree(naming_context_v1::closure* ctx, int indent = 0)
 /// @todo Must be a part of kickstarter (code that executes once on startup)?
 static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 {
+#if PCIBUS_TEST
+    auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
+    ASSERT(pciscan);
+    pciscan->apply();
+
+    while(1) {} 
+#endif
     /// @todo Domain manager.
     /// @todo VCPU.
     /// @todo Nucleus syscalls?
@@ -783,7 +833,9 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
         Context$Add(root,"sys>DomainMgr",&dommgrany);
     }
 */
-    kconsole << " + creating first domain." << endl;
+    kconsole << "===========================" << endl
+             << "   Creating first domain" << endl
+             << "===========================" << endl;
 
     /*
     * The Nemesis domain contains servers which look after all sorts

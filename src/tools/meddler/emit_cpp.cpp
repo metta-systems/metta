@@ -105,11 +105,11 @@ static string map_type(string type)
  */
 /*static string needs_include(string type)
 {
-	if (map_type(type).empty())
-	{
-		return string("#include \"")+type+"_interface.h\"";
-	}
-	return string();
+    if (map_type(type).empty())
+    {
+        return string("#include \"")+type+"_interface.h\"";
+    }
+    return string();
 }*/
 
 static vector<string> build_forwards(interface_t* intf)
@@ -167,45 +167,45 @@ static string replace_dots(string input)
  */
 static string emit_type(alias_t& type, bool fully_qualify_type = false)
 {
-	L(cout << "** EMITTING TYPE ** "; type.dump(""));
+    L(cout << "** EMITTING TYPE ** "; type.dump(""));
 
     string result = type.type();
     if (type.is_builtin_type())
     {
-		L(cout << "EMITTING BUILTIN TYPE " << result << endl);
+        L(cout << "EMITTING BUILTIN TYPE " << result << endl);
         result = map_type(type.unqualified_name());
-		L(cout << " AS " << result << endl);
+        L(cout << " AS " << result << endl);
         if (result.empty())
         {
-			cerr << "Error: Unknown mapping for builtin type " << type.type() << endl;
-			result = type.type();
-		}
-	}
-	else
-	if (type.is_interface_reference())
-	{
-		result = type.unqualified_name(); // we need first part of the name?!?
-		L(cout << "EMITTING INTERFACE REFERENCE " << result << endl);
-	}
-	else
-	if (type.is_local_type())
-	{
-		result = replace_dots(type.type());
+            cerr << "Error: Unknown mapping for builtin type " << type.type() << endl;
+            result = type.type();
+        }
+    }
+    else
+    if (type.is_interface_reference())
+    {
+        result = type.unqualified_name(); // we need first part of the name?!?
+        L(cout << "EMITTING INTERFACE REFERENCE " << result << endl);
+    }
+    else
+    if (type.is_local_type())
+    {
+        result = replace_dots(type.type());
         if (fully_qualify_type)
             result = type.get_root()->name() + "::" + result;
-		L(cout << "EMITTING LOCAL TYPE " << result << endl);
-	}
-	else
-	{
-		result = replace_dots(type.type());
-		L(cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl);
+        L(cout << "EMITTING LOCAL TYPE " << result << endl);
+    }
+    else
+    {
+        result = replace_dots(type.type());
+        L(cout << "EMITTING EXTERNAL QUALIFIED TYPE: " << result << endl);
     }
 
-	if (type.is_interface_reference())
-		result += "::closure_t*";
-	else
-    	if (type.is_reference())
-        	result += "&";
+    if (type.is_interface_reference())
+        result += "::closure_t*";
+    else
+        if (type.is_reference())
+            result += "&";
 
     return result;
 }
@@ -524,24 +524,38 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
     if (types.size() > 0)
     {
         s << indent_prefix << "type_representation_t* " << name() << "_types[] = {" << endl;
+        bool first = true;
         for (auto t : types)
-            s << indent_prefix << "    &" << t->name() << "_type_rep," << endl;
-        s << indent_prefix << "    NULL" << endl;
-        s << indent_prefix << "};" << endl << endl;
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+            s << indent_prefix << "    &" << t->name() << "_type_rep";
+        }
+        s << endl
+          << indent_prefix << "};" << endl << endl;
     }
 
     if (methods.size() > 0)
     {
         s << indent_prefix << "operation_t* " << name() << "_methods[] = {" << endl;
+        bool first = true;
         for (auto m : methods)
-            s << indent_prefix << "    &" << m->name() << "_method," << endl;
-        s << indent_prefix << "    NULL" << endl;
-        s << indent_prefix << "};" << endl << endl;
+        {
+            if (first)
+                first = false;
+            else
+                s << "," << endl;
+            s << indent_prefix << "    &" << m->name() << "_method";
+        }
+        s << endl
+          << indent_prefix << "};" << endl << endl;
     }
 
     // emit the closure
     s << indent_prefix << "interface_v1::closure_t " << name() << "_typeinfo_closure = {" << endl
-      << indent_prefix << "    nullptr, /* Will be patched to &interface_ops */" << endl
+      << indent_prefix << "    nullptr, // Will be patched to &interface_ops" << endl
       << indent_prefix << "    reinterpret_cast<interface_v1::state_t*>(&" << name() << "__intf_typeinfo)," << endl
       << indent_prefix << "};" << endl
       << endl;
@@ -552,22 +566,22 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
     s << indent_prefix << "interface_v1::state_t " << name() << "__intf_typeinfo" << endl
       << indent_prefix << "{" << endl
       << indent_prefix << "    { // representation" << endl
-      << indent_prefix << "        { type_system_v1::iref_type_code, (types::val)&" << name() << "_typeinfo_closure }, // any" << endl
-      << indent_prefix << "        { types::code_type_code, " << name() << "::type_code }, // code" << endl
+      << indent_prefix << "        { type_system_v1::iref_type_code, { .ptr32value = &" << name() << "_typeinfo_closure } }, // any" << endl
+      << indent_prefix << "        { types::code_type_code, { " << name() << "::type_code } }, // code" << endl
       << indent_prefix << "        \"" << name() << "\", // name" << endl
-      << indent_prefix << "        nullptr, /* Will be patched to meta_interface */" << endl
+      << indent_prefix << "        nullptr, // Will be patched to meta_interface" << endl
       << indent_prefix << "        sizeof(" << name() << "::closure_t*)" << endl
       << indent_prefix << "    }, // end representation" << endl
-      << indent_prefix << "    NULL, /* Needs */" << endl
-      << indent_prefix << "    0, /* Number of needs */" << endl
-      << indent_prefix << "    "; if (types.size() > 0) s << name() << "_types"; else s << "NULL"; s << ", /* Types */" << endl
-      << indent_prefix << "    " << types.size() << ", /* Number of types */" << endl
-      << indent_prefix << "    " << (local ? "true" : "false") << ", /* Is this interface local? */" << endl
-      << indent_prefix << "    "; if (parent) s << parent->name() << "::type_code"; else s << "0"; s << ", /* Supertype */" << endl
-      << indent_prefix << "    "; if (methods.size() > 0) s << name() << "_methods"; else s << "NULL"; s << ", /* Table of methods */" << endl
-      << indent_prefix << "    " << methods.size() << ", /* Number of methods */" << endl
-      << indent_prefix << "    NULL, /* Exceptions */" << endl
-      << indent_prefix << "    0, /* Number of exceptions */" << endl
+      << indent_prefix << "    nullptr, // Needs" << endl
+      << indent_prefix << "    0, // Number of needs" << endl
+      << indent_prefix << "    "; if (types.size() > 0) s << name() << "_types"; else s << "nullptr"; s << ", // Types" << endl
+      << indent_prefix << "    " << types.size() << ", // Number of types" << endl
+      << indent_prefix << "    " << (local ? "true" : "false") << ", // Is this interface local?" << endl
+      << indent_prefix << "    "; if (parent) s << parent->name() << "::type_code"; else s << "0"; s << ", // Supertype" << endl
+      << indent_prefix << "    "; if (methods.size() > 0) s << name() << "_methods"; else s << "nullptr"; s << ", // Table of methods" << endl
+      << indent_prefix << "    " << methods.size() << ", // Number of methods" << endl
+      << indent_prefix << "    nullptr, // Exceptions" << endl
+      << indent_prefix << "    0, // Number of exceptions" << endl
       << indent_prefix << "};" << endl << endl;
 }
 
@@ -695,7 +709,7 @@ void method_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool f
     for (auto param : params)
     {
         s << ", ";
-		s << param->name();
+        s << param->name();
     }
 
     // TODO: add by-ptr for non-interface returns
@@ -781,11 +795,11 @@ void method_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool ful
     s << indent_prefix << "operation_t " << name() << "_method = {" << endl
       << indent_prefix << "    \"" << name() << "\", /* Name */" << endl
       << indent_prefix << "    operation_v1::kind_proc, /* Kind */" << endl
-      << indent_prefix << "    "; if (n_params > 0) s << name() << "_params"; else s << "NULL"; s << ", /* Parameter list */" << endl
+      << indent_prefix << "    "; if (n_params > 0) s << name() << "_params"; else s << "nullptr"; s << ", /* Parameter list */" << endl
       << indent_prefix << "    " << params.size() << ", /* Number of arguments */" << endl
       << indent_prefix << "    " << returns.size() << ", /* Number of results */" << endl
       << indent_prefix << "    " << method_number << ", /* Operation index */" << endl
-      << indent_prefix << "    NULL, /* Array of exceptions */" << endl
+      << indent_prefix << "    nullptr, /* Array of exceptions */" << endl
       << indent_prefix << "    0, /* Number of exceptions */" << endl
       << indent_prefix << "    &" << name() << "_method_closure /* Closure for operation */" << endl
       << indent_prefix << "};" << endl << endl;
@@ -835,7 +849,7 @@ void alias_t::emit_include(ostringstream& s, string indent_prefix)
     // UWAGA: Very ad-hoc patch, please rework this for real includes.
     cout << "Emitting include for base alias_t: " << base_name() << endl;
     if (map_type(base_name()).empty())
-    	s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << endl;
+        s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << endl;
     else
         s << indent_prefix << "#include \"types.h\"" << endl;
 }
@@ -908,7 +922,7 @@ void type_alias_t::emit_impl_h(ostringstream& s, string indent_prefix, bool)
 
 void type_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
 {
-	s << indent_prefix << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
+    s << indent_prefix << "typedef " << emit_type(*this) << " " << replace_dots(name()) << ";";
 }
 
 void type_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)
@@ -922,8 +936,8 @@ void type_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool
       << indent_prefix << " * Alias: " << fqn << endl
       << indent_prefix << " */" << endl
       << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::alias_type_code, " << emit_type_code_prefix(*this) << "type_code }," << endl
-      << indent_prefix << "    { types::code_type_code, " << fqn << "_type_code }," << endl
+      << indent_prefix << "    { type_system_v1::alias_type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
       << indent_prefix << "    sizeof(" << fqn << ")" << endl
@@ -961,8 +975,8 @@ void sequence_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, 
       << indent_prefix << " * Sequence: " << fqn << endl
       << indent_prefix << " */" << endl
       << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::sequence__type_code, " << emit_type_code_prefix(*this) << "type_code }," << endl
-      << indent_prefix << "    { types::code_type_code, " << fqn << "_type_code }," << endl
+      << indent_prefix << "    { type_system_v1::sequence__type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
       << indent_prefix << "    sizeof(" << fqn << ")" << endl
@@ -998,7 +1012,7 @@ void array_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, boo
 
 void set_alias_t::emit_include(ostringstream& s, string indent_prefix)
 {
-	s << indent_prefix << "#include \"set_t.h\"" << endl;
+    s << indent_prefix << "#include \"set_t.h\"" << endl;
 }
 
 void set_alias_t::emit_impl_h(ostringstream& s, string indent_prefix, bool)
@@ -1022,8 +1036,8 @@ void set_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
       << indent_prefix << " * Set: " << fqn << endl
       << indent_prefix << " */" << endl
       << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::set__type_code, " << emit_type_code_prefix(*this) << "type_code }," << endl
-      << indent_prefix << "    { types::code_type_code, " << fqn << "_type_code }," << endl
+      << indent_prefix << "    { type_system_v1::set__type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
       << indent_prefix << "    sizeof(" << fqn << ")" << endl
@@ -1041,8 +1055,15 @@ void record_alias_t::emit_impl_h(ostringstream& s, string indent_prefix, bool)
 
 void record_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
 {
-	s << indent_prefix << "struct " << replace_dots(name()) << endl
-	  << indent_prefix << "{" << endl;
+    // @todo Special case for types::any:
+    if (name() == "any" && get_root()->name() == "types")
+    {
+        s << indent_prefix << "typedef ::any any;" << endl;
+        return;
+    }
+
+    s << indent_prefix << "struct " << replace_dots(name()) << endl
+      << indent_prefix << "{" << endl;
 
     for (auto field : fields)
     {
@@ -1079,23 +1100,23 @@ void record_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bo
     s << indent_prefix << "field_t " << name() << "_fields[] = {" << endl;
     for (auto f : fields)
     {
-        s << indent_prefix << "    { { record_v1::field_type_code, (types::val)&" << nameprefix << f->name() << "_field }, \"" << f->name() << "\" }," << endl;
+        s << indent_prefix << "    { { record_v1::field_type_code, { .ptr32value = &" << nameprefix << f->name() << "_field } }, \"" << f->name() << "\" }," << endl;
     }
     s << indent_prefix << "};" << endl << endl;
 
-    s << indent_prefix << "EnumRecState_t " << name() << "_state_rec = {" << endl
+    s << indent_prefix << "enum_rec_state_t " << name() << "_state_rec = {" << endl
       << indent_prefix << "    " << fields.size() << ", /* Number of fields */" << endl
       << indent_prefix << "    " << name() << "_fields" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "record_v1::closure_t " << name() << "_state_closure = {" << endl
       << indent_prefix << "    nullptr, /* Will be patched to record_ops. */" << endl
-      << indent_prefix << "    (record_v1::state_t*)&" << name() << "_state_rec" << endl
+      << indent_prefix << "    reinterpret_cast<record_v1::state_t*>(&" << name() << "_state_rec)" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::record__type_code, (types::val)&" << name() << "_state_closure }," << endl
-      << indent_prefix << "    { types::code_type_code, " << fqn << "_type_code }," << endl
+      << indent_prefix << "    { type_system_v1::record__type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
       << indent_prefix << "    sizeof(" << fqn << ")" << endl
@@ -1140,24 +1161,24 @@ void enum_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool
     int value = 0;
     for (auto f : fields)
     {
-        s << indent_prefix << "    { { enum_v1::value_type_code, " << value << " }, \"" << f << "\" }," << endl;
+        s << indent_prefix << "    { { enum_v1::value_type_code, { " << value << " } }, \"" << f << "\" }," << endl;
         ++value;
     }
     s << indent_prefix << "};" << endl << endl;
 
-    s << indent_prefix << "EnumRecState_t " << name() << "_state_rec = {" << endl
+    s << indent_prefix << "enum_rec_state_t " << name() << "_state_rec = {" << endl
       << indent_prefix << "    " << fields.size() << ", /* Number of enum elements */" << endl
       << indent_prefix << "    " << name() << "_elems" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "enum_v1::closure_t " << name() << "_state_closure = {" << endl
-      << indent_prefix << "    nullptr, /* Will be patched to enum_ops. */" << endl
-      << indent_prefix << "    (enum_v1::state_t*)&" << name() << "_state_rec" << endl
+      << indent_prefix << "    nullptr, // Will be patched to enum_ops." << endl
+      << indent_prefix << "    reinterpret_cast<enum_v1::state_t*>(&" << name() << "_state_rec)" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::enum__type_code, (types::val)&" << name() << "_state_closure }," << endl
-      << indent_prefix << "    { types::code_type_code, " << fqn << "_type_code }," << endl
+      << indent_prefix << "    { type_system_v1::enum__type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
       << indent_prefix << "    sizeof(" << fqn << ")" << endl

@@ -95,8 +95,29 @@ public:
 
     bool emit(const string& output_dir)
     {
+        ostringstream boilerplate_header;
         ostringstream impl_h, interface_h, interface_cpp, typedefs_cpp, filename;
         parser_t& parser = *parser_stack[0];
+
+        char* user_name = getenv("USER");
+        char* host_name = getenv("HOSTNAME");
+        time_t now;
+        time(&now);
+        struct tm *current;
+        current = localtime(&now);
+
+        L(cout << "### Generating boilerplate header" << endl);
+        boilerplate_header << "/*" << endl
+                           << " * " << parser.parse_tree->name() << " generated";
+        if (user_name)
+            boilerplate_header << " by " << user_name;
+        if (host_name)
+            boilerplate_header << " at " << host_name;
+        boilerplate_header << " on " << (1900 + current->tm_year) << "." << (1 + current->tm_mon) << "." << current->tm_mday
+                           << "T" << current->tm_hour << ":" << current->tm_min << ":" << current->tm_sec << endl;
+        boilerplate_header << " * AUTOMATICALLY GENERATED FILE, DO NOT EDIT!" << endl
+                           << " */" << endl
+                           << endl;
 
         L(cout << "### Emitting impl_h" << endl);
         parser.parse_tree->emit_impl_h(impl_h, "");
@@ -110,25 +131,25 @@ public:
 
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
         ofstream of(filename.str().c_str(), ios::out|ios::trunc);
-        of << impl_h.str();
+        of << boilerplate_header.str() << impl_h.str();
         of.close();
 
         filename.str("");
         filename << output_dir << "/" << parser.parse_tree->name() << "_interface.h";
         of.open(filename.str().c_str(), ios::out|ios::trunc);
-        of << interface_h.str();
+        of << boilerplate_header.str() << interface_h.str();
         of.close();
 
         filename.str("");
         filename << output_dir << "/" << parser.parse_tree->name() << "_interface.cpp";
         of.open(filename.str().c_str(), ios::out|ios::trunc);
-        of << interface_cpp.str();
+        of << boilerplate_header.str() << interface_cpp.str();
         of.close();
 
         filename.str("");
         filename << output_dir << "/" << parser.parse_tree->name() << "_typedefs.cpp";
         of.open(filename.str().c_str(), ios::out|ios::trunc);
-        of << typedefs_cpp.str();
+        of << boilerplate_header.str() << typedefs_cpp.str();
         of.close();
 
         return true;
