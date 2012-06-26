@@ -25,134 +25,134 @@
 static void 
 internal_raise(bool initial_raise, exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname) NEVER_RETURNS
 {
-	xcp_context_t* ctx;
-	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
+    xcp_context_t* ctx;
+    xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
 
-	ctx = *handlers;
+    ctx = *handlers;
 
-	while (ctx && ctx->state != xcp_none)
-	{
-		kconsole << "exception stack: state " << ctx->state << ", can't happen?" << endl;
-		if (ctx->args)
-		{
-			/* Another exception was in the middle of being processed when
-			 * this one happened. We have decided that we must pass higher
-			 * up the stack than that exception. Thus its argument
-			 * record is unreachable and must be freed.
-			 */
-			// FREE( ctx->args );
-			// ctx->args = BADPTR;
-		}
-		ctx = ctx->up;
-	}
+    while (ctx && ctx->state != xcp_none)
+    {
+        kconsole << "exception stack: state " << ctx->state << ", can't happen?" << endl;
+        if (ctx->args)
+        {
+            /* Another exception was in the middle of being processed when
+             * this one happened. We have decided that we must pass higher
+             * up the stack than that exception. Thus its argument
+             * record is unreachable and must be freed.
+             */
+            // FREE( ctx->args );
+            // ctx->args = BADPTR;
+        }
+        ctx = ctx->up;
+    }
 
-	if (!ctx)
-	{
-		PANIC("unhandled exception");
-		/* TODO: abort domain; threads' top-level fn should have a handler */
-	}
+    if (!ctx)
+    {
+        PANIC("unhandled exception");
+        /* TODO: abort domain; threads' top-level fn should have a handler */
+    }
 
-	ctx->state    = xcp_active;
-	ctx->name     = (const char*)i;
-	ctx->args     = a;
-	ctx->filename = filename;
-	ctx->line     = lineno;
-	ctx->funcname = funcname;
-	if (initial_raise)
-		ctx->down = NULL; // cauterise base of the backtrace
+    ctx->state    = xcp_active;
+    ctx->name     = (const char*)i;
+    ctx->args     = a;
+    ctx->filename = filename;
+    ctx->line     = lineno;
+    ctx->funcname = funcname;
+    if (initial_raise)
+        ctx->down = NULL; // cauterise base of the backtrace
 
-	/* we've already longjmp'ed to this xcp context, so pop it */
-	*handlers = ctx->up;
+    /* we've already longjmp'ed to this xcp context, so pop it */
+    *handlers = ctx->up;
 
-	kconsole << "raise: longjmp to context " << ctx << endl;
+    D(kconsole << "raise: longjmp to context " << ctx << endl);
 
-	kconsole << "raise: jmp_buf words" << endl;
-	for (size_t x = 0; x < _JBLEN; ++x)
-		kconsole << "word " << x << ": " << ctx->jmp[x] << endl;
+    D(kconsole << "raise: jmp_buf words" << endl);
+    D(for (size_t x = 0; x < _JBLEN; ++x)
+        kconsole << "word " << x << ": " << ctx->jmp[x] << endl);
 
-	xcp_longjmp (ctx->jmp, 1);
+    xcp_longjmp (ctx->jmp, 1);
 }
 
 static void 
 exception_support_setjmp_v1_raise(exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
 {
-	kconsole << "__ exception_support_setjmp_v1::raise" << endl;
-	internal_raise(true, self, i, a, filename, lineno, funcname);
+    kconsole << "__ exception_support_setjmp_v1::raise" << endl;
+    internal_raise(true, self, i, a, filename, lineno, funcname);
 }
 
 static void 
 exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c)
 {
-	xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
-	/*
-	 * We only need one pointer of state, which points to the first
-	 * context in the current chain. Thus we use the self->d_state pointer directly.
-	 */
-	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
+    xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
+    /*
+     * We only need one pointer of state, which points to the first
+     * context in the current chain. Thus we use the self->d_state pointer directly.
+     */
+    xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
 
-	kconsole << "__ exception_support_setjmp_v1::push_context " << ctx << " handlers " << handlers << endl;
+    V(kconsole << "__ exception_support_setjmp_v1::push_context " << ctx << " handlers " << handlers << endl);
 
-	ctx->state = xcp_none;
-	ctx->up = *handlers;
-	ctx->down = (xcp_context_t*)0x1; // non-NULL to mark as writable - see the write below!
-	ctx->args = NULL;
+    ctx->state = xcp_none;
+    ctx->up = *handlers;
+    ctx->down = (xcp_context_t*)0x1; // non-NULL to mark as writable - see the write below!
+    ctx->args = NULL;
 
-	/* only write the "down" pointer if we're not the top and the bottom hasn't been cauterised by a RAISE or FINALLY */
-	if (*handlers && (*handlers)->down)
-	  (*handlers)->down = ctx;
-	*handlers = ctx;
+    /* only write the "down" pointer if we're not the top and the bottom hasn't been cauterised by a RAISE or FINALLY */
+    if (*handlers && (*handlers)->down)
+      (*handlers)->down = ctx;
+    *handlers = ctx;
 }
 
 /* precondition: ctx.state = none or active */
 static void 
 exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c, const char* filename, uint32_t lineno, const char* funcname)
 {
-	xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
-	xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
-	xcp_state_t prev_state = ctx->state;
+    xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
+    xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
+    xcp_state_t prev_state = ctx->state;
 
-	kconsole << "__ exception_support_setjmp_v1::pop_context " << ctx << ", prev_state " << prev_state << endl;	
+    V(kconsole << "__ exception_support_setjmp_v1::pop_context " << ctx << ", prev_state " << prev_state << endl);
 
-	/* set state to popped so that OS_FINALLY only pops once in normal case */
-	ctx->state = xcp_popped;
+    /* set state to popped so that OS_FINALLY only pops once in normal case */
+    ctx->state = xcp_popped;
 
-	/* pop the context */
-	*handlers = ctx->up;
+    /* pop the context */
+    *handlers = ctx->up;
 
-	if (prev_state == xcp_active)
-	{
-		/* Exception was active, so propagate it up. */
-		internal_raise(false, reinterpret_cast<exception_support_v1::closure_t*>(self), (exception_support_v1::id)ctx->name, ctx->args, filename, lineno, funcname);
-		/* NOTREACHED */
-	}
-	else if (ctx->args)
-	{
-		// FREE( ctx->args );
-		// ctx->args = BADPTR;
-	}
+    if (prev_state == xcp_active)
+    {
+        /* Exception was active, so propagate it up. */
+        internal_raise(false, reinterpret_cast<exception_support_v1::closure_t*>(self), (exception_support_v1::id)ctx->name, ctx->args, filename, lineno, funcname);
+        /* NOTREACHED */
+    }
+    else if (ctx->args)
+    {
+        // FREE( ctx->args );
+        // ctx->args = BADPTR;
+    }
 }
 
 static exception_support_v1::args 
 exception_support_setjmp_v1_allocate_args(exception_support_setjmp_v1::closure_t* self, memory_v1::size size)
 {
-	kconsole << "__ exception_support_setjmp_v1::allocate_args " << size << endl;
-	address_t res = PVS(heap)->allocate(size);
+    D(kconsole << "__ exception_support_setjmp_v1::allocate_args " << size << endl);
+    address_t res = PVS(heap)->allocate(size);
 
-	// if (!res)
-	// {
-	// 	OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL); // hmm wait, the heap will throw that itself! no need for this check
-	// 	PANIC("NOTREACHED");
-	// }
+    // if (!res)
+    // {
+    //  OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL); // hmm wait, the heap will throw that itself! no need for this check
+    //  PANIC("NOTREACHED");
+    // }
 
-	return res;
+    return res;
 }
 
 static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_methods =
 {
-	exception_support_setjmp_v1_raise,
-	exception_support_setjmp_v1_push_context,
-	exception_support_setjmp_v1_pop_context,
-	exception_support_setjmp_v1_allocate_args
+    exception_support_setjmp_v1_raise,
+    exception_support_setjmp_v1_push_context,
+    exception_support_setjmp_v1_pop_context,
+    exception_support_setjmp_v1_allocate_args
 };
 
 //=====================================================================================================================
@@ -162,22 +162,22 @@ static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_meth
 static exception_support_setjmp_v1::closure_t* 
 exception_system_v1_create(exception_system_v1::closure_t* self)
 {
-	kconsole << " ** Exception system - create" << endl;
+    kconsole << " ** Exception system - create" << endl;
 
-	exception_support_setjmp_v1::closure_t* cl = new(PVS(heap)) exception_support_setjmp_v1::closure_t;
-	if (!cl)
-	{
-		kconsole << " + FAILED to get memory for exception system. This is quite fatal." << endl;
-		return 0; // Not much point in raising an exception here.
-	}
+    exception_support_setjmp_v1::closure_t* cl = new(PVS(heap)) exception_support_setjmp_v1::closure_t;
+    if (!cl)
+    {
+        kconsole << " + FAILED to get memory for exception system. This is quite fatal." << endl;
+        return 0; // Not much point in raising an exception here.
+    }
 
-	closure_init(cl, &exception_support_setjmp_v1_methods, reinterpret_cast<exception_support_setjmp_v1::state_t*>(0));
-	return cl;
+    closure_init(cl, &exception_support_setjmp_v1_methods, reinterpret_cast<exception_support_setjmp_v1::state_t*>(0));
+    return cl;
 }
 
 static const exception_system_v1::ops_t exception_system_v1_methods =
 {
-	exception_system_v1_create
+    exception_system_v1_create
 };
 
 static const exception_system_v1::closure_t clos =
