@@ -26,3 +26,6 @@ heap_factory:modules/heap_mod/heap_mod.comp
 stretch_table_factory:modules/stretch_table_mod/stretch_table_mod.comp
 exceptions_factory:modules/exceptions_mod/exceptions_mod.comp
 hashtables_factory:modules/hashtables_mod/hashtables_mod.comp
+
+# Test module
+#pcibus_mod:modules/pcibus/pcibus_mod.comp
