@@ -8,8 +8,11 @@
 //
 #pragma once
 
+#include <unordered_map>
+#include "elf.h"
 #include "panic.h"
 #include "default_console.h"
+#include "module_loader.h"
 
 /**
  * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets) find symbol by either name or value.
@@ -108,4 +111,6 @@ public:
 
         return 0;
     }
+
+    module_symbols_t::symmap all_symbols();
 };
