@@ -16,6 +16,7 @@
 #include "fourcc.h"
 #include "infopage.h"
 #include "bootinfo.h" // for print_module_map()
+// #include "exceptions.h"
 
 #if ELF_LOADER_DEBUG
 #define D(s) s
@@ -173,42 +174,6 @@ module_loader_t::loaded_module_names()
     return out;
 }
 
-module_symbols_t::symmap
-symbol_table_finder_t::all_symbols()
-{
-    module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
-
-    size_t n_entries = symbol_table->size / symbol_table->entsize;
-    V(kconsole << "All symbols: " << n_entries << endl);
-    V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
-    V(kconsole << "String table @ " << base + string_table->offset << endl);
-
-    for (size_t i = 0; i < n_entries; i++)
-    {
-        elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
-        const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
-
-        symbols.insert(std::make_pair(c, symbol));
-    }
-
-    return symbols;
-}
-
-module_symbols_t
-module_loader_t::symtab_for(const char* name)
-{
-    module_descriptor_t* out_mod;
-
-    if (!module_already_loaded(*d_last_available_address, name, out_mod))
-    {
-        D(kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl);
-        return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
-    }
-
-    symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
-    return finder.all_symbols();
-}
-
 static bool starts_with(const cstring_t& str, const char* prefix)
 {
     uint32_t i = 0;
@@ -225,38 +190,99 @@ static bool ends_with(const cstring_t& str, const cstring_t& suffix)
         return false;
 
     uint32_t i = 1;
-    while (i <= suffix.length() && str[str.length()-i] == suffix[suffix.length()-i])
+    while ((i <= suffix.length()) && (str[str.length()-i] == suffix[suffix.length()-i]))
+    {
         ++i;
-    if (i <= suffix.length() && str[str.length()-i] == suffix[suffix.length()-i])
+    }
+
+    // Compared to end..
+    if (i == suffix.length()+1)
        return true;
+
     return false;
 }
 
-module_symbols_t::symvec
+module_symbols_t::symmap
+symbol_table_finder_t::all_symbols(const char* suffix)
+{
+    kconsole << "symbol_table_finder_t::all_symbols {" << endl;
+    module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
+
+    size_t n_entries = symbol_table->size / symbol_table->entsize;
+    V(kconsole << "All symbols: " << n_entries << endl);
+    V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
+    V(kconsole << "String table @ " << base + string_table->offset << endl);
+
+    // OS_TRY{
+        for (size_t i = 0; i < n_entries; i++)
+        {
+            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
+            const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
+
+            if (ends_with(c, suffix))
+            {
+                kconsole << "all_symbols adding symbol " << c << endl;
+                symbols.insert(std::make_pair(c, symbol));
+            }
+        }
+    // }
+    // OS_CATCH("heap_v1.no_memory")
+    // {
+    //     PANIC("Out of memory!");
+    // }
+    // OS_ENDTRY;
+
+    kconsole << "symbol_table_finder_t::all_symbols }" << endl;
+    return symbols;
+}
+
+module_symbols_t
+module_loader_t::symtab_for(const char* name, const char* suffix)
+{
+    kconsole << "module_loader_t::symtab_for '" << name << "' {" << endl;
+    module_descriptor_t* out_mod;
+
+    if (!module_already_loaded(*d_last_available_address, name, out_mod))
+    {
+        D(kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl);
+        return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
+    }
+
+    symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
+    module_symbols_t t(finder.all_symbols(suffix));
+    kconsole << "module_loader_t::symtab_for }" << endl;
+    return t;
+}
+
+module_symbols_t::symmap
 module_symbols_t::starting_with(const char* prefix)
 {
-    symvec out(symvec_alloc(PVS(heap)));
+    symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
         if (starts_with(e.first, prefix))
         {
-            out.push_back(e.second);
+            out.insert(std::make_pair(e.first, e.second));
         }
     }
     return out;
 }
 
-module_symbols_t::symvec
+module_symbols_t::symmap
 module_symbols_t::ending_with(const char* suffix)
 {
-    symvec out(symvec_alloc(PVS(heap)));
+    kconsole << "ending_with '" << suffix << "' {" << endl;
+    symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
+        kconsole << "Ending with: checking symbol " << e.first << " against " << suffix << endl;
         if (ends_with(e.first, suffix))
         {
-            out.push_back(e.second);
+            kconsole << "Symbol " << e.first << " ends with " << suffix << endl;
+            out.insert(std::make_pair(e.first, e.second));
         }
     }
+    kconsole << "ending_with }" << endl;
     return out;
 }
 

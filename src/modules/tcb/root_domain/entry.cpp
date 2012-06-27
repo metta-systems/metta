@@ -84,10 +84,10 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
     return static_cast<closure_type*>(load_module(bootimg, module_name, clos));
 }
 
-static module_symbols_t symbols_in(const char* module_name)
+static module_symbols_t symbols_in(const char* module_name, const char* suffix)
 {
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    return bi->get_module_loader().symtab_for(module_name);
+    return bi->get_module_loader().symtab_for(module_name, suffix);
 }
 
 //======================================================================================================================
@@ -258,6 +258,7 @@ static void init_mem(bootimage_t& bootimg)
 #if PCIBUS_TEST
     load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
 #endif
+    load_module(bootimg, "interface_repository", nullptr);
     // === END WORKAROUND ===
 
     size_t modules_size;
@@ -402,17 +403,12 @@ static void init_type_system(bootimage_t& bootimg)
     //     strtab->put(buf, x);
     // }
 
-    /* Preload any types in the boot image */
+    /* Preload types in the boot image */
     kconsole << " +++ registering interfaces" << endl;
-    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    for (auto& module : bi->get_module_loader().loaded_module_names())
+    auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
+    for (auto& symbol : symbols)
     {
-        kconsole << " +++ from module " << module << endl;
-        auto symbols = symbols_in(module).ending_with("__intf_typeinfo");
-        for (auto& symbol : symbols)
-        {
-            ts->register_interface(symbol->value);//reinterpret_cast<type_system_f_v1::interface_info>
-        }
+        ts->register_interface(symbol.second->value);
     }
 
     // Idealized interface:
