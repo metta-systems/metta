@@ -19,7 +19,7 @@ stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEP
 stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O0 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
+flags = '-O1 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 # flags += ['--trace-includes']
@@ -240,6 +240,15 @@ def build(bld):
     platform = Options.options.platform
     clang = Options.options.clang == 'yes'
 
+    # repository = bld.program(
+    #     source = 'mini_entry.cpp',
+    #     target = 'interfaces_repository',
+    #     features = 'cxx',
+    #     env = bld.all_envs['KERNEL_ENV'].derive()
+    # )
+    # repository.includes = repository.env.INCLUDE_DIRS
+    # bld.repo_nodes = repository
+
     # Tool to parse interface files.
     # Build it first so that we can transform interface defitions to code during build.
     meddler = bld.program(
@@ -278,7 +287,7 @@ def build(bld):
     bld.all_comp_targets = []
     bld.recurse("modules")
 
-    # Target lib++
+    # Target libc++
     libcxx = bld.stlib(
         source = 'runtime/libc++/src/hash.cpp runtime/libc++/src/vector_inst.cpp',
         target = 'c++',
@@ -410,7 +419,7 @@ def build(bld):
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
                 + ['launcher/loader.cpp', 'modules/tcb/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
-            use = 'interfaces common platform kernel minruntime debug c++',
+            use = 'interfaces common platform kernel runtime debug c++',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])

@@ -372,8 +372,6 @@ static type_system_f_v1::closure_t*
 create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h, 
        map_card64_address_factory_v1::closure_t* cardmap, map_string_address_factory_v1::closure_t* stringmap)
 {
-    run_global_ctors(); // since meta_interface is in BSS (wtf?), we need to initialize it.
-
     type_system_f_v1::state_t* state = new(h) type_system_f_v1::state_t;
     closure_init(&state->closure, &typesystem_ops, state);
 

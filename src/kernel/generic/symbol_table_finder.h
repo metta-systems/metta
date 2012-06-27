@@ -112,5 +112,5 @@ public:
         return 0;
     }
 
-    module_symbols_t::symmap all_symbols();
+    module_symbols_t::symmap all_symbols(const char*suffix);
 };
