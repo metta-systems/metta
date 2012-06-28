@@ -2,8 +2,9 @@
 # encoding: utf-8
 #
 # Convert interface file into set of header and implementation files.
-# name_vX.if -> name_vX_interface.h
-#            -> name_vX_interface.cpp
+# name_vX.if -> name_vX_interface.cpp
+#            -> name_vX_typedefs.cpp
+#            -> name_vX_interface.h
 #            -> name_vX_impl.h
 #
 from waflib.Task import Task
@@ -33,16 +34,6 @@ class meddle(Task):
 def process_src(self, node):
     tg = self.bld.get_tgen_by_name('meddler')
     comp = tg.tasks[-1].outputs[0]
-    tsk = self.create_task('meddle', [comp, node], [node.change_ext('_interface.cpp'), node.change_ext('_interface.h'), node.change_ext('_impl.h'), node.change_ext('_typedefs.cpp')]) # Use node.name.replace instead of change_ext?
-    self.source.extend(tsk.outputs)
-
-# Added _interface.h and _impl.h files need not be processed.
-@extension('.h')
-def foo(*k, **kw):
-	pass
-
-# Add typedef files into interface repository target
-@extension('_typedefs.cpp')
-def foo(tg, node):
-    # tg.bld.repo_nodes.source.append(node)
-    pass
+    tsk = self.create_task('meddle', [comp, node], [node.change_ext('_interface.cpp'), node.change_ext('_typedefs.cpp'), node.change_ext('_interface.h'), node.change_ext('_impl.h')])
+    self.bld.get_tgen_by_name('interface_repository').source.append(tsk.outputs[1])    
+    self.source.append(tsk.outputs[0])
