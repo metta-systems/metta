@@ -25,8 +25,10 @@ export LLVM_TARGETS=x86,arm
 export MAKE_THREADS=4
 
 export LLVM_REVISION=154283
-export COMPILER_RT_REVISION=151531
 export CLANG_REVISION=154283
+# compiler_rt version bumped because of fatal asan warnings.
+# version is upped until the warnings disappeared but before it started insisting on ios library generation.
+export COMPILER_RT_REVISION=159142
 
 # binutils 2.21 won't work, see https://trac.macports.org/ticket/22679
 BINUTILS_VER=2.19.1
