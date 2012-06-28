@@ -11,7 +11,7 @@ echo "You'll need UNIX tools make, curl and tar."
 echo "===================================================================="
 echo
 
-mkdir -p toolchain/{build-llvm,build-gcc,build-binutils,tarballs}
+mkdir -p toolchain/{build/{llvm,gcc,binutils,gmp,mpfr,mpc},tarballs,sources}
 cd toolchain/
 
 # *** USER-ADJUSTABLE SETTINGS ***
@@ -102,30 +102,30 @@ echo "===================================================================="
 echo "Checking out llvm..."
 echo "===================================================================="
 
-if [ ! -d llvm ]; then
-	svn co -r$LLVM_REVISION http://llvm.org/svn/llvm-project/llvm/trunk llvm
+if [ ! -d sources/llvm ]; then
+	svn co -r$LLVM_REVISION http://llvm.org/svn/llvm-project/llvm/trunk sources/llvm
 else
-	svn up -r$LLVM_REVISION llvm
+	svn up -r$LLVM_REVISION sources/llvm
 fi
 
-if [ ! -d llvm/projects/compiler-rt ]; then
-	cd llvm/projects/
+if [ ! -d sources/llvm/projects/compiler-rt ]; then
+	cd sources/llvm/projects/
 	svn co -r$COMPILER_RT_REVISION http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt
-	cd ../..
+	cd ../../..
 else
-	svn up -r$COMPILER_RT_REVISION llvm/projects/compiler-rt
+	svn up -r$COMPILER_RT_REVISION sources/llvm/projects/compiler-rt
 fi
 
 echo "===================================================================="
 echo "Checking out clang..."
 echo "===================================================================="
 
-if [ ! -d llvm/tools/clang ]; then
-	cd llvm/tools/
+if [ ! -d sources/llvm/tools/clang ]; then
+	cd sources/llvm/tools/
 	svn co -r$CLANG_REVISION http://llvm.org/svn/llvm-project/cfe/trunk clang
-	cd ../..
+	cd ../../..
 else
-	svn up -r$CLANG_REVISION llvm/tools/clang
+	svn up -r$CLANG_REVISION sources/llvm/tools/clang
 fi
 
 echo "===================================================================="
@@ -138,8 +138,8 @@ echo "===================================================================="
 echo "Extracting binutils..."
 echo "===================================================================="
 
-if [ ! -d binutils-${BINUTILS_VER} ]; then
-	tar xf ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2
+if [ ! -d sources/binutils-${BINUTILS_VER} ]; then
+	tar xf ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2 -C sources
 fi
 
 echo "===================================================================="
@@ -149,15 +149,15 @@ echo "===================================================================="
 # To do: add this to build llvm gold plugin and use gold ...
 # --enable-gold --enable-plugins
 
-if [ ! -f build-binutils/.config.succeeded ]; then
-	cd build-binutils && \
-	../binutils-${BINUTILS_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
+if [ ! -f build/binutils/.config.succeeded ]; then
+	cd build/binutils && \
+	../../sources/binutils-${BINUTILS_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
 	--enable-languages=c,c++ --disable-werror \
 	--disable-nls --disable-shared --disable-multilib && \
 	touch .config.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-binutils/.config.succeeded exists, NOT reconfiguring binutils!"
+	echo "build/binutils/.config.succeeded exists, NOT reconfiguring binutils!"
 fi
 
 echo "===================================================================="
@@ -167,73 +167,216 @@ echo "===================================================================="
 # To do: add this to build llvm gold plugin and use gold ...
 # time make -j$MAKE_THREADS all-gold && \
 
-if [ ! -f build-binutils/.build.succeeded ]; then
-	cd build-binutils && \
+if [ ! -f build/binutils/.build.succeeded ]; then
+	cd build/binutils && \
 	time make -j$MAKE_THREADS && \
 	touch .build.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-binutils/.build.succeeded exists, NOT rebuilding binutils!"
+	echo "build/binutils/.build.succeeded exists, NOT rebuilding binutils!"
 fi
 
 echo "===================================================================="
 echo "Installing binutils..."
 echo "===================================================================="
 
-if [ ! -f build-binutils/.install.succeeded ]; then
-	cd build-binutils && \
+if [ ! -f build/binutils/.install.succeeded ]; then
+	cd build/binutils && \
 	make install && \
 	touch .install.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-binutils/.install.succeeded exists, NOT reinstalling binutils!"
+	echo "build/binutils/.install.succeeded exists, NOT reinstalling binutils!"
 fi
 
 export STRIP_FOR_TARGET=$PREFIX/bin/$TARGET-strip
 
 echo "===================================================================="
+echo "Extracting gmp..."
+echo "===================================================================="
+
+if [ ! -d sources/gmp-${GMP_VER} ]; then
+	tar xf ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2 -C sources
+fi
+
+echo "===================================================================="
+echo "Configuring gmp..."
+echo "===================================================================="
+
+# --host=$TARGET --program-prefix=$TARGET-
+
+if [ ! -f build/gmp/.config.succeeded ]; then
+	cd build/gmp && \
+	../../sources/gmp-${GMP_VER}/configure --prefix=$PREFIX \
+	--enable-cxx --disable-shared && \
+	touch .config.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/gmp/.config.succeeded exists, NOT reconfiguring gmp!"
+fi
+
+echo "===================================================================="
+echo "Building gmp..."
+echo "===================================================================="
+
+if [ ! -f build/gmp/.build.succeeded ]; then
+	cd build/gmp && \
+	make -j$MAKE_THREADS && \
+	make check && \
+	touch .build.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/gmp/.build.succeeded exists, NOT rebuilding gmp!"
+fi
+
+echo "===================================================================="
+echo "Installing gmp..."
+echo "===================================================================="
+
+if [ ! -f build/gmp/.install.succeeded ]; then
+	cd build/gmp && \
+	make install && \
+	touch .install.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/gmp/.install.succeeded exists, NOT reinstalling gmp!"
+fi
+
+echo "===================================================================="
+echo "Extracting mpfr..."
+echo "===================================================================="
+
+if [ ! -d sources/mpfr-${MPFR_VER} ]; then
+	tar xf ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2 -C sources
+fi
+
+echo "===================================================================="
+echo "Configuring mpfr..."
+echo "===================================================================="
+
+if [ ! -f build/mpfr/.config.succeeded ]; then
+	cd build/mpfr && \
+	../../sources/mpfr-${MPFR_VER}/configure --prefix=$PREFIX --with-gmp=$PREFIX --disable-shared && \
+	touch .config.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpfr/.config.succeeded exists, NOT reconfiguring mpfr!"
+fi
+
+echo "===================================================================="
+echo "Building mpfr..."
+echo "===================================================================="
+
+if [ ! -f build/mpfr/.build.succeeded ]; then
+	cd build/mpfr && \
+	make -j$MAKE_THREADS && \
+	touch .build.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpfr/.build.succeeded exists, NOT rebuilding mpfr!"
+fi
+
+echo "===================================================================="
+echo "Installing mpfr..."
+echo "===================================================================="
+
+if [ ! -f build/mpfr/.install.succeeded ]; then
+	cd build/mpfr && \
+	make install && \
+	touch .install.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpfr/.install.succeeded exists, NOT reinstalling mpfr!"
+fi
+
+echo "===================================================================="
+echo "Extracting mpc..."
+echo "===================================================================="
+
+if [ ! -d sources/mpc-${MPC_VER} ]; then
+	tar xf ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz -C sources
+fi
+
+echo "===================================================================="
+echo "Configuring mpc..."
+echo "===================================================================="
+
+if [ ! -f build/mpc/.config.succeeded ]; then
+	cd build/mpc && \
+	../../sources/mpc-${MPC_VER}/configure --prefix=$PREFIX --with-gmp=$PREFIX --with-mpfr=$PREFIX --disable-shared && \
+	touch .config.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpc/.config.succeeded exists, NOT reconfiguring mpc!"
+fi
+
+echo "===================================================================="
+echo "Building mpc..."
+echo "===================================================================="
+
+if [ ! -f build/mpc/.build.succeeded ]; then
+	cd build/mpc && \
+	make -j$MAKE_THREADS && \
+	touch .build.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpc/.build.succeeded exists, NOT rebuilding mpc!"
+fi
+
+echo "===================================================================="
+echo "Installing mpc..."
+echo "===================================================================="
+
+if [ ! -f build/mpc/.install.succeeded ]; then
+	cd build/mpc && \
+	make install && \
+	touch .install.succeeded && \
+	cd ../.. || exit 1
+else
+	echo "build/mpc/.install.succeeded exists, NOT reinstalling mpc!"
+fi
+
+echo "===================================================================="
 echo "Extracting gcc..."
 echo "===================================================================="
 
-if [ ! -d gcc-${GCC_VER} ]; then
-	tar xf ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2
-	tar xf ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2
-	tar xf ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2
-	tar xf ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz
-	tar xf ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2
-	cd gcc-${GCC_VER}
-	ln -s ../gmp-${GMP_VER} gmp
-	ln -s ../mpc-${MPC_VER} mpc
-	ln -s ../mpfr-${MPFR_VER} mpfr
-	cd ..
+if [ ! -d sources/gcc-${GCC_VER} ]; then
+	tar xf ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2 -C sources
+	tar xf ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2 -C sources
 fi
 
 echo "===================================================================="
 echo "Configuring gcc..."
 echo "===================================================================="
 
-if [ ! -f build-gcc/.config.succeeded ]; then
-	cd build-gcc && \
-	../gcc-${GCC_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
-	--with-gmp --with-mpfr --with-mpc --with-system-zlib --enable-stage1-checking --enable-plugin \
+if [ ! -f build/gcc/.config.succeeded ]; then
+	cd build/gcc && \
+	../../sources/gcc-${GCC_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
+	--with-gmp=$PREFIX \
+	--with-mpfr=$PREFIX \
+	--with-mpc=$PREFIX \
+	--with-system-zlib --enable-stage1-checking --enable-plugin \
 	--enable-lto --enable-languages=c,c++ \
-	--disable-nls --disable-shared --disable-multilib && \
+	--disable-decimal-float --disable-threads --disable-libmudflap --disable-libssp \
+	--disable-libgomp --disable-libquadmath \
+	--disable-nls --disable-shared --disable-multilib \
+	&& \
 	touch .config.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-gcc/.config.succeeded exists, NOT reconfiguring gcc!"
+	echo "build/gcc/.config.succeeded exists, NOT reconfiguring gcc!"
 fi
 
 echo "===================================================================="
 echo "Building gcc..."
 echo "===================================================================="
 
-if [ ! -f build-gcc/.build.succeeded ]; then
-	cd build-gcc && \
+if [ ! -f build/gcc/.build.succeeded ]; then
+	cd build/gcc && \
 	make -j$MAKE_THREADS all-gcc && \
 	make -j$MAKE_THREADS all-target-libgcc && \
 	touch .build.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
 	echo "build-gcc/.build.succeeded exists, NOT rebuilding gcc!"
 fi
@@ -242,14 +385,14 @@ echo "===================================================================="
 echo "Installing gcc..."
 echo "===================================================================="
 
-if [ ! -f build-gcc/.install.succeeded ]; then
-	cd build-gcc && \
+if [ ! -f build/gcc/.install.succeeded ]; then
+	cd build/gcc && \
 	make install-gcc && \
 	make install-target-libgcc && \
 	touch .install.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-gcc/.install.succeeded exists, NOT reinstalling gcc!"
+	echo "build/gcc/.install.succeeded exists, NOT reinstalling gcc!"
 fi
 
 echo "===================================================================="
@@ -261,48 +404,46 @@ unset LD
 # To do: add this to build llvm gold plugin and use gold ...
 # --with-binutils-include=$TOOLCHAIN_DIR/binutils-${BINUTILS_VER}/include/ --enable-pic
 
-if [ ! -f build-llvm/.config.succeeded ]; then
-	cd build-llvm && \
-	../llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
+if [ ! -f build/llvm/.config.succeeded ]; then
+	cd build/llvm && \
+	../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
 	--enable-targets=$LLVM_TARGETS  && \
 	touch .config.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-llvm/.config.succeeded exists, NOT reconfiguring llvm!"
+	echo "build/llvm/.config.succeeded exists, NOT reconfiguring llvm!"
 fi
 
 echo "===================================================================="
 echo "Building llvm... this may take a long while"
 echo "===================================================================="
 
-if [ ! -f build-llvm/.build.succeeded ]; then
-	cd build-llvm && \
+if [ ! -f build/llvm/.build.succeeded ]; then
+	cd build/llvm && \
 	make -j$MAKE_THREADS && \
 	touch .build.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-llvm/.build.succeeded exists, NOT rebuilding llvm!"
+	echo "build/llvm/.build.succeeded exists, NOT rebuilding llvm!"
 fi
 
 echo "===================================================================="
 echo "Installing llvm & clang..."
 echo "===================================================================="
 
-if [ ! -f build-llvm/.install.succeeded ]; then
-	cd build-llvm && \
+if [ ! -f build/llvm/.install.succeeded ]; then
+	cd build/llvm && \
 	make install && \
 	touch .install.succeeded && \
-	cd .. || exit 1
+	cd ../.. || exit 1
 else
-	echo "build-llvm/.install.succeeded exists, NOT reinstalling llvm!"
+	echo "build/llvm/.install.succeeded exists, NOT reinstalling llvm!"
 fi
 
 echo "===================================================================="
 echo "To clean up:"
 echo "cd toolchain"
-echo "rm -rf tarballs build-llvm build-gcc build-binutils"
-echo "rm -rf llvm gcc-${GCC_VER} binutils-${BINUTILS_VER}"
-echo "rm -rf mpfr-${MPFR_VER} gmp-${GMP_VER} mpc-${MPC_VER}"
+echo "rm -rf tarballs build sources"
 echo
 echo "Toolchain binaries will remain in gcc/ and clang/"
 echo "where Metta configure will find them."
