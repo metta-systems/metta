@@ -53,9 +53,16 @@ def options(opt):
     opt.load('compiler_c')
     opt.load('compiler_cxx')
 
+def toolchain_path():
+    tc_dir = os.path.join(os.getcwd(), 'toolchain')
+    # You need to amend path with gcc binaries otherwise clang will insist on calling system default one
+    # regardless of -gcc-toolchain options (what's that for then, ffs?)
+    os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.environ['PATH']
+    return tc_dir
+
 def configure(conf):
     # clang-config.sh replacement:
-    tc_dir = os.path.join(os.getcwd(), 'toolchain')
+    tc_dir = toolchain_path()
     os.environ['CLANG'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
     os.environ['CROSS_CC'] = os.path.join(tc_dir, 'clang', 'bin', 'clang')
     os.environ['CROSS_CXX'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
@@ -236,6 +243,8 @@ def configure(conf):
     conf.setenv('TEST_ENV', env_host_tests)
 
 def build(bld):
+    toolchain_path()
+
     arch = Options.options.arch
     platform = Options.options.platform
 
