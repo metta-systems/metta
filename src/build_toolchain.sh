@@ -26,7 +26,8 @@ export CLANG_REVISION=154283
 export COMPILER_RT_REVISION=159142
 
 # binutils 2.21 won't work, see https://trac.macports.org/ticket/22679
-BINUTILS_VER=2.19.1
+# minimal binutils version for gcc 4.6.2 is 2.20.1 (.cfi_section support)
+BINUTILS_VER=2.22
 GCC_VER=4.6.2
 MPFR_VER=3.1.0
 MPC_VER=0.9
@@ -41,6 +42,59 @@ export PREFIX=$TOOLCHAIN_DIR/gcc
 export TARGET=i686-pc-elf
 
 export LD=/usr/bin/ld # not /usr/bin/gcc-4.2!!
+
+echo "===================================================================="
+echo "Fetching binutils..."
+echo "===================================================================="
+if [ ! -f ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2 ]; then
+	echo "binutils"
+	curl http://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VER}.tar.bz2 -o ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2
+else
+	echo "Not fetching binutils, file exists."
+fi
+
+echo "===================================================================="
+echo "Fetching gcc..."
+echo "===================================================================="
+
+if [ ! -f ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2 ]; then
+	echo "gcc-core"
+	curl http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-core-${GCC_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2
+else
+	echo "Not fetching gcc-core, file exists."
+fi
+
+if [ ! -f ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2 ]; then
+	echo "gcc-g++"
+	curl http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-g++-${GCC_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2
+else
+	echo "Not fetching gcc-g++, file exists."
+fi
+
+echo "===================================================================="
+echo "Fetching gcc libraries..."
+echo "===================================================================="
+
+if [ ! -f ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2 ]; then
+	echo "mpfr"
+	curl http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VER}.tar.bz2 -o ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2
+else
+	echo "Not fetching mpfr, file exists."
+fi
+
+if [ ! -f ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz ]; then
+	echo "mpc"
+	curl http://www.multiprecision.org/mpc/download/mpc-${MPC_VER}.tar.gz -o ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz
+else
+	echo "Not fetching mpc, file exists."
+fi
+
+if [ ! -f ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2 ]; then
+	echo "gmp"
+	curl http://ftp.gnu.org/gnu/gmp/gmp-${GMP_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2
+else
+	echo "Not fetching gmp, file exists."
+fi
 
 echo "===================================================================="
 echo "Checking out llvm..."
@@ -70,47 +124,6 @@ if [ ! -d llvm/tools/clang ]; then
 else
 	#svn up llvm/tools/clang
 	echo "Not checking out clang, directory exists."
-fi
-
-echo "===================================================================="
-echo "Fetching binutils..."
-echo "===================================================================="
-if [ ! -f ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2 ]; then
-	echo "binutils"
-	curl http://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VER}.tar.bz2 -o ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2
-fi
-
-echo "===================================================================="
-echo "Fetching gcc..."
-echo "===================================================================="
-
-if [ ! -f ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2 ]; then
-	echo "gcc-core"
-	curl http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-core-${GCC_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2
-fi
-
-if [ ! -f ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2 ]; then
-	echo "gcc-g++"
-	curl http://ftp.gnu.org/gnu/gcc/gcc-${GCC_VER}/gcc-g++-${GCC_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gcc-g++-${GCC_VER}.tar.bz2
-fi
-
-echo "===================================================================="
-echo "Fetching gcc libraries..."
-echo "===================================================================="
-
-if [ ! -f ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2 ]; then
-	echo "mpfr"
-	curl http://ftp.gnu.org/gnu/mpfr/mpfr-${MPFR_VER}.tar.bz2 -o ${SOURCE_PREFIX}/mpfr-${MPFR_VER}.tar.bz2
-fi
-
-if [ ! -f ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz ]; then
-	echo "mpc"
-	curl http://www.multiprecision.org/mpc/download/mpc-${MPC_VER}.tar.gz -o ${SOURCE_PREFIX}/mpc-${MPC_VER}.tar.gz
-fi
-
-if [ ! -f ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2 ]; then
-	echo "gmp"
-	curl http://ftp.gnu.org/gnu/gmp/gmp-${GMP_VER}.tar.bz2 -o ${SOURCE_PREFIX}/gmp-${GMP_VER}.tar.bz2
 fi
 
 echo "===================================================================="
