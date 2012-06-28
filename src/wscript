@@ -12,7 +12,6 @@ top = '.'
 out = '_build_'
 
 include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
-system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
 stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
 stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
@@ -110,6 +109,8 @@ def configure(conf):
 
     # flags += gcc_debug_flag
     # extra_cross_flags += ['-no-canonical-prefixes']
+
+    system_header_dir = map(lambda d: '-isystem ' + d, ['runtime/libc++/include', os.path.join(dir, 'toolchain', 'clang', 'lib', 'clang', '3.1', 'include')])
 
     cxxflags = cflags
 
