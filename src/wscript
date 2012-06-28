@@ -6,15 +6,13 @@ Configure.autoconfig = 1
 
 # FIXME: Could use bzr python modules, too.
 APPNAME = 'metta'
-VERSION = os.popen("bzr version-info|grep revno|cut -d' ' -f2").read().strip()
+VERSION = os.popen("bzr version-info | grep revno | cut -d' ' -f2").read().strip()
 
 top = '.'
 out = '_build_'
 
 include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
-system_header_dir = map(lambda d: '-isystem' + d, 'runtime/libc++/include /Users/berkus/Tools/clang/lib/clang/3.1/include'.split())
 
-#old stl flags '_NOTHREADS __STL_NO_EXCEPTION_HEADER __STL_NO_BAD_ALLOC __STL_NO_DRAND48'.split()
 stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
 stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
 
@@ -24,8 +22,8 @@ non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging h
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 # flags += ['--trace-includes']
 
-# gcc_debug_flag = ['-###']
-gcc_debug_flag = ['-v']
+# clang_debug_flag = ['-###']
+clang_debug_flag = ['-v']
 
 # Lion has deprecated some OpenSSL stuff we use.
 flags += ['-Wno-deprecated-declarations']
@@ -38,7 +36,7 @@ def options(opt):
     opt.load('module_template', tooldir='waftools')
     opt.load('toolchain_builder', tooldir='waftools')
 
-    # arch (x86, x86-64, ppc, ppc64) - a generic cpu architecture (isa)
+    # arch (x86, x64, ppc, ppc64) - a generic cpu architecture (isa)
     # cpu (p4, arm11jsf) - a specific cpu format
     opt.add_option("--arch", action="store", default="x86", help="Select architecture to build for." + '[default: %default]')
 
@@ -52,13 +50,20 @@ def options(opt):
     # build type - release, debug, profile
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile/all)." + '[default: %default]')
 
-    # Use clang
-    opt.add_option("--clang", action="store", default="no", help="Use clang to build (default: %default)")
-
     opt.load('compiler_c')
     opt.load('compiler_cxx')
 
 def configure(conf):
+    # clang-config.sh replacement:
+    tc_dir = os.path.join(os.getcwd(), 'toolchain')
+    os.environ['CLANG'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
+    os.environ['CROSS_CC'] = os.path.join(tc_dir, 'clang', 'bin', 'clang')
+    os.environ['CROSS_CXX'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
+    os.environ['AS'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-as')
+    os.environ['AR'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ar')
+    os.environ['RANLIB'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ranlib')
+    os.environ['NM'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-nm')
+
     conf.check_waf_version(mini='1.6.11')
     conf.load('module_template', tooldir='waftools')
     conf.load('toolchain_builder', tooldir='waftools')
@@ -69,7 +74,6 @@ def configure(conf):
     arch = Options.options.arch
     platform = Options.options.platform
     build = Options.options.build
-    clang = Options.options.clang == 'yes'
 
     # Build and install local clang toolchain if necessary.
     conf.ensure_local_toolchain()
@@ -91,27 +95,19 @@ def configure(conf):
 
     conf.find_program('nm',var='NM')
 
-    if clang:
-        conf.load('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
-        extra_cross_flags += ['-target', 'i686-pc-elf']
-        extra_cross_cxxflags = ['-std=c++11']
-        linkflags = '-nostdlib'.split()
-        # with Clang use libc++ from LLVM project.
-        # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
-        # conf.env.INCLUDES_LIBCXX = system_header_dir
-        # conf.env.STLIB_LIBCXX = ['c++']
-    else:
-        conf.load('compiler_c')
-        conf.load('compiler_cxx') # FIXME: gcc detection per-config for x-compile?
-        extra_cross_cxxflags = ['-std=gnu++0x']
-        linkflags = []
-        if platform != 'hosted': linkflags += '-nostdlib -nostartfiles -nodefaultlibs'.split()
-        # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
-        linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
+    conf.load('clang', tooldir='waftools')
+    extra_cross_flags += ['-target', 'i686-pc-elf']
+    extra_cross_flags += ['-gcc-toolchain', os.path.join(tc_dir, 'gcc')]
+    extra_cross_cxxflags = ['-std=c++11']
+    linkflags = '-nostdlib'.split()
 
-    # flags += gcc_debug_flag
-    # extra_cross_flags += ['-no-canonical-prefixes]
-    extra_cross_flags += ['-gcc-toolchain', '/Users/berkus/Tools/crossgcc']
+    # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
+    # linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
+
+    flags += clang_debug_flag
+    # extra_cross_flags += ['-no-canonical-prefixes']
+
+    system_header_dir = map(lambda d: '-isystem' + d, ['runtime/libc++/include', os.path.join(tc_dir, 'clang', 'lib', 'clang', '3.1', 'include')])
 
     cxxflags = cflags
 
@@ -226,10 +222,14 @@ def configure(conf):
     else:
         conf.env.LIB_OPENSSL = 'ssl'
 
-    conf.env.STLIBPATH_LLVM = '/Users/berkus/Tools/clang/lib/'
-    conf.env.INCLUDES_LLVM = '/Users/berkus/Tools/clang/include/'
+    conf.env.STLIBPATH_LLVM = os.path.join(tc_dir, 'clang', 'lib')
+    conf.env.INCLUDES_LLVM = os.path.join(tc_dir, 'clang', 'include')
     conf.env.STLIB_LLVM = ['LLVMSupport']
     conf.env.LIB_LLVM = 'pthread'
+
+    # conf.env.STLIBPATH_LIBCXX = os.path.join(tc_dir, 'libc++')
+    # conf.env.INCLUDES_LIBCXX = system_header_dir
+    # conf.env.STLIB_LIBCXX = ['c++']
 
     env_host_tests = conf.env
 
@@ -238,8 +238,8 @@ def configure(conf):
 def build(bld):
     arch = Options.options.arch
     platform = Options.options.platform
-    clang = Options.options.clang == 'yes'
 
+    ## @todo - now uses build_interface_repository.sh
     # repository = bld.program(
     #     source = 'mini_entry.cpp',
     #     target = 'interfaces_repository',
