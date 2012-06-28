@@ -9,11 +9,6 @@ echo "not require any manual intervention. Fingers crossed!"
 echo
 echo "You'll need UNIX tools make, curl and tar."
 echo "===================================================================="
-echo "WARNING: This script assumes brewed gcc 4.6 installed."
-echo "To install: 'brew install gcc --enable-cxx --use-llvm'"
-echo "It will take a long time, drink twenty coffees."
-echo "WARNING: Obviously, this works on OSX only."
-echo "===================================================================="
 echo
 
 mkdir -p toolchain/{build-llvm,build-gcc,build-binutils,tarballs}
@@ -45,11 +40,7 @@ export SOURCE_PREFIX=$TOOLCHAIN_DIR/tarballs
 export PREFIX=$TOOLCHAIN_DIR/gcc
 export TARGET=i686-pc-elf
 
-# Brewed host gcc 4.6.2
-export CC=/usr/local/bin/x86_64-apple-darwin11.3.0-gcc-4.6
-export CXX=/usr/local/bin/x86_64-apple-darwin11.3.0-g++-4.6
 export LD=/usr/bin/ld # not /usr/bin/gcc-4.2!!
-export CPP=/usr/local/bin/cpp-4.6
 
 echo "===================================================================="
 echo "Checking out llvm..."
@@ -140,12 +131,14 @@ echo "===================================================================="
 echo "Configuring binutils..."
 echo "===================================================================="
 
+# To do: add this to build llvm gold plugin and use gold ...
+# --enable-gold --enable-plugins
+
 if [ ! -f build-binutils/.config.succeeded ]; then
 	cd build-binutils && \
 	../binutils-${BINUTILS_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
 	--enable-languages=c,c++ --disable-werror \
-	--disable-nls --disable-shared --disable-multilib \
-	--enable-gold --enable-plugins && \
+	--disable-nls --disable-shared --disable-multilib && \
 	touch .config.succeeded && \
 	cd .. || exit 1
 else
@@ -156,10 +149,12 @@ echo "===================================================================="
 echo "Building binutils..."
 echo "===================================================================="
 
+# To do: add this to build llvm gold plugin and use gold ...
+# time make -j$MAKE_THREADS all-gold && \
+
 if [ ! -f build-binutils/.build.succeeded ]; then
 	cd build-binutils && \
 	time make -j$MAKE_THREADS && \
-	time make -j$MAKE_THREADS all-gold && \
 	touch .build.succeeded && \
 	cd .. || exit 1
 else
@@ -246,10 +241,7 @@ echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
 
-unset CC
-unset CXX
 unset LD
-unset CPP
 
 # To do: add this to build llvm gold plugin and use gold ...
 # --with-binutils-include=$TOOLCHAIN_DIR/binutils-${BINUTILS_VER}/include/ --enable-pic
