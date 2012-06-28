@@ -17,10 +17,12 @@ cd toolchain/
 # *** USER-ADJUSTABLE SETTINGS ***
 
 export LLVM_TARGETS=x86,arm
-export MAKE_THREADS=4
+export MAKE_THREADS=8
 
-export LLVM_REVISION=154283
-export CLANG_REVISION=154283
+# r154283 definitely does NOT work.
+
+export LLVM_REVISION=151528
+export CLANG_REVISION=151528
 # compiler_rt version bumped because of fatal asan warnings.
 # version is upped until the warnings disappeared but before it started insisting on ios library generation.
 export COMPILER_RT_REVISION=159142
@@ -103,14 +105,15 @@ echo "===================================================================="
 if [ ! -d llvm ]; then
 	svn co -r$LLVM_REVISION http://llvm.org/svn/llvm-project/llvm/trunk llvm
 else
-	#svn up llvm
-	echo "Not checking out llvm, directory exists."
+	svn up -r$LLVM_REVISION llvm
 fi
 
 if [ ! -d llvm/projects/compiler-rt ]; then
 	cd llvm/projects/
 	svn co -r$COMPILER_RT_REVISION http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt
 	cd ../..
+else
+	svn up -r$COMPILER_RT_REVISION llvm/projects/compiler-rt
 fi
 
 echo "===================================================================="
@@ -122,8 +125,7 @@ if [ ! -d llvm/tools/clang ]; then
 	svn co -r$CLANG_REVISION http://llvm.org/svn/llvm-project/cfe/trunk clang
 	cd ../..
 else
-	#svn up llvm/tools/clang
-	echo "Not checking out clang, directory exists."
+	svn up -r$CLANG_REVISION llvm/tools/clang
 fi
 
 echo "===================================================================="

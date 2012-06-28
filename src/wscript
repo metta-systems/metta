@@ -111,7 +111,7 @@ def configure(conf):
     # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
     # linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    flags += clang_debug_flag
+    # flags += clang_debug_flag
     # extra_cross_flags += ['-no-canonical-prefixes']
 
     system_header_dir = map(lambda d: '-isystem' + d, ['runtime/libc++/include', os.path.join(tc_dir, 'clang', 'lib', 'clang', '3.1', 'include')])
@@ -243,20 +243,10 @@ def configure(conf):
     conf.setenv('TEST_ENV', env_host_tests)
 
 def build(bld):
-    toolchain_path()
+    tc_dir = toolchain_path()
 
     arch = Options.options.arch
     platform = Options.options.platform
-
-    ## @todo - now uses build_interface_repository.sh
-    # repository = bld.program(
-    #     source = 'mini_entry.cpp',
-    #     target = 'interfaces_repository',
-    #     features = 'cxx',
-    #     env = bld.all_envs['KERNEL_ENV'].derive()
-    # )
-    # repository.includes = repository.env.INCLUDE_DIRS
-    # bld.repo_nodes = repository
 
     # Tool to parse interface files.
     # Build it first so that we can transform interface defitions to code during build.
@@ -267,7 +257,7 @@ def build(bld):
         env = bld.all_envs['TOOLS_ENV'].derive(),
         defines = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS']
     )
-    meddler.includes = meddler.env['INCLUDE_DIRS'] + ['tools/meddler']
+    meddler.includes = meddler.env.INCLUDE_DIRS + ['tools/meddler', os.path.join(tc_dir, 'clang', 'include')]
 
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'choice_v1', 'closure', 'domain_v1', 'enum_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
@@ -291,6 +281,14 @@ def build(bld):
     )
     interfaces.env = bld.all_envs['KERNEL_ENV'].derive()
     interfaces.includes += interfaces.env['INCLUDE_DIRS'] # For building the C part
+
+    repository = bld.program(
+        source = [],
+        target = 'interface_repository',
+        features = 'cxx cxxprogram',
+        env = bld.all_envs['KERNEL_ENV'].derive()
+    )
+    repository.includes = repository.env.INCLUDE_DIRS
 
     # Make bootimage components.
     bld.all_comp_targets = []
@@ -473,7 +471,7 @@ def build(bld):
     # print "Target variant: "+target_variant
 
     bld(
-        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst'] + nm,
+        source = ['buildboot', 'kernel/platform/'+Options.options.platform+'/bootimage.lst', 'interface_repository'] + nm,
         target = 'init.img',
         # rule = '${SRC[0].abspath(env)} '+target_variant+'/ ${SRC[1].abspath(env)} ${TGT}', # note / after target-variant
         rule = '${SRC[0].abspath()} ./ ${SRC[1].abspath()} ${TGT}',
