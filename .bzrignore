@@ -1,15 +1,8 @@
 .lock-wscript
 _build_
 doxygen
-*.kdevelop
-*.kdevelop.filelist
 templates
 vesper.tag
-*.kdevelop.pcs
-*.kdevses
-*.kdev4
-.cproject
-.project
 debugger.log
 .waf-*
 .settings
@@ -19,5 +12,5 @@ Debug
 *.sublime-workspace
 *.sublime-project
 .DS_Store
-
-.lock-waf_darwin_build
+.lock-waf*
+toolchain/
