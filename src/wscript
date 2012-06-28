@@ -22,8 +22,8 @@ non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging h
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 # flags += ['--trace-includes']
 
-# gcc_debug_flag = ['-###']
-gcc_debug_flag = ['-v']
+# clang_debug_flag = ['-###']
+clang_debug_flag = ['-v']
 
 # Lion has deprecated some OpenSSL stuff we use.
 flags += ['-Wno-deprecated-declarations']
@@ -55,14 +55,14 @@ def options(opt):
 
 def configure(conf):
     # clang-config.sh replacement:
-    dir = os.getcwd()
-    os.environ['CLANG'] = os.path.join(dir, 'toolchain', 'clang', 'bin', 'clang++')
-    os.environ['CROSS_CC'] = os.path.join(dir, 'toolchain', 'clang', 'bin', 'clang')
-    os.environ['CROSS_CXX'] = os.path.join(dir, 'toolchain', 'clang', 'bin', 'clang++')
-    os.environ['AS'] = os.path.join(dir, 'toolchain', 'gcc', 'bin', 'i686-pc-elf-as')
-    os.environ['AR'] = os.path.join(dir, 'toolchain', 'gcc', 'bin', 'i686-pc-elf-ar')
-    os.environ['RANLIB'] = os.path.join(dir, 'toolchain', 'gcc', 'bin', 'i686-pc-elf-ranlib')
-    os.environ['NM'] = os.path.join(dir, 'toolchain', 'gcc', 'bin', 'i686-pc-elf-nm')
+    tc_dir = os.path.join(os.getcwd(), 'toolchain')
+    os.environ['CLANG'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
+    os.environ['CROSS_CC'] = os.path.join(tc_dir, 'clang', 'bin', 'clang')
+    os.environ['CROSS_CXX'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
+    os.environ['AS'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-as')
+    os.environ['AR'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ar')
+    os.environ['RANLIB'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ranlib')
+    os.environ['NM'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-nm')
 
     conf.check_waf_version(mini='1.6.11')
     conf.load('module_template', tooldir='waftools')
@@ -95,22 +95,19 @@ def configure(conf):
 
     conf.find_program('nm',var='NM')
 
-    conf.load('clang', tooldir='waftools') # FIXME: gcc detection per-config for x-compile?
+    conf.load('clang', tooldir='waftools')
     extra_cross_flags += ['-target', 'i686-pc-elf']
-    extra_cross_flags += ['-gcc-toolchain', os.path.join(dir, 'toolchain', 'gcc')]
+    extra_cross_flags += ['-gcc-toolchain', os.path.join(tc_dir, 'gcc')]
     extra_cross_cxxflags = ['-std=c++11']
     linkflags = '-nostdlib'.split()
-    # with Clang use libc++ from LLVM project.
-    # conf.env.STLIBPATH_LIBCXX = '/usr/local/lib/'
-    # conf.env.INCLUDES_LIBCXX = system_header_dir
-    # conf.env.STLIB_LIBCXX = ['c++']
+
     # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
     # linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    # flags += gcc_debug_flag
+    flags += clang_debug_flag
     # extra_cross_flags += ['-no-canonical-prefixes']
 
-    system_header_dir = map(lambda d: '-isystem ' + d, ['runtime/libc++/include', os.path.join(dir, 'toolchain', 'clang', 'lib', 'clang', '3.1', 'include')])
+    system_header_dir = map(lambda d: '-isystem' + d, ['runtime/libc++/include', os.path.join(tc_dir, 'clang', 'lib', 'clang', '3.1', 'include')])
 
     cxxflags = cflags
 
@@ -225,10 +222,14 @@ def configure(conf):
     else:
         conf.env.LIB_OPENSSL = 'ssl'
 
-    conf.env.STLIBPATH_LLVM = os.path.join(dir, 'toolchain', 'clang', 'lib')
-    conf.env.INCLUDES_LLVM = os.path.join(dir, 'toolchain', 'clang', 'include')
+    conf.env.STLIBPATH_LLVM = os.path.join(tc_dir, 'clang', 'lib')
+    conf.env.INCLUDES_LLVM = os.path.join(tc_dir, 'clang', 'include')
     conf.env.STLIB_LLVM = ['LLVMSupport']
     conf.env.LIB_LLVM = 'pthread'
+
+    # conf.env.STLIBPATH_LIBCXX = os.path.join(tc_dir, 'libc++')
+    # conf.env.INCLUDES_LIBCXX = system_header_dir
+    # conf.env.STLIB_LIBCXX = ['c++']
 
     env_host_tests = conf.env
 
@@ -238,6 +239,7 @@ def build(bld):
     arch = Options.options.arch
     platform = Options.options.platform
 
+    ## @todo - now uses build_interface_repository.sh
     # repository = bld.program(
     #     source = 'mini_entry.cpp',
     #     target = 'interfaces_repository',
