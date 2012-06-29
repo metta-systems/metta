@@ -77,24 +77,152 @@ shared_destroy(naming_context_v1::closure_t*)
 // Typesystem
 //=====================================================================================================================
 
+/**
+ * Look up a type name in this interface.
+ */
+// static type_representation_t* internal_get(type_system_f_v1::state_t* state, cstring_t name)
+// {
+//     interface_v1::state_t* iface = nullptr;
+//     type_representation_t* result = nullptr;
+//     cstring_t extra;
+
+//     // pos = find(name, '.');
+//     // if (pos)
+//     // {
+//     //     extra = name[pos+1:];
+//     //     name = name[:pos-1];
+//     // }
+
+//     /* now "name" is just the interface, and "extra" is any extra qualifier */
+
+//     if (state->interfaces_by_name->get(name.c_str(), (address_t*)&iface))
+//     {
+//         /* We've found the first component. */
+//         if (extra[0])
+//         {
+//             for (int i = 0; iface->types[i]; ++i)
+//                 if (extra == iface->types[i]->name)
+//                     result = iface->types[i];
+
+//             /* special case if it's an intf type defined by the metainterface */
+//             if (!result && (iface == &meta_interface))
+//             {
+//                 result = internal_get(state, extra);
+//             }
+//         }
+//         else
+//         {
+//             /* Otherwise return this interface clp */
+//             result = &iface->rep;
+//         }
+//     }
+
+//     return result;
+// }
+
+/**
+ *  Return a list of all types in the type system.
+ */
 static naming_context_v1::names
 type_system_v1_list(naming_context_v1::closure_t* self)
 {
+    // TypeSystem_st           *st  = (TypeSystem_st *) self->st;
+    // NOCLOBBER StringTblIter_clp iter = NULL;
+    // Context_Names           *seq;
+
+    // TRC(printf("TypeSystem$List: called\n"));
+    
+    // /* Get the result sequence */
+    // seq = SEQ_CLEAR (SEQ_NEW (Context_Names, 4*StringTbl$Size (st->intfsByName),
+    //               Pvs(heap)));
+
+    // /* Run through all the interfaces */
+    // TRY
+    // {
+    //     string_t        name;
+    //     Intf_st        *tb;
+    //     TypeRep_t         **trep ;
+
+    //     iter = StringTbl$Iterate (st->intfsByName);
+
+    //     while (StringTblIter$Next (iter, &name, (addr_t*)&tb))
+    //     {
+    //         AddName (tb->rep.name, Pvs(heap), seq);
+
+    //         /* Run through all the types defined in the current interface */
+    //         for (trep = (TypeRep_t **)tb->types; *trep; trep++)
+    //         AddQualName ( (*trep)->name, tb->rep.name, Pvs(heap), seq);
+    //     }
+    //     StringTblIter$Dispose (iter);
+    // }
+    // CATCH_ALL {
+    //       DB(printf("TypeSystem$List: failed in Malloc: undoing.\n"));
+    //       if (iter) StringTblIter$Dispose (iter);
+    //       SEQ_FREE_ELEMS (seq);
+    //       SEQ_FREE (seq);
+    //       DB(printf("TypeSystem$List: done undoing.\n"));
+    //       RAISE_Heap$NoMemory();
+    //       }
+    // ENDTRY;
+
+    // TRC(printf("TypeSystem$List: done.\n"));
+    // return seq;
     return naming_context_v1::names();
 }
 
+/**
+ * Type System Get method - return the type code as any.
+ */ 
 static bool
 type_system_v1_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
+    // TypeRep_t *tr = Int_Get ((TypeSystem_st *) self->st,  name);
+  
+    // if (!tr)
+    // return False;
+
+    // ANY_COPY (o, &(tr->code));
+    // return True;
     return false;
 }
 
+/**
+ * Info returns information about a type given its typecode.
+ */
 static interface_v1::closure_t*
 type_system_v1_info(type_system_v1::closure_t* self, type_system_v1::alias tc, types::any* rep)
 {
+    // TypeSystem_st *st = (TypeSystem_st *) self->st;
+    // Intf_st *b;
+    // TypeRep_t   *tr;
+
+    // /* Check the type code refers to a valid interface */
+    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (tc), (addr_t*)&b))
+    // RAISE_TypeSystem$BadCode(tc);
+
+    // /* Deal with the case where the type code refers to an interface type */
+    // if (TCODE_IS_INTERFACE (tc)) 
+    // {
+    // ANY_COPY (rep, &(b->rep.any));
+      
+    // return (Interface_clp) &meta_cl;
+    // }
+  
+    // /* Check that within the given interface this is a valid type */
+    // if (! TCODE_VALID_TYPE (tc, b))
+    // RAISE_TypeSystem$BadCode (tc);
+
+    // tr = TCODE_WHICH_TYPE (tc, b);
+  
+    // ANY_COPY (rep, (Type_Any *)&tr->any);
+
+    // return (Interface_clp) (word_t) (b->rep.any.val);
     return 0;
 }
 
+/**
+ * Return the size of a type.
+ */
 static memory_v1::size
 type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
@@ -118,51 +246,130 @@ type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static types::name
 type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+    interface_v1::state_t* iface = nullptr;
 
-    //     TypeSystem_st *st   = (TypeSystem_st *) self->st;
-    // Intf_st   *b    = NULL;
-    // Type_Name      name = NULL;
-    // TypeRep_t     *tr;
+    /* Check the type code refers to a valid interface */
+    if (!reinterpret_cast<type_system_f_v1::state_t*>(self->d_state)->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    // /* Check the type code refers to a valid interface */
-    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (tc), (addr_t*)&b))
-    // RAISE_TypeSystem$BadCode(tc);
-
-    // /* Deal with the case where the type code refers to an interface type */
-    // if (TCODE_IS_INTERFACE (tc)) {
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE (tc))
+    {
     // name = strdup(b->rep.name);
     // if(!name) RAISE_Heap$NoMemory();
     // return name;
-    // }
+    }
+  
+    /* Check that within the given interface this is a valid type */
+    if (!TCODE_VALID_TYPE (tc, iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    // /* Check that within the given interface this is a valid type */
-    // if (! TCODE_VALID_TYPE (tc, b))
-    // RAISE_TypeSystem$BadCode (tc);
-
-    // tr = TCODE_WHICH_TYPE (tc, b);
+    type_representation_t* tr = TCODE_WHICH_TYPE(tc, iface);
     // name = strdup(tr->name);
     // if(!name) RAISE_Heap$NoMemory();
-
     // return name;
-
-    return types::name();
+    return 0;
 }
 
+/**
+ * Try to find out if two types are compatible.
+ */
 static bool
 type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias sub, type_system_v1::alias super)
 {
+    // TypeSystem_st *st = (TypeSystem_st *) self->st;
+    // Intf_st *b;
+
+    // /* Check the type code refers to a valid interface */
+    // if (!LongCardTbl$Get (st->intfsByTC, 
+    //           TCODE_INTF_CODE (super), 
+    //           (addr_t*)&b)) {
+    // eprintf("TypeSystem$IsType: unknown typecode (super=%lx)\n", super);
+    // RAISE_TypeSystem$BadCode (super);
+    // }
+
+    // /* Quick and dirty check for equality */
+    // if (sub == super) {
+    // return True;
+    // }
+
+    // /* Check the type code refers to a valid interface */
+    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (sub), (addr_t*)&b)) {
+    // eprintf("TypeSystem$IsType: unknown typecode (sub=%lx)\n", sub);
+    // RAISE_TypeSystem$BadCode (sub);
+    // }
+
+    // /* Deal with the case where the type code refers to an interface type */
+    // if (TCODE_IS_INTERFACE (sub)) 
+    // {
+    // while (b->rep.code.val != super) 
+    // {
+    //     /* Look up the supertype */
+    //     if ( !b->extends ) {
+    //     return False;
+    //     }
+    //     if (!LongCardTbl$Get (st->intfsByTC, b->extends, (addr_t*)&b)) {
+    //     eprintf("TypeSystem$IsType: unknown typecode (super=%lx)\n", 
+    //         b->extends);
+    //     RAISE_TypeSystem$BadCode (sub);
+    //     }
+    // }
+    // return True;
+    // }
+
+    // /* We have a concrete type and it's not the same typecode, so fail. */
     return false;
 }
 
+/**
+ * Try to narrow a type.
+ */
 static types::val
 type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system_v1::alias tc)
 {
+    // if (!Ts_IsType (self, a->type, tc)) {
+    // NTRC(printf("TS$Narrow: any's type (%qx) incompat with desired %qx\n",
+    //        a->type, tc));
+    // RAISE_TypeSystem$Incompatible();
+    // }
+    
+    // return a->val;
     return types::val();
 }
 
+/**
+ * Unalias a type - recurse up alias chain until a non-alias type is found.
+ */
 static type_system_v1::alias
 type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+    // TypeSystem_st *st = (TypeSystem_st *) self->st;
+    // Intf_st *b  = NULL;
+    // TypeRep_t   *tr = NULL;
+
+    // for(;;) {
+    // /* Check the type code refers to a valid interface */
+    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (a), (addr_t*)&b))
+    //     RAISE_TypeSystem$BadCode (a);
+    
+    // /* Deal with the case where the type code refers to an interface type */
+    // if (TCODE_IS_INTERFACE (a))
+    //     return a;
+    
+    //  Check that within the given interface this is a valid type 
+    // if (! TCODE_VALID_TYPE (a, b))
+    //     RAISE_TypeSystem$BadCode(a);
+    
+    // /* Get the representation of this type */
+    // tr = TCODE_WHICH_TYPE (a, b); 
+
+    // /* If it's not an alias, return it */
+    // if ( tr->any.type != TypeSystem_Alias__code ) return a;
+    
+    // /* Else go round again. */
+    // a = ((Type_Any *)&tr->any)->val;
+    // }
+    // RAISE_TypeSystem$BadCode (a);
     return type_system_v1::alias();
 }
 
@@ -365,8 +572,6 @@ interface_v1::state_t meta_interface =
 //=====================================================================================================================
 // The Factory
 //=====================================================================================================================
-
-#include "c++ctors.h"
 
 static type_system_f_v1::closure_t* 
 create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h, 
