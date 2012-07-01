@@ -20,4 +20,4 @@ def build(bld):
     bld.recurse('hashtables_mod')
     bld.recurse('stretch_table_mod')
     bld.recurse('exceptions_mod')
-    bld.recurse('pcibus')
+    # bld.recurse('pcibus')

@@ -847,7 +847,7 @@ void exception_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
 void alias_t::emit_include(ostringstream& s, string indent_prefix)
 {
     // UWAGA: Very ad-hoc patch, please rework this for real includes.
-    cout << "Emitting include for base alias_t: " << base_name() << endl;
+    L(cout << "Emitting include for base alias_t: " << base_name() << endl);
     if (map_type(base_name()).empty())
         s << indent_prefix << "#include \"" << base_name() << "_interface.h\"" << endl;
     else

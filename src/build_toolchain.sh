@@ -11,13 +11,13 @@ echo "You'll need UNIX tools make, curl and tar."
 echo "===================================================================="
 echo
 
-mkdir -p toolchain/{build/{llvm,gcc,binutils,gmp,mpfr,mpc},tarballs,sources}
-cd toolchain/
-
 # *** USER-ADJUSTABLE SETTINGS ***
 
 export LLVM_TARGETS=x86,arm
-export MAKE_THREADS=4
+export MAKE_THREADS=8
+
+# r151528 seems to work well, but is very old.
+# r154283 definitely does NOT work.
 
 export LLVM_REVISION=151528
 export CLANG_REVISION=151528
@@ -27,13 +27,16 @@ export COMPILER_RT_REVISION=159142
 
 # binutils 2.21 won't work, see https://trac.macports.org/ticket/22679
 # minimal binutils version for gcc 4.6.2 is 2.20.1 (.cfi_section support)
-BINUTILS_VER=2.22
+BINUTILS_VER=2.20.1a
 GCC_VER=4.6.2
 MPFR_VER=3.1.0
 MPC_VER=0.9
 GMP_VER=5.0.4
 
 # END OF USER-ADJUSTABLE SETTINGS
+
+mkdir -p toolchain/{build/{llvm,gcc,binutils,gmp,mpfr,mpc},tarballs,sources}
+cd toolchain/
 
 export TOOLCHAIN_DIR=`pwd`
 export SOURCE_PREFIX=$TOOLCHAIN_DIR/tarballs
@@ -44,7 +47,7 @@ export TARGET=i686-pc-elf
 export LD=/usr/bin/ld # not /usr/bin/gcc-4.2!!
 
 echo "===================================================================="
-echo "Fetching binutils..."
+echo "Fetching binutils $BINUTILS_VER..."
 echo "===================================================================="
 if [ ! -f ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2 ]; then
 	echo "binutils"
@@ -54,7 +57,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Fetching gcc..."
+echo "Fetching gcc $GCC_VER..."
 echo "===================================================================="
 
 if [ ! -f ${SOURCE_PREFIX}/gcc-core-${GCC_VER}.tar.bz2 ]; then
@@ -133,19 +136,20 @@ echo "===================================================================="
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PREFIX/bin
 
 echo "===================================================================="
-echo "Extracting binutils..."
+echo "Extracting binutils $BINUTILS_VER..."
 echo "===================================================================="
 
 if [ ! -d sources/binutils-${BINUTILS_VER} ]; then
 	tar xf ${SOURCE_PREFIX}/binutils-${BINUTILS_VER}.tar.bz2 -C sources
 fi
 
+BINUTILS_VER=`echo $BINUTILS_VER | sed s/[a-z]//g`
+
 echo "===================================================================="
-echo "Configuring binutils..."
+echo "Configuring binutils $BINUTILS_VER..."
 echo "===================================================================="
 
-# To do: add this to build llvm gold plugin and use gold ...
-# --enable-gold --enable-plugins
+# --enable-gold --enable-plugins \
 
 if [ ! -f build/binutils/.config.succeeded ]; then
 	cd build/binutils && \
@@ -159,7 +163,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building binutils..."
+echo "Building binutils $BINUTILS_VER..."
 echo "===================================================================="
 
 # To do: add this to build llvm gold plugin and use gold ...
@@ -175,7 +179,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Installing binutils..."
+echo "Installing binutils $BINUTILS_VER..."
 echo "===================================================================="
 
 if [ ! -f build/binutils/.install.succeeded ]; then
@@ -190,7 +194,7 @@ fi
 export STRIP_FOR_TARGET=$PREFIX/bin/$TARGET-strip
 
 echo "===================================================================="
-echo "Extracting gmp..."
+echo "Extracting gmp $GMP_VER..."
 echo "===================================================================="
 
 if [ ! -d sources/gmp-${GMP_VER} ]; then
@@ -198,10 +202,10 @@ if [ ! -d sources/gmp-${GMP_VER} ]; then
 fi
 
 echo "===================================================================="
-echo "Configuring gmp..."
+echo "Configuring gmp $GMP_VER..."
 echo "===================================================================="
 
-# --host=$TARGET --program-prefix=$TARGET-
+# --build=$TARGET --program-prefix=$TARGET-
 
 if [ ! -f build/gmp/.config.succeeded ]; then
 	cd build/gmp && \
@@ -214,7 +218,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building gmp..."
+echo "Building gmp $GMP_VER..."
 echo "===================================================================="
 
 if [ ! -f build/gmp/.build.succeeded ]; then
@@ -228,7 +232,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Installing gmp..."
+echo "Installing gmp $GMP_VER..."
 echo "===================================================================="
 
 if [ ! -f build/gmp/.install.succeeded ]; then
@@ -241,7 +245,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Extracting mpfr..."
+echo "Extracting mpfr $MPFR_VER..."
 echo "===================================================================="
 
 if [ ! -d sources/mpfr-${MPFR_VER} ]; then
@@ -249,7 +253,7 @@ if [ ! -d sources/mpfr-${MPFR_VER} ]; then
 fi
 
 echo "===================================================================="
-echo "Configuring mpfr..."
+echo "Configuring mpfr $MPFR_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpfr/.config.succeeded ]; then
@@ -262,7 +266,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building mpfr..."
+echo "Building mpfr $MPFR_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpfr/.build.succeeded ]; then
@@ -275,7 +279,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Installing mpfr..."
+echo "Installing mpfr $MPFR_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpfr/.install.succeeded ]; then
@@ -288,7 +292,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Extracting mpc..."
+echo "Extracting mpc $MPC_VER..."
 echo "===================================================================="
 
 if [ ! -d sources/mpc-${MPC_VER} ]; then
@@ -296,7 +300,7 @@ if [ ! -d sources/mpc-${MPC_VER} ]; then
 fi
 
 echo "===================================================================="
-echo "Configuring mpc..."
+echo "Configuring mpc $MPC_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpc/.config.succeeded ]; then
@@ -309,7 +313,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building mpc..."
+echo "Building mpc $MPC_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpc/.build.succeeded ]; then
@@ -322,7 +326,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Installing mpc..."
+echo "Installing mpc $MPC_VER..."
 echo "===================================================================="
 
 if [ ! -f build/mpc/.install.succeeded ]; then
@@ -335,7 +339,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Extracting gcc..."
+echo "Extracting gcc $GCC_VER..."
 echo "===================================================================="
 
 if [ ! -d sources/gcc-${GCC_VER} ]; then
@@ -344,19 +348,23 @@ if [ ! -d sources/gcc-${GCC_VER} ]; then
 fi
 
 echo "===================================================================="
-echo "Configuring gcc..."
+echo "Configuring gcc $GCC_VER..."
 echo "===================================================================="
+
+# --with-gmp=$PREFIX \
+# --with-mpfr=$PREFIX \
+# --with-mpc=$PREFIX \
+# --enable-lto --enable-languages=c,c++ \
+# --disable-decimal-float --disable-threads --disable-libmudflap --disable-libssp \
+# --disable-libgomp --disable-libquadmath \
+
 
 if [ ! -f build/gcc/.config.succeeded ]; then
 	cd build/gcc && \
 	../../sources/gcc-${GCC_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
-	--with-gmp=$PREFIX \
-	--with-mpfr=$PREFIX \
-	--with-mpc=$PREFIX \
-	--with-system-zlib --enable-stage1-checking --enable-plugin \
-	--enable-lto --enable-languages=c,c++ \
-	--disable-decimal-float --disable-threads --disable-libmudflap --disable-libssp \
-	--disable-libgomp --disable-libquadmath \
+	--with-gmp --with-mpfr --with-mpc \
+	--with-system-zlib --enable-stage1-checking \
+	--enable-languages=c \
 	--disable-nls --disable-shared --disable-multilib \
 	&& \
 	touch .config.succeeded && \
@@ -366,7 +374,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building gcc..."
+echo "Building gcc $GCC_VER..."
 echo "===================================================================="
 
 if [ ! -f build/gcc/.build.succeeded ]; then
@@ -380,7 +388,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Installing gcc..."
+echo "Installing gcc $GCC_VER..."
 echo "===================================================================="
 
 if [ ! -f build/gcc/.install.succeeded ]; then
