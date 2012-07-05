@@ -95,7 +95,7 @@ exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t*
     ctx->state = xcp_none;
     ctx->up = *handlers;
     ctx->down = (xcp_context_t*)0x1; // non-NULL to mark as writable - see the write below!
-    ctx->args = NULL;
+    ctx->args = 0;
 
     /* only write the "down" pointer if we're not the top and the bottom hasn't been cauterised by a RAISE or FINALLY */
     if (*handlers && (*handlers)->down)
