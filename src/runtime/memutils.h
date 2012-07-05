@@ -26,25 +26,13 @@ namespace memutils {
  *
  * @warning Do not use fill_memory() to access IO space, use fill_io_memory() instead.
  */
+//Clearing 0x00040000 bytes at 0x009e2000 - this errored out in unrolled version, looks like counter wrapped. Need UTest.
 inline void* fill_memory(void* dest, int value, size_t count)
 {
     char *xs = reinterpret_cast<char*>(dest);
     while (count--)
     {
-        switch (count & 3)
-        {
-            case 3:
-                *xs++ = value;
-                --count;
-            case 2:
-                *xs++ = value;
-                --count;
-            case 1:
-                *xs++ = value;
-                --count;
-            default:
-                *xs++ = value;
-        }
+        *xs++ = value;
     }
     return dest;
 }
