@@ -7,9 +7,8 @@ PAGE_SIZE = 0x1000;
 
 /* setting up the Multiboot header - see GRUB docs for details. */
 MULTIBOOT_MAGIC = 0x1badb002;                                      /* 'magic number' lets bootloader find the header */
-MULTIBOOT_MODULE_ALIGN = 1;                                        /* align loaded modules on page boundaries - TODO: remove as we load stuff ourselves */
 MULTIBOOT_MEMORY_INFO  = 2;                                        /* provide memory map */
-MULTIBOOT_FLAGS = MULTIBOOT_MODULE_ALIGN + MULTIBOOT_MEMORY_INFO;
+MULTIBOOT_FLAGS = MULTIBOOT_MEMORY_INFO;
 MULTIBOOT_CHECKSUM = -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS);
 
 SECTIONS {

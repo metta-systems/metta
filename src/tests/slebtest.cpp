@@ -13,7 +13,7 @@ using namespace raii_wrapper;
 
 int main(int, char**)
 {
-    file f("slebtest.txt", fstream::in);
+    file f("slebtest.txt", std::fstream::in);
     size_t fsize = f.size();
     char* buffer = new char [fsize];
     f.read(buffer, fsize);

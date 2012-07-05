@@ -8,6 +8,6 @@ def options(opt):
 
 @conf
 def ensure_local_toolchain(bld):
-    print "******************************************************"
-    print "*** To build local toolchain run ./build_toolchain ***"
-    print "******************************************************"
+    print "*********************************************************"
+    print "*** To build local toolchain run ./build_toolchain.sh ***"
+    print "*********************************************************"

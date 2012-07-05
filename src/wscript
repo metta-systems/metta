@@ -11,22 +11,31 @@ VERSION = os.popen("bzr version-info | grep revno | cut -d' ' -f2").read().strip
 top = '.'
 out = '_build_'
 
+#===================================
+# Set up some global vars for build
+#===================================
+
 include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
 
 stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEPTIONS=1']
-stl_include_dirs = ['runtime', 'runtime/libc++/include', 'runtime/libc']
+stl_include_dirs = ['runtime', 'runtime/libc'] #'runtime/libc++/include',
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O1 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
-flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
-# flags += ['--trace-includes']
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-private-field', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
+
+# -emit-llvm and use gold to link all this together
+# Problem: no .lds and .map support??
+# flags += ['-emit-llvm']
 
 # clang_debug_flag = ['-###']
-clang_debug_flag = ['-v']
+clang_debug_flag = ['-v', '--trace-includes']
 
 # Lion has deprecated some OpenSSL stuff we use.
-flags += ['-Wno-deprecated-declarations']
+toolflags = ['-Wno-deprecated-declarations', '-stdlib=libc++']
+toollinkflags = ['-stdlib=libc++']
+
 
 def options(opt):
     # platform spec "arch-vendor-os", vendor can be omitted.
@@ -53,29 +62,43 @@ def options(opt):
     opt.load('compiler_c')
     opt.load('compiler_cxx')
 
+def clang_tc_dir(tc_dir, path):
+    return os.path.join(tc_dir, 'clang', os.sep.join(path.split('/')))
+
 def toolchain_path():
-    tc_dir = os.path.join(os.getcwd(), 'toolchain')
+    # Probe cross-branch toolchain first
+    # if you are in Metta/branches/master/src
+    # the toolchain must be in Metta/toolchain
+    # If it doesn't exist, assume local toolchain and pray for the best.
+    tc_dir = os.path.join(os.getcwd(), '..', '..', '..', 'toolchain')
+    if not os.path.exists(clang_tc_dir(tc_dir, 'bin/clang')):
+        tc_dir = os.path.join(os.getcwd(), 'toolchain')
     # You need to amend path with gcc binaries otherwise clang will insist on calling system default one
     # regardless of -gcc-toolchain options (what's that for then, ffs?)
-    os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.environ['PATH']
+    os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.path.join(tc_dir, 'gcc', 'i686-pc-elf', 'bin') + ':/usr/local/bin:/bin'
     return tc_dir
 
 def configure(conf):
-    # clang-config.sh replacement:
     tc_dir = toolchain_path()
-    os.environ['CLANG'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
-    os.environ['CROSS_CC'] = os.path.join(tc_dir, 'clang', 'bin', 'clang')
-    os.environ['CROSS_CXX'] = os.path.join(tc_dir, 'clang', 'bin', 'clang++')
+    os.environ['CLANG'] = clang_tc_dir(tc_dir, 'bin/clang++')
+    os.environ['CROSS_CC'] = clang_tc_dir(tc_dir, 'bin/clang')
+    os.environ['CROSS_CXX'] = clang_tc_dir(tc_dir, 'bin/clang++')
     os.environ['AS'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-as')
     os.environ['AR'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ar')
-    os.environ['RANLIB'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ranlib')
+    os.environ['RANLIB'] = os.path.join('bin', 'true') #os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ranlib')
     os.environ['NM'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-nm')
+    # os.environ['AS'] = os.path.join(tc_dir, 'clang', 'bin', 'llvm-as')
+    # os.environ['AR'] = os.path.join(tc_dir, 'clang', 'bin', 'llvm-ar')
+    # os.environ['RANLIB'] = os.path.join(tc_dir, 'clang', 'bin', 'llvm-ranlib')
+    # os.environ['NM'] = os.path.join(tc_dir, 'clang', 'bin', 'llvm-nm')
+
+    # os.environ['CROSS_LD'] = os.path.join(tc_dir, 'gcc', 'bin', 'i686-pc-elf-ld.gold') #os.path.join(tc_dir, 'clang', 'bin', 'llvm-ld')
 
     conf.check_waf_version(mini='1.6.11')
     conf.load('module_template', tooldir='waftools')
     conf.load('toolchain_builder', tooldir='waftools')
 
-    global flags, cflags, cxxflags, include_dirs, linkflags
+    global flags, cflags, cxxflags, include_dirs, linkflags, toolflags, toollinkflags
     # Configure for given platform
     # Configuration name is composed of architecture, cpu, release
     arch = Options.options.arch
@@ -95,26 +118,39 @@ def configure(conf):
 
     extra_cross_flags = ['-fno-builtin', '-fno-stack-protector'] #, '-fno-leading-underscore']
 
-    conf.load('yasm', tooldir='waftools')
-    conf.load('meddle', tooldir='waftools')
-    conf.load('genpaths', tooldir='waftools')
+    conf.load('yasm meddle genpaths', tooldir='waftools')
     conf.load('ar')
 
     conf.find_program('nm',var='NM')
+    # conf.find_program('ld',var='LD')
 
     conf.load('clang', tooldir='waftools')
     extra_cross_flags += ['-target', 'i686-pc-elf']
-    extra_cross_flags += ['-gcc-toolchain', os.path.join(tc_dir, 'gcc')]
+    # extra_cross_flags += ['-gcc-toolchain', os.path.join(tc_dir, 'gcc')]
     extra_cross_cxxflags = ['-std=c++11']
     linkflags = '-nostdlib'.split()
+
+    # Link using LLVM gold plugin (@todo factor out dylib_ext())
+    if sys.platform == 'darwin':
+        linkflags += ['-Wl,--plugin', clang_tc_dir(tc_dir, 'lib/LLVMgold.dylib')]
+    else:
+        linkflags += ['-Wl,--plugin', clang_tc_dir(tc_dir, 'lib/LLVMgold.so')]
 
     # linkflags += ['-Wl,--gc-sections', '-Wl,--print-gc-sections']
     # linkflags += ['-Wl,-O1', '-Wl,-zdynsort'] # GNU linker optimization of hash buckets.
 
-    # flags += clang_debug_flag
+    #=========================
+    # DEBUG CLANG INVOCATIONS
+    #=========================
+
+    flags += clang_debug_flag
+    linkflags += clang_debug_flag
+    toolflags += clang_debug_flag
+    toollinkflags += clang_debug_flag
+
     # extra_cross_flags += ['-no-canonical-prefixes']
 
-    system_header_dir = map(lambda d: '-isystem' + d, ['runtime/libc++/include', os.path.join(tc_dir, 'clang', 'lib', 'clang', '3.1', 'include')])
+    system_header_dir = map(lambda d: '-isystem' + d, [os.getcwd()+'/runtime/libc++/include', clang_tc_dir(tc_dir, 'lib/clang/3.2/include')])
 
     cxxflags = cflags
 
@@ -149,8 +185,61 @@ def configure(conf):
     # Value is metta release number, monotonically increasing with each public release.
     metta_flag = "__Metta__=1"
     kernel_flags = '-fno-strict-aliasing -ffreestanding -nostdinc'.split()
+
     # --gc-sections ruins everything - TODO: add attribute(section, used) to custom sections!
-    kernel_linkflags = ['-target', 'i686-pc-elf'] #'-ffreestanding'.split() # -Wl,--gc-sections -Wl,--print-gc-sections
+    kernel_linkflags = ['-target', 'i686-pc-elf'] #'-ffreestanding'.split() # -Wl,--gc-sections
+    # kernel_linkflags = ['--retain-symbols-file', 'retain.file',
+        # '--plugin-opt', 'mtriple=i686-pc-elf', '--plugin-opt', 'also-emit-llvm']
+    # ../../../../toolchain/gcc/bin/i686-pc-elf-ld.gold \
+    # -no-lto -O0 --plugin ../../../../toolchain/clang/lib/LLVMgold.dylib \
+    # -o interface_repository interface_repository.bc --plugin-opt mtriple=i686-pc-elf -Map ir.map -r
+
+    # kernel_linkflags = ['--debug', 'script', '--cref', '-r', '-y', '_GLOBAL_OFFSET_TABLE_', '--print-icf-sections', '--print-gc-sections', '--error-unresolved-symbols']
+
+    # gold options
+    # --compress-debug-sections zlib
+    # --debug [all,files,script,task][,...] Turn on debugging
+    # --verbose                   Synonym for --debug=files
+    # --defsym SYMBOL=EXPRESSION  Define a symbol   (hmm, might be useful?)
+    # --incremental               Do an incremental link if possible; otherwise, do a full link and prepare output for incremental linking
+    # --no-incremental            Do a full link (default)
+    # --just-symbols FILE         Read only symbol values from FILE  -- don't read symbols "contents"
+    # -Map MAPFILENAME Write map file
+    # --plugin-opt OPTION         Pass an option to the plugin 
+    # LLVMgold options:
+    # generate-api-file
+    # mcpu=
+    # extra-library-path=
+    # mtriple=
+    # obj-path=
+    # emit-llvm
+    # also-emit-llvm
+    # also-emit-llvm=<path>
+    #
+    #  --print-symbol-counts FILENAME    Print symbols defined and used for each input
+    # -q, --emit-relocs           Generate relocations in output -- will this finally work? versus
+    # -r, -relocatable            Generate relocatable output
+
+    # --retain-symbols-file FILE  keep only symbols listed in this file
+    # --section-ordering-file FILENAME Layout sections in the order specified.
+
+    # -S, --strip-debug           Strip debugging information
+    # --strip-debug-non-line      Emit only debug line number information
+    # --strip-debug-gdb           Strip debug symbols that are unused by gdb (at least versions <= 6.7)
+    # --strip-lto-sections        Strip LTO intermediate code sections
+
+    # --icf [none,all,safe]       Identical Code Folding. '--icf=safe' Folds ctors, dtors and functions whose pointers are definitely not taken.
+
+    # --stats                     Print resource usage statistics
+    # --sysroot DIR               Set target system root directory
+    # --threads                   Run the linker multi-threaded
+
+    # --section-start SECTION=ADDRESS Set address of section
+    # -Tbss ADDRESS Set the address of the bss segment
+    # -Tdata ADDRESS Set the address of the data segment
+    # -Ttext ADDRESS Set the address of the text segment
+    # --unresolved-symbols=report-all
+    # --error-unresolved-symbols  Report unresolved symbols as errors
 
     # ENVIRONMENT
 
@@ -195,16 +284,19 @@ def configure(conf):
     conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags + system_header_dir)
     conf.env.append_unique('CXXFLAGS', kernel_flags)
     conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split())
-    conf.env.append_unique('LINKFLAGS', kernel_linkflags + linkflags)
+    conf.env.append_value('LINKFLAGS',  linkflags + kernel_linkflags)
     if os.environ.has_key('CROSS_CC'):
         conf.env['CC'] = os.environ['CROSS_CC']
         conf.env['LINK_CC'] = os.environ['CROSS_CC']
     if os.environ.has_key('CROSS_CXX'):
         conf.env['CXX'] = os.environ['CROSS_CXX']
         conf.env['LINK_CXX'] = os.environ['CROSS_CXX']
+    if os.environ.has_key('CROSS_LD'):
+        conf.env['LINK_CC'] = os.environ['CROSS_LD']
+        conf.env['LINK_CXX'] = os.environ['CROSS_LD']
     conf.env.append_unique('CCFLAGS', ['-m32'])
     conf.env.append_unique('CXXFLAGS', ['-m32'])
-    conf.env.append_unique('LINKFLAGS', ['-m32'])
+    # conf.env.append_unique('LINKFLAGS', ['-m32'])
 
     env_kernel = conf.env
 
@@ -221,6 +313,10 @@ def configure(conf):
         conf.env['CXX'] = os.environ['HOST_CXX']
         conf.env['LINK_CXX'] = os.environ['HOST_CXX']
 
+    conf.env.append_unique('CCFLAGS', toolflags)
+    conf.env.append_unique('CXXFLAGS', toolflags)
+    conf.env.append_unique('LINKFLAGS',  toollinkflags)
+
     # set uselib for TOOLS_ENV
     conf.env.STLIB_UUID = 'uuid'
 
@@ -229,18 +325,21 @@ def configure(conf):
     else:
         conf.env.LIB_OPENSSL = 'ssl'
 
-    conf.env.STLIBPATH_LLVM = os.path.join(tc_dir, 'clang', 'lib')
-    conf.env.INCLUDES_LLVM = os.path.join(tc_dir, 'clang', 'include')
+    conf.env.STLIBPATH_LLVM = clang_tc_dir(tc_dir, 'lib')
+    conf.env.INCLUDES_LLVM = clang_tc_dir(tc_dir, 'include')
     conf.env.STLIB_LLVM = ['LLVMSupport']
     conf.env.LIB_LLVM = 'pthread'
 
-    # conf.env.STLIBPATH_LIBCXX = os.path.join(tc_dir, 'libc++')
-    # conf.env.INCLUDES_LIBCXX = system_header_dir
-    # conf.env.STLIB_LIBCXX = ['c++']
+    conf.env.LIBPATH_LIBCXX = os.path.join(tc_dir, 'libcxx', 'lib')
+    conf.env.INCLUDES_LIBCXX = os.path.join(tc_dir, 'libcxx', 'include')
+    conf.env.LIB_LIBCXX = ['c++']
 
     env_host_tests = conf.env
 
     conf.setenv('TEST_ENV', env_host_tests)
+
+def tools_env(bld):
+    return bld.all_envs['TOOLS_ENV'].derive()
 
 def build(bld):
     tc_dir = toolchain_path()
@@ -253,11 +352,11 @@ def build(bld):
     meddler = bld.program(
         target = 'meddler',
         source = map(lambda f: 'tools/meddler/' + f + '.cpp', 'meddler parser lexer ast symbol_table emit_cpp'.split()),
-        use = 'LLVM OPENSSL', # LIBCXX'
-        env = bld.all_envs['TOOLS_ENV'].derive(),
+        use = 'LLVM OPENSSL LIBCXX',
+        env = tools_env(bld),
         defines = ['__STDC_LIMIT_MACROS', '__STDC_CONSTANT_MACROS']
     )
-    meddler.includes = meddler.env.INCLUDE_DIRS + ['tools/meddler', os.path.join(tc_dir, 'clang', 'include')]
+    meddler.includes = meddler.env.INCLUDE_DIRS #[clang_tc_dir(tc_dir, 'include')] + 
 
     # List interfaces sorted alphabetically.
     interface_files = ['activation_v1', 'channel_v1', 'choice_v1', 'closure', 'domain_v1', 'enum_v1', 'event_v1', 'fault_handler_v1', 'frame_allocator_v1', 
@@ -294,10 +393,10 @@ def build(bld):
     bld.all_comp_targets = []
     bld.recurse("modules")
 
-    # Target libc++
+    # Target libcxx
     libcxx = bld.stlib(
         source = 'runtime/libc++/src/hash.cpp runtime/libc++/src/vector_inst.cpp',
-        target = 'c++',
+        target = 'cxx',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
     libcxx.includes = libcxx.env.INCLUDE_DIRS
@@ -365,7 +464,7 @@ def build(bld):
         source = 'tests/slebtest.cpp',
         target = 'slebtest',
         env = bld.all_envs['TEST_ENV'].derive(),
-        use = 'toolruntime toolcommon'
+        use = 'toolcommon LIBCXX'
     )
     slebtest.gen_incpaths('')
 
@@ -397,7 +496,8 @@ def build(bld):
     buildboot = bld.program(
         source = 'tools/buildboot/buildboot.cpp',
         target = 'buildboot',
-        env = bld.all_envs['TOOLS_ENV'].derive()
+        env = bld.all_envs['TOOLS_ENV'].derive(),
+        use = 'LIBCXX'
     )
     buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
     buildboot.includes = buildboot.env.INCLUDE_DIRS
@@ -426,7 +526,7 @@ def build(bld):
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
                 + ['launcher/loader.cpp', 'modules/tcb/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
-            use = 'interfaces common platform kernel runtime debug c++',
+            use = 'interfaces common platform kernel runtime debug cxx',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
