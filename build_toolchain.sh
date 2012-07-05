@@ -360,6 +360,8 @@ echo "===================================================================="
 echo "Configuring gcc $GCC_VER..."
 echo "===================================================================="
 
+# Enabling c++ language as we need g++ driver too...
+
 if [ ! -f build/gcc/.config.succeeded ]; then
     cd build/gcc && \
     ../../sources/gcc-${GCC_VER}/configure --prefix=$PREFIX --target=$TARGET --program-prefix=$TARGET- \
@@ -367,7 +369,7 @@ if [ ! -f build/gcc/.config.succeeded ]; then
     --with-mpfr=$PREFIX \
     --with-mpc=$PREFIX \
     --with-system-zlib --enable-stage1-checking \
-    --enable-languages=c \
+    --enable-languages=c,c++ \
     --disable-nls --disable-shared --disable-multilib \
     && \
     touch .config.succeeded && \
