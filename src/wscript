@@ -23,7 +23,7 @@ stl_include_dirs = ['runtime', 'runtime/libc'] #'runtime/libc++/include',
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
 flags = '-O1 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
-flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
+flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-private-field', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 
 # -emit-llvm and use gold to link all this together
 # Problem: no .lds and .map support??
@@ -75,7 +75,7 @@ def toolchain_path():
         tc_dir = os.path.join(os.getcwd(), 'toolchain')
     # You need to amend path with gcc binaries otherwise clang will insist on calling system default one
     # regardless of -gcc-toolchain options (what's that for then, ffs?)
-    os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.path.join(tc_dir, 'gcc', 'i686-pc-elf', 'bin') + ':' + '/usr/local/bin'
+    os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.path.join(tc_dir, 'gcc', 'i686-pc-elf', 'bin') + ':/usr/local/bin:/bin'
     return tc_dir
 
 def configure(conf):
@@ -256,6 +256,8 @@ def configure(conf):
     # conf.set_env_name('ENV', conf.env)
     # conf.setenv('ENV') # Activate the environment
     conf.env.append_unique('INCLUDE_DIRS', include_dirs)
+    conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
+    conf.env.append_unique('INCLUDE_DIRS', 'interfaces/nemesis')
     # Set arch-specific include paths
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
     conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
@@ -391,10 +393,10 @@ def build(bld):
     bld.all_comp_targets = []
     bld.recurse("modules")
 
-    # Target libc++
+    # Target libcxx
     libcxx = bld.stlib(
         source = 'runtime/libc++/src/hash.cpp runtime/libc++/src/vector_inst.cpp',
-        target = 'c++',
+        target = 'cxx',
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
     libcxx.includes = libcxx.env.INCLUDE_DIRS
@@ -462,7 +464,7 @@ def build(bld):
         source = 'tests/slebtest.cpp',
         target = 'slebtest',
         env = bld.all_envs['TEST_ENV'].derive(),
-        use = 'toolruntime toolcommon'
+        use = 'toolcommon LIBCXX'
     )
     slebtest.gen_incpaths('')
 
@@ -494,7 +496,8 @@ def build(bld):
     buildboot = bld.program(
         source = 'tools/buildboot/buildboot.cpp',
         target = 'buildboot',
-        env = bld.all_envs['TOOLS_ENV'].derive()
+        env = bld.all_envs['TOOLS_ENV'].derive(),
+        use = 'LIBCXX'
     )
     buildboot.env.append_unique('CXXFLAGS', ['-fexceptions'])
     buildboot.includes = buildboot.env.INCLUDE_DIRS
@@ -523,10 +526,10 @@ def build(bld):
             source = map(lambda f: 'launcher/pc99/' + f, 'loader.s loader-ia32.cpp loader-multiboot.cpp multiboot-ia32.cpp'.split())
                 + ['launcher/loader.cpp', 'modules/tcb/root_domain/root_domain.cpp', 'launcher/x86/startup.cpp']
                 + map(lambda f: 'kernel/arch/x86/' + f, 'bootinfo.cpp continuation.s'.split()),
-            use = 'interfaces common platform kernel runtime debug c++',
+            use = 'interfaces common platform kernel runtime debug cxx',
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
-        launcher.env.append_unique('LINKFLAGS', ['-Wl,-T', '../launcher/pc99/launcher.lds', '-Wl,-Map', 'launcher.map'])
+        launcher.env.append_unique('LINKFLAGS', ['-Wl,-T,../launcher/pc99/launcher.lds', '-Wl,-Map,launcher.map'])
         launcher.includes = launcher.env.INCLUDE_DIRS + ['launcher', 'launcher/pc99', 'modules/tcb/root_domain']
 
         ################################################################################################
@@ -544,7 +547,7 @@ def build(bld):
             env = bld.all_envs['KERNEL_ENV'].derive()
         )
         nucleus.env.append_unique('LINKFLAGS', ['-r']) # nucleus is relocatable.
-        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T', '../nucleus/x86/nucleus.lds', '-Wl,-Map', 'nucleus.map'])
+        nucleus.env.append_unique('LINKFLAGS', ['-Wl,-T,../nucleus/x86/nucleus.lds', '-Wl,-Map,nucleus.map'])
         nucleus.gen_incpaths('')
 
         bld.undef_check(launcher.target)
