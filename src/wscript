@@ -75,6 +75,7 @@ def toolchain_path():
         tc_dir = os.path.join(os.getcwd(), 'toolchain')
     # You need to amend path with gcc binaries otherwise clang will insist on calling system default one
     # regardless of -gcc-toolchain options (what's that for then, ffs?)
+    # VEEERY sanitized version of the env.
     os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.path.join(tc_dir, 'gcc', 'i686-pc-elf', 'bin') + ':/usr/local/bin:/bin'
     return tc_dir
 
