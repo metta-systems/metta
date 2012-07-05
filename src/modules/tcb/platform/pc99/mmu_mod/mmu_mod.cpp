@@ -847,9 +847,13 @@ static void enter_mappings(mmu_v1::state_t* state)
     kconsole << " +-mmu_module_v1: enter_mappings required total of " << state->l2_next << " new l2 tables." << endl;
 }
 
-static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
+static mmu_v1::closure_t*
+mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
 {
-    kconsole << " +-mmu_module_v1.create" << endl;
+    kconsole << "==========================" << endl
+             << "   mmu_module_v1.create" << endl
+             << "==========================" << endl;
+
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
 	size_t mmu_memory_needed_bytes = 0;
@@ -901,16 +905,21 @@ static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, u
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
     for(i = 0; i < N_L1_TABLES; i++)
     {
+        kconsole << " init mapping entry " << i << endl;//DEBUG
 	    state->l1_mapping[i] = 0;
 	    state->l1_virt[i] = 0;
 	    state->l1_shadows[i].sid = SID_NULL;
 	    state->l1_shadows[i].flags = 0;
     }
+    kconsole << "Done init mapping, preparing RAMtab" << endl;//DEBUG
 
     // Initialise the ram table; it follows the state record immediately.
     state->ramtab_size = max_ramtab_entries;
     state->ramtab = reinterpret_cast<ramtab_entry_t*>(first_range + ramtab_offset);
+    kconsole << "Clearing " << state->ramtab_size * sizeof(ramtab_entry_t) << " bytes at " << state->ramtab << endl;//DEBUG
     memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t));
+
+    kconsole << "Cleared RAMtab, setting up closure" << endl;//DEBUG
 
     closure_init(&state->ramtab_closure, &ramtab_v1_methods, reinterpret_cast<ramtab_v1::state_t*>(first_range));
     *ramtab = &state->ramtab_closure;
