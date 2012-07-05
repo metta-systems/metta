@@ -16,8 +16,6 @@
 
 namespace raii_wrapper {
 
-using std::fstream;
-
 class file_error
 {
 public:
@@ -32,19 +30,19 @@ class file
 public:
     file() {}
 
-    file(const char* fname, fstream::openmode mode)
+    file(const char* fname, std::fstream::openmode mode)
     {
         open(fname, mode);
     }
 
-    file(const std::string& fname, fstream::openmode mode)
+    file(const std::string& fname, std::fstream::openmode mode)
     {
         open(fname.c_str(), mode);
     }
 
     ~file() { file_.close(); }
 
-    void open(const char* fname, fstream::openmode mode)
+    void open(const char* fname, std::fstream::openmode mode)
     {
         file_.open(fname, mode);
         if (!file_.good())
@@ -89,7 +87,7 @@ public:
     long size()
     {
         long old = read_pos();
-        file_.seekg(0, fstream::end);
+        file_.seekg(0, std::fstream::end);
         long sz = read_pos();
         read_seek(old);
         return sz;
@@ -97,16 +95,18 @@ public:
 
     bool getline(std::string& str, char delim)
     {
-        return std::getline(file_, str, delim);
+        std::istream& is = std::getline(file_, str, delim);
+        return !is.eof() && !is.bad() && !is.fail();
     }
 
     bool getline(std::string& str)
     {
-        return std::getline(file_, str);
+        std::istream& is = std::getline(file_, str);
+        return !is.eof() && !is.bad() && !is.fail();
     }
 
 private:
-    fstream file_;
+    std::fstream file_;
 
     // prevent copying and assignment; only declarations
     file(const file&);
