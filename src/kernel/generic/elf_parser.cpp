@@ -314,7 +314,7 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
 {
     V(section_header_t* shstrtab = section_shstring_table());
 
-    uint32_t result;
+    uint32_t result = 0xdeadbeef; // Apparently invalid result.
     address_t P = (target_sect ? target_sect->vaddr : load_address) + rel.offset;
     uint32_t  A = *reinterpret_cast<uint32_t*>(P);
     address_t S = 0;
