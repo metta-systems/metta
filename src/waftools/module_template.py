@@ -14,8 +14,7 @@ def undef_check(bld, filename):
     bld(
         source = bld.path.find_or_declare(filename),
         rule = '%s -u ${SRC[0].abspath()}' % bld.env['NM'],
-        name = 'nm undef check ('+filename+')',
-        after = 'init.img'
+        name = 'nm undef check ('+filename+')'
     )
 
 @conf
@@ -36,9 +35,10 @@ def setup_module_build(bld, name, prefix, sources):
     mod.includes.append('.')
     mod.includes.append(prefix)
 
-    mod.env.append_unique('LINKFLAGS', ['-Wl,-r']); # Components are relocatable
+    # -Wl,
+    mod.env.append_unique('LINKFLAGS', ['-r']) #, '--error-unresolved-symbols']); # Components are relocatable
     if platform != 'hosted':
-        mod.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,'+name+'.map'])
+        mod.env.append_unique('LINKFLAGS', ['-Wl,-T', '../modules/component.lds', '-Wl,-Map', name+'.map'])
     bld.undef_check(mod.target)
     node = bld.path.find_or_declare(mod.target)
     bld.all_comp_targets += [node.bldpath()]
