@@ -11,7 +11,6 @@
 #include "lexer.h"
 #include "ast.h"
 #include "symbol_table.h"
-#include <llvm/TypeSymbolTable.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SourceMgr.h>
 
@@ -23,7 +22,6 @@ class parser_t
     AST::interface_t* parse_tree; friend class Meddler; // it is actually an interface. make it so.
     llvm::SourceMgr& source_mgr;
 	bool verbose;
-//     llvm::TypeSymbolTable types;
 
     void populate_symbol_table();
     bool parse_top_level_entities();

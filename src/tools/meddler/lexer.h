@@ -35,7 +35,8 @@ public:
     token::kind lex()
     {
         cur_kind = get_token();
-        L(if(verbose) std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl);
+        if (verbose)
+            std::cerr << "LEX: token " << current_token() << " kind " << cur_kind << std::endl;
         return cur_kind;
     }
 
