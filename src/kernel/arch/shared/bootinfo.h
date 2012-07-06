@@ -27,38 +27,38 @@ class module_loader_t;
 /*class memory_map_t
 {
 public:
-	memory_map_t();
-	memory_map_t(bootinfo_t* bi); // this hides bootinfo behind mmap type
+    memory_map_t();
+    memory_map_t(bootinfo_t* bi); // this hides bootinfo behind mmap type
 
-	// memory item returned by the iterator
-	class entry_t
-	{
-	public:
-		bool is_free();
-		physical_address_t start();
-		size_t size();
-	};
+    // memory item returned by the iterator
+    class entry_t
+    {
+    public:
+        bool is_free();
+        physical_address_t start();
+        size_t size();
+    };
 
-	class memory_map_iterator_t : public std::iterator<std::forward_iterator_tag, memory_map_t::memory_map_entry_t>
-	{
-	public:
-		memory_map_iterator_t();
-		memory_map_t::entry_t operator *();
-    	void operator ++();
-    	void operator ++(int);
-		inline bool operator == (const memory_map_iterator_t& other) { return ptr == other.ptr; }
-    	inline bool operator != (const memory_map_iterator_t& other) { return ptr != other.ptr; }
-	};
+    class memory_map_iterator_t : public std::iterator<std::forward_iterator_tag, memory_map_t::memory_map_entry_t>
+    {
+    public:
+        memory_map_iterator_t();
+        memory_map_t::entry_t operator *();
+        void operator ++();
+        void operator ++(int);
+        inline bool operator == (const memory_map_iterator_t& other) { return ptr == other.ptr; }
+        inline bool operator != (const memory_map_iterator_t& other) { return ptr != other.ptr; }
+    };
 
-	typedef memory_map_iterator_t iterator;
-	iterator begin(); // see bootinfo_t::mmap_begin()
-	iterator begin() const;
-	iterator end();
-	iterator end() const;
-	iterator rbegin();
-	iterator rbegin() const;
-	iterator rend();
-	iterator rend() const;
+    typedef memory_map_iterator_t iterator;
+    iterator begin(); // see bootinfo_t::mmap_begin()
+    iterator begin() const;
+    iterator end();
+    iterator end() const;
+    iterator rbegin();
+    iterator rbegin() const;
+    iterator rend();
+    iterator rend() const;
 };*/
 
 /**
@@ -170,10 +170,6 @@ public:
      */
     module_loader_t get_module_loader();
 
-    /**
-     * Return memory occupied by already loaded and relocated modules.
-     */
-    address_t used_modules_memory(size_t* size);
     /** Where the last loaded module ends. */
     address_t module_load_end() const { return last_available_module_address; }
 
@@ -201,8 +197,16 @@ public:
     bool append_vmap(address_t vstart, address_t pstart, size_t size);
     bool append_cmdline(const char* cmdline);
 
-	address_t find_usable_physical_memory_top();
-	address_t find_highmem_range_of_at_least(size_t bytes);
-	bool use_memory(address_t start, size_t size);
-    bool use_memory(void* start, size_t size) { return use_memory(reinterpret_cast<address_t>(start), size); }
+    address_t find_usable_physical_memory_top();
+    address_t find_highmem_range_of_at_least(size_t bytes);
+
+    bool use_memory(address_t start, size_t size, multiboot_t::mmap_entry_t::entry_type_e type);
+
+    inline bool use_memory(void* start, size_t size, multiboot_t::mmap_entry_t::entry_type_e type)
+    {
+        return use_memory(reinterpret_cast<address_t>(start), size, type);
+    }
+
+    // Debug aids.
+    void print_memory_map();
 };

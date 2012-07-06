@@ -74,8 +74,13 @@ public:
             bad_memory = 5, // unusable
             disabled = 6,
             // end of standard memory types
+            framebuffer = 66,
+            loader_reclaimable = 76, // not yet loaded modules and data
+            loaded_module = 77,
+            info_page = 88,
             non_free = 99, //something arbitrary for now.
-            bootinfo = 111
+            bootinfo = 111,
+            system_data = 122
         };
 
         inline uint64_t address() const { return base_addr; }

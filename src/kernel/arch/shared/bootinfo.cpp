@@ -127,7 +127,7 @@ multiboot_t::mmap_entry_t* bootinfo_t::mmap_iterator::operator *()
 
 void bootinfo_t::mmap_iterator::operator ++(int)
 {
-	operator++();
+    operator++();
 }
 
 void bootinfo_t::mmap_iterator::operator ++()
@@ -174,7 +174,7 @@ memory_v1::mapping* bootinfo_t::vmap_iterator::operator *()
 
 void bootinfo_t::vmap_iterator::operator ++(int)
 {
-	operator++();
+    operator++();
 }
 
 void bootinfo_t::vmap_iterator::operator ++()
@@ -206,12 +206,6 @@ void bootinfo_t::vmap_iterator::operator ++()
 // bootinfo_t
 // shared implementation.
 //======================================================================================================================
-
-address_t bootinfo_t::used_modules_memory(size_t* size)
-{
-    *size = last_available_module_address - first_module_address;
-    return first_module_address;
-}
 
 bool bootinfo_t::get_module(uint32_t number, address_t& start, address_t& end, const char*& name)
 {
@@ -290,6 +284,9 @@ bootinfo_t::vmap_iterator bootinfo_t::vmap_end()
     return vmap_iterator(0, 0);
 }
 
+/**
+ * Append information about yet not loaded module.
+ */
 bool bootinfo_t::append_module(uint32_t number, multiboot_t::modinfo_t* mod)
 {
     if (!mod)
@@ -395,8 +392,8 @@ address_t bootinfo_t::find_usable_physical_memory_top()
             if (e->start() + e->size() > top)
                 top = e->start() + e->size();
         }
-	});
-	return top;
+    });
+    return top;
 }
 
 /**
@@ -495,9 +492,9 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
     n_way = -1;
     std::for_each(mmap_begin(), mmap_end(), [&ret,&n_way,start,size](const multiboot_t::mmap_entry_t* e)
     {
-		if (start >= e->start() && e->size() >= size + (start - e->start()))
-		{
-		    if (start == e->start() && size == e->size())
+        if (start >= e->start() && e->size() >= size + (start - e->start()))
+        {
+            if (start == e->start() && size == e->size())
                 n_way = 0;
             else if (start == e->start())
                 n_way = 1;
@@ -507,16 +504,16 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
                 n_way = 3;
 
             ret = const_cast<multiboot_t::mmap_entry_t*>(e);
-		}
-	});
-	if (ret)
-	{
-	    kconsole << __FUNCTION__ << ": found matching memmap entry at " << ret << 
-	        (n_way == 0 ? ", removing fully" : 
-	        (n_way == 1 ? ", using start" :
-	        (n_way == 2 ? ", using end" :
+        }
+    });
+    if (ret)
+    {
+        kconsole << __FUNCTION__ << ": found matching memmap entry at " << ret << 
+            (n_way == 0 ? ", removing fully" : 
+            (n_way == 1 ? ", using start" :
+            (n_way == 2 ? ", using end" :
             (n_way == 3 ? ", splitting in the middle" : "ERROR")))) << endl;
-	}
+    }
     return ret;
 }
 
@@ -531,10 +528,10 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
  * @todo Calls to use_memory should not augment original entries, should just put used regions on top as an overlay
  * this would help frames mod initialisation to build proper physical frame regions.
  */
-bool bootinfo_t::use_memory(address_t start, size_t size)
+bool bootinfo_t::use_memory(address_t start, size_t size, multiboot_t::mmap_entry_t::entry_type_e type)
 {
-	multiboot_t::mmap_entry_t temp_entry;
-	multiboot_t::mmap_entry_t* orig_entry;
+    multiboot_t::mmap_entry_t temp_entry;
+    multiboot_t::mmap_entry_t* orig_entry;
     int n_way;
 
     kconsole << __FUNCTION__ << ": using " << int(size) << " bytes starting at " << start << endl;
@@ -542,9 +539,54 @@ bool bootinfo_t::use_memory(address_t start, size_t size)
     if (!orig_entry || !orig_entry->is_free())
         return false;
 
-    temp_entry.set_region(start, size, multiboot_t::mmap_entry_t::non_free);
+    temp_entry.set_region(start, size, type);
     if (!append_mmap(&temp_entry))
         return false;
 
-	return true;
+    return true;
+}
+
+static const char* type_to_text(int type)
+{
+    switch (type)
+    {
+        case multiboot_t::mmap_entry_t::free:
+            return "free";
+        case multiboot_t::mmap_entry_t::reserved:
+            return "reserved";
+        case multiboot_t::mmap_entry_t::acpi_reclaimable:
+            return "acpi_reclaimable";
+        case multiboot_t::mmap_entry_t::acpi_nvs:
+            return "acpi_nvs";
+        case multiboot_t::mmap_entry_t::bad_memory:
+            return "bad_memory";
+        case multiboot_t::mmap_entry_t::disabled:
+            return "disabled";
+        case multiboot_t::mmap_entry_t::framebuffer:
+            return "framebuffer";
+        case multiboot_t::mmap_entry_t::loader_reclaimable:
+            return "loader_reclaimable";
+        case multiboot_t::mmap_entry_t::loaded_module:
+            return "loaded_module";
+        case multiboot_t::mmap_entry_t::info_page:
+            return "info_page";
+        case multiboot_t::mmap_entry_t::non_free:
+            return "non_free";
+        case multiboot_t::mmap_entry_t::bootinfo:
+            return "bootinfo";
+        case multiboot_t::mmap_entry_t::system_data:
+            return "system_data";
+    }
+    return "<UNKNOWN>";
+}
+
+void bootinfo_t::print_memory_map()
+{
+    kconsole << "Bootloader-provided memory map:" << endl;
+    for (auto it = mmap_begin(); it != mmap_end(); ++it)
+    {
+        auto i = (*it);
+        kconsole << "Start: " << i->start() << ", end: " << i->end() << ", size: " << i->size() << ", type: " << i->type() << " (" << type_to_text(i->type()) << ")" << endl;
+    }
+    kconsole << "===============================" << endl;
 }
