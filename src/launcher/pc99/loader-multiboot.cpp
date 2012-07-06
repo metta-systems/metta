@@ -44,18 +44,14 @@ bool mbi_probe()
         }
     }
 
-    for (size_t i = 0; i < _mbi->module_count(); i++)
-    {
-        bi->append_module(i, _mbi->module(i));
-    }
-
     // mark loaded modules memory as used in the bootinfo (so we don't overwrite them later on)
     for (size_t i = 0; i < _mbi->module_count(); i++)
     {
-        if (!bi->use_memory(_mbi->module(i)->mod_start, _mbi->module(i)->mod_end - _mbi->module(i)->mod_start))
+        auto mod = _mbi->module(i);
+        bi->append_module(i, mod);
+        if (!bi->use_memory(mod->mod_start, mod->mod_end - mod->mod_start, multiboot_t::mmap_entry_t::loader_reclaimable))
         {
             kconsole << __FUNCTION__ << ": unable to reserve module memory in memmap!" << endl;
-            break;
         }
     }
 
