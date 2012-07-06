@@ -114,14 +114,14 @@ inline bool alloc_l2table(mmu_v1::state_t* state, address_t *l2va, address_t *l2
     size_t i;
 
     for (i = state->l2_next; i < state->l2_max; i++)
-	    if (state->info[i] == L2FREE)
-	        break;
+        if (state->info[i] == L2FREE)
+            break;
 
     if (i == state->l2_max)
     {
-	    // XXX go get some more mem from frames/salloc
-	    kconsole << "alloc_l2table: out of memory for tables!" << endl;
-	    return false;
+        // XXX go get some more mem from frames/salloc
+        kconsole << "alloc_l2table: out of memory for tables!" << endl;
+        return false;
     }
 
     state->info[i] = L2USED;
@@ -145,19 +145,19 @@ static bool add4k_page(mmu_v1::state_t* state, address_t va, page_t pte, sid_t s
     if (!state->l1_mapping[l1idx].is_present())
     {
         kconsole << "mapping va=" << va << " requires new L2 table" << endl;
-	    if (!alloc_l2table(state, &l2va, &l2pa)) {
+        if (!alloc_l2table(state, &l2va, &l2pa)) {
             kconsole << "!!! intel_mmu:add4k_page - cannot alloc l2 table." << endl;
-	        return false;
-	    }
+            return false;
+        }
         state->l1_mapping[l1idx].set_frame(l2pa);
         state->l1_mapping[l1idx].set_flags(page_t::writable|page_t::write_through);
-	    state->l1_virt[l1idx].set_frame(l2va);
+        state->l1_virt[l1idx].set_frame(l2va);
     }
 
     if (state->l1_mapping[l1idx].is_4mb())
     {
         kconsole << "URK! mapping va=" << va << " would use a 4MB page!" << endl;
-	    return false;
+        return false;
     }
 
     l2pa = state->l1_mapping[l1idx].frame();
@@ -200,7 +200,7 @@ static size_t update4k_pages(mmu_v1::state_t* state, address_t va, size_t n_page
     if (state->l1_mapping[l1idx].is_4mb())
     {
         kconsole << __FUNCTION__ << ": address " << va << " is mapped using a 4MB page!" << endl;
-	    return 0;
+        return 0;
     }
 
     l2pa = state->l1_mapping[l1idx].frame();
@@ -748,20 +748,20 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
         for (size_t j = 0; j < e->nframes; ++j)
         {
-	    	address_t va = e->virt + (j << FRAME_WIDTH);
-	    	bitmap[bitmap_index(va)] |= 1 << bitmap_bit(va);
-		}
+            address_t va = e->virt + (j << FRAME_WIDTH);
+            bitmap[bitmap_index(va)] |= 1 << bitmap_bit(va);
+        }
     });
 
     /* Now scan through the bitmap to determine the number of L2s reqd */
     for (int i = 0; i < 32; ++i)
     {
-		while (bitmap[i])
-		{
-	    	if (bitmap[i] & 1)
-				nptabs++;
-	    	bitmap[i] >>= 1;
-		}
+        while (bitmap[i])
+        {
+            if (bitmap[i] & 1)
+                nptabs++;
+            bitmap[i] >>= 1;
+        }
     }
 
     nptabs += N_EXTRA_L2S;
@@ -784,8 +784,8 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 */
 static size_t ramtab_required(bootinfo_t* bi, size_t& max_ramtab_entries)
 {
-	max_ramtab_entries = bi->find_usable_physical_memory_top() / PAGE_SIZE;
-	return max_ramtab_entries * sizeof(ramtab_entry_t);
+    max_ramtab_entries = bi->find_usable_physical_memory_top() / PAGE_SIZE;
+    return max_ramtab_entries * sizeof(ramtab_entry_t);
 }
 
 static inline bool is_non_cacheable(uint32_t type)
@@ -804,30 +804,30 @@ static void enter_mappings(mmu_v1::state_t* state)
         kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
         for (size_t j = 0; j < e->nframes; ++j)
         {
-	    	address_t virt = e->virt + (j << FRAME_WIDTH);
+            address_t virt = e->virt + (j << FRAME_WIDTH);
             address_t phys = e->phys + (j << FRAME_WIDTH);
 
             uint32_t flags = page_t::writable;
 
-    	    /* We assume the frames used by the established mappings
-    	       are part of the image unless otherwise specified */
+            /* We assume the frames used by the established mappings
+               are part of the image unless otherwise specified */
 
-    	    /*
-    	    ** Generally we want to cache things, but in the case
-    	    ** of IO space we prefer not to.
-    	    */
-    	    std::for_each(bi->mmap_begin(), bi->mmap_end(), [phys, virt, &flags](const multiboot_t::mmap_entry_t* e)
-    	    {
-    	        if (is_non_cacheable(e->type()) && (e->address() <= phys) && (e->address() + e->size() > phys))
-    		    {
-    		        kconsole << "Disabling cache for va=" << virt << endl;
-    		        flags |= page_t::cache_disable;
-    		    }
+            /*
+            ** Generally we want to cache things, but in the case
+            ** of IO space we prefer not to.
+            */
+            std::for_each(bi->mmap_begin(), bi->mmap_end(), [phys, virt, &flags](const multiboot_t::mmap_entry_t* e)
+            {
+                if (is_non_cacheable(e->type()) && (e->address() <= phys) && (e->address() + e->size() > phys))
+                {
+                    kconsole << "Disabling cache for va=" << virt << endl;
+                    flags |= page_t::cache_disable;
+                }
             });
 
-    	    /* We lock the L1 page table into the TLB */
-    	    if(state->use_global_pages && (virt == reinterpret_cast<address_t>(&(state->l1_mapping))))
-		        flags |= page_t::global;
+            /* We lock the L1 page table into the TLB */
+            if(state->use_global_pages && (virt == reinterpret_cast<address_t>(&(state->l1_mapping))))
+                flags |= page_t::global;
 
             page_t pte;
             pte = 0;
@@ -847,51 +847,55 @@ static void enter_mappings(mmu_v1::state_t* state)
     kconsole << " +-mmu_module_v1: enter_mappings required total of " << state->l2_next << " new l2 tables." << endl;
 }
 
-static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
+static mmu_v1::closure_t*
+mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
 {
-    kconsole << " +-mmu_module_v1.create" << endl;
+    kconsole << "==========================" << endl
+             << "   mmu_module_v1.create" << endl
+             << "==========================" << endl;
+
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
-	size_t mmu_memory_needed_bytes = 0;
+    size_t mmu_memory_needed_bytes = 0;
 
     // Calculate how much space is needed for the MMU structures.
     //    mmu_state,
     //    pagetables
     //    and ramtab
-	size_t n_l2_tables = 0;
-	size_t max_ramtab_entries = 0;
+    size_t n_l2_tables = 0;
+    size_t max_ramtab_entries = 0;
     size_t i;
 
-	mmu_memory_needed_bytes = memory_required(bi, n_l2_tables);
-	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
+    mmu_memory_needed_bytes = memory_required(bi, n_l2_tables);
+    mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t ramtab_offset = mmu_memory_needed_bytes;
 
-	mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries);
-	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
+    mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries);
+    mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t l2_tables_offset = mmu_memory_needed_bytes;
 
     mmu_memory_needed_bytes += n_l2_tables * L2SIZE; // page-aligned by definition
 
-	mmu_memory_needed_bytes += initial_reservation;
-	mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
+    mmu_memory_needed_bytes += initial_reservation;
+    mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
-	address_t first_range = bi->find_highmem_range_of_at_least(mmu_memory_needed_bytes);
+    address_t first_range = bi->find_highmem_range_of_at_least(mmu_memory_needed_bytes);
 
     // Find proper location to start "allocating" from.
-	first_range = page_align_up(first_range);
+    first_range = page_align_up(first_range);
 
-	if (!bi->use_memory(first_range, mmu_memory_needed_bytes))
-	{
+    if (!bi->use_memory(first_range, mmu_memory_needed_bytes, multiboot_t::mmap_entry_t::system_data))
+    {
         PANIC("Unable to use memory for initial MMU setup!");
-	}
+    }
 
-	kconsole << " +-mmu_module_v1: state allocated at " << first_range << endl;
+    kconsole << " +-mmu_module_v1: state allocated at " << first_range << endl;
 
-	mmu_v1::state_t *state = reinterpret_cast<mmu_v1::state_t*>(first_range);
-	mmu_v1::closure_t *cl = &state->mmu_closure;
-	closure_init(cl, &mmu_v1_methods, state);
+    mmu_v1::state_t *state = reinterpret_cast<mmu_v1::state_t*>(first_range);
+    mmu_v1::closure_t *cl = &state->mmu_closure;
+    closure_init(cl, &mmu_v1_methods, state);
 
     state->l1_mapping_virt = state->l1_mapping_phys = first_range;
     state->l1_virt_virt = reinterpret_cast<address_t>(&state->l1_virt);
@@ -901,10 +905,10 @@ static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, u
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
     for(i = 0; i < N_L1_TABLES; i++)
     {
-	    state->l1_mapping[i] = 0;
-	    state->l1_virt[i] = 0;
-	    state->l1_shadows[i].sid = SID_NULL;
-	    state->l1_shadows[i].flags = 0;
+        state->l1_mapping[i] = 0;
+        state->l1_virt[i] = 0;
+        state->l1_shadows[i].sid = SID_NULL;
+        state->l1_shadows[i].flags = 0;
     }
 
     // Initialise the ram table; it follows the state record immediately.
@@ -921,10 +925,10 @@ static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, u
     state->next_pdidx = 0;
     for(i = 0; i < PDIDX_MAX; i++)
     {
-	    state->pdom_tbl[i] = NULL;
-	    state->pdominfo[i].refcnt  = 0;
-	    state->pdominfo[i].gen     = 0;
-	    state->pdominfo[i].stretch = NULL;
+        state->pdom_tbl[i] = NULL;
+        state->pdominfo[i].refcnt  = 0;
+        state->pdominfo[i].gen     = 0;
+        state->pdominfo[i].stretch = NULL;
     }
 
     // And store a pointer to the pdom_tbl in the info page.
