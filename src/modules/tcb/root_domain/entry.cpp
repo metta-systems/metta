@@ -392,33 +392,15 @@ static void init_type_system(bootimage_t& bootimg)
     PVS(types) = reinterpret_cast<type_system_v1::closure_t*>(ts);
     kconsole <<  " + done: ts is at " << ts << endl;
 
-    /* Play with string tables a bit */
-    // map_string_address_v1::closure_t *strtab = strmod->create(PVS(heap));
-    // for (int x = 0; x < 100; ++x)
-    // {
-    //     char buf[100];
-    //     for (int y = 0; y < 99; ++y) buf[y] += y;
-    //     buf[99] = 0;
-    //     strtab->put(buf, x);
-    // }
-
-    /* Preload types in the boot image */
+    /* Preload types in the interface repository */
     kconsole << " +++ registering interfaces" << endl;
+    // Idealized interface:
+    // symbols = module("interface_repository").find_symbols().ending_with("__intf_typeinfo");
     auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
     for (auto& symbol : symbols)
     {
         ts->register_interface(symbol.second->value);
     }
-
-    // Idealized interface:
-    // for (auto& module : bootinfo_page.modules())
-    // {
-    //     symbols = module.find_symbols().ending_with("__intf_typeinfo");
-    //     for (auto& symbol : symbols)
-    //     {
-    //         ts->register_interface(symbol.value);//reinterpret_cast<type_system_f_v1::interface_info>
-    //     }
-    // }
 }
 
 static void init_namespaces(bootimage_t& bootimg)
