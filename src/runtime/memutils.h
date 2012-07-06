@@ -29,11 +29,7 @@ namespace memutils {
 //Clearing 0x00040000 bytes at 0x009e2000 - this errored out in unrolled version, looks like counter wrapped. Need UTest.
 inline void* fill_memory(void* dest, int value, size_t count)
 {
-    char *xs = reinterpret_cast<char*>(dest);
-    while (count--)
-    {
-        *xs++ = value;
-    }
+    asm volatile ("rep stosb" :: "c"(count), "a"(value), "D"(dest) : "memory");
     return dest;
 }
 
