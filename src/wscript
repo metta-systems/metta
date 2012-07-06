@@ -26,7 +26,7 @@ non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging h
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-private-field', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 
 # -emit-llvm and use gold to link all this together
-# Problem: no .lds and .map support??
+# Problem: no .lds and .map support?? well, partial.
 # flags += ['-emit-llvm']
 
 # clang_debug_flag = ['-###']
@@ -58,6 +58,8 @@ def options(opt):
 
     # build type - release, debug, profile
     opt.add_option("--build", action="store", default="release", help="Select build type (release/debug/profile/all)." + '[default: %default]')
+
+    opt.add_option("--debug-clang", action="store", default="no", help="Debug clang invocations (default: %default)")
 
     opt.load('compiler_c')
     opt.load('compiler_cxx')
@@ -144,10 +146,11 @@ def configure(conf):
     # DEBUG CLANG INVOCATIONS
     #=========================
 
-    flags += clang_debug_flag
-    linkflags += clang_debug_flag
-    toolflags += clang_debug_flag
-    toollinkflags += clang_debug_flag
+    if Options.options.debug_clang == 'yes':
+        flags += clang_debug_flag
+        linkflags += clang_debug_flag
+        toolflags += clang_debug_flag
+        toollinkflags += clang_debug_flag
 
     # extra_cross_flags += ['-no-canonical-prefixes']
 
@@ -389,6 +392,9 @@ def build(bld):
         env = bld.all_envs['KERNEL_ENV'].derive()
     )
     repository.includes = repository.env.INCLUDE_DIRS
+    repository.env.append_unique('LINKFLAGS', ['-r']) # Components are relocatable
+    if platform != 'hosted':
+        repository.env.append_unique('LINKFLAGS', ['-Wl,-T,../modules/component.lds', '-Wl,-Map,interface_repository.map'])
 
     # Make bootimage components.
     bld.all_comp_targets = []
