@@ -229,6 +229,9 @@ static void init_mem(bootimage_t& bootimg)
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
 
+    // Print memory map for debug.
+    bi->print_memory_map();
+
     // For address space randomization we should load modules as we go, for simplicity we load them all here.
     auto frames_factory = load_module<frames_module_v1::closure_t>(bootimg, "frames_factory", "exported_frames_module_rootdom");
     ASSERT(frames_factory);
@@ -260,10 +263,6 @@ static void init_mem(bootimage_t& bootimg)
 #endif
     load_module(bootimg, "interface_repository", nullptr);
     // === END WORKAROUND ===
-
-    size_t modules_size;
-    address_t modules_base = bi->used_modules_memory(&modules_size);
-    bi->use_memory(modules_base, modules_size); // TODO: use_memory as we load the modules, so no need for used_modules_memory()
 
     // FIXME: point of initial reservation is so that MMU_mod would configure enough pagetables to accomodate initial v2p mappings!
     // request necessary space for frames allocator
@@ -921,9 +920,9 @@ extern "C" void module_entry()
         PANIC("Bootimage not found! in image bootup");
     }
 
-    bi->use_memory(information_page_t::ADDRESS, PAGE_SIZE);
-    bi->use_memory(bootinfo_t::ADDRESS, PAGE_SIZE);
-    bi->use_memory(0xb8000, PAGE_SIZE);
+    bi->use_memory(information_page_t::ADDRESS, PAGE_SIZE, multiboot_t::mmap_entry_t::info_page);
+    bi->use_memory(bootinfo_t::ADDRESS, PAGE_SIZE, multiboot_t::mmap_entry_t::bootinfo);
+    bi->use_memory(0xb8000, PAGE_SIZE, multiboot_t::mmap_entry_t::framebuffer);
 
     bootimage_t bootimage(name, start, end);
 
