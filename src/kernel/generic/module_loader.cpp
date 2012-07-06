@@ -516,9 +516,6 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     // Relocate loaded data.
     module.relocate_to(section_base);//, symbol_table);
     
-    //TODO:
-    //d_parent->use_memory(from, to);
-
     // Prepare new module descriptor and put it into right memory location.
     address_t prev_address = *d_last_available_address;
     *d_last_available_address = page_align_up(*d_last_available_address);
@@ -540,6 +537,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     D(kconsole << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module) << endl);
 
     D(print_module_map());
+
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+    bi->use_memory(this_loaded_module.load_base, this_loaded_module.loaded_size, multiboot_t::mmap_entry_t::loaded_module);
 
     if (!closure_name)
     {
