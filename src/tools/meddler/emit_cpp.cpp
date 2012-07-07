@@ -375,6 +375,9 @@ void interface_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
     s << endl;
 
     // Closure.
+
+    if (!get_autodoc().empty())
+        s << indent_prefix << "/**\n" << get_autodoc() << "\n*/" << endl;
     
     // This structure acts as a namespace, limiting the scope of all declarations.
     s << indent_prefix << "namespace " << name() << endl
