@@ -16,6 +16,8 @@
 #include "operation_v1_interface.h"
 #include "interface_v1_state.h"
 #include "interface_v1_impl.h"
+#include "naming_context_v1_interface.h"
+#include "map_string_address_iterator_v1_interface.h"
 #include "map_card64_address_factory_v1_interface.h"
 #include "map_string_address_factory_v1_interface.h"
 #include "map_card64_address_v1_interface.h"
@@ -80,45 +82,58 @@ shared_destroy(naming_context_v1::closure_t*)
 /**
  * Look up a type name in this interface.
  */
-// static type_representation_t* internal_get(type_system_f_v1::state_t* state, cstring_t name)
-// {
-//     interface_v1::state_t* iface = nullptr;
-//     type_representation_t* result = nullptr;
-//     cstring_t extra;
+static type_representation_t* internal_get(type_system_f_v1::state_t* state, cstring_t name)
+{
+    interface_v1::state_t* iface = nullptr;
+    type_representation_t* result = nullptr;
+    cstring_t extra;
 
-//     // pos = find(name, '.');
-//     // if (pos)
-//     // {
-//     //     extra = name[pos+1:];
-//     //     name = name[:pos-1];
-//     // }
+    // pos = find(name, '.');
+    // if (pos)
+    // {
+    //     extra = name[pos+1:];
+    //     name = name[:pos-1];
+    // }
 
-//     /* now "name" is just the interface, and "extra" is any extra qualifier */
+    /* now "name" is just the interface, and "extra" is any extra qualifier */
 
-//     if (state->interfaces_by_name->get(name.c_str(), (address_t*)&iface))
-//     {
-//         /* We've found the first component. */
-//         if (extra[0])
-//         {
-//             for (int i = 0; iface->types[i]; ++i)
-//                 if (extra == iface->types[i]->name)
-//                     result = iface->types[i];
+    if (state->interfaces_by_name->get(name.c_str(), (address_t*)&iface))
+    {
+        /* We've found the first component. */
+        if (extra[0])
+        {
+            for (int i = 0; iface->types[i]; ++i)
+                if (extra == iface->types[i]->name)
+                    result = iface->types[i];
 
-//             /* special case if it's an intf type defined by the metainterface */
-//             if (!result && (iface == &meta_interface))
-//             {
-//                 result = internal_get(state, extra);
-//             }
-//         }
-//         else
-//         {
-//             /* Otherwise return this interface clp */
-//             result = &iface->rep;
-//         }
-//     }
+            /* special case if it's an intf type defined by the metainterface */
+            if (!result && (iface == &meta_interface))
+            {
+                result = internal_get(state, extra);
+            }
+        }
+        else
+        {
+            /* Otherwise return this interface clp */
+            result = &iface->rep;
+        }
+    }
 
-//     return result;
-// }
+    return result;
+}
+
+static void
+add_name(const char* name, heap_v1::closure_t* heap, naming_context_v1::names& n)
+{
+    n.push_back(name);
+}
+
+static void
+add_qual_name(const char* name, const char* subname, heap_v1::closure_t* heap, naming_context_v1::names& n)
+{
+    // n.push_back(name supname + "." + name);
+    // kconsole << name << "." << subname << endl;
+}
 
 /**
  *  Return a list of all types in the type system.
@@ -126,48 +141,38 @@ shared_destroy(naming_context_v1::closure_t*)
 static naming_context_v1::names
 type_system_v1_list(naming_context_v1::closure_t* self)
 {
-    // TypeSystem_st           *st  = (TypeSystem_st *) self->st;
-    // NOCLOBBER StringTblIter_clp iter = NULL;
-    // Context_Names           *seq;
+    auto state = reinterpret_cast<type_system_f_v1::closure_t*>(self)->d_state;
+    naming_context_v1::names n(std::heap_allocator<const char*>(PVS(heap))); // woeh... bad stuff
+    map_string_address_iterator_v1::closure_t* it = nullptr;
 
-    // TRC(printf("TypeSystem$List: called\n"));
-    
-    // /* Get the result sequence */
-    // seq = SEQ_CLEAR (SEQ_NEW (Context_Names, 4*StringTbl$Size (st->intfsByName),
-    //               Pvs(heap)));
+    /* Run through all the interfaces */
+    OS_TRY {
+        const char* name;
+        interface_v1::state_t* tb;
+        type_representation_t* trep;
 
-    // /* Run through all the interfaces */
-    // TRY
-    // {
-    //     string_t        name;
-    //     Intf_st        *tb;
-    //     TypeRep_t         **trep ;
+        it = state->interfaces_by_name->iterate();
 
-    //     iter = StringTbl$Iterate (st->intfsByName);
+        while (it->next(&name, (memory_v1::address*)&tb))
+        {
+            add_name(tb->rep.name, PVS(heap), n);
+            /* Run through all the types defined in the current interface */
+            for (size_t i = 0; i < tb->num_types; ++i)
+            {
+                trep = tb->types[i];
+                add_qual_name(tb->rep.name, trep->name, PVS(heap), n);
+            }
+        }
+        it->dispose();
+    }
+    OS_CATCH_ALL {
+        if (it)
+            it->dispose();
+        OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", 0);
+    }
+    OS_ENDTRY;
 
-    //     while (StringTblIter$Next (iter, &name, (addr_t*)&tb))
-    //     {
-    //         AddName (tb->rep.name, Pvs(heap), seq);
-
-    //         /* Run through all the types defined in the current interface */
-    //         for (trep = (TypeRep_t **)tb->types; *trep; trep++)
-    //         AddQualName ( (*trep)->name, tb->rep.name, Pvs(heap), seq);
-    //     }
-    //     StringTblIter$Dispose (iter);
-    // }
-    // CATCH_ALL {
-    //       DB(printf("TypeSystem$List: failed in Malloc: undoing.\n"));
-    //       if (iter) StringTblIter$Dispose (iter);
-    //       SEQ_FREE_ELEMS (seq);
-    //       SEQ_FREE (seq);
-    //       DB(printf("TypeSystem$List: done undoing.\n"));
-    //       RAISE_Heap$NoMemory();
-    //       }
-    // ENDTRY;
-
-    // TRC(printf("TypeSystem$List: done.\n"));
-    // return seq;
-    return naming_context_v1::names();
+    return n;
 }
 
 /**
@@ -176,14 +181,14 @@ type_system_v1_list(naming_context_v1::closure_t* self)
 static bool
 type_system_v1_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
-    // TypeRep_t *tr = Int_Get ((TypeSystem_st *) self->st,  name);
-  
-    // if (!tr)
-    // return False;
+    auto state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
+    type_representation_t* trep = internal_get(state, name);
 
-    // ANY_COPY (o, &(tr->code));
-    // return True;
-    return false;
+    if (!trep)
+        return false;
+
+    *obj = trep->code;
+    return true;
 }
 
 /**
@@ -437,7 +442,6 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     self->d_state->interfaces_by_name->put(iface->rep.name, intf);
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
 
-    meta_interface.num_types += 1; // @todo this will cause type traversal to go off-the-board
     kconsole << "register_interface }" << endl;
 }
 
