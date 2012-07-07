@@ -36,7 +36,7 @@ local interface map_string_address_v1
     size() returns (card32 size);
 
     ## Return an iterator for "self".
-#    iterate() returns (map_string_address_iterator& i);
+    iterate() returns (map_string_address_iterator_v1& i);
 
     ## Free the current "map_string_address".
     dispose();

@@ -1,0 +1,13 @@
+local interface map_string_address_iterator_v1
+{
+    ## If "i" is the result of the call "tbl.Iterate()", then the call
+    ## "i.Next(k, v)" selects an entry from "tbl" that has not already
+    ## been returned by "i", sets "k" and "v" to its key and value, and
+    ## returns "True".  If no entries remain, the call returns "False"
+    ## without setting "k" or "v". A;  The client must ensure that
+    ## while an iterator is in use, the parent table is not modified.
+    next(out string key, out memory_v1.address value) returns (boolean more);
+
+    ## Free the current iterator.
+    dispose();
+}
