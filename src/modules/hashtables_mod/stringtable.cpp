@@ -15,6 +15,8 @@
  */
 #include "map_string_address_factory_v1_interface.h"
 #include "map_string_address_factory_v1_impl.h"
+#include "map_string_address_iterator_v1_interface.h"
+#include "map_string_address_iterator_v1_impl.h"
 #include "map_string_address_v1_interface.h"
 #include "map_string_address_v1_impl.h"
 #include "heap_v1_interface.h"
@@ -22,6 +24,7 @@
 #include "heap_allocator.h"
 #include "unordered_map"
 #include "heap_new.h"
+#include "infopage.h"
 
 using namespace std;
 
@@ -36,6 +39,14 @@ struct map_string_address_v1::state_t
 	map_string_address_v1::closure_t closure;
 	heap_v1::closure_t* heap;
 	stringtable_t* table;
+};
+
+struct map_string_address_iterator_v1::state_t
+{
+	map_string_address_iterator_v1::closure_t closure;
+	heap_v1::closure_t* heap;
+	stringtable_t::iterator cur;
+	stringtable_t::iterator end;
 };
 
 static bool get(map_string_address_v1::closure_t* self, key_type k, value_type* v)
@@ -71,7 +82,49 @@ static uint32_t size(map_string_address_v1::closure_t* self)
 	return self->d_state->table->size();
 }
 
-static void dispose(map_string_address_v1::closure_t* self) // RENAME to destroy()? See stretch_table_mod for ref.
+static bool
+iterator_next(map_string_address_iterator_v1::closure_t* self, const char** key, memory_v1::address* value)
+{
+	auto state = self->d_state;
+	if (state->cur != state->end)
+	{
+		*key = (*state->cur).first;
+		*value = (*state->cur).second;
+		++state->cur;
+		return true;
+	}
+	else
+		return false;
+}
+
+static void
+iterator_dispose(map_string_address_iterator_v1::closure_t* self)
+{
+	self->d_state->heap->free(memory_v1::address(self->d_state));
+}
+
+static map_string_address_iterator_v1::ops_t iterator_ops = {
+	iterator_next,
+	iterator_dispose
+};
+
+static map_string_address_iterator_v1::closure_t*
+iterate(map_string_address_v1::closure_t* self)
+{
+	map_string_address_iterator_v1::state_t* state;
+
+	state = new(PVS(heap)) map_string_address_iterator_v1::state_t;
+	closure_init(&state->closure, &iterator_ops, state);
+
+	state->heap = PVS(heap);
+	state->cur = self->d_state->table->begin();
+	state->end = self->d_state->table->end();
+
+	return &state->closure;
+}
+
+static void
+dispose(map_string_address_v1::closure_t* self) // RENAME to destroy()? See stretch_table_mod for ref.
 {
 	self->d_state->table->clear();
 	//TODO: delete self
@@ -83,6 +136,7 @@ static struct map_string_address_v1::ops_t map_methods =
 	put,
 	remove,
 	size,
+	iterate,
 	dispose
 };
 

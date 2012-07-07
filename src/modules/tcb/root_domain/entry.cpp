@@ -401,6 +401,14 @@ static void init_type_system(bootimage_t& bootimg)
     {
         ts->register_interface(symbol.second->value);
     }
+
+    kconsole << "___ Testing the type system listing" << endl;
+    naming_context_v1::names n = ts->list();
+    for (auto m : n)
+    {
+        kconsole << m << endl;
+    }
+    kconsole << "___ Done testing type system listing" << endl;
 }
 
 static void init_namespaces(bootimage_t& bootimg)
