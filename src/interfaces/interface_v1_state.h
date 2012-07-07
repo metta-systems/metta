@@ -15,6 +15,7 @@ struct param_t
 {
     operation_v1::parameter  rep;
     const char*              name;
+    const char*              autodoc;     /**< Reference documentation */
 };
 
 /**
@@ -23,6 +24,7 @@ struct param_t
 struct field_t {
     types::any   value;
     const char*  name;
+    const char*  autodoc;     /**< Reference documentation */
 };
 
 /**
@@ -53,6 +55,7 @@ struct Exc_t {
     exception_v1::closure_t  closure;    /* Closure for exception       */
     interface_v1::state_t*   intf;       /* Defining interface          */
     const char*              name;       /* Name of exception           */
+    const char*              autodoc;    /**< Reference documentation   */
 };
 
 /**
@@ -61,6 +64,7 @@ struct Exc_t {
 struct operation_t
 {
     const char*               name;        /**< Name of Operation      */
+    const char*               autodoc;     /**< Reference documentation */
     operation_v1::kind        kind;        /**< Type of Operation      */
     param_t*                  params;      /**< Array of parameters    */
     uint32_t                  num_args;    /**< How many there are     */
@@ -80,6 +84,7 @@ struct type_representation_t
     types::any                any;        /**< Class-specific stuff           */
     types::any                code;       /**< Type code of type, as an any   */
     types::name               name;       /**< Name of type                   */
+    const char*               autodoc;    /**< Reference documentation        */
     interface_v1::state_t*    interface;  /**< Pointer to defining interface  */
     memory_v1::size           size;       /**< Size of an instance            */
 };

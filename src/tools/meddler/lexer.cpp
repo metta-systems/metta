@@ -92,7 +92,10 @@ token::kind lexer_t::get_token()
                 return token::autodoc;
             }
             else
+            {
+                --cur_ptr;
                 skip_line_comment();
+            }
             return get_token();
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
