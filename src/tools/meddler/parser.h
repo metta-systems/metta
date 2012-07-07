@@ -22,6 +22,10 @@ class parser_t
     AST::interface_t* parse_tree; friend class Meddler; // it is actually an interface. make it so.
     llvm::SourceMgr& source_mgr;
 	bool verbose;
+    std::string autodoc_buffer;
+
+    void append_autodoc(std::string docline);
+    void assign_autodoc(AST::node_t* node); // Assign collected autodoc to given node.
 
     void populate_symbol_table();
     bool parse_top_level_entities();
