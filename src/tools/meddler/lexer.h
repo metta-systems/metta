@@ -94,4 +94,5 @@ private:
     token::kind get_cardinal();
     int get_next_char();
     void skip_line_comment();
+    void get_autodoc_line();
 };
