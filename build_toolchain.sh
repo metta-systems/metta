@@ -407,33 +407,15 @@ else
 fi
 
 echo "===================================================================="
-echo "Configuring and building libcxx..."
-echo "===================================================================="
-
-if [ ! -f libcxx/.build.succeeded ]; then
-    cd libcxx/lib && \
-    TRIPLE=-apple- CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
-    ./buildit && \
-    touch ../.build.succeeded && \
-    cd ../.. || exit 1
-else
-    echo "libcxx/.build.succeeded exists, NOT rebuilding libcxx!"
-fi
-
-echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
 
 unset LD
 
-# Force use of local libcxx for new clang build.
-export EXTRA_OPTIONS='-I$TOOLCHAIN_DIR/libcxx/include'
-export EXTRA_LD_OPTIONS='-L$TOOLCHAIN_DIR/libcxx/lib -lc++'
-
 if [ ! -f build/llvm/.config.succeeded ]; then
     cd build/llvm && \
     ../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
-    --enable-libcpp --disable-docs \
+    --disable-docs \
     --with-binutils-include=$TOOLCHAIN_DIR/sources/binutils-${BINUTILS_VER}/include/ --enable-pic \
     --enable-targets=$LLVM_TARGETS  && \
     touch .config.succeeded && \
@@ -449,7 +431,6 @@ echo "===================================================================="
 if [ ! -f build/llvm/.build.succeeded ]; then
     cd build/llvm && \
     make -j$MAKE_THREADS && \
-    make check && \
     touch .build.succeeded && \
     cd ../.. || exit 1
 else
@@ -472,6 +453,80 @@ fi
 echo "Symlinking LLVMgold.dylib into binutils..."
 mkdir -p $PREFIX/lib/bfd-plugins
 ln -sf $TOOLCHAIN_DIR/clang/lib/LLVMgold.dylib $PREFIX/lib/bfd-plugins
+
+echo "===================================================================="
+echo "Configuring and building libcxx..."
+echo "===================================================================="
+
+if [ ! -f libcxx/.build.succeeded ]; then
+    cd libcxx/lib && \
+    TRIPLE=-apple- CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    ./buildit && \
+    touch ../.build.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "libcxx/.build.succeeded exists, NOT rebuilding libcxx!"
+fi
+
+echo "===================================================================="
+echo "===================================================================="
+echo "Rebuilding LLVM libraries with freshly installed clang..."
+echo "===================================================================="
+echo "===================================================================="
+
+echo "===================================================================="
+echo "Configuring llvm..."
+echo "===================================================================="
+
+# We rebuild using just built fresh clang
+# We also rebuild using gcc toolchain path we've just built - that's probably a bad idea in general, as it limits
+# clang's cross-compile abilities, but will do for now.
+# --with-gcc-toolchain=$PREFIX \
+# --enable-polly
+
+# Force use of local libcxx for new clang build.
+export EXTRA_OPTIONS='-I$TOOLCHAIN_DIR/libcxx/include'
+export EXTRA_LD_OPTIONS='-L$TOOLCHAIN_DIR/libcxx/lib -lc++'
+
+if [ ! -f build/llvm2/.config2.succeeded ]; then
+    cd build/llvm2 && \
+    CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    ../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
+    --enable-libcpp --disable-docs \
+    --with-binutils-include=$TOOLCHAIN_DIR/sources/binutils-${BINUTILS_VER}/include/ --enable-pic \
+    --enable-targets=$LLVM_TARGETS  && \
+    touch .config2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.config2.succeeded exists, NOT reconfiguring llvm!"
+fi
+
+echo "===================================================================="
+echo "Building llvm... this may take a long while"
+echo "===================================================================="
+
+if [ ! -f build/llvm2/.build2.succeeded ]; then
+    cd build/llvm2 && \
+    make -j$MAKE_THREADS && \
+    make check && \
+    touch .build2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.build2.succeeded exists, NOT rebuilding llvm!"
+fi
+
+echo "===================================================================="
+echo "Installing llvm & clang..."
+echo "===================================================================="
+
+if [ ! -f build/llvm2/.install2.succeeded ]; then
+    cd build/llvm2 && \
+    make install && \
+    touch .install2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.install2.succeeded exists, NOT reinstalling llvm!"
+fi
 
 echo "===================================================================="
 echo "To clean up:"
