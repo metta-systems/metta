@@ -8,9 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "string"
+#if !__Metta__
 #include "cstdlib"
 #include "cwchar"
 #include "cerrno"
+#endif
 #if _WIN32
 #include "support/win32/support.h"
 #endif // _WIN32
@@ -25,6 +27,8 @@ template class basic_string<wchar_t>;
 template
     string
     operator+<char, char_traits<char>, allocator<char> >(char const*, string const&);
+
+#if !__Metta__
 
 int
 stoi(const string& str, size_t* idx, int base)
@@ -675,5 +679,7 @@ wstring to_wstring(long double val)
     }
     return s;
 }
+
+#endif // !__Metta__
 
 _LIBCPP_END_NAMESPACE_STD
