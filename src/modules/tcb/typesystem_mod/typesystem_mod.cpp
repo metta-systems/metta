@@ -82,11 +82,11 @@ shared_destroy(naming_context_v1::closure_t*)
 /**
  * Look up a type name in this interface.
  */
-static type_representation_t* internal_get(type_system_f_v1::state_t* state, cstring_t name)
+static type_representation_t* internal_get(type_system_f_v1::state_t* state, const char* name)
 {
     interface_v1::state_t* iface = nullptr;
     type_representation_t* result = nullptr;
-    cstring_t extra;
+    const char* extra = nullptr;
 
     // pos = find(name, '.');
     // if (pos)
@@ -97,10 +97,10 @@ static type_representation_t* internal_get(type_system_f_v1::state_t* state, cst
 
     /* now "name" is just the interface, and "extra" is any extra qualifier */
 
-    if (state->interfaces_by_name->get(name.c_str(), (address_t*)&iface))
+    if (state->interfaces_by_name->get(name, (address_t*)&iface))
     {
         /* We've found the first component. */
-        if (extra[0])
+        if (extra)
         {
             for (int i = 0; iface->types[i]; ++i)
                 if (extra == iface->types[i]->name)
@@ -109,7 +109,7 @@ static type_representation_t* internal_get(type_system_f_v1::state_t* state, cst
             /* special case if it's an intf type defined by the metainterface */
             if (!result && (iface == &meta_interface))
             {
-                result = internal_get(state, extra);
+                result = internal_get(state, extra); // this should trigger search in "meta_interface.<something>" but that won't work atm
             }
         }
         else
@@ -122,17 +122,36 @@ static type_representation_t* internal_get(type_system_f_v1::state_t* state, cst
     return result;
 }
 
+char* stralloc(size_t size, heap_v1::closure_t* heap)
+{
+    return reinterpret_cast<char*>(heap->allocate(size));
+}
+
+char*
+string_copy(const char* src, heap_v1::closure_t* heap)
+{
+    size_t len = memutils::string_length(src) + 1;
+    char* dst = stralloc(len, heap);
+    memutils::copy_memory(dst, src, len);
+    return dst;
+}
+
 static void
 add_name(const char* name, heap_v1::closure_t* heap, naming_context_v1::names& n)
 {
-    n.push_back(name);
+    n.push_back(string_copy(name, heap));
 }
 
 static void
 add_qual_name(const char* name, const char* subname, heap_v1::closure_t* heap, naming_context_v1::names& n)
 {
-    // n.push_back(name supname + "." + name);
-    // kconsole << name << "." << subname << endl;
+    size_t l1 = memutils::string_length(name);
+    size_t len = l1 + memutils::string_length(subname) + 2;
+    char* dst = stralloc(len, heap);
+    memutils::copy_string(dst, name);
+    *(dst+l1) = '.';
+    memutils::copy_string(dst+l1+1, subname);
+    n.push_back(dst);
 }
 
 /**
@@ -142,7 +161,7 @@ static naming_context_v1::names
 type_system_v1_list(naming_context_v1::closure_t* self)
 {
     auto state = reinterpret_cast<type_system_f_v1::closure_t*>(self)->d_state;
-    naming_context_v1::names n(std::heap_allocator<const char*>(PVS(heap))); // woeh... bad stuff
+    naming_context_v1::names n;
     map_string_address_iterator_v1::closure_t* it = nullptr;
 
     /* Run through all the interfaces */
@@ -516,6 +535,7 @@ static type_representation_t type_##idlname##_rep = { \
     {  type_system_v1::predefined_type_code, { type_system_v1::predefined_##tag } }, \
     {  types::code_type_code, { idlname##_type_code } }, \
     #idlname, \
+    "Built-in type "#idlname, \
     &meta_interface, \
     sizeof(typename) \
 }
@@ -558,6 +578,7 @@ interface_v1::state_t meta_interface =
         { type_system_v1::iref_type_code, { .ptr32value = &meta_interface_closure } },  // any & cl.ptr
         { types::code_type_code, { meta_interface_type_code } },                        // Type Code
         TCODE_META_NAME,                                                                // Textual name
+        "Meta interface representing all interfaces in the system.",                    // Autodoc
         &meta_interface,                                                                // Scope
         sizeof(interface_v1::closure_t*)                                                // Size
     }, // end representation
