@@ -83,7 +83,7 @@ struct type_representation_t
 {
     types::any                any;        /**< Class-specific stuff           */
     types::any                code;       /**< Type code of type, as an any   */
-    types::name               name;       /**< Name of type                   */
+    const char*               name;       /**< Name of type                   */
     const char*               autodoc;    /**< Reference documentation        */
     interface_v1::state_t*    interface;  /**< Pointer to defining interface  */
     memory_v1::size           size;       /**< Size of an instance            */
