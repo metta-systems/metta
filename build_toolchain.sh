@@ -485,8 +485,8 @@ echo "===================================================================="
 # --enable-polly
 
 # Force use of local libcxx for new clang build.
-export EXTRA_OPTIONS='-I$TOOLCHAIN_DIR/libcxx/include'
-export EXTRA_LD_OPTIONS='-L$TOOLCHAIN_DIR/libcxx/lib -lc++'
+export EXTRA_OPTIONS="-I$TOOLCHAIN_DIR/libcxx/include"
+export EXTRA_LD_OPTIONS="-L$TOOLCHAIN_DIR/libcxx/lib -lc++"
 
 if [ ! -f build/llvm2/.config2.succeeded ]; then
     cd build/llvm2 && \
