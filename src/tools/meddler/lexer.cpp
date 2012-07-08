@@ -62,6 +62,12 @@ void lexer_t::skip_line_comment()
     }
 }
 
+void lexer_t::get_autodoc_line()
+{
+    token_start = cur_ptr; // Skip ##
+    skip_line_comment();
+}
+
 token::kind lexer_t::get_token()
 {
     if (next_kind != token::none)
@@ -80,7 +86,16 @@ token::kind lexer_t::get_token()
         case 0: case ' ': case '\t': case '\n': case '\r': // Ignore whitespace.
             return get_token();
         case '#':
-            skip_line_comment();
+            if (get_next_char() == '#')
+            {
+                get_autodoc_line();
+                return token::autodoc;
+            }
+            else
+            {
+                --cur_ptr;
+                skip_line_comment();
+            }
             return get_token();
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':

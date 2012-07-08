@@ -21,28 +21,33 @@ class method_t;
 
 class node_t
 {
-	node_t* above;
+    node_t* above;
     std::string name_;
+    std::string autodoc;
 public:
-	node_t(node_t* parent, std::string name) : above(parent), name_(name) {}
+    node_t(node_t* parent, std::string name) : above(parent), name_(name), autodoc() {}
     virtual ~node_t() {} // coz we have virtual functions
-	node_t* get_root() // for the purpose of this excercise, root will be the interface
-	{
-		node_t* parent = above;
-		while (parent)
-		{
-			if (!parent->above)
-				return parent;
-			parent = parent->above;
-		}
-		return 0;
-	}
+
+    inline void set_autodoc(std::string doc) { autodoc = doc; }
+    inline std::string get_autodoc() { return autodoc; }
+
+    node_t* get_root() // for the purpose of this excercise, root will be the interface
+    {
+        node_t* parent = above;
+        while (parent)
+        {
+            if (!parent->above)
+                return parent;
+            parent = parent->above;
+        }
+        return 0;
+    }
     inline std::string name() { return name_; }
-	void set_name(std::string nm) { name_ = nm; }
-	inline std::string base_name()
-	{
-	    return name().substr(0, name().find_first_of('.'));
-	}
+    void set_name(std::string nm) { name_ = nm; }
+    inline std::string base_name()
+    {
+        return name().substr(0, name().find_first_of('.'));
+    }
 
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false) = 0;
@@ -64,8 +69,8 @@ public:
     alias_t(node_t* parent) : node_t(parent, std::string()), type_(), kind(token::none), reference(false), interface(false), local(false), builtin(false) {}
     alias_t(node_t* parent, std::string nm) : node_t(parent, nm), type_(), kind(token::type), reference(false), interface(false), local(false), builtin(false) {}
     alias_t(node_t* parent, std::string tp, std::string nm) : node_t(parent, nm), type_(tp), kind(token::type), reference(false), interface(false), local(false), builtin(false) {}
-	std::string type() { return type_; }
-	void set_type(std::string tp) { type_ = tp; }
+    std::string type() { return type_; }
+    void set_type(std::string tp) { type_ = tp; }
     virtual std::string unqualified_name();
     virtual void dump(std::string indent_prefix);
 
@@ -88,9 +93,9 @@ private:
     std::string type_; // use known types! check LLVM's Type/TypeBuilder
     token::kind kind;
     bool reference; //! Is this type a reference?
-	bool interface; //! Is this type an interface reference?
-	bool local;     //! Is this type an interface local type?
-	bool builtin;   //! Is this a builtin type?
+    bool interface; //! Is this type an interface reference?
+    bool local;     //! Is this type an interface local type?
+    bool builtin;   //! Is this a builtin type?
 };
 
 class type_alias_t : public alias_t
@@ -197,7 +202,7 @@ class parameter_t : public alias_t
 {
 public:
     enum direction_e { in, out, inout } direction;
-	parameter_t(node_t* parent) : alias_t(parent), direction(inout) {}
+    parameter_t(node_t* parent) : alias_t(parent), direction(inout) {}
     virtual void dump(std::string indent_prefix);
     virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
@@ -223,7 +228,7 @@ public:
 class method_t : public node_t
 {
 public:
-	method_t(node_t* parent, std::string name, bool is_idempotent)
+    method_t(node_t* parent, std::string name, bool is_idempotent)
         : node_t(parent, name)
         , idempotent(is_idempotent)
         , never_returns(false)
@@ -272,8 +277,8 @@ public:
     virtual void dump(std::string indent_prefix);
     void set_parent(std::string p) { base = p; }
 
-	bool types_lookup(alias_t& type);
-	bool imported_types_lookup(alias_t& type);
+    bool types_lookup(alias_t& type);
+    bool imported_types_lookup(alias_t& type);
 
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
@@ -298,8 +303,8 @@ public:
     std::string base;         //  > base interface
     interface_t* parent;      // /
     std::vector<alias_t*>     imported_types;//added to this list when we see an unknown fully qualified identifier in var_decls.
-	// builtin identifiers should resolve to known types in list.
-	// unqualified identifiers should resolve to the following list:
+    // builtin identifiers should resolve to known types in list.
+    // unqualified identifiers should resolve to the following list:
     std::vector<alias_t*>     types;
     std::vector<exception_t*> exceptions;
     std::vector<method_t*>    methods;

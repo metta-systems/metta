@@ -1,0 +1,56 @@
+Simpler approach could be to keep IDL string type as "const char*" but for sequence<> make a sequence_t<T> class and specialize it for sequence<const char*> case by making it allocate data in heap always.
+
+/**
+ * Represents a sequence of entries of type T allocated on a heap for client use.
+ * Destroying a sequence will deallocate all items. (Sequence takes ownership of the items it holds).
+ * Specialized variants of sequence may provide custom handling, sequence_t<const char*> is one such type.
+ * Sequences can be iterating using STL-like interfaces sequence_t<T>::iterator and begin()/end() calls.
+ */
+template<typename T>
+class sequence_t
+{
+	// Sequence reserves memory for an index of entries allocated on the heap, and the entries themselves.
+	size_t allocated, used;
+	T* data;
+};
+
+== More flexible, better string ==
+
+Possible string repr as a "vector":
+{
+int capacity;
+int length;
+char* data;
+}
+
+'capacity' bytes are allocated, 'length' bytes are used at 'data'.
+
+Substrings and pointers to const strings can be indicated with capacity 0 (i.e. none is allocated, but we use substring's memory).
+
+LLVM StringRef can be also useful?
+/// StringRef - Represent a constant reference to a string, i.e. a character
+/// array and a length, which need not be null terminated.
+///
+/// This class does not own the string data, it is expected to be used in
+/// situations where the character data resides in some other buffer, whose
+/// lifetime extends past that of the StringRef. For this reason, it is not in
+/// general safe to store a StringRef.
+ 
+
+// we may extend cstring_t to be like this...
+cstring_t(const char* data, bool allocate_copy)
+{
+	if (allocate_copy)
+	{
+		data = strdup(data);
+		capacity = length = strlen(data);
+	}
+	else
+	{
+		data = data;
+		capacity = 0;
+		length = strlen(data);
+	}
+}
+
+

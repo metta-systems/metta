@@ -200,7 +200,9 @@ template <class _CharT,             // for <stdexcept>
           class _Allocator = allocator<_CharT> >
     class _LIBCPP_VISIBLE basic_string;
 typedef basic_string<char, char_traits<char>, allocator<char> > string;
+#if !__Metta__
 typedef basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> > wstring;
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
 

@@ -429,8 +429,12 @@ template <> struct hash<wstring>;
 #include <__config>
 #include <iosfwd>
 #include <cstring>
+#if !__Metta__
 #include <cstdio>  // For EOF.
 #include <cwchar>
+#else
+#define EOF (-1)
+#endif
 #include <algorithm>
 #include <iterator>
 #include <utility>
@@ -647,21 +651,21 @@ struct _LIBCPP_VISIBLE char_traits<char>
 
     _LIBCPP_INLINE_VISIBILITY
     static int compare(const char_type* __s1, const char_type* __s2, size_t __n)
-        {return memcmp(__s1, __s2, __n);}
+        {return memutils::is_memory_equal(__s1, __s2, __n);}
     _LIBCPP_INLINE_VISIBILITY
-    static size_t length(const char_type* __s) {return strlen(__s);}
+    static size_t length(const char_type* __s) {return memutils::string_length(__s);}
     _LIBCPP_INLINE_VISIBILITY
     static const char_type* find(const char_type* __s, size_t __n, const char_type& __a)
-        {return (const char_type*)memchr(__s, to_int_type(__a), __n);}
+        {return (const char_type*)memutils::find_byte(__s, to_int_type(__a), __n);}
     _LIBCPP_INLINE_VISIBILITY
     static char_type* move(char_type* __s1, const char_type* __s2, size_t __n)
-        {return (char_type*)memmove(__s1, __s2, __n);}
+        {return (char_type*)memutils::move_memory(__s1, __s2, __n);}
     _LIBCPP_INLINE_VISIBILITY
     static char_type* copy(char_type* __s1, const char_type* __s2, size_t __n)
-        {return (char_type*)memcpy(__s1, __s2, __n);}
+        {return (char_type*)memutils::copy_memory(__s1, __s2, __n);}
     _LIBCPP_INLINE_VISIBILITY
     static char_type* assign(char_type* __s, size_t __n, char_type __a)
-        {return (char_type*)memset(__s, to_int_type(__a), __n);}
+        {return (char_type*)memutils::fill_memory(__s, to_int_type(__a), __n);}
 
     _LIBCPP_INLINE_VISIBILITY static int_type  not_eof(int_type __c) _NOEXCEPT
         {return eq_int_type(__c, eof()) ? ~eof() : __c;}

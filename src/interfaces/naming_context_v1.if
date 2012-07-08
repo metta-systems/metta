@@ -13,19 +13,20 @@
 # and domain initialisation are all examples.  The "naming_context" interface
 # provides a general abstraction for this purpose.
 
-# A "naming_context" is a partial map from arc-names to "type.any"s
-# (arbitrary values tagged with their type codes). An arc-name is a non-empty
-# string which does not contain either of the separator characters defined
-# below.
-#
-# A naming network of arbitrary topology can be built by registering
-# one "context" in another.  For convenience, the procedures in the
-# "context" interface interpret pathnames.  Pathnames have the
-# syntax:
-#
-# Pathname  = ArcName { Separator ArcName }
-# Separator = '.'
-# ArcName   = [^.] { [^.] }
+## A "naming_context" is a partial map from arc-names to "types.any"s
+## (arbitrary values tagged with their type codes). An arc-name is a non-empty
+## string which does not contain the separator characters defined below.
+##
+## A naming network of arbitrary topology can be built by registering
+## one "context" in another.  For convenience, the procedures in the
+## "context" interface interpret pathnames.  Pathnames have the
+## syntax:
+##
+## Pathname  = ArcName { Separator ArcName }
+##
+## Separator = '.'
+##
+## ArcName   = [^.] { [^.] }
 
 local interface naming_context_v1
 {
@@ -51,11 +52,11 @@ local interface naming_context_v1
     # Operations
     #
 
-    ## The following type is used for listing names in a context:
+    ## This type is used for listing names in a context.
     sequence<string> names;
 
-    ## List all available names in a current context.
-    list() returns (names nl) raises (heap_v1.no_memory);
+    ## List all available names in the current context.
+    list() returns (names names_list) raises (heap_v1.no_memory);
 
     ## "get" maps pathnames to objects relative to the current context.
     ##
@@ -65,13 +66,13 @@ local interface naming_context_v1
     ##
     ## Otherwise, "name" is a pathname and "arc" should be bound to a
     ## "naming_context".  Let "next_cx" be "map[arc]".  If "next_cx" is not a
-    ## "type.any" for a "naming_context", raise the "not_context" exception.
+    ## "types.any" for a "naming_context", raise the "not_context" exception.
     ## Otherwise, let "rest" be the result of removing the first arc-name
     ## and separator from "name", and return the result of invoking
     ## "get(rest, obj)" on "next_cx".
     get(string name, out types.any obj) returns (boolean present) raises (not_context, denied);
 
-    ## "Add" binds an object to a pathname relative to the current context.
+    ## "add" binds an object to a pathname relative to the current context.
     ##
     ## If "name" is a pure arc-name, then if it is not bound in the
     ## current context, set "map[name]" to "obj" and return.  If it is
@@ -82,9 +83,9 @@ local interface naming_context_v1
     ## of "name" is bound to a "type.any" for a "naming_context", as for "get".
     ## If "arc" is not bound to anything, raise "not_found". If "arc" is
     ## bound but not to a context, raise "not_context".
-    add(string name, in types.any obj) returns () raises (exists, not_context, not_found, denied);
+    add(string name, in types.any obj) raises (exists, not_context, not_found, denied);
 
-    ## "Remove" deletes the binding for a pathname relative to the current
+    ## "remove" deletes the binding for a pathname relative to the current
     ## context.
     ##
     ## If "name" is a pure arc-name, and is bound in this context then
@@ -98,7 +99,7 @@ local interface naming_context_v1
     ## in a naming graph, but raises the question of what happens when
     ## a name denoting such an internal context is presented to be
     ## resolved.
-    remove(string name) returns () raises (not_context, not_found, denied);
+    remove(string name) raises (not_context, not_found, denied);
 
     ## "Dup" duplicates the context graph rooted at the current context
     ## in the "Heap" "h", applying the translations "xl".
@@ -111,6 +112,6 @@ local interface naming_context_v1
     ## values may be employed.
     # duplicate(heap_v1& h, word_table_v1& xlat) returns (naming_context_v1& copy) raises (heap_v1.no_memory, denied);
 
-    ## Finally, "Destroy" disposes of the current context.
-    destroy() returns () raises (denied);
+    ## "Destroy" disposes of the current context.
+    destroy() raises (denied);
 }

@@ -26,8 +26,8 @@ namespace memutils {
  *
  * @warning Do not use fill_memory() to access IO space, use fill_io_memory() instead.
  */
-//Clearing 0x00040000 bytes at 0x009e2000 - this errored out in unrolled version, looks like counter wrapped. Need UTest.
-inline void* fill_memory(void* dest, int value, size_t count)
+inline void*
+fill_memory(void* dest, int value, size_t count)
 {
     asm volatile ("rep stosb" :: "c"(count), "a"(value), "D"(dest) : "memory");
     return dest;
@@ -42,7 +42,8 @@ inline void* fill_memory(void* dest, int value, size_t count)
  *
  * @warning Do not use clear_memory() to access IO space, use fill_io_memory() with a value of 0 instead.
  */
-inline void* clear_memory(void* dest, size_t count)
+inline void*
+clear_memory(void* dest, size_t count)
 {
     return fill_memory(dest, 0, count);
 }
@@ -57,7 +58,8 @@ inline void* clear_memory(void* dest, size_t count)
  * @warning You should not use this function to access IO space, use copy_memory_to_io()
  * or copy_memory_from_io() instead.
  */
-inline void* copy_memory(void* dest, const void* src, size_t count)
+inline void*
+copy_memory(void* dest, const void* src, size_t count)
 {
     char *tmp = reinterpret_cast<char*>(dest);
     const char *s = reinterpret_cast<const char*>(src);
@@ -67,7 +69,8 @@ inline void* copy_memory(void* dest, const void* src, size_t count)
     return dest;
 }
 
-inline address_t copy_memory(address_t dest, address_t src, size_t count)
+inline address_t
+copy_memory(address_t dest, address_t src, size_t count)
 {
     return reinterpret_cast<address_t>(copy_memory(reinterpret_cast<void*>(dest), reinterpret_cast<const void*>(src), count));
 }
@@ -81,7 +84,8 @@ inline address_t copy_memory(address_t dest, address_t src, size_t count)
  *
  * Unlike copy_memory(), this function copes with overlapping areas.
  */
-inline void* move_memory(void* dest, const void* src, size_t count)
+inline void*
+move_memory(void* dest, const void* src, size_t count)
 {
     char *tmp;
     const char *s;
@@ -104,7 +108,8 @@ inline void* move_memory(void* dest, const void* src, size_t count)
  * @param[in]  count Number of bytes to compare.
  * @return     @c true if memory regions are equal, @c false otherwise.
  */
-inline bool is_memory_equal(const void* left, const void* right, size_t count)
+inline bool
+is_memory_equal(const void* left, const void* right, size_t count)
 {
     const char* ltmp = reinterpret_cast<const char*>(left);
     const char* rtmp = reinterpret_cast<const char*>(right);
@@ -122,7 +127,8 @@ inline bool is_memory_equal(const void* left, const void* right, size_t count)
  * @param[in]  count Number of bytes to compare.
  * @return     result of lexicographical memory compare, -1 if left is less than right, 0 if they are equal or 1 if left is greater than right.
  */
-inline int memory_difference(const void* left, const void* right, size_t count)
+inline int
+memory_difference(const void* left, const void* right, size_t count)
 {
     signed char __res;
 
@@ -142,7 +148,8 @@ inline int memory_difference(const void* left, const void* right, size_t count)
  * @param[in] s2 Another string
  * @return true if @c s1 equals @c s2, false if strings are different.
  */
-inline bool is_string_equal(const char *s1, const char *s2)
+inline bool
+is_string_equal(const char *s1, const char *s2)
 {
     signed char __res;
 
@@ -163,14 +170,14 @@ inline bool is_string_equal(const char *s1, const char *s2)
  * @param[in] s  Null-terminated string.
  * @returns      String length in bytes.
  */
-inline size_t string_length(const char *s)
+inline size_t
+string_length(const char *s)
 {
     size_t len = 0;
     if (s)
         while (*s++)
             len++;
     return len;
-    // return __builtin_strlen(s); // Causes undefined reference to `strlen'
 }
 
 /**
@@ -180,7 +187,8 @@ inline size_t string_length(const char *s)
  * @param[in]  max_length Maximum number of bytes to copy, unlimited if 0.
  * @return           Pointer to the start of the destination string.
  */
-inline char* copy_string(char* dest, const char* src, size_t max_length = 0)
+inline char*
+copy_string(char* dest, const char* src, size_t max_length = 0)
 {
     if (!src || !dest)
         return 0;
@@ -191,6 +199,24 @@ inline char* copy_string(char* dest, const char* src, size_t max_length = 0)
                   : src_length;
     copy_memory(dest, src, length);
     return dest;
+}
+
+/**
+ * Locates the first occurrence of c (converted to an unsigned char) in string s.
+ * @returns a pointer to the byte located, or NULL if no such byte exists within max_length bytes.
+ */
+inline void*
+find_byte(const void *s, int c, size_t max_length)
+{
+    unsigned char __b = c;
+    const unsigned char* __p = reinterpret_cast<const unsigned char*>(s);
+    while (max_length--)
+    {
+        if (*__p == __b)
+            return reinterpret_cast<void*>(const_cast<unsigned char*>(__p));
+        __p++;
+    }
+    return 0;
 }
 
 } // namespace memutils

@@ -11,6 +11,10 @@
 #include <sstream>
 #include "ast.h"
 #include <llvm/ADT/Twine.h>
+// for trim():
+#include <boost/algorithm/string.hpp>
+using namespace std;
+using namespace boost::algorithm;
 
 std::string token_to_name(token::kind tok)
 {
@@ -60,6 +64,7 @@ std::string token_to_name(token::kind tok)
         TNAME(identifier)
         TNAME(dotdot)
         TNAME(cardinal)
+        TNAME(autodoc)
     }
     return "UNKNOWN";
 }
@@ -155,7 +160,33 @@ std::string parser_t::parent_interface()
     return parse_tree->base;
 }
 
-#define D() L(if(verbose) std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl)
+void parser_t::append_autodoc(std::string docline)
+{
+    // Strip spaces at start and end.
+    trim(docline);
+
+    if (docline.empty())
+        autodoc_buffer += "\n";
+    else {
+        if (autodoc_buffer.empty())
+            autodoc_buffer = docline;
+        else
+            if (*autodoc_buffer.rbegin() == '\n')
+                autodoc_buffer += docline;
+            else
+                autodoc_buffer += " " + docline;
+    }
+}
+
+void parser_t::assign_autodoc(AST::node_t* node)
+{
+    if (verbose) std::cout << __FUNCTION__ << ": " << autodoc_buffer << std::endl;
+    if (!autodoc_buffer.empty())
+        node->set_autodoc(autodoc_buffer);
+    autodoc_buffer = "";
+}
+
+#define D() if(verbose) std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl
 
 //! module ::= full_interface_decl
 //! full_interface_decl ::= local_interface_decl | final_interface_decl | interface_decl
@@ -176,6 +207,10 @@ bool parser_t::parse_top_level_entities()
                     return true;
                 else
                     return false;
+                break;
+            case token::autodoc:
+                append_autodoc(lex.current_token());
+                lex.lex();
                 break;
         }
     }
@@ -206,6 +241,8 @@ bool parser_t::parse_interface()
 
         AST::interface_t* node = new AST::interface_t(lex.current_token(), is_local, is_final);
         parse_tree = node;
+
+        assign_autodoc(node);
 
         local_scope_t new_scope(symbols, lex.current_token());
 
@@ -328,6 +365,9 @@ bool parser_t::parse_interface_body()
                     return false;
                 }
                 break;
+            case token::autodoc:
+                append_autodoc(lex.current_token());
+                break;
             default:
                 PARSE_ERROR("Invalid token encountered.");
                 return false;
@@ -352,6 +392,9 @@ bool parser_t::parse_exception()
     }
 
     AST::exception_t* node = new AST::exception_t(parse_tree, lex.current_token());
+
+    assign_autodoc(node);
+
     local_scope_t new_scope(symbols, lex.current_token());
     if (!lex.expect(token::lbrace))
     {
@@ -399,6 +442,9 @@ bool parser_t::parse_method()
         }
 
         AST::method_t* m = new AST::method_t(parse_tree, name, is_idempotent);
+
+        assign_autodoc(m);
+
         is_idempotent = false;
 
         std::vector<AST::parameter_t*> params;

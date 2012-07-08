@@ -9,6 +9,7 @@
 #pragma once
 
 #include <memory>
+#include "infopage.h"
 #include "heap_v1_interface.h"
 #include "default_console.h"
 
@@ -33,9 +34,9 @@ public:
     template <class U> struct rebind {typedef heap_allocator<U> other;};
 
     heap_allocator() throw()
-        : heap(state_type(0xdeadbeef)) // mark non-kosher initialization
+        : heap(PVS(heap))
     {
-        V(kconsole << "default constructing heap_allocator at " << this << endl);
+        V(kconsole << "default constructing heap_allocator at " << this << " with heap " << heap << endl);
     }
 
     explicit heap_allocator(heap_v1::closure_t* h) throw()
