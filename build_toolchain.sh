@@ -412,7 +412,7 @@ echo "===================================================================="
 
 if [ ! -f libcxx/.build.succeeded ]; then
     cd libcxx/lib && \
-    export TRIPLE=-apple- && \
+    TRIPLE=-apple- CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
     ./buildit && \
     touch ../.build.succeeded && \
     cd ../.. || exit 1
