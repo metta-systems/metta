@@ -27,16 +27,6 @@ char* data;
 
 Substrings and pointers to const strings can be indicated with capacity 0 (i.e. none is allocated, but we use substring's memory).
 
-LLVM StringRef can be also useful?
-/// StringRef - Represent a constant reference to a string, i.e. a character
-/// array and a length, which need not be null terminated.
-///
-/// This class does not own the string data, it is expected to be used in
-/// situations where the character data resides in some other buffer, whose
-/// lifetime extends past that of the StringRef. For this reason, it is not in
-/// general safe to store a StringRef.
- 
-
 // we may extend cstring_t to be like this...
 cstring_t(const char* data, bool allocate_copy)
 {
@@ -53,4 +43,7 @@ cstring_t(const char* data, bool allocate_copy)
 	}
 }
 
+== Problem ==
+
+changing an interface that is a base for other interfaces does not trigger rebuild of these interfaces (implicit dependency information is missing from the build system...)
 
