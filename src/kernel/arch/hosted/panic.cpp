@@ -13,14 +13,14 @@
 void panic(const char* message, const char* file, uint32_t line)
 {
     kconsole << "PANIC! " << message << " at " << file << ":" << (int)line << endl;
-    debugger_t::print_backtrace(0, 0, 20);
+    // debugger_t::print_backtrace(0, 0, 20);
     halt();
 }
 
 void panic_assert(const char* desc, const char* file, uint32_t line)
 {
     kconsole << "ASSERTION FAILED! " << desc << " at " << file << ":" << (int)line << endl;
-    debugger_t::print_backtrace(0, 0, 20);
+    // debugger_t::print_backtrace(0, 0, 20);
     halt();
 }
 

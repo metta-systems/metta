@@ -17,7 +17,7 @@ void panic(const char* message, const char* file, uint32_t line)
 
     kconsole.set_attr(RED, YELLOW);
     kconsole << "PANIC! " << message << " at " << file << ":" << (int)line << endl;
-    debugger_t::print_backtrace(0, 0, 20);
+    // debugger_t::print_backtrace(0, 0, 20);
 
     halt();
 }
@@ -28,7 +28,7 @@ void panic_assert(const char* desc, const char* file, uint32_t line)
 
     kconsole.set_attr(WHITE, RED);
     kconsole << "ASSERTION FAILED! " << desc << " at " << file << ":" << (int)line << endl;
-    debugger_t::print_backtrace(0, 0, 20);
+    // debugger_t::print_backtrace(0, 0, 20);
 
     halt();
 }
