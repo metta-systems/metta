@@ -26,6 +26,7 @@
 #include "default_console.h"
 #include "exceptions.h"
 #include "debugger.h"
+#include "stringref.h"
 
 /**
  * @defgroup typecode Type code
@@ -80,49 +81,6 @@ shared_destroy(naming_context_v1::closure_t*)
 // Typesystem
 //=====================================================================================================================
 
-/**
- * Look up a type name in this interface.
- */
-static type_representation_t* internal_get(type_system_f_v1::state_t* state, const char* name)
-{
-    interface_v1::state_t* iface = nullptr;
-    type_representation_t* result = nullptr;
-    const char* extra = nullptr;
-
-    // pos = find(name, '.');
-    // if (pos)
-    // {
-    //     extra = name[pos+1:];
-    //     name = name[:pos-1];
-    // }
-
-    /* now "name" is just the interface, and "extra" is any extra qualifier */
-
-    if (state->interfaces_by_name->get(name, (address_t*)&iface))
-    {
-        /* We've found the first component. */
-        if (extra)
-        {
-            for (int i = 0; iface->types[i]; ++i)
-                if (extra == iface->types[i]->name)
-                    result = iface->types[i];
-
-            /* special case if it's an intf type defined by the metainterface */
-            if (!result && (iface == &meta_interface))
-            {
-                result = internal_get(state, extra); // this should trigger search in "meta_interface.<something>" but that won't work atm
-            }
-        }
-        else
-        {
-            /* Otherwise return this interface clp */
-            result = &iface->rep;
-        }
-    }
-
-    return result;
-}
-
 char* stralloc(size_t size, heap_v1::closure_t* heap)
 {
     return reinterpret_cast<char*>(heap->allocate(size));
@@ -135,6 +93,56 @@ string_copy(const char* src, heap_v1::closure_t* heap)
     char* dst = stralloc(len, heap);
     memutils::copy_memory(dst, src, len);
     return dst;
+}
+
+char*
+string_n_copy(const char* src, size_t len, heap_v1::closure_t* heap)
+{
+    char* dst = stralloc(len+1, heap);
+    memutils::copy_memory(dst, src, len);
+    dst[len] = 0;
+    return dst;
+}
+
+/**
+ * Look up a type name in this interface.
+ */
+static type_representation_t* internal_get(type_system_f_v1::state_t* state, const char* name)
+{
+    interface_v1::state_t* iface = nullptr;
+    type_representation_t* result = nullptr;
+    stringref_t name_sr(name);
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
+
+    // @todo: move this allocation to stringref_t guts?
+    if (!refs.second.empty())
+        name = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
+    /* now "name" is just the interface, and "extra" is any extra qualifier */
+
+    if (state->interfaces_by_name->get(name, (address_t*)&iface))
+    {
+        /* We've found the first component. */
+        if (!refs.second.empty())
+        {
+            for (int i = 0; iface->types[i]; ++i)
+                if (refs.second == iface->types[i]->name)
+                    result = iface->types[i];
+
+            /* special case if it's an intf type defined by the metainterface */
+            if (!result && (iface == &meta_interface))
+            {
+                result = internal_get(state, refs.second.data()); // this should trigger search in "meta_interface.<something>" but that won't work atm
+            }
+        }
+        else
+        {
+            /* Otherwise return this interface clp */
+            result = &iface->rep;
+        }
+    }
+
+    return result;
 }
 
 static void
@@ -509,7 +517,6 @@ meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::
     auto state = reinterpret_cast<type_system_f_v1::closure_t*>(self)->d_state;
     interface_v1::state_t* iface = nullptr;
     type_representation_t* trep = nullptr;
-    const char* extra = nullptr;
 
     /* First we check for builtin types (e.g. STRING, CHAR, etc.) */
     for (size_t i = 0; i < meta_interface.num_types; ++i)
@@ -524,23 +531,19 @@ meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::
 
     /* Otherwise look up the leading component of "name" */
   
-// @todo use stringrefs to point inside subwords in long name specifiers
-// e.g. stringref_t extra = stringref_t(name, find(name, "."));
-// pull stringref interface from llvm?
+    stringref_t name_sr(name);
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
 
-    // if (extra)
-    // {
-    // sep      = *extra;  /* save separator */
-    // *extra++ = '\0';
-    // }
-  
+    if (!refs.second.empty())
+        name = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
     /* now "name" is just the interface, and "extra" is any extra qualifier */
 
     if (state->interfaces_by_name->get(name, (address_t*)&iface))
     {
         // We've found the first component. If there are no more components,
         // then simply return the types.any; otherwise, have to recurse a bit.
-        if (!extra)
+        if (refs.second.empty())
         {
             *obj = iface->rep.any;
             exists = true;
@@ -556,7 +559,8 @@ meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::
             types::val v = type_system_v1_narrow(ts, iface->rep.any, naming_context_v1::type_code);
             naming_context_v1::closure_t* context = reinterpret_cast<naming_context_v1::closure_t*>(v);
 
-            exists = context->get(extra, obj);
+            exists = context->get(refs.second.data(), obj);
+            // @todo free (name) here
         }
     }
   
