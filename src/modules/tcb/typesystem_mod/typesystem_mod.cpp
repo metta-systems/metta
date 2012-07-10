@@ -26,6 +26,7 @@
 #include "default_console.h"
 #include "exceptions.h"
 #include "debugger.h"
+#include "stringref.h"
 
 /**
  * @defgroup typecode Type code
@@ -47,6 +48,7 @@ struct type_system_f_v1::state_t
     map_string_address_v1::closure_t*  interfaces_by_name;
 };
 
+extern interface_v1::closure_t meta_interface_closure; // forward declaration
 extern interface_v1::state_t meta_interface; // forward declaration
 
 //=====================================================================================================================
@@ -79,49 +81,6 @@ shared_destroy(naming_context_v1::closure_t*)
 // Typesystem
 //=====================================================================================================================
 
-/**
- * Look up a type name in this interface.
- */
-static type_representation_t* internal_get(type_system_f_v1::state_t* state, const char* name)
-{
-    interface_v1::state_t* iface = nullptr;
-    type_representation_t* result = nullptr;
-    const char* extra = nullptr;
-
-    // pos = find(name, '.');
-    // if (pos)
-    // {
-    //     extra = name[pos+1:];
-    //     name = name[:pos-1];
-    // }
-
-    /* now "name" is just the interface, and "extra" is any extra qualifier */
-
-    if (state->interfaces_by_name->get(name, (address_t*)&iface))
-    {
-        /* We've found the first component. */
-        if (extra)
-        {
-            for (int i = 0; iface->types[i]; ++i)
-                if (extra == iface->types[i]->name)
-                    result = iface->types[i];
-
-            /* special case if it's an intf type defined by the metainterface */
-            if (!result && (iface == &meta_interface))
-            {
-                result = internal_get(state, extra); // this should trigger search in "meta_interface.<something>" but that won't work atm
-            }
-        }
-        else
-        {
-            /* Otherwise return this interface clp */
-            result = &iface->rep;
-        }
-    }
-
-    return result;
-}
-
 char* stralloc(size_t size, heap_v1::closure_t* heap)
 {
     return reinterpret_cast<char*>(heap->allocate(size));
@@ -134,6 +93,56 @@ string_copy(const char* src, heap_v1::closure_t* heap)
     char* dst = stralloc(len, heap);
     memutils::copy_memory(dst, src, len);
     return dst;
+}
+
+char*
+string_n_copy(const char* src, size_t len, heap_v1::closure_t* heap)
+{
+    char* dst = stralloc(len+1, heap);
+    memutils::copy_memory(dst, src, len);
+    dst[len] = 0;
+    return dst;
+}
+
+/**
+ * Look up a type name in this interface.
+ */
+static type_representation_t* internal_get(type_system_f_v1::state_t* state, const char* name)
+{
+    interface_v1::state_t* iface = nullptr;
+    type_representation_t* result = nullptr;
+    stringref_t name_sr(name);
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
+
+    // @todo: move this allocation to stringref_t guts?
+    if (!refs.second.empty())
+        name = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
+    /* now "name" is just the interface, and "extra" is any extra qualifier */
+
+    if (state->interfaces_by_name->get(name, (address_t*)&iface))
+    {
+        /* We've found the first component. */
+        if (!refs.second.empty())
+        {
+            for (int i = 0; iface->types[i]; ++i)
+                if (refs.second == iface->types[i]->name)
+                    result = iface->types[i];
+
+            /* special case if it's an intf type defined by the metainterface */
+            if (!result && (iface == &meta_interface))
+            {
+                result = internal_get(state, refs.second.data()); // this should trigger search in "meta_interface.<something>" but that won't work atm
+            }
+        }
+        else
+        {
+            /* Otherwise return this interface clp */
+            result = &iface->rep;
+        }
+    }
+
+    return result;
 }
 
 static void
@@ -216,32 +225,27 @@ type_system_v1_get(naming_context_v1::closure_t* self, const char* name, types::
 static interface_v1::closure_t*
 type_system_v1_info(type_system_v1::closure_t* self, type_system_v1::alias tc, types::any* rep)
 {
-    // TypeSystem_st *st = (TypeSystem_st *) self->st;
-    // Intf_st *b;
-    // TypeRep_t   *tr;
+    interface_v1::state_t* iface = nullptr;
 
-    // /* Check the type code refers to a valid interface */
-    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (tc), (addr_t*)&b))
-    // RAISE_TypeSystem$BadCode(tc);
+    /* Check the type code refers to a valid interface */
+    if (!reinterpret_cast<type_system_f_v1::state_t*>(self->d_state)->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    // /* Deal with the case where the type code refers to an interface type */
-    // if (TCODE_IS_INTERFACE (tc)) 
-    // {
-    // ANY_COPY (rep, &(b->rep.any));
-      
-    // return (Interface_clp) &meta_cl;
-    // }
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE(tc))
+    {
+        *rep = iface->rep.any;
+        return &meta_interface_closure;
+    }
   
-    // /* Check that within the given interface this is a valid type */
-    // if (! TCODE_VALID_TYPE (tc, b))
-    // RAISE_TypeSystem$BadCode (tc);
+    /* Check that within the given interface this is a valid type */
+    if (!TCODE_VALID_TYPE(tc, iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    // tr = TCODE_WHICH_TYPE (tc, b);
-  
-    // ANY_COPY (rep, (Type_Any *)&tr->any);
+    type_representation_t* trep = TCODE_WHICH_TYPE(tc, iface);
 
-    // return (Interface_clp) (word_t) (b->rep.any.val);
-    return 0;
+    *rep = trep->any;
+    return reinterpret_cast<interface_v1::closure_t*>(iface->rep.any.ptr32value);
 }
 
 /**
@@ -257,7 +261,7 @@ type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
     /* Deal with the case where the type code refers to an interface type */
-    if (TCODE_IS_INTERFACE (tc))
+    if (TCODE_IS_INTERFACE(tc))
         return iface->rep.size;
   
     /* Check that within the given interface this is a valid type */
@@ -277,22 +281,40 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
     /* Deal with the case where the type code refers to an interface type */
-    if (TCODE_IS_INTERFACE (tc))
+    if (TCODE_IS_INTERFACE(tc))
     {
-    // name = strdup(b->rep.name);
-    // if(!name) RAISE_Heap$NoMemory();
-    // return name;
+        return string_copy(iface->rep.name, PVS(heap));
     }
   
     /* Check that within the given interface this is a valid type */
     if (!TCODE_VALID_TYPE (tc, iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    type_representation_t* tr = TCODE_WHICH_TYPE(tc, iface);
-    // name = strdup(tr->name);
-    // if(!name) RAISE_Heap$NoMemory();
-    // return name;
-    return 0;
+    type_representation_t* trep = TCODE_WHICH_TYPE(tc, iface);
+    return string_copy(trep->name, PVS(heap));
+}
+
+static const char*
+type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias tc)
+{
+    interface_v1::state_t* iface = nullptr;
+
+    /* Check the type code refers to a valid interface */
+    if (!reinterpret_cast<type_system_f_v1::state_t*>(self->d_state)->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE(tc))
+    {
+        return string_copy(iface->rep.autodoc, PVS(heap));
+    }
+  
+    /* Check that within the given interface this is a valid type */
+    if (!TCODE_VALID_TYPE (tc, iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    type_representation_t* trep = TCODE_WHICH_TYPE(tc, iface);
+    return string_copy(trep->autodoc, PVS(heap));
 }
 
 /**
@@ -301,47 +323,37 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static bool
 type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias sub, type_system_v1::alias super)
 {
-    // TypeSystem_st *st = (TypeSystem_st *) self->st;
-    // Intf_st *b;
+    type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
+    interface_v1::state_t* iface = nullptr;
 
-    // /* Check the type code refers to a valid interface */
-    // if (!LongCardTbl$Get (st->intfsByTC, 
-    //           TCODE_INTF_CODE (super), 
-    //           (addr_t*)&b)) {
-    // eprintf("TypeSystem$IsType: unknown typecode (super=%lx)\n", super);
-    // RAISE_TypeSystem$BadCode (super);
-    // }
+    /* Check the super type code refers to a valid interface */
+    if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(super), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", super);
 
-    // /* Quick and dirty check for equality */
-    // if (sub == super) {
-    // return True;
-    // }
+    /* Quick and dirty check for equality. */
+    if (sub == super)
+        return true;
 
-    // /* Check the type code refers to a valid interface */
-    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (sub), (addr_t*)&b)) {
-    // eprintf("TypeSystem$IsType: unknown typecode (sub=%lx)\n", sub);
-    // RAISE_TypeSystem$BadCode (sub);
-    // }
+    /* Check the sub type code refers to a valid interface */
+    if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(sub), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", sub);
 
-    // /* Deal with the case where the type code refers to an interface type */
-    // if (TCODE_IS_INTERFACE (sub)) 
-    // {
-    // while (b->rep.code.val != super) 
-    // {
-    //     /* Look up the supertype */
-    //     if ( !b->extends ) {
-    //     return False;
-    //     }
-    //     if (!LongCardTbl$Get (st->intfsByTC, b->extends, (addr_t*)&b)) {
-    //     eprintf("TypeSystem$IsType: unknown typecode (super=%lx)\n", 
-    //         b->extends);
-    //     RAISE_TypeSystem$BadCode (sub);
-    //     }
-    // }
-    // return True;
-    // }
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE(sub))
+    {
+        while (iface->rep.code.value != super)
+        {
+            /* Look up the supertype */
+            if (!iface->supertype)
+                return false;
 
-    // /* We have a concrete type and it's not the same typecode, so fail. */
+            if (!state->interfaces_by_typecode->get(iface->supertype, (address_t*)&iface))
+                OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", iface->supertype);
+        }
+        return true;
+    }
+
+    /* We have a concrete type and it's not the same typecode, so fail. */
     return false;
 }
 
@@ -351,14 +363,10 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
 static types::val
 type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system_v1::alias tc)
 {
-    // if (!Ts_IsType (self, a->type, tc)) {
-    // NTRC(printf("TS$Narrow: any's type (%qx) incompat with desired %qx\n",
-    //        a->type, tc));
-    // RAISE_TypeSystem$Incompatible();
-    // }
-    
-    // return a->val;
-    return types::val();
+    if (!type_system_v1_is_type(self, a.type_, tc))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.incompatible", 0);
+
+    return a.value;
 }
 
 /**
@@ -367,34 +375,36 @@ type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system
 static type_system_v1::alias
 type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
-    // TypeSystem_st *st = (TypeSystem_st *) self->st;
-    // Intf_st *b  = NULL;
-    // TypeRep_t   *tr = NULL;
+    type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
+    interface_v1::state_t* iface = nullptr;
+    type_representation_t* trep = nullptr;
 
-    // for(;;) {
-    // /* Check the type code refers to a valid interface */
-    // if (!LongCardTbl$Get (st->intfsByTC, TCODE_INTF_CODE (a), (addr_t*)&b))
-    //     RAISE_TypeSystem$BadCode (a);
-    
-    // /* Deal with the case where the type code refers to an interface type */
-    // if (TCODE_IS_INTERFACE (a))
-    //     return a;
-    
-    //  Check that within the given interface this is a valid type 
-    // if (! TCODE_VALID_TYPE (a, b))
-    //     RAISE_TypeSystem$BadCode(a);
-    
-    // /* Get the representation of this type */
-    // tr = TCODE_WHICH_TYPE (a, b); 
+    while (true)
+    {
+        /* Check the type code refers to a valid interface */
+        if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+            OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 
-    // /* If it's not an alias, return it */
-    // if ( tr->any.type != TypeSystem_Alias__code ) return a;
-    
-    // /* Else go round again. */
-    // a = ((Type_Any *)&tr->any)->val;
-    // }
-    // RAISE_TypeSystem$BadCode (a);
-    return type_system_v1::alias();
+        /* Deal with the case where the type code refers to an interface type */
+        if (TCODE_IS_INTERFACE(tc))
+            return tc;
+
+        /* Check that within the given interface this is a valid type */
+        if (!TCODE_VALID_TYPE (tc, iface))
+            OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+        /* Get the representation of this type */
+        trep = TCODE_WHICH_TYPE(tc, iface);
+
+        /* If it's not an alias, return it */
+        if (trep->any.type_ != type_system_v1::alias_type_code)
+            return tc;
+
+        /* Else go round again. */
+        tc = trep->any.value;
+    }
+
+    OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
 }
 
 /*
@@ -474,6 +484,7 @@ static type_system_f_v1::ops_t typesystem_ops =
     type_system_v1_info,
     type_system_v1_size,
     type_system_v1_name,
+    type_system_v1_docstring,
     type_system_v1_is_type,
     type_system_v1_narrow,
     type_system_v1_unalias,
@@ -487,25 +498,118 @@ static type_system_f_v1::ops_t typesystem_ops =
 static naming_context_v1::names
 meta_interface_list(naming_context_v1::closure_t* self)
 {
-    return naming_context_v1::names();
+    auto state = reinterpret_cast<type_system_f_v1::closure_t*>(self)->d_state;
+    naming_context_v1::names n;
+    map_string_address_iterator_v1::closure_t* it = nullptr;
+
+    OS_TRY {
+        const char* name;
+        interface_v1::state_t* tb;
+
+        /* Run through all the predefined types */
+        for (size_t i = 0; i < meta_interface.num_types; ++i)
+        {
+            add_name(meta_interface.types[i]->name, PVS(heap), n);
+        }
+
+        /* then all the others */
+        it = state->interfaces_by_name->iterate();
+        while (it->next(&name, (memory_v1::address*)&tb))
+        {
+            add_name(tb->rep.name, PVS(heap), n);
+        }
+        it->dispose();
+    }
+    OS_CATCH_ALL {
+        if (it)
+            it->dispose();
+        OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", 0);
+    }
+    OS_ENDTRY;
+
+    return n;
 }
 
+/**
+ * Meta-interface get method - this differs from typesystem's get in that 
+ * we have to deal with PROCs and EXCEPTIONs as well as TYPEs.
+ */ 
 static bool
 meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
-    return false;
+    bool exists = false;
+    auto state = reinterpret_cast<type_system_f_v1::closure_t*>(self)->d_state;
+    interface_v1::state_t* iface = nullptr;
+    type_representation_t* trep = nullptr;
+
+    /* First we check for builtin types (e.g. STRING, CHAR, etc.) */
+    for (size_t i = 0; i < meta_interface.num_types; ++i)
+    {
+        trep = meta_interface.types[i];
+        if (memutils::is_string_equal(trep->name, name))
+        {
+            *obj = trep->any;
+            return true;
+        }
+    }
+
+    /* Otherwise look up the leading component of "name" */
+  
+    stringref_t name_sr(name);
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
+
+    if (!refs.second.empty())
+        name = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
+    /* now "name" is just the interface, and "extra" is any extra qualifier */
+
+    if (state->interfaces_by_name->get(name, (address_t*)&iface))
+    {
+        // We've found the first component. If there are no more components,
+        // then simply return the types.any; otherwise, have to recurse a bit.
+        if (refs.second.empty())
+        {
+            *obj = iface->rep.any;
+            exists = true;
+        }
+        else
+        {
+            type_system_v1::closure_t* ts = reinterpret_cast<type_system_v1::closure_t*>(&state->closure);
+
+            /* in this case, need first half to be a context */
+            if (!type_system_v1_is_type(ts, iface->rep.any.type_, naming_context_v1::type_code))
+                OS_RAISE((exception_support_v1::id)"type_system_v1.not_context", 0);
+
+            types::val v = type_system_v1_narrow(ts, iface->rep.any, naming_context_v1::type_code);
+            naming_context_v1::closure_t* context = reinterpret_cast<naming_context_v1::closure_t*>(v);
+
+            exists = context->get(refs.second.data(), obj);
+            // @todo free (name) here
+        }
+    }
+  
+    return exists;
 }
 
+/**
+ * extends method: the meta-interface does not extend anything.
+ */
 static bool
 meta_interface_v1_extends(interface_v1::closure_t* self, interface_v1::closure_t** o)
 {
     return false;
 }
 
+/**
+ * info method: return information about the meta-interface.
+ */
 static bool
 meta_interface_v1_info(interface_v1::closure_t* self, interface_v1::needs* need_list, types::name* name, types::code* code)
 {
-    return false;
+    *need_list = interface_v1::needs();
+    *name = string_copy(TCODE_META_NAME, PVS(heap));
+    *code = meta_interface_type_code;
+    return /*local:*/false;
 }
 
 static interface_v1::ops_t meta_ops =
@@ -519,7 +623,7 @@ static interface_v1::ops_t meta_ops =
     meta_interface_v1_info
 };
 
-static interface_v1::closure_t meta_interface_closure =
+interface_v1::closure_t meta_interface_closure =
 {
     &meta_ops,
     nullptr
