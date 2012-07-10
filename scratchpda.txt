@@ -1,18 +1,19 @@
-bootimage is currently simply series of elf modules, which are loaded into memory and relocated. they have bss allocated etc, so from the compact boot image form they are converted into in-memory representation and registered in bootinfo page.
+== bootimage notes ==
 
-then some memory initialization mumbo-jumbo happens using some of these modules.
-then we create the root namespace context.
+Bootimage is currently simply series of elf modules, which are loaded into memory and relocated. They have bss allocated etc, so from the compact boot image form they are converted into in-memory representation and registered in bootinfo page.
 
-now interesting part, scrub all module infos in bootinfo page and enter them into root context "modules" scope.
-from now on the NAME_FIND equivalent should work - modules can be looked up from namespace.
+Then some memory initialization mumbo-jumbo happens using some of these modules.
+Then we create the root namespace context.
+
+Now interesting part, scrub all module infos in bootinfo page and enter them into root context "modules" scope.
+From now on the NAME_FIND equivalent should work - modules can be looked up from namespace.
 
 !!NB: Not all modules from bootimage need to enter the modules namespace, some boot-time only may not be needed there??
 
-do we need to keep any namespace info in the bootimage or we can reconstruct it on bootup?
-right now I don't see anything that we would need to store in the bootimage.
+Do we need to keep any namespace info in the bootimage or we can reconstruct it on bootup?
+Right now I don't see anything that we would need to store in the bootimage.
 
-
-so very important part of bootstrap are the context_factory and naming_context 
+So very important part of bootstrap are the context_factory and naming_context 
 
 bootimage_t bootimg;
 for_each(bootimg.modules()) {
@@ -26,3 +27,66 @@ for_each(bootimg.modules()) {
 for_each(bootinfo_page.modules()) {
 	module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
 }
+
+== Cleanups todo ==
+
+@todo move types__intf_typeinfo to types::intf_typeinfo etc because of namespace linking issues
+all non-pub types should be inside namespace types { namespace { } } perhaps
+
+kill tools libs in root wscript, they are overhead?
+
+== Gold linker todo ==
+
+Doesn't build _GLOBAL_OFFSET_TABLE_ for some reason, reproducible case made.
+
+== Better IDL support in C++ ==
+
+Simpler approach could be to keep IDL string type as "const char*" but for sequence<> make a sequence_t<T> class and specialize it for sequence<const char*> case by making it allocate data in heap always.
+
+/**
+ * Represents a sequence of entries of type T allocated on a heap for client use.
+ * Destroying a sequence will deallocate all items. (Sequence takes ownership of the items it holds).
+ * Specialized variants of sequence may provide custom handling, sequence_t<const char*> is one such type.
+ * Sequences can be iterating using STL-like interfaces sequence_t<T>::iterator and begin()/end() calls.
+ */
+template<typename T>
+class sequence_t
+{
+	// Sequence reserves memory for an index of entries allocated on the heap, and the entries themselves.
+	size_t allocated, used;
+	T* data;
+};
+
+== More flexible, better string ==
+
+Possible string repr as a "vector":
+{
+int capacity;
+int length;
+char* data;
+}
+
+'capacity' bytes are allocated, 'length' bytes are used at 'data'.
+
+Substrings and pointers to const strings can be indicated with capacity 0 (i.e. none is allocated, but we use substring's memory).
+
+// we may extend cstring_t to be like this...
+cstring_t(const char* data, bool allocate_copy)
+{
+	if (allocate_copy)
+	{
+		data = strdup(data);
+		capacity = length = strlen(data);
+	}
+	else
+	{
+		data = data;
+		capacity = 0;
+		length = strlen(data);
+	}
+}
+
+== Dependency Problem during build ==
+
+changing an interface that is a base for other interfaces does not trigger rebuild of these interfaces (implicit dependency information is missing from the build system...)
+
