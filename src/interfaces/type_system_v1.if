@@ -87,10 +87,10 @@ local interface type_system_v1 extends naming_context_v1
     type alias    set_;
     type record_v1& record_;
 
-    # "code" is not a valid type code in this context.
+    ## Raised if "code" is not a valid type code in this context.
     exception bad_code { alias code; }
 
-    # Raised when a "narrow" operation fails.
+    ## Raised when a "narrow" operation fails.
     exception incompatible {}
 
     # The "info" procedure maps a type code "tc" to information
@@ -105,40 +105,45 @@ local interface type_system_v1 extends naming_context_v1
         returns (interface_v1& scope) 
         raises (bad_code);
 
-    # "size" returns how may bytes an instance of the type occupies in
-    # memory. This is not as straightforward as it sounds, for instance
-    # the "Size" of a "STRING" is one word, and the "Size" of a
-    # "SEQUENCE" is the (fixed) size of the sequence data structure
-    # excluding its elements. It is provided for things like
-    # marshalling code and Monger.
+    ## "size" returns how may bytes an instance of the type occupies in
+    ## memory. This is not as straightforward as it sounds, for instance
+    ## the "Size" of a "STRING" is one word, and the "Size" of a
+    ## "SEQUENCE" is the (fixed) size of the sequence data structure
+    ## excluding its elements. It is provided for things like
+    ## marshalling code and Monger.
 
     size(alias tc) returns (memory_v1.size s) raises (bad_code);
 
-    # "name" returns the name of the type.
+    ## "name" returns the name of the type.
 
     name(alias tc) returns (types.name name) raises (bad_code);
 
-    # The "is_type" procedure tells whether one type is compatible
-    # with another.  Types are compatible if they have the same type
-    # code (note that aliases are \emph{not} compatible), or "sub" is
-    # an interface type which directly or indirectly "extends"
-    # the interface type "super". "bad_code" is raised if one or other
-    # of the type codes does not exist.
+    ## "docstring" returns textual description of the type, field, record or method.
+    ## @todo methods can not currently be looked up...?
+
+    docstring(alias tc) returns (string doc) raises (bad_code);
+
+    ## The "is_type" procedure tells whether one type is compatible
+    ## with another.  Types are compatible if they have the same type
+    ## code (note that aliases are __not__ compatible), or "sub" is
+    ## an interface type which directly or indirectly "extends"
+    ## the interface type "super". "bad_code" is raised if one or other
+    ## of the type codes does not exist.
 
     is_type(alias sub, alias super) returns (boolean result) raises (bad_code);
 
-    # "narrow" performs a runtime type check:
-    # If "is_type(a.type, tc)", then return "a.val"; otherwise raise
-    # "incompatible".
+    ## "narrow" performs a runtime type check:
+    ## If "is_type(a.type, tc)", then return "a.val"; otherwise raise
+    ## "incompatible".
 
     narrow(types.any a, alias tc) returns (types.val v) raises (incompatible);
 
     # It may sometimes be convenient (in Monger for example) to
-    # know the type of which a given type is an alias. The "unalias"
-    # operation can be thought of as repeatedly reading the base type
-    # of a given alias, until the base type itself is not an
-    # alias. Given a "types.code", therefore, "unalias" will always return
-    # a "type.code" of a type which is not an alias.
+    # know the type of which a given type is an alias. 
+    ## The "unalias" operation can be thought of as repeatedly reading the base type
+    ## of a given alias, until the base type itself is not an
+    ## alias. Given a type code, therefore, "unalias" will always return
+    ## a type code of a type which is not an alias.
     # Return the ultimate base type of "tc". If "tc" refers to a type
     # which is not an alias, "base := a".
 

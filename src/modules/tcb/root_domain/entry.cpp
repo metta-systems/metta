@@ -40,6 +40,7 @@
 #include "nemesis/exception_system_v1_interface.h"
 #include "exceptions.h"
 #include "closure_interface.h"
+#include "interface_v1_state.h"
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
@@ -409,6 +410,12 @@ static void init_type_system(bootimage_t& bootimg)
         kconsole << m << endl;
     }
     kconsole << "___ Done testing type system listing" << endl;
+
+    kconsole << "___ Testing type system doc strings" << endl;
+    kconsole << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code) << endl;
+    kconsole << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code) << endl;
+    kconsole << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code) << endl;
+    kconsole << "___ Done testing type system doc strings" << endl;
 }
 
 static void init_namespaces(bootimage_t& bootimg)

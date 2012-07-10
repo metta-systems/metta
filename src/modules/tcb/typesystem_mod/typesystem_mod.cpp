@@ -294,6 +294,29 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
     return string_copy(trep->name, PVS(heap));
 }
 
+static const char*
+type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias tc)
+{
+    interface_v1::state_t* iface = nullptr;
+
+    /* Check the type code refers to a valid interface */
+    if (!reinterpret_cast<type_system_f_v1::state_t*>(self->d_state)->interfaces_by_typecode->get(TCODE_INTF_CODE(tc), (address_t*)&iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    /* Deal with the case where the type code refers to an interface type */
+    if (TCODE_IS_INTERFACE(tc))
+    {
+        return string_copy(iface->rep.autodoc, PVS(heap));
+    }
+  
+    /* Check that within the given interface this is a valid type */
+    if (!TCODE_VALID_TYPE (tc, iface))
+        OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
+
+    type_representation_t* trep = TCODE_WHICH_TYPE(tc, iface);
+    return string_copy(trep->autodoc, PVS(heap));
+}
+
 /**
  * Try to find out if two types are compatible.
  */
@@ -461,6 +484,7 @@ static type_system_f_v1::ops_t typesystem_ops =
     type_system_v1_info,
     type_system_v1_size,
     type_system_v1_name,
+    type_system_v1_docstring,
     type_system_v1_is_type,
     type_system_v1_narrow,
     type_system_v1_unalias,
