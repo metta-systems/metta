@@ -170,9 +170,6 @@ echo "===================================================================="
 echo "Building binutils $BINUTILS_VER..."
 echo "===================================================================="
 
-# To do: add this to build llvm gold plugin and use gold ...
-# time make -j$MAKE_THREADS all-gold && \
-
 if [ ! -f build/binutils/.build.succeeded ]; then
     cd build/binutils && \
     time make -j$MAKE_THREADS && \
@@ -208,8 +205,6 @@ fi
 echo "===================================================================="
 echo "Configuring gmp $GMP_VER..."
 echo "===================================================================="
-
-# --build=$TARGET --program-prefix=$TARGET-
 
 if [ ! -f build/gmp/.config.succeeded ]; then
     cd build/gmp && \
@@ -473,10 +468,18 @@ echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
 
-# We rebuild using just built fresh clang
+# We rebuild using just built fresh clang for the sole reason of being able
+# to use recent libcxx (which we link against in tools), so LLVM libs have
+# to be built against this same libcxx too.
+
+# Check if polly and lld can be built with this llvm version without errors
+# and enable:
 # --enable-polly
 
 # Force use of local libcxx for new clang build.
+# This doesn't enable the options, merely records them, the real activation
+# happens below in make command invocation.
+
 export EXTRA_OPTIONS="-I$TOOLCHAIN_DIR/libcxx/include"
 export EXTRA_LD_OPTIONS="-L$TOOLCHAIN_DIR/libcxx/lib -lc++"
 
@@ -535,3 +538,4 @@ echo "All done, enjoy!"
 echo "===================================================================="
 echo "===================================================================="
 cd ..
+
