@@ -479,9 +479,6 @@ echo "Configuring llvm..."
 echo "===================================================================="
 
 # We rebuild using just built fresh clang
-# We also rebuild using gcc toolchain path we've just built - that's probably a bad idea in general, as it limits
-# clang's cross-compile abilities, but will do for now.
-# --with-gcc-toolchain=$PREFIX \
 # --enable-polly
 
 # Force use of local libcxx for new clang build.
@@ -507,7 +504,7 @@ echo "===================================================================="
 
 if [ ! -f build/llvm2/.build2.succeeded ]; then
     cd build/llvm2 && \
-    make -j$MAKE_THREADS && \
+    make -j$MAKE_THREADS EXTRA_OPTIONS="$EXTRA_OPTIONS" EXTRA_LD_OPTIONS="$EXTRA_LD_OPTIONS" && \
     make check && \
     touch .build2.succeeded && \
     cd ../.. || exit 1
