@@ -1,0 +1,6 @@
+Perform scanning of the system buses and build a device tree which describes machine configuration.
+
+A prerequisite for device driver loading and probing.
+
+Device tree can be represented as a naming_context, mapping various information about devices from arc-names.
+
