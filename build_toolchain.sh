@@ -18,14 +18,9 @@ export MAKE_THREADS=8
 
 export LLVM_REVISION=159656
 export CLANG_REVISION=159656
-# compiler_rt version bumped because of fatal asan warnings.
-# version is upped until the warnings disappeared but before it started insisting on ios library generation.
-# r159142
 export COMPILER_RT_REVISION=159656
 export LIBCXX_REVISION=159656
 
-# binutils 2.21 won't work, see https://trac.macports.org/ticket/22679
-# minimal binutils version for gcc 4.6.2 is 2.20.1 (.cfi_section support)
 BINUTILS_VER=2.22
 GCC_VER=4.6.2
 MPFR_VER=3.1.0
