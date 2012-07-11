@@ -90,3 +90,20 @@ cstring_t(const char* data, bool allocate_copy)
 
 changing an interface that is a base for other interfaces does not trigger rebuild of these interfaces (implicit dependency information is missing from the build system...)
 
+== Categories ==
+
+Architecture
+Boot/kickstart
+Buildsystem
+C++ runtime
+Debugger
+Device manager
+Documentation
+Glue code
+Graphical User Interface
+Interface Definition Language
+Memory manager
+Nucleus
+Portal manager
+Scheduling
+System
