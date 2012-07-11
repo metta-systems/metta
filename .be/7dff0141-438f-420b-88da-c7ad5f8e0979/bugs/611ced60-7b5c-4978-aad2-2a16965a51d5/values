@@ -1,0 +1,21 @@
+creator: Berkus <berkus@exquance.com>
+
+
+extra_strings:
+- BLOCKS:8dde25f7-2f54-42f2-99f4-6a8003ba6cb8
+
+
+reporter: Berkus <berkus@exquance.com>
+
+
+severity: minor
+
+
+status: open
+
+
+summary: Jotun native file format work
+
+
+time: Tue, 10 Jul 2012 23:01:33 +0000
+

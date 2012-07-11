@@ -1,0 +1,22 @@
+creator: Berkus <berkus@exquance.com>
+
+
+extra_strings:
+- BLOCKS:8dde25f7-2f54-42f2-99f4-6a8003ba6cb8
+- BLOCKS:ed82dc4a-3786-41a2-8cb2-48536766e984
+
+
+reporter: Berkus <berkus@exquance.com>
+
+
+severity: minor
+
+
+status: open
+
+
+summary: Migrate linking to gold with LLVM plugin
+
+
+time: Tue, 10 Jul 2012 23:15:50 +0000
+

@@ -18,14 +18,9 @@ export MAKE_THREADS=8
 
 export LLVM_REVISION=159656
 export CLANG_REVISION=159656
-# compiler_rt version bumped because of fatal asan warnings.
-# version is upped until the warnings disappeared but before it started insisting on ios library generation.
-# r159142
 export COMPILER_RT_REVISION=159656
 export LIBCXX_REVISION=159656
 
-# binutils 2.21 won't work, see https://trac.macports.org/ticket/22679
-# minimal binutils version for gcc 4.6.2 is 2.20.1 (.cfi_section support)
 BINUTILS_VER=2.22
 GCC_VER=4.6.2
 MPFR_VER=3.1.0
@@ -175,9 +170,6 @@ echo "===================================================================="
 echo "Building binutils $BINUTILS_VER..."
 echo "===================================================================="
 
-# To do: add this to build llvm gold plugin and use gold ...
-# time make -j$MAKE_THREADS all-gold && \
-
 if [ ! -f build/binutils/.build.succeeded ]; then
     cd build/binutils && \
     time make -j$MAKE_THREADS && \
@@ -213,8 +205,6 @@ fi
 echo "===================================================================="
 echo "Configuring gmp $GMP_VER..."
 echo "===================================================================="
-
-# --build=$TARGET --program-prefix=$TARGET-
 
 if [ ! -f build/gmp/.config.succeeded ]; then
     cd build/gmp && \
@@ -407,33 +397,15 @@ else
 fi
 
 echo "===================================================================="
-echo "Configuring and building libcxx..."
-echo "===================================================================="
-
-if [ ! -f libcxx/.build.succeeded ]; then
-    cd libcxx/lib && \
-    export TRIPLE=-apple- && \
-    ./buildit && \
-    touch ../.build.succeeded && \
-    cd ../.. || exit 1
-else
-    echo "libcxx/.build.succeeded exists, NOT rebuilding libcxx!"
-fi
-
-echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
 
 unset LD
 
-# Force use of local libcxx for new clang build.
-export EXTRA_OPTIONS='-I$TOOLCHAIN_DIR/libcxx/include'
-export EXTRA_LD_OPTIONS='-L$TOOLCHAIN_DIR/libcxx/lib -lc++'
-
 if [ ! -f build/llvm/.config.succeeded ]; then
     cd build/llvm && \
     ../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
-    --enable-libcpp --disable-docs \
+    --disable-docs \
     --with-binutils-include=$TOOLCHAIN_DIR/sources/binutils-${BINUTILS_VER}/include/ --enable-pic \
     --enable-targets=$LLVM_TARGETS  && \
     touch .config.succeeded && \
@@ -449,7 +421,6 @@ echo "===================================================================="
 if [ ! -f build/llvm/.build.succeeded ]; then
     cd build/llvm && \
     make -j$MAKE_THREADS && \
-    make check && \
     touch .build.succeeded && \
     cd ../.. || exit 1
 else
@@ -474,6 +445,85 @@ mkdir -p $PREFIX/lib/bfd-plugins
 ln -sf $TOOLCHAIN_DIR/clang/lib/LLVMgold.dylib $PREFIX/lib/bfd-plugins
 
 echo "===================================================================="
+echo "Configuring and building libcxx..."
+echo "===================================================================="
+
+if [ ! -f libcxx/.build.succeeded ]; then
+    cd libcxx/lib && \
+    TRIPLE=-apple- CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    ./buildit && \
+    touch ../.build.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "libcxx/.build.succeeded exists, NOT rebuilding libcxx!"
+fi
+
+echo "===================================================================="
+echo "===================================================================="
+echo "Rebuilding LLVM libraries with freshly installed clang..."
+echo "===================================================================="
+echo "===================================================================="
+
+echo "===================================================================="
+echo "Configuring llvm..."
+echo "===================================================================="
+
+# We rebuild using just built fresh clang for the sole reason of being able
+# to use recent libcxx (which we link against in tools), so LLVM libs have
+# to be built against this same libcxx too.
+
+# Check if polly and lld can be built with this llvm version without errors
+# and enable:
+# --enable-polly
+
+# Force use of local libcxx for new clang build.
+# This doesn't enable the options, merely records them, the real activation
+# happens below in make command invocation.
+
+export EXTRA_OPTIONS="-I$TOOLCHAIN_DIR/libcxx/include"
+export EXTRA_LD_OPTIONS="-L$TOOLCHAIN_DIR/libcxx/lib -lc++"
+
+if [ ! -f build/llvm2/.config2.succeeded ]; then
+    cd build/llvm2 && \
+    CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    ../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
+    --enable-libcpp --disable-docs \
+    --with-binutils-include=$TOOLCHAIN_DIR/sources/binutils-${BINUTILS_VER}/include/ --enable-pic \
+    --enable-targets=$LLVM_TARGETS  && \
+    touch .config2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.config2.succeeded exists, NOT reconfiguring llvm!"
+fi
+
+echo "===================================================================="
+echo "Building llvm... this may take a long while"
+echo "===================================================================="
+
+if [ ! -f build/llvm2/.build2.succeeded ]; then
+    cd build/llvm2 && \
+    make -j$MAKE_THREADS EXTRA_OPTIONS="$EXTRA_OPTIONS" EXTRA_LD_OPTIONS="$EXTRA_LD_OPTIONS" && \
+    make check && \
+    touch .build2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.build2.succeeded exists, NOT rebuilding llvm!"
+fi
+
+echo "===================================================================="
+echo "Installing llvm & clang..."
+echo "===================================================================="
+
+if [ ! -f build/llvm2/.install2.succeeded ]; then
+    cd build/llvm2 && \
+    make install && \
+    touch .install2.succeeded && \
+    cd ../.. || exit 1
+else
+    echo "build/llvm2/.install2.succeeded exists, NOT reinstalling llvm!"
+fi
+
+echo "===================================================================="
 echo "To clean up:"
 echo "cd toolchain"
 echo "rm -rf tarballs build sources"
@@ -488,3 +538,4 @@ echo "All done, enjoy!"
 echo "===================================================================="
 echo "===================================================================="
 cd ..
+

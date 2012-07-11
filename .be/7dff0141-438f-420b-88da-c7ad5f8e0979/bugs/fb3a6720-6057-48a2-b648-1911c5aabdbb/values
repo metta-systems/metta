@@ -1,0 +1,21 @@
+creator: Berkus <berkus@exquance.com>
+
+
+extra_strings:
+- BLOCKS:83777c5a-cf88-45a8-a3ad-af9cdbd5c9e5
+
+
+reporter: Berkus <berkus@exquance.com>
+
+
+severity: minor
+
+
+status: open
+
+
+summary: Investigate TLSF memory allocator for RT tasks
+
+
+time: Tue, 10 Jul 2012 23:33:31 +0000
+

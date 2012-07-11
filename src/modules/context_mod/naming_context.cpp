@@ -23,7 +23,6 @@
 // sequence<> meddler support
 
 // steps:
-// implement types.any and type_system
 // implement naming_context
 
 using namespace std;
