@@ -1,3 +1,6 @@
+assigned: Berkus <berkus@exquance.com>
+
+
 creator: Berkus <berkus@exquance.com>
 
 
@@ -11,7 +14,7 @@ reporter: Berkus <berkus@exquance.com>
 severity: minor
 
 
-status: open
+status: assigned
 
 
 summary: Finish porting naming context operations

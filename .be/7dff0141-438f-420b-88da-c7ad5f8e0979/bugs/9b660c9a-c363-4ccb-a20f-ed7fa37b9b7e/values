@@ -1,0 +1,21 @@
+creator: Berkus <berkus@exquance.com>
+
+
+extra_strings:
+- BLOCKS:f7bf9690-8aad-4903-a467-674b7dae087f
+
+
+reporter: Berkus <berkus@exquance.com>
+
+
+severity: minor
+
+
+status: open
+
+
+summary: Devise a testing framework for modules
+
+
+time: Wed, 11 Jul 2012 01:42:38 +0000
+

@@ -27,6 +27,7 @@
 #include "exceptions.h"
 #include "debugger.h"
 #include "stringref.h"
+#include "stringstuff.h"
 
 /**
  * @defgroup typecode Type code
@@ -80,29 +81,6 @@ shared_destroy(naming_context_v1::closure_t*)
 //=====================================================================================================================
 // Typesystem
 //=====================================================================================================================
-
-char* stralloc(size_t size, heap_v1::closure_t* heap)
-{
-    return reinterpret_cast<char*>(heap->allocate(size));
-}
-
-char*
-string_copy(const char* src, heap_v1::closure_t* heap)
-{
-    size_t len = memutils::string_length(src) + 1;
-    char* dst = stralloc(len, heap);
-    memutils::copy_memory(dst, src, len);
-    return dst;
-}
-
-char*
-string_n_copy(const char* src, size_t len, heap_v1::closure_t* heap)
-{
-    char* dst = stralloc(len+1, heap);
-    memutils::copy_memory(dst, src, len);
-    dst[len] = 0;
-    return dst;
-}
 
 /**
  * Look up a type name in this interface.
