@@ -379,6 +379,12 @@ void interface_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
     s << indent_prefix << "#pragma once" << endl << endl
       << indent_prefix << "#include \"module_interface.h\"" << endl;
 
+    // @todo Special case for types::any:
+    if (name() == "types")
+    {
+        s << indent_prefix << "#include \"any.h\"" << endl;
+    }
+
     // Includes.
     // Do not include interface-only references, as it creates cyclic dependencies.
     // Instead, make a forward declaration down below..
