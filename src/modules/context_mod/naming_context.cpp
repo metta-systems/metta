@@ -21,10 +21,40 @@
 #include "stringref.h"
 #include "stringstuff.h"
 
+#include "elf.h"//temporary for hash test
+
 // required:
 // sequence<> meddler support - std::vector<T> for now, but looking into using sequence_t<T> wrapper instead
 
 using namespace std;
+
+// Things aren't exactly as simple as it would seem, STL doesn't have specializations of hash<> and equal_to<> for
+// C strings, so their interpretation as keys of an unordered_map is ... pointer based.
+// Unsurprisingly, this breaks just about any attempt to find a string key.
+// @todo Check the hash specialization for std::string and implement the similar for C string, or even better
+// use stringref_t/cstring_t for key_type.
+
+template<>
+struct hash<const char*>
+{
+    size_t operator ()(const char* key) const
+    {
+        size_t hash = elf32::elf_hash(key);
+        D(kconsole << "hash: key '" << key << "', hash " << hash << endl);
+        return hash;
+    }
+};
+
+template<>
+class equal_to<const char*>
+{
+public:
+    bool operator ()(const char* left, const char* right) const
+    {
+        D(kconsole << "equal_to: left '" << left << "' and right '" << right << "'" << endl);
+        return stringref_t(left) == stringref_t(right);
+    }
+};
 
 typedef const char* key_type;
 typedef types::any value_type;
@@ -34,24 +64,24 @@ typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, 
 
 struct naming_context_v1::state_t
 {
-	naming_context_v1::closure_t closure;
-	context_map map;
-	heap_v1::closure_t* heap;
-	type_system_v1::closure_t* typesystem;
+    naming_context_v1::closure_t closure;
+    context_map map;
+    heap_v1::closure_t* heap;
+    type_system_v1::closure_t* typesystem;
 
-	state_t(context_allocator* alloc, heap_v1::closure_t* heap_) : map(*alloc), heap(heap_) {}
+    state_t(context_allocator* alloc, heap_v1::closure_t* heap_) : map(*alloc), heap(heap_) {}
 };
 
 static naming_context_v1::names
 list(naming_context_v1::closure_t* self)
 {
-	naming_context_v1::names n(context_allocator(self->d_state->heap));
-	for (auto x : self->d_state->map)
-	{
-		n.push_back(x.first);
-	}
+    naming_context_v1::names n(context_allocator(self->d_state->heap));
+    for (auto x : self->d_state->map)
+    {
+        n.push_back(x.first);
+    }
 
-	return n;
+    return n;
 }
 
 /**
@@ -60,7 +90,164 @@ list(naming_context_v1::closure_t* self)
 static bool
 get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
 {
-	naming_context_v1::state_t* state = self->d_state;
+    naming_context_v1::state_t* state = self->d_state;
+
+    stringref_t name_sr(key);
+    // Split key into first component and the rest.
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
+
+    // @todo: move this allocation to stringref_t guts?
+    if (!refs.second.empty())
+        key = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
+    D(kconsole << "naming_context.get: listing existing keys" << endl;
+    for (auto x : self->d_state->map)
+    {
+        stringref_t k(x.first);
+        kconsole << k.data() << ", length " << k.size() << endl;
+    })
+
+    D(stringref_t k(key);
+    kconsole << "naming_context.get: finding key " << k.data() << ", length " << k.size();)
+    context_map::iterator it = state->map.find(key);
+
+    D(if (it != state->map.end())
+        kconsole << ", FOUND" << endl;
+    else
+        kconsole << ", NOT FOUND" << endl;)
+
+    // There was only one component and so we can get the value and return.
+    if (refs.second.empty())
+    {
+        if (it != state->map.end())
+        {
+            *out_value = (*it).second;
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        // At this stage there is another component. Thus we need to check
+        // that the types.any actually is a subtype of naming_context, and then
+        // recurse.
+        D(kconsole << "..there are subkeys, need to recurse" << endl;
+        kconsole << "First key " << key << ", length " << refs.first.size() << endl;
+        if (!refs.second.empty())
+            kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
+
+        // Check conformance with the context type 
+        if (it != state->map.end())
+        {
+            types::any result((*it).second);
+            if (state->typesystem->is_type(result.type_, naming_context_v1::type_code))
+            {
+                naming_context_v1::closure_t* nctx = reinterpret_cast<naming_context_v1::closure_t*>(state->typesystem->narrow(result, naming_context_v1::type_code));
+                // @todo support either passing stringrefs or extracting cstrings out of stringrefs...
+                return nctx->get(refs.second.data(), out_value);
+            }
+            else
+            {
+                // Have to check for exceptions presence, since get is caled before exception system is set up.
+                if(PVS(exceptions)) {
+                    OS_RAISE((exception_support_v1::id)"naming_context_v1.not_context", 0);
+                } else {
+                    kconsole << __FUNCTION__ << ": not a context " << (*it).first << endl;
+                    return false;
+                }
+            }
+        }
+        // Haven't found this item
+        kconsole << "naming_context.get: failed to go deeper." << endl;
+        return false;
+    }
+}
+
+/**
+ * Bind a name in the context (not necessarily this one!).
+ */
+static void
+add(naming_context_v1::closure_t *self, const char *key, types::any value)
+{
+    naming_context_v1::state_t* state = self->d_state;
+
+    stringref_t name_sr(key);
+    // Split key into first component and the rest.
+    std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
+
+    // @todo: move this allocation to stringref_t guts?
+    if (!refs.second.empty())
+        key = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
+
+    D(kconsole << "naming_context.add: listing existing keys" << endl;
+    for (auto x : self->d_state->map)
+    {
+        stringref_t k(x.first);
+        kconsole << k.data() << ", length " << k.size() << endl;
+    })
+
+    D(stringref_t k(key);
+    kconsole << "naming_context.add: finding key " << k.data() << ", length " << k.size();)
+
+    context_map::iterator it = state->map.find(key);
+
+    D(if (it != state->map.end())
+        kconsole << ", FOUND" << endl;
+    else
+        kconsole << ", NOT FOUND" << endl;)
+
+    // There was only one component and so we can add the value and return.
+    if (refs.second.empty())
+    {
+        if (it != state->map.end())
+        {
+            OS_RAISE((exception_support_v1::id)"naming_context_v1.exists", 0);
+        }
+        else
+        {
+            D(kconsole << "adding " << key << "=>" << value << endl;)
+            state->map.insert(make_pair(key, value));
+            return;
+        }
+    }
+    else
+    {
+        // At this stage there is another component. Thus we need to check
+        // that the types.any actually is a subtype of naming_context, and then
+        // recurse.
+        D(kconsole << "..there are subkeys, need to recurse" << endl;
+        kconsole << "First key " << key << ", length " << refs.first.size() << endl;
+        if (!refs.second.empty())
+            kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
+
+        // Check conformance with the context type 
+        if (it != state->map.end())
+        {
+            types::any result((*it).second);
+            if (state->typesystem->is_type(result.type_, naming_context_v1::type_code))
+            {
+                naming_context_v1::closure_t* nctx = reinterpret_cast<naming_context_v1::closure_t*>(state->typesystem->narrow(result, naming_context_v1::type_code));
+                // @todo support either passing stringrefs or extracting cstrings out of stringrefs...
+                nctx->add(refs.second.data(), value);
+                return;
+            }
+            else
+            {
+                OS_RAISE((exception_support_v1::id)"naming_context_v1.not_context", 0);
+            }
+        }
+        // Haven't found this item
+        OS_RAISE((exception_support_v1::id)"naming_context_v1.not_found", (exception_support_v1::args)key);
+    }
+}
+
+/**
+ * Remove a name from a context (not necessarily this one!).
+ */
+static void
+remove(naming_context_v1::closure_t *self, const char *key)
+{
+    naming_context_v1::state_t* state = self->d_state;
 
     stringref_t name_sr(key);
     // Split key into first component and the rest.
@@ -71,70 +258,42 @@ get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
         key = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
 
     context_map::iterator it = state->map.find(key);
-	// There was only one component and so we can get the value and return.
-	if (refs.second.empty())
-	{
-	    if (it != state->map.end())
-	    {
-	    	*out_value = (*it).second;
-	        return true;
-	    }
-	    return false;
-	}
-	else
-	{
-		// At this stage there is another component. Thus we need to check
-		// that the types.any actually is a subtype of naming_context, and then
-		// recurse.
-		
-		// Check conformance with the context type 
-	    if (it != state->map.end())
-	    {
-	    	if (state->typesystem->is_type(out_value->type_, naming_context_v1::type_code))
-	    	{
-	    		naming_context_v1::closure_t* nctx = reinterpret_cast<naming_context_v1::closure_t*>(state->typesystem->narrow(*out_value, naming_context_v1::type_code));
-	    		// @todo support either passing stringrefs or extracting cstrings out of stringrefs...
-	    		return nctx->get(refs.second.data(), out_value);
-	    	}
-		    else
-		    {
-				// Have to check for exceptions presence, since get is caled before exception system is set up.
-				if(PVS(exceptions)) {
-					OS_RAISE((exception_support_v1::id)"naming_context_v1.not_context", 0);
-				} else {
-					kconsole << __FUNCTION__ << ": not a context " << (*it).first << endl;
-				    return false;
-				}
-		    }
-		}
-		// Haven't found this item
-		kconsole << __FUNCTION__ << ": failed to go deeper." << endl;
-		return false;
-	}
-}
-
-// This is incomplete, doesn't support compound arc-names.
-/**
- * Bind a name in the context (not necessarily this one!).
- */
-static void
-add(naming_context_v1::closure_t *self, const char *key, types::any value)
-{
-	self->d_state->map.insert(make_pair(key, value));
-	// return self->d_state->table->insert(std::make_pair(k, v)).second;
-}
-
-// This is incomplete, doesn't support compound arc-names.
-static void
-remove(naming_context_v1::closure_t *self, const char *key)
-{
-    context_map::iterator it = self->d_state->map.find(key);
-    if (it != self->d_state->map.end())
+    // There was only one component and so we can add the value and return.
+    if (refs.second.empty())
     {
-        self->d_state->map.erase(it);
-        // return true;
+        if (it != state->map.end())
+        {
+            state->map.erase(it);
+        }
+        else
+        {
+            OS_RAISE((exception_support_v1::id)"naming_context_v1.not_found", (exception_support_v1::args)key);
+        }
     }
-    // return false;
+    else
+    {
+        // At this stage there is another component. Thus we need to check
+        // that the types.any actually is a subtype of naming_context, and then
+        // recurse.
+        
+        // Check conformance with the context type 
+        if (it != state->map.end())
+        {
+            types::any result((*it).second);
+            if (state->typesystem->is_type(result.type_, naming_context_v1::type_code))
+            {
+                naming_context_v1::closure_t* nctx = reinterpret_cast<naming_context_v1::closure_t*>(state->typesystem->narrow(result, naming_context_v1::type_code));
+                // @todo support either passing stringrefs or extracting cstrings out of stringrefs...
+                nctx->remove(refs.second.data());
+            }
+            else
+            {
+                OS_RAISE((exception_support_v1::id)"naming_context_v1.not_context", 0);
+            }
+        }
+        // Haven't found this item
+        OS_RAISE((exception_support_v1::id)"naming_context_v1.not_found", (exception_support_v1::args)key);
+    }
 }
 
 static void
@@ -145,11 +304,11 @@ destroy(naming_context_v1::closure_t* self)
 
 static const naming_context_v1::ops_t naming_context_v1_methods =
 {
-	list,
-	get,
-	add,
-	remove,
-	destroy
+    list,
+    get,
+    add,
+    remove,
+    destroy
 };
 
 //=====================================================================================================================
@@ -159,19 +318,19 @@ static const naming_context_v1::ops_t naming_context_v1_methods =
 static naming_context_v1::closure_t*
 create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* heap, type_system_v1::closure_t* type_system)
 {
-	kconsole << " ** Creating new naming context." << endl;
+    kconsole << " ** Creating new naming context." << endl;
 
-	context_allocator* alloc = new(heap) context_allocator(heap);
-	naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
-	state->typesystem = type_system;
+    context_allocator* alloc = new(heap) context_allocator(heap);
+    naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
+    state->typesystem = type_system;
 
-	closure_init(&state->closure, &naming_context_v1_methods, state);
-	return &state->closure;
+    closure_init(&state->closure, &naming_context_v1_methods, state);
+    return &state->closure;
 }
 
 static const naming_context_factory_v1::ops_t naming_context_factory_v1_methods =
 {
-	create_context
+    create_context
 };
 
 static const naming_context_factory_v1::closure_t clos =
