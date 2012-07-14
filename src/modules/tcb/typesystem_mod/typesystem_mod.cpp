@@ -252,6 +252,7 @@ type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static types::name
 type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+    D(kconsole << "type_system.name" << endl);
     interface_v1::state_t* iface = nullptr;
 
     /* Check the type code refers to a valid interface */
@@ -275,6 +276,7 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static const char*
 type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+    D(kconsole << "type_system.docstring" << endl);
     interface_v1::state_t* iface = nullptr;
 
     /* Check the type code refers to a valid interface */
@@ -301,6 +303,7 @@ type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias 
 static bool
 type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias sub, type_system_v1::alias super)
 {
+    D(kconsole << "type_system.is_type" << endl);
     type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
     interface_v1::state_t* iface = nullptr;
 
@@ -341,9 +344,11 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
 static types::val
 type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system_v1::alias tc)
 {
+    D(kconsole << "type_system.narrow {" << endl);
     if (!type_system_v1_is_type(self, a.type_, tc))
         OS_RAISE((exception_support_v1::id)"type_system_v1.incompatible", 0);
 
+    D(kconsole << "type_system.narrow " << a << " }" << endl);
     return a.value;
 }
 
@@ -353,6 +358,7 @@ type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system
 static type_system_v1::alias
 type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
+    D(kconsole << "type_system.unalias" << endl);
     type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
     interface_v1::state_t* iface = nullptr;
     type_representation_t* trep = nullptr;
@@ -401,7 +407,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf); // @todo do we need to convert this back and forth?
     address_t dummy;
 
-    kconsole << "register_interface '" << iface->rep.name << "' {" << endl;
+    D(kconsole << "register_interface '" << iface->rep.name << "' {" << endl);
 
     if (self->d_state->interfaces_by_name->get(iface->rep.name, &dummy))
         OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", 0);
@@ -449,7 +455,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     self->d_state->interfaces_by_name->put(iface->rep.name, intf);
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
 
-    kconsole << "register_interface }" << endl;
+    D(kconsole << "register_interface }" << endl);
 }
 
 static type_system_f_v1::ops_t typesystem_ops = 

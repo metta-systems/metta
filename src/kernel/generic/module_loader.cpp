@@ -205,7 +205,7 @@ static bool ends_with(const cstring_t& str, const cstring_t& suffix)
 module_symbols_t::symmap
 symbol_table_finder_t::all_symbols(const char* suffix)
 {
-    kconsole << "symbol_table_finder_t::all_symbols {" << endl;
+    D(kconsole << "symbol_table_finder_t::all_symbols {" << endl);
     module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
 
     size_t n_entries = symbol_table->size / symbol_table->entsize;
@@ -221,7 +221,7 @@ symbol_table_finder_t::all_symbols(const char* suffix)
 
             if (ends_with(c, suffix))
             {
-                kconsole << "all_symbols adding symbol " << c << endl;
+                V(kconsole << "all_symbols adding symbol " << c << endl);
                 symbols.insert(std::make_pair(c, symbol));
             }
         }
@@ -232,14 +232,14 @@ symbol_table_finder_t::all_symbols(const char* suffix)
     // }
     // OS_ENDTRY;
 
-    kconsole << "symbol_table_finder_t::all_symbols }" << endl;
+    D(kconsole << "symbol_table_finder_t::all_symbols }" << endl);
     return symbols;
 }
 
 module_symbols_t
 module_loader_t::symtab_for(const char* name, const char* suffix)
 {
-    kconsole << "module_loader_t::symtab_for '" << name << "' {" << endl;
+    D(kconsole << "module_loader_t::symtab_for '" << name << "' {" << endl);
     module_descriptor_t* out_mod;
 
     if (!module_already_loaded(*d_last_available_address, name, out_mod))
@@ -250,7 +250,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
 
     symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
     module_symbols_t t(finder.all_symbols(suffix));
-    kconsole << "module_loader_t::symtab_for }" << endl;
+    D(kconsole << "module_loader_t::symtab_for }" << endl);
     return t;
 }
 
@@ -271,18 +271,18 @@ module_symbols_t::starting_with(const char* prefix)
 module_symbols_t::symmap
 module_symbols_t::ending_with(const char* suffix)
 {
-    kconsole << "ending_with '" << suffix << "' {" << endl;
+    D(kconsole << "ending_with '" << suffix << "' {" << endl);
     symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
-        kconsole << "Ending with: checking symbol " << e.first << " against " << suffix << endl;
+        V(kconsole << "Ending with: checking symbol " << e.first << " against " << suffix << endl);
         if (ends_with(e.first, suffix))
         {
-            kconsole << "Symbol " << e.first << " ends with " << suffix << endl;
+            V(kconsole << "Symbol " << e.first << " ends with " << suffix << endl);
             out.insert(std::make_pair(e.first, e.second));
         }
     }
-    kconsole << "ending_with }" << endl;
+    D(kconsole << "ending_with }" << endl);
     return out;
 }
 

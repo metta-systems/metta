@@ -18,10 +18,10 @@ class bootinfo_t;
 class module_symbols_t
 {
 public:
-    typedef std::heap_allocator<std::pair<const char*, elf32::symbol_t*>> symmap_alloc;
-    typedef std::unordered_map<const char*, elf32::symbol_t*, std::hash<const char*>, std::equal_to<const char*>, symmap_alloc> symmap;
-    // typedef std::heap_allocator<elf32::symbol_t*> symvec_alloc;
-    // typedef std::vector<elf32::symbol_t*, symvec_alloc> symvec;
+    typedef const char* key_type;
+    typedef elf32::symbol_t* value_type;
+    typedef std::heap_allocator<std::pair<key_type, value_type>> symmap_alloc;
+    typedef std::unordered_map<key_type, value_type, std::hash<key_type>, std::equal_to<key_type>, symmap_alloc> symmap;
 
     module_symbols_t(symmap&& s) : symtab(s) {} // move ctor
 

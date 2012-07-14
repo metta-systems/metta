@@ -310,6 +310,7 @@ def configure(conf):
     # Use host cc for building tools and local tests - do we need target tests as well?
     conf.setenv('TOOLS_ENV', env_base)
     conf.env.append_unique('CXXFLAGS', extra_cross_cxxflags)
+    # conf.env.append_unique('CXXFLAGS', '-fno-rtti -fno-exceptions'.split()) -- @todo LLVM requires this!
     if os.environ.has_key('HOST_CC'):
         conf.env['CC'] = os.environ['HOST_CC']
         conf.env['LINK_CC'] = os.environ['HOST_CC']

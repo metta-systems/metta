@@ -48,7 +48,8 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 
     if (!ctx)
     {
-        PANIC("unhandled exception");
+        kconsole << "Unhandled exception " << (const char*)i << " raised from " << filename << ":" << (int)lineno << " (in function " << funcname << ")" << endl;
+        PANIC("unhandled exception system abort");
         /* TODO: abort domain; threads' top-level fn should have a handler */
     }
 
