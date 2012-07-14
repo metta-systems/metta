@@ -820,7 +820,7 @@ static void enter_mappings(mmu_v1::state_t* state)
             {
                 if (is_non_cacheable(e->type()) && (e->address() <= phys) && (e->address() + e->size() > phys))
                 {
-                    kconsole << "Disabling cache for va=" << virt << endl;
+                    V(kconsole << "Disabling cache for va=" << virt << endl);
                     flags |= page_t::cache_disable;
                 }
             });

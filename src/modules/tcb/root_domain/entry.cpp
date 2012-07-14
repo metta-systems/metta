@@ -394,7 +394,7 @@ static void init_type_system(bootimage_t& bootimg)
     kconsole <<  " + done: ts is at " << ts << endl;
 
     /* Preload types in the interface repository */
-    kconsole << " +++ registering interfaces" << endl;
+    kconsole << " + registering interfaces" << endl;
     // Idealized interface:
     // symbols = module("interface_repository").find_symbols().ending_with("__intf_typeinfo");
     auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
@@ -403,13 +403,13 @@ static void init_type_system(bootimage_t& bootimg)
         ts->register_interface(symbol.second->value);
     }
 
-    kconsole << "___ Testing the type system listing" << endl;
+    D(kconsole << "___ Testing the type system listing" << endl;
     naming_context_v1::names n = ts->list();
     for (auto m : n)
     {
         kconsole << m << endl;
     }
-    kconsole << "___ Done testing type system listing" << endl;
+    kconsole << "___ Done testing type system listing" << endl);
 
     kconsole << "___ Testing type system doc strings" << endl;
     kconsole << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code) << endl;
@@ -440,25 +440,33 @@ static void init_namespaces(bootimage_t& bootimg)
 
     kconsole << "######### factory created root context" << endl;
 
-    types::any v;
+    kconsole << "######### constructing sub-context" << endl;
+    auto module_context = context_factory->create_context(PVS(heap), PVS(types));
+
     kconsole << "######### adding" << endl;
+    root->add("Modules", closure_to_any(module_context, naming_context_v1::type_code)); // should auto convert to types::any
+
+    types::any v;
     root->add("Text", v);
     root->add("Shmest", v);
     root->add("Fest", v);
+    root->add("Modules.Test1", v);
+
     kconsole << "######### listing" << endl;
     for (auto x : root->list())
     {
         kconsole << "Returned naming_context keys " << x << endl;
     }
-    if (root->get("Fest", &v))
+
+    kconsole << "######### getting sub-context" << endl;
+    if (root->get("Modules.Test1", &v))
     {
-        kconsole << "Fest found in naming_context" << endl;
+        kconsole << "Test1 found in sub-context" << endl;
     }
     else
     {
-        kconsole << "Fest NOT found in naming_context" << endl;
+        kconsole << "Test1 NOT found in sub-context" << endl;
     }
-    kconsole << "######### constructing sub-context (NOT DONE)" << endl;
     kconsole << "######### done with root context" << endl;
 
 #if 0
