@@ -34,7 +34,7 @@ private:
 };
 
 /**
- * Loads components from initramfs to predefined memory area and relocates them.
+ * Loads components from bootimage to predefined memory area and relocates them.
  * Constructor receives addresses of last_available_address field from
  * inside bootinfo page.
  * @internal This class shall be used only internally during bootup.
@@ -42,6 +42,30 @@ private:
 class module_loader_t
 {
 public:
+    struct module_entry
+    {
+        const char* name;       // pointer to a const string in the internal module_descriptor_t
+        address_t load_base;    // start of module, symbol lookup address base.
+        size_t    loaded_size;  // size of loaded module, start to end, including 
+        address_t entry_point;  // main() entry point address.
+        address_t symtab_start; // address of symbol table for lookups
+        address_t strtab_start; // address of string table for name lookups
+    } PACKED;
+
+    /** Iterator for going over available modules. */
+    class iterator : public std::iterator<std::forward_iterator_tag, module_entry>
+    {
+        void* ptr;
+
+        void set(void* entry);
+
+    public:
+        iterator(module_entry* entry);
+        module_entry& operator *();
+        void operator ++();
+        inline bool operator != (const iterator& other) { return ptr != other.ptr; }
+    };
+
     typedef std::heap_allocator<const char*> strvec_alloc;
     typedef std::vector<const char*, strvec_alloc> strvec;
 
@@ -58,6 +82,10 @@ public:
 
     module_symbols_t symtab_for(const char* name, const char* suffix);
     strvec loaded_module_names();
+
+    // These two methods allow iterating instantiated modules in a standard fashion.
+    iterator begin();
+    iterator end();
 
 private:
     bootinfo_t* d_parent;
