@@ -30,7 +30,7 @@ bootinfo_t::bootinfo_t(bool create_new)
     }
 }
 
-module_loader_t bootinfo_t::get_module_loader()
+module_loader_t bootinfo_t::modules()
 {
     return module_loader_t(this, &first_module_address, &last_available_module_address);
 }

@@ -25,10 +25,11 @@
 #include "heap_module_v1_interface.h"
 #include "pervasives_v1_interface.h"
 #include "system_frame_allocator_v1_interface.h"
-#include "system_stretch_allocator_v1_interface.h"
 #include "stretch_driver_module_v1_interface.h"
 #include "stretch_table_module_v1_interface.h"
 #include "stretch_table_v1_interface.h"
+#include "stretch_allocator_v1_interface.h"
+#include "system_stretch_allocator_v1_interface.h"
 #include "stretch_allocator_module_v1_interface.h"
 #include "map_card64_address_v1_interface.h"
 #include "map_card64_address_factory_v1_interface.h"
@@ -74,7 +75,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
-    void** closure_ptr = reinterpret_cast<void**>(bi->get_module_loader().load_module(module_name, loader, clos));
+    void** closure_ptr = reinterpret_cast<void**>(bi->modules().load_module(module_name, loader, clos));
     return *closure_ptr; // @todo little discrepancy due to root_domain using the same load_module() to find its own entry point.
     /** todo Skip dependencies for now. */
 }
@@ -88,7 +89,29 @@ static inline closure_type* load_module(bootimage_t& bootimg, const char* module
 static module_symbols_t symbols_in(const char* module_name, const char* suffix)
 {
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    return bi->get_module_loader().symtab_for(module_name, suffix);
+    return bi->modules().symtab_for(module_name, suffix);
+}
+
+// @todo move this to naming_context operations?
+static void
+print_context_tree(naming_context_v1::closure_t* ctx, int indent = 0)
+{
+    for (auto item : ctx->list())
+    {
+        types::any v;
+        if (ctx->get(item, &v))
+        {
+            for (int i = 0; i < indent; ++i)
+                kconsole << " ";
+            kconsole << "+-" << item << " (" << v << ")" << endl;
+
+            if (PVS(types)->is_type(v.type_, naming_context_v1::type_code))
+            {
+                naming_context_v1::closure_t* nctx = reinterpret_cast<naming_context_v1::closure_t*>(PVS(types)->narrow(v, naming_context_v1::type_code));
+                print_context_tree(nctx, indent+2);
+            }
+        }
+    }
 }
 
 //======================================================================================================================
@@ -222,7 +245,8 @@ static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closu
     str->set_rights(root_domain_pdid, rr);
 }
 
-static void init_mem(bootimage_t& bootimg)
+static void
+init(bootimage_t& bootimg)
 {
     kconsole << "=================" << endl
              << "   Init memory" << endl
@@ -335,7 +359,6 @@ static void init_mem(bootimage_t& bootimg)
     auto strtab = stretch_table_factory->create(heap);
 
     kconsole << " + Creating null stretch driver" << endl;
-
     PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
@@ -345,10 +368,7 @@ static void init_mem(bootimage_t& bootimg)
 
     auto root_domain_pdid = create_address_space(frames, mmu);
     map_initial_heap(heap_factory, heap, initial_heap_size, root_domain_pdid);
-}
 
-static void init_type_system(bootimage_t& bootimg)
-{
     /* Get an Exception System */
     kconsole << "============================" << endl
              << "   Bringing up exceptions" << endl
@@ -416,10 +436,8 @@ static void init_type_system(bootimage_t& bootimg)
     kconsole << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code) << endl;
     kconsole << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code) << endl;
     kconsole << "___ Done testing type system doc strings" << endl;
-}
 
-static void init_namespaces(bootimage_t& bootimg)
-{
+    // static void init_namespaces(bootimage_t& bootimg)
     /// @todo Module namespaces.
     /// @todo Context.
     /// @todo IDC stubs.
@@ -430,7 +448,7 @@ static void init_namespaces(bootimage_t& bootimg)
              << "=================================" << endl;
 
     /* Build root context */
-    kconsole <<  "Root, ";
+    kconsole << "Root, ";
 
     auto context_factory = load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
     ASSERT(context_factory);
@@ -438,92 +456,22 @@ static void init_namespaces(bootimage_t& bootimg)
     ASSERT(root);
     PVS(root)  = root;
 
-    kconsole << "######### factory created root context" << endl;
-
-    kconsole << "######### constructing sub-context" << endl;
-    auto module_context = context_factory->create_context(PVS(heap), PVS(types));
-
-    kconsole << "######### adding" << endl;
-    root->add("Modules", closure_to_any(module_context, naming_context_v1::type_code)); // should auto convert to types::any
-
-    types::any v;
-    root->add("Text", v);
-    root->add("Shmest", v);
-    root->add("Fest", v);
-    root->add("Modules.Test1", v);
-
-    kconsole << "######### listing" << endl;
-    for (auto x : root->list())
-    {
-        kconsole << "Returned naming_context keys " << x << endl;
-    }
-
-    kconsole << "######### getting sub-context" << endl;
-    if (root->get("Modules.Test1", &v))
-    {
-        kconsole << "Test1 found in sub-context" << endl;
-    }
-    else
-    {
-        kconsole << "Test1 NOT found in sub-context" << endl;
-    }
-    kconsole << "######### done with root context" << endl;
-
 #if 0
-// Idealized interface:
-auto module_context = context_factory->create_context(PVS(heap), PVS(types));
-root->add("Modules", module_context); <-- auto converts to types::any
-for (module : bootinfo_page.modules())
-{
-    module_context->add(module.name(), module); // i.e. Root.Modules.FramesFactory
-}
-
-print_tree(PVS(root));// Print whole naming contexts tree by exploiting type information to find sub-contexts.
-
-void print_tree(naming_context_v1::closure* ctx, int indent = 0)
-{
-}
-#endif
-
-#if 0
-    kconsole <<  "modules, ";
+    kconsole << "Modules, ";
     {
-        auto mods = context_factory->create_context(heap, PVS(types));
-        DECLARE_ANY(mods_any, context_v1_closure, mods);
-        char *cur_name;
-        addr_t cur_val;
+        auto module_context = context_factory->create_context(PVS(heap), PVS(types));
 
-        root->add("modules", &mods_any);
+        // At the moment this conversion is largely manual, need to invent some template magic
+        // to pull right codes when auto-constructing types.any from a closure.
+        root->add("Modules", closure_to_any(module_context, naming_context_v1::type_code));
 
-        // TODO: make namespace iterator, init named namespace from bootimg and run over all of its entries.
-
-        set_namespace(nexusprimal->namespc, "modules");//set_namespace affects what lookup_next will return below...
-        while((cur_name=lookup_next(&cur_val))!=NULL)
+        for (auto module : bi->modules())
         {
-            D(kconsole << endl << "adding " << cur_val << " with name " << cur_name);
-            mods->add(cur_name, cur_val);
+            symbol_finder_t mfinder(over module);
+            any = mfinder.find("exported_modname_rootdom_any");
+            module_context->add(module.name(), any));
+            // i.e. Root.Modules.FramesFactory
         }
-        D(kconsole << endl);
-    }
-
-    kconsole <<  "blob, ";
-    {
-        auto blobs = context_factory->create_context(heap, PVS(types));
-        DECLARE_ANY(blobs_any, context_v1_closure, blobs);
-        Type_Any b_any;
-        char *cur_name;
-        addr_t cur_val;
-
-        root->add("blob", &blobs_any);
-
-        set_namespace(nexusprimal->namespc, "blob");
-        while((cur_name=lookup_next(&cur_val))!=NULL)
-        {
-            D(kconsole << endl << "adding " << cur_val << " with name " << cur_name);
-            ANY_INIT(&b_any, RdWrMod_Blob, cur_val);
-            blobs->add(cur_name, &b_any);
-        }
-        D(kconsole << endl);
     }
 
     kconsole <<  "proc, ";
@@ -563,24 +511,17 @@ void print_tree(naming_context_v1::closure* ctx, int indent = 0)
         DECLARE_ANY(syms_any, context_v1_closure, syms);
         root->add("symbols", syms_any);
     }
-
+#endif
     /* Build system services context */
-    kconsole <<  "sys, ";
+    kconsole << "System, ";
     {
-        auto sys = context_factory->create_context(heap, PVS(types));
-        DECLARE_ANY(sys_any, context_v1_closure, sys);
-        DECLARE_ANY(salloc_any, stretch_allocator_v1_closure, salloc);
-        DECLARE_ANY(sysalloc_any, system_stretch_allocator_v1_closure, sysalloc);
-        DECLARE_ANY(ts_any, typesystem_v1_closure, PVS(types));
-        DECLARE_ANY(frames_any, frame_v1_closure, framesF);
-        DECLARE_ANY(strtab_any, stretch_table_v1_closure, strtab);
-
-        root->add("sys", &sys_any);
-        sys->add("stretch_allocator", &salloc_any);
-        sys->add("system_allocator", &sysalloc_any);
-        sys->add("typesystem", &ts_any);
-        sys->add("frames_allocator", &frames_any);
-        sys->add("stretch_table", &strtab_any);
+        auto sys = context_factory->create_context(PVS(heap), PVS(types));
+        root->add("System", closure_to_any(sys, naming_context_v1::type_code));
+        sys->add("StretchAllocator", closure_to_any(PVS(stretch_allocator), stretch_allocator_v1::type_code));
+        sys->add("SystemAllocator", closure_to_any(sysalloc, system_stretch_allocator_v1::type_code));
+        sys->add("TypeSystem", closure_to_any(PVS(types), type_system_v1::type_code));
+        sys->add("FramesAllocator", closure_to_any(frames, frame_allocator_v1::type_code));
+        sys->add("StretchTable", closure_to_any(strtab, stretch_table_v1::type_code));
     }
 
     /* IDC stub context */
@@ -787,7 +728,7 @@ void print_tree(naming_context_v1::closure* ctx, int indent = 0)
         kconsole << " + Adding boot domain sequence to progs context...\n"));
         Context$Add(progs, "BootDomains", &boot_seq_any);
     }*/
-#endif
+    print_context_tree(root, 0);
 }
 
 /// @todo Must be a part of kickstarter (code that executes once on startup)?
@@ -933,8 +874,6 @@ extern "C" void module_entry()
 
     INFO_PAGE.pervasives = &pervasives;
 
-    init_mem(bootimage);
-    init_type_system(bootimage);
-    init_namespaces(bootimage);
+    init(bootimage);
     start_root_domain(bootimage);
 }
