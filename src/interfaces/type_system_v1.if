@@ -123,6 +123,8 @@ local interface type_system_v1 extends naming_context_v1
 
     docstring(alias tc) returns (string doc) raises (bad_code);
 
+    ## Return true if "sub" type is compatible with "super" type.
+    ##
     ## The "is_type" procedure tells whether one type is compatible
     ## with another.  Types are compatible if they have the same type
     ## code (note that aliases are __not__ compatible), or "sub" is
