@@ -30,7 +30,8 @@ inline any closure_to_any(C* closure, uint64_t type)
 	return a;
 }
 
-console_t& operator << (console_t& con, any& v)
+inline console_t&
+operator << (console_t& con, any& v)
 {
 	con << "any { type: " << v.type_ << ", value: " << v.value << "}";
 	return con;

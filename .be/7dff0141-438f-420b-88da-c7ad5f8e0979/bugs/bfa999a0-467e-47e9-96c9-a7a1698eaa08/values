@@ -14,7 +14,7 @@ reporter: Berkus <berkus@exquance.com>
 severity: minor
 
 
-status: assigned
+status: fixed
 
 
 summary: Finish porting naming context operations

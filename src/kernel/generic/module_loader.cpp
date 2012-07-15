@@ -43,20 +43,14 @@ struct module_descriptor_t
 {
     uint32_t magic;         // 'MDUL'
     char name[32];          // name of the module
-    address_t load_base;    // start of module, symbol lookup address base.
-    size_t    loaded_size;  // size of loaded module, start to end, including 
-    address_t entry_point;  // main() entry point address.
-    address_t symtab_start; // address of symbol table for lookups
-    address_t strtab_start; // address of string table for name lookups
     module_descriptor_t* previous;
+    module_loader_t::module_entry entry;
 
     inline module_descriptor_t()
         : magic(four_cc<'M','D','U','L'>::value)
         , name({0})
-        , load_base(0), loaded_size(0)
-        , entry_point(0)
-        , symtab_start(0), strtab_start(0)
         , previous(0)
+        , entry()
     {}
 } PACKED;
 
@@ -127,7 +121,7 @@ void print_module_map()
             break;
         }
 
-        kconsole << "*** " << module->name << " @ " << module->load_base << ".." << module->load_base + module->loaded_size << ", size " << int(module->loaded_size) << " bytes. Entry " << module->entry_point << ", symtab " << module->symtab_start << ", strtab " << module->strtab_start << endl;
+        kconsole << "*** " << module->name << " @ " << module->entry.load_base << ".." << module->entry.load_base + module->entry.loaded_size << ", size " << int(module->entry.loaded_size) << " bytes. Entry " << module->entry.entry_point << ", symtab " << module->entry.symtab_start << ", strtab " << module->entry.strtab_start << endl;
         module = module->previous;
     }
     kconsole << "**********************************" << endl;
@@ -248,7 +242,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
         return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
     }
 
-    symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
+    symbol_table_finder_t finder(out_mod->entry.load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->entry.symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->entry.strtab_start));
     module_symbols_t t(finder.all_symbols(suffix));
     D(kconsole << "module_loader_t::symtab_for }" << endl);
     return t;
@@ -305,7 +299,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             PANIC("UNSUPPORTED");
         }
 
-        symbol_table_finder_t finder(out_mod->load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->strtab_start));
+        symbol_table_finder_t finder(out_mod->entry.load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->entry.symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->entry.strtab_start));
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
@@ -330,7 +324,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     kconsole << __FUNCTION__ << ": loading module at " << section_base << endl;
 
-    this_loaded_module.load_base = section_base;
+    this_loaded_module.entry.load_base = section_base;
 
 /*    if (module.program_header_count() > 0)
     {
@@ -447,7 +441,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
         }
         if (symbol_table && (symbol_table->size > 0))
         {
-            this_loaded_module.symtab_start = *d_last_available_address;
+            this_loaded_module.entry.symtab_start = *d_last_available_address;
             memutils::copy_memory(*d_last_available_address, address_t(symbol_table), sizeof(*symbol_table));
             elf32::section_header_t* new_symtab = reinterpret_cast<elf32::section_header_t*>(*d_last_available_address);
             *d_last_available_address += sizeof(*symbol_table);
@@ -455,7 +449,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             D(kconsole << "### symbol table copied to " << *d_last_available_address << endl);
             // TODO: new_symtab uses offset field as an absolute address in memory where the section starts.
             // for now simply patch a new offset into the old section header!!
-            new_symtab->offset = *d_last_available_address - this_loaded_module.load_base;
+            new_symtab->offset = *d_last_available_address - this_loaded_module.entry.load_base;
 
             // FIXME - we patch the source symbol table here because of the clumsy way we do loading
             symbol_table->offset = *d_last_available_address - module.start();
@@ -468,13 +462,13 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
         }
         if (string_table)
         {
-            this_loaded_module.strtab_start = *d_last_available_address;
+            this_loaded_module.entry.strtab_start = *d_last_available_address;
             memutils::copy_memory(*d_last_available_address, address_t(string_table), sizeof(*string_table));
             elf32::section_header_t* new_strtab = reinterpret_cast<elf32::section_header_t*>(*d_last_available_address);
             *d_last_available_address += sizeof(*string_table);
             memutils::copy_memory(*d_last_available_address, module.start() + string_table->offset, string_table->size);
             D(kconsole << "### string table copied to " << *d_last_available_address << endl);
-            new_strtab->offset = *d_last_available_address - this_loaded_module.load_base;
+            new_strtab->offset = *d_last_available_address - this_loaded_module.entry.load_base;
 
             // FIXME - we patch the source string table here because of the clumsy way we do loading
             string_table->offset = *d_last_available_address - module.start();
@@ -493,7 +487,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     {
         for (size_t i = 0; i < module.symbol_entries_count(); i++)
         {
-            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(this_loaded_module.load_base + symbol_table->offset + i * symbol_table->entsize);
+            elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(this_loaded_module.entry.load_base + symbol_table->offset + i * symbol_table->entsize);
             if (ELF32_ST_TYPE(symbol->info) < STT_SECTION)
             {
                 // cstring_t symname(module.string_table() + symbol->name);
@@ -528,9 +522,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     ASSERT(free_space >= sizeof(this_loaded_module));
     memutils::copy_string(this_loaded_module.name, name, sizeof(this_loaded_module.name));
     this_loaded_module.previous = (previous_loaded_module->magic == four_cc<'M','D','U','L'>::value) ? previous_loaded_module : 0;
-    this_loaded_module.entry_point = module.get_entry_point() + section_base - start; // make absolute address of entry point
+    this_loaded_module.entry.entry_point = module.get_entry_point() + section_base - start; // make absolute address of entry point
 
-    this_loaded_module.loaded_size = *d_last_available_address - this_loaded_module.load_base; // full size including metadata and descriptor
+    this_loaded_module.entry.loaded_size = *d_last_available_address - this_loaded_module.entry.load_base; // full size including metadata and descriptor
     // we also need another size - code, data and bss without metadata and descriptor, for separating them in the userspace context.
 
     memutils::copy_memory(*d_last_available_address - sizeof(this_loaded_module), address_t(&this_loaded_module), sizeof(this_loaded_module));
@@ -539,20 +533,20 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     D(print_module_map());
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
-    bi->use_memory(this_loaded_module.load_base, this_loaded_module.loaded_size, multiboot_t::mmap_entry_t::loaded_module);
+    bi->use_memory(this_loaded_module.entry.load_base, this_loaded_module.entry.loaded_size, multiboot_t::mmap_entry_t::loaded_module);
 
     if (!closure_name)
     {
-        address_t entry = this_loaded_module.entry_point;
+        address_t entry = this_loaded_module.entry.entry_point;
 		D(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
         return (void*)(entry);
     }
     else
     {
         // Symbol is a pointer to closure structure.
-        symbol_table_finder_t finder(this_loaded_module.load_base,
-            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.symtab_start),
-            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.strtab_start));
+        symbol_table_finder_t finder(this_loaded_module.entry.load_base,
+            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.entry.symtab_start),
+            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.entry.strtab_start));
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));

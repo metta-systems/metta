@@ -135,24 +135,6 @@ public:
         const char* name;
     };
 
-    /** Iterator for going over available modules. */
-    class module_iterator : public std::iterator<std::forward_iterator_tag, module_entry>
-    {
-        uint64_t mod_start;
-        uint64_t mod_end;
-        const char* name;
-        void* ptr;
-        void* end;
-
-        void set(void* entry);
-
-    public:
-        module_iterator(void* entry, void* end);
-        module_entry operator *();
-        void operator ++();
-        inline bool operator != (const module_iterator& other) { return ptr != other.ptr; }
-    };
-
 public:
     bootinfo_t(bool create_new = false);
     inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
@@ -168,7 +150,7 @@ public:
      * two different bootinfos at once! 
      * (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
      */
-    module_loader_t get_module_loader();
+    module_loader_t modules();
 
     /** Where the last loaded module ends. */
     address_t module_load_end() const { return last_available_module_address; }
@@ -184,9 +166,6 @@ public:
     
     vmap_iterator vmap_begin();
     vmap_iterator vmap_end();
-
-    module_iterator module_begin();
-    module_iterator module_end();
 
     /** Append parts of multiboot header in a format suitable for bootinfo page. */
     bool append_module(uint32_t number, multiboot_t::modinfo_t* mod);

@@ -303,7 +303,7 @@ type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias 
 static bool
 type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias sub, type_system_v1::alias super)
 {
-    D(kconsole << "type_system.is_type" << endl);
+    D(kconsole << "type_system.is_type" << endl;)
     type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
     interface_v1::state_t* iface = nullptr;
 
@@ -311,30 +311,46 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
     if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(super), (address_t*)&iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", super);
 
+    D(kconsole << "type_system.is_type: " << super << " is valid supertype " << iface->rep.name << endl;)
+
     /* Quick and dirty check for equality. */
     if (sub == super)
+    {
+        D(kconsole << "subtype and supertype matched, returning true!" << endl;)
         return true;
+    }
 
     /* Check the sub type code refers to a valid interface */
     if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(sub), (address_t*)&iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", sub);
 
+    D(kconsole << "type_system.is_type: " << sub << " is valid subtype " << iface->rep.name << endl;)
+
     /* Deal with the case where the type code refers to an interface type */
     if (TCODE_IS_INTERFACE(sub))
     {
+        D(kconsole << "type_system.is_type: " << iface->rep.code.value << " vs " << super << endl;)
         while (iface->rep.code.value != super)
         {
             /* Look up the supertype */
             if (!iface->supertype)
+            {
+                D(kconsole << "no supertype found, returning false!" << endl;)
                 return false;
+            }
 
             if (!state->interfaces_by_typecode->get(iface->supertype, (address_t*)&iface))
                 OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", iface->supertype);
+            D(kconsole << "type_system.is_type: found valid supertype " << iface->rep.name << endl;
+            kconsole << "type_system.is_type: " << iface->rep.code.value << " vs " << super << endl;)
         }
+
+        D(kconsole << "valid supertype matched, returning true!" << endl;)
         return true;
     }
 
     /* We have a concrete type and it's not the same typecode, so fail. */
+    D(kconsole << "concrete type not equal, returning false!" << endl;)
     return false;
 }
 
