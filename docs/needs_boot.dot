@@ -1,71 +1,25 @@
 digraph {
-# Stuff we're after (what domain_manager and vcpu need)
 	vcpu [style=filled,fillcolor=yellow,color=black,fontcolor=black];
-	domain [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	domain_manager [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	binder [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	idc_offer [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	activation [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	system_stretch_allocator [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-	time [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-	protection_domain [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-	channel [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-	event [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-# Leaf Nodes
-	heap [style=filled,fillcolor=blue,color=black,fontcolor=green];
-	map_card64_address_factory [style=filled,fillcolor=blue,color=black,fontcolor=green];
-	types [style=filled,fillcolor=blue,color=black,fontcolor=green];
-	memory [style=filled,fillcolor=blue,color=black,fontcolor=green];
-	system_frame_allocator [style=filled,fillcolor=blue,color=black,fontcolor=green];
-# Non-leaf nodes
-    frame_allocator [style=filled,fillcolor=blue,fontcolor=white];
-    stretch [style=filled,fillcolor=blue,fontcolor=white];
-    mmu [style=filled,fillcolor=blue,fontcolor=white];
 
 	activation -> vcpu;
-	binder -> channel;
-	channel -> domain;
 	domain_manager -> activation;
-	domain_manager -> protection_domain;
-	domain_manager -> time;
-	domain_manager -> domain;
 	domain_manager -> vcpu;
 	domain_manager -> idc_offer;
 	domain_manager -> binder;
 	domain_manager_factory -> system_stretch_allocator;
-	domain_manager_factory -> time;
 	domain_manager_factory -> domain_manager;
-	domain_manager_factory -> system_frame_allocator;
-	domain_manager_factory -> map_card64_address_factory;
-	domain_manager_factory -> mmu;
 	domain_manager_factory -> vcpu;
-	frame_allocator -> memory;
-	frame_allocator -> heap;
-	gatekeeper -> heap;
-	gatekeeper -> stretch;
-	gatekeeper -> protection_domain;
-	idc -> heap;
 	idc -> binder;
-	idc -> event;
-	idc -> types;
 	idc_client_binding -> idc;
-	idc_offer -> types;
 	idc_offer -> binder;
-	idc_offer -> protection_domain;
 	idc_offer -> idc_client_binding;
 	idc_offer -> gatekeeper;
-	mmu -> frame_allocator;
-	mmu -> memory; 
-	mmu -> protection_domain;
-	mmu -> stretch;
-	stretch -> protection_domain;
-	system_stretch_allocator -> protection_domain;
 	system_stretch_allocator -> vcpu;
 	vcpu -> activation;
-	vcpu -> channel;
-	vcpu -> event;
-	vcpu -> time;
-	vcpu -> domain;
-	vcpu -> protection_domain;
 	vcpu -> idc_offer;
 }
