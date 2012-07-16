@@ -1,7 +1,7 @@
 digraph {
 # Stuff we're after (what domain_manager and vcpu need)
 	vcpu [style=filled,fillcolor=yellow,color=black,fontcolor=black];
-	domain [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	domain [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	domain_manager [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	binder [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	idc_offer [style=filled,fillcolor=yellow,color=black,fontcolor=black];
@@ -9,7 +9,7 @@ digraph {
 	system_stretch_allocator [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	time [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	protection_domain [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
-	channel [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	channel [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	event [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 # Leaf Nodes
 	heap [style=filled,fillcolor=blue,color=black,fontcolor=green];
