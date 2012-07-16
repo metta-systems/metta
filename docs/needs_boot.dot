@@ -1,0 +1,67 @@
+digraph {
+# Stuff we're after (what DomainMgr and VP need)
+	VP [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Domain [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	DomainMgr [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Binder [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	IDCOffer [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Activation [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	StretchAllocatorF [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Time [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	ProtectionDomain [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Channel [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Event [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+# Leaf Nodes
+	Heap [style=filled,fillcolor=green,color=black,fontcolor=black];
+	LongCardTblMod [style=filled,fillcolor=green,color=black,fontcolor=black];
+	Type [style=filled,fillcolor=green,color=black,fontcolor=black];
+	Mem [style=filled,fillcolor=green,color=black,fontcolor=black];
+	FramesF [style=filled,fillcolor=green,color=black,fontcolor=black];
+# Non-leaf nodes
+	Activation -> VP;
+	Binder -> Channel;
+	Channel -> Domain;
+	DomainMgr -> Activation;
+	DomainMgr -> ProtectionDomain;
+	DomainMgr -> Time;
+	DomainMgr -> Domain;
+	DomainMgr -> VP;
+	DomainMgr -> IDCOffer;
+	DomainMgr -> Binder;
+	DomainMgrMod -> StretchAllocatorF;
+	DomainMgrMod -> Time;
+	DomainMgrMod -> DomainMgr;
+	DomainMgrMod -> FramesF;
+	DomainMgrMod -> LongCardTblMod;
+	DomainMgrMod -> MMU;
+	DomainMgrMod -> VP;
+	Frames -> Mem;
+	Frames -> Heap;
+	Gatekeeper -> Heap;
+	Gatekeeper -> Stretch;
+	Gatekeeper -> ProtectionDomain;
+	IDC -> Heap;
+	IDC -> Binder;
+	IDC -> Event;
+	IDC -> Type;
+	IDCClientBinding -> IDC;
+	IDCOffer -> Type;
+	IDCOffer -> Binder;
+	IDCOffer -> ProtectionDomain;
+	IDCOffer -> IDCClientBinding;
+	IDCOffer -> Gatekeeper;
+	MMU -> Frames;
+	MMU -> Mem; 
+	MMU -> ProtectionDomain;
+	MMU -> Stretch;
+	Stretch -> ProtectionDomain;
+	StretchAllocatorF -> ProtectionDomain;
+	StretchAllocatorF -> VP;
+	VP -> Activation;
+	VP -> Channel;
+	VP -> Event;
+	VP -> Time;
+	VP -> Domain;
+	VP -> ProtectionDomain;
+	VP -> IDCOffer;
+}
