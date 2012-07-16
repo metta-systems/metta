@@ -242,7 +242,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
         return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
     }
 
-    symbol_table_finder_t finder(out_mod->entry.load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->entry.symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->entry.strtab_start));
+    symbol_table_finder_t finder(out_mod->entry);
     module_symbols_t t(finder.all_symbols(suffix));
     D(kconsole << "module_loader_t::symtab_for }" << endl);
     return t;
