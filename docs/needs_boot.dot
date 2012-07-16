@@ -6,6 +6,7 @@ digraph {
 	activation [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	system_stretch_allocator [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 
+# Interface dependencies
 	activation -> vcpu;
 	domain_manager -> activation;
 	domain_manager -> vcpu;
@@ -22,4 +23,18 @@ digraph {
 	system_stretch_allocator -> vcpu;
 	vcpu -> activation;
 	vcpu -> idc_offer;
+
+# Implementation dependencies (arrowhead = box)
+	subgraph cluster_binder_impl {
+		binder -> plumber [arrowhead=box];
+		binder -> idc_offer [arrowhead=box];
+		binder -> idc_client_binding [arrowhead=box];
+		binder -> idc_server_binding [arrowhead=box];
+		binder -> idc_server_stubs [arrowhead=box];
+		binder -> idc_client_stubs [arrowhead=box];
+		binder -> events [arrowhead=box];
+		binder -> binder_callback [arrowhead=box];
+		binder -> domain_manager [arrowhead=box];
+		binder -> gatekeeper [arrowhead=box];
+	}
 }
