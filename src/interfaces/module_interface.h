@@ -11,6 +11,8 @@
 // This file is included by all generated interfaces.
 // Include built-in types, meddler-generated code uses them.
 #include "types.h"
+// Export macros below need type any.
+#include "any.h"
 
 // A mixed influence of OSKit COM and Nemesis component interfaces.
 
@@ -31,4 +33,5 @@ void closure_init(C* closure, O* ops, S* state)
 
 // Make given closure available to the root domain during bootup.
 #define EXPORT_CLOSURE_TO_ROOTDOM(_name, _version, _cl) \
-extern "C" const _name##_##_version::closure_t* const exported_##_name##_rootdom = &_cl
+extern "C" const _name##_##_version::closure_t* const exported_##_name##_rootdom = &_cl; \
+extern "C" const any exported_##_name##_any = { _name##_##_version::type_code, { .ptr32value = &_cl } }
