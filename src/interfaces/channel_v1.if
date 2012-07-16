@@ -6,11 +6,11 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# Events are transmitted between virtual processors over event
-# channels.  User code does not normally manipulate channels; instead,
-# it uses associated event counts via its user-level scheduler.  The
-# "Channel" interface defines the channel-related types used by lower
-# levels.
+## Events are transmitted between virtual processors over event
+## channels.  User code does not normally manipulate channels; instead,
+## it uses associated event counts via its user-level scheduler.  The
+## channel interface defines the channel-related types used by lower
+## levels.
 
 local interface channel_v1
 {
@@ -18,9 +18,9 @@ local interface channel_v1
     # Types
     #===================================================================================================================
 
-    # An event channel is a (tx, rx) pair of endpoints.  Endpoints
-    # are stored in per-domain memory at the kernel level.
-    # An endpoint is identified within its domain by an "Endpoint".
+    ## An event channel is a (tx, rx) pair of endpoints.  Endpoints
+    ## are stored in per-domain memory at the kernel level.
+    ## An endpoint is identified within its domain by an endpoint.
     
     type card32 endpoint; # Opaque
 
@@ -31,20 +31,20 @@ local interface channel_v1
     type endpoint tx;
     enum { rx, tx } endpoint_type;
 
-    # An endpoint is either "Free" or allocated.  A newly
-    # allocated endpoint is in state "Local".  While its
-    # channel is open, the endpoint is in state "Connected".
-    # An endpoint of a closed channel is in state "Dead".
-    #
-    # An endpoint makes transitions between these states as a result
-    # of actions by the binder.
+    ## An endpoint is either "free" or allocated.  A newly
+    ## allocated endpoint is in state "local_".  While its
+    ## channel is open, the endpoint is in state "connected".
+    ## An endpoint of a closed channel is in state "dead".
+    ##
+    ## An endpoint makes transitions between these states as a result
+    ## of actions by the binder.
 
     enum { free, local_, connected, dead } state_e;
 
-    # For inter-domain communication ("IDC"), it is often useful to have
-    # pairs of channels, one in each direction.  Each domain holds one or
-    # one or more "(rx, tx)" pairs of endpoints connected to corresponding
-    # pairs at the peer domain.
+    ## For inter-domain communication ("IDC"), it is often useful to have
+    ## pairs of channels, one in each direction.  Each domain holds
+    ## one or more "(rx, tx)" pairs of endpoints connected to corresponding
+    ## pairs at the peer domain.
 
     record pair {
         rx receiver;
@@ -56,12 +56,12 @@ local interface channel_v1
     # Exceptions
     #===================================================================================================================
 
-    # Raised when "ep" does not denote an "Endpoint" or has an inappropriate polarity (endpoint_type).
+    ## Raised when "ep" does not denote an endpoint or has an inappropriate polarity (endpoint_type).
     exception invalid { endpoint ep; }
 
-    # Raised by operations encountering an unexpected state "st" for an endpoint "ep".
+    ## Raised by operations encountering an unexpected state "state" for an endpoint "ep".
     exception bad_state { endpoint ep; state_e state; }
 
-    # Raised when no further endpoint slots are available at "dom".
+    ## Raised when no further endpoint slots are available at "dom".
     exception no_slots { domain_v1.id domain; }
 }
