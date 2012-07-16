@@ -11,7 +11,7 @@ reporter: Berkus <berkus@exquance.com>
 severity: minor
 
 
-status: assigned
+status: open
 
 
 summary: Port VCPU operations
