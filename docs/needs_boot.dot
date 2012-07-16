@@ -6,18 +6,22 @@ digraph {
 	Binder [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	IDCOffer [style=filled,fillcolor=yellow,color=black,fontcolor=black];
 	Activation [style=filled,fillcolor=yellow,color=black,fontcolor=black];
-	StretchAllocatorF [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	StretchAllocatorF [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	Time [style=filled,fillcolor=yellow,color=black,fontcolor=black];
-	ProtectionDomain [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	ProtectionDomain [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 	Channel [style=filled,fillcolor=yellow,color=black,fontcolor=black];
-	Event [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	Event [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
 # Leaf Nodes
-	Heap [style=filled,fillcolor=green,color=black,fontcolor=black];
-	LongCardTblMod [style=filled,fillcolor=green,color=black,fontcolor=black];
-	Type [style=filled,fillcolor=green,color=black,fontcolor=black];
-	Mem [style=filled,fillcolor=green,color=black,fontcolor=black];
-	FramesF [style=filled,fillcolor=green,color=black,fontcolor=black];
+	Heap [style=filled,fillcolor=blue,color=black,fontcolor=green];
+	LongCardTblMod [style=filled,fillcolor=blue,color=black,fontcolor=green];
+	Type [style=filled,fillcolor=blue,color=black,fontcolor=green];
+	Mem [style=filled,fillcolor=blue,color=black,fontcolor=green];
+	FramesF [style=filled,fillcolor=blue,color=black,fontcolor=green];
 # Non-leaf nodes
+    Frames [style=filled,fillcolor=blue,fontcolor=white];
+    Stretch [style=filled,fillcolor=blue,fontcolor=white];
+    MMU [style=filled,fillcolor=blue,fontcolor=white];
+
 	Activation -> VP;
 	Binder -> Channel;
 	Channel -> Domain;
