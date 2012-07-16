@@ -6,17 +6,16 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# A stretch is a contiguous area of the virtual address space, with the same accessibility throughout the range.
-#
-# Stretches are always a whole number of clicks in size; in other words they correspond to a set of contiguous pages.
-# They are disjoint: they cannot overlap. One consequence is that stretches cannot be refined: if you have a stretch
-# it doesn't make sense to talk to the VM system about a subset of the stretch.
-#
-# A stretch is represented by an instance of the "Stretch" interface.
+## A stretch is a contiguous area of the virtual address space, with the same accessibility throughout the range.
+##
+## Stretches are always a whole number of clicks in size; in other words they correspond to a set of contiguous pages.
+## They are disjoint: they cannot overlap. One consequence is that stretches cannot be refined: if you have a stretch
+## it doesn't make sense to talk to the VM system about a subset of the stretch.
 
 local interface stretch_v1
 {
     # A stretch with address "a" and size "s" contains addresses in the range: [ a, a + s )
+    type memory_v1.size size;
     
     # Return the range of addresses occupied by the stretch.
     # XXX Do some other stuff too.... (maybe add mapping?)
