@@ -984,7 +984,7 @@ static const mmu_module_v1::ops_t mmu_module_v1_methods =
     mmu_module_v1_finish_init
 };
 
-static const mmu_module_v1::closure_t clos =
+static mmu_module_v1::closure_t clos =
 {
     &mmu_module_v1_methods,
     NULL // no state

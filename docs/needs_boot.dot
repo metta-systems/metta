@@ -1,0 +1,42 @@
+digraph {
+	vcpu [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	domain_manager [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	binder [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	idc_offer [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	activation [style=filled,fillcolor=yellow,color=black,fontcolor=black];
+	system_stretch_allocator [style=filled,fillcolor=blue,color=black,fontcolor=yellow];
+
+# Interface dependencies
+	activation -> vcpu;
+	domain_manager -> activation;
+	domain_manager -> vcpu;
+	domain_manager -> idc_offer;
+	domain_manager -> binder;
+	domain_manager_factory -> system_stretch_allocator;
+	domain_manager_factory -> domain_manager;
+	domain_manager_factory -> vcpu;
+	idc -> binder;
+	idc_client_binding -> idc;
+	idc_offer -> binder;
+	idc_offer -> idc_client_binding;
+	idc_offer -> gatekeeper;
+	system_stretch_allocator -> vcpu;
+	vcpu -> activation;
+	vcpu -> idc_offer;
+
+# Implementation dependencies (arrowhead = box)
+	subgraph cluster_binder_impl {
+		binder -> vcpu [arrowhead=box];
+		binder -> plumber [arrowhead=box];
+		binder -> idc_offer [arrowhead=box];
+		binder -> idc_client_binding [arrowhead=box];
+		binder -> idc_server_binding [arrowhead=box];
+		binder -> idc_server_stubs [arrowhead=box];
+		binder -> idc_client_stubs [arrowhead=box];
+		binder -> events [arrowhead=box];
+		binder -> binder_callback [arrowhead=box];
+		binder -> domain_manager [arrowhead=box];
+		binder -> gatekeeper [arrowhead=box];
+		binder -> entry [arrowhead=box];
+	}
+}

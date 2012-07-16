@@ -1,0 +1,44 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+## Manages virtual memory owned by a domain for communication.
+##
+## The gatekeeper of a domain keeps track of the stretches it owns
+## for the purposes of Interdomain communication of some sort.
+## Its methods provide a convenient way for a domain to get hold of a
+## heap or stretch which can be used for either standard IDC or for a
+## higher layer shared memory protocol (e.g. IO channels).
+
+local interface gatekeeper_v1
+{
+    exception failure {}
+
+    ## The get_heap operation returns a heap of size "size" (or if "size"
+    ## is zero, then of `sufficient' size) for IDC communication with
+    ## the specified protection domain.
+    ##
+    ## Return a heap which is mapped either "R","W" or "RW" into the
+    ## protection domain identified by "pdid". If "cache" is true, a
+    ## heap which was previously created may be returned again;
+    ## otherwise a new heap will be created for the purpose of this call.
+
+    get_heap(protection_domain_v1.id pdid, stretch_v1.size size, stretch_v1.rights rights, boolean cache)
+        returns (heap_v1& heap)
+        raises (failure);
+
+    ## The get_stretch operation returns a stretch of the specified size (or
+    ## of the default size if size is zero) which is available with the
+    ## given access rights "rights" to the specified protection domain.
+    ## The "align_width" gives the required alignment of the base of the
+    ## stretch, while "page_width" gives its contiguity constraints.
+
+    get_stretch(protection_domain_v1.id pdid, stretch_v1.size size, stretch_v1.rights rights,
+                card32 align_width, card32 page_width)
+        returns (stretch_v1& stretch)
+        raises (failure);
+}

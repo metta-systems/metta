@@ -6,16 +6,16 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# Protection Domains represent a mapping from the set of all virtual addresses to a set of protection rights
-# (as specified in "stretch_v1.if"). They are created and destroyed via the "MMU" interface.
-#
-# Protection Domains at present have no methods, but they do define a type "ID", which is an opaque 'handle' 
-# on the protection domain. This handle is used for invocations on the glue, or other system services.
+## Protection domains represent a mapping from the set of all virtual addresses to a set of protection rights
+## (as specified in "stretch_v1.if"). They are created and destroyed via the "mmu_v1" interface.
+##
+## Protection domains at present have no methods, but they do define a type "id", which is an opaque 'handle'
+## on the protection domain. This handle is used for invocations on the glue, or other system services.
 
 local interface protection_domain_v1
 {
-   # Every protection domain has a unique identifier of type "ID"
-   # There is a distinguished value "NULL_PDID" which is guaranteed 
-   # never to be a valid protection domain identifier.
-   type int32 id; # opaque
+	## Every protection domain has a unique identifier of type "id"
+	## There is a distinguished value "NULL_PDID" which is guaranteed 
+	## never to be a valid protection domain identifier.
+	type card32 id; # opaque
 }

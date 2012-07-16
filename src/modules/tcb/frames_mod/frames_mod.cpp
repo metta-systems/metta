@@ -790,7 +790,7 @@ static const frames_module_v1::ops_t frames_module_v1_methods =
     frames_module_v1_finish_init
 };
 
-static const frames_module_v1::closure_t clos =
+static frames_module_v1::closure_t clos =
 {
     &frames_module_v1_methods,
     NULL

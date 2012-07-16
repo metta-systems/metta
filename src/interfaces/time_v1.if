@@ -6,17 +6,18 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# Types for talking about time.
+## Types for talking about time.
 
 local interface time_v1
 {
-    # Times and durations are represented by "ns" values, which
-    # give numbers of nanoseconds since some unspecified epoch.
+    ## Times and durations are represented by "ns" values, which
+    ## give numbers of nanoseconds since some unspecified epoch.
     type int64 ns;
+
+    ## Time is an alias for concrete time type.
     type ns time;
 
     # The "now" method returns the current value of the system
     # clock. Clock resolution is unspecified.
     now() returns (ns now);
 }
-

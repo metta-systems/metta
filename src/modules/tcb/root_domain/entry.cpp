@@ -42,6 +42,7 @@
 #include "exceptions.h"
 #include "closure_interface.h"
 #include "interface_v1_state.h"
+#include "symbol_table_finder.h"
 
 // temp for calls debug
 #include "frames_module_v1_impl.h"
@@ -438,7 +439,6 @@ init(bootimage_t& bootimg)
     kconsole << "___ Done testing type system doc strings" << endl;
 
     // static void init_namespaces(bootimage_t& bootimg)
-    /// @todo Module namespaces.
     /// @todo Context.
     /// @todo IDC stubs.
 
@@ -457,6 +457,7 @@ init(bootimage_t& bootimg)
     PVS(root)  = root;
 
 #if 0
+@todo implement iterator and module_loader::begin()/end()
     kconsole << "Modules, ";
     {
         auto module_context = context_factory->create_context(PVS(heap), PVS(types));
@@ -467,13 +468,15 @@ init(bootimage_t& bootimg)
 
         for (auto module : bi->modules())
         {
-            symbol_finder_t mfinder(over module);
-            any = mfinder.find("exported_modname_rootdom_any");
-            module_context->add(module.name(), any));
-            // i.e. Root.Modules.FramesFactory
+            symbol_table_finder_t finder(module);
+            any* v = reinterpret_cast<any*>(finder.find_symbol("exported_modname_rootdom_any"));
+            kconsole << module.name << " module any is " << *v << endl;
+            module_context->add(module.name, *v);
         }
     }
+#endif
 
+#if 0
     kconsole <<  "proc, ";
     {
         auto proc = context_factory->create_context(heap, PVS(types));
@@ -731,8 +734,19 @@ init(bootimage_t& bootimg)
     print_context_tree(root, 0);
 }
 
+#define CONTEXT_FIND(name, type) \
+({ \
+    any v; \
+    if (!PVS(root)->get(name, &v)) OS_RAISE((exception_support_v1::id)"naming_context_v1.not_found", (exception_support_v1::args)name); \
+    reinterpret_cast<type::closure_t*>(PVS(types)->narrow(v, type::type_code)); \
+})
+
 /// @todo Must be a part of kickstarter (code that executes once on startup)?
-static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
+/// @todo Domain manager.
+/// @todo VCPU.
+/// @todo Nucleus syscalls?
+static NEVER_RETURNS void
+start_root_domain(bootimage_t& bootimg)
 {
 #if PCIBUS_TEST
     auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
@@ -741,48 +755,43 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
 
     while(1) {} 
 #endif
-    /// @todo Domain manager.
-    /// @todo VCPU.
-    /// @todo Nucleus syscalls?
 
+#if 0
     /* Find the Virtual Processor module */
-/*    vp = NAME_FIND("modules>VP", VP_clp);
-    kconsole << " + got VP   at %p\n", vp));
+    vp = CONTEXT_FIND("Modules.VCPU", vcpu_v1);
+    kconsole << " + got VCPU at " << vp << endl;
 
-    Time = NAME_FIND("modules>Time", Time_clp);
-    kconsole << " + got Time at %p\n", Time));
-    PVS(time)= Time;
-*/
-    /* IM: init the wall-clock time values of the PIP */
-/*    INFO_PAGE.prev_sched_time = NOW();
+    time = CONTEXT_FIND("Modules.Time", time_v1);
+    kconsole << " + got time at " << time << endl;
+    PVS(time) = time;
+
+    /* init the wall-clock time values of the infopage */
+    INFO_PAGE.prev_sched_time = NOW();
     INFO_PAGE.ntp_time  = NOW();
     INFO_PAGE.NTPscaling_factor = 0x0000000100000000LL; // 1.0
+#endif
 
-    // DomainMgr
-    kconsole << " + initialising domain manager.\n"));
-    {
-        DomainMgrMod_clp dmm;
-        LongCardTblMod_clp LongCardTblMod;
-        Type_Any dommgrany;
+    kconsole << "=================================" << endl
+             << "   Initialising domain manager" << endl
+             << "=================================" << endl;
+#if 0
+    domain_manager_factory_v1::closure_t* dmm = CONTEXT_FIND("Modules.DomainManagerFactory", domain_manager_factory_v1);
+    map_card64_address_factory_v1::closure_t* tablemod = CONTEXT_FIND("Modules.MapCard64AddressFactory", map_card64_address_factory_v1);
 
-        dmm = NAME_FIND("modules>DomainMgrMod", DomainMgrMod_clp);
-        LongCardTblMod = NAME_FIND("modules>LongCardTblMod", LongCardTblMod_clp);
-        dommgr = DomainMgrMod$New(dmm, salloc, LongCardTblMod,
-                                framesF, mmu, vp, Time, kst); // only need vp->ops part of the vp for constructing further domains
+    domain_manager_v1::closure_t* dommgr = dmm->create(salloc, tablemod,
+                            framesF, mmu, vp, Time, kst); // only need vp->ops part of the vp for constructing further domains
 
-        ANY_INIT(&dommgrany,DomainMgr_clp,dommgr);
-        Context$Add(root,"sys>DomainMgr",&dommgrany);
-    }
-*/
+    root->add("System.DomainManager", closure_to_any(dommgr, domain_manager_v1::type_code));
+#endif
     kconsole << "===========================" << endl
              << "   Creating first domain" << endl
              << "===========================" << endl;
 
-    /*
-    * The Nemesis domain contains servers which look after all sorts
-    * of kernel resources.  It it trusted to play with the kernel
-    * state in a safe manner
-    */
+    /**
+     * The root domain contains servers which look after all sorts
+     * of kernel resources. It it trusted to play with the kernel
+     * state in a safe manner.
+     */
 /*    Nemesis = NAME_FIND("modules>Nemesis", Activation_clp);
     Nemesis->st= kst;
 
@@ -792,7 +801,7 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
         ntsc_halt();
     }
 
-    PVS(vp) = vp = DomainMgr$NewDomain(dommgr, Nemesis, &nemesis_pdid,
+    PVS(vcpu) = vcpu = dommgr->create_domain(Nemesis, &nemesis_pdid,
                                     nemesis_info->nctxts,
                                     nemesis_info->neps,
                                     nemesis_info->nframes,
@@ -802,13 +811,10 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
                                     &did,
                                     &dummy_offer);
     // Turn off activations for now
-    VP$ActivationsOff(vp);
+    vp->activations_off();
 
-#ifdef __IX86__
-    // Frob the pervasives things. This is pretty nasty.
-    RW(vp)->pvs      = &NemesisPVS;
-    INFO_PAGE.pvsptr = &(RW(vp)->pvs);
-#endif
+    DCB_RW(vp)->pervasives = INFO_PAGE.pervasives;
+
     kconsole << " + did NewDomain." << endl;
 */
 
@@ -829,17 +835,17 @@ static NEVER_RETURNS void start_root_domain(bootimage_t& bootimg)
     kconsole << "      + domain ID      = %x\n", (word_t)did));
     kconsole << "      + activation clp = %p\n", (addr_t)Nemesis));
     kconsole << "      + vp closure     = %p\n", (addr_t)vp));
-    kconsole << "      + rop            = %p\n", (addr_t)RO(vp)));
+    kconsole << "      + rop            = %p\n", (addr_t)DCB_RO(vp)));
 
-    kconsole << "*************** ENGAGING PROTECTION ******************\n"));
-    MMU$Engage(mmu, VP$ProtDomID(vp));
+    kconsole << "*************** ENGAGING PROTECTION ******************" << endl;
+    mmu->engage(vp->protection_domain_id());
 
-Up to here the execution might as well be in ring0, with the activation of nemesis domain the cpu may switch to ring3.
+    // Up to here the execution might as well be in ring0, with the activation of nemesis domain the cpu may switch to ring3.
 
-    kconsole << "NemesisPrimal: Activating Nemesis domain" << endl;
-    ntsc_actdom(RO(vp), Activation_Reason_Allocated);
+    kconsole << " + Activating root domain" << endl;
+    nucleus::activate_domain(DCB_RO(vp), ::activation_reason_allocated);
 */
-    PANIC("root_domain entry returned!");
+    PANIC("root_domain entry returned! IT'S OK STILL, NO WORRIES");
 }
 
 //======================================================================================================================

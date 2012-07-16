@@ -15,6 +15,7 @@
 #include "isr.h"
 #include "protection_domain_v1_interface.h"
 #include "stretch_v1_interface.h"
+#include "default_console.h"
 
 /**
  * @brief Privileged system code running in supervisor mode.

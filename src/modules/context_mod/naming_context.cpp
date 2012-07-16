@@ -333,7 +333,7 @@ static const naming_context_factory_v1::ops_t naming_context_factory_v1_methods 
     create_context
 };
 
-static const naming_context_factory_v1::closure_t clos =
+static naming_context_factory_v1::closure_t clos =
 {
     &naming_context_factory_v1_methods,
     NULL

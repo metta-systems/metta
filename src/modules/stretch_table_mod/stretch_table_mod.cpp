@@ -132,7 +132,7 @@ static const stretch_table_module_v1::ops_t stretch_table_module_v1_methods =
     create 
 };
 
-static const stretch_table_module_v1::closure_t clos =
+static stretch_table_module_v1::closure_t clos =
 {
     &stretch_table_module_v1_methods,
     NULL

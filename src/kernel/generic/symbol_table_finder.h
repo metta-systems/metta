@@ -37,6 +37,11 @@ public:
         D(kconsole << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table << endl);
     }
 
+    symbol_table_finder_t(module_loader_t::module_entry& mod)
+    {
+        symbol_table_finder_t(mod.load_base, reinterpret_cast<elf32::section_header_t*>(mod.symtab_start), reinterpret_cast<elf32::section_header_t*>(mod.strtab_start));
+    }
+
     // TODO: use debugging info if present
     cstring_t find_symbol(address_t addr, address_t* symbol_start)
     {
