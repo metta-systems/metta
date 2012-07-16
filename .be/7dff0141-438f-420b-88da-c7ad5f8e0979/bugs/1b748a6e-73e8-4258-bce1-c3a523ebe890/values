@@ -11,7 +11,7 @@ reporter: Berkus <berkus@exquance.com>
 severity: minor
 
 
-status: open
+status: assigned
 
 
 summary: Port domain manager
