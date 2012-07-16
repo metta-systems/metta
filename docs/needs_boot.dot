@@ -26,6 +26,7 @@ digraph {
 
 # Implementation dependencies (arrowhead = box)
 	subgraph cluster_binder_impl {
+		binder -> vcpu [arrowhead=box];
 		binder -> plumber [arrowhead=box];
 		binder -> idc_offer [arrowhead=box];
 		binder -> idc_client_binding [arrowhead=box];
@@ -36,5 +37,6 @@ digraph {
 		binder -> binder_callback [arrowhead=box];
 		binder -> domain_manager [arrowhead=box];
 		binder -> gatekeeper [arrowhead=box];
+		binder -> entry [arrowhead=box];
 	}
 }
