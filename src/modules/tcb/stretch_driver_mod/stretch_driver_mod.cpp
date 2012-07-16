@@ -189,7 +189,7 @@ static const stretch_driver_module_v1::ops_t stretch_driver_module_v1_methods =
     NULL
 };
 
-static const stretch_driver_module_v1::closure_t clos =
+static stretch_driver_module_v1::closure_t clos =
 {
     &stretch_driver_module_v1_methods,
     NULL

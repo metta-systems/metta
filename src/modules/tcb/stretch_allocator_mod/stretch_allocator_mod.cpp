@@ -663,7 +663,7 @@ static const stretch_allocator_module_v1::ops_t stretch_allocator_module_v1_meth
     stretch_allocator_module_v1_finish_init
 };
 
-static const stretch_allocator_module_v1::closure_t clos =
+static stretch_allocator_module_v1::closure_t clos =
 {
     &stretch_allocator_module_v1_methods,
     NULL

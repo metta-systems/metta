@@ -181,7 +181,7 @@ static const exception_system_v1::ops_t exception_system_v1_methods =
     exception_system_v1_create
 };
 
-static const exception_system_v1::closure_t clos =
+static exception_system_v1::closure_t clos =
 {
     &exception_system_v1_methods,
     NULL

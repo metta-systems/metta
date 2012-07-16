@@ -133,7 +133,7 @@ static const heap_module_v1::ops_t heap_module_v1_methods =
     heap_module_v1_realize
 };
 
-static const heap_module_v1::closure_t clos =
+static heap_module_v1::closure_t clos =
 {
     &heap_module_v1_methods,
     NULL
