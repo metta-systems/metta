@@ -6,29 +6,49 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-local interface system_stretch_allocator_v1
+## Allocates stretches. This extended interface also allows the
+## creation of new stretch allocators.
+##
+## A system stretch allocator is an extention of the stretch allocator
+## interface. In addition to all the normal operations, it allows the
+## creation of new stretch allocators. This may be in order to
+## service a client; i.e. a particular domain and protection
+## domain; or it may be for other special purposes.
+
+local interface system_stretch_allocator_v1 extends stretch_allocator_v1
 {
-    # Copied from stretch_allocator_v1 for now (sans inheritance in meddler)
-    exception failure {}
-    
-    sequence<memory_v1.size> size_seq;
-    sequence<stretch_v1&> stretch_seq;
-    
-    create(memory_v1.size size, stretch_v1.rights access) returns (stretch_v1& stretch) raises (failure);
-    create_list(size_seq sizes, stretch_v1.rights access) returns (stretch_seq stretches) raises (failure);
-    create_at(memory_v1.size size, stretch_v1.rights access, memory_v1.address start, memory_v1.attrs attr, memory_v1.physmem_desc region) returns (stretch_v1& stretch) raises (memory_v1.failure);
-    clone(stretch_v1& template_stretch, memory_v1.size size) returns (stretch_v1& stretch) raises (failure);
-    destroy_stretch(stretch_v1& stretch) raises (stretch_v1.denied);
-    destroy();
-    
-    # System frame allocator methods:
+    ## Returns a new stretch allocator for a client domain.
+
     create_client(protection_domain_v1.id child, vcpu_v1& vp, protection_domain_v1.id parent)
         returns (stretch_allocator_v1& allocator)
         raises (heap_v1.no_memory);
-        
+
+    ## Creates a new stretch allocator which will produce
+    ## stretches nailed by physical memory.
+    ## The physical memory will be allocated via the given "frames"
+    ## interface. The heap will be used for internal state.
+
     create_nailed(frame_allocator_v1& frames, heap_v1& heap)
         returns (stretch_allocator_v1& allocator)
         raises (heap_v1.no_memory);
+
+    ## Creates a stretch of a particular size at a particular address,
+    ## which might already be allocated.
+    ## Since this might break the stretch model if used poorly, it is
+    ## restricted to this interface.
+    ##
+    ## The value "start" describes the requested (page aligned)
+    ## starting virtual address of the stretch, unless it has
+    ## the value ANY_ADDRESS, in which case an arbitrary base
+    ## may be chosen contigent on its satisfying the various VM
+    ## attributes (see memory_v1.if) held in "attr" and the page
+    ## width given by "pwidth".
+    ## In the case where the region is already allocated, "attr"
+    ## and "pwidth" describe that region.
+    ##
+    ## If "pmem" is not NULL, it holds the physical memory into which
+    ## the stretch is mapped; in the case where the stretch is to be
+    ## pinned down, this **must** hold enough frames.
 
     create_over(memory_v1.size size, stretch_v1.rights access, 
                 memory_v1.address start, memory_v1.attrs attr, card32 page_width, memory_v1.physmem_desc pmem)
