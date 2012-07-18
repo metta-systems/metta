@@ -1,0 +1,54 @@
+#
+# Part of Metta OS. Check http://metta.exquance.com for latest version.
+#
+# Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
+#
+# Distributed under the Boost Software License, Version 1.0.
+# (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+## A gatekeeper factory is used by a domain at startup to create a
+## gatekeeper. There are a number of different types of gatekeepers
+## which may be created depending on the requirements of the domain.
+
+local interface gatekeeper_factory_v1
+{
+    ## Create a new, general Gatekeeper.
+    ##
+    ## create() needs to know about a stretch allocator and also a
+    ## heap factory. The heap factory determines the class of heap that will
+    ## be generated when required. The passed-in heap is used to allocate the
+    ## state for the gatekeeper.
+    create(stretch_allocator_v1& sa, heap_factory_v1& hf, heap_v1& heap, frame_allocator_v1& frames)
+        returns (gatekeeper_v1& gk)
+        raises (heap_v1.no_memory);
+
+    ## Create a gatekeeper for the specified pdom using the stretch provided.
+    ##
+    ## create_private() creates a new gatekeeper from a single stretch
+    ## for use by the specified protection domain "pdid".  The stretch
+    ## is assumed read-only and is filled with a single heap. The heap
+    ## "heap" is used to allocate state for the gatekeeper.
+    create_private(stretch_v1& s, protection_domain_v1.id pdid, heap_factory_v1& hf, heap_v1& heap)
+        returns (gatekeeper_v1& gk)
+        raises (heap_v1.no_memory, stretch_v1.denied);
+
+    ## Create a gatekeeper to run in a single stretch.
+    ##
+    ## create_global() creates a new gatekeeper from a single
+    ## stretch. This stretch is mapped globally read-only and is
+    ## filled with a single heap. The heap "heap" is used to allocate
+    ## state for the gatekeeper.
+    create_global(stretch_v1& s, heap_factory_v1& hf, heap_v1& heap)
+        returns (gatekeeper_v1& gk)
+        raises (heap_v1.no_memory, stretch_v1.denied);
+
+    ## Create a trivial gatekeeper.
+    ##
+    ## create_simple() generates a trivial gatekeeper which always returns
+    ## the same heap, one supplied by the user. The state also comes out
+    ## of this heap. This heap ought to be globally readable by
+    ## everyone.
+    create_simple(heap_v1& heap)
+        returns (gatekeeper_v1& gk)
+        raises (heap_v1.no_memory);
+}
