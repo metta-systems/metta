@@ -22,7 +22,7 @@
 #include "mmu_module_v1_interface.h"
 #include "mmu_module_v1_impl.h" // for debug
 #include "heap_v1_interface.h"
-#include "heap_module_v1_interface.h"
+#include "heap_factory_v1_interface.h"
 #include "pervasives_v1_interface.h"
 #include "system_frame_allocator_v1_interface.h"
 #include "stretch_driver_module_v1_interface.h"
@@ -221,7 +221,7 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
  * maps a stretch over the existing heap.
  * This allows us to map it read/write for us, and read-only to everyone else.
  */
-static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
+static void map_initial_heap(heap_factory_v1::closure_t* heap_factory, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
 {
     kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
     memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
@@ -233,7 +233,7 @@ static void map_initial_heap(heap_module_v1::closure_t* heap_mod, heap_v1::closu
 
     auto str = PVS(stretch_allocator)->create_over(initial_heap_size, rr, memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
 
-    auto real_heap = heap_mod->realize(heap, str);
+    auto real_heap = heap_factory->realize(heap, str);
 
     if (real_heap != heap)
     {
@@ -265,7 +265,7 @@ init(bootimage_t& bootimg)
     auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_factory", "exported_mmu_module_rootdom");
     ASSERT(mmu_factory); // mmu_factory
 
-    auto heap_factory = load_module<heap_module_v1::closure_t>(bootimg, "heap_factory", "exported_heap_module_rootdom");
+    auto heap_factory = load_module<heap_factory_v1::closure_t>(bootimg, "heap_factory", "exported_heap_module_rootdom");
     ASSERT(heap_factory);
 
     auto stretch_allocator_factory = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_factory", "exported_stretch_allocator_module_rootdom");
