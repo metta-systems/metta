@@ -216,9 +216,10 @@ j. In class declarations, "public" declarations shall precede "protected" declar
 
 k. Virtual functions should always be marked as such even in derived classes where it is not technically necessary.
 
-l. In a function definition, the function return type shall be put to the left of the function name (not above it).
+l. In a function definition, the function return type shall be put above the function name (not to the left of it).
 
-    some_type_t some_function(some_other_type_t& object)
+    some_type_t
+    some_function(some_other_type_t& object)
     {
         // ...
     }
@@ -226,7 +227,8 @@ l. In a function definition, the function return type shall be put to the left o
 m. In a template function definition, the function template arguments shall be put to the line above function signature.
 
     template <typename T, int N>
-    some_type_t some_function(some_other_type_t& object)
+    some_type_t
+    some_function(some_other_type_t& object)
     {
         // ...
     }
@@ -278,8 +280,8 @@ u. Variables in declaration blocks and their initialization can be justified to 
     double  avoid_long_names   = 1.1;
     bool    long_names         = true;
 
-v. Files usually include at the top licensing header from file license_header and at the bottom the vi/kate
-   modelines from file modelines.txt. Ruby script apply_boilerplate.rb can be used to add them to new files.
+v. Files usually include at the top licensing header from file license_header. Ruby script apply_boilerplate.rb
+   can be used to add it to new files.
 
 
 ========================================================================================================================
@@ -298,11 +300,11 @@ c. Classes, functions and methods shall be documented using simple Doxygen comme
    functions in public API will carry their own documentation in the header files. Internal documentation can be
    appended by writing it in the source file.
 
-   Doxygen comments shall include a brief description ("//!") of the method/attribute, and may also contain
-   a detailed description ("/*! ... */"), if that is considered necessary.
+   Doxygen comments shall include a brief description of the method/attribute, and may also contain
+   a detailed description, if that is considered necessary.
 
-    //! A brief description of the function, normally on one line.
-    /*!
+    /**
+     * A brief description of the function, normally on one line until colon.
      * An optional detailed description,
      * normally on several lines.
      */
@@ -313,18 +315,18 @@ c. Classes, functions and methods shall be documented using simple Doxygen comme
 
 d. For inline functions, defined on a single line in the header file, a brief description just above the definition is enough.
 
-    //! A brief description of the function.
+    /// A brief description of the function.
     void my_inline_function(int x) { a = x; }
 
 e. For structs, enums and attributes, a brief description is enough. Enum values and attributes may be documented
-   after the value, using "//!<".
+   after the value.
 
     //! Type of line used for drawing.
     enum line_type_e
     {
-        no_line,     //!< No line at all.
-        thin_line,   //!< Thin line (1-3 pixels).
-        thick_line,  //!< Thick line (3-9 pixels).
+        no_line,     /**< No line at all.           */
+        thin_line,   /**< Thin line (1-3 pixels).   */
+        thick_line,  /**< Thick line (3-9 pixels).  */
     };
 
 
@@ -336,7 +338,7 @@ e. For structs, enums and attributes, a brief description is enough. Enum values
 test.h:
 
 //
-// Copyright 2007 - 2009, Stanislav Karchebnyy <berkus+metta@madfire.net>
+// Copyright 2007 - 2012, Stanislav Karchebnyy <berkus+metta@madfire.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -354,14 +356,16 @@ class something_t;
 
 namespace example_n {
 
-//! This is an example test object.
+/**
+ * This is an example test object.
+ */
 class test_t : public object_t
 {
 public:
-    //! Shorthand type for list of test objects.
+    /// Shorthand type for list of test objects.
     typedef value_list<test_t> list;
 
-    //! Obtain a singleton instance of test class.
+    /// Obtain a singleton instance of test class.
     static test_t* instance() { return instance_; } // singleton/factory methods go in constructors place
 
     virtual ~test_t();
@@ -409,11 +413,6 @@ private:
 
 } // namespace example_n
 
-#endif
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :
-
 
 test.cpp:
 
@@ -423,10 +422,10 @@ test.cpp:
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
+#include "test.h" // per Lakos' "Large scale C++ design" component header file is included first.
 #include <sysinclude3.h>
 #include <extinclude3.h>
 #include "localinclude2.h"
-#include "test.h"
 
 namespace example_n
 {
@@ -454,7 +453,8 @@ test_t::test_t(string_t some_string)
 }
 
 
-void test_t::apply_func2(something_t* sth)
+void
+test_t::apply_func2(something_t* sth)
 {
     for (int x = 0; x < 10; x++)
         if (x == 5)
@@ -462,9 +462,6 @@ void test_t::apply_func2(something_t* sth)
 }
 
 } // namespace example_n
-
-// kate: indent-width 4; replace-tabs on;
-// vim: set et sw=4 ts=4 sts=4 cino=(4 :
 
 
 ========================================================================================================================
