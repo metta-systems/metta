@@ -44,4 +44,9 @@ digraph {
 		gatekeeper -> vcpu [arrowhead=box];
 		gatekeeper -> mutex [arrowhead=box];
 	}
+
+	subgraph cluster_event_impl {
+		events -> event [arrowhead=box];
+		mutex -> event [arrowhead=box];
+	}
 }
