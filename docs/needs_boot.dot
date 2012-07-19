@@ -39,4 +39,9 @@ digraph {
 		binder -> gatekeeper [arrowhead=box];
 		binder -> entry [arrowhead=box];
 	}
+
+	subgraph cluster_gatekeeper_impl {
+		gatekeeper -> vcpu [arrowhead=box];
+		gatekeeper -> mutex [arrowhead=box];
+	}
 }

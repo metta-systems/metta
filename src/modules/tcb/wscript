@@ -14,3 +14,4 @@ def build(bld):
     bld.recurse('stretch_allocator_mod')
     bld.recurse('stretch_driver_mod')
     bld.recurse('typesystem_mod')
+    bld.recurse('gatekeeper_mod')
