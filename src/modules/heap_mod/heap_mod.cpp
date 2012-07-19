@@ -7,8 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <new>
-#include "heap_module_v1_interface.h"
-#include "heap_module_v1_impl.h"
+#include "heap_factory_v1_interface.h"
+#include "heap_factory_v1_impl.h"
 #include "heap_v1_interface.h"
 #include "heap_v1_impl.h"
 #include "heap.h"
@@ -81,10 +81,10 @@ static const heap_v1::ops_t heap_v1_methods =
 };
 
 //======================================================================================================================
-// heap_module_v1 implementation
+// heap_factory_v1 implementation
 //======================================================================================================================
 
-static heap_v1::closure_t* heap_module_v1_create_raw(heap_module_v1::closure_t* self, memory_v1::address where, memory_v1::size size)
+static heap_v1::closure_t* heap_factory_v1_create_raw(heap_factory_v1::closure_t* self, memory_v1::address where, memory_v1::size size)
 {
     kconsole << __FUNCTION__ << ": at " << where << " with " << int(size) << " bytes." << endl;
 
@@ -108,7 +108,7 @@ static heap_v1::closure_t* heap_module_v1_create_raw(heap_module_v1::closure_t* 
     return ret;
 }
 
-static memory_v1::address heap_module_v1_where(heap_module_v1::closure_t* self, heap_v1::closure_t* heap, memory_v1::size* size)
+static memory_v1::address heap_factory_v1_where(heap_factory_v1::closure_t* self, heap_v1::closure_t* heap, memory_v1::size* size)
 {
     return 0;
 }
@@ -117,7 +117,7 @@ static memory_v1::address heap_module_v1_where(heap_module_v1::closure_t* self, 
  * Realize is used to turn a 'raw' heap into a stretch-based one, and requires that the given stretch maps exactly over
  * the frames of the original heap.
  */
-static heap_v1::closure_t* heap_module_v1_realize(heap_module_v1::closure_t* self, heap_v1::closure_t* raw_heap, stretch_v1::closure_t* stretch)
+static heap_v1::closure_t* heap_factory_v1_realize(heap_factory_v1::closure_t* self, heap_v1::closure_t* raw_heap, stretch_v1::closure_t* stretch)
 {
     // switch heap type to 'stretch'
     // clear out all stretches
@@ -126,17 +126,17 @@ static heap_v1::closure_t* heap_module_v1_realize(heap_module_v1::closure_t* sel
     return raw_heap;
 }
 
-static const heap_module_v1::ops_t heap_module_v1_methods =
+static const heap_factory_v1::ops_t heap_factory_v1_methods =
 {
-    heap_module_v1_create_raw,
-    heap_module_v1_where,
-    heap_module_v1_realize
+    heap_factory_v1_create_raw,
+    heap_factory_v1_where,
+    heap_factory_v1_realize
 };
 
-static heap_module_v1::closure_t clos =
+static heap_factory_v1::closure_t clos =
 {
-    &heap_module_v1_methods,
+    &heap_factory_v1_methods,
     NULL
 };
 
-EXPORT_CLOSURE_TO_ROOTDOM(heap_module, v1, clos);
+EXPORT_CLOSURE_TO_ROOTDOM(heap_factory, v1, clos);
