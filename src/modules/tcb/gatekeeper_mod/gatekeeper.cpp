@@ -1,4 +1,5 @@
 #include "gatekeeper_v1_interface.h"
+#include "gatekeeper_v1_impl.h"
 #include "gatekeeper_factory_v1_interface.h"
 #include "gatekeeper_factory_v1_impl.h"
 #include "heap_new.h"
@@ -6,6 +7,10 @@
 //=====================================================================================================================
 // Gatekeeper internal data structures.
 //=====================================================================================================================
+
+struct gatekeeper_v1::state_t
+{
+};
 
 /**
  * State record for reference-counted heap.
@@ -24,7 +29,7 @@ struct gatekeeper_heap_state_t
 /**
  * State record for simple gatekeeper.
  */
-struct simple_gatekeeper_state_t
+struct simple_gatekeeper_state_t : gatekeeper_v1::state_t
 {
 	gatekeeper_v1::closure_t* closure;
 	heap_v1::closure_t*       heap;        // Heap to return
@@ -32,6 +37,54 @@ struct simple_gatekeeper_state_t
 	stretch_v1::closure_t*    stretch;     // Stretch used for heap
 	protection_domain_v1::id  pdid;
 	gatekeeper_heap_state_t   heap_state;  // Simple heap state wrapper
+};
+
+//=====================================================================================================================
+// Simple gatekeeper.
+//=====================================================================================================================
+
+/**
+ * Get a heap readable and/or writable by the given protection domain. 
+ * In this implementation (simple) we have exactly one heap, and hence
+ * cannot handle certain options. 
+ */
+heap_v1::closure_t*
+simple_get_heap(gatekeeper_v1::closure_t* self, protection_domain_v1::id pdid, stretch_v1::size size, stretch_v1::rights rights, bool cache)
+{
+	simple_gatekeeper_state_t* state = reinterpret_cast<simple_gatekeeper_state_t*>(self->d_state);
+
+	if (!cache)
+	{
+		// Cannot create a new heap; we only have the one. So die.
+		OS_RAISE("gatekeeper_v1.failure", 0);
+	}
+
+	if ((state->pdid != NULL_PDID) && (state->pdid != pdid))
+	{
+		// Cannot create a new heap for pdom "pdid". So die.
+		OS_RAISE("gatekeeper_v1.failure", 0);
+	}
+
+ //    if(access != SET_ELEM(Stretch_Right_Read)) {
+	//  Can't chmod the heap either; its read only, so die. 
+	// RAISE_Gatekeeper$Failure();
+ //    }
+
+	return &state->heap_state.closure;
+}
+
+stretch_v1::closure_t*
+simple_get_stretch(gatekeeper_v1::closure_t*, protection_domain_v1::id, stretch_v1::size, stretch_v1::rights, uint32_t, uint32_t)
+{
+    kconsole << "Attempt to call get_stretch() on a simple gatekeeper!" << endl;
+	OS_RAISE("gatekeeper_v1.failure", 0);
+	return 0;
+}
+
+static gatekeeper_v1::ops_t simple_gatekeeper_ops =
+{
+	simple_get_heap,
+	simple_get_stretch
 };
 
 //=====================================================================================================================
