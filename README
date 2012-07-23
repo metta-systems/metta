@@ -1,26 +1,49 @@
-To build Metta execute the following commands:
+Metta is a multimedia, mobile, social OS.
+-----------------------------------------
 
- $ cd src
+My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires.
+
+Be free!
+
+-----------------------------------------
+
+== To build Metta ==
+
+0. Check out the sources following the procedure on the http://metta.exquance.com/wiki/SourceCheckout:
+
+ $ mkdir Metta/branches
+ $ cd Metta/branches
+ $ bzr init-repo .
+ $ bzr branch http://metta.exquance.com/bzr master
+
+Sources will be checked out into branch "master" under "Metta/branches". The reason for having this deep directory structure is toolchain builder will create toolchain directory under Metta, shared by all branches. init-repo in branches also helps reduce overhead of branching in this directory.
+
+1. Install yasm assembler, 'brew install yasm' for example.
+
+2. Generate a toolchain.
+
+ $ cd Metta
+ $ sh branches/master/build_toolchain.sh
+
+This is going to take a while.
+
+If you're unable to build toolchain locally and are on a Lion Mac, download prebuilt one and unpack it.
+
+ $ cd Metta
+ $ wget http://downloads.exquance.com/toolchain-x86_64-darwin.tar.bz2
+ $ tar xf toolchain-x86_64-darwin.tar.bz2
+
+3. Build Metta
+
+ $ cd Metta/branches/master/src
  $ ./waf
 
-You will need gcc 4.4.2 or above and yasm to build.
+4. After successful build run emulator software to try out Metta.
 
-After successful build run emulator software to try out Metta.
 src directory is preconfigured for using Bochs, so you can simply type:
 
  $ bochs -q
 
-== Following is for developers only! ==
+-----------------------------------------
 
-For experimental building with clang first copy waftools/clang.py to
-.waf-..../wafadmin/Tools, then configure to use it:
- 
- $ ./waf configure --check-c-compiler=clang --check-cxx-compiler=clang
-
-Then you can try to build:
-
- $ ./waf
-
-
-You are free to contribute and remember: if you don't, somebody else will.
-Their name will remain in history forever, yours will fade away.
+You are free to contribute and remember: if you don't, somebody else will!
