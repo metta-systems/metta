@@ -436,6 +436,7 @@ init(bootimage_t& bootimg)
     kconsole << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code) << endl;
     kconsole << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code) << endl;
     kconsole << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code) << endl;
+    kconsole << "Autodoc for type gatekeeper_v1: " << ts->docstring(gatekeeper_v1::type_code) << endl;
     kconsole << "___ Done testing type system doc strings" << endl;
 
     // static void init_namespaces(bootimage_t& bootimg)

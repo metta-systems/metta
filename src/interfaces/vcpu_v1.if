@@ -6,16 +6,15 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-#
-# User-level Virtual Processor management; for use by user-level schedulers.
-# The kernel scheduler communicates with a domain's user-level scheduler via state
-# and operations on the domain's Virtual Processor (VP).
-#
-# The procedures in the "VP" interface are implemented by a user-level
-# shared library and a few system calls.  There is no internal
-# concurrency control over the state which may be written at the
-# user level: user-level schedulers are expected to call conflicting
-# procedures within their own critical sections.
+## User-level Virtual Processor management; for use by user-level schedulers.
+## The kernel scheduler communicates with a domain's user-level scheduler via state
+## and operations on the domain's Virtual Processor (VCPU).
+##
+## The procedures in the vcpu interface are implemented by a user-level
+## shared library and a few system calls.  There is no internal
+## concurrency control over the state which may be written at the
+## user level: user-level schedulers are expected to call conflicting
+## procedures within their own critical sections.
 #
 
 local interface vcpu_v1
@@ -24,33 +23,32 @@ local interface vcpu_v1
     # Context slots
     #===================================================================================================================
 
-    # A virtual processor has "NumContexts" slots in which context
-    # is stored when the VP loses the real processor.  These slots
-    # are identified by a "ContextSlot" in the range "0..NumContexts-1".
+    type card32 context_slot;
 
-    type card32 context_slot_t;
+    ## A virtual processor has num_contexts slots in which context
+    ## is stored when the vcpu loses the real processor.  These slots
+    ## are identified by a context_slot in the range "0..num_contexts-1".
+    num_contexts() returns (context_slot slots);
 
-    num_contexts() returns (context_slot_t slots);
-
-    # Context slots are reserved and freed with "AllocContext" and "FreeContext".
-
-    # Raised when no free context slots are available
+    ## Raised when no free context slots are available
     exception no_context_slots {}
 
-    # Raised when "cs" is out of range or its contents are invalid.
-    exception invalid_context { context_slot_t slot; }
+    ## Raised when "slot" is out of range or its contents are invalid.
+    exception invalid_context { context_slot slot; }
 
-    allocate_context() returns (context_slot_t slot) raises (no_context_slots);
+    ## Context slots are reserved "allocate_context".
+    allocate_context() returns (context_slot slot) raises (no_context_slots);
     
-    release_context(context_slot_t slot) raises (invalid_context);
+    ## Context slots are freed with "release_context".
+    release_context(context_slot slot) raises (invalid_context);
 
     # The user-level scheduler obtains the address of the "jmp_buf"
     # associated with a context slot with "Context".  The result
     # can be passed to "setjmp" and "longjmp" to switch between
     # threads.
 
-    # Return the address of the context save area identified by "cs".
-    context(context_slot_t slot) returns (memory_v1.address address);
+    ## Return the address of the context save area identified by "slot".
+    context(context_slot slot) returns (memory_v1.address address);
 
     #===================================================================================================================
     # Activations
@@ -58,25 +56,25 @@ local interface vcpu_v1
 
     # A domain is activated via its activation vector.
 
-    # Set this VP's activation vector to "avec".
-    # "SetActivationVector" is not atomic with respect to activations;
-    # it must be called with activations disabled.  This may change
-    # in the future.
+    ## Set this vcpu's activation vector to "activation_vector".
+    ## This operation is not atomic with respect to activations;
+    ## it must be called with activations disabled.
+    # This may change in the future.
     set_activation_vector(activation_v1& activation_vector);
 
-    # Activations are initially disabled.
-
-    # Set "vp.activationsOn := True".
-    # "ActivationsOn" is a simple write to a user-level flag,
-    # not a system call; it will not cause this domain to be re-activated
-    # because of pending events accumulated while activations are disabled.
+    ## Enable domain activations.
+    ##
+    ## Enabling activations is a simple write to a user-level flag,
+    ## not a system call; it will not cause this domain to be re-activated
+    ## because of pending events accumulated while activations were disabled.
+    ## Activations are initially disabled.
     enable_activations();
 
-    # Set "vp.activationsOn := False".
+    ## Disable domain activations.
     disable_activations();
 
-    # Return "vp.activationsOn".
-    are_activations_on() returns (boolean on);
+    ## Return current status of domain activations.
+    are_activations_enabled() returns (boolean on);
 
     # If this VP loses the processor and activations are enabled,
     # context is stored in the VP's ``save slot''.  When the VP
@@ -84,9 +82,10 @@ local interface vcpu_v1
     # its activation vector with activations disabled.  The initial
     # save slot is indeterminate and possibly invalid.
 
-    get_save_slot() returns (context_slot_t slot);
-    # "SetSaveSlot" returns "Context(cs)".
-    set_save_slot(context_slot_t slot) returns (memory_v1.address addres) raises (invalid_context);
+    get_save_slot() returns (context_slot slot);
+
+    # set_save_slot() returns "context(slot)".
+    set_save_slot(context_slot slot) returns (memory_v1.address addres) raises (invalid_context);
 
     # If this VP loses the processor and activations are disabled,
     # context is stored in the VP's ``resume slot''.  When the VP
@@ -94,8 +93,8 @@ local interface vcpu_v1
     # from the resume slot.  The initial resume slot is valid and
     # allocated.
 
-    get_resume_slot() returns (context_slot_t slot);
-    set_resume_slot(context_slot_t slot) raises (invalid_context);
+    get_resume_slot() returns (context_slot slot);
+    set_resume_slot(context_slot slot) raises (invalid_context);
 
     #===================================================================================================================
     # Event channels
@@ -103,58 +102,60 @@ local interface vcpu_v1
 
     # A virtual processor sends and receives events over event channels.
 
-    # Return the number of slots for channel endpoints at this VCPU.
+    ## Return the number of slots for channel endpoints at this vcpu.
     num_channels() returns (card32 n);
 
-    # The "QueryChannel" procedure returns the "state" and "type" of the endpoint "ep".
-    # If "ep"'s "type" is "RX", "rxval" gives its current received value.
+    ## The query_channel() operation returns the "state" and "ep_type" of the endpoint "ep".
+    ## If "ep"'s "type" is "RX", "rxval" gives its current received value.
 
-    query_channel(channel_v1.endpoint ep) returns (channel_v1.state_e state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack) raises (channel_v1.invalid);
+    query_channel(channel_v1.endpoint ep)
+        returns (channel_v1.state_e state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack)
+        raises (channel_v1.invalid);
 
     # Channel endpoints are allocated by the domain. The following operations are provided 
     # to allocate and free them; note that there is no concurrency control at this level.
 
-    # Find an end-point in the "Free" state, set its state to "Allocated" and return it.
+    ## Find an end-point in the "free" state, set its state to "allocated" and return it.
     allocate_channel() returns (channel_v1.endpoint ep) raises (channel_v1.no_slots);
 
-    # Take an end-point not in the "Connected" state, and set its state to "Free".
+    ## Take an end-point not in the "connected" state, and set its state to "free".
     release_channel(channel_v1.endpoint ep) raises (channel_v1.invalid, channel_v1.bad_state);
 
     # User-level schedulers inform the kernel when they wish events
     # to be transmitted to other domains by calling "Send".
 
-    # Request that the received value of the RX endpoint associated with "tx" be set to "val".
+    ## Request that the received value of the RX endpoint associated with "tx" be set to "val".
     send(channel_v1.tx tx, event_v1.val val) raises (channel_v1.invalid, channel_v1.bad_state);
 
-    # Return the current received value of the endpoint "ep".
+    ## Return the current received value of the endpoint "ep".
     poll(channel_v1.endpoint ep) returns (event_v1.val val) raises (channel_v1.invalid);
 
-    # Write "ack" into the acknowledged value for the endpoint
-    # "ep". Return the current received value (not the ack value).
+    ## Write "ack" into the acknowledged value for the endpoint
+    ## "ep". Return the current received value (not the ack value).
     ack(channel_v1.endpoint ep, event_v1.val ack) 
         returns (event_v1.val val) 
         raises (channel_v1.invalid, channel_v1.bad_state);
 
-    # A "Channel.Endpoint" "ep" has \emph{pending} events iff its value is different from its acknowledged count.
+    # A channel endpoint "ep" has pending events iff its value is different from its acknowledged count.
 
-    # The system maintains a list of end-points which require
-    # attention. A "Channel.Endpoint" is added to this list if its
-    # state becomes "Dead", or if it has no prior events pending and an
-    # event for it arrives (in other words, its state changes from `not
-    # pending' to `pending'). An end-point is removed from this list by
-    # the "NextEvent" operation (below).
+    ## The system maintains a list of end-points which require
+    ## attention. A "Channel.Endpoint" is added to this list if its
+    ## state becomes "Dead", or if it has no prior events pending and an
+    ## event for it arrives (in other words, its state changes from `not
+    ## pending' to `pending'). An end-point is removed from this list by
+    ## the "NextEvent" operation.
 
     are_events_pending() returns (boolean pending);
 
-    # If "EventsPending" returns false, there is no endpoint in the
+    # If are_events_pending() returns false, there is no endpoint in the
     # list of those requiring attention. If it returns true, there is
     # at least one end-point which the system believes is worthy of
     # attention (though this end-point is not guaranteed to have pending events).
 
-    # If "NextEvent" returns false, there is no endpoint in the list of
-    # those requiring attention.  Otherwise, the other results are the
-    # identifier, type, current received value (for "RX"s) and state of
-    # an endpoint which may have pending events or have been closed down.
+    ## If get_next_event() returns false, there is no endpoint in the list of
+    ## those requiring attention.  Otherwise, the other results are the
+    ## identifier, type, current received value (for "RX"s) and state of
+    ## an endpoint which may have pending events or have been closed down.
 
     # The intended pattern of use is (in an activation handler):
     #
