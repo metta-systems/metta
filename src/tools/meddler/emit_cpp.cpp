@@ -1059,7 +1059,8 @@ void set_alias_t::emit_impl_h(ostringstream& s, string indent_prefix, bool)
 void set_alias_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
 {
     // for bigger enums could potentially be expanded to array of uints..
-    s << indent_prefix << "struct " << name() << " { uint32_t value; };" << endl;
+    // s << indent_prefix << "struct " << name() << " { uint32_t value; };" << endl;
+    s << indent_prefix << "typedef set_t<" << type() << "> " << name() << ";" << endl;
 }
 
 void set_alias_t::emit_interface_cpp(ostringstream& s, string indent_prefix, bool)

@@ -292,18 +292,16 @@ inline uint16_t alloc_pdidx(mmu_v1::state_t* state)
 static flags_t control_bits(mmu_v1::state_t* state, stretch_v1::rights rights, memory_v1::attr_flags attr, bool valid)
 {
     flags_t flags = 0;
-    set_t<stretch_v1::right> r(rights.value);
-    set_t<memory_v1::attrs> a(attr.value);
 
     if (!valid)
         flags |= page_t::swapped;
-    if (!r.has(stretch_v1::right_read))
+    if (!rights.has(stretch_v1::right_read))
         flags |= page_t::kernel_mode;
-    if (r.has(stretch_v1::right_execute))
+    if (rights.has(stretch_v1::right_execute))
         flags |= page_t::executable;
-    if (r.has(stretch_v1::right_write))
+    if (rights.has(stretch_v1::right_write))
         flags |= page_t::writable;
-    if (state->use_global_pages && r.has(stretch_v1::right_global))
+    if (state->use_global_pages && rights.has(stretch_v1::right_global))
         flags |= page_t::global;
 
     /**
@@ -316,11 +314,11 @@ static flags_t control_bits(mmu_v1::state_t* state, stretch_v1::rights rights, m
      * buffers, are updated correctly as long as their pmem attrs
      * include non_memory (but not no_cache).
      */
-    if (a.has(memory_v1::attrs_no_cache))
+    if (attr.has(memory_v1::attrs_no_cache))
     {
         flags |= page_t::cache_disable;
     }
-    else if (a.has(memory_v1::attrs_non_memory))
+    else if (attr.has(memory_v1::attrs_non_memory))
     {
         flags |= page_t::write_through;
     }
@@ -346,9 +344,7 @@ static void mmu_v1_start(mmu_v1::closure_t* self, protection_domain_v1::id root_
 static void mmu_v1_add_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str, memory_v1::virtmem_desc mem_range, stretch_v1::rights global_rights)
 {
     page_t pte;
-    memory_v1::attr_flags aa;
-    aa.value = 0;
-    flags_t flags = control_bits(self->d_state, global_rights, aa, /*valid:*/false);
+    flags_t flags = control_bits(self->d_state, global_rights, 0, /*valid:*/false);
     pte.set_flags(flags);
 
     size_t page_width = mem_range.page_width;
@@ -482,9 +478,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
 static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str, memory_v1::virtmem_desc mem_range, stretch_v1::rights global_rights)
 {
     page_t pte;
-    memory_v1::attr_flags aa;
-    aa.value = 0;
-    flags_t flags = control_bits(self->d_state, global_rights, aa, /*valid:*/true);
+    flags_t flags = control_bits(self->d_state, global_rights, 0, /*valid:*/true);
     pte.set_flags(flags);
 
     size_t page_width = mem_range.page_width;
@@ -526,11 +520,8 @@ static protection_domain_v1::id mmu_v1_create_domain(mmu_v1::closure_t* self)
 
     uint16_t idx = alloc_pdidx(state);
 
-    stretch_v1::rights rr;
-    rr.value = 0; /*stretch_v1::rights_none*/
-
     state->pdominfo[idx].refcnt = 0;
-    state->pdominfo[idx].stretch = state->stretch_allocator->create(sizeof(pdom_t), rr);
+    state->pdominfo[idx].stretch = state->stretch_allocator->create(sizeof(pdom_t), stretch_v1::right_none);
     state->pdominfo[idx].gen++;
 
     memory_v1::size sz;
@@ -600,7 +591,7 @@ static void mmu_v1_set_rights(mmu_v1::closure_t* self, protection_domain_v1::id 
     kconsole << __FUNCTION__ << ": pdom " << pdom << ", sid " << sid << " " << rights << endl;
 
     uint8_t mask = sid & 1 ? 0xf0 : 0x0f;
-    uint32_t val = rights.value;
+    uint32_t val = rights;
     if (sid & 1) val <<= 4;
     pdom->rights[sid>>1] &= ~mask;
     pdom->rights[sid>>1] |= val;

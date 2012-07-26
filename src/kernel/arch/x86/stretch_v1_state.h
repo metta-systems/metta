@@ -45,12 +45,11 @@ const uint32_t right_none = 0;
 
 inline console_t& operator << (console_t& con, stretch_v1::rights rights)
 {
-    set_t<stretch_v1::right> r(rights.value);
     con << "["
-        << (r.has(stretch_v1::right_meta)    ? "M" : "-")
-        << (r.has(stretch_v1::right_read)    ? "R" : "-")
-        << (r.has(stretch_v1::right_write)   ? "W" : "-")
-        << (r.has(stretch_v1::right_execute) ? "X" : "-")
+        << (rights.has(stretch_v1::right_meta)    ? "M" : "-")
+        << (rights.has(stretch_v1::right_read)    ? "R" : "-")
+        << (rights.has(stretch_v1::right_write)   ? "W" : "-")
+        << (rights.has(stretch_v1::right_execute) ? "X" : "-")
         << "]";
     return con;
 }
