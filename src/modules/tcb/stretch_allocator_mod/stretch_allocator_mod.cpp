@@ -244,20 +244,10 @@ static void set_default_rights(system_stretch_allocator_v1::state_t* state, stre
     server_state_t* ss = state->shared_state;
     if (state->pdid != NULL_PDID)
     {
-        set_t<stretch_v1::right> r;
-        r.add(stretch_v1::right_read)
-         .add(stretch_v1::right_write)
-         .add(stretch_v1::right_meta);
-        stretch_v1::rights rr;
-        rr.value = r;
-
-        ss->mmu->set_rights(state->pdid, stretch, rr);
+        ss->mmu->set_rights(state->pdid, stretch, stretch_v1::rights(stretch_v1::right_read).add(stretch_v1::right_write).add(stretch_v1::right_meta));
         if (state->parent != NULL_PDID)
         {
-            r.clear();
-            r.add(stretch_v1::right_meta);
-            rr.value = r;
-            ss->mmu->set_rights(state->parent, stretch, rr);
+            ss->mmu->set_rights(state->parent, stretch, stretch_v1::rights(stretch_v1::right_meta));
         }
     }
 }
