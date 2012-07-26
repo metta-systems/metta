@@ -193,7 +193,7 @@ local interface vcpu_v1
     # "cs" will be clobbered in the common case where "cs" is the
     # current save slot.
 
-    rfa_resume(context_slot_t slot) never returns raises (invalid_context);
+    rfa_resume(context_slot slot) never returns raises (invalid_context);
 
     # A domain releases the real processor voluntarily with "RFABlock",
     # "Block" or "Yield".  These give differing hints to the kernel
