@@ -1,0 +1,27 @@
+server domain
++--start a service
++--find transport
+   +--transport = name_context.lookup(Modules.ShmTransport)
++--create IDCOffer
+   +--offer, service = transport.Offer(closure, connection_callback, scheduling_entry)
+   - closure is the server closure,
+   - connection_callback, if provided, is used to veto clients,
+   - scheduling_entry adds support for IDCServerStubs.dispatch calling.
++--register service closure in ObjectTbl
+   +--transport.Offer will export to ObjectTbl
++--publish IDCOffer in trader context under some name
+   +--NamingContext.Add(name, offer)
+
+client domain
++--trader name table lookup
+   +--offer = NamingContext.Get(name)
++--use obtained IDCOffer to bind to server via ObjectTbl
+   +--ObjectTbl.Import(offer)
++--Bind() call goes through Binder and executes a BinderCallback.Request on a connection
+   +--in ObjectTbl: offer.Bind(gatekeeper, entry)
++--offer has not many implementations, one of which is ClientStubsIDCOffer, in csidc.c
+   all it does is runs Bind() on offer returned from IDCTransport and then wraps it into client stubs interface.
+   which then goes to OfferBind_m in Transport implementation, where actual binding happens:
+
++--BinderCallback.Request goes through to the server awaiting new clients
+   +--BinderCallback.Request()
