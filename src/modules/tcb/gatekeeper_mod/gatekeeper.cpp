@@ -2,7 +2,11 @@
 #include "gatekeeper_v1_impl.h"
 #include "gatekeeper_factory_v1_interface.h"
 #include "gatekeeper_factory_v1_impl.h"
+#include "heap_v1_impl.h"
+#include "default_console.h"
+#include "exceptions.h"
 #include "heap_new.h"
+#include "ia32.h" // for NULL_PDID @todo Make this an arch independent definition...
 
 //=====================================================================================================================
 // Gatekeeper internal data structures.
@@ -31,7 +35,7 @@ struct gatekeeper_heap_state_t
  */
 struct simple_gatekeeper_state_t : gatekeeper_v1::state_t
 {
-	gatekeeper_v1::closure_t* closure;
+	gatekeeper_v1::closure_t  closure;
 	heap_v1::closure_t*       heap;        // Heap to return
 	heap_v1::closure_t*       alloc_heap;  // Heap state comes from
 	stretch_v1::closure_t*    stretch;     // Stretch used for heap
@@ -56,13 +60,13 @@ simple_get_heap(gatekeeper_v1::closure_t* self, protection_domain_v1::id pdid, s
 	if (!cache)
 	{
 		// Cannot create a new heap; we only have the one. So die.
-		OS_RAISE("gatekeeper_v1.failure", 0);
+		OS_RAISE((exception_support_v1::id)"gatekeeper_v1.failure", 0);
 	}
 
 	if ((state->pdid != NULL_PDID) && (state->pdid != pdid))
 	{
 		// Cannot create a new heap for pdom "pdid". So die.
-		OS_RAISE("gatekeeper_v1.failure", 0);
+		OS_RAISE((exception_support_v1::id)"gatekeeper_v1.failure", 0);
 	}
 
  //    if(access != SET_ELEM(Stretch_Right_Read)) {
@@ -77,7 +81,7 @@ stretch_v1::closure_t*
 simple_get_stretch(gatekeeper_v1::closure_t*, protection_domain_v1::id, stretch_v1::size, stretch_v1::rights, uint32_t, uint32_t)
 {
     kconsole << "Attempt to call get_stretch() on a simple gatekeeper!" << endl;
-	OS_RAISE("gatekeeper_v1.failure", 0);
+	OS_RAISE((exception_support_v1::id)"gatekeeper_v1.failure", 0);
 	return 0;
 }
 
@@ -85,6 +89,17 @@ static gatekeeper_v1::ops_t simple_gatekeeper_ops =
 {
 	simple_get_heap,
 	simple_get_stretch
+};
+
+//=====================================================================================================================
+// Gatekeeper heap.
+//=====================================================================================================================
+
+static heap_v1::ops_t gatekeeper_heap_ops =
+{
+	NULL,
+	NULL,
+	NULL
 };
 
 //=====================================================================================================================
@@ -127,7 +142,7 @@ create_simple(gatekeeper_factory_v1::closure_t* self, heap_v1::closure_t* heap)
 	simple_gatekeeper_state_t* state = new(heap) simple_gatekeeper_state_t;
 	if (!state)
 	{
-		OS_RAISE("heap_v1.no_memory", 0);
+		OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", 0);
 	}
 
 	state->heap = heap;
@@ -137,7 +152,7 @@ create_simple(gatekeeper_factory_v1::closure_t* self, heap_v1::closure_t* heap)
 
 	closure_init(&state->closure, &simple_gatekeeper_ops, state);
 
-	closure_init(&state->heap_state.closure, &gatekeeper_heap_ops, &state->heap_state);
+	closure_init(&state->heap_state.closure, &gatekeeper_heap_ops, reinterpret_cast<heap_v1::state_t*>(&state->heap_state));
 	state->heap_state.heap = heap;
 	state->heap_state.destroyable = false;
     // MU_INIT(&st->heap_st.mu);
