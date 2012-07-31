@@ -22,6 +22,14 @@ client domain
 +--offer has not many implementations, one of which is ClientStubsIDCOffer, in csidc.c
    all it does is runs Bind() on offer returned from IDCTransport and then wraps it into client stubs interface.
    which then goes to OfferBind_m in Transport implementation, where actual binding happens:
-
-+--BinderCallback.Request goes through to the server awaiting new clients
-   +--BinderCallback.Request()
++--get transmit buffer memory from gatekeeper
++--create various state
++--initialize client stubs
++--setup event chnannels
++--call Binder.SimpleConnect()
+   +--get domain's BinderCallback
+   +--call BinderCallback.SimpleRequest() on it
+   +--goes through to the server awaiting new clients
+      +--now inside SimpleRequest:
+      +--@todo goes in ObjectTbl.c
+   +--Plumber.Connect() endpoints
