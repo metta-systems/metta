@@ -13,6 +13,7 @@
 #include "type_system_factory_v1_impl.h"
 #include "enum_v1_interface.h"
 #include "record_v1_interface.h"
+#include "choice_v1_interface.h"
 #include "operation_v1_interface.h"
 #include "interface_v1_state.h"
 #include "interface_v1_impl.h"
@@ -415,7 +416,7 @@ extern operation_v1::ops_t operation_ops;
 extern exception_v1::ops_t exception_ops;
 extern record_v1::ops_t    record_ops;
 extern enum_v1::ops_t      enum_ops;
-// extern choice_v1::ops_t    choice_ops;
+extern choice_v1::ops_t    choice_ops;
 
 static void
 type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_system_f_v1::interface_info intf)
@@ -445,9 +446,9 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
             clos_ptr = iface->types[i]->any.value;
             switch (iface->types[i]->any.type_)
             {
-                // case type_system_v1::choice_type_code:
-                //     reinterpret_cast<choice_v1::closure_t*>(clos_ptr)->d_methods = &choice_ops;
-                //     break;
+                case type_system_v1::choice_type_code:
+                    reinterpret_cast<choice_v1::closure_t*>(clos_ptr)->d_methods = &choice_ops;
+                    break;
                 case type_system_v1::enum__type_code:
                     reinterpret_cast<enum_v1::closure_t*>(clos_ptr)->d_methods = &enum_ops;
                     break;

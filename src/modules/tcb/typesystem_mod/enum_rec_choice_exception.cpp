@@ -3,6 +3,8 @@
 #include "interface_v1_interface.h"
 #include "exception_v1_impl.h"
 #include "interface_v1_state.h"
+#include "choice_v1_interface.h"
+#include "choice_v1_impl.h"
 #include "exceptions.h"
 
 //=====================================================================================================================
@@ -69,14 +71,15 @@ get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 //   return False;
 }
 
-/*
+/**
  * Return base type of a choice; i.e the type of the discriminator
  */
-// static types::code
-// base(choice_v1::closure_t* self)
-// {
-// 	return self->d_state->disc;
-// }
+static types::code
+base(choice_v1::closure_t* self)
+{
+	// return self->d_state->discriminator;
+    return 0;
+}
 
 static const char*
 info(exception_v1::closure_t* self, interface_v1::closure_t** i, uint32_t* n)
@@ -117,35 +120,35 @@ shared_destroy(naming_context_v1::closure_t*)
 //=====================================================================================================================
 
 naming_context_v1::ops_t enum_ops = {
-	list,
-	get,
-	shared_add,
-	shared_remove,
-	shared_destroy
+    list,
+    get,
+    shared_add,
+    shared_remove,
+    shared_destroy
 };
 
 naming_context_v1::ops_t record_ops = {
-	list,
-	get,
-	shared_add,
-	shared_remove,
-	shared_destroy
+    list,
+    get,
+    shared_add,
+    shared_remove,
+    shared_destroy
 };
 
-// choice_v1::ops_t choice_ops = {
-// 	list,
-// 	get,
-// 	shared_add,
-// 	shared_remove,
-// 	shared_destroy,
-// 	base
-// };
+choice_v1::ops_t choice_ops = {
+    list,
+    get,
+    shared_add,
+    shared_remove,
+    shared_destroy,
+    base
+};
 
 exception_v1::ops_t exception_ops = {
-	list,
-	get,
-	shared_add,
-	shared_remove,
-	shared_destroy,
-	info
+    list,
+    get,
+    shared_add,
+    shared_remove,
+    shared_destroy,
+    info
 };
