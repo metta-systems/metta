@@ -40,8 +40,9 @@ struct enum_rec_state_t
 /**
  * Choice type state.
  */
-struct choice_state_t : public enum_rec_state_t
+struct choice_state_t
 {
+    enum_rec_state_t ctx;
     types::code discriminator;
 };
 

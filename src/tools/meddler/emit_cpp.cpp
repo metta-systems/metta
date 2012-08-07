@@ -525,6 +525,7 @@ void interface_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
     s << indent_prefix << "#include \"interface_v1_state.h\"" << endl
       << indent_prefix << "#include \"type_system_v1_interface.h\"" << endl
       << indent_prefix << "#include \"record_v1_interface.h\"" << endl //@todo see record type emitter for info
+      << indent_prefix << "#include \"choice_v1_interface.h\"" << endl //@todo see choice type emitter for info
       << indent_prefix << "#include \"enum_v1_interface.h\"" << endl //@todo see enum type emitter for info
       << indent_prefix << "#include \"" << name() << "_interface.h\"" << endl
       << indent_prefix << "#include \"" << name() << "_impl.h\"" << endl;
@@ -1011,7 +1012,7 @@ void sequence_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, 
       << indent_prefix << " * Sequence: " << fqn << endl
       << indent_prefix << " */" << endl
       << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::sequence__type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
+      << indent_prefix << "    { type_system_v1::sequence_type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
       << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    \"" << string_escape(get_autodoc()) << "\", // autodoc" << endl
@@ -1074,7 +1075,7 @@ void set_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bool 
       << indent_prefix << " * Set: " << fqn << endl
       << indent_prefix << " */" << endl
       << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::set__type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
+      << indent_prefix << "    { type_system_v1::set_type_code, { " << emit_type_code_prefix(*this) << "type_code } }," << endl
       << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    \"" << string_escape(get_autodoc()) << "\", // autodoc" << endl
@@ -1154,7 +1155,7 @@ void record_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bo
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::record__type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
+      << indent_prefix << "    { type_system_v1::record_type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
       << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    \"" << string_escape(get_autodoc()) << "\", // autodoc" << endl
@@ -1195,6 +1196,7 @@ void choice_alias_t::emit_interface_cpp(std::ostringstream& s, std::string inden
 {
 }
 
+// @todo: add choice_v1_interface.h to includes only if we emit choice aliases
 void choice_alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
 {
     string fqn = replace_dots(get_root()->name() + "." + name());
@@ -1208,8 +1210,8 @@ void choice_alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_
     for (auto f : choices)
     {
         s << indent_prefix << "choice_v1::field " << nameprefix << f->name() << "_field = {" << endl
-          << indent_prefix << "    " << fqn << ", " << f->name() << "" << endl
-          << indent_prefix << "    " << emit_type_code_prefix(*f) << "type_code," << endl
+          << indent_prefix << "    " << get_root()->name() << "::" << selector << "_" << f->name() << "," << endl
+          << indent_prefix << "    " << emit_type_code_prefix(*f) << "type_code" << endl
           << indent_prefix << "};" << endl;
     }
 
@@ -1220,19 +1222,22 @@ void choice_alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_
     }
     s << indent_prefix << "};" << endl << endl;
 
+//@todo finish emitting right records for choice
+
     s << indent_prefix << "choice_state_t " << name() << "_state_rec = {" << endl
-      << indent_prefix << "    " << choices.size() << ", /* Number of fields */" << endl
-      << indent_prefix << "    " << name() << "_fields" << endl
-      << indent_prefix << "    " << selector << "_type_code" << endl
+      << indent_prefix << "    { " << choices.size() << ", /* Number of fields */" << endl
+      << indent_prefix << "    " << name() << "_fields }," << endl
+      // @fixme: should emit_type_code_prefix() on selector...
+      << indent_prefix << "    " << get_root()->name() << "::" << selector << "_type_code" << endl
       << indent_prefix << "};" << endl << endl;
 
-    s << indent_prefix << "record_v1::closure_t " << name() << "_state_closure = {" << endl
-      << indent_prefix << "    nullptr, /* Will be patched to record_ops. */" << endl
-      << indent_prefix << "    reinterpret_cast<record_v1::state_t*>(&" << name() << "_state_rec)" << endl
+    s << indent_prefix << "choice_v1::closure_t " << name() << "_state_closure = {" << endl
+      << indent_prefix << "    nullptr, /* Will be patched to choice_ops. */" << endl
+      << indent_prefix << "    reinterpret_cast<choice_v1::state_t*>(&" << name() << "_state_rec)" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
-      << indent_prefix << "    { type_system_v1::record__type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
+      << indent_prefix << "    { type_system_v1::choice_type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
       << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
       << indent_prefix << "    \"" << name() << "\"," << endl
       << indent_prefix << "    \"" << string_escape(get_autodoc()) << "\", // autodoc" << endl

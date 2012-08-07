@@ -89,13 +89,13 @@ local interface type_system_v1 extends naming_context_v1
 #    record tc_array { array_index n; alias tc; }
 #     cardinal bit_set;//?
 #     alias    ref;
-#     choice&  choice;
 
     type enum_v1& enum_;
     type interface_v1& iref;
-    type alias    sequence_;
-    type alias    set_;
-    type record_v1& record_;
+    type alias    sequence;
+    type alias    set;
+    type record_v1& record;
+    type choice_v1& choice;
 
     ## Raised if "code" is not a valid type code in this context.
     exception bad_code { alias code; }

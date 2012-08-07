@@ -451,7 +451,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
                 case type_system_v1::enum__type_code:
                     reinterpret_cast<enum_v1::closure_t*>(clos_ptr)->d_methods = &enum_ops;
                     break;
-                case type_system_v1::record__type_code:
+                case type_system_v1::record_type_code:
                     reinterpret_cast<record_v1::closure_t*>(clos_ptr)->d_methods = &record_ops;
                     break;
             }
