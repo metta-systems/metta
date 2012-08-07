@@ -1,0 +1,13 @@
+# Used to create an ActivationF interface to run over a particular VP.
+#
+# The "ActivationMod" interface is used to create an instance of an
+# "ActivationF.if" to run over a particular VP.
+
+local interface activation_dispatcher_factory_v1
+{
+    ## Create a new activation dispatcher to run over the vcpu and which
+    ## can deal with up to "num_timeouts" pending timeouts.
+
+    create(vcpu_v1& vcpu, time_v1& time, heap_v1& heap, card32 num_timeouts)
+        returns (activation_dispatcher_v1& dispatcher, activation_v1& activation_handler);
+}
