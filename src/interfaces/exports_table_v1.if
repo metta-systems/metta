@@ -1,4 +1,4 @@
-#      Maintains table of exported interfaces for a domain
+# Maintains table of exported interfaces for a domain
 #
 # An "ObjectTbl" is an IDC service which maintains a mapping from
 # "IDCOffer"s to interfaces, either local services which have been
@@ -24,7 +24,7 @@ local interface exports_table_v1
 
     # The table has been used in an inconsistent manner, for example
     # "Export"ing an offer twice, or the table is out of memory.
-    exception failure { fail_type t; }
+    exception failure { fail_type fail; }
 
     enum entry_type { service, surrogate }
 
@@ -50,24 +50,23 @@ local interface exports_table_v1
     # create a new binding.  This is entered in the table and client
     # surrogate returned.
 
-    import_object(idc_offer_v1& offer) returns (types.any interface) raises (failure);
+    ## If "offer" is in the table, return its interface. Otherwise try
+    ## to bind to it and return the result of the bind.
 
-    # If "offer" is in the table, return its interface. Otherwise try
-    # to bind to it and return the result of the bind.
+    import_object(idc_offer_v1& offer) returns (types.any interface) raises (failure);
 
     # A general purpose operation is also provided to query the object
     # table about a particular offer, without taking any particular
-    # action. 
+    # action.
 
     info(idc_offer_v1& offer, out types.any interface, out handle info)
         returns (boolean exists);
 
-    # When a server domain wishes to withdraw a service, or a client
-    # domain has finished used a service, the corresponding object
-    # table entry is removed with "Delete":
-
-    ## If "offer" is in the table, then remove it and return
-    ## "True". Otherwise return "False".
+    ## When a server domain wishes to withdraw a service, or a client
+    ## domain has finished used a service, the corresponding object
+    ## table entry is removed with "remove":
+    ##
+    ## If offer is in the table, then remove it and return true. Otherwise return false.
 
     remove(idc_offer_v1& offer)
         returns (boolean present);

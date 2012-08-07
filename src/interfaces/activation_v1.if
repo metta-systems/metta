@@ -6,14 +6,14 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
-# Vector via which the real processor is given to a VP.
-#
-# A domain differs from the normal concept of a user process
-# in the way in which the processor is presented to it.
-# The domain's user-level scheduler can be explicitly informed
-# when the processor is given to the domain by invocations on
-# its \emph{activation vector}, an "IREF Activation" associated
-# with the domain's \emph{virtual processor} (VP).
+## Vector via which the real processor is given to a VP.
+##
+## A domain differs from the normal concept of a user process
+## in the way in which the processor is presented to it.
+## The domain's user-level scheduler can be explicitly informed
+## when the processor is given to the domain by invocations on
+## its activation vector, an "activation_v1&" associated
+## with the domain's virtual processor.
 
 local interface activation_v1
 {
@@ -33,8 +33,8 @@ local interface activation_v1
     enum reason { preempted, allocated, extra, event, reactivated }
 
     # A domain is activated by disabling activations, then invoking
-    # "Go" on its VP's activation vector with the appropriate value
-    # of "ar".  "Go" executes on a small, permanently resident activation
-    # stack associated with the VP.
+    # "go" on its vcpu's activation vector with the appropriate value
+    # of "activation_reason". "go" executes on a small, permanently resident activation
+    # stack associated with the vcpu.
     go(vcpu_v1& vcpu, reason activation_reason) never returns;
 }

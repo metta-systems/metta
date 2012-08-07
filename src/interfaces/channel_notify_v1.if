@@ -1,0 +1,25 @@
+# Hooks for handling events on a particular VP channel.
+#
+# A channel notify interface is called within the activation
+# handler of a vcpu.
+#
+# Currently channel notifications are used by the "Entry" and "Tasks"
+# style inter-domain communication, as described in the ANSAware/RT 
+# Computation and Engineering models; and also by various other things.
+##
+## All operations in this interface must be invoked with
+## activations turned off, preferably from within the activation
+## handler.  
+
+local interface channel_notify_v1 extends chained_handler_v1
+{
+    # The event demultiplexer calls "Notify" in the middle of its
+    # processing of incoming events when it finds an event channel
+    # which is attached. The arguments are part of the end point's state.
+
+    ## Notify an interested party that notification has been received 
+    ## from the kernel about activity on event channel "channel".
+
+    notify(channel_v1.endpoint channel, channel_v1.endpoint_type type,
+        event_v1.value val, channel_v1.state state);
+}
