@@ -42,6 +42,8 @@ class parser_t
     bool parse_argument_list(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_argument(AST::node_t* parent, std::vector<AST::parameter_t*>& args, AST::parameter_t::direction_e default_dir);
     bool parse_id_list(std::vector<std::string>& ids, token::kind delim);
+    bool parse_choice_decl(AST::node_t* parent);
+    bool parse_choice_list(AST::node_t* parent);
 
     bool parse_enum_type_alias();
     bool parse_array_type_alias();
@@ -49,6 +51,7 @@ class parser_t
     bool parse_sequence_type_alias();
     bool parse_set_type_alias();
     bool parse_record_type_alias();
+    bool parse_choice_type_alias();
     bool parse_type_alias();
 
 	void configure_type(AST::alias_t& to_get);

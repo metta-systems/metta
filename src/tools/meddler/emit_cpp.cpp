@@ -229,7 +229,7 @@ static string emit_type(alias_t& type, bool fully_qualify_type = false)
         result += "::closure_t*";
     else
         if (type.is_reference())
-            result += "&";
+            result += "*";
 
     return result;
 }
@@ -1146,6 +1146,84 @@ void record_alias_t::emit_typedef_cpp(ostringstream& s, string indent_prefix, bo
     s << indent_prefix << "enum_rec_state_t " << name() << "_state_rec = {" << endl
       << indent_prefix << "    " << fields.size() << ", /* Number of fields */" << endl
       << indent_prefix << "    " << name() << "_fields" << endl
+      << indent_prefix << "};" << endl << endl;
+
+    s << indent_prefix << "record_v1::closure_t " << name() << "_state_closure = {" << endl
+      << indent_prefix << "    nullptr, /* Will be patched to record_ops. */" << endl
+      << indent_prefix << "    reinterpret_cast<record_v1::state_t*>(&" << name() << "_state_rec)" << endl
+      << indent_prefix << "};" << endl << endl;
+
+    s << indent_prefix << "type_representation_t " << name() << "_type_rep = {" << endl
+      << indent_prefix << "    { type_system_v1::record__type_code, { .ptr32value = &" << name() << "_state_closure } }," << endl
+      << indent_prefix << "    { types::code_type_code, { " << fqn << "_type_code } }," << endl
+      << indent_prefix << "    \"" << name() << "\"," << endl
+      << indent_prefix << "    \"" << string_escape(get_autodoc()) << "\", // autodoc" << endl
+      << indent_prefix << "    &" << get_root()->name() << "__intf_typeinfo," << endl
+      << indent_prefix << "    sizeof(" << fqn << ")" << endl
+      << indent_prefix << "};" << endl
+      << endl;
+}
+
+//=====================================================================================================================
+// choice_alias_t
+//=====================================================================================================================
+
+void choice_alias_t::emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+}
+
+void choice_alias_t::emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    s << indent_prefix << "struct " << replace_dots(name()) << endl
+      << indent_prefix << "{" << endl
+
+      << indent_prefix << "    " << selector << " tag;" << endl
+      << indent_prefix << "    union choice {" << endl;
+
+    for (auto field : choices)
+    {
+        field->emit_interface_h(s, indent_prefix + "        ");
+        s << ";" << endl;
+    }
+
+    s << indent_prefix << "    };" << endl
+      << indent_prefix << "};" << endl;
+
+}
+
+void choice_alias_t::emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+}
+
+void choice_alias_t::emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types)
+{
+    string fqn = replace_dots(get_root()->name() + "." + name());
+    s << indent_prefix << "/*" << endl
+      << indent_prefix << " * Choice: " << fqn << endl
+      << indent_prefix << " */" << endl << endl;
+
+    string nameprefix = get_root()->name() + "_" + name() + "_";
+
+    // Describe each field.
+    for (auto f : choices)
+    {
+        s << indent_prefix << "choice_v1::field " << nameprefix << f->name() << "_field = {" << endl
+          << indent_prefix << "    " << fqn << ", " << f->name() << "" << endl
+          << indent_prefix << "    " << emit_type_code_prefix(*f) << "type_code," << endl
+          << indent_prefix << "};" << endl;
+    }
+
+    s << indent_prefix << "field_t " << name() << "_fields[] = {" << endl;
+    for (auto f : choices)
+    {
+        s << indent_prefix << "    { { choice_v1::field_type_code, { .ptr32value = &" << nameprefix << f->name() << "_field } }, \"" << f->name() << "\", \"" << string_escape(f->get_autodoc()) << "\" }," << endl;
+    }
+    s << indent_prefix << "};" << endl << endl;
+
+    s << indent_prefix << "choice_state_t " << name() << "_state_rec = {" << endl
+      << indent_prefix << "    " << choices.size() << ", /* Number of fields */" << endl
+      << indent_prefix << "    " << name() << "_fields" << endl
+      << indent_prefix << "    " << selector << "_type_code" << endl
       << indent_prefix << "};" << endl << endl;
 
     s << indent_prefix << "record_v1::closure_t " << name() << "_state_closure = {" << endl

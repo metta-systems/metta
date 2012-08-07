@@ -22,6 +22,7 @@ enum kind
     dotdot,            // ..
     equal, comma,      // =  ,
     reference,         // &
+    dblarrow,          // =>
     lsquare, rsquare,  // [  ]
     lbrace, rbrace,    // {  }
     less, greater,     // <  >
@@ -39,7 +40,7 @@ enum kind
     kw_in, kw_inout, kw_out, kw_idempotent,
     kw_raises, kw_extends, kw_never, kw_returns,
 
-    kw_type, kw_sequence, kw_set, kw_range, kw_record, kw_enum, kw_array,
+    kw_type, kw_sequence, kw_set, kw_range, kw_record, kw_choice, kw_on, kw_enum, kw_array,
 
     autodoc // Autodoc comments
 };

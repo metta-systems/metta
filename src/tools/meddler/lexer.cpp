@@ -100,7 +100,22 @@ token::kind lexer_t::get_token()
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
             return get_cardinal();
-        case '=': return token::equal;
+        case '=':
+            if (get_next_char() == '>')
+            {
+                return token::dblarrow;
+            }
+            --cur_ptr;
+            return token::equal;
+        // @todo Does this make things nicer or only confuses?
+        // i.e. method()->(int value);
+        // case '-':
+        // if (get_next_char() == '>')
+        // {
+        //     return token::kw_returns;
+        // }
+        // --cur_ptr; --cur_ptr;
+        // return get_identifier();
         case ',': return token::comma;
         case '&': return token::reference;
         case '[': return token::lsquare;
