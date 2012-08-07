@@ -21,18 +21,13 @@
 #include "map_string_address_v1_impl.h"
 #include "heap_v1_interface.h"
 #include "default_console.h"
-#include "heap_allocator.h"
-#include "unordered_map"
+#include "hashtables.h"
 #include "heap_new.h"
 #include "infopage.h"
 
 using namespace std;
 
-typedef map_string_address_v1::key key_type;
-typedef map_string_address_v1::value value_type;
-typedef pair<key_type, value_type> pair_type;
-typedef heap_allocator<pair_type> string_table_heap_allocator;
-typedef unordered_map<key_type, value_type, hash<key_type>, equal_to<key_type>, string_table_heap_allocator> stringtable_t;
+DECLARE_MAP(stringtable, map_string_address_v1::key, map_string_address_v1::value);
 
 struct map_string_address_v1::state_t
 {
@@ -148,7 +143,7 @@ static map_string_address_v1::closure_t*
 map_string_address_factory_v1_create(map_string_address_factory_v1::closure_t* self, heap_v1::closure_t* heap)
 {
 	map_string_address_v1::state_t* state = new(heap) map_string_address_v1::state_t;
-    auto heap_alloc = new(heap) string_table_heap_allocator(heap); // FIXME: a mem leak!
+    auto heap_alloc = new(heap) stringtable_heap_allocator(heap); // FIXME: a mem leak!
 	// TODO: if (!state) raise Exception
 	state->heap = heap;
 	state->table = new(heap) stringtable_t(*heap_alloc);
