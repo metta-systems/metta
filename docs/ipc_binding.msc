@@ -1,0 +1,53 @@
+# Run through mscgen to get a sequence diagram. @todo Add as part of ./waf doc
+msc {
+   sd[label="Server Domain"],cd[label="Client Domain"],t[label="Transport"],o[label="ObjectTbl"],n[label="Naming Context"],b[label="Binder"],g[label="Gatekeeper"];
+
+   sd box sd [label="in Server Domain"];
+
+   sd => sd [label="Start a service"];
+
+   sd => n [label="Find transport"];
+   sd << n [label="transport = name_context.lookup(Modules.ShmTransport)"];
+
+   sd => t [label="Create IDCOffer"];
+   sd << t [label="offer, service = transport.Offer(closure, connection_callback, scheduling_entry)"];
+   sd note t [label="closure is the server closure,"];
+   sd note t [label="connection_callback, if provided, is used to veto clients,"];
+   sd note t [label="scheduling_entry adds support for IDCServerStubs.dispatch calling."];
+
+   sd => t [label="transport.Offer will export to ObjectTbl"];
+   t => o [label="register service closure in ObjectTbl"];
+
+   sd => n [label="publish IDCOffer in trader context under some name"];
+   sd << n [label="NamingContext.Add(name, offer)"];
+
+   cd box cd [label="in Client Domain"];
+
+   cd => n [label="look up server offer in context"];
+   cd << n [label="offer = NamingContext.Get(name)"];
+
+   cd => o [label="use obtained IDCOffer to bind to server via ObjectTbl"];
+   cd << o [label="ObjectTbl.Import(offer)"];
+
+   cd => o [label="Bind() call goes through Binder and executes a BinderCallback.Request on a connection"];
+   o => g [label="in ObjectTbl: offer.Bind(gatekeeper, entry)"];
+
+   cd note o [label="offer has not many implementations, one of which is ClientStubsIDCOffer, in csidc.c"];
+   cd note o [label="all it does is runs Bind() on offer returned from IDCTransport and then wraps it into client stubs interface."];
+   cd note o [label="which then goes to OfferBind_m in Transport implementation, where actual binding happens:"];
+
+   t => g [label="get transmit buffer memory from gatekeeper"];
+   t => t [label="create various state"];
+   t => t [label="initialize client stubs"];
+   t => t [label="setup event chnannels"];
+
+   cd => b [label="call Binder.SimpleConnect()"];
+   b => sd [label="get domain's BinderCallback"];
+   b => o [label="call BinderCallback.SimpleRequest() on it"];
+
+   b => sd [label="goes through to the server awaiting new clients"];
+   sd note sd [label="now inside SimpleRequest:"];
+   sd note sd [label="@todo goes in ObjectTbl.c"];
+
+   sd note sd [label="Plumber.Connect() endpoints"];
+}

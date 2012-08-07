@@ -153,6 +153,12 @@ public:
     virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 };
 
+/**
+record Name {
+    idc_service& field1;
+    idc_client_binding& field2;
+}
+*/
 class record_alias_t : public alias_t
 {
 public:
@@ -162,6 +168,29 @@ public:
     virtual bool add_field(alias_t* field);
     virtual void dump(std::string indent_prefix);
     virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}//FIXME
+    virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+};
+
+/**
+choice Handle on EntryType { << EntryType must be an existing ENUM type!
+    Service => idc_service&,
+    Surrogate => idc_client_binding&
+}
+*/
+class choice_alias_t : public alias_t
+{
+public:
+    std::string selector;
+    std::vector<alias_t*> choices;
+
+    choice_alias_t(node_t* parent, std::string nm) : alias_t(parent, nm) {}
+    void set_selector(std::string selector_) { selector = selector_; }
+    virtual bool add_field(alias_t* field);
+    virtual void dump(std::string indent_prefix);
+    virtual void emit_include(std::ostringstream& s, std::string indent_prefix) {}
     virtual void emit_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
     virtual void emit_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);

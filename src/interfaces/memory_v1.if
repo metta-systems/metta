@@ -27,7 +27,7 @@ local interface memory_v1
     #   dma        - a region of the physical address space to which or from where DMA may take place.
     #   read_only  - a piece of virt/phys memory which is now and always shall be read-only. E.g. ROM, NTSC stuff.
 
-    enum { regular, nailed, non_memory, no_cache, dma, read_only } attrs;
+    enum attrs { regular, nailed, non_memory, no_cache, dma, read_only }
     set<attrs> attr_flags;
 
     # A region of physical memory is described by a physmem_desc
@@ -119,7 +119,7 @@ local interface memory_v1
     # not take a page fault on a page to which it has no access, nor
     # will it be able to take a fault on write on an unaligned address.
 
-    enum {
+    enum fault {
         translation_not_valid,
         unaligned_access,
         access_violation,
@@ -130,5 +130,5 @@ local interface memory_v1
         page_faut,
         breakpoint,
         max_fault_number
-    } fault;
+    }
 }

@@ -109,7 +109,7 @@ local interface vcpu_v1
     ## If "ep"'s "type" is "RX", "rxval" gives its current received value.
 
     query_channel(channel_v1.endpoint ep)
-        returns (channel_v1.state_e state, channel_v1.endpoint_type ep_type, event_v1.val rx_val, event_v1.val rx_ack)
+        returns (channel_v1.state state, channel_v1.endpoint_type ep_type, event_v1.value rx_val, event_v1.value rx_ack)
         raises (channel_v1.invalid);
 
     # Channel endpoints are allocated by the domain. The following operations are provided 
@@ -125,15 +125,15 @@ local interface vcpu_v1
     # to be transmitted to other domains by calling "Send".
 
     ## Request that the received value of the RX endpoint associated with "tx" be set to "val".
-    send(channel_v1.tx tx, event_v1.val val) raises (channel_v1.invalid, channel_v1.bad_state);
+    send(channel_v1.tx tx, event_v1.value val) raises (channel_v1.invalid, channel_v1.bad_state);
 
     ## Return the current received value of the endpoint "ep".
-    poll(channel_v1.endpoint ep) returns (event_v1.val val) raises (channel_v1.invalid);
+    poll(channel_v1.endpoint ep) returns (event_v1.value val) raises (channel_v1.invalid);
 
     ## Write "ack" into the acknowledged value for the endpoint
     ## "ep". Return the current received value (not the ack value).
-    ack(channel_v1.endpoint ep, event_v1.val ack) 
-        returns (event_v1.val val) 
+    ack(channel_v1.endpoint ep, event_v1.value ack) 
+        returns (event_v1.value val) 
         raises (channel_v1.invalid, channel_v1.bad_state);
 
     # A channel endpoint "ep" has pending events iff its value is different from its acknowledged count.
@@ -165,7 +165,7 @@ local interface vcpu_v1
     #      vcpu->rfa_block()
 
     get_next_event() 
-        returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.val val, channel_v1.state_e state);
+        returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.value val, channel_v1.state state);
 
     #===================================================================================================================
     # Scheduling functions

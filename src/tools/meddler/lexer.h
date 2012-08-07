@@ -67,6 +67,52 @@ public:
         return llvm::SMLoc::getFromPointer(token_start);
     }
 
+    // @todo: add want_lex(kind) method to look up an identifier of expected type (e.g. ignore if expecting an
+    // kw_identifier and got a kw_choice - 'choice' can be an id too). Use want_lex() in match/expect/maybe below.
+
+    bool want_lex(token::kind wanted_kind)
+    {
+        lex();
+        // extern std::string token_to_name(token::kind tok);
+        // std::cerr << "want_lex(" << token_to_name(wanted_kind) << ") lexed " << token_to_name(token_kind()) << std::endl;
+        if (wanted_kind != token_kind())
+        {
+            if (wanted_kind == token::identifier)
+            {
+                switch(token_kind())
+                {
+                    case token::kw_local:
+                    case token::kw_final:
+                    case token::kw_interface:
+                    case token::kw_exception:
+                    case token::kw_in:
+                    case token::kw_inout:
+                    case token::kw_out:
+                    case token::kw_idempotent:
+                    case token::kw_raises:
+                    case token::kw_extends:
+                    case token::kw_never:
+                    case token::kw_returns:
+                    case token::kw_type:
+                    case token::kw_sequence:
+                    case token::kw_set:
+                    case token::kw_range:
+                    case token::kw_record:
+                    case token::kw_choice:
+                    case token::kw_on:
+                    case token::kw_enum:
+                    case token::kw_array:
+                    case token::type: // hmmm, if we expect an ident, type name can also be an identifier, or not??
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
     // Match current token to kind.
     bool match(token::kind kind)
     {
@@ -76,13 +122,13 @@ public:
     // Read next token and expect it to be of type kind
     bool expect(token::kind kind)
     {
-        return (lex() == kind);
+        return want_lex(kind);
     }
 
     // Lookup next token and see if it matches kind
     bool maybe(token::kind kind)
     {
-        if (lex() == kind)
+        if (want_lex(kind))
             return true;
         lexback();
         return false;

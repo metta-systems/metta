@@ -38,7 +38,7 @@ local interface stretch_v1
     # are null, the only ACL entry is "Read" / "Write" / "Meta" for the
     # protection domain which created it.
 
-    enum { read, write, execute, meta, global } right;
+    enum right { read, write, execute, meta, global }
     set<right> rights;
 
     # Client does not have permission to manipulate the stretch.

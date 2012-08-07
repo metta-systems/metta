@@ -13,13 +13,13 @@
 
 local interface event_v1
 {
-    #===================================================================================================================
+    #
     # Types
-    #===================================================================================================================
+    #
 
-    ## An event count is a monotonically increasing value of type "val"
+    ## An event count is a monotonically increasing value of type "value"
     ## associated with a domain.
-    type card64 val;
+    type card64 value;
 
     ## An event count is identified within its domain by a "Count".
     type card64 count; # Opaque

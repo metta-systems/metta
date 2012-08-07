@@ -28,6 +28,7 @@ std::string token_to_name(token::kind tok)
         TNAME(equal)
         TNAME(comma)
         TNAME(reference)
+        TNAME(dblarrow)
         TNAME(lsquare)
         TNAME(rsquare)
         TNAME(lbrace)
@@ -59,6 +60,8 @@ std::string token_to_name(token::kind tok)
         TNAME(kw_set)
         TNAME(kw_range)
         TNAME(kw_record)
+        TNAME(kw_choice)
+        TNAME(kw_on)
         TNAME(kw_enum)
         TNAME(kw_array)
         TNAME(identifier)
@@ -121,6 +124,8 @@ void parser_t::populate_symbol_table()
     symbols.insert("set", token::kw_set);
     symbols.insert("range", token::kw_range);
     symbols.insert("record", token::kw_record);
+    symbols.insert("choice", token::kw_choice);
+    symbols.insert("on", token::kw_on);
     symbols.insert("enum", token::kw_enum);
     symbols.insert("array", token::kw_array);
     symbols.insert("int8", token::_builtin_type);
@@ -349,6 +354,13 @@ bool parser_t::parse_interface_body()
                     return false;
                 }
                 break;
+            case token::kw_choice:
+                if (!parse_choice_type_alias())
+                {
+//                     PARSE_ERROR("Choice type parse failed.");
+                    return false;
+                }
+                break;
             case token::kw_type:
                 if (!parse_type_alias())
                 {
@@ -526,13 +538,13 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
     while (lex.lex() != token::rparen)
     {
         lex.lexback();
-        if (!lex.expect(token::type))
+        if (!lex.expect(token::identifier))
         {
-            if (!lex.match(token::identifier))
-            {
+            // if (!lex.match(token::identifier))
+            // {
                 PARSE_ERROR("type ID expected");
                 return false;
-            }
+            // }
         }
         ids.push_back(lex.current_token());
         if (!lex.expect(token::comma))
@@ -913,6 +925,115 @@ bool parser_t::parse_record_type_alias()
     return true;
 }
 
+//! choice_decl ::= id '=>' type_decl
+bool parser_t::parse_choice_decl(AST::node_t* parent)
+{
+    AST::alias_t* alias = new AST::alias_t(parent);
+
+    if (!lex.expect(token::identifier))
+    {
+        PARSE_ERROR("Choice from selector enum expected.");
+        return false;
+    }
+
+    std::string name = lex.current_token();
+
+    if (!lex.expect(token::dblarrow))
+    {
+        PARSE_ERROR("=> expected");
+        return false;
+    }
+
+    if (!parse_type_decl(*alias))
+        return false;
+
+    alias->set_name(name);
+    parent->add_field(alias);
+
+    if (!lex.expect(token::comma))
+    {
+        if (lex.match(token::rbrace))
+        {
+            lex.lexback();
+            return true;
+        }
+        PARSE_ERROR(", or } expected");
+        return false;
+    }
+    return true;
+}
+
+//! choice_list ::= choice_decl (',' choice_decl)*
+bool parser_t::parse_choice_list(AST::node_t* parent)
+{
+    D();
+    while (lex.lex() != token::rbrace)
+    {
+        lex.lexback();
+        if (!parse_choice_decl(parent))
+            return false;
+    }
+    lex.lexback();
+    return true;
+}
+
+
+bool parser_t::parse_choice_type_alias()
+{
+    D();
+    if (!lex.match(token::kw_choice))
+        return false;
+
+    if (!lex.expect(token::identifier))
+    {
+        PARSE_ERROR("choice ID expected");
+        return false;
+    }
+
+    AST::choice_alias_t* node = new AST::choice_alias_t(parse_tree, lex.current_token());
+    local_scope_t new_scope(symbols, lex.current_token());
+
+    if (!lex.expect(token::kw_on))
+    {
+        PARSE_ERROR("'on' keyword expected in choice declaration");
+        return false;
+    }
+
+    if (!lex.expect(token::identifier))
+    {
+        PARSE_ERROR("choice selector ID expected");
+        return false;
+    }
+
+    std::string selector = lex.current_token();
+    // @todo: find selector in the list of defined enums and raise error if not found
+    // or if specified selectors are not defined in the enum.
+    node->set_selector(selector);
+
+    if (!lex.expect(token::lbrace))
+    {
+        PARSE_ERROR("{ expected");
+        return false;
+    }
+
+    parse_choice_list(node);
+
+    if (!lex.expect(token::rbrace))
+    {
+        PARSE_ERROR("} expected");
+        return false;
+    }
+
+    parse_tree->add_type(node);
+    if (!symbols.insert_checked(node->name(), token::type))
+    {
+        PARSE_ERROR("duplicate symbol");
+        return false;
+    }
+
+    return true;
+}
+
 // FIXME: should enum create a scope?
 bool parser_t::parse_enum_type_alias()
 {
@@ -920,7 +1041,14 @@ bool parser_t::parse_enum_type_alias()
     if (!lex.match(token::kw_enum))
         return false;
 
-    AST::enum_alias_t* node = new AST::enum_alias_t(parse_tree);//memleaks on errors!
+    if (!lex.expect(token::identifier))
+    {
+        PARSE_ERROR("enum ID expected");
+        return false;
+    }
+
+    AST::enum_alias_t* node = new AST::enum_alias_t(parse_tree);
+    node->set_name(lex.current_token());
 
     if (!lex.expect(token::lbrace))
     {
@@ -931,7 +1059,7 @@ bool parser_t::parse_enum_type_alias()
     std::vector<std::string> ids;
     if (!parse_id_list(ids, token::rbrace))
     {
-        PARSE_ERROR("enum list parse failed");
+        // PARSE_ERROR("enum list parse failed");
         return false;
     }
 
@@ -940,20 +1068,6 @@ bool parser_t::parse_enum_type_alias()
     if (!lex.expect(token::rbrace))
     {
         PARSE_ERROR("} expected");
-        return false;
-    }
-
-    if (!lex.expect(token::identifier))
-    {
-        PARSE_ERROR("enum ID expected");
-        return false;
-    }
-
-    node->set_name(lex.current_token());
-
-    if (!lex.expect(token::semicolon))
-    {
-        PARSE_ERROR("; expected");
         return false;
     }
 

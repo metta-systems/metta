@@ -1,0 +1,15 @@
+#      Server Domains's handle on an offered service. 
+# When a "BinderCallback.Request" comes in to a domain from the binder,
+# it should dispatched to the relevant "IDCService", typically by an
+# "ObjectTbl".
+
+local interface idc_service_v1 extends binder_callback_v1
+{
+    ## Withdraw the service.
+    ##
+    ## Destroying an IDC service probably does not remove any bindings
+    ## associated with it.  This method should not be invoked from any
+    ## domain other than the one which created the offer; it will fail
+    ## in some way.  It should probably raise a "denied" exception.
+    destroy();
+}

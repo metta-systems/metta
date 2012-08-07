@@ -18,15 +18,15 @@ local interface stretch_driver_v1
     # but essentially the type "User" is for those who feel confident
     # enough to have a bash at implementing some weirdo-type stretch
     # driver of their own. Hehe.
-    enum { user, null, nailed, physical, paged, remote } kind;
+    enum kind { user, null, nailed, physical, paged, remote }
 
     # The result of a StretchDriver's attempt to map or otherwise
     # deal with a fault on a page may be any of the following:
-    enum {
+    enum result {
         success, # everything went ok
         failure, # doomed to failure
         retry    # this attempt failed, but can retry.
-    } result;
+    }
 
     # Note; the reason for the odd third result type above is to
     # cope with StretchDrivers who require certain conditions

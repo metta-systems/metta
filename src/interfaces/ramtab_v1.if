@@ -8,7 +8,7 @@
 #
 local interface ramtab_v1
 {
-    enum { unused, mapped, nailed } state;
+    enum state { unused, mapped, nailed }
     
     # "size" returns the total number of frames handled by this interface.
     size() returns (memory_v1.size max_frame_number);

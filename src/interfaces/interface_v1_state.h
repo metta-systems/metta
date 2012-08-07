@@ -21,7 +21,8 @@ struct param_t
 /**
  * Field type: used in Records, Choices, Enumerations and Exceptions.
  */
-struct field_t {
+struct field_t
+{
     types::any   value;
     const char*  name;
     const char*  autodoc;     /**< Reference documentation */
@@ -36,12 +37,12 @@ struct enum_rec_state_t
     field_t*  elems;     /* val = enum. value or record type code */
 };
 
-/*
- * Choice type state
+/**
+ * Choice type state.
  */
-struct ChoiceState_t {
-    enum_rec_state_t  ctx;
-    types::code       disc;      /* discriminator    */
+struct choice_state_t : public enum_rec_state_t
+{
+    types::code discriminator;
 };
 
 struct ExcRef_t {

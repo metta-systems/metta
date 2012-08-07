@@ -11,7 +11,7 @@ local interface operation_v1 extends naming_context_v1
     # all those of kind "Result" come after the others.
 
     # what sort of parameter this is.
-    enum { input, output, in_out, result } param_mode;
+    enum param_mode { input, output, in_out, result }
 
     # returned by the context.
     record parameter { 
@@ -20,7 +20,7 @@ local interface operation_v1 extends naming_context_v1
     }
 
     # Operations themselves come in three flavours:
-    enum { proc, announcement, no_return } kind;
+    enum kind { proc, announcement, no_return }
 
     # An operation is provided to return miscellaneous information
     # about an operation:

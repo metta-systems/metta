@@ -102,6 +102,12 @@ bool record_alias_t::add_field(alias_t* field)
     return true;
 }
 
+bool choice_alias_t::add_field(alias_t* field)
+{
+    choices.push_back(field);
+    return true;
+}
+
 bool enum_alias_t::add_field(alias_t* field)
 {
     //std::cout << "enum_alias_t::add_field()" << std::endl;
@@ -190,6 +196,18 @@ void record_alias_t::dump(std::string indent_prefix)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
         for (auto var : fields) {
+            std::cout << indent_prefix << "  "; var->dump("");
+        }
+}
+
+void choice_alias_t::dump(std::string indent_prefix)
+{
+    std::cout << indent_prefix << "choice_t(\"" << name() << "\")" << std::endl;
+    std::cout << indent_prefix << "+-selector " << selector << std::endl;
+    if (choices.size() == 0)
+        std::cout << indent_prefix << "  [empty]" << std::endl;
+    else
+        for (auto var : choices) {
             std::cout << indent_prefix << "  "; var->dump("");
         }
 }
