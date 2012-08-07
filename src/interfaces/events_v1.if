@@ -1,0 +1,141 @@
+##      Operations for event counts, sequencers and channels.
+## Metta provides a simple mechanism by which threads in a domain
+## can synchronise with the occurrence of events caused by agents
+## either within or outside that domain.  The mechanism is based on
+## event counts, whose values may be used to affect the scheduling
+## of threads.  Two event counts may be coupled with an event channel,
+## which causes the value of the receiving (RX) count to be updated with
+## the value of the the transmitting (TX) count at certain times.
+
+local interface events_v1
+{
+    # 
+    # Exceptions
+    # 
+
+    ## Raised when "ec" does not denote a "Count".
+    exception invalid { event_v1.count ec; }
+
+    # Raised when no further event counts are available.
+    exception no_resources {}
+
+    # 
+    # Allocation
+    # 
+
+    # The operations in the event interface are implemented by a domain's
+    # user-level scheduler, in order that it can schedule the calling
+    # threads appropriately.
+    # 
+    # A domain's event counts are allocated and freed with "create"
+    # and "destroy":
+
+    ## Return a count with "ec.val = 0", and no threads waiting on "ec".
+    create() returns (event_v1.count ec) raises (no_resources);
+
+    ## Return "ec" to the free pool.
+    ## Threads waiting on "ec" during a call to "destroy(ec)" will raise
+    ## the "Alerted" exception from "Await".  If "ec" was associated with
+    ## an open event channel, that channel is closed.
+    destroy(event_v1.count ec) raises (invalid);
+
+    # 
+    # Event count operations
+    # 
+    # The primitive scheduling operations are those of Reed and Kanodia.
+
+    ## Return the current value of "ec.value".
+    ##
+    ## More precisely, "read" returns a value which includes the effects
+    ## of all the "advance"s preceding this read, and may or may not include
+    ## the effects of those in progress during the read.
+    read(event_v1.count ec) 
+        returns (event_v1.value value)
+        raises (invalid, channel_v1.bad_state, channel_v1.invalid);
+
+    ## Increase "ec.value" by "increment" atomically wrt. other calls of
+    ## "advance" on "ec".
+    advance(event_v1.count ec, event_v1.value increment)
+        raises (invalid, channel_v1.bad_state, channel_v1.invalid);
+
+    ## Block the current thread until "ec.val >= val", then return "read(ec)".
+    await(event_v1.count ec, event_v1.value value)
+        returns (event_v1.value new_value)
+        raises (invalid, thread_v1.alerted, channel_v1.bad_state, channel_v1.invalid);
+
+    ## Block the current thread until either "ec.val >= val"
+    ## or "Time.Now() >= until", then return "read(ec)".
+    await_until(event_v1.count ec, event_v1.value value, time_v1.time until)
+        returns (event_v1.value new_value)
+        raises (invalid, thread_v1.alerted, channel_v1.bad_state, channel_v1.invalid);
+
+    #
+    # Sequencers
+    #
+
+    # Threads can order their actions by waiting on counts for
+    # values obtained from a sequencer.
+
+    ## Raised when "sq" does not denote a sequencer.
+    exception invalid_sequencer { event_v1.sequencer seq; }
+
+    ## Return a sequencer with "seq.value = 0".
+    create_sequencer()
+        returns (event_v1.sequencer seq)
+        raises (no_resources);
+
+    # Return "seq" to the free pool.
+    destroy_sequencer(event_v1.sequencer seq)
+        raises (invalid_sequencer);
+
+    ## Return "seq.val".
+    read_seq(event_v1.sequencer seq)
+        returns (event_v1.value value)
+        raises (invalid_sequencer);
+
+    ## Equivalent to
+    ## 
+    ## << result := seq.val; seq.val++ >>; return result
+    ticket(event_v1.sequencer seq)
+        returns (event_v1.value value)
+        raises (invalid_sequencer);
+
+    #
+    # Events and Channels
+    #
+
+    # If a "Count" "ec" is associated with the TX endpoint of an open
+    # event channel, then eventually the received value of that channel's
+    # RX endpoint becomes "ec.value".  Similarly, if "ec" is associated
+    # with the RX endpoint of an open event channel, then eventually
+    # "ec.value" gets that endpoint's received value.
+
+    # Event counts are associated with channel endpoints by the
+    # following two procedures:
+
+    attach(event_v1.count ec, channel_v1.endpoint channel, channel_v1.endpoint_type type)
+        raises (invalid, channel_v1.bad_state, channel_v1.invalid);
+
+    attach_pair(event_v1.pair events, channel_v1.pair channels)
+        raises (invalid, channel_v1.bad_state, channel_v1.invalid);
+
+    # If "event" is attached to a channel, "query_endpoint" returns the
+    # endpoint and the channel type. If "event" is not attached, it
+    # returns "NULL_EP" for the "ep" and the "type" is undefined.
+
+    query_endpoint(event_v1.count ec)
+        returns (channel_v1.endpoint channel, channel_v1.endpoint_type type)
+        raises (invalid);
+
+    # Channel's endpoints are allocated by the vcpu interface. The following operations
+    # are provided as wrappers with concurrency control.
+
+    ## Find an end-point in the "Free" state, set its state to "Allocated" and return it.
+    create_channel()
+        returns (channel_v1.endpoint channel)
+        raises (channel_v1.no_slots);
+
+    ## Take an end-point not in the "Connected" state, and set its state to "Free".
+    destroy_channel(channel_v1.endpoint channel)
+        raises (channel_v1.bad_state, channel_v1.invalid);
+}

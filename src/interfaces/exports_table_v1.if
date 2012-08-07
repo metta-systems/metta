@@ -1,0 +1,74 @@
+#      Maintains table of exported interfaces for a domain
+#
+# An "ObjectTbl" is an IDC service which maintains a mapping from
+# "IDCOffer"s to interfaces, either local services which have been
+# "Export"ed or client stubs to services which have been
+# "Import"ed. 
+#
+# The table handles incoming connection requests from other
+# domains (which arrive via the "Binder"). A request for connection
+# to an "IDCOffer" is looked up in the table and mapped to a
+# "IDCService", which is invoked to create the server side
+# connection state and return to the "Binder". 
+#
+# A second function of the table is when the domain is acting as a
+# client: if it has received an "IDCOffer" and wishes to bind to it,
+# it calls "Import" to return an interface of the appropriate
+# type.  This is either a client surrogate, or the service itself if
+# the offer has been around the houses and come back.
+
+local interface exports_table_v1
+{
+    # There is one exception specific to the "ObjectTbl":
+    enum fail_type { duplicate, no_memory, bind }
+
+    # The table has been used in an inconsistent manner, for example
+    # "Export"ing an offer twice, or the table is out of memory.
+    exception failure { fail_type t; }
+
+    enum entry_type { service, surrogate }
+
+    choice handle on entry_type {
+        service   => idc_service_v1&,
+        surrogate => idc_client_binding_v1&
+    }
+
+    # When a service offer is created, the corresponding "IDCTransport"
+    # registers it in the object table using "Export". 
+    # It is an exception to try to export the same offer twice.
+
+    export_object(idc_service_v1& service, idc_offer_v1& offer, types.any interface)
+        raises (failure);
+
+    # When a client domain receives an "IDCOffer" it may be from a
+    # service local to the domain, or from a service for which the client
+    # already has a binding.  Calling "Import" returns the service
+    # if it is local, or the client surrogate interface if it is remote
+    # and a binding for it already exists. 
+    # 
+    # Otherwise, the "Bind" method on the "IDCOffer" is invoked to
+    # create a new binding.  This is entered in the table and client
+    # surrogate returned.
+
+    import_object(idc_offer_v1& offer) returns (types.any interface) raises (failure);
+
+    # If "offer" is in the table, return its interface. Otherwise try
+    # to bind to it and return the result of the bind.
+
+    # A general purpose operation is also provided to query the object
+    # table about a particular offer, without taking any particular
+    # action. 
+
+    info(idc_offer_v1& offer, out types.any interface, out handle info)
+        returns (boolean exists);
+
+    # When a server domain wishes to withdraw a service, or a client
+    # domain has finished used a service, the corresponding object
+    # table entry is removed with "Delete":
+
+    ## If "offer" is in the table, then remove it and return
+    ## "True". Otherwise return "False".
+
+    remove(idc_offer_v1& offer)
+        returns (boolean present);
+}

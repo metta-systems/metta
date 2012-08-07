@@ -13,7 +13,7 @@
 #
 # Ordinal types:
 #
-# enum { id_1, id_2, id_3 } E;
+# enum E { id_1, id_2, id_3 }
 # set<enum> S;
 # range id_1..id_2 R;
 # int8
@@ -69,11 +69,21 @@ local interface type_system_v1 extends naming_context_v1
 
     type types.code alias;
 
-    enum { Boolean, Card16, Card32, Card64,
-          Int16, Int32, Int64,
-          Float, Double,
-          Octet, Char,
-          Opaque, String } predefined;
+    enum predefined { 
+        Boolean,
+        Card16,
+        Card32,
+        Card64,
+        Int16,
+        Int32,
+        Int64,
+        Float,
+        Double,
+        Octet,
+        Char,
+        Opaque,
+        String 
+    }
 
 #    type card32 tc_array_index;
 #    record tc_array { array_index n; alias tc; }

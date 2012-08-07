@@ -1,0 +1,32 @@
+#	Server domain's interface to the same-machine IDC binder.
+#
+# A domain offering services accepts connection requests from the
+# binder over an IDC channel established with "Binder.RegisterDomain".
+# The binder makes a connection request on behalf of a client domain
+# by calling the procedure "BinderCallback.Request" on this callback
+# channel to the server domain.  This will typically be implemented
+# by the domain's exports table.
+
+local interface binder_callback_v1
+{
+    # The binder supplies the client's identity and protection domain,
+    # the SAP (port) to connect to, and the cookies supplied by the
+    # client. 
+    # If the server domain does not wish to accept the request, it
+    # should raise the appropriate "Binder.Error".  Otherwise,
+    # having gobbled the client's cookies, it should return a list of 
+    # channel end-points and a further list of cookies.  The cookies
+    # will be returned to the original client; the end-points will be
+    # connected to the those supplied by the original client.  If the
+    # wrong number of end-points are returned, the client will see a
+    # "Binder.Error". 
+
+    # "SimpleRequest" is to "Request" as the "Binder"'s "SimpleConnect"
+    # is to its "ConnectTo".
+
+    simple_request(domain_v1.id client, protection_domain_v1.id pdid,
+        binder_v1.port port, binder_v1.cookie cookie,
+        out channel_v1.pair server_endpoints, 
+        out binder_v1.cookie server_cookie)
+        raises (binder_v1.error, channel_v1.no_slots);
+}

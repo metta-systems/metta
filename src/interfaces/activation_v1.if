@@ -30,7 +30,7 @@ local interface activation_v1
     # between this mechanism and the use of well-known "Channel.RX"s
     # will be investigated.
     #
-    enum { preempted, allocated, extra, event, reactivated } reason;
+    enum reason { preempted, allocated, extra, event, reactivated }
 
     # A domain is activated by disabling activations, then invoking
     # "Go" on its VP's activation vector with the appropriate value

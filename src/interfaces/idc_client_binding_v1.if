@@ -1,0 +1,53 @@
+#      Client control interface to an IDC binding
+# 
+# Invoking "Bind" on an "IDCOffer" results in (if all goes well) an
+# "IREF" of the required type, plus one of type "IDCClientBinding".
+# "IDCClientBinding" interfaces are used for two purposes: firstly, they
+# provide the means to create invocations, and are used by the
+# surrogates for transmitting requests. Secondly, they allow control
+# of a binding from the client's point of view; most notably, closing
+# it down. 
+#
+# It is possible to map surrogates to and from the corresponding
+# "IDCClientBinding"s by using the convention documented in
+# the "IDCClientStubs" interface.
+
+local interface idc_client_binding_v1
+{
+    ## Block until there is a transmit buffer free, then return the
+    ## associated "BufferDesc" set up for a call of the operation
+    ## whose index is "proc".
+    init_call(card32 proc, string name)
+        returns (idc_v1.buffer_desc b);
+
+    ## Block until there is a transmit buffer free, then return the
+    ## associated "BufferDesc" set up for a cast of the "ANNOUNCEMENT" 
+    ## whose index is "ann".
+    init_cast(card32 ann, string name)
+        returns (idc_v1.buffer_desc b);
+               
+    ## Transmit the buffer previously prepared with "InitCall" or
+    ## "InitCast". 
+    send_call(idc_v1.buffer_desc b);
+
+    ## Receive a reply from a server. "rc" represents an exception
+    ## raised by the server or infrastructure, or "0" if the call
+    ## completed normally.
+    receive_reply()
+        returns (card32 rc, idc_v1.buffer_desc b, string name);
+
+    # Notify any interested parties that the contents of the
+    # receive buffer have been read and can be overwritten.
+    ack_receive(idc_v1.buffer_desc b);
+
+    ## Remove the binding, destroying both the client invocation
+    ## interface and this one, and call "ObjectTbl.Delete" on the
+    ## pervasive object table, passing the "IDCOffer" which generated
+    ## this binding.
+    destroy();
+
+    # Having "Destroy" call "ObjectTbl.Delete" is EXPERIMENTAL.  This
+    # feature may disappear in future if it turns out not to be a good
+    # idea.  If that happens, the "IDCClientStubs.State" record should
+    # be modified by adding a field giving the "IDCOffer".
+}

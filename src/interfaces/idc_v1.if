@@ -1,0 +1,14 @@
+local interface idc_v1
+{
+	type binder_v1.cookie buffer;
+	type binder_v1.cookies buffers;
+
+	record buffer_rec {
+		memory_v1.address base;
+		memory_v1.address ptr;
+		memory_v1.size space;
+		heap_v1& heap;
+	}
+
+	type buffer_rec& buffer_desc;
+}

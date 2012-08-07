@@ -29,7 +29,7 @@ local interface channel_v1
 
     type endpoint rx;
     type endpoint tx;
-    enum { rx, tx } endpoint_type;
+    enum endpoint_type { rx, tx }
 
     ## An endpoint is either "free" or allocated.  A newly
     ## allocated endpoint is in state "local_".  While its
@@ -39,7 +39,7 @@ local interface channel_v1
     ## An endpoint makes transitions between these states as a result
     ## of actions by the binder.
 
-    enum { free, local_, connected, dead } state_e;
+    enum state { free, local, connected, dead }
 
     ## For inter-domain communication ("IDC"), it is often useful to have
     ## pairs of channels, one in each direction.  Each domain holds
@@ -60,7 +60,7 @@ local interface channel_v1
     exception invalid { endpoint ep; }
 
     ## Raised by operations encountering an unexpected state "state" for an endpoint "ep".
-    exception bad_state { endpoint ep; state_e state; }
+    exception bad_state { endpoint ep; state state; }
 
     ## Raised when no further endpoint slots are available at "dom".
     exception no_slots { domain_v1.id domain; }
