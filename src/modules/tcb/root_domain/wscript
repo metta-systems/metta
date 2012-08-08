@@ -2,4 +2,4 @@
 # -*- coding: utf-8 -*-
 
 def build(bld):
-    mod = bld.setup_module_build('root_domain', '../..', 'entry.cpp') # root_domain.cpp
+    mod = bld.setup_module_build('root_domain', '../..', 'entry.cpp events.cpp') # root_domain.cpp
