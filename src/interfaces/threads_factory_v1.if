@@ -1,0 +1,38 @@
+## Allows creation of a user level thread scheduler.
+## 
+## A thread scheduler can be created by using an instance of the
+## threads factory interface. Various implementations of thread
+## schedulers may have differing scheduling policies.
+
+local interface threads_factory_v1
+{
+    record stack {
+        stretch_v1& guard;
+        stretch_v1& stretch;
+    }
+
+    ## "create" creates a thread scheduler. The client is expected to
+    ## supply the default stack and heap sizes, main thread "entry"
+    ## and "data", and a template pervasives record. It must also
+    ## supply a stack for start-of-day, and a stretch to be used to
+    ## create the initial heap. The scheduler can be specified as being
+    ## "preemptive" or not.
+    ## 
+    ## If "create" returns successfully, the following additional fields of the
+    ## main thread's pervasives have been initialised: "time", "evs", "thd",
+    ## "thds", "srcth", and "bndr".  Also, "vp"'s activation vector has
+    ## been set so that the main thread will run when the domain is next
+    ## activated, and "vp"'s current save slot is its current resume slot.
+    ## The main thread can be entered by enabling activations and yielding
+    ## the processor.
+
+    create(memory_v1.address entry,
+           memory_v1.address data,
+           stack proto_stack,
+           stretch_v1& user_stretch,
+           memory_v1.size default_stack_bytes,
+           in pervasives_v1.init& pervasives_init)
+        returns (threads_manager_v1& threads,
+            activation_dispatcher_v1& dispatcher)
+        raises (threads_v1.no_resources);
+}

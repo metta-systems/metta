@@ -1,0 +1,66 @@
+## Forking user-level threads.
+## 
+## Multiple threads of control may be created in a Nemesis domain
+## via the "Threads" interface, provided that the domain's user-level
+## scheduler implements it. 
+
+local interface threads_v1
+{
+    ## Raised when there are insufficient resources to fork a new thread.
+
+    exception no_resources {}
+
+    ## Fork creates a new thread executing "entry(data)".
+    ## The new thread's stack is at least stack_bytes long,
+    ## unless stack_bytes is zero, in which case it has the default
+    ## size specified when the scheduler was initialised.
+    ## 
+    ## Fork returns a handle "t" on the newly created thread to allow
+    ## facilities like "Join" and "Alert".
+
+    fork(memory_v1.address entry, memory_v1.address data, memory_v1.size stack_bytes)
+        returns (thread_v1& t)
+        raises (no_resources);
+
+    # Sometimes a thread wishes to ensure that no other thread will
+    # run until it has completed a particular critical section.
+    # The following pair of methods are provided to do this.
+    #
+    # Note: in a preemptive user-level scheduler, these methods are prone to abuse.
+    # Hence any implementation may decide to deschedule or
+    # even terminate a particular thread which remains too long
+    # in a critical section.
+
+    ## Enter a threads-level critical section.
+    ## If the parameter "vcpu_cs" is true, then a vcpu critical
+    ## section is also entered (i.e. activations will be off
+    ## on returning from the call.)
+    ## Note: this is the recommended manner in which 
+    ## to turn off activations (rather than using vcpu.activations_off
+    ## directly) due to page fault / breakpoint restrictions. 
+    ##
+    ## The call is nestable: n calls to enter_critical_section will 
+    ## require n calls to leave_critical_section in order to 
+    ## leave the critical section and/or restore the original 
+    ## activation mode.
+
+    enter_critical_section(boolean vcpu_cs);
+
+    ## Leave a level of critical section; calls are nestable, and hence each enter_critical_section must have 
+    ## a corresponding leave_critical_section.
+    ## If the enter_critical_section corresponding to this call also entered 
+    ## a virtual processor critical section, then this critical section will also be left.
+
+    leave_critical_section();
+
+    ## If a domain's user-level scheduler is not preemptive, threads must call "yield"
+    ## to pass control to each other.  If there are other threads ready
+    ## to run, "yield" transfers control to one of them and returns
+    ## when the caller is next scheduled; otherwise it returns immediately.
+
+    yield();
+
+    ## A thread finishes either by returning from "entry" or by calling "exit".
+
+    exit() never returns;
+}

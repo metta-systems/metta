@@ -369,7 +369,7 @@ def build(bld):
                        'memory_v1', 'mmu_module_v1', 'mmu_v1', 
                        'naming_context_v1', 'naming_context_factory_v1', 'operation_v1', 'pervasives_v1', 'protection_domain_v1', 'ramtab_v1', 'record_v1',
                        'stretch_allocator_module_v1', 'stretch_allocator_v1', 'stretch_driver_module_v1', 'stretch_driver_v1', 'stretch_table_v1', 
-                       'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'time_notify_v1', 'time_v1', 'timer_v1', 'types',
+                       'stretch_table_module_v1', 'stretch_v1', 'system_frame_allocator_v1', 'system_stretch_allocator_v1', 'threads_factory_v1', 'thread_hooks_v1', 'thread_v1', 'threads_manager_v1', 'threads_v1', 'time_notify_v1', 'time_v1', 'timer_v1', 'types',
                        'type_system_v1', 'type_system_f_v1', 'type_system_factory_v1', 'vcpu_v1',
                        # Temporary interfaces "borrowed" from Nemesis
                        'nemesis/exception_v1', 'nemesis/exception_support_v1', 'nemesis/exception_support_setjmp_v1', 'nemesis/exception_system_v1'
