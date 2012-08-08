@@ -628,6 +628,9 @@ bool parser_t::parse_var_decl(AST::alias_t& to_get)
 {
     D();
     // Scan all components:
+    string autodoc;
+    if (lex.maybe(token::autodoc))
+        autodoc = lex.current_token();
     if (!parse_type_decl(to_get))
         return false;
     if (!lex.expect(token::identifier))
@@ -636,6 +639,7 @@ bool parser_t::parse_var_decl(AST::alias_t& to_get)
         return false;
     }
     to_get.set_name(lex.current_token());
+    to_get.set_autodoc(autodoc);
     return true;
 }
 
