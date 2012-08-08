@@ -1,34 +1,55 @@
 #pragma once
+
 #include "event_v1_interface.h"
+#include "events_v1_interface.h"
 
-class event_count_t
+class event_counter_t
 {
-	event_v1::value v;
+	event_v1::count c;
 public:
-	event_count_t() : v(0) {}
+	inline event_counter_t()
+	{
+		c = PVS(events)->create();
+	}
+	// event_count_t(const event_count_t& other)
+	// {
+	// 	c = other.c;
+	// }
+	inline ~event_counter_t()
+	{
+		PVS(events)->destroy(c);
+	}
 
-	event_v1::value read();
-	void await(event_v1::value v);
-	void await_until(event_v1::value v, event_v1::value t);
-	void advance(event_v1::value n);
-	void sleep_until(event_v1::value t);
+	inline event_v1::value read() { return PVS(events)->read(c); }
+	inline void advance(event_v1::value n) { PVS(events)->advance(c, n); }
+	inline void await(event_v1::value v) { PVS(events)->await(c, v); }
+	inline void await_until(event_v1::value v, event_v1::value t) { PVS(events)->await_until(c, v, t); }
+	// void sleep_until(event_v1::value t);
+	// void sleep(time_v1::time ns) { sleep_until(NOW() + ns); }
 };
 
 class event_sequencer_t
 {
-	event_v1::value v;
+	event_v1::sequencer s;
 public:
-	event_sequencer_t() : v(0) {}
+	inline event_sequencer_t()
+	{
+		s = PVS(events)->create_sequencer();
+	}
+	inline ~event_sequencer_t()
+	{
+		PVS(events)->destroy_sequencer(s);
+	}
 
-	event_v1::value read();
-	event_v1::value ticket();
+	inline event_v1::value read() { return PVS(events)->read_seq(s); }
+	inline event_v1::value ticket() { return PVS(events)->ticket(s); }
 };
 
 // SRC mutex is non-recursive
 // Posix mutex is slightly more tricky as it needs thread-owner ID. See R.J.Black Fawn paper for discussion and implementation.
 class mutex_t
 {
-	event_count_t e;
+	event_counter_t e;
 	event_sequencer_t s;
 public:
 	inline mutex_t() : e(), s() { e.advance(1); } // s with value 0 and e with value 1 are the start condition
@@ -39,7 +60,7 @@ public:
 
 class condition_t
 {
-	event_count_t e;
+	event_counter_t e;
 	event_sequencer_t s;
 public:
 	inline condition_t() : e(), s() {}
