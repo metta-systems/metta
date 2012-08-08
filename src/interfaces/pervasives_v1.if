@@ -6,15 +6,78 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 #
+## The use of the pervasives pointer in Metta is entirely a matter
+## of convention at the user level. There is no reason not to have
+## different domains with different pervasive interfaces, or indeed
+## threads within a single domain having different pervasive interface
+## types. However, one needs to be careful about interfaces which
+## assume particular fields of the pervasives pointer when calling
+## them. This interface specification defines one type of record,
+## particularly useful with a conventional threads package in
+## an environment a bit like Unix/C.
+##
+## For the moment, this record is quite full. In due course, it should
+## become clear which components are really needed here and which can
+## be passed as explicit arguments or looked up from the name space at
+## run time.
+
 local interface pervasives_v1
 {
     record rec
     {
+        ## Virtual processor
+        vcpu_v1& vcpu;
+        ## Default heap
         heap_v1& heap;
-        system_stretch_allocator_v1& stretch_allocator; # FIXME: don't expose system_ part though!
-        stretch_driver_v1& stretch_driver;
+        ## Runtime typing
         type_system_v1& types; # It's actually a type_system_f but only a couple select drivers can access it.
+        ## Root name space
+        naming_context_v1& root;
+        ## Exception handling
         exception_support_setjmp_v1& exceptions;
+
+        ## Time
+        time_v1& time;
+        ## Event & Timeout demux
+        activation_dispatcher_v1& dispatcher;
+        ## Event counts and sequencers
+        events_v1& events;
+        ## Current thread
+        thread_v1& thread;
+        ## Thread Scheduler
+        threads_v1& threads;
+
+        ## Binder
+        binder_v1& binder;
+        ## Exports table
+        exports_table_v1& exports;
+        ## Stretch Allocator
+        system_stretch_allocator_v1& stretch_allocator; # @todo don't expose system_ part, use stretch_allocator_v1&
+        ## Default Stretch Driver
+        stretch_driver_v1& stretch_driver;
+        ## Gatekeeper
+        gatekeeper_v1& gatekeeper;
+        # Default Entry
+        #entry     : IREF Entry,
+    }
+
+    ## Most elements of a pervasive record will be acquired by the
+    ## domain after it starts up by querying some name context. However,
+    ## a few basic interfaces need to be passed in when the domain is
+    ## created as part of the initial state record of the domain's
+    ## initial activation vector. The following type represents a loose
+    ## convention as the minimum required; it is of course entirely up
+    ## the domain which calls the "DomainMgr" what the state record
+    ## actually is. The record is actually allocated on the supplied heap.
+
+    record init {
+        ## Virtual processor
+        vcpu_v1& vcpu;
+        ## Initial heap
+        heap_v1& heap;
+        ## For narrowing types
+        type_system_v1& types;
+        ## Name space
         naming_context_v1& root;
     }
 }
