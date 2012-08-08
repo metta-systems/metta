@@ -1,0 +1,28 @@
+## Thread hooks.
+## 
+## Libraries are informed of the creation and destruction of threads
+## by callbacks on an instance of the thread hooks interface.
+
+local interface thread_hooks_v1
+{
+    ## Each registered thread hooks' "fork" operation is called on the
+    ## parent thread during its execution of the "threads.fork"
+    ## operation, before the forkee thread becomes runnable.  The "new_pvs"
+    ## argument is a pointer to the (per-thread) pervasive state record of
+    ## the forkee thread.
+
+    fork(pervasives_v1.rec& new_pvs);
+
+    ## Each registered thread hooks' "forked" operation is called
+    ## on a newly forked thread before it calls its "entry".
+
+    forked();
+
+    ## "exit_thread" is called on the dying thread during its destruction.
+
+    exit_thread();
+
+    ## "exit_domain" is called after "exit_thread" on the last thread in a domain.
+
+    exit_domain();
+}

@@ -1,0 +1,28 @@
+## Handle on a thread.
+## 
+## A handle on a thread is provided by an instance of the thread
+## interface, which is returned from a call to threads.fork().
+
+local interface thread_v1
+{
+    ## Raised in an alerted thread.
+
+    exception alerted {}
+
+    ## A "Thread" "t" can be alerted by a call to "Alert" on "t".  This
+    ## sets a flag within the thread's state and may cause it to raise the
+    ## "Alerted" exception.
+
+    alert();
+
+    ## returns information about the location and size of the thread's
+    ## stack.  Stacks grow downwards from stackTop to stackBot.
+
+    get_stack_info() 
+        returns (memory_v1.address stack_ptr, memory_v1.address stack_top, memory_v1.address stack_bottom);
+
+    ## Mark the thread as a "daemon" thread. The thread will not be counted
+    ## when deciding whether to terminate the domain upon exit of a thread.
+
+    set_daemon();
+}

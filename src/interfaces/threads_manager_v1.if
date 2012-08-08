@@ -1,0 +1,82 @@
+## Thread hooks.
+## 
+## Some libraries (such as those that maintain per-thread state) need
+## to take action when threads are created and destroyed.  They achieve
+## this with a thread hooks closure registered with the user-level scheduler via the
+## threads_manager interface.
+
+local interface threads_manager_v1 extends threads_v1
+{
+    # We first have three procedures which are for use from activation
+    # handlers ##- i.e. when the caller is not a thread. 
+    # As there is no simple way to determine whether or not we are 
+    # within an activation handler or within a thread, all routines 
+    # in this interface should be used with discretion. 
+
+    ## "CurrentThread" returns the current "running" thread; i.e. 
+    ## the thread that would be running if we were not in an 
+    ## activation handler.
+
+    current_thread() returns (thread_v1& t);
+
+    ## "BlockThread" is provided mainly for the use of the various
+    ## "Entry"s. It allows the blocking of the thread "t" with no 
+    ## timeouts; the "maybe_until" parameter is simply a hint to the ULTS
+    ## as to when it might be sensible to consider a reschedule. 
+    ## 
+    ## "BlockThread" returns True iff "t" was in a threads-level 
+    ## critical section.
+
+    block_thread(thread_v1& t, time_v1.time maybe_until)
+        returns (boolean in_cs);
+
+    ## UnblockThread unblocks a thread; if the thread "t" was not
+    ## actually blocked, the call will return successfully anyway.
+    ## The "cs" parameter specifies whether or not the thread was 
+    ## in a thread-level critical section (as returned by block_thread).
+
+    unblock_thread(thread_v1& t, boolean in_cs);
+
+    # For running threads, we have two useful procedures to "Block" 
+    # and "Unblock" threads. These perform similar functions to 
+    # the above, but also deal with the fact the caller is the 
+    # current running thread. 
+
+    ## On ocassion, a thread may wish to block itself indefinitely and  
+    ## then yield in a fashion where, once it is resumed (after being
+    ## unblocked) it returns immediately with the information regarding 
+    ## whether it has been 'alerted' or not.
+    ## 
+    ## "BlockYield" blocks the current thread and then yields the
+    ## processor to another thread (if there is one). It is similar
+    ## to the "Yield" method of the "Threads" interface, except that 
+    ## it guarantees that the current thread will not be run 
+    ## again until explicitly unblocked by an external agency. 
+    ## 
+    ## As with "BlockThread", the "maybe_until" parameter is simply a hint 
+    ## to the ULTS as to when it might be sensible to consider a
+    ## reschedule; the actual unblocking of the thread must be carried
+    ## out by an external agency. 
+
+    block_yield(time_v1.time maybe_until)
+        returns (boolean alerted);
+
+    ## "UnblockYield" unblocks the thread "t" and then yields the
+    ## processor. The "cs" parameter specifies whether the thread 
+    ## being unblocked was in a threads-level critical section 
+    ## when it was blocked.
+
+    unblock_yield(thread_v1& t, boolean in_cs)
+        returns (boolean alerted);
+
+    # Finally, a miscellaneous registration method. 
+
+    ## Append "hooks" to the sequence of user-level scheduler hooks.
+    ##
+    ## The registered hooks' "fork" and "forked" operations are called in
+    ## order of registration.  The hooks' "exit_thread" and "exit_domain"
+    ## operations are called in reverse order of registration.
+
+    register_hooks(thread_hooks_v1& hooks)
+        raises (heap_v1.no_memory);
+}

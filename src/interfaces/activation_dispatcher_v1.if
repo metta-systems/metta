@@ -1,0 +1,143 @@
+# Hooks for registering activation handling code.
+#
+## Activation dispatcher deals with demuxing events to
+## "ChannelNotify" handlers and invoking "TimeNotify" handlers
+## whenever timeouts are observed to be reached.
+# It generally sits directly on top of the vcpu (i.e. as an activation
+# handler), and after performing its actions upcalls the next
+# activation handler.
+
+local interface activation_dispatcher_v1
+{
+    #
+    # Notifications on Channels.
+    #
+   
+    ## attach associates a channel notify with a given channel
+    ## end-point, which should be of type rx. Thereafter, event
+    ## notifications coming in on that channel are simply
+    ## dispatched to the Notify routine.
+
+    # Note that these operations are typically called by various 
+    # entries (such as those used for IDC, memory management, 
+    # or to implement event counts). Most 'application' level code
+    # should not need to call these directly.
+
+    ## Ensure that in future event notifications on the channel "rx"
+    ## are dispatched via "cn".  Raises exceptions if the channel
+    ## end-point is invalid, or not of type "RX".  Return the old
+    ## "ChannelNotify" "on" previously attached to "rx", or "NULL" if
+    ## there was none. If "cn" is "NULL", no more activations are sent
+    ## for this channel.
+
+    attach(channel_notify_v1& notify, channel_v1.rx rx)
+        returns (channel_notify_v1& old_notify)
+        raises (channel_v1.invalid, channel_v1.bad_state);
+
+    # Clients dealing with event notification may sometimes wish to 
+    # perform some operations which are atomic with respect to the
+    # calling of the notification handler. Rather than turn off
+    # activations, it is possible (and preferable) to mask the 
+    # notification of a particular event (or of all events).
+
+    ## Temorarily cause events arriving on the channel "rx" to
+    ## be ignored: the events will not be lost, simply
+    ## deferred to such a time as unmask_event is called.
+    ## Returns false if the event was already masked, or
+    ## true otherwise.
+    ## Raises exceptions if the channel end-point is invalid, or not
+    ## of type rx.
+
+    mask_event(channel_v1.rx rx)
+        returns (boolean ok)
+        raises (channel_v1.invalid, channel_v1.bad_state);
+
+    ## Reenable the processing of events arriving on the channel "rx".
+    ## Returns false if the event was not already masked, or
+    ## true otherwise.
+    ## Raises exceptions if the channel end-point is invalid, or not
+    ## of type "RX".
+
+    unmask_event(channel_v1.rx rx)
+        returns (boolean ok)
+        raises (channel_v1.invalid, channel_v1.bad_state);
+
+    ## Masks all events, regardless of whether they were already 
+    ## masked or not. After a subsequent "UnmaskEvents", however,
+    ## any events which were individually masked at the time of 
+    ## this call will still be so.
+
+    mask_events();
+
+    ## Unmasks all events.
+
+    unmask_events();
+
+    ## Raised if the ActivationF cannot deal with any more timeouts.
+    exception too_many_timeouts {}
+
+    # Arrange that the "Notify" procedure of "tn" is called once it
+    # is noticed that the current time is >= "deadline". The
+    # "handle" parameter is provided as an opaque value which will
+    # be present when the upcall occurs.
+    # Returns "True" if everything went ok, "False" otherwise
+    # (e.g. if the current time is already later than "deadline").
+    # Raises "TooManyTimeouts" if it cannot add another timeout.
+
+    add_timeout(time_notify_v1& notify, time_v1.time deadline, opaque handle)
+        returns (boolean ok)
+        raises (too_many_timeouts);
+
+    # Remove a timeout previously registered by "AddTimeout". 
+    # Returns "True" if there was a timeout for time "deadline" with
+    # handle "handle" to be removed, "False" otherwise.
+
+    remove_timeout(time_v1.time deadline, opaque handle)
+        returns (boolean ok);
+
+    # Clients dealing with time notifications may sometimes wish to 
+    # perform some operations which are atomic with respect to the
+    # calling of the notification handler. Rather than turn off
+    # activations, it is possible (and preferable) to mask the 
+    # notification of all timeouts.
+
+    # Masks all timeouts. No time notifications will be \emph{lost}, 
+    # but they will be deferred until some time after the calling of
+    # "UnmaskTimeouts" below. 
+
+    mask_timeouts();
+
+    # Unmasks all timeouts.
+
+    unmask_timeouts();
+
+    # 
+    # Chained activation handlers
+    # 
+    
+    # A (for example) ULS may register \emph{its} "Activation" closure with
+    # the "SetHandler" call. This will cause it to be 'activated'
+    # after the channel notification process has occurred.
+
+    # Register "ah" as the activation handler to be invoked after
+    # channel demultiplexing. Returns the old handler "oh", or
+    # "NULL" is there was none. This allows chaining of activation
+    # handler-style code.
+    # {\bf XXX} At present it is the responsibility of the caller to
+    # call "oh" if it is necessary. Aha.
+
+    set_handler(activation_v1& activation)
+        returns (activation_v1& old_activation);
+
+    # 
+    # Exit hooks
+    # 
+
+    ## When a ULS (or whoever) believes that it has nothing more to
+    ## do, it may call "reactivate". This essentially checks for 
+    ## events and timeouts once more and, if nothing of interest has
+    ## occurred, RFABlock's the domain until the closest timeout (if
+    ## any).
+
+    reactivate();
+}

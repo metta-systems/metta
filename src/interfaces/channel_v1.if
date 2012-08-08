@@ -14,9 +14,9 @@
 
 local interface channel_v1
 {
-    #===================================================================================================================
+    #
     # Types
-    #===================================================================================================================
+    #
 
     ## An event channel is a (tx, rx) pair of endpoints.  Endpoints
     ## are stored in per-domain memory at the kernel level.
@@ -29,7 +29,7 @@ local interface channel_v1
 
     type endpoint rx;
     type endpoint tx;
-    enum endpoint_type { rx, tx }
+    enum endpoint_type { none, rx, tx }
 
     ## An endpoint is either "free" or allocated.  A newly
     ## allocated endpoint is in state "local_".  While its
@@ -52,9 +52,9 @@ local interface channel_v1
     }
     sequence<pair> pairs;
 
-    #===================================================================================================================
+    #
     # Exceptions
-    #===================================================================================================================
+    #
 
     ## Raised when "ep" does not denote an endpoint or has an inappropriate polarity (endpoint_type).
     exception invalid { endpoint ep; }

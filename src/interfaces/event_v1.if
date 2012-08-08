@@ -22,7 +22,7 @@ local interface event_v1
     type card64 value;
 
     ## An event count is identified within its domain by a "Count".
-    type card64 count; # Opaque
+    type opaque count;
 
     ## Each end of an inter-domain communication ("IDC") channel has one
     ## one or more "(rx, tx)" pairs of event counts connected to corresponding
@@ -35,5 +35,5 @@ local interface event_v1
     sequence<pair> pairs;
 
     ## Threads can order their actions by waiting on counts for values obtained from a sequencer.
-    type card64 sequencer; # Opaque
+    type opaque sequencer;
 }
