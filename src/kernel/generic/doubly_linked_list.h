@@ -17,12 +17,12 @@ struct dl_link_t
 
     inline void init()
     {
-        next = prev = static_cast<_Base*>(this);
+        next = prev = nullptr;
     }
     
     inline bool is_empty()
     {
-        return next == static_cast<_Base*>(this);
+        return (next == nullptr) && (prev == nullptr);
     }
     
     inline void remove()
