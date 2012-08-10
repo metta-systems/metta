@@ -11,6 +11,7 @@
 #include "module_interface.h"
 #include "binder_v1_interface.h"
 #include "exceptions.h"
+#include "time.h"
 
 /* 
  * Eventcount and Sequencer stuff
@@ -39,7 +40,7 @@ struct instance_state_t;
 
 struct qlink_t : public dl_link_t<qlink_t>
 {
-    dl_link_t<void>        timeq; 
+    dl_link_t<qlink_t>     timeq; 
     event_v1::value        wait_value;
     time_v1::time          wait_time;
     time_v1::time          block_time; /// for debugging.
@@ -139,6 +140,80 @@ public:
 //=====================================================================================================================
 // Events helper functions.
 //=====================================================================================================================
+
+/**
+ * block_event:
+ *    enqueue the current thread "current" waiting for "value" on event "event_count",
+ *    (and, if "until" != FOREVER, waiting for the timeout "until").
+ *    Then block & yield the current thread (i.e. self).
+ *    Will return from yield once the thread is
+ *       (a) unblocked, and
+ *       (b) run again.
+ *    Return true iff we were unblocked via being alerted.
+ *
+ *  pre:  event_count.value < value && (until == FOREVER || NOW() < until)
+ *  post: unblocked.
+ */
+
+static bool
+block_event(events_v1::state_t* state, event_count_t* event_count, thread_v1::closure_t* thread,
+            event_v1::value value, time_v1::time until)
+{
+    instance_state_t* istate  = state->inst_state;
+    qlink_t* current = &state->qlink;
+    bool alerted = false;
+
+    if (state == istate->exit_st)
+    {
+        state->qlink.thread = thread;
+    }
+
+    current->wait_value = value;
+    current->wait_time = until;
+    current->block_time = NOW();
+
+    if (event_count)
+    {
+        // Find insertion point in waitq.
+        qlink_t* wqp = event_count->wait_queue.next;
+
+        while (wqp != &event_count->wait_queue && wqp->wait_value <= value)
+            wqp = wqp->next;
+
+        wqp->add_to_tail(current);
+    }
+    else
+        current->init(); // use reset() or clear_links() maybe?
+
+    if (until != FOREVER)
+    {
+        if (!istate->dispatcher->add_timeout(&state->time_notify, until, current))
+        {
+            // Timeout passed while we were adding it.
+            if (current->next)
+            {
+                current->remove();
+                current->init();
+                current->timeq.init();
+            }
+            return alerted;
+        }
+
+        qlink_t* tqp = istate->time_queue.next;
+
+        while (tqp != &istate->time_queue && tqp->wait_time <= until)
+            tqp = tqp->next;
+
+        tqp->add_to_tail(current->timeq); // @todo
+    }
+    else
+        current->timeq.init();
+
+    // Now we block the thread in the user-level scheduler, and yield.
+    alerted = istate->thread_manager->block_yield(until);
+
+    return alerted;
+}
 
 static void
 unblock_event(instance_state_t* istate, event_count_t* event_count, bool alerted)
@@ -269,7 +344,75 @@ events_advance(events_v1::closure_t* self, event_v1::count ec, event_v1::value i
 static event_v1::value
 events_await(events_v1::closure_t* self, event_v1::count ec, event_v1::value value)
 {
-    return 0;
+    instance_state_t* istate  = self->d_state->inst_state;
+    event_count_t* event_count = reinterpret_cast<event_count_t*>(ec);
+    bool alerted = false;
+
+    if (EC_LE(value, event_count->value))
+        return event_count->value;
+
+    istate->thread_manager->enter_critical_section(/*vcpu_cs:*/true);
+
+    // If we're receiving, sync up incoming event counts.
+    if (event_count->ep_type == channel_v1::endpoint_type_rx)
+    {
+        channel_v1::endpoint_type ep_type;
+        event_v1::value rx_val, rx_ack;
+
+        /*
+         * We must first get into a consistent state wrt. external
+         * events, which may arrive at any time. The aim is to get to
+         * the stage where we both have a value for the count, and are
+         * guaranteed that the FIFO will register the count going above
+         * that value.                          
+         */
+        while (true)
+        {
+            // Read count and ack values.
+            istate->vcpu->query_channel(event_count->ep, &ep_type, &rx_val, &rx_ack);
+
+            if (EC_GT(rx_val, value) || (rx_val == rx_ack))
+                break;
+
+            istate->vcpu->ack(event_count->ep, rx_val);
+        }
+
+        /*
+         * For receiving end events, the following condition now holds:
+         * (with ep = event_count->ep)
+         *
+         * (rx_val <= ep->value) && (rx_val == ep->ack || rx_val >= value)
+         *
+         * This is required to ensure that events are not lost by the scheduler.
+         */
+
+        // Finally update the local value and unblock awoken threads.
+        event_count->value = rx_val;
+        unblock_event(istate, event_count, /*alerted:*/false);
+    }
+
+    event_v1::value result = event_count->value;
+
+    /*
+     * We now block if value < ec->value. This test also takes care of the
+     * local case when ec was advanced after the test outside the
+     * critical section above.
+     */
+
+    if (EC_GT(value, result))
+    {
+        if (block_event(self->d_state, event_count, PVS(thread), value, FOREVER))
+            alerted = true; // => "event_count" might have been freed,
+        else
+            result = event_count->value;
+    }
+
+    istate->thread_manager->leave_critical_section();
+
+    if (alerted)
+        OS_RAISE((exception_support_v1::id)"thread_v1.alerted", 0);
+
+    return result;
 }
 
 static event_v1::value
