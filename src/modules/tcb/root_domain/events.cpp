@@ -10,6 +10,7 @@
 #include "events_v1_impl.h"
 #include "module_interface.h"
 #include "binder_v1_interface.h"
+#include "exceptions.h"
 
 /* 
  * Eventcount and Sequencer stuff
@@ -151,7 +152,7 @@ unblock_event(instance_state_t* istate, event_count_t* event_count, bool alerted
 
         // @todo: remove from timeq too...
 
-        if(alerted)
+        if (alerted)
             cur->thread->alert();
 
         istate->thread_manager->unblock_thread(cur->thread, /*in_cs:*/false);
@@ -237,10 +238,32 @@ events_read(events_v1::closure_t* self, event_v1::count ec)
     return event_count->value;
 }
 
+/**
+ * Advance preserves vcpu activations mode. Thus, it can be
+ * called within an activations-off critical section.
+ */
 static void
 events_advance(events_v1::closure_t* self, event_v1::count ec, event_v1::value increment)
 {
+    instance_state_t* istate  = self->d_state->inst_state;
+    event_count_t* event_count = reinterpret_cast<event_count_t*>(ec);
+    vcpu_lock_t lock(istate->vcpu);
 
+    event_count->value += increment;
+
+    unblock_event(istate, event_count, /*alerted:*/false); // unblock awoken threads
+
+    // If event is connected, send out the new value.
+    if (event_count->ep_type == channel_v1::endpoint_type_tx)
+    {
+        OS_TRY {
+            istate->vcpu->send(event_count->ep, event_count->value);
+        }
+        OS_FINALLY {
+            lock.unlock();
+        }
+        OS_ENDTRY;
+    }
 }
 
 static event_v1::value
