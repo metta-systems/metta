@@ -46,7 +46,7 @@ digraph {
 	}
 
 	subgraph cluster_event_impl {
-		events -> event [arrowhead=box];
+		events -> event [arrowhead=box,fillcolor=green];
 		mutex -> event [arrowhead=box];
 		events -> thread_hooks;
 		events -> time_notify;

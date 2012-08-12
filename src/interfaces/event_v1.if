@@ -25,12 +25,12 @@ local interface event_v1
     type opaque count;
 
     ## Each end of an inter-domain communication ("IDC") channel has one
-    ## one or more "(rx, tx)" pairs of event counts connected to corresponding
+    ## one or more "(receiver, sender)" pairs of event counts connected to corresponding
     ## pairs at the peer domain.
 
     record pair {
-        count rx;
-        count tx;
+        count receiver;
+        count sender;
     }
     sequence<pair> pairs;
 

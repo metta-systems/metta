@@ -7,6 +7,7 @@
 #include "thread_hooks_v1_interface.h"
 #include "time_notify_v1_interface.h"
 #include "channel_notify_v1_interface.h"
+#include "channel_notify_v1_impl.h"
 #include "events_v1_impl.h"
 #include "module_interface.h"
 #include "binder_v1_interface.h"
@@ -31,6 +32,7 @@
 #define EC_GE(ev1,ev2)           (((int64_t) ((ev1) - (ev2))) >= 0)
 
 #define NULL_EP 0
+#define NULL_EVENT 0
 
 //=====================================================================================================================
 // Events types.
@@ -141,6 +143,16 @@ public:
 // Events helper functions.
 //=====================================================================================================================
 
+channel_notify_v1::ops_t notify_methods = 
+{
+    nullptr,
+    nullptr
+};
+
+//=====================================================================================================================
+// Events helper functions.
+//=====================================================================================================================
+
 /**
  * block_event:
  *    enqueue the current thread "current" waiting for "value" on event "event_count",
@@ -245,7 +257,9 @@ events_create(events_v1::closure_t* self)
     vcpu_lock_t lock(istate->vcpu);
 
     event_count_t* res = new(istate->heap) event_count_t(istate);
-    // if (!res) RAISE_Events$NoResources(); @todo
+    if (!res)
+        OS_RAISE((exception_support_v1::id)"events_v1.no_resources", 0);
+
     istate->all_counts.add_to_tail(res); // Add to the set of all counts.
 
     return res;
@@ -418,8 +432,103 @@ events_await(events_v1::closure_t* self, event_v1::count ec, event_v1::value val
 static event_v1::value
 events_await_until(events_v1::closure_t* self, event_v1::count ec, event_v1::value value, time_v1::time until)
 {
-    return 0;
+    instance_state_t* istate  = self->d_state->inst_state;
+    bool alerted = false;
+
+    if (until < 0)
+        until = FOREVER;
+
+    if (ec == NULL_EVENT)
+    {
+        if (IN_FUTURE(until))
+        {
+            istate->thread_manager->enter_critical_section(/*vcpu_cs:*/true);
+
+            if (block_event(self->d_state, nullptr, PVS(thread), value, until))
+                alerted = true;
+
+            istate->thread_manager->leave_critical_section();
+        }
+
+        if (alerted)
+            OS_RAISE((exception_support_v1::id)"thread_v1.alerted", 0);
+
+        return 0;
+    }
+
+    event_count_t* event_count = reinterpret_cast<event_count_t*>(ec);
+
+    if (EC_LE(value, event_count->value) || until <= NOW())
+        return event_count->value;
+
+    istate->thread_manager->enter_critical_section(/*vcpu_cs:*/true);
+
+    // If we're receiving, sync up incoming event counts.
+    if (event_count->ep_type == channel_v1::endpoint_type_rx)
+    {
+        channel_v1::endpoint_type ep_type;
+        event_v1::value rx_val, rx_ack;
+
+        /*
+         * We must first get into a consistent state wrt. external
+         * events, which may arrive at any time. The aim is to get to
+         * the stage where we both have a value for the count, and are
+         * guaranteed that the FIFO will register the count going above
+         * that value.                          
+         */
+        while (true)
+        {
+            // Read count and ack values.
+            istate->vcpu->query_channel(event_count->ep, &ep_type, &rx_val, &rx_ack);
+
+            if (EC_GT(rx_val, value) || (rx_val == rx_ack) || !IN_FUTURE(until))
+                break;
+
+            PVS(threads)->yield();
+            istate->vcpu->ack(event_count->ep, rx_val);
+        }
+
+        /*
+         * For receiving end events, the following condition now holds:
+         * (with ep = event_count->ep)
+         *
+         * (rx_val <= ep->value) && (rx_val == ep->ack || rx_val >= value || until >= NOW)
+         *
+         * This is required to ensure that events are not lost by the scheduler.
+         */
+
+        // Finally update the local value and unblock awoken threads.
+        event_count->value = rx_val;
+        unblock_event(istate, event_count, /*alerted:*/false);
+    }
+
+    event_v1::value result = event_count->value;
+
+    /*
+     * We now block if value < ec->value. This test also takes care of the
+     * local case when ec was advanced after the test outside the
+     * critical section above.
+     */
+
+    if (EC_GT(value, result) && IN_FUTURE(until))
+    {
+        if (block_event(self->d_state, event_count, PVS(thread), value, until))
+            alerted = true; // => "event_count" might have been freed,
+        else
+            result = event_count->value;
+    }
+
+    istate->thread_manager->leave_critical_section();
+
+    if (alerted)
+        OS_RAISE((exception_support_v1::id)"thread_v1.alerted", 0);
+
+    return result;
 }
+
+/**
+ * Sequencers.
+ */
 
 static event_v1::sequencer
 events_create_sequencer(events_v1::closure_t* self)
@@ -428,7 +537,8 @@ events_create_sequencer(events_v1::closure_t* self)
     vcpu_lock_t lock(istate->vcpu);
 
     sequencer_t* res = new(istate->heap) sequencer_t(0);
-    // if (!res) RAISE_Events$NoResources(); @todo
+    if (!res)
+        OS_RAISE((exception_support_v1::id)"events_v1.no_resources", 0);
 
     return res;
 }
@@ -458,34 +568,200 @@ events_ticket(events_v1::closure_t* self, event_v1::sequencer seq)
     return v;
 }
 
+/**
+ * Events and Channels.
+ */
+
 static void
 events_attach(events_v1::closure_t* self, event_v1::count ec, channel_v1::endpoint channel, channel_v1::endpoint_type type)
 {
+    instance_state_t* istate  = self->d_state->inst_state;
+    event_count_t* event_count = reinterpret_cast<event_count_t*>(ec);
 
+    OS_TRY {
+        channel_v1::endpoint_type ep_type;
+        event_v1::value rx_val, rx_ack;
+
+        istate->thread_manager->enter_critical_section(/*vcpu_cs:*/true);
+
+        channel_v1::state state = istate->vcpu->query_channel(event_count->ep, &ep_type, &rx_val, &rx_ack);
+
+        if (state == channel_v1::state_connected)
+        {
+            if (ep_type != type)
+                OS_RAISE((exception_support_v1::id)"channel_v1.invalid", channel);
+        }
+        else
+            if (state != channel_v1::state_local)
+                OS_RAISE((exception_support_v1::id)"channel_v1.bad_state", /*channel, state*/0);
+
+        if (event_count->ep_type != channel_v1::endpoint_type_none)
+            OS_RAISE((exception_support_v1::id)"channel_v1.invalid", 0); //ec); // Already attached.
+
+        event_count->ep = channel;
+        event_count->ep_type = type;
+
+        if (type == channel_v1::endpoint_type_rx)
+        {
+            closure_init(&event_count->notify_closure, &notify_methods, reinterpret_cast<channel_notify_v1::state_t*>(event_count));
+            event_count->notifications.next = istate->dispatcher->attach(&event_count->notify_closure, channel);
+            if (event_count->notifications.next)
+            {
+                event_count->notifications.next->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&event_count->notify_closure));
+            }
+            event_count->notifications.prev = nullptr;
+        }
+
+        if (state == channel_v1::state_connected)
+        {
+            if (type == channel_v1::endpoint_type_rx)
+            {
+                event_count->value = rx_val;
+                unblock_event(istate, event_count, false);
+            }
+            else
+            {
+                istate->vcpu->send(event_count->ep, event_count->value);
+            }
+        }        
+    }
+    OS_FINALLY {
+        istate->thread_manager->leave_critical_section();
+    }
+    OS_ENDTRY;
 }
 
 static void
 events_attach_pair(events_v1::closure_t* self, event_v1::pair events, channel_v1::pair channels)
 {
+    instance_state_t* istate  = self->d_state->inst_state;
 
+    OS_TRY {
+        channel_v1::state rx_state, tx_state;
+        channel_v1::endpoint_type ep_type;
+        event_v1::value rx_val, rx_ack;
+        event_v1::value tx_val, tx_ack;
+        event_count_t* rx = reinterpret_cast<event_count_t*>(events.receiver);
+        event_count_t* tx = reinterpret_cast<event_count_t*>(events.sender);
+
+        istate->thread_manager->enter_critical_section(/*vcpu_cs:*/true);
+
+        tx_state = istate->vcpu->query_channel(channels.sender, &ep_type, &tx_val, &tx_ack);
+
+        if (tx_state == channel_v1::state_connected)
+        {
+            if (ep_type != channel_v1::endpoint_type_tx)
+                OS_RAISE((exception_support_v1::id)"channel_v1.invalid", channels.sender);
+        }
+        else
+            if (tx_state != channel_v1::state_local)
+                OS_RAISE((exception_support_v1::id)"channel_v1.bad_state", /*channel, state*/0);
+
+        rx_state = istate->vcpu->query_channel(channels.receiver, &ep_type, &rx_val, &rx_ack);
+
+        if (rx_state == channel_v1::state_connected)
+        {
+            if (ep_type != channel_v1::endpoint_type_rx)
+                OS_RAISE((exception_support_v1::id)"channel_v1.invalid", channels.receiver);
+        }
+        else
+            if (rx_state != channel_v1::state_local)
+                OS_RAISE((exception_support_v1::id)"channel_v1.bad_state", /*channel, state*/0);
+
+        if (tx->ep_type != channel_v1::endpoint_type_none)
+            OS_RAISE((exception_support_v1::id)"channel_v1.invalid", 0); //tx); // Already attached.
+
+        if (rx->ep_type != channel_v1::endpoint_type_none)
+            OS_RAISE((exception_support_v1::id)"channel_v1.invalid", 0); //rx); // Already attached.
+
+        tx->ep = channels.sender;
+        tx->ep_type = channel_v1::endpoint_type_tx;
+
+        rx->ep = channels.receiver;
+        rx->ep_type = channel_v1::endpoint_type_rx;
+
+        // Initialize receiving end.
+        closure_init(&rx->notify_closure, &notify_methods, reinterpret_cast<channel_notify_v1::state_t*>(rx));
+        rx->notifications.next = istate->dispatcher->attach(&rx->notify_closure, channels.receiver);
+        if (rx->notifications.next)
+        {
+            rx->notifications.next->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&rx->notify_closure));
+        }
+        rx->notifications.prev = nullptr;
+
+        if (rx_state == channel_v1::state_connected)
+        {
+            rx->value = rx_val;
+            unblock_event(istate, rx, false);
+        }
+
+        if (tx_state == channel_v1::state_connected)
+        {
+            istate->vcpu->send(tx->ep, tx->value);
+        }
+    }
+    OS_FINALLY {
+        istate->thread_manager->leave_critical_section();
+    }
+    OS_ENDTRY;
 }
 
 static channel_v1::endpoint
 events_query_endpoint(events_v1::closure_t* self, event_v1::count ec, channel_v1::endpoint_type* type)
 {
-    return 0;
+    if (ec == NULL_EVENT)
+        OS_RAISE((exception_support_v1::id)"events_v1.invalid", 0);//ec);
+
+    instance_state_t* istate  = self->d_state->inst_state;
+    vcpu_lock_t lock(istate->vcpu);
+
+    // Inside the critical section, assign to temporaries that we know can't page fault.
+    event_count_t* event_count = reinterpret_cast<event_count_t*>(ec);
+    channel_v1::endpoint_type type_tmp = event_count->ep_type;
+    channel_v1::endpoint ep_tmp = event_count->ep;
+    lock.unlock();
+
+    *type = type_tmp;
+    return ep_tmp;
 }
 
 static channel_v1::endpoint
 events_create_channel(events_v1::closure_t* self)
 {
-    return 0;
+    instance_state_t* istate  = self->d_state->inst_state;
+    channel_v1::endpoint result = NULL_EP;
+    vcpu_lock_t lock(istate->vcpu);
+
+    OS_TRY {
+        result = istate->vcpu->allocate_channel();
+        auto old_notify = PVS(dispatcher)->attach(nullptr, result);
+        if (old_notify)
+            PANIC("Newly allocated channel is already attached!");
+    }
+    OS_FINALLY {
+        lock.unlock();
+    }
+    OS_ENDTRY;
+
+    return result;
 }
 
 static void
 events_destroy_channel(events_v1::closure_t* self, channel_v1::endpoint channel)
 {
+    instance_state_t* istate  = self->d_state->inst_state;
+    vcpu_lock_t lock(istate->vcpu);
 
+    OS_TRY {
+        auto old_notify = PVS(dispatcher)->attach(nullptr, channel);
+        if (old_notify)
+            PANIC("Trying to free channel which is still attached!");
+        istate->vcpu->release_channel(channel);
+    }
+    OS_FINALLY {
+        lock.unlock();
+    }
+    OS_ENDTRY;
 }
 
 events_v1::ops_t events_methods = 
