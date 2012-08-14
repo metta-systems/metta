@@ -40,13 +40,20 @@
 
 struct instance_state_t;
 
-struct qlink_t : public dl_link_t<qlink_t>
+struct qlink_t
 {
+    dl_link_t<qlink_t>     waitq;
     dl_link_t<qlink_t>     timeq; 
     event_v1::value        wait_value;
     time_v1::time          wait_time;
     time_v1::time          block_time; /// for debugging.
     thread_v1::closure_t*  thread;
+
+    inline qlink_t()
+    {
+        waitq.init(this);
+        timeq.init(this);
+    }
 };
 
 /* Per thread state; encapsulates a 'qlink_t' to block that thread. */
@@ -58,14 +65,16 @@ struct events_v1::state_t //per_thread_state_t
     qlink_t                    qlink;       /// Used to block/unblock this thread.
 };
 
-struct event_count_t : public dl_link_t<event_count_t>
+struct event_count_t
 {
+    dl_link_t<event_count_t>                 ec_queue;       /// Link for all counts queue.
     event_v1::value                          value;          /// Current value.
     channel_v1::endpoint                     ep;             /// Attached endpoint, or NULL_EP.
     channel_v1::endpoint_type                ep_type;        /// Type of attached endpoint, or undefined.
-    dl_link_t<channel_notify_v1::closure_t>  notifications;  /// Chained notification handlers.
-    dl_link_t<qlink_t>                       wait_queue;     /// List of threads waiting on this event count.
+    channel_notify_v1::closure_t*            prev_notify;    /// Chained notification handlers - one that calls us.
+    channel_notify_v1::closure_t*            next_notify;    /// Chained notification handlers - the one we call after us.
     channel_notify_v1::closure_t             notify_closure; /// If attached, d_ops set to proper methods.
+    dl_link_t<qlink_t>                       wait_queue;     /// List of threads waiting on this event count.
     instance_state_t*                        inst_state;
 
     event_count_t(instance_state_t* e_st)
@@ -73,8 +82,9 @@ struct event_count_t : public dl_link_t<event_count_t>
         value = 0;
         ep = NULL_EP;
         ep_type = channel_v1::endpoint_type_none;
-        notifications.init();
-        wait_queue.init();
+        ec_queue.init(this);
+        prev_notify = next_notify = nullptr;
+        wait_queue.init(/*this:duh, @todo*/);
         closure_init(&notify_closure, static_cast<channel_notify_v1::ops_t*>(nullptr), static_cast<channel_notify_v1::state_t*>(nullptr));
         inst_state = e_st;
     }
@@ -187,36 +197,36 @@ block_event(events_v1::state_t* state, event_count_t* event_count, thread_v1::cl
     if (event_count)
     {
         // Find insertion point in waitq.
-        qlink_t* wqp = event_count->wait_queue.next;
+        dl_link_t<qlink_t>* wqp = event_count->wait_queue.next();
 
-        while (wqp != &event_count->wait_queue && wqp->wait_value <= value)
-            wqp = wqp->next;
+        while (wqp != &event_count->wait_queue && (*wqp)->wait_value <= value)
+            wqp = wqp->next();
 
-        wqp->add_to_tail(current);
+        wqp->add_to_tail(current->waitq);
     }
     else
-        current->init(); // use reset() or clear_links() maybe?
+        current->waitq.init(); // use reset() or clear_links() maybe?
 
     if (until != FOREVER)
     {
         if (!istate->dispatcher->add_timeout(&state->time_notify, until, current))
         {
             // Timeout passed while we were adding it.
-            if (current->next)
+            if (current->waitq.next())
             {
-                current->remove();
-                current->init();
+                current->waitq.remove();
+                current->waitq.init();
                 current->timeq.init();
             }
             return alerted;
         }
 
-        qlink_t* tqp = istate->time_queue.next;
+        dl_link_t<qlink_t>* tqp = istate->time_queue.next();
 
-        while (tqp != &istate->time_queue && tqp->wait_time <= until)
-            tqp = tqp->next;
+        while (tqp != &istate->time_queue && (*tqp)->wait_time <= until)
+            tqp = tqp->next();
 
-        tqp->add_to_tail(current->timeq); // @todo
+        tqp->add_to_tail(current->timeq);
     }
     else
         current->timeq.init();
@@ -231,11 +241,11 @@ static void
 unblock_event(instance_state_t* istate, event_count_t* event_count, bool alerted)
 {
     while (!event_count->wait_queue.is_empty()
-        && (alerted || EC_LE(event_count->wait_queue.next->wait_value, event_count->value)))
+        && (alerted || EC_LE((*event_count->wait_queue.next())->wait_value, event_count->value)))
     {
-        qlink_t *cur = event_count->wait_queue.next;
+        qlink_t *cur = *event_count->wait_queue.next();
 
-        cur->remove();
+        cur->waitq.remove();
 
         // @todo: remove from timeq too...
 
@@ -260,7 +270,7 @@ events_create(events_v1::closure_t* self)
     if (!res)
         OS_RAISE((exception_support_v1::id)"events_v1.no_resources", 0);
 
-    istate->all_counts.add_to_tail(res); // Add to the set of all counts.
+    istate->all_counts.ec_queue.add_to_tail(res->ec_queue);
 
     return res;
 }
@@ -274,22 +284,22 @@ events_destroy(events_v1::closure_t* self, event_v1::count ec)
 
     unblock_event(istate, event_count, /*alerted:*/true); // Alert all waiters on this event count.
 
-    event_count->remove();
+    event_count->ec_queue.remove();
 
     if (event_count->ep != NULL_EP)
     {
-        if (event_count->notifications.prev)
-            event_count->notifications.prev->set_link(chained_handler_v1::position_after,
-                reinterpret_cast<chained_handler_v1::closure_t*>(event_count->notifications.next));// oh, man.
+        if (event_count->prev_notify)
+            event_count->prev_notify->set_link(chained_handler_v1::position_after,
+                reinterpret_cast<chained_handler_v1::closure_t*>(event_count->next_notify));// oh, man.
         else
         {
             // We were the head of the notify queue, so attach the old handler (may be NULL) to the endpoint.
-            istate->dispatcher->attach(event_count->notifications.next, event_count->ep);
+            istate->dispatcher->attach(event_count->next_notify, event_count->ep);
         }
 
-        if (event_count->notifications.next)
-            event_count->notifications.next->set_link(chained_handler_v1::position_before,
-                reinterpret_cast<chained_handler_v1::closure_t*>(event_count->notifications.prev));// oh, man.
+        if (event_count->next_notify)
+            event_count->next_notify->set_link(chained_handler_v1::position_before,
+                reinterpret_cast<chained_handler_v1::closure_t*>(event_count->prev_notify));// oh, man.
     }
     lock.unlock();
 
@@ -604,12 +614,12 @@ events_attach(events_v1::closure_t* self, event_v1::count ec, channel_v1::endpoi
         if (type == channel_v1::endpoint_type_rx)
         {
             closure_init(&event_count->notify_closure, &notify_methods, reinterpret_cast<channel_notify_v1::state_t*>(event_count));
-            event_count->notifications.next = istate->dispatcher->attach(&event_count->notify_closure, channel);
-            if (event_count->notifications.next)
+            event_count->next_notify = istate->dispatcher->attach(&event_count->notify_closure, channel);
+            if (event_count->next_notify)
             {
-                event_count->notifications.next->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&event_count->notify_closure));
+                event_count->next_notify->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&event_count->notify_closure));
             }
-            event_count->notifications.prev = nullptr;
+            event_count->prev_notify = nullptr;
         }
 
         if (state == channel_v1::state_connected)
@@ -682,12 +692,12 @@ events_attach_pair(events_v1::closure_t* self, event_v1::pair events, channel_v1
 
         // Initialize receiving end.
         closure_init(&rx->notify_closure, &notify_methods, reinterpret_cast<channel_notify_v1::state_t*>(rx));
-        rx->notifications.next = istate->dispatcher->attach(&rx->notify_closure, channels.receiver);
-        if (rx->notifications.next)
+        rx->next_notify = istate->dispatcher->attach(&rx->notify_closure, channels.receiver);
+        if (rx->next_notify)
         {
-            rx->notifications.next->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&rx->notify_closure));
+            rx->next_notify->set_link(chained_handler_v1::position_before, reinterpret_cast<chained_handler_v1::closure_t*>(&rx->notify_closure));
         }
-        rx->notifications.prev = nullptr;
+        rx->prev_notify = nullptr;
 
         if (rx_state == channel_v1::state_connected)
         {

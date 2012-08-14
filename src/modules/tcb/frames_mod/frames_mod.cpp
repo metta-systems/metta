@@ -158,7 +158,7 @@ static bool add_range_element(frame_allocator_v1::state_t* client_state, address
     new_entry->n_phys_frames = n_phys_frames;
     new_entry->frame_width = frame_width;
 
-    client_state->region_list->insert_after(new_entry);
+    client_state->region_list->insert_after(*new_entry);
 
     return true;
 }
@@ -180,13 +180,13 @@ static bool add_range(frame_allocator_v1::state_t* client_state, address_t start
     else
     {
         // Try to find the correct place to insert it.
-        region_list_t *link;
+        region_list_t* link;
         address_t current_start, current_end, next_start;
-        for (link = client_state->region_list->next; link != client_state->region_list; link = link->next)
+        for (link = *client_state->region_list->next(); link != client_state->region_list; link = *link->next())
         {
-            current_start = link->start;
-            current_end = current_start + (link->n_phys_frames << FRAME_WIDTH);
-            next_start = link->next->start;
+            current_start = (*link)->start;
+            current_end = current_start + ((*link)->n_phys_frames << FRAME_WIDTH);
+            next_start = (*link->next())->start;
             if ((start >= current_end) && (end <= next_start))
                 break;
         }
@@ -199,8 +199,8 @@ static bool add_range(frame_allocator_v1::state_t* client_state, address_t start
             if (end == next_start)
             {
                 kconsole << __FUNCTION__ << ": no prior elements, merging on rhs." << endl;
-                link->next->n_phys_frames += n_phys_frames;
-                link->next->start = start;
+                (*link->next())->n_phys_frames += n_phys_frames;
+                (*link->next())->start = start;
                 return true;
             }
             else
@@ -587,7 +587,7 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
     domain->min_phys_frame_count = 0;
     domain->max_phys_frame_count = state->ramtab->size();
     domain->ramtab = reinterpret_cast<ramtab_entry_t*>(state->ramtab->base());
-    domain->memory_region_list.init();
+    domain->memory_region_list.init(&domain->memory_region_list);
 
     kconsole << __FUNCTION__ << ": initialising new client record" << endl;
     new_client_state->domain = domain;
