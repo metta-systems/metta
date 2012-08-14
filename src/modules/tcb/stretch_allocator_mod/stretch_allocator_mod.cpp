@@ -128,20 +128,20 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
     kconsole << __FUNCTION__ << " size " << size << ", start " << start << endl;
 
     size_t npages = (size + PAGE_SIZE - 1) >> PAGE_WIDTH;
-    virtual_address_space_region* region;
+    dl_link_t<virtual_address_space_region>* region;
 
     if (unaligned(start))
     {
         // no start address requested, allocate at start of any suitable region.
-        for (region = state->regions->next; region != state->regions; region = region->next)
+        for (region = state->regions->next(); region != state->regions; region = region->next())
         {
-            kconsole << region;
+            kconsole << *region;
 
-            if (npages <= region->desc.n_pages)
+            if (npages <= (*region)->desc.n_pages)
                 break;
         }
 
-        kconsole << "found region " << region << endl;
+        kconsole << "found region " << *region << endl;
 
         if (region == state->regions)
         {
@@ -149,19 +149,19 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
             return false;
         }
 
-        *virt_addr  = region->desc.start_addr;
+        *virt_addr  = (*region)->desc.start_addr;
         *n_pages    = npages;
-        *page_width = region->desc.page_width;
+        *page_width = (*region)->desc.page_width;
 
-        if (region->desc.n_pages > npages)
+        if ((*region)->desc.n_pages > npages)
         {
-            region->desc.start_addr += align_to_frame_width(size, region->desc.page_width);
-            region->desc.n_pages -= npages;
+            (*region)->desc.start_addr += align_to_frame_width(size, (*region)->desc.page_width);
+            (*region)->desc.n_pages -= npages;
         }
         else
         {
             region->remove();
-            delete region;
+            delete *region;
         }
     }
     else
@@ -170,11 +170,11 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
         size_t start_page = (start + PAGE_SIZE - 1) >> PAGE_WIDTH;
         size_t region_start_page = 0, region_last_page = 0, region_page_offset = 0;
 
-        for (region = state->regions->next; region != state->regions; region = region->next)
+        for (region = state->regions->next(); region != state->regions; region = region->next())
         {
             // get the region start and end pages
-            region_start_page = (region->desc.start_addr + PAGE_SIZE - 1) >> PAGE_WIDTH;
-            region_last_page = region_start_page + region->desc.n_pages;
+            region_start_page = ((*region)->desc.start_addr + PAGE_SIZE - 1) >> PAGE_WIDTH;
+            region_last_page = region_start_page + (*region)->desc.n_pages;
 
             // check if we're within one region
             if (start_page >= region_start_page && (start_page + npages) <= region_last_page)
@@ -187,9 +187,9 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
             return false;
         }
 
-        if ((start & ((1UL << region->desc.page_width) - 1)) != 0) // FIXME: check start_page alignment instead?
+        if ((start & ((1UL << (*region)->desc.page_width) - 1)) != 0) // FIXME: check start_page alignment instead?
         {
-            kconsole << __FUNCTION__ << ": requested address " << start << " not aligned to region's page width " << region->desc.page_width << endl;
+            kconsole << __FUNCTION__ << ": requested address " << start << " not aligned to region's page width " << (*region)->desc.page_width << endl;
             nucleus::debug_stop();
         }
 
@@ -197,40 +197,40 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
 
         *virt_addr  = start_page << PAGE_WIDTH; // FIXME: use region page_width instead?
         *n_pages    = npages;
-        *page_width = region->desc.page_width;
+        *page_width = (*region)->desc.page_width;
 
         // Now take out the allocated region.
         if (region_page_offset == 0)
         {
             // allocating from the start of the region
-            if (region->desc.n_pages > npages)
+            if ((*region)->desc.n_pages > npages)
             {
-                region->desc.start_addr += align_to_frame_width(size, region->desc.page_width);
-                region->desc.n_pages -= npages;
+                (*region)->desc.start_addr += align_to_frame_width(size, (*region)->desc.page_width);
+                (*region)->desc.n_pages -= npages;
             }
             else
             {
                 region->remove();
-                delete region; // FIXME: check that the right operator delete is called!
+                delete *region; // FIXME: check that the right operator delete is called!
             }
         }
         else
         {
             // allocating from the end of the region
-            if ((region_page_offset + npages) == region->desc.n_pages)
+            if ((region_page_offset + npages) == (*region)->desc.n_pages)
             {
-                region->desc.n_pages -= npages;
+                (*region)->desc.n_pages -= npages;
             }
             else
             {
                 // allocating from the middle of the region
                 auto new_region = new(state->heap) virtual_address_space_region;
-                new_region->desc.start_addr = *virt_addr + align_to_frame_width(size, region->desc.page_width);
-                new_region->desc.n_pages = region->desc.n_pages - (npages + region_page_offset);
-                new_region->desc.page_width = region->desc.page_width;
-                new_region->desc.attr = region->desc.attr;
-                region->desc.n_pages = region_page_offset;
-                region->insert_after(new_region);
+                new_region->desc.start_addr = *virt_addr + align_to_frame_width(size, (*region)->desc.page_width);
+                new_region->desc.n_pages = (*region)->desc.n_pages - (npages + region_page_offset);
+                new_region->desc.page_width = (*region)->desc.page_width;
+                new_region->desc.attr = (*region)->desc.attr;
+                (*region)->desc.n_pages = region_page_offset;
+                region->insert_after(*new_region);
             }
         }
     }
@@ -376,7 +376,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
     //lock();
     stretch_list_t* link = new(ss->heap) stretch_list_t;
     link->stretch = &s->closure;
-    state->stretches.add_to_tail(link);
+    state->stretches.add_to_tail(*link);
     //unlock();
 
     kconsole << __FUNCTION__ << ": returning stretch at " << &s->closure << endl;
@@ -470,7 +470,7 @@ stretch_allocator_v1::closure_t* system_stretch_allocator_v1_create_nailed(syste
     first->desc.n_pages = n_pages;
     first->desc.page_width = page_width;
     first->desc.attr = memory_v1::attrs_regular;
-    shared_state->regions->add_to_head(first);
+    shared_state->regions->add_to_head(*first);
 
     kconsole << __FUNCTION__ << ": creating client state" << endl;
     auto client_state = new(heap) system_stretch_allocator_v1::state_t;
@@ -483,7 +483,7 @@ stretch_allocator_v1::closure_t* system_stretch_allocator_v1_create_nailed(syste
     closure_init(&client_state->closure, &stretch_allocator_v1_nailed_methods, client_state);
 
     // Keep a record of this 'client'.
-    shared_state->clients.add_to_head(client_state);
+    shared_state->clients.add_to_head(*client_state);
 
     kconsole << __FUNCTION__ << ": done creating" << endl;
     return &client_state->closure;
@@ -542,7 +542,7 @@ static stretch_v1::closure_t* system_stretch_allocator_v1_create_over(system_str
     //lock();
     stretch_list_t* link = new(state->heap) stretch_list_t;
     link->stretch = &s->closure;
-    self->d_state->stretches.add_to_tail(link);
+    self->d_state->stretches.add_to_tail(*link);
     //unlock();
 
     kconsole << __FUNCTION__ << ": returning stretch at " << &s->closure << endl;
@@ -584,7 +584,7 @@ static system_stretch_allocator_v1::closure_t* stretch_allocator_module_v1_creat
     region->desc.n_pages = 0x100000; // 4GiB address space.
     region->desc.page_width = PAGE_WIDTH;
     region->desc.attr = memory_v1::attrs_regular;
-    shared_state->regions->add_to_tail(region);
+    shared_state->regions->add_to_tail(*region);
 
     // by this point allocated memory contains
     // @0x1000 PIP, 1 page
@@ -636,7 +636,7 @@ static system_stretch_allocator_v1::closure_t* stretch_allocator_module_v1_creat
     // Oh, uglyness, oh, casting!
     closure_init(&client_state->closure, reinterpret_cast<const stretch_allocator_v1::ops_t*>(&system_stretch_allocator_v1_methods), client_state);
 
-    shared_state->clients.add_to_head(client_state);
+    shared_state->clients.add_to_head(*client_state);
 
     return reinterpret_cast<system_stretch_allocator_v1::closure_t*>(&client_state->closure);
 }
