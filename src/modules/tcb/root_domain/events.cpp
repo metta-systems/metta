@@ -13,6 +13,7 @@
 #include "binder_v1_interface.h"
 #include "exceptions.h"
 #include "time.h"
+#include "heap_new.h"
 
 /* 
  * Eventcount and Sequencer stuff
