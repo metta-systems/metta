@@ -13,10 +13,9 @@ Be free!
 
  $ mkdir Metta/branches
  $ cd Metta/branches
- $ bzr init-repo .
- $ bzr branch http://metta.exquance.com/bzr master
+ $ git clone https://github.com/berkus/metta.git master
 
-Sources will be checked out into branch "master" under "Metta/branches". The reason for having this deep directory structure is toolchain builder will create toolchain directory under Metta, shared by all branches. init-repo in branches also helps reduce overhead of branching in this directory.
+Sources will be checked out into branch "master" under "Metta/branches". The reason for having this deep directory structure is toolchain builder will create toolchain directory under Metta, shared by all branches.
 
 1. Install yasm assembler, 'brew install yasm' for example.
 
@@ -27,7 +26,7 @@ Sources will be checked out into branch "master" under "Metta/branches". The rea
 
 This is going to take a while.
 
-If you're unable to build toolchain locally and are on a Lion Mac, download prebuilt one and unpack it.
+If you're unable to build toolchain locally and are on a (post-) Lion Mac, download prebuilt one and unpack it.
 
  $ cd Metta
  $ wget http://downloads.exquance.com/toolchain-x86_64-darwin.tar.bz2
