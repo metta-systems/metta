@@ -250,7 +250,6 @@ def configure(conf):
     conf.env.append_unique('CCFLAGS', cflags + flags)
     conf.env.append_unique('CXXFLAGS', cxxflags + flags)
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
-    # conf.env.append_unique('NASM_FLAGS', ['-f', 'elf'])
 
     # conf.env['variant'] = arch + '-' + platform + '-' + build
 
