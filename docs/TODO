@@ -1,14 +1,9 @@
 * Add bootimage namespace iteration (bootimage_t::namespace_t::iterator?)
 
-* Finish typesystem loading.
-  - enter all available interfaces and types
-  - meta-interface describes built-in types as well as keeps reference to all other added types
-
-* Implement IDC mechanism.
-
 * Finish introspection and write a command line tool to interactively explore type system.
 
 * Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
+
 * Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
 
 * Assocfs:
@@ -20,13 +15,15 @@
 * We need a simple application to start coding from the user perspective.
   Something simple, single focused and immensely mettaish. Ideas?
 
+* Create architecture descriptions in increasing level of detail (@sa ANSA engineering overview).
+
 -----------------------------------------------------------------------------------------------------------------------
 
 * System components:
   scheduler
   protection domains
   memory manager √
-  usermode
+  usermode √
 
   UP √
   SMP
@@ -35,7 +32,8 @@
 * Nucleus (privileged core) - TODO: cleanly separate this code into a specialized component
   IRQ stubs
   privileged instructions
-  limited set of syscalls for performing privileged instructions - TODO: make a list now
+  limited set of syscalls for performing privileged instructions - @TODO: make a list now
+  - write_pdbr √
 
 * Drivers
   keyboard (PS/2, usb support needs more drivers)
@@ -45,9 +43,13 @@
   network
 
 * Services
-  typesystem
+  typesystem √
   events
   IDC
+  - shm transport
+  - marshalling & stub generator
+  - events plumbing between domains
+  - exports table & lookup
   exceptions √
 
 * Applications

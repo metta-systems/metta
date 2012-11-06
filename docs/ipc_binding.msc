@@ -1,3 +1,8 @@
+# Servers publish services by exporting them through export table and registering in the node namespace (and optionally 
+# with networked object trader).
+# 
+
+
 # Run through mscgen to get a sequence diagram. @todo Add as part of ./waf doc
 msc {
    sd[label="Server Domain"],cd[label="Client Domain"],t[label="Transport"],o[label="ObjectTbl"],n[label="Naming Context"],b[label="Binder"],g[label="Gatekeeper"];
