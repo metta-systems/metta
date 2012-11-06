@@ -12,7 +12,7 @@
 #include "module_interface.h"
 #include "binder_v1_interface.h"
 #include "exceptions.h"
-#include "time.h"
+#include "time_macros.h"
 #include "heap_new.h"
 
 /* 
