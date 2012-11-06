@@ -1,8 +1,8 @@
-#      Hooks for handling timeouts from an activation handler.
-#
-# A time notify interface is called within the activation handler of a vcpu.
-
-## All operations in this interface \emph{must} be invoked with
+## Hooks for handling timeouts from an activation handler.
+##
+## A time notify interface is called within the activation handler of a vcpu.
+##
+## All operations in this interface must be invoked with
 ## activations turned off, preferably from within the activation
 ## handler.  
 
@@ -14,7 +14,7 @@ local interface time_notify_v1
     # The "handle" is the value which was passed in when this closure
     # was registered with the XXX.
 
-    ## Notify an interested party that "now" is >= "deadline".
+    ## Notify an interested party that "now" is at or after the "deadline".
 
     notify(time_v1.time now, time_v1.time deadline, opaque handle);
 }
