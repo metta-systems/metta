@@ -4,9 +4,8 @@
 import os, sys, Task, Options, Configure, Utils
 Configure.autoconfig = 1
 
-# FIXME: Could use bzr python modules, too.
 APPNAME = 'metta'
-VERSION = os.popen("bzr version-info | grep revno | cut -d' ' -f2").read().strip()
+VERSION = os.popen("git show --oneline | head -n 1 | cut -d' ' -f1").read().strip()
 
 top = '.'
 out = '_build_'
