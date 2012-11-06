@@ -35,6 +35,12 @@ clang_debug_flag = ['-v', '--trace-includes']
 toolflags = ['-Wno-deprecated-declarations', '-stdlib=libc++']
 toollinkflags = ['-stdlib=libc++']
 
+def normpath(p):
+    import posixpath, ntpath
+    if sys.platform == 'windows':
+        return ntpath.normpath(p)
+    else:
+        return posixpath.normpath(p)
 
 def options(opt):
     # platform spec "arch-vendor-os", vendor can be omitted.
@@ -68,17 +74,17 @@ def clang_tc_dir(tc_dir, path):
 
 def toolchain_path():
     # Probe cross-branch toolchain first
-    # if you are in Metta/branches/master/src
+    # if you are in Metta/master/src
     # the toolchain must be in Metta/toolchain
     # If it doesn't exist, assume local toolchain and pray for the best.
-    tc_dir = os.path.join(os.getcwd(), '..', '..', '..', 'toolchain')
+    tc_dir = os.path.join(os.getcwd(), '..', '..', 'toolchain')
     if not os.path.exists(clang_tc_dir(tc_dir, 'bin/clang')):
         tc_dir = os.path.join(os.getcwd(), 'toolchain')
     # You need to amend path with gcc binaries otherwise clang will insist on calling system default one
     # regardless of -gcc-toolchain options (what's that for then, ffs?)
     # VEEERY sanitized version of the env.
     os.environ['PATH'] = os.path.join(tc_dir, 'gcc', 'bin') + ':' + os.path.join(tc_dir, 'gcc', 'i686-pc-elf', 'bin') + ':/usr/local/bin:/bin'
-    return tc_dir
+    return normpath(tc_dir)
 
 def configure(conf):
     tc_dir = toolchain_path()
@@ -278,7 +284,7 @@ def configure(conf):
     # Config for building kernel
     conf.setenv('KERNEL_ENV', env_base)
     conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
-    # conf.env.append_unique('INCLUDE_DIRS', system_header_dir)
+    #conf.env.append_unique('INCLUDE_DIRS', system_header_dir)
     conf.env.append_unique('DEFINES', metta_flag)
     conf.env.append_unique('DEFINES', ['BOCHS_IO_HACKS']) # debugging hacks for bochs
     conf.env.append_unique('DEFINES', stl_defines)
@@ -435,12 +441,12 @@ def build(bld):
     minruntime.includes = minruntime.env.INCLUDE_DIRS
 
 #@FIXME: toolruntime should build with host toolchain and host bitness! (now mismatches -m32 with -m64 for linking... by using wrong AR)
-    toolruntime = bld.stlib(
-        source = 'runtime/memutils.cpp runtime/cstring.cpp'.split(),
-        target = 'toolruntime',
-        env = bld.all_envs['TOOLS_ENV'].derive(),
-        includes = include_dirs
-    )
+    #toolruntime = bld.stlib(
+    #    source = 'runtime/memutils.cpp runtime/cstring.cpp'.split(),
+    #    target = 'toolruntime',
+    #    env = bld.all_envs['TOOLS_ENV'].derive(),
+    #    includes = include_dirs
+    #)
 
     commons = bld.stlib(
         source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser console module_loader'.split()),

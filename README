@@ -9,20 +9,19 @@ Be free!
 
 == To build Metta ==
 
-0. Check out the sources following the procedure on the http://metta.exquance.com/wiki/SourceCheckout:
+0. Check out the sources:
 
- $ mkdir Metta/branches
- $ cd Metta/branches
+ $ mkdir Metta; cd Metta
  $ git clone https://github.com/berkus/metta.git master
 
-Sources will be checked out into branch "master" under "Metta/branches". The reason for having this deep directory structure is toolchain builder will create toolchain directory under Metta, shared by all branches.
+Sources will be checked out into branch "master" under "Metta". This extra umbrella directory is needed because toolchain builder will create Metta/toolchain for the local toolchain it builds.
 
 1. Install yasm assembler, 'brew install yasm' for example.
 
 2. Generate a toolchain.
 
  $ cd Metta
- $ sh branches/master/build_toolchain.sh
+ $ sh master/build_toolchain.sh
 
 This is going to take a while.
 
@@ -34,7 +33,7 @@ If you're unable to build toolchain locally and are on a (post-) Lion Mac, downl
 
 3. Build Metta
 
- $ cd Metta/branches/master/src
+ $ cd Metta/master/src
  $ ./waf
 
 4. After successful build run emulator software to try out Metta.
@@ -46,3 +45,4 @@ src directory is preconfigured for using Bochs, so you can simply type:
 -----------------------------------------
 
 You are free to contribute and remember: if you don't, somebody else will!
+Just send a pull request on github.

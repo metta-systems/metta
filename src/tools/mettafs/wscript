@@ -5,11 +5,9 @@ def build(bld):
     mkfs = bld.program(
     	name = 'mkmettafs',
     	source = 'mkfs.cpp block_device.cpp block_cache.cpp block_device_mapper.cpp',
-    	use = 'UUID OPENSSL',
+    	use = 'UUID OPENSSL LIBCXX',
     	target = 'mkmettafs',
-	    env = bld.all_envs['TOOLS_ENV'].derive()
-	)
+	env = bld.all_envs['TOOLS_ENV'].derive()
+    )
     mkfs.includes = map(lambda d: '../../'+d, mkfs.env.INCLUDE_DIRS)
 
-# kate: indent-width 4; replace-tabs on;
-# vim: set et sw=4 ts=4 sts=4 cino=(4 :
