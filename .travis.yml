@@ -1,4 +1,6 @@
 language: c++
+before_install:
+  - sudo apt-get install -qq yasm
 script: cd src && ./waf
 branches:
   only:
