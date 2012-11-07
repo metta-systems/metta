@@ -19,8 +19,12 @@ To build Metta
 
 Sources will be checked out into branch "master" under "Metta". This extra umbrella directory is needed because toolchain builder will create Metta/toolchain for the local toolchain it builds.
 
-1. Install yasm assembler, 'brew install yasm' for example.
-
+1. Install dependencies 
+  * yasm assembler, `brew install yasm` for example.
+  * boost, `brew install boost`
+  * OSSP uuid implementation, `brew install ossp-uuid`
+  * cdrtools (for mkisofs), `brew install cdrtools`
+  * bochs emulator
 2. Generate a toolchain.
 
 ```
