@@ -1,0 +1,8 @@
+language: c++
+script: cd src && ./waf
+branches:
+  only:
+    - master
+notifications:
+  email: false
+
