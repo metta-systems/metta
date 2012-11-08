@@ -1,3 +1,5 @@
+![Metta OS](docs/metta.png)
+
 Metta is a multimedia, mobile, social OS
 ========================================
 
