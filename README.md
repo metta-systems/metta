@@ -1,4 +1,4 @@
-![Metta OS](https://github.com/berkus/metta/blob/master/docs/metta.png)
+![Metta OS](https://raw.github.com/berkus/metta/master/docs/metta.png)
 
 Metta is a multimedia, mobile, social OS
 ========================================
