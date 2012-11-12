@@ -6,7 +6,7 @@ from waflib.TaskGen import feature, extension
 from waflib import Task
 
 def configure(conf):
-	yasm=conf.find_program(['yasm'],var='YASM')
+	yasm=conf.find_program(['yasm'],var='YASM',path_list=['/usr/bin','/usr/local/bin'])
 	if not yasm:conf.fatal('could not find yasm, install it or set PATH env var')
 	conf.env.AS_TGT_F=['-o']
 	conf.env.ASLNK_TGT_F=['-o']
