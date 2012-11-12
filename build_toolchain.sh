@@ -8,6 +8,8 @@ echo "every once in a while. The process is largely automatic and should"
 echo "not require any manual intervention. Fingers crossed!"
 echo
 echo "You'll need UNIX tools make, curl and tar."
+echo
+echo "Specify LIBCXX_TRIPLE if you're not on mac - @todo fix with cmake build!"
 echo "===================================================================="
 echo
 
@@ -20,6 +22,9 @@ export LLVM_REVISION=160855
 export CLANG_REVISION=160855
 export COMPILER_RT_REVISION=160855
 export LIBCXX_REVISION=160855
+if [ -z $LIBCXX_TRIPLE ]; then
+    export LIBCXX_TRIPLE=-apple-
+fi
 
 BINUTILS_VER=2.22
 GCC_VER=4.6.2
@@ -128,7 +133,7 @@ echo "Checking out recent libcxx r$LIBCXX_REVISION..."
 echo "===================================================================="
 
 if [ ! -d libcxx ]; then
-    svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx
+    svn co -r$LIBCXX_REVISION http://llvm.org/svn/llvm-project/libcxx/trunk libcxx
 else
     svn up -r$LIBCXX_REVISION libcxx
 fi
@@ -450,7 +455,7 @@ echo "===================================================================="
 
 if [ ! -f libcxx/.build.succeeded ]; then
     cd libcxx/lib && \
-    TRIPLE=-apple- CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    TRIPLE=$LIBCXX_TRIPLE CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
     ./buildit && \
     touch ../.build.succeeded && \
     cd ../.. || exit 1
