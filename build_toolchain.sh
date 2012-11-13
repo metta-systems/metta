@@ -469,6 +469,8 @@ echo "Rebuilding LLVM libraries with freshly installed clang..."
 echo "===================================================================="
 echo "===================================================================="
 
+# TODO: copy libc++.so.1 to clang bin directory for Linux building or adjust LD_LIBRARY_PATH...
+
 echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
@@ -521,7 +523,7 @@ echo "===================================================================="
 
 if [ ! -f build/llvm2/.install2.succeeded ]; then
     cd build/llvm2 && \
-    make install && \
+    make install EXTRA_OPTIONS="$EXTRA_OPTIONS" EXTRA_LD_OPTIONS="$EXTRA_LD_OPTIONS" && \
     touch .install2.succeeded && \
     cd ../.. || exit 1
 else
