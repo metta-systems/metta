@@ -1,6 +1,9 @@
 language: c++
 before_install:
-  - sudo apt-get install -qq yasm libboost-all-dev cdrkit libossp-uuid-dev
+  - sudo apt-get install -qq python-software-properties
+  - sudo add-apt-repository ppa:brandonsnider/cdrtools
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq yasm libboost-all-dev mkisofs libossp-uuid-dev
   - wget http://downloads.exquance.com/toolchain-i386-gentoo.tar.bz2
   - tar xf toolchain-i386-gentoo.tar.bz2 -C ..
 script: cd src && ./waf
