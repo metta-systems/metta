@@ -1,6 +1,8 @@
 language: c++
 before_install:
   - sudo apt-get install -qq yasm
+  - wget http://downloads.exquance.com/toolchain-i386-gentoo.tar.bz2
+  - tar xf toolchain-i386-gentoo.tar.bz2 -C ..
 script: cd src && ./waf
 branches:
   only:
