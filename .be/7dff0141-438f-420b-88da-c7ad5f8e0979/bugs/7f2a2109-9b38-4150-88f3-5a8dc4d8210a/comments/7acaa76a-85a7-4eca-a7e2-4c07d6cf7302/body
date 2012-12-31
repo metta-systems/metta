@@ -1,4 +1,0 @@
-One issue with gold was problem with not generating the GOT properly. There's a testcase for this exists and can be used in configuring proper gold setup.
-
-Another option is to try and build ELF lld with llvm. It sure is very limited at the moment.
-
