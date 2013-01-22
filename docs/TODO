@@ -2,6 +2,7 @@
  ☐ Finish introspection and write a command line tool to interactively explore type system.
  ☐ Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
  ☐ Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
+ ☐ Add generic types a-la C# to type system?
 
 Assocfs:
     ☐ OS block cache - write tests.
