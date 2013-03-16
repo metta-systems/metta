@@ -9,7 +9,7 @@
 #include "block_device.h"
 #include "block_device_mapper.h"
 #include "block_cache.h"
-#include <uuid/uuid.h>
+#include <uuid/uuid.h> // @todo Use boost::uuid and remove libossp-uuid dependency
 #include "superblock.h"
 #include "memutils.h"
 #include "fourcc.h"
