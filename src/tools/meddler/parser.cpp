@@ -15,6 +15,7 @@
 #include <boost/algorithm/string.hpp>
 using namespace std;
 using namespace boost::algorithm;
+// @todo: since we already depend on boost, why not replace parsing with something like boost::wave::idl?
 
 std::string token_to_name(token::kind tok)
 {
