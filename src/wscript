@@ -328,6 +328,9 @@ def configure(conf):
 
     # set uselib for TOOLS_ENV
     conf.env.STLIB_UUID = 'uuid'
+    if sys.platform == 'darwin':
+        conf.env.LIBPATH_UUID = '/usr/local/opt/ossp-uuid/lib'
+        conf.env.INCLUDES_UUID = '/usr/local/opt/ossp-uuid/includes'
 
     if sys.platform == 'darwin':
         conf.env.LIB_OPENSSL = 'crypto'
