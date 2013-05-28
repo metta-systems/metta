@@ -13,6 +13,7 @@
 
 // temporary testing
 #include "../../devices/network/ne2000_pci/ne2k.h"
+#include "../../devices/graphics/bochs_emu/bga.h"
 
 static const char* class2string(int class_id)
 {
@@ -88,6 +89,19 @@ entry(closure::closure_t* self)
 				if (dev.is_present())
 				{
 					dev.dump();
+
+					if ((dev.vendor() == 0x1234) && (dev.device() == 0x1111))
+					{
+						graphics::bga bga;
+						bga.configure(&dev);
+						bga.init();
+						if (bga.is_available()) {
+							bga.set_mode(640, 480, 32);
+						}
+						else {
+							kconsole << "BGA init failed!" << endl;
+						}
+					}
 
 					if ((dev.vendor() == 0x10ec) && (dev.device() == 0x8029))
 					{
