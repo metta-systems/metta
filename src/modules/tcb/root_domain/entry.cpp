@@ -254,7 +254,7 @@ init(bootimage_t& bootimg)
     auto mmu_factory = load_module<mmu_module_v1::closure_t>(bootimg, "mmu_factory", "exported_mmu_module_rootdom");
     ASSERT(mmu_factory); // mmu_factory
 
-    auto heap_factory = load_module<heap_factory_v1::closure_t>(bootimg, "heap_factory", "exported_heap_module_rootdom");
+    auto heap_factory = load_module<heap_factory_v1::closure_t>(bootimg, "heap_factory", "exported_heap_factory_rootdom");
     ASSERT(heap_factory);
 
     auto stretch_allocator_factory = load_module<stretch_allocator_module_v1::closure_t>(bootimg, "stretch_allocator_factory", "exported_stretch_allocator_module_rootdom");
@@ -272,7 +272,7 @@ init(bootimage_t& bootimg)
     load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
     load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
-    load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_context_module_rootdom");
+    load_module<naming_context_factory_v1::closure_t>(bootimg, "context_factory", "exported_naming_context_factory_rootdom");
 #if PCIBUS_TEST
     load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
 #endif
