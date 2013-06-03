@@ -20,7 +20,7 @@ stl_defines = ['_LIBCPP_NO_IOSTREAMS=1', '_LIBCPP_NO_WCHAR=1', '_LIBCPP_NO_EXCEP
 stl_include_dirs = ['runtime', 'runtime/libc'] #'runtime/libc++/include',
 
 cflags = ['-fvisibility-inlines-hidden',  '-fvisibility=hidden']
-flags = '-O1 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-3dnow'.split()
+flags = '-O1 -g -ffunction-sections -fdata-sections -Wall -Wextra -Werror -mno-mmx -mno-sse -mno-sse2 -mno-3dnow'.split()
 non_debug_flags = '-ffunction-sections -fdata-sections' # these make debugging harder
 flags += ['-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-unused-private-field', '-Wno-gnu-array-member-paren-init', '-Wno-gcc-compat']
 
