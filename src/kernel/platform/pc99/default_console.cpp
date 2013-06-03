@@ -25,15 +25,20 @@ default_console_t& default_console_t::self()
 default_console_t::default_console_t()
     : console_t()
 {
-    videoram = reinterpret_cast<volatile unsigned char*>(0xb8000);
     clear();
 }
 
 void default_console_t::clear()
 {
-    memutils::clear_memory((void*)videoram, LINE_PITCH*LINE_COUNT);
+    memutils::clear_memory((void*)rambuf, sizeof(rambuf));
+    blit();
     locate(0,0);
     attr = 0x07;
+}
+
+void default_console_t::blit()
+{
+    memutils::copy_memory((void*)videoram, (void*)rambuf, sizeof(rambuf));
 }
 
 void default_console_t::set_color(Color col)
@@ -62,15 +67,16 @@ void default_console_t::locate(int row, int col)
     x86_cpu_t::outb(0x3d5, cursor & 0xff); // Send the low cursor byte.
 }
 
-void default_console_t::scroll_up() /* FIXME: remove vram reads! */
+void default_console_t::scroll_up()
 {
-    memutils::move_memory((void*)videoram, (void*)(videoram+LINE_PITCH), LINE_PITCH*(LINE_COUNT-1));
-    memutils::fill_memory((void*)(videoram+LINE_PITCH*(LINE_COUNT-1)), 0, LINE_PITCH);
+    memutils::move_memory((void*)rambuf, (void*)(rambuf+LINE_PITCH), sizeof(rambuf)-LINE_PITCH);
+    memutils::fill_memory((void*)(rambuf+LINE_PITCH*(LINE_COUNT-1)), 0, LINE_PITCH);
 }
 
 void default_console_t::newline()
 {
     print_char(eol);
+    blit();
 }
 
 /** Print decimal integer */
@@ -100,10 +106,10 @@ void default_console_t::print_int(int n)
         n = n % div;
         div /= 10;
     }
+    blit();
 }
 
-/** Print hexadecimal byte */
-void default_console_t::print_byte(unsigned char n)
+inline void default_console_t::print_byte_internal(unsigned char n)
 {
     const char hexdigits[17] = "0123456789abcdef"; // 16+1 for terminating null
     char c = hexdigits[(n >> 4) & 0xF];
@@ -112,21 +118,30 @@ void default_console_t::print_byte(unsigned char n)
     print_char(c);
 }
 
+/** Print hexadecimal byte */
+void default_console_t::print_byte(unsigned char n)
+{
+    print_byte_internal(n);
+    blit();
+}
+
 /** Print hexadecimal integer */
 void default_console_t::print_hex(uint32_t n)
 {
     print_str("0x");
-    print_byte((n >> 24) & 0xff);
-    print_byte((n >> 16) & 0xff);
-    print_byte((n >> 8) & 0xff);
-    print_byte(n & 0xff);
+    print_byte_internal((n >> 24) & 0xff);
+    print_byte_internal((n >> 16) & 0xff);
+    print_byte_internal((n >> 8) & 0xff);
+    print_byte_internal(n & 0xff);
+    blit();
 }
 
 void default_console_t::print_hex2(uint16_t n)
 {
     print_str("0x");
-    print_byte((n >> 8) & 0xff);
-    print_byte(n & 0xff);
+    print_byte_internal((n >> 8) & 0xff);
+    print_byte_internal(n & 0xff);
+    blit();
 }
 
 /** Print 64 bit hex integer */
@@ -134,7 +149,8 @@ void default_console_t::print_hex8(unsigned long long n)
 {
     print_str("0x");
     for(int i = 8; i > 0; i--)
-        print_byte((n >> (i-1)*8) & 0xFF);
+        print_byte_internal((n >> (i-1)*8) & 0xFF);
+    blit();
 }
 
 /* Minimal support for startup I/O */
@@ -201,24 +217,24 @@ void default_console_t::print_char(char ch)
         case '\n':
             do
             {
-                videoram[cursor++] = ' ';
-                videoram[cursor++] = attr;
+                rambuf[cursor++] = ' ';
+                rambuf[cursor++] = attr;
             }
             while (cursor % LINE_PITCH != 0);
             break;
         case '\t':
             do
             {
-                videoram[cursor++] = ' ';
-                videoram[cursor++] = attr;
+                rambuf[cursor++] = ' ';
+                rambuf[cursor++] = attr;
             }
             while (cursor % TAB_PITCH != 0);
             break;
         default:
             if (ch < ' ')
                 ch = '.'; // replace non-printable chars
-            videoram[cursor++] = ch; /* character */
-            videoram[cursor++] = attr; /* foreground, background colors. */
+            rambuf[cursor++] = ch; /* character */
+            rambuf[cursor++] = attr; /* foreground, background colors. */
     }
 
     if (cursor >= LINE_PITCH*LINE_COUNT)
@@ -266,6 +282,7 @@ void default_console_t::print_str(const char *str)
     char *b = (char *)str;
     while (*b)
         print_char(*b++);
+    blit();
 }
 
 void default_console_t::debug_log(const char *str, ...)
@@ -273,6 +290,6 @@ void default_console_t::debug_log(const char *str, ...)
     unsigned char old_attr = attr;
     set_attr(WHITE, BLACK);
     print_str(str);
-    print_char(eol);
+    newline();
     attr = old_attr;
 }

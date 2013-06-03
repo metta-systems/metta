@@ -53,7 +53,11 @@ public:
 private:
     default_console_t();
 
-    volatile unsigned char* videoram;
+    void blit(); // Blit rambuf to videoram
+    void print_byte_internal(unsigned char n);
+
+    uint8_t rambuf[160*25];
+    unsigned char* videoram{(unsigned char*)0xb8000};
     unsigned int            cursor;
     unsigned char           attr;
 };
