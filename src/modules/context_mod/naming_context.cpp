@@ -32,7 +32,7 @@ using namespace std;
 // C strings, so their interpretation as keys of an unordered_map is ... pointer based.
 // Unsurprisingly, this breaks just about any attempt to find a string key.
 // @todo Check the hash specialization for std::string and implement the similar for C string, or even better
-// use stringref_t/cstring_t for key_type.
+// @todo use stringref_t/cstring_t for key_type.
 
 template<>
 struct hash<const char*>

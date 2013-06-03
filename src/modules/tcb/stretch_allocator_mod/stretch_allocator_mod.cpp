@@ -430,12 +430,10 @@ static const stretch_allocator_v1::ops_t stretch_allocator_v1_nailed_methods =
 /**
  * create_nailed() is used to create a 'special' stretch allocator for use by the system code for page tables,
  * protection domains, dcbs, etc.
- * On alphas, 'special' means that the stretches are all allocated from a 4GB region of memory;
- * this memory is backed by physical memory in a simple manner - the high bits are zapped to give the physical
- * address. The fact of the magic prefix also simplifies the task of sanity checking arguments for the palcode.
  * On intel machines, all that 'special' means is that the stretches are backed by physical memory on creation.
  */
-stretch_allocator_v1::closure_t* system_stretch_allocator_v1_create_nailed(system_stretch_allocator_v1::closure_t* self, frame_allocator_v1::closure_t* frames, heap_v1::closure_t* heap)
+stretch_allocator_v1::closure_t*
+system_stretch_allocator_v1_create_nailed(system_stretch_allocator_v1::closure_t* self, frame_allocator_v1::closure_t* frames, heap_v1::closure_t* heap)
 {
     kconsole << __FUNCTION__ << endl;
     server_state_t* orig_state = self->d_state->shared_state;
@@ -497,7 +495,8 @@ stretch_allocator_v1::closure_t* system_stretch_allocator_v1_create_nailed(syste
  * XXX SMH: This latter case could cause the breaking of the stretch model if called unscrupulously. This is the main
  * reason for the restriction of this method at the current time.
  */
-static stretch_v1::closure_t* system_stretch_allocator_v1_create_over(system_stretch_allocator_v1::closure_t* self, memory_v1::size size, stretch_v1::rights global_rights, memory_v1::address start, memory_v1::attrs attr, uint32_t page_width, memory_v1::physmem_desc pmem)
+static stretch_v1::closure_t*
+system_stretch_allocator_v1_create_over(system_stretch_allocator_v1::closure_t* self, memory_v1::size size, stretch_v1::rights global_rights, memory_v1::address start, memory_v1::attrs attr, uint32_t page_width, memory_v1::physmem_desc pmem)
 {
     memory_v1::virtmem_desc virtmem;
     bool update = false;
@@ -566,7 +565,8 @@ static const system_stretch_allocator_v1::ops_t system_stretch_allocator_v1_meth
 // stretch_allocator_module_v1 methods
 //======================================================================================================================
 
-static system_stretch_allocator_v1::closure_t* stretch_allocator_module_v1_create(stretch_allocator_module_v1::closure_t* self, heap_v1::closure_t* heap, mmu_v1::closure_t* mmu)
+static system_stretch_allocator_v1::closure_t*
+stretch_allocator_module_v1_create(stretch_allocator_module_v1::closure_t* self, heap_v1::closure_t* heap, mmu_v1::closure_t* mmu)
 {
     kconsole << __FUNCTION__ << endl;
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
