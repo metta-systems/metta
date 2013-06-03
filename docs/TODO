@@ -1,7 +1,18 @@
+General:
+ ☐ Retarget to x86_64 and UEFI
+    - by the time i'm getting to arm there will be armv8 chips everywhere anyway.
+
+Boot:
+
+ ☐ Clean up the C-like code from Nemesis and turn it into robust shared kernel components with dynamic loading/resolution
+    - otherwise there will still be "multiple consoles" and other crap
+    - should console be actually a callable mod? perhaps.
+
  ☐ Add bootimage namespace iteration (bootimage_t::namespace_t::iterator?)
  ☐ Finish introspection and write a command line tool to interactively explore type system.
  ☐ Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
  ☐ Make a memory map tool to see what is allocated where, associate stretches and domains with allocated frames.
+     - display it at runtime at the bottom of the screen ...
  ☐ Add generic types a-la C# to type system?
 
 Assocfs:
@@ -23,21 +34,51 @@ System components:
 
   ✔ UP @done (12-12-31 16:58)
   ☐ SMP
+  * SMP - may require serious redesign
   ☐ NUMA
+  * NUMA-style CPU addressing
+  ☐ ARM port
+  ☐ Hosted port
 
 Nucleus (privileged core):
  TODO: cleanly separate this code into a specialized component
   ☐ IRQ stubs
   ☐ privileged instructions
   ☐ limited set of syscalls for performing privileged instructions - @TODO: make a list now
+  * syscall/sysret, sysenter/sysexit in addition to current "int 99"
   ✔ write_pdbr @done (12-12-31 16:59)
 
 Drivers:
   ☐ keyboard (PS/2, usb support needs more drivers)
   ☐ PCI
+    ✔ PCI bus enumeration (enumeration works, not optimal) @done (13-06-03 10:09)
+    ☐ assigning PCI irqs and handlers
   ☐ ACPI (using acpica port?)
+  ☐ Device driver infra
+  ☐ APIC
+  ☐ IO APIC
+  ☐ x2APIC
   ☐ display
+    ✔ BGA driver @done (13-05-28 18:09)
+   ☐ Intel GMA driver (http://www.x.org/docs/intel/)
   ☐ network
+    ✔ ne2000 driver @done (13-05-28 18:09)
+
+  * Scan pcibus
+    * This needs access interface
+  * Find netdev
+  * Start netdev driver
+    * needs irq assignment
+    * needs irq handler installation
+  * Send and receive packets
+    * needs io fbufs
+    * needs synchro events
+    * needs client QoS
+  * Use ipv6 packets
+    * needs network stacking/layering
+
+  ☐ PC keyboard driver
+  ☐ USB bus
 
 Services:
   ✔ typesystem @done (12-12-31 16:59)
@@ -54,9 +95,7 @@ Applications:
   ☐ child
   ☐ memory inspector
   ☐ symbolic debugger
-
-
- ☐ Write tests for atomic_count
+  ☐ Write tests for atomic_count
 
 Other:
     ☐ Investigate TLSF memory allocator for RT tasks 
@@ -74,6 +113,7 @@ Toolchain:
     ☐ Migrate linking to gold with LLVM plugin
         One issue with gold was problem with not generating the GOT properly. There's a testcase for this exists and can be used in configuring proper gold setup.
         Another option is to try and build ELF lld with llvm. It sure is very limited at the moment.
+        - lld built, try it out!
 
 Baby steps:
     ☐ Port activations and handlers framework
@@ -98,6 +138,12 @@ Meddler:
 Milestone-1:
     ☐ Start a root thread
        Start and run a single kernel thread in kernel address space with kernel (user?) privileges.
+
+Another realistic scenario more on the HID side:
+  * make a simple cli: type in an arcname and it will try to look it up and print out formatted according to the type
+    * this needs events, contexts etc all running...
+  * needs keyboard HID driver (PS2 or USB)
+    * for USB a huge pile of protocol handling must be implemented
 
 Testing:
     ☐ Devise a testing framework for modules
