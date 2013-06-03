@@ -25,7 +25,9 @@ default_console_t& default_console_t::self()
 default_console_t::default_console_t()
     : console_t()
 {
-    clear();
+    memutils::copy_memory((void*)rambuf, (void*)videoram, sizeof(rambuf));
+    // clear();
+    locate(LINE_COUNT, 0);
 }
 
 void default_console_t::clear()
@@ -210,6 +212,12 @@ void default_console_t::print_char(char ch)
     }
 #endif /* CONFIG_COMPORT */
 
+    if (cursor >= LINE_PITCH*LINE_COUNT)
+    {
+        scroll_up();
+        cursor = LINE_PITCH * (LINE_COUNT - 1);
+    }
+
     switch (ch)
     {
         case '\r':
@@ -237,11 +245,6 @@ void default_console_t::print_char(char ch)
             rambuf[cursor++] = attr; /* foreground, background colors. */
     }
 
-    if (cursor >= LINE_PITCH*LINE_COUNT)
-    {
-        scroll_up();
-        cursor = LINE_PITCH * (LINE_COUNT - 1);
-    }
     bochs_console_print_char(ch);
 //     serial_print_char(ch);
 }
