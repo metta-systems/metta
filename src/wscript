@@ -124,7 +124,7 @@ def configure(conf):
     # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
     # * Tests running on the target system (KERNEL_TEST_ENV)
 
-    extra_cross_flags = ['-fno-builtin', '-fno-stack-protector'] #, '-fno-leading-underscore']
+    extra_cross_flags = ['-fno-stack-protector'] #'-fno-builtin', , '-fno-leading-underscore']
 
     conf.load('yasm meddle genpaths', tooldir='waftools')
     conf.load('ar')
