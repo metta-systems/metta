@@ -29,7 +29,7 @@ namespace memutils {
 inline void*
 fill_memory(void* dest, int value, size_t count)
 {
-    asm volatile ("rep stosb" :: "c"(count), "a"(value), "D"(dest) : "memory");
+    asm volatile ("cld; rep stosb" :: "c"(count), "a"(value), "D"(dest) : "memory");
     return dest;
 }
 
@@ -61,11 +61,7 @@ clear_memory(void* dest, size_t count)
 inline void*
 copy_memory(void* dest, const void* src, size_t count)
 {
-    char *tmp = reinterpret_cast<char*>(dest);
-    const char *s = reinterpret_cast<const char*>(src);
-
-    while (count--)
-        *tmp++ = *s++;
+    asm volatile ("cld; rep movsb" :: "c"(count), "S"(src), "D"(dest) : "memory");
     return dest;
 }
 
@@ -95,8 +91,7 @@ move_memory(void* dest, const void* src, size_t count)
     } else {
         tmp = reinterpret_cast<char*>(dest) + count;
         s = reinterpret_cast<const char*>(src) + count;
-        while (count--)
-            *--tmp = *--s;
+        asm volatile ("std; rep movsb" :: "c"(count), "S"(s), "D"(tmp) : "memory");
     }
     return dest;
 }
