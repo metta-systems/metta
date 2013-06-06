@@ -49,6 +49,8 @@
 #include "frames_module_v1_impl.h"
 #include "map_string_address_v1_interface.h"
 
+#include "config.h" // for PCIBUS_TEST
+
 /**
  * @class bootimage_t
  * bootimage contains modules and namespaces.

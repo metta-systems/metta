@@ -188,6 +188,7 @@ def configure(conf):
     conf.define('CONFIG_X86_FXSR', 1)
     conf.define('CONFIG_X86_SYSENTER', 1)
     conf.define('CONFIG_IOAPIC', 1)
+    conf.define('PCIBUS_TEST', 1)
     conf.write_config_header('kernel/config.h')
 
     # Flag that we're building under/for Metta.
