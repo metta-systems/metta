@@ -38,6 +38,11 @@
 struct virtual_address_space_region : public dl_link_t<virtual_address_space_region>
 {
     memory_v1::virtmem_desc desc;
+
+    // This doubly-linked list is very messy...
+    virtual_address_space_region() : dl_link_t<virtual_address_space_region>() {
+        init(this);
+    }
 };
 
 //! Shared state.
@@ -58,6 +63,11 @@ struct server_state_t
 struct stretch_list_t : public dl_link_t<stretch_list_t>
 {
     stretch_v1::closure_t* stretch;
+
+    // This doubly-linked list is very messy...
+    stretch_list_t() : dl_link_t<stretch_list_t>() {
+        init(this);
+    }
 };
 
 // Dummy placeholder.
@@ -74,6 +84,11 @@ struct system_stretch_allocator_v1::state_t : public stretch_allocator_v1::state
     stretch_allocator_v1::closure_t  closure;      //!< Storage for the returned closure.
 
     stretch_list_t                   stretches;    //!< We hang all of the allocated stretches here.
+
+    // This doubly-linked list is very messy...
+    state_t() : dl_link_t<state_t>() {
+        init(this);
+    }
 };
 
 //======================================================================================================================
@@ -577,7 +592,6 @@ stretch_allocator_module_v1_create(stretch_allocator_module_v1::closure_t* self,
     shared_state->frames = NULL;
     shared_state->clients.init();
     shared_state->regions = new(heap) virtual_address_space_region;
-    shared_state->regions->init();
 
     auto region = new(heap) virtual_address_space_region;
     region->desc.start_addr = 0;

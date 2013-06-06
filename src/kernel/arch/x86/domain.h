@@ -46,8 +46,7 @@ struct region_list_t : public dl_link_t<region_list_t>
     size_t     n_phys_frames; /* No of *physical* frames it extends      */
     size_t     frame_width;   /* Logical frame width within region       */
 
-    region_list_t()
-    {
+    region_list_t() : dl_link_t<region_list_t>() {
         init(this);
     }
 };

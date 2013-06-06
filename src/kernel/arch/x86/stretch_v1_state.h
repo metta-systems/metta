@@ -36,6 +36,10 @@ struct state_t : public dl_link_t<state_t>
     memory_v1::size                  size;
     
     stretch_v1::rights               global_rights;
+
+    state_t() : dl_link_t<state_t>() {
+        init(this);
+    }
 };
 
 /** Convenience constant to denote "no rights". */
