@@ -131,9 +131,9 @@ static void register_sid(server_state_t* state, sid_t sid, stretch_v1::closure_t
 inline console_t& operator << (console_t& con, virtual_address_space_region* region)
 {
     con << "region:" << endl
-        << "  start: " << region->desc.start_addr << endl
-        << "  pages: " << region->desc.n_pages << endl
-        << "  width: " << region->desc.page_width << endl
+        << "  START: " << region->desc.start_addr << "; start page: " << (region->desc.start_addr >> PAGE_WIDTH) << endl
+        << "  bytes: " << (region->desc.n_pages << region->desc.page_width) << "; PAGES: " << region->desc.n_pages << endl
+        << "  width bits: " << int(region->desc.page_width) << endl
         << "  attrs: " << region->desc.attr << endl;
     return con;
 }
@@ -156,7 +156,7 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
                 break;
         }
 
-        kconsole << "found region " << *region << endl;
+        kconsole << "found " << *region << endl;
 
         if (region == state->regions)
         {
