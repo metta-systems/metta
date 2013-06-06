@@ -179,11 +179,11 @@ static bool vm_alloc(server_state_t* state, memory_v1::size size, memory_v1::add
             delete *region;
         }
     }
-    else
+    else // aligned(start)
     {
         // have a requested start address; compute start page
         size_t start_page = (start + PAGE_SIZE - 1) >> PAGE_WIDTH;
-        size_t region_start_page = 0, region_last_page = 0, region_page_offset = 0;
+        size_t region_start_page{0}, region_last_page{0}, region_page_offset{0};
 
         for (region = state->regions->next(); region != state->regions; region = region->next())
         {
