@@ -1,23 +1,12 @@
 boot: cdrom
 ata0-slave: type=cdrom, path=_build_/metta.iso, status=inserted
-cpu: count=2, reset_on_triple_fault=0, ips=1000000
+cpu: count=1, reset_on_triple_fault=0, ips=1000000
 megs: 128
-# For bochs after 2.4.6:
-#pci: enabled=1, chipset=i440fx, slot1=pcivga, slot2=ne2k
-# For bochs 2.4.6:
-i440fxsupport: enabled=1, slot1=pcivga, slot2=ne2k
-ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=fbsd, ethdev=en1 #macosx
+pci: enabled=1, chipset=i440fx, slot1=pcivga #, slot2=ne2k
+#ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=fbsd, ethdev=en0
 usb_uhci: enabled=1, port1=mouse
-usb_ohci: enabled=1
 mouse: enabled=0
 magic_break: enabled=1
 port_e9_hack: enabled=1
 debugger_log: debugger.log
-#gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
-display_library: carbon
-#term
-#nogui
-#x
-#carbon
-#x, options="gui_debug"
-#config_interface: wx
+display_library: x, options="gui_debug"
