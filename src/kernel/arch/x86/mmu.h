@@ -131,7 +131,7 @@ inline void ia32_mmu_t::enable_paged_mode() ALWAYS_INLINE
 }
 
 /**
- * Enables paged mode for IA32
+ * Enables non-paged mode for IA32.
  */
 inline void ia32_mmu_t::disable_paged_mode() ALWAYS_INLINE
 {
@@ -149,7 +149,7 @@ inline bool ia32_mmu_t::paged_mode_enabled() ALWAYS_INLINE
 }
 
 /**
- * @returns the linear address of the last pagefault
+ * @returns the linear address of the last pagefault.
  */
 inline address_t ia32_mmu_t::get_pagefault_address() ALWAYS_INLINE
 {
@@ -159,9 +159,9 @@ inline address_t ia32_mmu_t::get_pagefault_address() ALWAYS_INLINE
 }
 
 /**
- * Get the active page table
+ * Get the active page table.
  *
- * @returns the physical base address of the currently active page directory
+ * @returns the physical base address of the currently active page directory.
  */
 inline physical_address_t ia32_mmu_t::get_active_pagetable() ALWAYS_INLINE
 {
@@ -171,9 +171,9 @@ inline physical_address_t ia32_mmu_t::get_active_pagetable() ALWAYS_INLINE
 }
 
 /**
- * Sets the active page table
+ * Sets the active page table.
  *
- * @param page_dir_physical page directory physical base address
+ * @param page_dir_physical page directory physical base address.
  */
 inline void ia32_mmu_t::set_active_pagetable(physical_address_t page_dir_physical) ALWAYS_INLINE
 {
