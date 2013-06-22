@@ -17,6 +17,7 @@
 #include "debugger.h"
 #include "c++ctors.h"
 #include "panic.h"
+#include "mmu.h"
 
 static void dump_regs(registers_t* regs)
 {

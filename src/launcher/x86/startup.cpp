@@ -15,7 +15,7 @@
 #include "infopage.h"
 #include "frames_module_v1_interface.h"
 #include "timer_v1_interface.h"
-#include "cpu.h"
+#include "mmu.h"
 #include "c++ctors.h"
 #include "new"
 #include "debugger.h"
