@@ -36,6 +36,7 @@
 
 #include "types.h"
 #include "ia32.h"
+#include "cpu.h"
 // #include "x86_protection_domain.h"
 
 /**
@@ -57,6 +58,7 @@ public:
     static address_t get_pagefault_address(void);
     static physical_address_t get_active_pagetable(void);
     static void set_active_pagetable(physical_address_t page_dir_physical);
+    static inline void enable_2mb_pages();
 //     static void set_active_pagetable(x86_protection_domain_t& pdom);
 };
 
@@ -95,45 +97,36 @@ inline void ia32_mmu_t::flush_page_directory_entry(address_t linear)
 }
 
 /**
- * Set a flag in CR0.
+ * Enables physical address extension (2M pages) support for IA32.
+ * Necessary for x86_64 mode.
  */
-inline void ia32_cr0_set(uint32_t flag)
+inline void ia32_mmu_t::enable_2mb_pages() ALWAYS_INLINE
 {
-    uint32_t dummy;
-    asm volatile ("movl %%cr0, %0\n"
-                  "orl %1, %0\n"
-                  "movl %0, %%cr0\n"
-                  : "=r"(dummy)
-                  : "ir"(flag));
+    x86_cpu_t::cr4_set_flag(IA32_CR4_PAE);
 }
 
 /**
- * Set a flag in CR4.
+ * Enables extended page size (4M) support for IA32.
  */
-inline void ia32_cr4_set(uint32_t flag)
+inline void ia32_mmu_t::enable_4mb_pages() ALWAYS_INLINE
 {
-    uint32_t dummy;
-    asm volatile ("movl %%cr4, %0\n"
-                  "orl %1, %0\n"
-                  "movl %0, %%cr4\n"
-                  : "=r"(dummy)
-                  : "ir"(flag));
+    x86_cpu_t::cr4_set_flag(IA32_CR4_PSE);
 }
 
 /**
- * Enables extended page size (4M) support for IA32
+ * Enables global page support for IA32.
  */
-inline void ia32_mmu_t::enable_4mb_pages()
+inline void ia32_mmu_t::enable_global_pages() ALWAYS_INLINE
 {
-    ia32_cr4_set(IA32_CR4_PSE);
+    x86_cpu_t::cr4_set_flag(IA32_CR4_PGE);
 }
 
 /**
- * Enables global page support for IA32
+ * Enables paged mode for IA32.
  */
-inline void ia32_mmu_t::enable_global_pages()
+inline void ia32_mmu_t::enable_paged_mode() ALWAYS_INLINE
 {
-    ia32_cr4_set(IA32_CR4_PGE);
+    asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
 }
 
 /**

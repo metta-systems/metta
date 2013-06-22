@@ -10,9 +10,9 @@
 
 #include "types.h"
 #include "macros.h"
-#include "mmu.h"
 #include "cpu_flags.h"
 #include "cpu_information.h"
+#include "ia32.h"
 
 /**
  * Intel x86 CPU related operations.
@@ -20,6 +20,28 @@
 class x86_cpu_t
 {
 public:
+    /**
+     * Set a flag in CR0.
+     */
+    static inline void cr0_set_flag(uint32_t flag) ALWAYS_INLINE
+    {
+        uint32_t dummy;
+        asm volatile ("movl %%cr0, %0\n" : "=r"(dummy));
+        dummy |= flag;
+        asm volatile ("movl %0, %%cr0\n" :: "r"(dummy));
+    }
+
+    /**
+     * Set a flag in CR4.
+     */
+    static inline void cr4_set_flag(uint32_t flag) ALWAYS_INLINE
+    {
+        uint32_t dummy;
+        asm volatile ("movl %%cr4, %0\n" : "=r"(dummy));
+        dummy |= flag;
+        asm volatile ("movl %0, %%cr4\n" :: "r"(dummy));
+    }
+
     /**
      * Write a byte out to the specified port.
      */
@@ -177,9 +199,9 @@ public:
                       "movl    %eax, %cr0");
     }
 
-    static inline void enable_alignment_checks()
+    static inline void enable_alignment_checks() ALWAYS_INLINE
     {
-        ia32_cr0_set(IA32_CR0_AM);
+        cr0_set_flag(IA32_CR0_AM);
     }
 
     /* setup to read DCstall cycles + inst retired */
@@ -191,9 +213,9 @@ public:
         wrmsr(X86_MSR_EVSEL0, 0x4300C0); // Insts retired + EN + OS + USR
     }
 
-    static inline void enable_user_pmctr()
+    static inline void enable_user_pmctr() ALWAYS_INLINE
     {
-        ia32_cr4_set(IA32_CR4_PCE); /* enable read from user land */
+        cr4_set_flag(IA32_CR4_PCE); /* enable read from user land */
     }
 
 private:
