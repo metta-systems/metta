@@ -59,7 +59,7 @@ inline void gdt_entry_t::set_null()
 
 inline void gdt_entry_t::set_seg(uint32_t base, uint32_t limit, segtype_e type, int dpl)
 {
-    if (limit > (1 << 20)) // FIXME: >=
+    if (limit >= (1 << 20))
     {
         x.d.limit_low  = (limit >> 12) & 0xffff;
         x.d.limit_high = (limit >> 28) & 0xf;
