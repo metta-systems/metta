@@ -199,7 +199,8 @@ static bool ends_with(const cstring_t& str, const cstring_t& suffix)
 module_symbols_t::symmap
 symbol_table_finder_t::all_symbols(const char* suffix)
 {
-    D(kconsole << "symbol_table_finder_t::all_symbols {" << endl);
+    logger::function_scope fs("symbol_table_finder_t::all_symbols");
+
     module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
 
     size_t n_entries = symbol_table->size / symbol_table->entsize;
@@ -226,14 +227,15 @@ symbol_table_finder_t::all_symbols(const char* suffix)
     // }
     // OS_ENDTRY;
 
-    D(kconsole << "symbol_table_finder_t::all_symbols }" << endl);
     return symbols;
 }
 
 module_symbols_t
 module_loader_t::symtab_for(const char* name, const char* suffix)
 {
-    D(kconsole << "module_loader_t::symtab_for '" << name << "' {" << endl);
+    logger::function_scope fs("module_loader_t::symtab_for");
+
+    D(kconsole << "'" << name << "'" << endl);
     module_descriptor_t* out_mod;
 
     if (!module_already_loaded(*d_last_available_address, name, out_mod))
@@ -244,7 +246,6 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
 
     symbol_table_finder_t finder(out_mod->entry);
     module_symbols_t t(finder.all_symbols(suffix));
-    D(kconsole << "module_loader_t::symtab_for }" << endl);
     return t;
 }
 
@@ -265,7 +266,8 @@ module_symbols_t::starting_with(const char* prefix)
 module_symbols_t::symmap
 module_symbols_t::ending_with(const char* suffix)
 {
-    D(kconsole << "ending_with '" << suffix << "' {" << endl);
+    logger::function_scope fs("module_symbols_t::ending_with");
+    D(kconsole << "'" << suffix << "'" << endl);
     symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
@@ -276,7 +278,6 @@ module_symbols_t::ending_with(const char* suffix)
             out.insert(std::make_pair(e.first, e.second));
         }
     }
-    D(kconsole << "ending_with }" << endl);
     return out;
 }
 
