@@ -133,6 +133,41 @@ static void SECTION(".init.cpu") check_cpu_features()
     else
         max_cpuid = 0;
 
+    // kconsole << "max cpuid level " << max_cpuid << endl;
+    x86_cpu_t::cpuid(0x80000001, &dummy, &dummy, &dummy, &family);
+    if (family & (1 << 29)) {
+        kconsole << "64 bits cpu supported! " << family << endl;
+    }
+
+#define MSR_EFER 0xC0000080
+#define MSR_EFER_SCE (1 << 0)
+#define MSR_EFER_LME (1 << 8)
+
+    // Switch from protected mode to Long Mode.
+    // ia32_mmu_t::disable_paged_mode(); // Disable paging
+    // debugger_t::breakpoint();
+    // ia32_mmu_t::enable_4mb_pages();
+    // ia32_mmu_t::enable_global_pages();
+    // ia32_mmu_t::enable_2mb_pages(); // Set the PAE enable bit in CR4
+    // address_t* PML2 = (address_t*)0x1000;
+    // address_t* PML3 = (address_t*)0x2000;
+    // address_t* PML4 = (address_t*)0x3000;
+    // *PML2 = 0x87; // single 4Mb ID mapping
+    // *PML3 = 0x1000 | 7;
+    // *PML4 = 0x2000 | 7;
+    // ia32_mmu_t::set_active_pagetable(0x3000); // Load CR3 with the physical address of the PML4
+    // x86_cpu_t::write_msr(MSR_EFER, x86_cpu_t::read_msr(MSR_EFER) | MSR_EFER_LME | MSR_EFER_SCE); // Enable long mode by setting the EFER.LME flag in MSR 0xC0000080
+    // ia32_mmu_t::enable_paged_mode(); // Enable paging
+// Now the CPU will be in compatibility mode, and instructions are still 32-bit.
+// To enter long mode, the D/B bit (bit 22, 2nd dword) of the GDT code segment
+// must be clear (as it would be for a 16-bit code segment), and
+// the L bit (bit 21, 2nd dword) of the GDT code segment must be set.
+// Once that is done, the CPU is in 64-bit long mode.
+    // load_64_gdt();
+    // load_64_idt();
+    // Reload segment registers.
+    // debugger_t::breakpoint();
+
     if (max_cpuid >= 1)
     {
         x86_cpu_t::cpuid(1, &family, &dummy, &dummy, &dummy);
