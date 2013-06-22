@@ -12,24 +12,12 @@
 #include "default_console.h"
 #include "memory.h"
 #include "debugger.h"
+#include "debugmacros.h" // for D() and V()
 #include "panic.h"
 #include "fourcc.h"
 #include "infopage.h"
 #include "bootinfo.h" // for print_module_map()
 // #include "exceptions.h"
-
-#if ELF_LOADER_DEBUG
-#define D(s) s
-#else
-#define D(s)
-#endif
-
-#if ELF_RELOC_DEBUG_V
-#define V(s) s
-#else
-#define V(s)
-#endif
-
 #include "symbol_table_finder.h"
 
 /**
