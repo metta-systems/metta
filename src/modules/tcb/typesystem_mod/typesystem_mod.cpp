@@ -424,7 +424,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf); // @todo do we need to convert this back and forth?
     address_t dummy;
 
-    D(kconsole << "register_interface '" << iface->rep.name << "' {" << endl);
+    kconsole << "register_interface '" << iface->rep.name << "' {" << endl;
 
     if (self->d_state->interfaces_by_name->get(iface->rep.name, &dummy))
         OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", 0);

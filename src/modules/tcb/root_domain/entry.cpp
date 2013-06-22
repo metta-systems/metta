@@ -410,6 +410,7 @@ init(bootimage_t& bootimg)
     // Idealized interface:
     // symbols = module("interface_repository").find_symbols().ending_with("__intf_typeinfo");
     auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
+    kconsole << "   found " << int(symbols.size()) << " interfaces" << endl;
     for (auto& symbol : symbols)
     {
         ts->register_interface(symbol.second->value);

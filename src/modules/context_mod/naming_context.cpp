@@ -324,6 +324,8 @@ create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* h
     naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
     state->typesystem = type_system;
 
+    kconsole << " ** Created new naming context." << endl;
+
     closure_init(&state->closure, &naming_context_v1_methods, state);
     return &state->closure;
 }
