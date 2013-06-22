@@ -3,11 +3,10 @@ OUTPUT_ARCH(i386)
 ENTRY(_start)
 
 START_ADDRESS = 0x100000;
-PAGE_SIZE = 0x1000;
 
 /* setting up the Multiboot header - see GRUB docs for details. */
-MULTIBOOT_MAGIC = 0x1badb002;                                      /* 'magic number' lets bootloader find the header */
-MULTIBOOT_MEMORY_INFO  = 2;                                        /* provide memory map */
+MULTIBOOT_MAGIC = 0x1badb002;        /* 'magic number' lets bootloader find the header */
+MULTIBOOT_MEMORY_INFO  = 2;          /* provide memory map */
 MULTIBOOT_FLAGS = MULTIBOOT_MEMORY_INFO;
 MULTIBOOT_CHECKSUM = -(MULTIBOOT_MAGIC + MULTIBOOT_FLAGS);
 
