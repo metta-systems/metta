@@ -100,7 +100,7 @@ public:
     /**
      * Read internal CPU 64-bit clock (timestamp counter).
      */
-    static inline uint64_t rdtsc() ALWAYS_INLINE
+    static inline uint64_t read_tsc() ALWAYS_INLINE
     {
         uint64_t ret;
         asm volatile("rdtsc" : "=A"(ret));
@@ -108,9 +108,19 @@ public:
     }
 
     /**
+     * Read machine-specific register.
+     */
+    static inline uint64_t read_msr(uint32_t index) ALWAYS_INLINE
+    {
+        uint64_t value;
+        asm volatile("rdmsr" : "=A" (value) : "c" (index));
+        return value;
+    }
+
+    /**
      * Write machine-specific register.
      */
-    static inline void wrmsr(uint32_t index, uint64_t value) ALWAYS_INLINE
+    static inline void write_msr(uint32_t index, uint64_t value) ALWAYS_INLINE
     {
         asm volatile("wrmsr" :: "A" (value), "c" (index));
     }
@@ -207,10 +217,10 @@ public:
     /* setup to read DCstall cycles + inst retired */
     static inline void init_pmctr()
     {
-        wrmsr(X86_MSR_PMCTR0, 0);
-        wrmsr(X86_MSR_PMCTR1, 0);
-        wrmsr(X86_MSR_EVSEL1, 0x30048); // DCU wait cycles
-        wrmsr(X86_MSR_EVSEL0, 0x4300C0); // Insts retired + EN + OS + USR
+        write_msr(X86_MSR_PMCTR0, 0);
+        write_msr(X86_MSR_PMCTR1, 0);
+        write_msr(X86_MSR_EVSEL1, 0x30048); // DCU wait cycles
+        write_msr(X86_MSR_EVSEL0, 0x4300C0); // Insts retired + EN + OS + USR
     }
 
     static inline void enable_user_pmctr() ALWAYS_INLINE
