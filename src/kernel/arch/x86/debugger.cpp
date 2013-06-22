@@ -10,6 +10,21 @@
 #include "default_console.h"
 #include "registers.h"
 
+namespace logger {
+
+function_scope::function_scope(const char* fn)
+    : name(fn)
+{
+    kconsole << name << " {" << endl;
+}
+
+function_scope::~function_scope()
+{
+    kconsole << "} " << name << endl;
+}
+
+} // namespace logger
+
 void debugger_t::dump_memory(address_t start, size_t size)
 {
     char *ptr = (char *)start;

@@ -11,6 +11,17 @@
 #include "types.h"
 #include "macros.h"
 
+namespace logger {
+
+class function_scope
+{
+    const char* name;
+public:
+    function_scope(const char *fn);
+    ~function_scope();
+};
+
+}
 /**
  * The kernel debugger.
  */
