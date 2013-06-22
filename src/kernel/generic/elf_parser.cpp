@@ -312,7 +312,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
  */
 bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_header_t* target_sect, address_t load_address)
 {
-    V(section_header_t* shstrtab = section_shstring_table());
+    section_header_t* shstrtab = section_shstring_table();
 
     uint32_t result = 0xdeadbeef; // Apparently invalid result.
     address_t P = (target_sect ? target_sect->vaddr : load_address) + rel.offset;
@@ -320,7 +320,10 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
     address_t S = 0;
 
     if (ELF32_ST_TYPE(sym.info) == 0 && sym.shndx == 0)
+    {
+        kconsole << "Undefined symbol '" << strtab_pointer(section_string_table(), sym.name) << "'" << endl;
         PANIC("Invalid relocatable image: undefined symbols!");
+    }
 
     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
     {
