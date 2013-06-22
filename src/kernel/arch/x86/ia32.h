@@ -58,10 +58,23 @@ static const size_t    FRAME_WIDTH = 12;
 #define IA32_CR0_PG (1 << 31)   /**< enable paging                                               */
 
 // CR4 register
-#define IA32_CR4_PSE    (1 << 4)   /**< page size extensions (enable 4MB pages)       */
-#define IA32_CR4_PAE    (1 << 5)   /**< physical address extension (enable 2MB pages) */
-#define IA32_CR4_PGE    (1 << 7)   /**< enable global pages                           */
-#define IA32_CR4_PCE    (1 << 8)   /**< enable rdpmc in user-mode                     */
+#define IA32_CR4_VME        (1 << 0)  /**< virtual 8086 mode extensions                  */
+#define IA32_CR4_PVI        (1 << 1)  /**< protected mode virtual interrupts             */
+#define IA32_CR4_TSD        (1 << 2)  /**< timestamp disable (forbid user rdtsc when set)*/
+#define IA32_CR4_DE         (1 << 3)  /**< debugging extensions                          */
+#define IA32_CR4_PSE        (1 << 4)  /**< page size extensions (enable 4MB pages)       */
+#define IA32_CR4_PAE        (1 << 5)  /**< physical address extension (enable 2MB pages) */
+#define IA32_CR4_MCE        (1 << 6)  /**< enable machine check exceptions               */
+#define IA32_CR4_PGE        (1 << 7)  /**< enable global pages                           */
+#define IA32_CR4_PCE        (1 << 8)  /**< enable rdpmc in user-mode                     */
+#define IA32_CR4_OSFXSR     (1 << 9)  /**< enable SSE and FPU fast save/restore          */
+#define IA32_CR4_OSXMMEXCPT (1 << 10) /**< enable unmasked SSE exceptions                */
+#define IA32_CR4_VMXE       (1 << 13) /**< enable virtual machine extensions             */
+#define IA32_CR4_SMXE       (1 << 14) /**< enable safer mode extensions                  */
+#define IA32_CR4_PCIDE      (1 << 17) /**< enable process-context identifiers            */
+#define IA32_CR4_OSXSAVE    (1 << 18) /**< enable xsave and cpu extended states          */
+#define IA32_CR4_SMEP       (1 << 20) /**< enable supervisor mode execution protection   */
+#define IA32_CR4_SMAP       (1 << 21) /**< enable supervisor mode access protection      */
 
 // Machine-specific registers
 #define X86_MSR_PMCTR0  0xc1
