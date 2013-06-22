@@ -18,6 +18,7 @@
 #include "cpu.h"
 #include "c++ctors.h"
 #include "new"
+#include "debugger.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -193,15 +194,6 @@ static void prepare_infopage()
 
 extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 
-// @TODO: export to debugger.h?
-class func_logging_aid_t
-{
-    const char* name;
-public:
-    func_logging_aid_t(const char* _name) : name(_name) { kconsole << name << " {" << endl; }
-    ~func_logging_aid_t() { kconsole << "} " << name << endl; }
-};
-
 /**
  * Get the system going.
  *
@@ -214,7 +206,7 @@ extern "C" void arch_prepare()
     // No dynamic memory allocation here yet, global objects not constructed either.
     run_global_ctors();
 
-    func_logging_aid_t aid("arch_prepare");
+    logger::function_scope fs("arch_prepare");
 
     // Grab the bootinfo page and discover where is our bootimage.
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
