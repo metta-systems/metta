@@ -45,20 +45,21 @@
 class ia32_mmu_t
 {
 public:
-    static void flush_page_directory(bool global = false);
-    static void flush_page_directory_entry(address_t addr);
-    inline static void flush_page_directory_entry(void* addr)
+    static inline void flush_page_directory(bool global = false);
+    static inline void flush_page_directory_entry(address_t addr);
+    static inline void flush_page_directory_entry(void* addr)
     {
         flush_page_directory_entry(reinterpret_cast<address_t>(addr));
     }
-    static void enable_4mb_pages();
-    static void enable_global_pages();
-    static void enable_paged_mode();
-    static bool paged_mode_enabled();
-    static address_t get_pagefault_address(void);
-    static physical_address_t get_active_pagetable(void);
-    static void set_active_pagetable(physical_address_t page_dir_physical);
     static inline void enable_2mb_pages();
+    static inline void enable_4mb_pages();
+    static inline void enable_global_pages();
+    static inline void enable_paged_mode();
+    static inline void disable_paged_mode();
+    static inline bool paged_mode_enabled();
+    static inline address_t get_pagefault_address(void);
+    static inline physical_address_t get_active_pagetable(void);
+    static inline void set_active_pagetable(physical_address_t page_dir_physical);
 //     static void set_active_pagetable(x86_protection_domain_t& pdom);
 };
 
@@ -91,7 +92,7 @@ inline void ia32_mmu_t::flush_page_directory(bool global)
  *
  * @param linear linear address
  */
-inline void ia32_mmu_t::flush_page_directory_entry(address_t linear)
+inline void ia32_mmu_t::flush_page_directory_entry(address_t linear) ALWAYS_INLINE
 {
     asm volatile ("invlpg (%0)\n" :: "r"(linear));
 }
@@ -132,15 +133,15 @@ inline void ia32_mmu_t::enable_paged_mode() ALWAYS_INLINE
 /**
  * Enables paged mode for IA32
  */
-inline void ia32_mmu_t::enable_paged_mode()
+inline void ia32_mmu_t::disable_paged_mode() ALWAYS_INLINE
 {
-    asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_PG | IA32_CR0_WP | IA32_CR0_PE));
+    asm volatile ("mov %0, %%cr0\n" :: "r"(IA32_CR0_WP | IA32_CR0_PE));
 }
 
 /**
  * Check if paging is enabled.
  */
-inline bool ia32_mmu_t::paged_mode_enabled()
+inline bool ia32_mmu_t::paged_mode_enabled() ALWAYS_INLINE
 {
     uint32_t cr0;
     asm volatile("movl %%cr0, %0\n" : "=r"(cr0));
@@ -150,7 +151,7 @@ inline bool ia32_mmu_t::paged_mode_enabled()
 /**
  * @returns the linear address of the last pagefault
  */
-inline address_t ia32_mmu_t::get_pagefault_address()
+inline address_t ia32_mmu_t::get_pagefault_address() ALWAYS_INLINE
 {
     uint32_t faulting_address;
     asm volatile("movl %%cr2, %0\n" : "=r"(faulting_address));
@@ -162,7 +163,7 @@ inline address_t ia32_mmu_t::get_pagefault_address()
  *
  * @returns the physical base address of the currently active page directory
  */
-inline physical_address_t ia32_mmu_t::get_active_pagetable()
+inline physical_address_t ia32_mmu_t::get_active_pagetable() ALWAYS_INLINE
 {
     physical_address_t ret;
     asm volatile ("movl %%cr3, %0\n" : "=a"(ret));
@@ -174,7 +175,7 @@ inline physical_address_t ia32_mmu_t::get_active_pagetable()
  *
  * @param page_dir_physical page directory physical base address
  */
-inline void ia32_mmu_t::set_active_pagetable(physical_address_t page_dir_physical)
+inline void ia32_mmu_t::set_active_pagetable(physical_address_t page_dir_physical) ALWAYS_INLINE
 {
     asm volatile ("movl %0, %%cr3\n" :: "r"(page_dir_physical));
 }
