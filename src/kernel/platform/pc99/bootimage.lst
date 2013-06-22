@@ -30,4 +30,4 @@ hashtables_factory:modules/hashtables_mod/hashtables_mod.comp
 interface_repository:interface_repository
 
 # Test module
-#pcibus_mod:modules/pcibus/pcibus_mod.comp
+pcibus_mod:modules/pcibus/pcibus_mod.comp
