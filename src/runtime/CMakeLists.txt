@@ -5,6 +5,7 @@ set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} ${KERNEL_LINK_FLAGS}")
 include_directories(libc++/include)
 include_directories(../kernel/arch/shared) # for panic.h
 include_directories(../kernel/arch/x86) # for ia32.h
+include_directories(../kernel/platform/shared) # for default_console.h
 
 list(APPEND runtime_SOURCES memutils.cpp cstring.cpp setjmp.s)
 #if (PLATFORM NOT STREQUAL "hosted")

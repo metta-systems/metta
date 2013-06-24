@@ -58,35 +58,13 @@ size_t strlen(const char* s);
 */
 
 #include <__config>
-#if !__Metta__
 #include <string.h>
-#else
-#include <cstddef>
-#include "memutils.h"
-#endif //!__Metta__
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
-
-#if __Metta__
-
-inline _LIBCPP_INLINE_VISIBILITY void* memcpy(void* dest, const void* src, size_t count)
-{ return memutils::copy_memory(dest, src, count); }
-inline _LIBCPP_INLINE_VISIBILITY void* memmove(void* dest, const void* src, size_t count)
-{ return memutils::move_memory(dest, src, count); }
-inline _LIBCPP_INLINE_VISIBILITY void* memset(void* dest, int value, size_t count)
-{ return memutils::fill_memory(dest, value, count); }
-inline _LIBCPP_INLINE_VISIBILITY int memcmp(const void* dest, const void* src, size_t count)
-{ return memutils::is_memory_equal(dest, src, count); }
-inline _LIBCPP_INLINE_VISIBILITY void *memchr(const void *src, int chr, size_t count)
-{ return memutils::find_byte(src, chr, count); }
-inline _LIBCPP_INLINE_VISIBILITY size_t strlen(const char *s)
-{ return memutils::string_length(s); }
-
-#else
 
 using ::size_t;
 using ::memcpy;
@@ -116,7 +94,7 @@ using ::strspn;
 using ::strstr;
 
 // MSVC, GNU libc and its derivates already have the correct prototype in <string.h> #ifdef __cplusplus
-#if !defined(__GLIBC__) && !defined(_MSC_VER) && !defined(__sun__)
+#if !defined(__GLIBC__) && !defined(_MSC_VER) && !defined(__sun__) && !defined(_STRING_H_CPLUSPLUS_98_CONFORMANCE_)
 inline _LIBCPP_INLINE_VISIBILITY       char* strchr(      char* __s, int __c) {return ::strchr(__s, __c);}
 inline _LIBCPP_INLINE_VISIBILITY       char* strpbrk(      char* __s1, const char* __s2) {return ::strpbrk(__s1, __s2);}
 inline _LIBCPP_INLINE_VISIBILITY       char* strrchr(      char* __s, int __c) {return ::strrchr(__s, __c);}
@@ -128,8 +106,6 @@ using ::strtok;
 using ::memset;
 using ::strerror;
 using ::strlen;
-
-#endif //__Metta__
 
 _LIBCPP_END_NAMESPACE_STD
 

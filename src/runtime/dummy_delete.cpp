@@ -18,7 +18,7 @@ void* operator new(size_t size) throw()
     return 0;
 }
 
-void operator delete(void*)
+void operator delete(void*) throw()
 {
     PANIC("Default delete called!");
 }
