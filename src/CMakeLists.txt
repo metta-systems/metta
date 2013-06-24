@@ -11,10 +11,13 @@
 # platform hosted = whatever host supports
 # board raspi = -target arm-elf-eabi -march=arm6 -mfloat-abi=hard
 
-cmake_minimum_required(VERSION 2.8.10)
-project(Metta)
+cmake_minimum_required(VERSION 2.8.11)
+project(Metta CXX)
 
 include(CTest)
+
+#include(CMakeForceCompiler)
+#cmake_force_cxx_compiler(${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/clang++ Clang)
 
 # Configure arch, cpu, platform, board
 # If none specified - use hosted
