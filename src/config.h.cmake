@@ -1,3 +1,8 @@
+#cmakedefine CONFIG_PLATFORM "@PLATFORM@"
+#cmakedefine CONFIG_BOARD "@BOARD@"
+#cmakedefine CONFIG_ARCH "@ARCH@"
+#cmakedefine CONFIG_TARGET "@TARGET@"
+
 #cmakedefine CONFIG_INLINING 1
 #cmakedefine CONFIG_DEBUG_SYMBOLS 1
 #cmakedefine SYSTEM_DEBUG 1

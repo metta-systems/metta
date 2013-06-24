@@ -23,9 +23,27 @@ include(CTest)
 # If platform specified, board is either also specified or not known.
 # 
 if (NOT CONFIG_PLATFORM AND NOT CONFIG_BOARD)
-	set(PLATFORM hosted)
+	set(CONFIG_PLATFORM hosted)
 endif()
 
+# Board may also set platform to bring in any non-specific details
+# Board configs may set TARGET, PLATFORM, BOARD and ARCH variables in _cache_.
+if (CONFIG_BOARD)
+	include(cmake/boards/${CONFIG_BOARD}.cmake)
+endif ()
+
+# Platform configs may set TARGET, PLATFORM, BOARD and ARCH variables in _cache_.
+if (CONFIG_PLATFORM)
+	include(cmake/platforms/${CONFIG_PLATFORM}.cmake)
+endif ()
+
+# TODO: include cmake/arches/${ARCH}.cmake here to set arch-specific flags
+# TODO: same for CPU?
+
+message("##   TARGET set to ${TARGET}")
+message("##   PLATFORM set to ${PLATFORM}")
+message("##   BOARD set to ${BOARD}")
+message("##   ARCH set to ${ARCH}")
 
 # On mac, use openssl from brew, not the default system one, because it is too old.
 # Run 'brew install openssl' to install it.
@@ -44,8 +62,7 @@ set(Boost_USE_STATIC_LIBS ON) # Easier to deploy elsewhere
 find_package(Boost REQUIRED)
 
 # Generate our config.h
-set(ARCH i686)
-set(PLATFORM pc99)
+# PLATFORM, BOARD and ARCH are used here from the platform config files.
 set(BUILD ${CMAKE_BUILD_TYPE})
 set(CONFIG_INLINING 1)
 set(CONFIG_DEBUG_SYMBOLS 1)
