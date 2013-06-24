@@ -86,12 +86,19 @@ foreach (src ${interface_files})
     list(APPEND interface_repo_files
         ${CMAKE_CURRENT_BINARY_DIR}/${src}_typedefs.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/${src}_interface.h)
+    list(APPEND interface_lib_files
+        ${CMAKE_CURRENT_BINARY_DIR}/${src}_interface.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/${src}_interface.h
+        ${CMAKE_CURRENT_BINARY_DIR}/${src}_impl.h)
 endforeach()
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/nemesis ${CMAKE_CURRENT_SOURCE_DIR})
+list(APPEND interface_repo_files entry.cpp) # define dummy entry point
 
 # Generate all interface files before starting compile, cmake can't track includes
 # dependency in generated source files :|
 add_custom_target(prepare_files DEPENDS ${interface_repo_files})
 
-add_component(interface_repository "${interface_repo_files}")
+add_component(interface_repository ${interface_repo_files})
 add_dependencies(interface_repository prepare_files)
+
+add_library(interfaces ${interface_lib_files})
