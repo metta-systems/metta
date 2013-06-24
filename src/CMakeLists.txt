@@ -56,3 +56,4 @@ include_directories(runtime) # required_features.h - huh?
 
 add_subdirectory(tools/meddler)
 add_subdirectory(tools/mettafs)
+add_subdirectory(tools/buildboot)
