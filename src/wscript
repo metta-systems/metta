@@ -4,82 +4,17 @@ VERSION = os.popen("git show --oneline | head -n 1 | cut -d' ' -f1").read().stri
 # Set up some global vars for build
 #===================================
 
-include_dirs = 'kernel kernel/generic nucleus nucleus/x86 runtime'.split()
-
-stl_include_dirs = ['runtime', 'runtime/libc'] #'runtime/libc++/include',
-
 # clang_debug_flag = ['-###']
 clang_debug_flag = ['-v', '--trace-includes']
 
-def configure(conf):
-    # Define categories for building:
-    # * Base template environment. (ENV)
-    # * Kernel and bootstrap, with no external dependencies. (KERNEL_ENV)
-    # * Apps/servers running on target system, with possible kernel/boot deps. (APP_ENV)
-    # * Tools running on host system, stl/boost ok. (TOOLS_ENV)
-    # * Tests running on host system, using boost_unit_test_framework. (TEST_ENV)
-    # * Tests running on the target system (KERNEL_TEST_ENV)
-
-    conf.load('yasm meddle genpaths', tooldir='waftools')
-
-    system_header_dir = map(lambda d: '-isystem' + d, [os.getcwd()+'/runtime/libc++/include', clang_tc_dir(tc_dir, 'lib/clang/3.2/include')])
+system_header_dir = map(lambda d: '-isystem' + d, [os.getcwd()+'/runtime/libc++/include', clang_tc_dir(tc_dir, 'lib/clang/3.2/include')])
 
     # Set up common environment variables
     conf.env.append_unique('YASM_FLAGS', ['-f', 'elf'])
 
-    conf.env.append_unique('INCLUDE_DIRS', include_dirs)
-    conf.env.append_unique('INCLUDE_DIRS', 'interfaces')
-    conf.env.append_unique('INCLUDE_DIRS', 'interfaces/nemesis')
-    # Set arch-specific include paths
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + arch, 'kernel/arch/'.split()))
-    conf.env.append_unique('INCLUDE_DIRS', map(lambda d: d + platform, 'kernel/platform/'.split()))
-    # Append shared includes after, so we could override in arch-specific ones.
-    conf.env.append_unique('INCLUDE_DIRS', 'kernel/arch/shared kernel/platform/shared'.split())
-
-    # Config for building kernel
-    conf.setenv('KERNEL_ENV', env_base)
-    conf.env.append_unique('INCLUDE_DIRS', stl_include_dirs)
-    conf.env.append_unique('CCFLAGS', extra_cross_flags + kernel_flags + system_header_dir)
-    conf.env.append_unique('CXXFLAGS', extra_cross_flags + extra_cross_cxxflags + system_header_dir)
-    conf.env.append_value('LINKFLAGS',  linkflags + kernel_linkflags)
 
     if sys.platform == 'darwin': conf.env.LIB_OPENSSL = 'crypto'
     else: conf.env.LIB_OPENSSL = 'ssl'
-
-def build(bld):
-    tc_dir = toolchain_path()
-
-    arch = Options.options.arch
-    platform = Options.options.platform
-
-    # Make bootimage components.
-    bld.all_comp_targets = []
-    bld.recurse("modules")
-
-    # Common libraries
-    # TODO: add conditional source compilation: if arch/<cpu>/runtime/ directory has optimized versions, use them.
-    libdebug = bld.stlib(
-        source = map(lambda d: "kernel/arch/"+arch+"/"+d, 'panic.cpp debugger.cpp registers.s'.split()),
-        target = 'debug',
-        env = bld.all_envs['KERNEL_ENV'].derive()
-    )
-    libdebug.includes = libdebug.env.INCLUDE_DIRS
-
-    commons = bld.stlib(
-        source = map(lambda d: 'kernel/generic/'+d+'.cpp', 'elf_parser console module_loader'.split()),
-        target = 'common',
-        env = bld.all_envs['KERNEL_ENV'].derive()
-    )
-    commons.includes = commons.env.INCLUDE_DIRS
-
-    bld.recurse('kernel/platform/'+Options.options.platform)
-
-    libkernel = bld.stlib(
-        source = map(lambda d: 'kernel/arch/'+arch+'/' + d, 'bootinfo.cpp bootimage.cpp'.split()) + ['kernel/arch/shared/bootinfo.cpp'],
-        target = 'kernel',
-        env = bld.all_envs['KERNEL_ENV'].derive()
-    )
-    libkernel.includes = libkernel.env.INCLUDE_DIRS
 
     ################################
     # FINAL OUTPUTS
