@@ -14,6 +14,9 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(Metta CXX)
 
+set(CMAKE_ASM_NASM_COMPILER "yasm")
+enable_language(ASM_NASM)
+
 include(CTest)
 
 #include(CMakeForceCompiler)
