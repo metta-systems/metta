@@ -1,4 +1,5 @@
 find_library(UUID_LIBRARY uuid PATHS /usr/local/opt/ossp-uuid/lib)
+mark_as_advanced(UUID_LIBRARY)
 include_directories(/usr/local/opt/ossp-uuid/includes)
 
 include_directories(${CMAKE_SOURCE_DIR}/kernel/arch/x86) # fourcc.h
