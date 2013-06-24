@@ -1,0 +1,1 @@
+add_kernel_component(stretch_allocator_mod stretch_allocator_mod.cpp)

@@ -1,0 +1,1 @@
+add_kernel_component(stretch_table_mod stretch_table_mod.cpp)

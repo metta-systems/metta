@@ -169,6 +169,9 @@ macro(add_component name)
     endif ()
 endmacro()
 
+macro(add_kernel_component)
+	add_component(${ARGN} LIBS debugger common kernel platform interfaces)
+endmacro()
 
 include_directories(kernel/generic) # macros.h - huh?
 include_directories(runtime) # required_features.h - huh?
@@ -180,6 +183,8 @@ add_subdirectory(tools/buildboot)
 add_subdirectory(runtime)
 add_subdirectory(runtime/libc++)
 add_subdirectory(interfaces)
+add_subdirectory(modules)
+add_subdirectory(kernel)
 
 # TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
 # set -x PATH /Users/berkus/Hobby/Metta/toolchain/gcc/bin /usr/bin /bin /usr/sbin /sbin /usr/local/bin
