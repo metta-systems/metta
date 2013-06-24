@@ -164,3 +164,8 @@ add_subdirectory(tools/buildboot)
 #add_subdirectory(tools/parsedwarf)
 add_subdirectory(runtime)
 add_subdirectory(runtime/libc++)
+add_subdirectory(interfaces)
+
+# TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
+# set -x PATH /Users/berkus/Hobby/Metta/toolchain/gcc/bin /usr/bin /bin /usr/sbin /sbin /usr/local/bin
+# Find a way to make it automatic... via cmake command?
