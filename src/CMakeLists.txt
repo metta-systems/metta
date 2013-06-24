@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 2.8.10)
+project(Metta)
+
+include(CTest)
+
+# Generate our config.h
+set(CONFIG_INLINING 1)
+set(CONFIG_DEBUG_SYMBOLS 1)
+set(SYSTEM_DEBUG 1)
+set(SYSTEM_VERBOSE_DEBUG 0)
+set(HEAP_DEBUG 0)
+set(MEMORY_DEBUG 1)
+set(BOOTIMAGE_DEBUG 0)
+set(DWARF_DEBUG 0)
+set(RAMTAB_DEBUG 0)
+set(TOOLS_DEBUG 1)
+set(MEDDLER_DEBUG 0)
+set(CONFIG_COMPORT 0)
+set(CONFIG_COMSPEED 115200)
+set(CONFIG_X86_PSE 1)
+set(CONFIG_X86_PGE 1)
+set(CONFIG_X86_FXSR 1)
+set(CONFIG_X86_SYSENTER 1)
+set(CONFIG_IOAPIC 1)
+set(PCIBUS_TEST 1)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+add_subdirectory(tools/meddler)
