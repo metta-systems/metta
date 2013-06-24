@@ -43,13 +43,20 @@ set(PCIBUS_TEST 1)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+set(ROOT cd)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/mkbootimg/menu.lst.in ${CMAKE_CURRENT_BINARY_DIR}/tools/mkbootimg/menu.lst.cd)
+
 # -Wdocumentation not yet enabled - need to clean up llvm source (git pull fresher copy?)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ferror-limit=3 -std=c++11 -stdlib=libc++ -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-private-field")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -emit-llvm -O4 -ferror-limit=3 -std=c++11 -stdlib=libc++ -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-private-field -Wno-unused-variable -Wno-gnu-array-member-paren-init -Wno-gcc-compat -fvisibility-inlines-hidden -fvisibility=hidden")
 
 # Lion has deprecated some OpenSSL stuff we use.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 
-set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} -stdlib=libc++")
+set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} -O4 -stdlib=libc++")
+
+set(KERNEL_CXX_FLAGS "-target i686-pc-elf -m32 -ffreestanding -O0 -g -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -ffunction-sections -fdata-sections -fno-stack-protector -fno-strict-aliasing -fno-rtti -fno-exceptions") # -mno-red-zone -nostdinc
+set(KERNEL_DEFINES -D__Metta__=1 -D_LIBCPP_NO_IOSTREAMS=1 -D_LIBCPP_NO_WCHAR=1 -D_LIBCPP_NO_EXCEPTIONS=1 -DBOCHS_IO_HACKS=1)
+set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib")
 
 include_directories(kernel/generic) # macros.h - huh?
 include_directories(runtime) # required_features.h - huh?
@@ -57,3 +64,6 @@ include_directories(runtime) # required_features.h - huh?
 add_subdirectory(tools/meddler)
 add_subdirectory(tools/mettafs)
 add_subdirectory(tools/buildboot)
+#add_subdirectory(tools/parsedwarf)
+add_subdirectory(runtime)
+add_subdirectory(runtime/libc++)
