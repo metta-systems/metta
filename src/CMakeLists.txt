@@ -147,9 +147,21 @@ macro(set_build_for_target)
 endmacro()
 
 # Generate a named component file from given sources.
-macro(add_component name sources)
+# Syntax: add_component(name sources [LIBS lib_targets])
+macro(add_component name)
+	cmake_parse_arguments(AC "" "" "LIBS" ${ARGN})
+	#message("These should be the sources: ${AC_UNPARSED_ARGUMENTS}")
+	#message("These should be the libs: ${AC_LIBS}")
+	set(sources "${AC_UNPARSED_ARGUMENTS}")
+
     add_executable(${name} ${sources})
+    if (AC_LIBS)
+    	target_link_libraries(${name} "${AC_LIBS}")
+    endif()
     set_target_properties(${name} PROPERTIES OUTPUT_NAME ${name}.comp)
+
+    #add_custom_command(COMMAND nm )
+
     # Components are relocatable
     set_property(TARGET ${name} PROPERTY LINK_FLAGS '-r')
     if (NOT PLATFORM STREQUAL "hosted")
