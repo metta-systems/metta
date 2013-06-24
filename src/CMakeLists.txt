@@ -1,7 +1,31 @@
+# arch (x86, x64, ppc, ppc64) - a generic cpu architecture (isa)
+# cpu (p4, arm11jsf) - a specific cpu format
+# platform (efi, pc99, hosted) - a generic infrastructure
+# board (vulcan, beagleboard) - a specific infrastructure
+# board usually implies platform, cpu and arch.
+# platform sometimes implies arch.
+# build type - release, debug, profile
+
+# platform pc99 = -target i686-pc-elf -m32
+# platform u/efi = -target x86_64-apple-elf -m64
+# platform hosted = whatever host supports
+# board raspi = -target arm-elf-eabi -march=arm6 -mfloat-abi=hard
+
 cmake_minimum_required(VERSION 2.8.10)
 project(Metta)
 
 include(CTest)
+
+# Configure arch, cpu, platform, board
+# If none specified - use hosted
+# If both specified - check they're compatible
+# If board specified, infer PLATFORM
+# If platform specified, board is either also specified or not known.
+# 
+if (NOT CONFIG_PLATFORM AND NOT CONFIG_BOARD)
+	set(PLATFORM hosted)
+endif()
+
 
 # On mac, use openssl from brew, not the default system one, because it is too old.
 # Run 'brew install openssl' to install it.
@@ -20,6 +44,9 @@ set(Boost_USE_STATIC_LIBS ON) # Easier to deploy elsewhere
 find_package(Boost REQUIRED)
 
 # Generate our config.h
+set(ARCH i686)
+set(PLATFORM pc99)
+set(BUILD ${CMAKE_BUILD_TYPE})
 set(CONFIG_INLINING 1)
 set(CONFIG_DEBUG_SYMBOLS 1)
 set(SYSTEM_DEBUG 1)
