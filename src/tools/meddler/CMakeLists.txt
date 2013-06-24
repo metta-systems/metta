@@ -1,3 +1,5 @@
+set_build_for_host()
+
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../../toolchain/clang/include) # llvm includes

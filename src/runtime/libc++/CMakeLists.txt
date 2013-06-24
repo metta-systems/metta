@@ -1,6 +1,4 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_CXX_FLAGS}")
-add_definitions(${KERNEL_DEFINES})
-set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} ${KERNEL_LINK_FLAGS}")
+set_build_for_target()
 
 include_directories(include)
 

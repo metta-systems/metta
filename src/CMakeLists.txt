@@ -93,17 +93,67 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(ROOT cd)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/mkbootimg/menu.lst.in ${CMAKE_CURRENT_BINARY_DIR}/tools/mkbootimg/menu.lst.cd)
 
-# -Wdocumentation not yet enabled - need to clean up llvm source (git pull fresher copy?)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -emit-llvm -O4 -ferror-limit=3 -std=c++11 -stdlib=libc++ -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-private-field -Wno-unused-variable -Wno-gnu-array-member-paren-init -Wno-gcc-compat -fvisibility-inlines-hidden -fvisibility=hidden")
+#============================
+# Set compiler flags.
+#============================
 
+# Limit available path for clang to find proper cross-gcc
+set(GCC_PATH ${CMAKE_SOURCE_DIR}/../../toolchain/gcc)
+
+# Flags common for host and kernel environments.
+
+# -Wdocumentation not yet enabled - need to clean up llvm source (git pull fresher copy?)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ferror-limit=3 -std=c++11 -stdlib=libc++ -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-private-field -Wno-unused-variable -Wno-gnu-array-member-paren-init -Wno-gcc-compat -fvisibility-inlines-hidden -fvisibility=hidden")
 # Lion has deprecated some OpenSSL stuff we use.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} -stdlib=libc++")
 
-set(CMAKE_LINK_FLAGS "${CMAKE_LINK_FLAGS} -O4 -stdlib=libc++")
+# Host environment flags.
+set(TOOLS_CXX_FLAGS "-emit-llvm -O4")
+set(TOOLS_DEFINES "")
+set(TOOLS_LINK_FLAGS "-O4")
 
-set(KERNEL_CXX_FLAGS "-target i686-pc-elf -m32 -ffreestanding -O0 -g -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -ffunction-sections -fdata-sections -fno-stack-protector -fno-strict-aliasing -fno-rtti -fno-exceptions") # -mno-red-zone -nostdinc
+# Clang invocations debug
+#set(CMAKE_CXX_FLAGS "-v ${CMAKE_CXX_FLAGS}")
+#set(CMAKE_LINK_FLAGS "-v -### ${CMAKE_LINK_FLAGS}")
+
+# Kernel environment flags.
+# TODO: change -isysroot for kernel mode...
+set(KERNEL_CXX_FLAGS "-target i686-pc-elf -m32 -integrated-as -ffreestanding -O0 -g -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -ffunction-sections -fdata-sections -fno-stack-protector -fno-strict-aliasing -fno-rtti -fno-exceptions") # -mno-red-zone -nostdinc
 set(KERNEL_DEFINES -D__Metta__=1 -D_LIBCPP_NO_IOSTREAMS=1 -D_LIBCPP_NO_WCHAR=1 -D_LIBCPP_NO_EXCEPTIONS=1 -DBOCHS_IO_HACKS=1)
 set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib")
+
+# Make necessary preparations to switch environment for host build.
+macro(set_build_for_host)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOOLS_CXX_FLAGS}")
+	add_definitions(${TOOLS_DEFINES})
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TOOLS_LINK_FLAGS}")
+endmacro()
+
+# Make necessary preparations to switch environment for kernel build.
+macro(set_build_for_target)
+	include_directories(${CMAKE_SOURCE_DIR}/runtime/libc++/include)
+	include_directories(${CMAKE_SOURCE_DIR}/kernel/arch/shared)
+	include_directories(${CMAKE_SOURCE_DIR}/kernel/arch/${ARCH})
+	include_directories(${CMAKE_SOURCE_DIR}/kernel/platform/shared)
+	include_directories(${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_CXX_FLAGS}")
+	add_definitions(${KERNEL_DEFINES})
+#	set(CMAKE_EXE_LINKER_FLAGS "-gnu-toolchain ${GCC_PATH} ${CMAKE_EXE_LINKER_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${KERNEL_LINK_FLAGS}")
+endmacro()
+
+# Generate a named component file from given sources.
+macro(add_component name sources)
+    add_executable(${name} ${sources})
+    set_target_properties(${name} PROPERTIES OUTPUT_NAME ${name}.comp)
+    # Components are relocatable
+    set_property(TARGET ${name} PROPERTY LINK_FLAGS '-r')
+    if (NOT PLATFORM STREQUAL "hosted")
+        set_property(TARGET ${name} PROPERTY LINK_FLAGS "-Wl,-T,${CMAKE_SOURCE_DIR}/modules/component.lds -Wl,-Map,${name}.map")
+    endif ()
+endmacro()
+
 
 include_directories(kernel/generic) # macros.h - huh?
 include_directories(runtime) # required_features.h - huh?
