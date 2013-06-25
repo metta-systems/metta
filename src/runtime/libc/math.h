@@ -6,8 +6,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-// Fake file for libc++
+// Fake standard header for libc++.
 //
 #pragma once
-
-#define EOF (-1)
