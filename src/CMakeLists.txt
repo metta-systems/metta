@@ -152,7 +152,7 @@ macro(add_component name)
 endmacro()
 
 macro(add_kernel_component)
-	add_component(${ARGN} LIBS common kernel platform component_support debugger runtime debugger interfaces)
+	add_component(${ARGN} LIBS common kernel component_support debugger platform runtime interfaces cxx)
 endmacro()
 
 include_directories(kernel/generic) # macros.h - huh?

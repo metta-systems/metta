@@ -9,7 +9,6 @@ add_library(debugger STATIC
 
 add_library(common STATIC
     generic/elf_parser.cpp
-	generic/console.cpp
 	generic/module_loader.cpp)
 
 add_library(kernel STATIC
@@ -19,4 +18,5 @@ add_library(kernel STATIC
 
 add_library(platform STATIC
 	platform/${PLATFORM}/multiboot.cpp
+	generic/console.cpp
 	platform/${PLATFORM}/default_console.cpp)
