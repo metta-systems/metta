@@ -5,7 +5,7 @@ include_directories(${CMAKE_SOURCE_DIR}/interfaces ${CMAKE_BINARY_DIR}/interface
 add_library(debugger STATIC
 	arch/${ARCH}/panic.cpp
 	arch/${ARCH}/debugger.cpp
-	arch/${ARCH}/registers.s)
+	arch/${ARCH}/registers.nasm)
 
 add_library(common STATIC
     generic/elf_parser.cpp
