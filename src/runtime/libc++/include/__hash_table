@@ -16,7 +16,11 @@
 #include <memory>
 #include <iterator>
 #include <algorithm>
+#if !__Metta__
 #include <cmath>
+#else
+#include <ceil>
+#endif
 
 #include <__undef_min_max>
 

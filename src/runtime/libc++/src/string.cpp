@@ -8,8 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "string"
+#if !__Metta__
 #include "cstdlib"
 #include "cwchar"
+#else
+#include "stdlib.h"
+#endif
 #include "cerrno"
 #include "limits"
 #include "stdexcept"
@@ -22,11 +26,15 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 template class __basic_string_common<true>;
 
 template class basic_string<char>;
+#if !__Metta__
 template class basic_string<wchar_t>;
+#endif // !__Metta__
 
 template
     string
     operator+<char, char_traits<char>, allocator<char> >(char const*, string const&);
+
+#if !__Metta__
 
 namespace
 {
@@ -126,6 +134,8 @@ as_integer( const string& func, const string& s, size_t* idx, int base )
     return as_integer_helper<unsigned long long>( func, s, idx, base, strtoull );
 }
 
+#if !_LIBCPP_NO_WCHAR
+
 // wstring
 template<>
 inline
@@ -170,6 +180,8 @@ as_integer( const string& func, const wstring& s, size_t* idx, int base )
 {
     return as_integer_helper<unsigned long long>( func, s, idx, base, wcstoull );
 }
+
+#endif //!__LIBCPP_NO_WCHAR
 
 // as_float
 
@@ -392,6 +404,8 @@ struct initial_string<string, V, b>
     }
 };
 
+#if !_LIBCPP_NO_WCHAR
+
 template <class V>
 struct initial_string<wstring, V, false>
 {
@@ -431,6 +445,8 @@ get_swprintf()
     return static_cast<int (__cdecl*)(wchar_t* __restrict, size_t, const wchar_t*__restrict, ...)>(swprintf);
 #endif
 }
+
+#endif //!_LIBCPP_NO_WCHAR
 
 }  // unnamed namespace
 
@@ -479,6 +495,8 @@ string to_string(long double val)
     return as_string(snprintf, initial_string<string, long double>()(), "%Lf", val);
 }
 
+#if !_LIBCPP_NO_WCHAR
+
 wstring to_wstring(int val)
 {
     return as_string(get_swprintf(), initial_string<wstring, int>()(), L"%d", val);
@@ -523,4 +541,9 @@ wstring to_wstring(long double val)
 {
     return as_string(get_swprintf(), initial_string<wstring, long double>()(), L"%Lf", val);
 }
+
+#endif // !_LIBCPP_NO_WCHAR
+
+#endif // !__Metta__
+
 _LIBCPP_END_NAMESPACE_STD
