@@ -18,9 +18,7 @@ set(CMAKE_ASM_NASM_COMPILER "yasm")
 enable_language(ASM_NASM)
 
 include(CTest)
-
-#include(CMakeForceCompiler)
-#cmake_force_cxx_compiler(${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/clang++ Clang)
+include(CMakeParseArguments)
 
 # Configure arch, cpu, platform, board
 # If none specified - use hosted
@@ -50,22 +48,6 @@ message("##   TARGET set to ${TARGET}")
 message("##   PLATFORM set to ${PLATFORM}")
 message("##   BOARD set to ${BOARD}")
 message("##   ARCH set to ${ARCH}")
-
-# On mac, use openssl from brew, not the default system one, because it is too old.
-# Run 'brew install openssl' to install it.
-if (APPLE)
-	set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
-	# Set pkg-config path in case pkg-config is installed on the machine.
-	set(ENV{PKG_CONFIG_PATH} /usr/local/opt/openssl/lib/pkgconfig)
-	# A bug in cmake prevents use of OPENSSL_ROOT_DIR for finding a custom openssl,
-	# so we use an internal variable instead. This needs to be fixed in cmake.
-	set(_OPENSSL_ROOT_HINTS_AND_PATHS PATHS /usr/local/opt/openssl)
-endif (APPLE)
-
-find_package(OpenSSL REQUIRED)
-set(Boost_USE_MULTITHREAD ON)
-set(Boost_USE_STATIC_LIBS ON) # Easier to deploy elsewhere
-find_package(Boost REQUIRED)
 
 # Generate our config.h
 # PLATFORM, BOARD and ARCH are used here from the platform config files.
@@ -170,21 +152,57 @@ macro(add_component name)
 endmacro()
 
 macro(add_kernel_component)
-	add_component(${ARGN} LIBS debugger common kernel platform interfaces)
+	add_component(${ARGN} LIBS common kernel platform component_support debugger runtime debugger interfaces)
 endmacro()
 
 include_directories(kernel/generic) # macros.h - huh?
 include_directories(runtime) # required_features.h - huh?
 
+if (NOT CMAKE_CROSSCOMPILING)
+
+# On mac, use openssl from brew, not the default system one, because it is too old.
+# Run 'brew install openssl' to install it.
+if (APPLE)
+	set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+	# Set pkg-config path in case pkg-config is installed on the machine.
+	set(ENV{PKG_CONFIG_PATH} /usr/local/opt/openssl/lib/pkgconfig)
+	# A bug in cmake prevents use of OPENSSL_ROOT_DIR for finding a custom openssl,
+	# so we use an internal variable instead. This needs to be fixed in cmake.
+	set(_OPENSSL_ROOT_HINTS_AND_PATHS PATHS /usr/local/opt/openssl)
+endif (APPLE)
+
+find_package(OpenSSL REQUIRED)
+set(Boost_USE_MULTITHREAD ON)
+set(Boost_USE_STATIC_LIBS ON) # Easier to deploy elsewhere
+find_package(Boost REQUIRED)
+
+
 add_subdirectory(tools/meddler)
 add_subdirectory(tools/mettafs)
 add_subdirectory(tools/buildboot)
 #add_subdirectory(tools/parsedwarf)
+
+export(TARGETS meddler buildboot FILE ${CMAKE_BINARY_DIR}/ImportExecutables.cmake)
+
+else()
+
+set(CMAKE_AR ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ar)
+set(CMAKE_RANLIB ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ranlib)
+
+include_directories(runtime/libc)
+add_definitions(-D__STDC_HOSTED__=0)
+
+# From cmake cross-compiling page: import the tools from host build.
+set(IMPORT_EXECUTABLES "IMPORTFILE-NOTFOUND" CACHE FILEPATH "Point it to the export file from a native build")
+include(${IMPORT_EXECUTABLES})
+
 add_subdirectory(runtime)
 add_subdirectory(runtime/libc++)
 add_subdirectory(interfaces)
 add_subdirectory(modules)
 add_subdirectory(kernel)
+
+endif()
 
 # TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
 # set -x PATH /Users/berkus/Hobby/Metta/toolchain/gcc/bin /usr/bin /bin /usr/sbin /sbin /usr/local/bin
