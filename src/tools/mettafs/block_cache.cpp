@@ -8,7 +8,6 @@
 //
 #include "block_cache.h"
 #include "block_device_mapper.h"
-#include "panic.h"
 #include "memutils.h"
 #include <cstdio>
 #include <cassert>
@@ -192,7 +191,7 @@ size_t block_cache_t::unwritten_blocks()
 std::vector<cache_block_t*> block_cache_t::get_blocks(size_t nblocks, size_t block_size)
 {
     if (nblocks > max_blocks)
-        PANIC("Cannot allocate more blocks than allowed in the cache in total!");
+        throw std::runtime_error("Cannot allocate more blocks than allowed in the cache in total!");
 
     std::vector<cache_block_t*> ret;
 
@@ -319,14 +318,14 @@ size_t block_cache_t::cached_read(deviceno_t device, block_device_t::blockno_t b
             actually_read = read_blocks(device, block_n, buffer, block_stripe, block_size);
 
             if (actually_read < block_stripe)
-                PANIC("Read blocks from physical media failed! [make it nonfatal]");
+                throw std::runtime_error("Read blocks from physical media failed! [make it nonfatal]");
 
             // create new blocks for just read data
             // add new block to the cache, evicting LRU entries as needed
             auto ents = get_blocks(block_stripe, block_size);
 
             if (ents.size() < block_stripe)
-                PANIC("Couldn't get enough block cache entries.");
+                throw std::runtime_error("Couldn't get enough block cache entries.");
 
             // cache the blocks
             // for (size_t b = 0; b < block_stripe; ++b)
@@ -369,7 +368,7 @@ size_t block_cache_t::cached_write(deviceno_t device, block_device_t::blockno_t 
             auto ents = get_blocks(1, block_size);
 
             if (ents.size() < 1)
-                PANIC("get_blocks failed");
+                throw std::runtime_error("get_blocks failed");
 
             std::cerr << "New blocks allocated: " << ents.size() << std::endl;
 
