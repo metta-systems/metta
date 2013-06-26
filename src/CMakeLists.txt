@@ -210,7 +210,8 @@ add_subdirectory(launcher)
 add_subdirectory(nucleus)
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/init.img
-    COMMAND buildboot ${CMAKE_BINARY_DIR}/ ${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM}/bootimage.lst ${CMAKE_BINARY_DIR}/init.img)
+    COMMAND buildboot ${CMAKE_BINARY_DIR}/ ${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM}/bootimage.lst ${CMAKE_BINARY_DIR}/init.img
+	DEPENDS launcher nucleus) # FIXME: some more deps missing!! ninja metta will not build all
 
 add_custom_command(OUTPUT metta.iso
     COMMAND sh ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}
