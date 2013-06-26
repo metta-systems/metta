@@ -129,9 +129,9 @@ macro(set_build_for_target)
 endmacro()
 
 # Generate a named component file from given sources.
-# Syntax: add_component(name sources [LIBS lib_targets])
+# Syntax: add_component(name sources [LINK_SCRIPT script_name] [LIBS lib_targets])
 macro(add_component name)
-	cmake_parse_arguments(AC "" "" "LIBS" ${ARGN})
+	cmake_parse_arguments(AC "" "LINK_SCRIPT" "LIBS" ${ARGN})
 	#message("These should be the sources: ${AC_UNPARSED_ARGUMENTS}")
 	#message("These should be the libs: ${AC_LIBS}")
 	set(sources "${AC_UNPARSED_ARGUMENTS}")
@@ -144,10 +144,13 @@ macro(add_component name)
 
     #add_custom_command(COMMAND nm )
 
-    # Components are relocatable
-    set_property(TARGET ${name} PROPERTY LINK_FLAGS '-r')
+    # Components are relocatable (-r)
     if (NOT PLATFORM STREQUAL "hosted")
-        set_property(TARGET ${name} PROPERTY LINK_FLAGS "-Wl,-T,${CMAKE_SOURCE_DIR}/modules/component.lds -Wl,-Map,${name}.map")
+    	if (AC_LINK_SCRIPT)
+	        set_property(TARGET ${name} PROPERTY LINK_FLAGS "-r -Wl,-T,${AC_LINK_SCRIPT} -Wl,-Map,${name}.map")
+        else (AC_LINK_SCRIPT)
+	        set_property(TARGET ${name} PROPERTY LINK_FLAGS "-r -Wl,-T,${CMAKE_SOURCE_DIR}/modules/component.lds -Wl,-Map,${name}.map")
+        endif (AC_LINK_SCRIPT)
     endif ()
 endmacro()
 
