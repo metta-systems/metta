@@ -4,7 +4,7 @@
 #
 
 # nucleus specifies ring0 module
-nucleus:nucleus.sys
+nucleus:nucleus/nucleus.comp
 
 # root_domain performs startup construction
 root_domain:modules/tcb/root_domain/root_domain.comp
@@ -27,7 +27,7 @@ stretch_table_factory:modules/stretch_table_mod/stretch_table_mod.comp
 exceptions_factory:modules/exceptions_mod/exceptions_mod.comp
 hashtables_factory:modules/hashtables_mod/hashtables_mod.comp
 
-interface_repository:interface_repository
+interface_repository:interfaces/interface_repository.comp
 
 # Test module
 pcibus_mod:modules/pcibus/pcibus_mod.comp
