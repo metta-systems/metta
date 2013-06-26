@@ -1,5 +1,5 @@
 boot: cdrom
-ata0-slave: type=cdrom, path=_build_/metta.iso, status=inserted
+ata0-slave: type=cdrom, path=_build_target_/metta.iso, status=inserted
 cpu: count=1, reset_on_triple_fault=0, ips=1000000
 megs: 128
 pci: enabled=1, chipset=i440fx, slot1=pcivga #, slot2=ne2k
