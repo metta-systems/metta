@@ -205,6 +205,9 @@ add_subdirectory(interfaces)
 add_subdirectory(modules)
 add_subdirectory(kernel)
 
+#if (NOT PLATFORM STREQUAL "hosted"):
+add_subdirectory(launcher)
+add_subdirectory(nucleus)
 endif()
 
 # TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
