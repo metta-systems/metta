@@ -8,6 +8,6 @@ ninja
 # Then build the target system using cross toolchain we built.
 cd ../_build_target_
 cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake ..
-ninja
+ninja metta
 
 cd ..

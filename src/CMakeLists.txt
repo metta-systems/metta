@@ -208,6 +208,19 @@ add_subdirectory(kernel)
 #if (NOT PLATFORM STREQUAL "hosted"):
 add_subdirectory(launcher)
 add_subdirectory(nucleus)
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/init.img
+    COMMAND buildboot ${CMAKE_BINARY_DIR}/ ${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM}/bootimage.lst ${CMAKE_BINARY_DIR}/init.img)
+
+add_custom_command(OUTPUT metta.iso
+    COMMAND sh ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}
+    DEPENDS launcher ${CMAKE_BINARY_DIR}/init.img ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}/tools/mkbootimg/menu.lst.cd)
+
+# For now you have to build it with 'ninja metta' until I figure out 
+# a default target name.
+add_custom_target(metta
+	DEPENDS metta.iso)
+
 endif()
 
 # TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
