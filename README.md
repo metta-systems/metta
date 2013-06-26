@@ -21,7 +21,6 @@ To build Metta
 ```
 
 Sources will be checked out into branch "develop" under "Metta". This extra umbrella directory is needed because toolchain builder will create Metta/toolchain for the local toolchain it builds.
-
 1. Install dependencies 
   * yasm assembler, `brew install yasm` for example.
   * boost, `brew install boost`
@@ -36,7 +35,6 @@ All dependencies in one command:
 ```
  $ brew install yasm boost ossp-uuid openssl cdrtools cmake ninja bochs
 ```
-
 2. Generate a toolchain.
 
 ```
@@ -53,14 +51,12 @@ If you're unable to build toolchain locally and are on a (post-) Lion Mac, downl
  $ wget http://downloads.exquance.com/toolchain-x86_64-darwin.tar.bz2
  $ tar xf toolchain-x86_64-darwin.tar.bz2
 ```
-
 3. Build Metta
 
 ```
  $ cd Metta/develop/src
  $ sh buildit.sh
 ```
-
 4. After successful build run emulator software to try out Metta.
 
 src directory is preconfigured for using Bochs, so you can simply type:
