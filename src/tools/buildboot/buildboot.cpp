@@ -529,7 +529,7 @@ static void parse_module_lines(std::vector<module_info>& modules, line_reader_t&
     {
         string name = modline.substr(0, pos);
         string file = prefix + modline.substr(pos+1);
-        D(cerr << "parse_module_lines: module " << name << " in " << file << endl);
+        //D(cerr << "parse_module_lines: module " << name << " in " << file << endl);
         mod.init(name, file);
     }
     else
