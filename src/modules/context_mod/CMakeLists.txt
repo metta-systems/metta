@@ -1,0 +1,1 @@
+add_kernel_component(context_mod naming_context.cpp)

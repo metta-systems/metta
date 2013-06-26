@@ -2,9 +2,10 @@
 
 #include <__config>
 
-inline _LIBCPP_INLINE_VISIBILITY float ceil(float x)
+inline
+_LIBCPP_INLINE_VISIBILITY 
+float ceil(float x)
 {
     if (int(x) == x) return x;
     return int(x+1);
 }
-

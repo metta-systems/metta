@@ -27,12 +27,12 @@ void* operator new(size_t size)
     PANIC("Default new called!");
 }
 
-void operator delete(void*)
+void operator delete(void*) throw()
 {
     PANIC("Default delete called!");
 }
 
-void operator delete[](void*)
+void operator delete[](void*) throw()
 {
     PANIC("Default delete[] called!");
 }

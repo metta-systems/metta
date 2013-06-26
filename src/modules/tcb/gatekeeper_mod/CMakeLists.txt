@@ -1,0 +1,1 @@
+add_kernel_component(gatekeeper_mod gatekeeper.cpp)

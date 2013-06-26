@@ -1,0 +1,8 @@
+add_subdirectory(platform/shared)
+add_subdirectory(platform/${PLATFORM}/mmu_mod)
+add_subdirectory(root_domain)
+add_subdirectory(frames_mod)
+add_subdirectory(stretch_allocator_mod)
+add_subdirectory(stretch_driver_mod)
+add_subdirectory(typesystem_mod)
+add_subdirectory(gatekeeper_mod)

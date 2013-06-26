@@ -1,0 +1,1 @@
+add_kernel_component(exceptions_mod exception_system.cpp)

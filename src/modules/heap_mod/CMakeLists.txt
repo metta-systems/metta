@@ -1,0 +1,1 @@
+add_kernel_component(heap_mod heap_mod.cpp heap.cpp)
