@@ -26,5 +26,6 @@ add_component(launcher
     x86/startup.cpp
     ../kernel/arch/x86/bootinfo.cpp
     ../kernel/arch/x86/continuation.nasm
+    NOT_RELOC # Launcher is not relocatable.
     LINK_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/pc99/launcher.lds
     LIBS common platform kernel runtime debugger interfaces cxx)
