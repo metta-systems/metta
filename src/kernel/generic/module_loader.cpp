@@ -533,9 +533,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     else
     {
         // Symbol is a pointer to closure structure.
-        symbol_table_finder_t finder(this_loaded_module.entry.load_base,
-            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.entry.symtab_start),
-            reinterpret_cast<elf32::section_header_t*>(this_loaded_module.entry.strtab_start));
+        symbol_table_finder_t finder(this_loaded_module.entry);
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
