@@ -33,13 +33,17 @@ public:
     {
         ASSERT(symbol_table);
         ASSERT(string_table);
-
         D(kconsole << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table << endl);
     }
 
     symbol_table_finder_t(module_loader_t::module_entry& mod)
+        : base(mod.load_base)
+        , symbol_table(reinterpret_cast<elf32::section_header_t*>(mod.symtab_start))
+        , string_table(reinterpret_cast<elf32::section_header_t*>(mod.strtab_start))
     {
-        symbol_table_finder_t(mod.load_base, reinterpret_cast<elf32::section_header_t*>(mod.symtab_start), reinterpret_cast<elf32::section_header_t*>(mod.strtab_start));
+        ASSERT(symbol_table);
+        ASSERT(string_table);
+        D(kconsole << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table << endl);
     }
 
     // TODO: use debugging info if present
