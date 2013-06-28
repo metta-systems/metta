@@ -121,5 +121,8 @@ public:
         return 0;
     }
 
-    module_symbols_t::symmap all_symbols(const char*suffix);
+    /**
+     * Return all symbols in a module with a given suffix.
+     */
+    module_symbols_t::symmap all_symbols(const char* suffix);
 };
