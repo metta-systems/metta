@@ -93,7 +93,7 @@ public:
     address_t find_symbol(cstring_t str)
     {
         size_t n_entries = symbol_table->size / symbol_table->entsize;
-        V(kconsole << n_entries << " symbols to consider." << endl);
+        V(kconsole << int(n_entries) << " symbols to consider." << endl);
         V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
         V(kconsole << "String table @ " << base + string_table->offset << endl);
 

@@ -228,7 +228,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
 
     if (!module_already_loaded(*d_last_available_address, name, out_mod))
     {
-        D(kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl);
+        kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl;
         return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
     }
 
@@ -361,7 +361,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
-        kconsole << " +-- Loading module " << name << " with " << int(module.section_header_count()) << " section headers." << endl;
+        kconsole << "Loading module \"" << name << "\" with " << int(module.section_header_count()) << " section headers." << endl;
 
         // Calculate section offsets and sizes.
         start = 0;
@@ -527,7 +527,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (!closure_name)
     {
         address_t entry = this_loaded_module.entry.entry_point;
-		D(kconsole << " +-- Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
+		D(kconsole << "Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
         return (void*)(entry);
     }
     else
@@ -539,7 +539,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
-        kconsole << " +-- Returning closure symbol " << symbol << ", pointer " << entry << endl;
+        kconsole << "Returning closure symbol " << symbol << ", pointer " << entry << endl;
         return reinterpret_cast<void*>(symbol);//entry);
     }
 }

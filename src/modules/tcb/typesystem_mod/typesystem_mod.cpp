@@ -472,7 +472,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     self->d_state->interfaces_by_name->put(iface->rep.name, intf);
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
 
-    D(kconsole << "register_interface }" << endl);
+    kconsole << "register_interface }" << endl;
 }
 
 static type_system_f_v1::ops_t typesystem_ops = 
