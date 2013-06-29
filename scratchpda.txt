@@ -28,17 +28,6 @@ for_each(bootinfo_page.modules()) {
 	module_context.add(module.name(), module); // i.e. Root.Modules.FramesFactory
 }
 
-== Cleanups todo ==
-
-@todo move types__intf_typeinfo to types::intf_typeinfo etc because of namespace linking issues
-all non-pub types should be inside namespace types { namespace { } } perhaps
-
-kill tools libs in root wscript, they are overhead?
-
-== Gold linker todo ==
-
-Doesn't build _GLOBAL_OFFSET_TABLE_ for some reason, reproducible case made.
-
 == Better IDL support in C++ ==
 
 Simpler approach could be to keep IDL string type as "const char*" but for sequence<> make a sequence_t<T> class and specialize it for sequence<const char*> case by making it allocate data in heap always.
@@ -85,25 +74,3 @@ cstring_t(const char* data, bool allocate_copy)
 		length = strlen(data);
 	}
 }
-
-== Dependency Problem during build ==
-
-changing an interface that is a base for other interfaces does not trigger rebuild of these interfaces (implicit dependency information is missing from the build system...)
-
-== Categories ==
-
-Architecture
-Boot/kickstart
-Buildsystem
-C++ runtime
-Debugger
-Device manager
-Documentation
-Glue code
-Graphical User Interface
-Interface Definition Language
-Memory manager
-Nucleus
-Portal manager
-Scheduling
-System

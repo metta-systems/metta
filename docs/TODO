@@ -6,6 +6,15 @@ General:
  ☐ Retarget to x86_64 and UEFI
     - by the time i'm getting to arm there will be armv8 chips everywhere anyway.
 
+Cleanups:
+ ☐ move types__intf_typeinfo to types::intf_typeinfo etc because of namespace linking issues
+ ☐ all non-pub types should be inside namespace types { namespace { } } perhaps
+ ☐ kill tools libs in root wscript, they are overhead?
+
+Linker:
+ ☐ gold doesn't build _GLOBAL_OFFSET_TABLE_ for some reason, reproducible case made.
+ ☐ try to make lld json link scripts? - this will let scratch binutils
+
 Boot:
 
  ☐ Clean up the C-like code from Nemesis and turn it into robust shared kernel components with dynamic loading/resolution
