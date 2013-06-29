@@ -1,5 +1,2 @@
-*.pyc
-.lock-waf*
-.waf-*
-_build_
-
+src/_build_*
+debugger.log
