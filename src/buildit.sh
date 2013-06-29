@@ -12,7 +12,6 @@ cd ../_build_target_
 if [ ! -f CMakeCache.txt ]; then
 	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake ..
 fi
-ninja       # FIXME: some deps are still missing from metta target
 ninja metta
 
 cd ..

@@ -1,3 +1,7 @@
+Build:
+ ☐ Dependency Problem during build: changing an interface that is a base for other interfaces does not trigger rebuild of these interfaces (implicit dependency information is missing from the build system...)
+ ✔ Dependency Problem during build: missing dependency of init.img on built components, so 'ninja metta' will not rebuild the iso image when necessary. @done (13-06-29 12:33)
+
 General:
  ☐ Retarget to x86_64 and UEFI
     - by the time i'm getting to arm there will be armv8 chips everywhere anyway.
