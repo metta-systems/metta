@@ -11,8 +11,8 @@
 #include "algorithm"
 #include "default_console.h"
 #include "memory.h"
+#include "logger.h"
 #include "debugger.h"
-#include "debugmacros.h" // for D() and V()
 #include "panic.h"
 #include "fourcc.h"
 #include "infopage.h"
@@ -223,7 +223,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
 {
     logger::function_scope fs("module_loader_t::symtab_for");
 
-    D(kconsole << "'" << name << "'" << endl);
+    logger::debug() << "'" << name << "'";
     module_descriptor_t* out_mod;
 
     if (!module_already_loaded(*d_last_available_address, name, out_mod))
@@ -255,7 +255,7 @@ module_symbols_t::symmap
 module_symbols_t::ending_with(const char* suffix)
 {
     logger::function_scope fs("module_symbols_t::ending_with");
-    D(kconsole << "'" << suffix << "'" << endl);
+    logger::debug() << "'" << suffix << "'";
     symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
@@ -282,7 +282,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     if (module_already_loaded(*d_last_available_address, name, out_mod))
     {
-        D(kconsole << "This module has already been loaded, trying to look up closure" << endl);
+        logger::debug() << "This module has already been loaded, trying to look up closure.";
         if (!closure_name)
         {
             PANIC("UNSUPPORTED");

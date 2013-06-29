@@ -19,6 +19,7 @@
 #include "c++ctors.h"
 #include "new"
 #include "debugger.h"
+#include "logger.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {

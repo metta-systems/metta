@@ -19,4 +19,5 @@ add_library(kernel STATIC
 add_library(platform STATIC
 	platform/${PLATFORM}/multiboot.cpp
 	generic/console.cpp
+	platform/shared/null_console.cpp
 	platform/${PLATFORM}/default_console.cpp)

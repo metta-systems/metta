@@ -12,6 +12,8 @@
 #include "console.h"
 
 #define kconsole default_console_t::self()
+#define null_console null_console_t::self()
+
 //TODO:
 //add kdebug as kconsole or null_console depending on boot flags
 
@@ -60,4 +62,36 @@ private:
     unsigned char* videoram{(unsigned char*)0xb8000};
     unsigned int            cursor;
     unsigned char           attr;
+};
+
+
+class null_console_t : public console_t
+{
+public:
+    static null_console_t& self();
+
+    virtual void set_color(Color col);
+    virtual void set_background(Color col);
+    virtual void set_attr(Color fore, Color back);// e.g. GREEN on BLACK
+
+    virtual void clear();
+    virtual void locate(int row, int col);
+    virtual void scroll_up();
+    virtual void newline();
+
+    virtual void print_int(int n);
+    virtual void print_char(char ch);
+    virtual void print_unprintable(char ch);
+    virtual void print_byte(unsigned char n);
+    virtual void print_hex(uint32_t n);
+    virtual void print_hex2(uint16_t n);
+    virtual void print_hex8(uint64_t n);
+    virtual void print_str(const char *s);
+
+    virtual void wait_ack();
+
+    virtual void debug_log(const char *str, ...);
+
+private:
+    null_console_t();
 };

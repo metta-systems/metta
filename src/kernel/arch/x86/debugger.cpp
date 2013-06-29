@@ -7,10 +7,13 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "debugger.h"
+#include "logger.h"
 #include "default_console.h"
 #include "registers.h"
 
 namespace logger {
+
+logging::log_levels logging::log_level = logging::warnings_level;
 
 function_scope::function_scope(const char* fn)
     : name(fn)
