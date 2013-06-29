@@ -22,9 +22,15 @@ namespace graphics {
 class bga
 {
 	void* lfb{(void*)0xe0000000};
+	int xres_max{640}, yres_max{480}, bpp_max{8};
 
 	void reg_write(int regno, uint16_t value);
 	uint16_t reg_read(int regno);
+
+	/**
+	 * Obtain maximum supported resolution.
+	 */
+	void set_caps();
 
 public:
 	bga() {}
@@ -37,6 +43,8 @@ public:
 	void configure(pci_device_t* card);
 	void init();
 	void set_mode(int width, int height, int bpp);
+
+	inline void* get_lfb() { return lfb; }
 };
 
 } // namespace graphics

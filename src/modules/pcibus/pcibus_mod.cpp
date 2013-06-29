@@ -94,9 +94,8 @@ entry(closure::closure_t* self)
 					{
 						graphics::bga bga;
 						bga.configure(&dev);
-						bga.init();
 						if (bga.is_available()) {
-							bga.set_mode(640, 480, 32);
+							bga.init();
 						}
 						else {
 							kconsole << "BGA init failed!" << endl;

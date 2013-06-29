@@ -39,12 +39,19 @@ void bga::configure(pci_device_t* card)
     uint32_t bar0 = card->read_config_space(BAR0); // LFB
 
     kconsole << "This bga uses LFB at " << bar0 << endl;
+    lfb = (void*)bar0;
 }
 
+// OSdev wiki sez:
+// Based on source code examination for Bochs (iodev/vga.cc) 
+// setting VBE_DISPI_GETCAPS in VBE_DISPI_INDEX_ENABLE makes the 
+// VBE_DISPI_INDEX_ (XRES / YRES / BPP) fields return their maximum 
+// values when read instead of the current values.
 void bga::init()
 {
     kconsole << "Initializing BGA." << endl;
-    // Do nothing.
+    set_caps();
+    set_mode(640, 480, 32);
 }
 
 void bga::set_mode(int width, int height, int bpp)
@@ -54,6 +61,16 @@ void bga::set_mode(int width, int height, int bpp)
     reg_write(VBE_DISPI_INDEX_YRES, height);
     reg_write(VBE_DISPI_INDEX_BPP, bpp);
     reg_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED|VBE_DISPI_LFB_ENABLED);
+}
+
+void bga::set_caps()
+{
+    reg_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_GETCAPS);
+    xres_max = reg_read(VBE_DISPI_INDEX_XRES);
+    yres_max = reg_read(VBE_DISPI_INDEX_YRES);
+    bpp_max = reg_read(VBE_DISPI_INDEX_BPP);
+    reg_write(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED|VBE_DISPI_LFB_ENABLED);
+    kconsole << "Maximum supported mode " << xres_max << "x" << yres_max << "_" << bpp_max << endl;
 }
 
 } // namespace graphics
