@@ -174,6 +174,9 @@ include_directories(kernel/generic) # macros.h - huh?
 include_directories(runtime) # required_features.h - huh?
 
 if (NOT CMAKE_CROSSCOMPILING)
+#==============================================================================
+# Generate host tools.
+#==============================================================================
 
 # On mac, use openssl from brew, not the default system one, because it is too old.
 # Run 'brew install openssl' to install it.
@@ -200,6 +203,9 @@ add_subdirectory(tools/buildboot)
 export(TARGETS meddler buildboot FILE ${CMAKE_BINARY_DIR}/ImportExecutables.cmake)
 
 else()
+#==============================================================================
+# Generate system files.
+#==============================================================================
 
 set(CMAKE_AR ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ar)
 set(CMAKE_RANLIB ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ranlib)
