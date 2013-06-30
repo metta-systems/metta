@@ -152,13 +152,13 @@ get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
                 if(PVS(exceptions)) {
                     OS_RAISE((exception_support_v1::id)"naming_context_v1.not_context", 0);
                 } else {
-                    kconsole << __FUNCTION__ << ": not a context " << (*it).first << endl;
+                    logger::warning() << __FUNCTION__ << ": not a context " << (*it).first;
                     return false;
                 }
             }
         }
         // Haven't found this item
-        kconsole << "naming_context.get: failed to go deeper." << endl;
+        logger::warning() << "naming_context.get: failed to go deeper.";
         return false;
     }
 }
@@ -318,13 +318,13 @@ static const naming_context_v1::ops_t naming_context_v1_methods =
 static naming_context_v1::closure_t*
 create_context(naming_context_factory_v1::closure_t* self, heap_v1::closure_t* heap, type_system_v1::closure_t* type_system)
 {
-    kconsole << " ** Creating new naming context." << endl;
+    logger::debug() << " ** Creating new naming context.";
 
     context_allocator* alloc = new(heap) context_allocator(heap);
     naming_context_v1::state_t* state = new(heap) naming_context_v1::state_t(alloc, heap);
     state->typesystem = type_system;
 
-    kconsole << " ** Created new naming context." << endl;
+    logger::debug() << " ** Created new naming context.";
 
     closure_init(&state->closure, &naming_context_v1_methods, state);
     return &state->closure;

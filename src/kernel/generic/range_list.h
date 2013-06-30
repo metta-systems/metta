@@ -8,8 +8,8 @@
 //
 #pragma once
 
-// #include "stl/list"
 #include "default_console.h"
+#include "logger.h"
 
 /**
  * This class manages a list of ranges. It automatically merges adjacent entries in the list.
@@ -29,7 +29,7 @@ public:
         inline range_t(type_t start, type_t length) : d_start(start), d_length(length) {}
         inline void set(type_t start, type_t length)
         {
-            kconsole << "range_t::set(" << start << ", " << length << ")" << endl;
+            logger::trace() << "range_t::set(" << start << ", " << length << ")";
             d_start = start;
             d_length = length;
         }

@@ -402,7 +402,7 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
     // Account for L2 infos
     res += n_l2_tables * sizeof(l2_info);
 
-    kconsole << " +--Got nptabs " << nptabs << endl;
+    logger::debug() << "Got " << int(nptabs) << " nptabs";
 
     return res;
 }
