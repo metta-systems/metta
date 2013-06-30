@@ -1,3 +1,5 @@
+#!/bin/sh
+
 mkdir -p _build_host_ _build_target_
 
 # First build the host executables using native compiler and environment.
