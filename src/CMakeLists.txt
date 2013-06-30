@@ -223,9 +223,10 @@ add_subdirectory(interfaces)
 add_subdirectory(modules)
 add_subdirectory(kernel)
 
-#if (NOT PLATFORM STREQUAL "hosted"):
+#if (NOT PLATFORM STREQUAL "hosted")
 add_subdirectory(launcher)
 add_subdirectory(nucleus)
+#endif()
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/init.img
     COMMAND buildboot ${CMAKE_BINARY_DIR}/ ${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM}/bootimage.lst ${CMAKE_BINARY_DIR}/init.img
