@@ -235,9 +235,7 @@ add_custom_command(OUTPUT metta.iso
     COMMAND sh ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}
     DEPENDS launcher ${CMAKE_BINARY_DIR}/init.img ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}/tools/mkbootimg/menu.lst.cd)
 
-# For now you have to build it with 'ninja metta' until I figure out 
-# a default target name.
-add_custom_target(metta
+add_custom_target(metta ALL
 	DEPENDS metta.iso)
 
 endif()
