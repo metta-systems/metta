@@ -228,7 +228,7 @@ module_loader_t::symtab_for(const char* name, const char* suffix)
 
     if (!module_already_loaded(*d_last_available_address, name, out_mod))
     {
-        kconsole << "The module " << name << " is not yet loaded, cannot look up symbols." << endl;
+        logger::warning() << "The module " << name << " is not yet loaded, cannot look up symbols." << endl;
         return module_symbols_t::symmap(module_symbols_t::symmap_alloc(PVS(heap)));
     }
 
@@ -311,7 +311,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (*d_first_used_address == 0)
         *d_first_used_address = section_base;
 
-    kconsole << __FUNCTION__ << ": loading module at " << section_base << endl;
+    logger::debug() << __FUNCTION__ << ": loading module at " << section_base;
 
     this_loaded_module.entry.load_base = section_base;
 
@@ -361,7 +361,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     }
     else*/ if (module.section_header_count() > 0)
     {
-        kconsole << "Loading module \"" << name << "\" with " << int(module.section_header_count()) << " section headers." << endl;
+        logger::debug() << "Loading module \"" << name << "\" with " << int(module.section_header_count()) << " section headers.";
 
         // Calculate section offsets and sizes.
         start = 0;

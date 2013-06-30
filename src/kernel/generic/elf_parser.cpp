@@ -1,7 +1,7 @@
 //
 // Part of Metta OS. Check http://metta.exquance.com for latest version.
 //
-// Copyright 2007 - 2012, Stanislav Karchebnyy <berkus@exquance.com>
+// Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,23 +9,8 @@
 #include "elf_parser.h"
 #include "default_console.h"
 #include "memutils.h"
-// #include "memory.h"
-// #include "minmax.h"
 #include "config.h"
 #include "panic.h"
-
-#if ELF_LOADER_DEBUG
-#define D(s) s
-#else
-#define D(s)
-#endif
-
-#if ELF_RELOC_DEBUG_V
-#define V(s) s
-#else
-#define V(s)
-#endif
-
 #include "symbol_table_finder.h"
 
 using namespace elf32;
@@ -272,7 +257,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
     if (!shstrtab)
         return false;
 
-	kconsole << "Relocating module to " << load_address << endl;
+	logger::debug() << "Relocating module to " << load_address;
 
     // Traverse all sections, find relocation sections and apply them.
     section_header_t* rel_section;
@@ -284,7 +269,7 @@ bool elf_parser_t::relocate_to(address_t load_address)
             section_header_t* target_sect = section_header(rel_section->info);
             if (!(target_sect->flags & SHF_ALLOC))
                 continue;
-            V(kconsole << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset << endl);
+            logger::trace() << "Found rel section " << strtab_pointer(shstrtab, rel_section->name) << " @" << rel_section->offset;
             elf32::rel_t* rels = reinterpret_cast<elf32::rel_t*>(elf2loc(header, rel_section->offset));
             ASSERT(sizeof(rels[0]) == rel_section->entsize); // Standard says entsize should tell the actual entry size
             size_t nrels = rel_section->size / sizeof(rels[0]);
@@ -328,13 +313,13 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
     if (ELF32_ST_TYPE(sym.info) == STT_SECTION)
     {
         S = section_header(sym.shndx)->vaddr;
-        V(kconsole << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
+        logger::trace() << "S is section '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'";
     }
     else
     {
         S = sym.value;
-        V(kconsole << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'" << endl);
-        V(section_header(sym.shndx)->dump(shstring_table()));
+        logger::trace() << "S is symbol '" << strtab_pointer(section_string_table(), sym.name) << "' of type " << ELF32_ST_TYPE(sym.info) << " for section " << sym.shndx << " '" << strtab_pointer(shstrtab, section_header(sym.shndx)->name) << "'";
+        // V(section_header(sym.shndx)->dump(shstring_table()));
     }
 
     switch (ELF32_R_TYPE(rel.info))
@@ -344,17 +329,17 @@ bool elf_parser_t::apply_relocation(elf32::rel_t& rel, symbol_t& sym, section_he
             break;
         case R_386_32:
             result = S + A;
-            V(kconsole << "R_386_32: S " << S << " + A " << A << " = " << result << endl);
+            logger::trace() << "R_386_32: S " << S << " + A " << A << " = " << result;
             break;
         case R_386_PC32:
             result = S + A - P;
-            V(kconsole << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result << endl);
+            logger::trace() << "R_386_PC32: S " << S << " + A " << A << " - P " << P << " = " << result;
             break;
         default:
             kconsole << "Unknown relocation type " << ELF32_R_TYPE(rel.info) << ", skipped, expect crashes!" << endl;
             break;
     }
-    V(kconsole << P << " = " << A << " -> " << result << endl);
+    logger::trace() << P << " = " << A << " -> " << result;
     *reinterpret_cast<uint32_t*>(P) = result;
 
     return true;

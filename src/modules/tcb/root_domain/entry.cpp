@@ -76,7 +76,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     if (!addr.start)
         return 0;
 
-    kconsole << " + Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
+    logger::debug() << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
@@ -222,7 +222,7 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
  */
 static void map_initial_heap(heap_factory_v1::closure_t* heap_factory, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
 {
-    kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
+    logger::debug() << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap;
     memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
     auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1::rights(stretch_v1::right_read), memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
@@ -231,7 +231,7 @@ static void map_initial_heap(heap_factory_v1::closure_t* heap_factory, heap_v1::
 
     if (real_heap != heap)
     {
-        kconsole << WARNING << __FUNCTION__ << ": realize changed heap address from " << heap << " to " << real_heap << endl;
+        logger::warning() << __FUNCTION__ << ": realize changed heap address from " << heap << " to " << real_heap;
     }
 
     // Map our heap as local read/write
@@ -290,10 +290,10 @@ init(bootimage_t& bootimg)
     ramtab_v1::closure_t* rtab;
     memory_v1::address next_free;
 
-    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
+    logger::debug() << "Init memory region size " << int(required + initial_heap_size) << " bytes.";
     auto mmu = mmu_factory->create(required + initial_heap_size, &rtab, &next_free);
 
-    kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
+    logger::debug() << "Obtained ramtab closure @ " << rtab << ", next free " << next_free;
 
     kconsole << "==============================" << endl
              << "   Creating frame allocator" << endl
@@ -348,10 +348,10 @@ init(bootimage_t& bootimg)
 
     mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
-    kconsole << " + Creating stretch table" << endl;
+    logger::debug() << "Creating stretch table";
     auto strtab = stretch_table_factory->create(heap);
 
-    kconsole << " + Creating null stretch driver" << endl;
+    logger::debug() << "Creating null stretch driver";
     PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
@@ -374,13 +374,13 @@ init(bootimage_t& bootimg)
     // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
     // Check exception handling via too big heap allocation (easiest)
-    kconsole << "__ Testing exceptions" << endl;
+    logger::debug() << "__ Testing exceptions";
     OS_TRY {
         auto res = PVS(heap)->allocate(1024*1024*1024);
         ASSERT(res); // Should not execute this!
     }
     OS_CATCH("heap_v1.no_memory") {
-        kconsole << "__ Handled heap_v1.no_memory exception, yippie!" << endl;
+        logger::debug() << "__ Handled heap_v1.no_memory exception, yippie!";
     }
     OS_ENDTRY
 
@@ -388,30 +388,30 @@ init(bootimage_t& bootimg)
              << "   Bringing up type system" << endl
              << "=============================" << endl;
 
-    kconsole <<  " + getting safe_card64table_mod..." << endl;
+    logger::debug() << "Getting safe_card64table_mod...";
     auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
 
-    kconsole <<  " + getting stringtable_mod..." << endl;
+    logger::debug() << "Getting stringtable_mod...";
     auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
 
-    kconsole <<  " + getting typesystem_mod..." << endl;
+    logger::debug() << "Getting typesystem_mod...";
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
 
-    kconsole <<  " + creating a new type system..." << endl;
+    logger::debug() << "Creating a new type system...";
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
     ASSERT(ts);
     PVS(types) = reinterpret_cast<type_system_v1::closure_t*>(ts);
-    kconsole <<  " + done: ts is at " << ts << endl;
+    logger::debug() << "Done: typesystem is at " << ts;
 
     /* Preload types in the interface repository */
-    kconsole << " + registering interfaces" << endl;
+    logger::debug() << "Registering interfaces";
     // Idealized interface:
     // symbols = module("interface_repository").find_symbols().ending_with("__intf_typeinfo");
     auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
-    kconsole << "   found " << int(symbols.size()) << " interfaces" << endl;
+    logger::debug() << "   found " << int(symbols.size()) << " interfaces";
     for (auto& symbol : symbols)
     {
         ts->register_interface(symbol.second->value);
@@ -853,9 +853,9 @@ extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 
-    kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
+    kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl << endl;
 
-    kconsole << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl << endl;
+    logger::debug() << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;

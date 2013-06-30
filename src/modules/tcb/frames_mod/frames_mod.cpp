@@ -21,6 +21,7 @@
 #include "bootinfo.h"
 #include "domain.h"
 #include "algorithm"
+#include "logger.h"
 
 /**
  * Frame allocator client record.
@@ -168,13 +169,12 @@ static bool add_range(frame_allocator_v1::state_t* client_state, address_t start
     if (!client_state->heap || !client_state->region_list || !n_phys_frames)
         return true;
 
-    kconsole << __FUNCTION__ << ": " << n_phys_frames << " frames at " << start << " frame width " << frame_width << endl;
+    logger::trace() << __FUNCTION__ << ": " << n_phys_frames << " frames at " << start << " frame width " << frame_width;
     address_t end = start + (n_phys_frames << FRAME_WIDTH);
 
     if (client_state->region_list->is_empty())
     {
-        kconsole << __FUNCTION__ << ": region list is empty, allocating new entry" << endl;
-
+        logger::trace() << __FUNCTION__ << ": region list is empty, allocating new entry";
         return add_range_element(client_state, start, n_phys_frames, frame_width);
     }
     else
@@ -198,14 +198,14 @@ static bool add_range(frame_allocator_v1::state_t* client_state, address_t start
             // FIXME: doesn't check frame_width??
             if (end == next_start)
             {
-                kconsole << __FUNCTION__ << ": no prior elements, merging on rhs." << endl;
+                logger::debug() << __FUNCTION__ << ": no prior elements, merging on rhs.";
                 (*link->next())->n_phys_frames += n_phys_frames;
                 (*link->next())->start = start;
                 return true;
             }
             else
             {
-                kconsole << __FUNCTION__ << ": no prior elements, allocating new entry." << endl;
+                logger::debug() << __FUNCTION__ << ": no prior elements, allocating new entry.";
                 return add_range_element(client_state, start, n_phys_frames, frame_width);
             }
         }
@@ -244,7 +244,7 @@ static frames_module_v1::state_t* alloc_any(frame_allocator_v1::closure_t* self,
     frames_module_v1::state_t* state = client_state->module_state;
     frames_module_v1::state_t* cur_state = state;
 
-    kconsole << __FUNCTION__ << ": requested " << n_physical_frames << " frames." << endl;
+    logger::debug() << __FUNCTION__ << ": requested " << n_physical_frames << " frames.";
 
     while (cur_state)
     {
@@ -284,7 +284,7 @@ static frames_module_v1::state_t* alloc_range(frame_allocator_v1::closure_t* sel
 
     if ((cur_state = get_region(state, start)) == NULL)
     {
-        kconsole << "alloc_range: we don't own requested address " << start << endl;
+        logger::warning() << "alloc_range: we don't own requested address " << start;
         PANIC("frames_mod");
     }
 
@@ -307,7 +307,7 @@ static frames_module_v1::state_t* alloc_range(frame_allocator_v1::closure_t* sel
     }
 
     int bytes = int(*n_log_frames << cur_state->frame_width);
-    kconsole << "alloc_range: allocated " << bytes << " bytes at requested address " << start << "->" << start + bytes << endl;
+    logger::debug() << "alloc_range: allocated " << bytes << " bytes at requested address " << start << "->" << start + bytes;
     return cur_state;
 }
 
@@ -329,7 +329,7 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocat
 
     if (bytes == 0)
     {
-        kconsole << __FUNCTION__ << ": request to allocate 0 bytes." << endl;
+        logger::warning() << __FUNCTION__ << ": request to allocate 0 bytes.";
         return NO_ADDRESS;
     }
 
@@ -338,7 +338,7 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocat
 
     if (client_state->n_allocated_phys_frames + n_phys_frames > client_state->guaranteed_frames)
     {
-        kconsole << __FUNCTION__ << ": client exceeded quota!" << endl;
+        logger::warning() << __FUNCTION__ << ": client exceeded quota!";
         return NO_ADDRESS;
     }
 
@@ -347,7 +347,7 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocat
         cur_state = alloc_any(self, n_phys_frames, frame_width, &first_frame, &n_frames);
         if (!cur_state)
         {
-            kconsole << __FUNCTION__ << ": failed to allocate " << bytes << " bytes." << endl;
+            logger::warning() << __FUNCTION__ << ": failed to allocate " << bytes << " bytes.";
             return NO_ADDRESS;
         }
     }
@@ -356,13 +356,13 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocat
         // for alloc_range we check alignment externally
         if (!is_aligned_to_frame_width(start, frame_width))
         {
-            kconsole << __FUNCTION__ << ": start " << start << " not aligned to width " << frame_width << endl;
+            logger::warning() << __FUNCTION__ << ": start " << start << " not aligned to width " << frame_width;
             return NO_ADDRESS;
         }
         cur_state = alloc_range(self, n_phys_frames, start, &first_frame, &n_frames);
         if (!cur_state)
         {
-            kconsole << __FUNCTION__ << ": failed to allocate " << bytes << " bytes at " << start << endl;
+            logger::warning() << __FUNCTION__ << ": failed to allocate " << bytes << " bytes at " << start;
             return NO_ADDRESS;
         }
     }
@@ -392,7 +392,7 @@ static memory_v1::address system_frame_allocator_v1_allocate_range(frame_allocat
         PANIC("Something's wrong.");
     }
 
-    kconsole << __FUNCTION__ << ": allocated " << start << endl;
+    logger::debug() << __FUNCTION__ << ": allocated " << start;
     return start;
 }
 
@@ -410,7 +410,7 @@ static uint32_t system_frame_allocator_v1_query(frame_allocator_v1::closure_t* s
 
     if (!cur_state)
     {
-        kconsole << __FUNCTION__ << ": address " << addr << " is non-existant" << endl;
+        logger::warning() << __FUNCTION__ << ": address " << addr << " is non-existant";
         return 0;
     }
 
@@ -425,7 +425,7 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
 
     if (!cur_state)
     {
-        kconsole << __FUNCTION__ << ": cannot handle non-existant address " << addr << endl;
+        logger::warning() << __FUNCTION__ << ": cannot handle non-existant address " << addr;
         PANIC("Frame allocator misuse."); // FIXME: just return error or raise xcp
     }
 
@@ -470,17 +470,17 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
             owner = cur_state->ramtab->get(first_frame + i, &frame_width, &mem_state);
             if (owner != client_state->owner)
             {
-                kconsole << __FUNCTION__ << ": we do not own the frame at " << ((first_frame + i) << FRAME_WIDTH) << endl;
+                logger::warning() << __FUNCTION__ << ": we do not own the frame at " << ((first_frame + i) << FRAME_WIDTH);
                 PANIC("Frame allocator misuse.");
             }
             if (frame_width != allocation_frame_width)
             {
-                kconsole << __FUNCTION__ << ": frame " << (first_frame + i) << " width is " << frame_width << ", should be " << allocation_frame_width << endl;
+                logger::warning() << __FUNCTION__ << ": frame " << (first_frame + i) << " width is " << frame_width << ", should be " << allocation_frame_width;
                 PANIC("Frame allocator misuse.");
             }
             if ((mem_state == ramtab_v1::state_mapped) || (mem_state == ramtab_v1::state_nailed))
             {
-                kconsole << __FUNCTION__ << ": frame at " << ((first_frame + i) << FRAME_WIDTH) << " is " << (mem_state == ramtab_v1::state_mapped ? "mapped" : "nailed") << endl;
+                logger::warning() << __FUNCTION__ << ": frame at " << ((first_frame + i) << FRAME_WIDTH) << " is " << (mem_state == ramtab_v1::state_mapped ? "mapped" : "nailed");
                 PANIC("Frame allocator misuse.");
             }
         }
@@ -492,7 +492,7 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
 
     if (end_log_frame > cur_state->n_logical_frames)
     {
-        kconsole << __FUNCTION__ << ": not all addresses are in the same region." << endl;
+        logger::warning() << __FUNCTION__ << ": not all addresses are in the same region.";
         PANIC("Frame allocator misuse.");
     }
 
@@ -506,7 +506,7 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
     for (i = end_log_frame; i >= start_log_frame; --i)
     {
         cur_state->frames[i].free = ++end_free;
-        kconsole << "1. Log frame " << i << " free set to " << cur_state->frames[i].free << endl;
+        logger::trace() << "1. Log frame " << i << " free set to " << cur_state->frames[i].free;
     }
 
     /*
@@ -518,7 +518,7 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
     for (; /*wrap protect:*/(i < start_log_frame) && (cur_state->frames[i].free != 0); --i)
     {
         cur_state->frames[i].free = ++end_free;
-        kconsole << "2. Log frame " << i << " free set to " << cur_state->frames[i].free << endl;
+        logger::trace() << "2. Log frame " << i << " free set to " << cur_state->frames[i].free;
     }
 
     /* Now update the ramtab (if appropriate) */
@@ -538,7 +538,7 @@ static void system_frame_allocator_v1_free(frame_allocator_v1::closure_t* self, 
     size_t new_phys_frames = client_state->n_allocated_phys_frames - n_phys_frames;
     if (new_phys_frames > client_state->n_allocated_phys_frames)
     {
-        kconsole << __FUNCTION__ << ": freeing more frames than I own (ignored)" << endl;
+        logger::warning() << __FUNCTION__ << ": freeing more frames than I own (ignored)";
         new_phys_frames = 0;
     }
     client_state->n_allocated_phys_frames = new_phys_frames;
@@ -561,7 +561,7 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
 
     if (!client_state->heap)
     {
-        kconsole << __FUNCTION__ << ": called before initialisation is complete." << endl;
+        logger::warning() << __FUNCTION__ << ": called before initialisation is complete.";
         return NULL;
     }
 
@@ -571,25 +571,25 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
         extra_frames = granted_frames;
 
     // Invariant: extra_frames >= granted_frames >= init_alloc_frames
-    kconsole << __FUNCTION__ << ": allocating new client state" << endl;
+    logger::debug() << __FUNCTION__ << ": allocating new client state";
 
     frame_allocator_v1::state_t* new_client_state = reinterpret_cast<frame_allocator_v1::state_t*>(client_state->heap->allocate(sizeof(*new_client_state)));
     if (!new_client_state)
     {
-        kconsole << __FUNCTION__ << ": out of memory in frames allocator." << endl;
+        logger::fatal() << __FUNCTION__ << ": out of memory in frames allocator.";
         PANIC("Out of memory.");
     }
 
     dcb_ro_t *domain = reinterpret_cast<dcb_ro_t*>(owner_dcb_virt);
 
-    kconsole << __FUNCTION__ << ": initialising domain record" << endl;
+    logger::debug() << __FUNCTION__ << ": initialising domain record";
 
     domain->min_phys_frame_count = 0;
     domain->max_phys_frame_count = state->ramtab->size();
     domain->ramtab = reinterpret_cast<ramtab_entry_t*>(state->ramtab->base());
     domain->memory_region_list.init(&domain->memory_region_list);
 
-    kconsole << __FUNCTION__ << ": initialising new client record" << endl;
+    logger::debug() << __FUNCTION__ << ": initialising new client record";
     new_client_state->domain = domain;
     new_client_state->region_list = &domain->memory_region_list;
     new_client_state->n_allocated_phys_frames = init_alloc_frames;
@@ -604,12 +604,12 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
     size_t n_frames;
     frames_module_v1::state_t* cur_state;
 
-    kconsole << __FUNCTION__ << ": allocating " << init_alloc_frames << " init frames" << endl;
+    logger::debug() << __FUNCTION__ << ": allocating " << init_alloc_frames << " init frames";
 
     cur_state = alloc_any(self, init_alloc_frames, FRAME_WIDTH, &first_frame, &n_frames);
     if (cur_state == NULL)
     {
-        kconsole << __FUNCTION__ << ": failed to allocate " << init_alloc_frames << " frames." << endl;
+        logger::fatal() << __FUNCTION__ << ": Out of physical memory, failed to allocate " << init_alloc_frames << " frames.";
         PANIC("Out of physical memory.");
     }
     if (n_frames != init_alloc_frames)
@@ -618,7 +618,7 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
     }
 
     address_t start = frame_address(cur_state, first_frame);
-    kconsole << __FUNCTION__ << ": allocated " << init_alloc_frames << " physical frames at " << start << endl;
+    logger::debug() << __FUNCTION__ << ": allocated " << init_alloc_frames << " physical frames at " << start;
 
     alloc_update_free_predecessors(cur_state, first_frame);
     mark_frames_used(new_client_state, cur_state, first_frame, n_frames);
@@ -661,7 +661,6 @@ static const system_frame_allocator_v1::ops_t system_frame_allocator_v1_methods 
 
 static memory_v1::size frames_module_v1_required_size(frames_module_v1::closure_t* self)
 {
-    kconsole << " +-frames_mod: required_size {" << endl;
     UNUSED(self);
     size_t n_regions = 0, n_frames = 0, res = 0;
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t; // simplify memory map operations
@@ -679,8 +678,7 @@ static memory_v1::size frames_module_v1_required_size(frames_module_v1::closure_
     res = sizeof(frame_allocator_v1::closure_t) + sizeof(frame_allocator_v1::state_t) + n_regions * sizeof(frames_module_v1::state_t) + n_frames * sizeof(frame_st);
     res = page_align_up(res);
 
-    kconsole << " +-frames_mod: counted " << n_regions << " memory regions" << endl
-             << "}" << endl;
+    logger::debug() << "frames_mod: required_size counted " << int(n_regions) << " memory regions";
     return res;
 }
 
@@ -690,7 +688,7 @@ static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_modu
 {
     UNUSED(self);
 
-    kconsole << "frames_mod create @ " << where_to_start << endl;
+    logger::debug() << "frames_mod create @ " << where_to_start << endl;
     frame_allocator_v1::state_t* client_state = reinterpret_cast<frame_allocator_v1::state_t*>(where_to_start);
 
     system_frame_allocator_v1::closure_t* ret = reinterpret_cast<system_frame_allocator_v1::closure_t*>(&client_state->closure);
@@ -722,13 +720,13 @@ static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_modu
         {
             running_state->attrs = memory_v1::attrs_regular;
             running_state->ramtab = rtab;
-            kconsole << "Adding RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
+            logger::debug() << "Adding RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type();
         }
         else
         {
             running_state->attrs = memory_v1::attrs_non_memory;
             running_state->ramtab = 0;
-            kconsole << "Adding non-RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
+            logger::debug() << "Adding non-RAM at " << e->address() << " is " << e->size() << " bytes of type " << e->type();
         }
         running_state->frames = reinterpret_cast<frame_st*>(running_state + 1);
 
@@ -742,8 +740,8 @@ static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_modu
     });
     last_state->next = 0;
 
-    kconsole << " +-frames_mod: counted " << n_regions << " memory regions again" << endl;
-    kconsole << " +-frames_mod: and finished at address " << page_align_up(reinterpret_cast<address_t>(&last_state->frames[last_state->n_logical_frames])) << endl;
+    logger::debug() << "frames_mod: counted " << int(n_regions) << " memory regions again";
+    logger::debug() << "frames_mod: and finished at address " << page_align_up(reinterpret_cast<address_t>(&last_state->frames[last_state->n_logical_frames]));
 
     /*
      * Mark already used frames allocated.
@@ -753,7 +751,7 @@ static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_modu
         if (e->type() != multiboot_t::mmap_entry_t::non_free)
             return;
 
-        kconsole << "Used memory at " << e->address() << " is " << e->size() << " bytes of type " << e->type() << endl;
+        logger::debug() << "Used memory at " << e->address() << " is " << e->size() << " bytes of type " << e->type();
 
         address_t first_frame;
         size_t n_frames;
@@ -776,7 +774,7 @@ static void frames_module_v1_finish_init(frames_module_v1::closure_t* self, syst
 
     if (state->heap != NULL)
     {
-        kconsole << __FUNCTION__ << ": called with heap=" << heap << ", but already have " << state->heap << endl;
+        logger::warning() << __FUNCTION__ << ": called with heap=" << heap << ", but already have " << state->heap;
         PANIC("Double initialisation of frames module!");
     }
 
