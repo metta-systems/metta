@@ -40,7 +40,7 @@ struct hash<const char*>
     size_t operator ()(const char* key) const
     {
         size_t hash = elf32::elf_hash(key);
-        D(kconsole << "hash: key '" << key << "', hash " << hash << endl);
+        logger::trace() << "hash: key '" << key << "', hash " << hash;
         return hash;
     }
 };
@@ -51,7 +51,7 @@ class equal_to<const char*>
 public:
     bool operator ()(const char* left, const char* right) const
     {
-        D(kconsole << "equal_to: left '" << left << "' and right '" << right << "'" << endl);
+        logger::trace() << "equal_to: left '" << left << "' and right '" << right << "'";
         return stringref_t(left) == stringref_t(right);
     }
 };
@@ -100,21 +100,21 @@ get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
     if (!refs.second.empty())
         key = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
 
-    D(kconsole << "naming_context.get: listing existing keys" << endl;
-    for (auto x : self->d_state->map)
+    logger::trace() << "naming_context.get: listing existing keys";
+    for (auto x : self->d_state->map) // TODO: remove this loop, debug only!
     {
         stringref_t k(x.first);
-        kconsole << k.data() << ", length " << k.size() << endl;
-    })
+        logger::trace() << k.data() << ", length " << k.size();
+    }
 
-    D(stringref_t k(key);
-    kconsole << "naming_context.get: finding key " << k.data() << ", length " << k.size();)
+    // D(stringref_t k(key);
+    // kconsole << "naming_context.get: finding key " << k.data() << ", length " << k.size();)
     context_map::iterator it = state->map.find(key);
 
-    D(if (it != state->map.end())
-        kconsole << ", FOUND" << endl;
-    else
-        kconsole << ", NOT FOUND" << endl;)
+    // D(if (it != state->map.end())
+        // kconsole << ", FOUND" << endl;
+    // else
+        // kconsole << ", NOT FOUND" << endl;)
 
     // There was only one component and so we can get the value and return.
     if (refs.second.empty())
@@ -131,10 +131,10 @@ get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
         // At this stage there is another component. Thus we need to check
         // that the types.any actually is a subtype of naming_context, and then
         // recurse.
-        D(kconsole << "..there are subkeys, need to recurse" << endl;
-        kconsole << "First key " << key << ", length " << refs.first.size() << endl;
-        if (!refs.second.empty())
-            kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
+        // D(kconsole << "..there are subkeys, need to recurse" << endl;
+        // kconsole << "First key " << key << ", length " << refs.first.size() << endl;
+        // if (!refs.second.empty())
+            // kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
 
         // Check conformance with the context type 
         if (it != state->map.end())
@@ -179,22 +179,22 @@ add(naming_context_v1::closure_t *self, const char *key, types::any value)
     if (!refs.second.empty())
         key = string_n_copy(refs.first.data(), refs.first.size(), PVS(heap)); // @todo MEMLEAK
 
-    D(kconsole << "naming_context.add: listing existing keys" << endl;
-    for (auto x : self->d_state->map)
-    {
-        stringref_t k(x.first);
-        kconsole << k.data() << ", length " << k.size() << endl;
-    })
+    // D(kconsole << "naming_context.add: listing existing keys" << endl;
+    // for (auto x : self->d_state->map)
+    // {
+        // stringref_t k(x.first);
+        // kconsole << k.data() << ", length " << k.size() << endl;
+    // })
 
-    D(stringref_t k(key);
-    kconsole << "naming_context.add: finding key " << k.data() << ", length " << k.size();)
+    // D(stringref_t k(key);
+    // kconsole << "naming_context.add: finding key " << k.data() << ", length " << k.size();)
 
     context_map::iterator it = state->map.find(key);
 
-    D(if (it != state->map.end())
-        kconsole << ", FOUND" << endl;
-    else
-        kconsole << ", NOT FOUND" << endl;)
+    // D(if (it != state->map.end())
+        // kconsole << ", FOUND" << endl;
+    // else
+        // kconsole << ", NOT FOUND" << endl;)
 
     // There was only one component and so we can add the value and return.
     if (refs.second.empty())
@@ -205,7 +205,7 @@ add(naming_context_v1::closure_t *self, const char *key, types::any value)
         }
         else
         {
-            D(kconsole << "adding " << key << "=>" << value << endl;)
+            logger::trace() << "adding " << key << "=>" << value;
             state->map.insert(make_pair(key, value));
             return;
         }
@@ -215,10 +215,10 @@ add(naming_context_v1::closure_t *self, const char *key, types::any value)
         // At this stage there is another component. Thus we need to check
         // that the types.any actually is a subtype of naming_context, and then
         // recurse.
-        D(kconsole << "..there are subkeys, need to recurse" << endl;
-        kconsole << "First key " << key << ", length " << refs.first.size() << endl;
-        if (!refs.second.empty())
-            kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
+        // D(kconsole << "..there are subkeys, need to recurse" << endl;
+        // kconsole << "First key " << key << ", length " << refs.first.size() << endl;
+        // if (!refs.second.empty())
+            // kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
 
         // Check conformance with the context type 
         if (it != state->map.end())

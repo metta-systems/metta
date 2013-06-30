@@ -20,15 +20,16 @@ void logging::set_verbosity(log_levels verbosity)
     log_level = verbosity;
 }
 
-function_scope::function_scope(const char* fn)
+function_scope::function_scope(const char* fn, logging::log_levels verbosity)
     : name(fn)
+    , level(verbosity)
 {
-    kconsole << name << " {" << endl;
+    logging::logging(level) << name << " {";
 }
 
 function_scope::~function_scope()
 {
-    kconsole << "} " << name << endl;
+    logging::logging(level) << "} " << name;
 }
 
 } // namespace logger

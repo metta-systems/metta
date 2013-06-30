@@ -13,14 +13,6 @@
 
 namespace logger {
 
-class function_scope
-{
-    const char* name;
-public:
-    function_scope(const char *fn);
-    ~function_scope();
-};
-
 class logging
 {
 public:
@@ -48,9 +40,35 @@ protected:
     logging(log_levels l) : my_log_level(l) {}
     ~logging() { if (my_log_level >= log_level) kconsole << endl; }
 
+    friend class function_scope;
+
 private:
     static log_levels log_level;
 };
+
+/**
+ * Allow tracing a scope with a name. Optional verbosity setting allows to adjust
+ * tracing granularity.
+ *
+ * @example
+ * {
+ * 	  function_scope outer("outer scope", logging::debug_level);
+ * 	  {
+ * 	  	  function_scope inner("inner scope", logging::trace_level);
+ * 	  	  return;
+ * 	  }
+ * }
+ * @endexample
+ */
+class function_scope
+{
+    const char* name{0};
+    logging::log_levels level{logging::trace_level};
+public:
+    function_scope(const char *fn, logging::log_levels verbosity = logging::trace_level);
+    ~function_scope();
+};
+
 
 // Loglevel trace - most detailed information.
 class trace : public logging

@@ -192,9 +192,9 @@ symbol_table_finder_t::all_symbols(const char* suffix)
     module_symbols_t::symmap symbols(module_symbols_t::symmap_alloc(PVS(heap)));
 
     size_t n_entries = symbol_table->size / symbol_table->entsize;
-    V(kconsole << "All symbols: " << n_entries << endl);
-    V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
-    V(kconsole << "String table @ " << base + string_table->offset << endl);
+    logger::trace() << "All symbols: " << int(n_entries);
+    logger::trace() << "Symbol table @ " << base + symbol_table->offset;
+    logger::trace() << "String table @ " << base + string_table->offset;
 
     // OS_TRY{
         for (size_t i = 0; i < n_entries; i++)
@@ -204,7 +204,7 @@ symbol_table_finder_t::all_symbols(const char* suffix)
 
             if (ends_with(c, suffix))
             {
-                V(kconsole << "all_symbols adding symbol " << c << endl);
+                logger::trace() << "all_symbols adding symbol " << c;
                 symbols.insert(std::make_pair(c, symbol));
             }
         }
@@ -259,10 +259,10 @@ module_symbols_t::ending_with(const char* suffix)
     symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
     {
-        V(kconsole << "Ending with: checking symbol " << e.first << " against " << suffix << endl);
+        logger::trace() << "Ending with: checking symbol " << e.first << " against " << suffix;
         if (ends_with(e.first, suffix))
         {
-            V(kconsole << "Symbol " << e.first << " ends with " << suffix << endl);
+            logger::trace() << "Symbol " << e.first << " ends with " << suffix;
             out.insert(std::make_pair(e.first, e.second));
         }
     }
@@ -292,7 +292,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
-        kconsole << " +-- Returning closure symbol " << symbol << ", pointer " << entry << endl;
+        logger::debug() << "Returning closure symbol " << symbol << ", pointer " << entry;
         return reinterpret_cast<void*>(symbol);
     }
 
@@ -304,8 +304,8 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     elf32::section_header_t* symbol_table = 0;
 
     // Load either program OR sections, prefer program (faster loading ideally).
-    D(kconsole << "program headers: " << module.program_header_count() << endl
-             << "section headers: " << module.section_header_count() << endl);
+    logger::debug() << "program headers: " << module.program_header_count() << endl
+             << "section headers: " << module.section_header_count();
 
     address_t section_base = page_align_up(*d_last_available_address);
     if (*d_first_used_address == 0)
@@ -406,12 +406,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             {
                 if (sh.type == SHT_NOBITS)
                 {
-                    D(kconsole << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr << endl);
+                    logger::debug() << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr;
                     memutils::clear_memory((void*)sh.vaddr, sh.size);
                 }
                 else
                 {
-                    D(kconsole << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr << endl);
+                    logger::debug() << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr;
                     memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                 }
                 // Adjust module end address.
@@ -435,7 +435,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             elf32::section_header_t* new_symtab = reinterpret_cast<elf32::section_header_t*>(*d_last_available_address);
             *d_last_available_address += sizeof(*symbol_table);
             memutils::copy_memory(*d_last_available_address, module.start() + symbol_table->offset, symbol_table->size);
-            D(kconsole << "### symbol table copied to " << *d_last_available_address << endl);
+            logger::debug() << "### symbol table copied to " << *d_last_available_address;
             // TODO: new_symtab uses offset field as an absolute address in memory where the section starts.
             // for now simply patch a new offset into the old section header!!
             new_symtab->offset = *d_last_available_address - this_loaded_module.entry.load_base;
@@ -456,7 +456,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             elf32::section_header_t* new_strtab = reinterpret_cast<elf32::section_header_t*>(*d_last_available_address);
             *d_last_available_address += sizeof(*string_table);
             memutils::copy_memory(*d_last_available_address, module.start() + string_table->offset, string_table->size);
-            D(kconsole << "### string table copied to " << *d_last_available_address << endl);
+            logger::debug() << "### string table copied to " << *d_last_available_address;
             new_strtab->offset = *d_last_available_address - this_loaded_module.entry.load_base;
 
             // FIXME - we patch the source string table here because of the clumsy way we do loading
@@ -484,14 +484,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                 //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (before)" << endl; 
                 // }
 
-                V(kconsole << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value);
+                logger::trace() << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value << ", new value " << symbol->value + module.section_header(symbol->shndx)->vaddr;
                 symbol->value += module.section_header(symbol->shndx)->vaddr;
 
                 // if (closure_name && (symname == closure_name)) {
                 //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (after)" << endl;
                 // }
-
-                V(kconsole << ", new value " << symbol->value << endl);
             }
         }
     }
@@ -517,9 +515,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     // we also need another size - code, data and bss without metadata and descriptor, for separating them in the userspace context.
 
     memutils::copy_memory(*d_last_available_address - sizeof(this_loaded_module), address_t(&this_loaded_module), sizeof(this_loaded_module));
-    D(kconsole << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module) << endl);
+    logger::debug() << "### writing module descriptor to " << *d_last_available_address - sizeof(this_loaded_module);
 
-    D(print_module_map());
+    // D(print_module_map());
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     bi->use_memory(this_loaded_module.entry.load_base, this_loaded_module.entry.loaded_size, multiboot_t::mmap_entry_t::loaded_module);
@@ -527,7 +525,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     if (!closure_name)
     {
         address_t entry = this_loaded_module.entry.entry_point;
-		D(kconsole << "Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address << endl);
+		logger::debug() << "Entry " << entry << ", section_base " << section_base << ", start " << start << ", next mod start " << *d_last_available_address;
         return (void*)(entry);
     }
     else
@@ -537,7 +535,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
-        kconsole << "Returning closure symbol " << symbol << ", pointer " << entry << endl;
+        logger::debug() << "Returning closure symbol " << symbol << ", pointer " << entry;
         return reinterpret_cast<void*>(symbol);//entry);
     }
 }

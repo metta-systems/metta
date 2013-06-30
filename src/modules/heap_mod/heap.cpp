@@ -9,6 +9,7 @@
 #include "heap.h"
 #include "memory.h"
 #include "debugger.h"
+#include "logger.h"
 #include "default_console.h"
 #include "panic.h"
 #include "config.h" // for HEAP_DEBUG
@@ -295,7 +296,7 @@ void *heap_t::allocate(size_t size)
     check_integrity();
 #endif
 
-    V(kconsole << "heap_t::allocate("<<size<<") returning "<<(free_block+1)<<endl);
+    logger::trace() << "heap_t::allocate(" << size << ") returning " << (free_block + 1);
     return free_block + 1;
 }
 
@@ -316,7 +317,7 @@ void heap_t::free(void *p)
     }
     
     to_free = reinterpret_cast<heap_rec_t*>(p) - 1;
-    V(kconsole << "heap_t::free("<<p<<") freeing "<<to_free<<endl);
+    logger::trace() << "heap_t::free(" << p << ") freeing " << to_free;
     nextblock = next_block(to_free);
     
     to_free->next = blocks[to_free->index];

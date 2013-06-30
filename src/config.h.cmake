@@ -11,7 +11,6 @@
 #cmakedefine MEMORY_DEBUG 1
 #cmakedefine BOOTIMAGE_DEBUG 0
 #cmakedefine DWARF_DEBUG 0
-#cmakedefine RAMTAB_DEBUG 0
 /* Overarching tools debugging enabler, disable to turn off all tools debugging prints. */
 #cmakedefine TOOLS_DEBUG 1
 /* Per-tool: Enable Meddler debug prints. Needs TOOLS_DEBUG. */

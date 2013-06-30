@@ -29,6 +29,7 @@
 #include "cpu.h"
 #include "domain.h"
 #include "stretch_v1_state.h"
+#include "logger.h"
 
 //======================================================================================================================
 // mmu_v1 state
@@ -289,30 +290,24 @@ static const mmu_v1::ops_t mmu_v1_methods =
 // ramtab_v1 methods
 //======================================================================================================================
 
-#if RAMTAB_DEBUG
-#define RD(s) s
-#else
-#define RD(s)
-#endif
-
 static memory_v1::size ramtab_v1_size(ramtab_v1::closure_t* self)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning size " << st->ramtab_size << endl);
+    logger::trace() << __FUNCTION__ << ": ramtab state at " << st << ", returning size " << st->ramtab_size;
     return st->ramtab_size;
 }
 
 static memory_v1::address ramtab_v1_base(ramtab_v1::closure_t* self)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning base " << st->ramtab << endl);
+    logger::trace() << __FUNCTION__ << ": ramtab state at " << st << ", returning base " << st->ramtab;
     return reinterpret_cast<memory_v1::address>(st->ramtab);
 }
 
 static void ramtab_v1_put(ramtab_v1::closure_t* self, uint32_t frame, uint32_t owner, uint32_t frame_width, ramtab_v1::state state)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": frame " << frame << " with owner " << owner << " and frame width " << int(frame_width) << " in state " << state << endl);
+    logger::trace() << __FUNCTION__ << ": frame " << frame << " with owner " << owner << " and frame width " << int(frame_width) << " in state " << state;
     if (frame >= st->ramtab_size)
     {
         kconsole << __FUNCTION__ << ": out of range frame " << frame << ", max is " << st->ramtab_size << endl;
@@ -337,7 +332,7 @@ static uint32_t ramtab_v1_get(ramtab_v1::closure_t* self, uint32_t frame, uint32
 
     *frame_width = st->ramtab[frame].frame_width;
     *state = ramtab_v1::state(st->ramtab[frame].state);
-    RD(kconsole << __FUNCTION__ << ": frame " << frame << " with owner " << st->ramtab[frame].owner << " and frame width " << int(*frame_width) << " in state " << *state << endl);
+    logger::trace() << __FUNCTION__ << ": frame " << frame << " with owner " << st->ramtab[frame].owner << " and frame width " << int(*frame_width) << " in state " << *state;
     return st->ramtab[frame].owner;
 }
 
@@ -348,8 +343,6 @@ static const ramtab_v1::ops_t ramtab_v1_methods =
     ramtab_v1_put,
     ramtab_v1_get
 };
-
-#undef RD
 
 //======================================================================================================================
 // mmu_module_v1 methods

@@ -417,20 +417,21 @@ init(bootimage_t& bootimg)
         ts->register_interface(symbol.second->value);
     }
 
-    D(kconsole << "___ Testing the type system listing" << endl;
+    logger::debug() << "___ Testing the type system listing";
     naming_context_v1::names n = ts->list();
     for (auto m : n)
     {
-        kconsole << m << endl;
+        logger::debug() << m;
     }
-    kconsole << "___ Done testing type system listing" << endl);
+    logger::debug() << "___ Done testing type system listing";
 
-    kconsole << "___ Testing type system doc strings" << endl;
-    kconsole << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code) << endl;
-    kconsole << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code) << endl;
-    kconsole << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code) << endl;
-    kconsole << "Autodoc for type gatekeeper_v1: " << ts->docstring(gatekeeper_v1::type_code) << endl;
-    kconsole << "___ Done testing type system doc strings" << endl;
+    logger::debug() << "___ Testing type system doc strings";
+    logger::debug() << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code);
+    logger::debug() << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code);
+    logger::debug() << "Autodoc for type naming_context_v1: " << ts->docstring(naming_context_v1::type_code);
+    logger::debug() << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code);
+    logger::debug() << "Autodoc for type gatekeeper_v1: " << ts->docstring(gatekeeper_v1::type_code);
+    logger::debug() << "___ Done testing type system doc strings";
 
     // static void init_namespaces(bootimage_t& bootimg)
     /// @todo Context.

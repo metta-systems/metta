@@ -8,7 +8,6 @@
 //
 #pragma once
 
-#include "debugmacros.h" // define D() and V()
 #include "console.h"
 
 #define kconsole default_console_t::self()
