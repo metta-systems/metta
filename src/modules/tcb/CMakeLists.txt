@@ -6,3 +6,5 @@ add_subdirectory(stretch_allocator_mod)
 add_subdirectory(stretch_driver_mod)
 add_subdirectory(typesystem_mod)
 add_subdirectory(gatekeeper_mod)
+
+set(all_init_components "${all_init_components}" PARENT_SCOPE)

@@ -128,11 +128,6 @@ macro(set_build_for_target)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${KERNEL_LINK_FLAGS}")
 endmacro()
 
-# This target is needed so it can depend on components we build.
-# It's defined here because add_component() below needs it.
-add_custom_target(init_image
-	DEPENDS ${CMAKE_BINARY_DIR}/init.img)
-
 # Generate a named component file from given sources.
 # Syntax: add_component(name sources [NOT_RELOC] [LINK_SCRIPT script_name] [LIBS lib_targets])
 macro(add_component name)
@@ -161,9 +156,7 @@ macro(add_component name)
 	    set(_link_flags "${_link_flags} -Wl,-Map,${name}.map")
     endif ()
     set_property(TARGET ${name} PROPERTY LINK_FLAGS ${_link_flags})
-
-    # This is a bit extreme - not all components may be part of the init.img
-    add_dependencies(init_image ${name})
+    set(all_init_components "${all_init_components};${name}" PARENT_SCOPE)
 endmacro()
 
 macro(add_kernel_component)
@@ -217,6 +210,8 @@ add_definitions(-D__STDC_HOSTED__=0)
 set(IMPORT_EXECUTABLES "IMPORTFILE-NOTFOUND" CACHE FILEPATH "Point it to the export file from a native build")
 include(${IMPORT_EXECUTABLES})
 
+set(all_init_components) # cmake cannot into dependency management, so do it manually...
+
 add_subdirectory(runtime)
 add_subdirectory(runtime/libc++)
 add_subdirectory(interfaces)
@@ -230,7 +225,7 @@ add_subdirectory(nucleus)
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/init.img
     COMMAND buildboot ${CMAKE_BINARY_DIR}/ ${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM}/bootimage.lst ${CMAKE_BINARY_DIR}/init.img
-	DEPENDS launcher nucleus)
+	DEPENDS launcher nucleus ${all_init_components})
 
 add_custom_command(OUTPUT metta.iso
     COMMAND sh ${CMAKE_SOURCE_DIR}/tools/mkbootimg/images.sh ${CMAKE_BINARY_DIR}
