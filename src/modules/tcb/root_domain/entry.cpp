@@ -726,6 +726,7 @@ init(bootimage_t& bootimg)
         kconsole << " + Adding boot domain sequence to progs context...\n"));
         Context$Add(progs, "BootDomains", &boot_seq_any);
     }*/
+    kconsole << endl;
     print_context_tree(root, 0);
 }
 
