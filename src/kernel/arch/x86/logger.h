@@ -93,7 +93,7 @@ class warning : public logging
 {
 public:
     warning() : logging(none_level) {
-        kconsole << "[WARNING] ";
+        kconsole << WARNING << "[WARNING] ";
     }
 };
 
@@ -101,7 +101,7 @@ class fatal : public logging
 {
 public:
     fatal() : logging(none_level) {
-        kconsole << "[FATAL] ";
+        kconsole << ERROR << "[FATAL] ";
     }
     ~fatal() { PANIC("fatal error"); }
 };
