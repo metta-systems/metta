@@ -17,4 +17,4 @@ add_component(nucleus
     x86/init_nucleus.cpp
     x86/nucleus.cpp
     LINK_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/x86/nucleus.lds
-    LIBS common kernel platform debugger minruntime cxx)
+    LIBS common kernel debugger platform minruntime cxx)
