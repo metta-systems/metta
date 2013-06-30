@@ -15,6 +15,7 @@
 #include "bootinfo.h"
 #include "elf_parser.h"
 #include "debugger.h"
+#include "logger.h"
 #include "module_loader.h"
 #include "infopage.h"
 #include "frames_module_v1_interface.h"
@@ -872,6 +873,9 @@ extern "C" void module_entry()
     bootimage_t bootimage(name, start, end);
 
     INFO_PAGE.pervasives = &pervasives;
+
+    // meh, too deep nested :/
+    logger::logging::set_verbosity(logger::logging::none_level);
 
     init(bootimage);
     start_root_domain(bootimage);

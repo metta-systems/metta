@@ -13,7 +13,12 @@
 
 namespace logger {
 
-logging::log_levels logging::log_level = logging::warnings_level;
+logging::log_levels logging::log_level = logging::none_level;
+
+void logging::set_verbosity(log_levels verbosity)
+{
+    log_level = verbosity;
+}
 
 function_scope::function_scope(const char* fn)
     : name(fn)

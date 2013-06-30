@@ -23,24 +23,7 @@ public:
 
 class logging
 {
-protected:
-    enum log_levels {
-        trace_level = 0,
-        debug_level,
-        info_level,
-        warnings_level // warning and fatal are always displayed!
-    };
-    log_levels my_log_level{warnings_level};
-
-    logging(log_levels l) : my_log_level(l) {}
-    ~logging() { if (my_log_level >= log_level) kconsole << endl; }
-
-private:
-    static log_levels log_level;
-
 public:
-    // static void set_log_level(int v)
-
     template <typename T>
 	console_t& operator << (const T& v) {
         if (my_log_level >= log_level)
@@ -50,6 +33,23 @@ public:
         }
         return null_console;
     }
+
+    enum log_levels {
+        trace_level = 0,
+        debug_level,
+        info_level,
+        none_level // warning and fatal are always displayed!
+    };
+    static void set_verbosity(log_levels verbosity);
+
+protected:
+    log_levels my_log_level{none_level};
+
+    logging(log_levels l) : my_log_level(l) {}
+    ~logging() { if (my_log_level >= log_level) kconsole << endl; }
+
+private:
+    static log_levels log_level;
 };
 
 // Loglevel trace - most detailed information.
@@ -74,7 +74,7 @@ public:
 class warning : public logging
 {
 public:
-    warning() : logging(warnings_level) {
+    warning() : logging(none_level) {
         kconsole << "[WARNING] ";
     }
 };
@@ -82,7 +82,7 @@ public:
 class fatal : public logging
 {
 public:
-    fatal() : logging(warnings_level) {
+    fatal() : logging(none_level) {
         kconsole << "[FATAL] ";
     }
     ~fatal() { PANIC("fatal error"); }
