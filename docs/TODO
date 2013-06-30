@@ -9,18 +9,11 @@ General:
 Cleanups:
  ☐ move types__intf_typeinfo to types::intf_typeinfo etc because of namespace linking issues
  ☐ all non-pub types should be inside namespace types { namespace { } } perhaps
- ☐ kill tools libs in root wscript, they are overhead?
-
-Linker:
- ☐ gold doesn't build _GLOBAL_OFFSET_TABLE_ for some reason, reproducible case made.
- ☐ try to make lld json link scripts? - this will let scratch binutils
 
 Boot:
-
  ☐ Clean up the C-like code from Nemesis and turn it into robust shared kernel components with dynamic loading/resolution
     - otherwise there will still be "multiple consoles" and other crap
     - should console be actually a callable mod? perhaps.
-
  ☐ Add bootimage namespace iteration (bootimage_t::namespace_t::iterator?)
  ☐ Finish introspection and write a command line tool to interactively explore type system.
  ☐ Make a real module loader with all tables and proper memory allocation - current one seems to step over already allocated data and needs to preload things in order to work...
@@ -29,15 +22,11 @@ Boot:
  ☐ Add generic types a-la C# to type system?
 
 Assocfs:
-    ☐ OS block cache - write tests.
-    ☐ write b+tree handler
-
- ☐ write more unit-tests for all these modules!
-
- ☐ We need a simple application to start coding from the user perspective. Something simple, single focused and immensely mettaish. Ideas?
-
- ☐ Create architecture descriptions in increasing level of detail (@sa ANSA engineering overview).
-
+  ☐ OS block cache - write tests.
+  ☐ write b+tree handler
+  ☐ write more unit-tests for all these modules!
+  ☐ We need a simple application to start coding from the user perspective. Something simple, single focused and immensely mettaish. Ideas?
+  ☐ Create architecture descriptions in increasing level of detail (@sa ANSA engineering overview).
 
 System components:
   ☐ scheduler
@@ -122,11 +111,13 @@ Other:
         Device tree can be represented as a naming_context, mapping various information about devices from arc-names.
 
 Toolchain:
-    ☐ Jotun native file format work
-    ☐ Migrate linking to gold with LLVM plugin
+  ☐ Jotun native file format work
+  ☐ Migrate linking to gold with LLVM plugin
         One issue with gold was problem with not generating the GOT properly. There's a testcase for this exists and can be used in configuring proper gold setup.
         Another option is to try and build ELF lld with llvm. It sure is very limited at the moment.
         - lld built, try it out!
+ ☐ gold doesn't build _GLOBAL_OFFSET_TABLE_ for some reason, reproducible case made.
+ ☐ try to make lld json link scripts? - this will let scratch binutils
 
 Baby steps:
     ☐ Port activations and handlers framework
