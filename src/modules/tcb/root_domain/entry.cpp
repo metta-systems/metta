@@ -747,8 +747,6 @@ start_root_domain(bootimage_t& bootimg)
     auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     ASSERT(pciscan);
     pciscan->apply();
-
-    while(1) {} 
 #endif
 
 #if 0
