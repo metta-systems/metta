@@ -67,12 +67,12 @@ public:
 
     pointer allocate(size_type __n, std::allocator<void>::const_pointer hint = 0)
     {
-        logger::debug() << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap;
+        logger::trace() << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap;
         return reinterpret_cast<pointer>(heap->allocate(__n * sizeof(T)));
     }
     void deallocate(pointer p, size_type) throw()
     {
-        logger::debug() << "heap_allocator::deallocate @ " << p << " from heap " << heap;
+        logger::trace() << "heap_allocator::deallocate @ " << p << " from heap " << heap;
         heap->free(reinterpret_cast<memory_v1::address>(p));
     }
 };

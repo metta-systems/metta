@@ -406,12 +406,12 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             {
                 if (sh.type == SHT_NOBITS)
                 {
-                    logger::debug() << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr;
+                    logger::trace() << "Clearing " << int(sh.size) << " bytes at " << sh.vaddr;
                     memutils::clear_memory((void*)sh.vaddr, sh.size);
                 }
                 else
                 {
-                    logger::debug() << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr;
+                    logger::trace() << "Copying " << int(sh.size) << " bytes from " << (module.start() + sh.offset) << " to " << sh.vaddr;
                     memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                 }
                 // Adjust module end address.

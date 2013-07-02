@@ -875,7 +875,7 @@ extern "C" void module_entry()
     INFO_PAGE.pervasives = &pervasives;
 
     // meh, too deep nested :/
-    logger::logging::set_verbosity(logger::logging::none_level);
+    logger::logging::set_verbosity(logger::logging::debug_level);
 
     init(bootimage);
     start_root_domain(bootimage);
