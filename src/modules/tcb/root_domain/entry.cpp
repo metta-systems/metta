@@ -754,10 +754,10 @@ start_root_domain(bootimage_t& bootimg)
 #if 0
     /* Find the Virtual Processor module */
     vp = CONTEXT_FIND("Modules.VCPU", vcpu_v1);
-    kconsole << " + got VCPU at " << vp << endl;
+    kconsole << "Got VCPU at " << vp << endl;
 
     time = CONTEXT_FIND("Modules.Time", time_v1);
-    kconsole << " + got time at " << time << endl;
+    kconsole << "Got time at " << time << endl;
     PVS(time) = time;
 
     /* init the wall-clock time values of the infopage */
@@ -810,7 +810,7 @@ start_root_domain(bootimage_t& bootimg)
 
     DCB_RW(vp)->pervasives = INFO_PAGE.pervasives;
 
-    kconsole << " + did NewDomain." << endl;
+    kconsole << "Did NewDomain." << endl;
 */
 
     /* register our vp and pdom with the stretch allocators */

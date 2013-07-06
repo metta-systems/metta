@@ -221,7 +221,7 @@ symbol_table_finder_t::all_symbols(const char* suffix)
 module_symbols_t
 module_loader_t::symtab_for(const char* name, const char* suffix)
 {
-    logger::function_scope fs("module_loader_t::symtab_for");
+    logger::function_scope fs("module_loader_t.symtab_for");
 
     logger::debug() << "'" << name << "'";
     module_descriptor_t* out_mod;
@@ -254,7 +254,7 @@ module_symbols_t::starting_with(const char* prefix)
 module_symbols_t::symmap
 module_symbols_t::ending_with(const char* suffix)
 {
-    logger::function_scope fs("module_symbols_t::ending_with");
+    logger::function_scope fs("module_symbols_t.ending_with");
     logger::debug() << "'" << suffix << "'";
     symmap out(symmap_alloc(PVS(heap)));
     for (auto e : symtab)
@@ -304,7 +304,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
     elf32::section_header_t* symbol_table = 0;
 
     // Load either program OR sections, prefer program (faster loading ideally).
-    logger::debug() << "program headers: " << module.program_header_count() << endl
+    logger::trace() << "program headers: " << module.program_header_count() << endl
              << "section headers: " << module.section_header_count();
 
     address_t section_base = page_align_up(*d_last_available_address);
