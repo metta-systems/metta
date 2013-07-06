@@ -164,7 +164,7 @@ static bool add4k_page(mmu_v1::state_t* state, address_t va, page_t pte, sid_t s
     l2va = state->l2_virt + (l2pa - state->l2_phys);
     // XXX PARANOIA
     if (l2va != state->l1_virt[l1idx].frame())
-        logger::warning() << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame();
+        logger::warning() << "Virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame();
 
     // Ok, once here, we have a pointer to our l2 table in "l2va"
     l2idx = pte_entry(va);
@@ -719,7 +719,7 @@ static int bitmap_index(address_t va)
     return va >> 27; // Each array word represents 32*4Mb = 128Mb => 27 bits.
 }
 
-#define N_EXTRA_L2S     32                     // We require an additional margin of L2 ptabs.
+#define N_EXTRA_L2S   32    // We require an additional margin of L2 ptabs.
 
 static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 {
@@ -935,7 +935,10 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
         state->info[i] = L2FREE;
 
     // Enter mappings for all the existing translations.
-    enter_mappings(state); // this call uses mappings in bootinfo_page, so we need to set them up sooner or call enter_mappings() later, maybe in Done or Engage?
+    // This call uses mappings in bootinfo_page,
+    // so we need to set them up sooner or call enter_mappings() later,
+    // maybe in Done or Engage?
+    enter_mappings(state);
 
     // Swap over to our new page table!
     logger::debug() << "mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys;

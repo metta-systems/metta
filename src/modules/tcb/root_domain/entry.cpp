@@ -124,7 +124,8 @@ print_context_tree(naming_context_v1::closure_t* ctx, int indent = 0)
 /**
  * Set up MMU and frame allocator.
  */
-static protection_domain_v1::id create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
+static protection_domain_v1::id
+create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
 {
     auto pdom = mmu->create_domain();
 
@@ -242,7 +243,7 @@ static void
 init(bootimage_t& bootimg)
 {
     kconsole << "=================" << endl
-             << "   Init memory" << endl
+             << "   Init memory"    << endl
              << "=================" << endl;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
@@ -296,13 +297,13 @@ init(bootimage_t& bootimg)
     logger::debug() << "Obtained ramtab closure @ " << rtab << ", next free " << next_free;
 
     kconsole << "==============================" << endl
-             << "   Creating frame allocator" << endl
+             << "   Creating frame allocator"    << endl
              << "==============================" << endl;
 
     auto frames = frames_factory->create(rtab, next_free);
 
     kconsole << "===================" << endl
-             << "   Creating heap" << endl
+             << "   Creating heap"    << endl
              << "===================" << endl;
 
     auto heap = heap_factory->create_raw(next_free + required, initial_heap_size);
@@ -327,7 +328,7 @@ init(bootimage_t& bootimg)
 #endif
 
     kconsole << "=======================================" << endl
-             << "   Creating system stretch allocator" << endl
+             << "   Creating system stretch allocator"    << endl
              << "=======================================" << endl;
 
     auto system_stretch_allocator = stretch_allocator_factory->create(heap, mmu);
@@ -341,7 +342,7 @@ init(bootimage_t& bootimg)
      * be backed by phyiscal memory on creation.
      */
     kconsole << "=======================================" << endl
-             << "   Creating nailed stretch allocator" << endl
+             << "   Creating nailed stretch allocator"    << endl
              << "=======================================" << endl;
 
     auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap);//yikes!
@@ -356,7 +357,7 @@ init(bootimage_t& bootimg)
 
     // Create the initial address space; returns a pdom for root domain.
     kconsole << "====================================" << endl
-             << "   Creating initial address space" << endl
+             << "   Creating initial address space"    << endl
              << "====================================" << endl;
 
     auto root_domain_pdid = create_address_space(frames, mmu);
@@ -364,7 +365,7 @@ init(bootimage_t& bootimg)
 
     /* Get an Exception System */
     kconsole << "============================" << endl
-             << "   Bringing up exceptions" << endl
+             << "   Bringing up exceptions"    << endl
              << "============================" << endl;
 
     auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
@@ -385,7 +386,7 @@ init(bootimage_t& bootimg)
     OS_ENDTRY
 
     kconsole << "=============================" << endl
-             << "   Bringing up type system" << endl
+             << "   Bringing up type system"    << endl
              << "=============================" << endl;
 
     logger::debug() << "Getting safe_card64table_mod...";
@@ -439,7 +440,7 @@ init(bootimage_t& bootimg)
 
     /* Build initial name space */
     kconsole << "=================================" << endl
-             << "   Building initial name space" << endl
+             << "   Building initial name space"    << endl
              << "=================================" << endl;
 
     /* Build root context */
@@ -766,7 +767,7 @@ start_root_domain(bootimage_t& bootimg)
 #endif
 
     kconsole << "=================================" << endl
-             << "   Initialising domain manager" << endl
+             << "   Initialising domain manager"    << endl
              << "=================================" << endl;
 #if 0
     domain_manager_factory_v1::closure_t* dmm = CONTEXT_FIND("Modules.DomainManagerFactory", domain_manager_factory_v1);
@@ -778,7 +779,7 @@ start_root_domain(bootimage_t& bootimg)
     root->add("System.DomainManager", closure_to_any(dommgr, domain_manager_v1::type_code));
 #endif
     kconsole << "===========================" << endl
-             << "   Creating first domain" << endl
+             << "   Creating first domain"    << endl
              << "===========================" << endl;
 
     /**
