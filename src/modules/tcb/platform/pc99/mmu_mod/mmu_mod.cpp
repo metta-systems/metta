@@ -41,9 +41,9 @@ struct ramtab_entry_t
 
 struct pdom_st
 {
-    uint16_t               refcnt;  /* reference count on this pdom    */
-    uint16_t               gen;     /* current generation of this pdom */
-    stretch_v1::closure_t* stretch; /* handle on stretch (for destroy) */
+    uint16_t               refcnt;  /* Reference count on this pdom    */
+    uint16_t               gen;     /* Current generation of this pdom */
+    stretch_v1::closure_t* stretch; /* Handle on stretch (for destroy) */
 };
 
 struct pdom_t
@@ -87,20 +87,20 @@ struct mmu_v1::state_t
 
 //    uint32_t              n_frames;//FIXME: UNUSED!!?!
 
-    address_t             l1_mapping_virt; /* virtual  address of l1 page table */
-    address_t             l1_mapping_phys; /* physical address of l1 page table */
+    address_t             l1_mapping_virt; /* Virtual  address of l1 page table */
+    address_t             l1_mapping_phys; /* Physical address of l1 page table */
 
-    address_t             l2_virt;   /* virtual  address of l2 array base */
-    address_t             l2_phys;   /* physical address of l2 array base */
+    address_t             l2_virt;         /* Virtual  address of l2 array base */
+    address_t             l2_phys;         /* Physical address of l2 array base */
 
-    address_t             l1_virt_virt; /* virtual address of l2 PtoV table  */
+    address_t             l1_virt_virt;    /* Virtual address of l2 PtoV table  */
 
-    ramtab_entry_t*       ramtab;      /* base of ram table            */
-    size_t                ramtab_size; /* size of ram table            */
+    ramtab_entry_t*       ramtab;          /* Base of ram table                 */
+    size_t                ramtab_size;     /* Size of ram table                 */
 
-    uint32_t              l2_max;   /* index of the last available chunk   */
-    uint32_t              l2_next;  /* index of first potential free chunk */
-    l2_info               info[0];  /* free/used L2 info; actually l2_max entries   */
+    uint32_t              l2_max;          /* Index of the last available chunk   */
+    uint32_t              l2_next;         /* Index of first potential free chunk */
+    l2_info               info[0];         /* Free/used L2 info; actually l2_max entries */
 };
 
 //======================================================================================================================
