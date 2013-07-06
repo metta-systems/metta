@@ -113,5 +113,5 @@ address_t mbi_prepare()
         PANIC("Invalid root_domain ELF image!");
 
     // Return bootstrapper's entry point address.
-    return (address_t)bi->modules().load_module("root_domain", elf, "module_entry");
+    return (address_t)bi->modules().load_module("root_domain", elf2, "module_entry");
 }
