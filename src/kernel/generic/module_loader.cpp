@@ -288,7 +288,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             PANIC("UNSUPPORTED");
         }
 
-        symbol_table_finder_t finder(out_mod->entry.load_base, reinterpret_cast<elf32::section_header_t*>(out_mod->entry.symtab_start), reinterpret_cast<elf32::section_header_t*>(out_mod->entry.strtab_start));
+        symbol_table_finder_t finder(out_mod->entry.load_base,
+            reinterpret_cast<elf32::section_header_t*>(out_mod->entry.symtab_start),
+            reinterpret_cast<elf32::section_header_t*>(out_mod->entry.strtab_start));
 
         address_t symbol = finder.find_symbol(closure_name);
         address_t entry = reinterpret_cast<address_t>(*(void**)(symbol));
@@ -372,8 +374,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
         {
             if (sh.flags & SHF_ALLOC)
             {
-                if (sh.vaddr == 0)
+                if (sh.vaddr == 0) {
                     sh.vaddr = section_base + section_offset;
+                }
                 else
                 {
                     // Sometimes relocatable section vaddr is non-zero and I'm utterly confused as to what this
@@ -415,8 +418,9 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
                     memutils::copy_memory(sh.vaddr, module.start() + sh.offset, sh.size);
                 }
                 // Adjust module end address.
-                if (sh.vaddr + sh.size > *d_last_available_address)
+                if (sh.vaddr + sh.size > *d_last_available_address) {
                     *d_last_available_address = sh.vaddr + sh.size;
+                }
             }
         });
 
