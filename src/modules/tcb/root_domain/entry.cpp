@@ -11,7 +11,7 @@
 #include "any.h"
 #include "macros.h"
 #include "c++ctors.h"
-#include "root_domain.h"
+#include "bootimage.h"
 #include "bootinfo.h"
 #include "elf_parser.h"
 #include "debugger.h"

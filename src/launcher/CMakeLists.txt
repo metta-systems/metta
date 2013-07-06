@@ -22,7 +22,6 @@ add_component(launcher
     pc99/loader-multiboot.cpp
     pc99/multiboot-ia32.cpp
     loader.cpp
-    ../modules/tcb/root_domain/root_domain.cpp
     x86/startup.cpp
     ../kernel/arch/x86/bootinfo.cpp
     ../kernel/arch/x86/continuation.nasm

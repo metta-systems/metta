@@ -16,7 +16,6 @@
 #include "debugger.h"
 #include "module_loader.h"
 #include "bootimage.h"
-#include "root_domain.h"
 
 /**
  * Check if a valid multiboot info structure is present.
@@ -77,7 +76,7 @@ extern "C" void arch_prepare();
  * - ELF-load the proper nucleus module.
  * - initialize it and mark memory as used.
  * - ELF-load the root-domain bootstrapper.
- * - return entry point of root-domain kick-off sequence. -- TODO, this means root_domain starts in ring0, we better launch it in ring3 directly. - launch_kernel() may switch to ring3
+ * - return entry point of root-domain kick-off sequence. root-domain will run in ring3.
  * @return entry point for the kernel.
  */
 address_t mbi_prepare()
@@ -97,16 +96,22 @@ address_t mbi_prepare()
     }
 
     bootimage_t bootimage(name, start, end);
-    // bootimage_t bootimage(mbi->module(0)->mod_start);
 
     // Load and relocate nucleus.
     elf_parser_t elf(bootimage.find_module("nucleus").start);
+    if (!elf.is_valid())
+        PANIC("Invalid nucleus ELF image!");
     void (*nucleus_init)() = reinterpret_cast<void (*)()>(bi->modules().load_module("nucleus", elf, "nucleus_init"));
     nucleus_init();
 
     // Load and relocate root domain bootstrapper.
-    root_domain_t root_dom(bootimage);
+    bootimage_t::modinfo_t mi = bootimage.find_root_domain(0);
+    kconsole << "Root domain at " << (unsigned)mi.start << ", size " << int(mi.size) << " bytes." << endl;
+
+    elf_parser_t elf2(mi.start);
+    if (!elf2.is_valid())
+        PANIC("Invalid root_domain ELF image!");
 
     // Return bootstrapper's entry point address.
-    return root_dom.entry();
+    return (address_t)bi->modules().load_module("root_domain", elf, "module_entry");
 }
