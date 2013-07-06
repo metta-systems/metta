@@ -1,6 +1,0 @@
-tests = bld.new_task_gen('cxx', 'program')
-tests.find_sources_in_dirs('.')
-tests.includes = '../lib'
-tests.env = bld.env_of_name('TEST_ENV').copy()
-tests.uselib = 'TEST'
-tests.target = 'run-tests'
