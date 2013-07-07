@@ -104,17 +104,17 @@ First stage loader: /kickstart
 
 Starts in protected mode, linear addresses equal physical, paging is off.
 
-GRUB (or other bootloader)
-+--loader
-   +--setup stack
-   +--find modules in bootimage - nucleus and root_domain
-   +--loader->prepare()
-      +--create bootpage
-      +--relocate nucleus binary
-      +--perform privileged nucleus initialization (interrupt and exception handlers)
-      +--relocate root_domain binary
-      +--obtain root_domain entry point address
-   +--run root_domain entry point in ring3
+    GRUB (or other bootloader)
+    +--loader
+       +--setup stack
+       +--find modules in bootimage - nucleus and root_domain
+       +--loader->prepare()
+          +--create bootpage
+          +--relocate nucleus binary
+          +--perform privileged nucleus initialization (interrupt and exception handlers)
+          +--relocate root_domain binary
+          +--obtain root_domain entry point address
+       +--run root_domain entry point in ring3
 
 First stage loader does not allocate any memory, except the bootpage at a fixed memory address, which can later be freed or put into memory map.
 
@@ -173,27 +173,27 @@ Physical memory layout during kickstart:
 Glue code: syscalls
 -------------------
 
-Available Nemesis syscalls to glue code:
+    Available Nemesis syscalls to glue code:
 
-  privileged:
-    ntsc_swpipl        // Change interrupt priority level.
-    ntsc_entkern       // Enter kernel mode.
-    ntsc_leavekern     // Leave kernel mode.
-    ntsc_kevent        // Send an event from an interrupt stub.
-    ntsc_rti           // Return from an interrupt stub.
+      privileged:
+        ntsc_swpipl        // Change interrupt priority level.
+        ntsc_entkern       // Enter kernel mode.
+        ntsc_leavekern     // Leave kernel mode.
+        ntsc_kevent        // Send an event from an interrupt stub.
+        ntsc_rti           // Return from an interrupt stub.
 
-Syscalls for metta glue:
+    Syscalls for metta glue:
 
-  privileged:
-    ??sc_activate(vcpu_t*)  Activate a process
+      privileged:
+        ??sc_activate(vcpu_t*)  Activate a process
 
-  unprivileged:
-    sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
-    sc_return_resume(context_t*) Return from activation, resuming passed context.
-    sc_return_block()  Return from activation and block.
-    sc_block()         Block awaiting an event.
-    sc_yield()         Relinquish CPU allocation for this period.
-    sc_send(int n, uint64_t event)      Send an event.
+      unprivileged:
+        sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
+        sc_return_resume(context_t*) Return from activation, resuming passed context.
+        sc_return_block()  Return from activation and block.
+        sc_block()         Block awaiting an event.
+        sc_yield()         Relinquish CPU allocation for this period.
+        sc_send(int n, uint64_t event)      Send an event.
 
 
 Applications: startup
@@ -201,39 +201,34 @@ Applications: startup
 
 From the starting application process viewpoint:
 
-- load application code and data
-- read library dependencies
-- for missing libraries, load them and their dependencies
-- link calls from app to used libraries
+ * load application code and data
+ * read library dependencies
+ * for missing libraries, load them and their dependencies
+ * link calls from app to used libraries
 
 
 Library viewpoint:
-- library implements a component interface
-- this means per-client data is allocated by calling constructors of the interface
-- libraries which do not have per-client data may implement interfaces directly, but i presume this is rare.
+ * library implements a component interface
+ * this means per-client data is allocated by calling constructors of the interface
+ * libraries which do not have per-client data may implement interfaces directly, but i presume this is rare.
 
 A typical application:
-- load trader library
-- load memory library
-- instantiate trader interface
-- instantiate memory interface
-- allocate something
-- use trader to locate a peer
-- instantiate a peer interface
-- send something to peer via interface instance
-
-
-
---------8<--------imaginary cut line--------8<--------do not cross-------->8--------imaginary cut line-------->8--------
+ * load trader library
+ * load memory library
+ * instantiate trader interface
+ * instantiate memory interface
+ * allocate something
+ * use trader to locate a peer
+ * instantiate a peer interface
+ * send something to peer via interface instance
 
 ----
 All Oberon needs is Single Level Storage (SLS); another innovative feature of the System i5.
 There is a "Persistent Oberon" variant that offers an SLS-like framework for those people that want to explore that avenue.
 
 Oberon the language allows direct manipulation of the hardware registers, so Oberon the OS is written entirely in a high-level language, without the need for assembly code.
+
 ----
-
-
 Device drivers usually run in userspace and are coupled with interrupt handlers - usually implemented inside the same driver and simply waiting on an interrupt semaphore. Drivers communicate using the same portals, generated from interface definition files. Usually there is a rich interface defined, not only get bytes/send bytes but much more semantic information is being maintained by either a driver or an abstraction level above
 it about what is going on and why. This allows drivers to make much more educated decisions about, for example, read-ahead strategy to use for particular clients. This makes things a bit more complicated to implement, but in reality there will be some sort of more abstract and user-task-oriented metadriver just above more dumb and hardware-oriented "executive drivers".
 There are some system components, like security server, that implement trusted computing base and maintain overall integrity of the system. In case of dynamic reconfiguration and continuous upgrades this is vital. Hotswapping of components would be highly desirable to have, although at this point this is not planned at all.
