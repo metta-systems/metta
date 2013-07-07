@@ -19,14 +19,6 @@ Try and have separate ABI and APIs for the kernel, much better for portability a
 
 ----------------------------------------------------------------------
 
-/*
- * The Pentium Pro and later support global PDE/PTE entries,
- * which are not removed from the TLB when we switch tasks.
- */
-pmap_global_ext = (base_cpuid.feature_flags & CPUF_PAGE_GLOBAL_EXT) ? INTEL_PTE_GLOBAL : 0;
-
-----------------------------------------------------------------------
-
 When you send multiple or big files to someone, they will be transparently compressed into a vxa archive with decoder
 for recipient's architecture(s) embedded, and then transparently uncompressed at the receiving side.
 
