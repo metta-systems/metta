@@ -138,16 +138,29 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 
     /* Map stretches over the boot image */
 
+//
+// code - loaded module sections, read only, execute, global
+// data - loaded module data and bss, read/write, maybe only bss writable
+// data - info pages, bootinfo page? and framebuffers, read/write
+// metadata - module string and symbol tables, read-only, only for root domain
+//
+// no need to map original unloaded modules.
+// 
+// Should use module_loader module map and map with appropriate rights
+// for text (RX), rodata(R), and bss (RW)...
+//
+
     // map nucleus code
 
     // map over loaded modules
-    /// @todo Should use module_loader module map and map with appropriate rights for text (RX), rodata(R), and bss (RW)...
-                // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
-                //                      mod->addr, mod->size));
-                // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
-                //                              (addr_t)mod->addr,
-                //                              0, PAGE_WIDTH, NULL);
-                // ASSERT_ADDRESS(str, mod->addr);
+    /// @todo Should use module_loader module map and map with appropriate rights
+    // for text (RX), rodata(R), and bss (RW)...
+
+    // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n", mod->addr, mod->size));
+    // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
+    //                              (addr_t)mod->addr,
+    //                              0, PAGE_WIDTH, NULL);
+    // ASSERT_ADDRESS(str, mod->addr);
 #if 0
     /* Intialise the pdom map to zero */
     for (map_index=0; map_index < MAP_SIZE; map_index++) {
@@ -452,10 +465,10 @@ init(bootimage_t& bootimg)
     ASSERT(root);
     PVS(root)  = root;
 
-#if 0
-@todo implement iterator and module_loader::begin()/end()
     kconsole << "Modules, ";
     {
+#if 0
+@todo implement iterator and module_loader::begin()/end()
         auto module_context = context_factory->create_context(PVS(heap), PVS(types));
 
         // At the moment this conversion is largely manual, need to invent some template magic
@@ -469,8 +482,8 @@ init(bootimage_t& bootimg)
             kconsole << module.name << " module any is " << *v << endl;
             module_context->add(module.name, *v);
         }
-    }
 #endif
+    }
 
 #if 0
     kconsole <<  "proc, ";
