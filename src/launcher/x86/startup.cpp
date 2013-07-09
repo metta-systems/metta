@@ -198,7 +198,7 @@ extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 /**
  * Get the system going.
  *
- * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.
+ * Prepare all system-specific structures and initialise BP and APs.
  *
  * @todo Relate Pistachio SMP startup routines here.
  */
