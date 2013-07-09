@@ -137,7 +137,7 @@ public:
 
 public:
     bootinfo_t(bool create_new = false);
-    inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
+    inline bool is_valid() const { return (magic == BI_MAGIC) and (size() <= PAGE_SIZE); }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
     inline bool will_overflow(size_t add_size)
