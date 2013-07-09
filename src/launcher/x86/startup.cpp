@@ -218,8 +218,8 @@ extern "C" void arch_prepare()
     
     // TODO: CREATE INITIAL MEMORY MAPPINGS PROPERLY HERE
     // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
-//    int ramtop = 16*MiB;
-    bi->append_vmap(0, 0, 32*MiB);//min(16*MiB, ramtop));
+    int ramtop = 32*MiB;
+    bi->append_vmap(0, 0, ramtop);
 
     // @todo Timer interrupt should be enabled by the scheduler module once it installs the timer IRQ handler...
     // timer_v1::closure_t* timer = init_timer();
