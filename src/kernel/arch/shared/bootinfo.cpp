@@ -586,7 +586,7 @@ void bootinfo_t::print_memory_map()
     for (auto it = mmap_begin(); it != mmap_end(); ++it)
     {
         auto i = (*it);
-        kconsole << "Start: " << i->start() << ", end: " << i->end() << ", size: " << i->size() << ", type: " << i->type() << " (" << type_to_text(i->type()) << ")" << endl;
+        kconsole << "Range: [" << i->start() << ", " << i->end() << "], size: " << i->size() << ", type: " << i->type() << " (" << type_to_text(i->type()) << ")" << endl;
     }
     kconsole << "===============================" << endl;
 }
