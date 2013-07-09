@@ -419,7 +419,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
         if (!e->is_free() || (e->start() < LOWER_BOUND))
             return;
 
-        logger::debug() << "Parsing free highmem range [" << e->start() << ".." << e->end() << ")";
+        logger::trace() << "Parsing free highmem range [" << e->start() << ".." << e->end() << ")";
         range.set(e->start(), e->size());
 
         std::for_each(mmap_begin(), mmap_end(), [&range, this](const multiboot_t::mmap_entry_t* f)
@@ -465,7 +465,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
             first_range = range.start();
 
     });
-    logger::debug() << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range;
+    logger::trace() << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range;
     return first_range;
 }
 

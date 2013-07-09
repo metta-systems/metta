@@ -855,6 +855,8 @@ extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 
+    logger::logging::set_verbosity(logger::logging::debug_level); // meh, too deep nested names :/
+
     kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl << endl;
 
     logger::debug() << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl;
@@ -874,9 +876,6 @@ extern "C" void module_entry()
     bootimage_t bootimage(name, start, end);
 
     INFO_PAGE.pervasives = &pervasives;
-
-    // meh, too deep nested :/
-    logger::logging::set_verbosity(logger::logging::debug_level);
 
     init(bootimage);
     start_root_domain(bootimage);
