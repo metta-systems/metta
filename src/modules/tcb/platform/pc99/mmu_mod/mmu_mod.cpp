@@ -833,6 +833,9 @@ static void enter_mappings(mmu_v1::state_t* state)
 static mmu_v1::closure_t*
 mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
 {
+    // TODO: stuff that might be consuming too much time is marked with //--
+    // check and clean it up if possible.
+
     kconsole << "==========================" << endl
              << "   mmu_module_v1.create" << endl
              << "==========================" << endl;
@@ -849,12 +852,12 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     size_t max_ramtab_entries = 0;
     size_t i;
 
-    mmu_memory_needed_bytes = memory_required(bi, n_l2_tables);
+    mmu_memory_needed_bytes = memory_required(bi, n_l2_tables); //--
     mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t ramtab_offset = mmu_memory_needed_bytes;
 
-    mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries);
+    mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries); //--
     mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t l2_tables_offset = mmu_memory_needed_bytes;
@@ -886,7 +889,7 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     logger::debug() << "mmu_module_v1: L1 phys table at va=" << state->l1_mapping_virt << ", pa=" << state->l1_mapping_phys << ", virt table at va=" << state->l1_virt_virt;
 
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
-    for(i = 0; i < N_L1_TABLES; i++)
+    for(i = 0; i < N_L1_TABLES; i++) //--
     {
         state->l1_mapping[i] = 0;
         state->l1_virt[i] = 0;
@@ -897,7 +900,7 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     // Initialise the ram table; it follows the state record immediately.
     state->ramtab_size = max_ramtab_entries;
     state->ramtab = reinterpret_cast<ramtab_entry_t*>(first_range + ramtab_offset);
-    memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t));
+    memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t)); //--
 
     closure_init(&state->ramtab_closure, &ramtab_v1_methods, reinterpret_cast<ramtab_v1::state_t*>(first_range));
     *ramtab = &state->ramtab_closure;
@@ -906,7 +909,7 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
 
     // Initialise the protection domain tables
     state->next_pdidx = 0;
-    for(i = 0; i < PDIDX_MAX; i++)
+    for(i = 0; i < PDIDX_MAX; i++) //--
     {
         state->pdom_tbl[i] = NULL;
         state->pdominfo[i].refcnt  = 0;
@@ -931,14 +934,14 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     logger::debug() << "mmu_module_v1: " << int(state->l2_max) << " L2 tables at va=" << state->l2_virt << ", pa=" << state->l2_phys;
 
     state->l2_next = 0;
-    for(i = 0; i < state->l2_max; i++)
+    for(i = 0; i < state->l2_max; i++) //--
         state->info[i] = L2FREE;
 
     // Enter mappings for all the existing translations.
     // This call uses mappings in bootinfo_page,
     // so we need to set them up sooner or call enter_mappings() later,
     // maybe in Done or Engage?
-    enter_mappings(state);
+    enter_mappings(state); //--
 
     // Swap over to our new page table!
     logger::debug() << "mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys;
