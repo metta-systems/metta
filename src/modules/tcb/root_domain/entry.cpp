@@ -853,6 +853,11 @@ start_root_domain(bootimage_t& bootimg)
     kconsole << " + Activating root domain" << endl;
     nucleus::activate_domain(DCB_RO(vp), ::activation_reason_allocated);
 */
+
+    // Print final memory map for debug.
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+    bi->print_memory_map();
+
     PANIC("root_domain entry returned! IT'S OK STILL, NO WORRIES");
 }
 
