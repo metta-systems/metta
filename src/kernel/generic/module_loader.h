@@ -45,8 +45,10 @@ public:
     struct module_entry
     {
         const char* name;       // pointer to a const string in the internal module_descriptor_t
-        address_t load_base;    // start of module, symbol lookup address base.
-        size_t    loaded_size;  // size of loaded module, start to end, including 
+        address_t load_base;    // start of module, symbol lookup address base. [code_start]
+        size_t    loaded_size;  // size of loaded module, start to end, including:
+        address_t data_start;
+        address_t bss_start;
         address_t entry_point;  // main() entry point address.
         address_t symtab_start; // address of symbol table for lookups
         address_t strtab_start; // address of string table for name lookups
