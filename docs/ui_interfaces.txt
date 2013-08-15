@@ -1,0 +1,5 @@
+interface brush_v1
+
+brush interface provides way to paint a graphical area with color, gradient, texture or any other custom paint method.
+
+paint(graphics g, area a, options o);
