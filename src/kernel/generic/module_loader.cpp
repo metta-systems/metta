@@ -17,8 +17,20 @@
 #include "fourcc.h"
 #include "infopage.h"
 #include "bootinfo.h" // for print_module_map()
-// #include "exceptions.h"
 #include "symbol_table_finder.h"
+
+// Actions of module loader:
+// Load elf file
+// Find module_depends in symbols. Parse it.
+// Check that all modules in depends list are already loaded, if not, append them to list
+// of modules to load.
+//
+// Load code, data+bss and metadata page aligned with different rights; prepare vmem info
+// Resolve undefined symbols against kernel symbol table - use linker for that
+// Record exported symbols into kernel symbol table - use linker for that
+
+
+
 
 /**
  * @class module_loader_t
@@ -115,7 +127,8 @@ void print_module_map()
     kconsole << "**********************************" << endl;
 }
 
-static bool module_already_loaded(address_t from, cstring_t name, module_descriptor_t*& out_mod)
+static bool
+module_already_loaded(address_t from, cstring_t name, module_descriptor_t*& out_mod)
 {
     module_descriptor_t* module = reinterpret_cast<module_descriptor_t*>(from - sizeof(module_descriptor_t));
     while (module)

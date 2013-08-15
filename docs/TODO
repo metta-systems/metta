@@ -8,6 +8,47 @@ Module loader:
  ☐ stuff like console and debug logger should be loadable modules so that other components link to the shared instance.
  ☐ can be instantiated early in kickstart and entered into pervasives? PVS(logger), PVS(console) e.g.
 
+Collect symbols from each module symbol table into kernel symtab, each symbol already loaded referencing a module it is from.
+Use linker to merge symbols with missing definitions, export defined symbols.
+
+
+module_descriptor_t {
+  list<module_descriptor_t> dependencies; // we resolve symbols from these modules
+  symtab exported_symbols; // export only non-local (external) symbols 
+}
+
+// this should be possible to automate...
+BEGIN_MODULE_DEPENDS // defines module_depends symbol as an array
+MODULE_DEPENDS_ON(hashtables_mod) // this defines a list of modules to look through
+MODULE_DEPENDS_ON(heap_mod)          // done only to save time from looking in all the modules - is it needed?
+// actually, this also manually builds module dependency tree to give some total order
+END_MODULE_DEPENDS // null-terminates the array
+
+load_module():
+  (from linux kernel module howto from http://download.boulder.ibm.com/ibmdl/pub/software/dw/linux/l-lkm/l-lkm-pdf.pdf)
+   load module file in memory (done automatically by grub on startup)
+   ELF sanity checks
+   find module options (cmdline)
+   MODULE_STATE_COMING
+   allocate per-cpu sections
+   perform relocations
+   resolve external symbols
+   flush i-cache
+   notify module list listeners
+   call module_init()
+   MODULE_STATE_LIVE
+unload_module():
+   MODULE_STATE_GOING
+   call module_exit()
+   MODULE_STATE_GONE
+
+struct kernel_symbol_t {
+  unsigned long value;
+  const char *name;// need sect ref + strtab ptr?
+  unsigned long hash_value;
+};
+
+
 Cleanups:
  ☐ move types__intf_typeinfo to types::intf_typeinfo etc because of namespace linking issues
  ☐ all non-pub types should be inside namespace types { namespace { } } perhaps

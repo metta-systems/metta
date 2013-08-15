@@ -105,7 +105,7 @@ set(TOOLS_LINK_FLAGS "-O4")
 # TODO: change -isysroot for kernel mode...
 set(KERNEL_CXX_FLAGS "-target i686-pc-elf -m32 -integrated-as -ffreestanding -O0 -g -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -ffunction-sections -fdata-sections -fno-stack-protector -fno-strict-aliasing -fno-rtti -fno-exceptions") # -mno-red-zone -nostdinc
 set(KERNEL_DEFINES -D__Metta__=1 -D_LIBCPP_NO_IOSTREAMS=1 -D_LIBCPP_NO_WCHAR=1 -D_LIBCPP_NO_EXCEPTIONS=1 -DBOCHS_IO_HACKS=1)
-set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib")
+set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib -Wl,--hash-style=gnu")
 
 # Make necessary preparations to switch environment for host build.
 macro(set_build_for_host)

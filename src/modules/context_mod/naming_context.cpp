@@ -342,3 +342,6 @@ static naming_context_factory_v1::closure_t clos =
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(naming_context_factory, v1, clos);
+BEGIN_MODULE_DEPENDS
+MODULE_DEPENDS_ON(heap_mod)
+END_MODULE_DEPENDS
