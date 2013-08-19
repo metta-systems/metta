@@ -1,3 +1,5 @@
+@sa http://kentonv.github.io/capnproto/language.html#interfaces for RPC protocol description.
+
 // autodoc comments should be spilled into generated _interface.h or _interface.cpp files and then processed by doxygen?
 // also, autodoc comments should be entered into the typedefs descriptions table, so that tools like Monger could display it as inline docs.
 
