@@ -1,7 +1,7 @@
 ![Metta OS](https://raw.github.com/berkus/metta/master/docs/metta.png)
 
 Metta is a multimedia, mobile, social OS
-========================================
+=====================================
 
 My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at http://exocortex.madfire.net.
 
@@ -21,7 +21,9 @@ To build Metta
 ```
 
 Sources will be checked out into branch "develop" under "Metta". This extra umbrella directory is needed because toolchain builder will create Metta/toolchain for the local toolchain it builds.
-1. Install dependencies 
+
+1. Install dependencies
+
   * yasm assembler, `brew install yasm` for example.
   * boost, `brew install boost`
   * OSSP uuid implementation, `brew install ossp-uuid`
@@ -35,6 +37,7 @@ All dependencies in one command:
 ```
  $ brew install yasm boost ossp-uuid openssl cdrtools cmake ninja bochs
 ```
+
 2. Generate a toolchain.
 
 ```
@@ -51,12 +54,14 @@ If you're unable to build toolchain locally and are on a (post-) Lion Mac, downl
  $ wget http://downloads.exquance.com/toolchain-x86_64-darwin.tar.bz2
  $ tar xf toolchain-x86_64-darwin.tar.bz2
 ```
+
 3. Build Metta
 
 ```
  $ cd Metta/develop/src
  $ sh buildit.sh
 ```
+
 4. After successful build run emulator software to try out Metta.
 
 src directory is preconfigured for using Bochs, so you can simply type:
@@ -67,5 +72,5 @@ src directory is preconfigured for using Bochs, so you can simply type:
 
 -----------------------------------------
 
-You are free to contribute and remember: if you don't, somebody else will!
+You are free to contribute and remember: if you do not, somebody else will!
 Just send a pull request on github.
