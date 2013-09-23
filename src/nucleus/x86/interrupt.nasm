@@ -9,6 +9,18 @@
 extern isr_handler    ; in isr.cpp
 extern irq_handler
 
+; align 16
+; isr00:
+;     pusha
+;     call    INT_00_IN_C
+;     popa
+;     iretd
+; 
+; void INT_00_IN_C (void) {
+;     kprintf ("INT00 : #DE Divide Error Exception.\n");
+;     ...
+; }
+
 %macro ISR_NOERRCODE 1
 global isr%1
 isr%1:
