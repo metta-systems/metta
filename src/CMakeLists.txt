@@ -81,9 +81,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tools/mkbootimg/menu.lst.in ${CMAKE_C
 # Set compiler flags.
 #============================
 
-# Limit available path for clang to find proper cross-gcc
-set(GCC_PATH ${CMAKE_SOURCE_DIR}/../../toolchain/gcc)
-
 # Flags common for host and kernel environments.
 
 # -Wdocumentation not yet enabled - need to clean up llvm source (git pull fresher copy?)
@@ -105,7 +102,7 @@ set(TOOLS_LINK_FLAGS "-O4")
 # TODO: change -isysroot for kernel mode...
 set(KERNEL_CXX_FLAGS "-target i686-pc-elf -m32 -integrated-as -ffreestanding -O0 -g -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -ffunction-sections -fdata-sections -fno-stack-protector -fno-strict-aliasing -fno-rtti -fno-exceptions") # -mno-red-zone -nostdinc
 set(KERNEL_DEFINES -D__Metta__=1 -D_LIBCPP_NO_IOSTREAMS=1 -D_LIBCPP_NO_WCHAR=1 -D_LIBCPP_NO_EXCEPTIONS=1 -DBOCHS_IO_HACKS=1)
-set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib")
+#set(KERNEL_LINK_FLAGS "-target i686-pc-elf -nostdlib")
 
 # Make necessary preparations to switch environment for host build.
 macro(set_build_for_host)
@@ -123,7 +120,6 @@ macro(set_build_for_target)
 	include_directories(${CMAKE_SOURCE_DIR}/kernel/platform/${PLATFORM})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${KERNEL_CXX_FLAGS}")
 	add_definitions(${KERNEL_DEFINES})
-#	set(CMAKE_EXE_LINKER_FLAGS "-gnu-toolchain ${GCC_PATH} ${CMAKE_EXE_LINKER_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${KERNEL_LINK_FLAGS}")
 endmacro()
 
@@ -154,7 +150,8 @@ macro(add_component name)
         endif (AC_LINK_SCRIPT)
 	    set(_link_flags "${_link_flags} -Wl,-Map,${name}.map")
     endif ()
-    set_property(TARGET ${name} PROPERTY LINK_FLAGS ${_link_flags})
+    get_property(all_link_flags TARGET ${name} PROPERTY LINK_FLAGS)
+    set_property(TARGET ${name} PROPERTY LINK_FLAGS "${all_link_flags} ${_link_flags}")
     set(all_init_components "${all_init_components};${name}" PARENT_SCOPE)
 endmacro()
 
@@ -199,8 +196,14 @@ else()
 # Generate system files.
 #==============================================================================
 
-set(CMAKE_AR ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ar)
-set(CMAKE_RANLIB ${CMAKE_SOURCE_DIR}/../../toolchain/gcc/i686-pc-elf/bin/ranlib)
+set(CMAKE_AR ${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/llvm-ar)
+set(CMAKE_RANLIB true)
+SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> rs <TARGET> <LINK_FLAGS> <OBJECTS>")
+SET(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> rs <TARGET> <LINK_FLAGS> <OBJECTS>")
+
+set(_linker "${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/lld -flavor gnu <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES>")
+set(CMAKE_C_LINK_EXECUTABLE "${_linker}")
+set(CMAKE_CXX_LINK_EXECUTABLE "${_linker}")
 
 include_directories(runtime/libc)
 add_definitions(-D__STDC_HOSTED__=0)
@@ -235,6 +238,3 @@ add_custom_target(metta ALL
 
 endif()
 
-# TODO: need to force binary PATH to force clang to find proper gcc toolchain, like
-# set -x PATH /Users/berkus/Hobby/Metta/toolchain/gcc/bin /usr/bin /bin /usr/sbin /sbin /usr/local/bin
-# Find a way to make it automatic... via cmake command?
