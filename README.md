@@ -1,4 +1,6 @@
-atta-metta - the selfish kindness
-=================================
+metta
+=====
 
-Website for Metta OS and related MettaNode, SSU and peer-to-peer routing technologies.
+Metta wiki redirect.
+
+Maybe redirect to [atta-metta](http://atta-metta.github.io) later?
