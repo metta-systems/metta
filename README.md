@@ -76,3 +76,5 @@ You are free to contribute and remember: if you do not, somebody else will!
 Just send a pull request on github.
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/berkus/metta/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
+[Build & test status dashboard](https://github.com/berkus/metta/wiki/Dashboard)
