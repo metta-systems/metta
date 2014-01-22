@@ -1,5 +1,5 @@
 Thread
-{{
+```
 fluke_thread_create
 fluke_thread_create_hash
 fluke_thread_destroy [cannot destroy itself]
@@ -21,10 +21,10 @@ fluke_thread_set_saved_state [itself]
 fluke_thread_set_server [preliminary iface][itself]
 fluke_thread_set_state [cannot call on itself]
 fluke_thread_schedule  [cannot call on itself] // donate cpu to another thread
-}}
+```
 
 Task
-{{
+```
 fluke_task_create
 fluke_task_create_hash
 fluke_task_destroy
@@ -32,10 +32,10 @@ fluke_task_get_state
 fluke_task_move
 fluke_task_reference
 fluke_task_set_state
-}}
+```
 
 Region
-{{
+```
 fluke_region_create
 fluke_region_create_hash
 fluke_region_destroy
@@ -45,10 +45,10 @@ fluke_region_protect
 fluke_region_reference
 fluke_region_search [can search in other tasks]
 fluke_region_set_state
-}}
+```
 
 Mapping
-{{
+```
 fluke_mapping_create
 fluke_mapping_create_hash
 fluke_mapping_destroy
@@ -57,10 +57,10 @@ fluke_mapping_move
 fluke_mapping_protect
 fluke_mapping_reference
 fluke_mapping_set_state
-}}
+```
 
 Port // Fluke IPC endpoints
-{{
+```
 fluke_port_create
 fluke_port_create_hash
 fluke_port_destroy
@@ -68,10 +68,10 @@ fluke_port_get_state
 fluke_port_move
 fluke_port_reference
 fluke_port_set_state
-}}
+```
 
 Port set
-{{
+```
 fluke_pset_create
 fluke_pset_create_hash
 fluke_pset_destroy
@@ -79,10 +79,10 @@ fluke_pset_get_state
 fluke_pset_move
 fluke_pset_reference
 fluke_pset_set_state
-}}
+```
 
 IPC // C interface, not directly mapped to kernel API
-{{
+```
 fluke_ipc_call // syncronous idempotent call
 fluke_ipc_client_connect_send // create a reliable connection to a server
 fluke_ipc_client_connect_send_over_receive // perform a reliable IPC to a server (client_{connect_send+over_receive})
@@ -109,10 +109,10 @@ fluke_ipc_server_send
 fluke_ipc_client_send_over_receive // send a message on a reliable IPC connection and reverse the connection
 fluke_ipc_server_send_over_receive
 fluke_ipc_wait_receive // wait on a port set for incoming IPC invocations
-}}
+```
 
 Mutex
-{{
+```
 fluke_mutex_create
 fluke_mutex_create_hash
 fluke_mutex_destroy
@@ -123,10 +123,10 @@ fluke_mutex_reference
 fluke_mutex_set_state
 fluke_mutex_trylock
 fluke_mutex_unlock
-}}
+```
 
 Condition
-{{
+```
 fluke_cond_broadcast
 fluke_cond_create
 fluke_cond_create_hash
@@ -137,10 +137,10 @@ fluke_cond_reference
 fluke_cond_set_state
 fluke_cond_signal
 fluke_cond_wait
-}}
+```
 
 Reference
-{{
+```
 fluke_ref_check
 fluke_ref_compare
 fluke_ref_copy
@@ -149,7 +149,7 @@ fluke_ref_destroy
 fluke_ref_hash
 fluke_ref_move
 fluke_ref_type
-}}
+```
 
 
 
