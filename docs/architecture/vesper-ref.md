@@ -1,10 +1,10 @@
-nucleus_t:
+**nucleus_t**
   - domain traversal supported.
 
-domain_t: // (@sa Pebble's domain_fork)
+**domain_t** // (@sa Pebble's domain_fork)
   - contains a portal_table with indexes into available portals as means of crossing domain boundaries
 
-scheduler_t (server):
+**scheduler_t (server)**
   - thread management,
   - blocks and switches threads,
   - not really privileged, other than having interrupts disabled during execution in some implementations,
@@ -16,10 +16,10 @@ scheduler_t (server):
 
       `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
 
-interrupt_dispatcher_t (server):
+**interrupt_dispatcher_t (server)**
   - abstracts interrupt handling on particular architecture by translating interrupts to portals.
 
-thread_t: // thread abstraction inside scheduler_t
+**thread_t** // thread abstraction inside scheduler_t
 ```cpp
     thread_t
     {
@@ -31,25 +31,25 @@ thread_t: // thread abstraction inside scheduler_t
 ```
     @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
 
-portal_t: // a portal abstraction used inside the kernel to generate, optimize and address portals
+**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
 
-portal_manager_t (server):
+**portal_manager_t (server)**
   - space traversal routines (portals) generation,
   - privileged server, has access to spaces in order to add/remove portals to portal_table.
 
-vm_server_t (server):
+**vm_server_t (server)**
   - serves paged memory to apps,
   - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
   - can map/grant/unmap memory pages upon request (via regions and mappings).
 
-trader_t (server):
+**trader_t (server)**
   - allocates portal IDs for clients
   - lets clients find portal IDs by interface specification
     * adopt sort of dbus-like portal spec with service,interface,method triplet.
   - 0-65535 are system wide portal IDs (available in all PDs).
   - 65536 and above are per-process portal IDs.
 
-security_server_t (server):
+**security_server_t (server)**
   - controls who has access where.
   - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
     security information.
