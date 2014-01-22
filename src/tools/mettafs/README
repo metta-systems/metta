@@ -1,6 +1,0 @@
-Use Qt4 to prototype quickly a file-based tagfs implementation.
-
-
-A graph-db may be an interesting approach (file contents are nodes, tags are either edges or separate nodes, in which case a semantic relation of object with tag may be specified e.g. FIDO is_a DOG).
-Full semantic information at fs level - interesting.
-
