@@ -14,16 +14,17 @@ blobs might point back at their metadata?
 
 
 Global Attribute Dictionary
-
+```
  attr. name | attr. value | hash
 ------------+-------------+------------
 NAME        | aaa.jpg     |  341435234123       (impl detail: hash is a direct pointer into the HashLoc table?)
 CREATED     | 2010-10-01  |  341435234123
 DOWNLOAD_URL| http://bla. |  341435234123
+```
 
 HashLoc table
-
+```
          hash | disk location
 --------------+------------------
 341435234123  | block 100500
-
+```
