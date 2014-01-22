@@ -1,11 +1,13 @@
 ![Metta OS](https://raw.github.com/berkus/metta/master/docs/metta.png)
 
 Metta is a multimedia, mobile, social OS
-=====================================
+========================================
 
-My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at http://exocortex.madfire.net.
+My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at http://atta-metta.net.
 
 Be free!
+
+मेता
 
 -----------------------------------------
 
