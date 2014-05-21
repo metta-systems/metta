@@ -1,4 +1,4 @@
--- Pervasives record
+-- Nemesis Pervasives record
 Rec : TYPE = RECORD [
 
    vp        : IREF VP,                 -- Virtual processor
@@ -8,7 +8,7 @@ Rec : TYPE = RECORD [
    exns      : IREF ExnSupport,         -- Exception handling
 
    time      : IREF Time,               -- Time
-   actf      : IREF ActivationF,        -- Event \& Timeout demux (XXX)
+   actf      : IREF ActivationF,        -- Event & Timeout demux (XXX)
    evs       : IREF Events,             -- Event counts and sequencers
    thd       : IREF Thread,             -- Current thread
    thds      : IREF Threads,            -- Thread Scheduler
