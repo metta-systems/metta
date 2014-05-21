@@ -34,25 +34,6 @@ stretch_driver (bound to stretch) [userspace]
   [drmgem]: http://lwn.net/Articles/283798/
 
 
-Glue code
----------
-
-To construct portable kernel, at least 3 different architectures should be supported.
-
-* x86
-* x86_64
-* arm
-* hosted
-* mips?
-
-Pistachio has an excellent c++ implementation of the kernel - use it as reference.
-(e.g. OSdev/L4/l4ka-pistachio/kernel/src/generic)
-
-Applications
-------------
-
-Domain startup: closure(methods: Go; state: everything new domain needs to get going)
-
 IDC
 ---
 
@@ -154,7 +135,7 @@ Physical memory layout during kickstart:
           | kickstart code       |
           +----------------------+ 0x0010_8000
           | kickstart data       |
-          +----------------------+ 0x0010_9000 --------> 
+          +----------------------+ 0x0010_9000 -------->
           |                      |
           | /kernel-startup      |
           |  module              |
@@ -168,32 +149,6 @@ Physical memory layout during kickstart:
           |                      |                       do we need it at all? try to avoid.
           | .................... |
           |                      |
-
-
-Glue code: syscalls
--------------------
-
-    Available Nemesis syscalls to glue code:
-
-      privileged:
-        ntsc_swpipl        // Change interrupt priority level.
-        ntsc_entkern       // Enter kernel mode.
-        ntsc_leavekern     // Leave kernel mode.
-        ntsc_kevent        // Send an event from an interrupt stub.
-        ntsc_rti           // Return from an interrupt stub.
-
-    Syscalls for metta glue:
-
-      privileged:
-        ??sc_activate(vcpu_t*)  Activate a process
-
-      unprivileged:
-        sc_return()    Return from activation, reentrancy reenabled and code resumed from the next instruction after call.
-        sc_return_resume(context_t*) Return from activation, resuming passed context.
-        sc_return_block()  Return from activation and block.
-        sc_block()         Block awaiting an event.
-        sc_yield()         Relinquish CPU allocation for this period.
-        sc_send(int n, uint64_t event)      Send an event.
 
 
 Applications: startup
@@ -241,7 +196,3 @@ Higher level components make the user interface part. Some handle input events a
 The applications run inside nested virtual machines. Level of nesting depends on level of control needed and amount of emulation required to be able to run application.
 
   [omos]: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.44.2856
-
-
--- rephrase this for Contexts case --
-Requests for finding other interfaces go through security server, which decides what applications should see what. It is not uncommon for application to request, e.g. a memory_manager interface. Even if app receives it, in reality, all its memory requests go through logging_debugging_memory_manager and the application is actually being debugged without knowing about it. This can happen for all application interactions with its environment, which effectively puts every application into a highly controlled sandbox, if necessary. Which, for an internet-enabled mobile OS is quite a requirement.
