@@ -84,7 +84,8 @@ public:
 
         if (symbol_start)
             *symbol_start = 0;
-        return NULL;
+
+        return nullptr;
     }
 
     // Find symbol str in symbol table and return its absolute address.

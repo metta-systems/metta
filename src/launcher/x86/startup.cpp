@@ -35,7 +35,7 @@ static void parse_cmdline(bootinfo_t* bi)
         // "maxmem="
 
 /*#define PARSENUM(name, var, msg, massage...)            \
-        if ((p = strstr(mbi->cmdline, name"=")) != NULL)    \
+        if ((p = strstr(mbi->cmdline, name"=")) != nullptr)    \
         {                           \
             var = strtoul(p+strlen(name)+1, &p, 10);        \
             if (*p == 'K') var*=1024;               \
@@ -52,7 +52,7 @@ static void parse_cmdline(bootinfo_t* bi)
         }*/
 
 /*#define PARSEBOOL(name, var, msg)               \
-    if ((p = strstr (mbi->cmdline, name"=")) != NULL)   \
+    if ((p = strstr (mbi->cmdline, name"=")) != nullptr)   \
     {                           \
         p = strchr (p, '=') + 1;                \
         if (strncmp (p, "yes", 3) == 0 ||           \

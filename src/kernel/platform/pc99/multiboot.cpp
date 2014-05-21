@@ -15,8 +15,8 @@ void multiboot_t::set_header(multiboot_t::header_t* h)
 {
     header = h;
 
-    symtab = NULL;
-    strtab = NULL;
+    symtab = nullptr;
+    strtab = nullptr;
 
     if (!header)
         return;

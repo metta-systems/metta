@@ -43,7 +43,7 @@ public:
     //                   /          |          |              \     
     //
     BTreeNode* m_parent; // pointer to the parent BTreeNode
-    BTreeNode(BTreeNode* mp=NULL) : m_parent(mp){}
+    BTreeNode(BTreeNode* mp = nullptr) : m_parent(mp) {}
 };
 
 class BTree
@@ -60,9 +60,12 @@ protected:
     //store the result of every search
     BTreeNode* search_result;
 public:
-    BTree(v_func f, int n, BTreeNode* r=NULL):m_visit(f),m_order(n),m_root(r)
+    BTree(v_func f, int n, BTreeNode* r = nullptr)
+        : m_visit(f)
+        , m_order(n)
+        , m_root(r)
     {
-        search_result = NULL;
+        search_result = nullptr;
     };
     ~BTree();
     bool Insertion(Elem&);//Insert a element to the B-tree.

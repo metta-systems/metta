@@ -19,7 +19,7 @@
 
 //======================================================================================================================
 // stretch_driver_module_v1 methods
-// NULL implementation
+// Null implementation
 //======================================================================================================================
 
 struct stretch_driver_v1::state_t
@@ -111,7 +111,7 @@ fault_handler_v1::closure_t* null_add_handler(stretch_driver_v1::closure_t* self
     if (reason > memory_v1::fault_max_fault_number)
     {
         kconsole << __FUNCTION__ << ": bogus reason, ignored." << endl;
-        return NULL;
+        return nullptr;
     }
     null_driver_state_t* state = reinterpret_cast<null_driver_state_t*>(self->d_state);
     auto result = state->overrides[reason];
@@ -165,16 +165,18 @@ static stretch_driver_v1::closure_t* create_null(stretch_driver_module_v1::closu
     kconsole << __PRETTY_FUNCTION__ << endl;
     auto state = new(heap) null_driver_state_t;
 
-    if (!state)
-        return NULL;
+    if (!state) {
+        return nullptr;
+    }
 
     state->kind = stretch_driver_v1::kind_null;
-    state->vcpu = NULL; // don't have/need
+    state->vcpu = nullptr; // don't have/need
     state->heap = heap;
     state->stretch_table = strtab;
 
-    for(size_t i = 0; i < memory_v1::fault_max_fault_number; ++i)
-        state->overrides[i] = NULL;
+    for(size_t i = 0; i < memory_v1::fault_max_fault_number; ++i) {
+        state->overrides[i] = nullptr;
+    }
 
     closure_init(&state->closure, &stretch_driver_v1_null_methods, state);
 
@@ -184,15 +186,15 @@ static stretch_driver_v1::closure_t* create_null(stretch_driver_module_v1::closu
 static const stretch_driver_module_v1::ops_t stretch_driver_module_v1_methods =
 {
     create_null,
-    NULL,
-    NULL,
-    NULL
+    nullptr,
+    nullptr,
+    nullptr
 };
 
 static stretch_driver_module_v1::closure_t clos =
 {
     &stretch_driver_module_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(stretch_driver_module, v1, clos);

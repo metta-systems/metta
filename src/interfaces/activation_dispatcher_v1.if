@@ -26,8 +26,8 @@ local interface activation_dispatcher_v1
     ## Ensure that in future event notifications on the channel "rx"
     ## are dispatched via "cn".  Raises exceptions if the channel
     ## end-point is invalid, or not of type "RX".  Return the old
-    ## "ChannelNotify" "on" previously attached to "rx", or "NULL" if
-    ## there was none. If "cn" is "NULL", no more activations are sent
+    ## "ChannelNotify" "on" previously attached to "rx", or "nullptr" if
+    ## there was none. If "cn" is "nullptr", no more activations are sent
     ## for this channel.
 
     attach(channel_notify_v1& notify, channel_v1.rx rx)
@@ -121,7 +121,7 @@ local interface activation_dispatcher_v1
 
     # Register "ah" as the activation handler to be invoked after
     # channel demultiplexing. Returns the old handler "oh", or
-    # "NULL" is there was none. This allows chaining of activation
+    # "nullptr" is there was none. This allows chaining of activation
     # handler-style code.
     # {\bf XXX} At present it is the responsibility of the caller to
     # call "oh" if it is necessary. Aha.

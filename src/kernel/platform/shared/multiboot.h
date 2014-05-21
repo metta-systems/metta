@@ -180,10 +180,10 @@ public:
     // multiboot_t public methods
     //==================================================================================================================
 
-    multiboot_t(header_t* h = NULL)
-        : header(NULL)
-        , strtab(NULL)
-        , symtab(NULL)
+    multiboot_t(header_t* h = nullptr)
+        : header(nullptr)
+        , strtab(nullptr)
+        , symtab(nullptr)
     {
         set_header(h);
     }

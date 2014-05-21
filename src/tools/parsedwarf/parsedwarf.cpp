@@ -7,6 +7,7 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include <stdlib.h>
+#include <string>
 #include <stdexcept>
 #include "raiifile.h"
 #include "elf_parser.h"
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
             {
                 if (str.find("| ") == 0)
                 {
-                    address_t addr = strtoul(strmid(str, 2, 10).c_str(), NULL, 0);
+                    address_t addr = std::stoul(strmid(str, 2, 10), nullptr, 0);
                     dwarf.lookup(addr);
                 }
                 else

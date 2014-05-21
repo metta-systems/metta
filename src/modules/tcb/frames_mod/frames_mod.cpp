@@ -152,8 +152,9 @@ static void alloc_update_free_predecessors(frames_module_v1::state_t* cur_state,
 static bool add_range_element(frame_allocator_v1::state_t* client_state, address_t start, size_t n_phys_frames, size_t frame_width)
 {
     region_list_t* new_entry = new(client_state->heap) region_list_t;
-    if (new_entry == NULL)
+    if (new_entry == nullptr) {
         return false;
+    }
 
     new_entry->start = start;
     new_entry->n_phys_frames = n_phys_frames;
@@ -267,7 +268,7 @@ static frames_module_v1::state_t* alloc_any(frame_allocator_v1::closure_t* self,
         cur_state = cur_state->next;
     }
 
-    return NULL; // out of physical memory
+    return nullptr; // out of physical memory
 }
 
 static frames_module_v1::state_t* alloc_any(system_frame_allocator_v1::closure_t* self, size_t n_physical_frames, uint32_t align, address_t* first_log_frame, size_t* n_log_frames)
@@ -282,7 +283,7 @@ static frames_module_v1::state_t* alloc_range(frame_allocator_v1::closure_t* sel
     frames_module_v1::state_t* cur_state = state;
     uint32_t fshift;
 
-    if ((cur_state = get_region(state, start)) == NULL)
+    if ((cur_state = get_region(state, start)) == nullptr)
     {
         logger::warning() << "alloc_range: we don't own requested address " << start;
         PANIC("frames_mod");
@@ -562,7 +563,7 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
     if (!client_state->heap)
     {
         logger::warning() << __FUNCTION__ << ": called before initialisation is complete.";
-        return NULL;
+        return nullptr;
     }
 
     if (init_alloc_frames > granted_frames)
@@ -607,7 +608,7 @@ static frame_allocator_v1::closure_t* system_frame_allocator_v1_create_client(sy
     logger::debug() << __FUNCTION__ << ": allocating " << init_alloc_frames << " init frames";
 
     cur_state = alloc_any(self, init_alloc_frames, FRAME_WIDTH, &first_frame, &n_frames);
-    if (cur_state == NULL)
+    if (cur_state == nullptr)
     {
         logger::fatal() << __FUNCTION__ << ": Out of physical memory, failed to allocate " << init_alloc_frames << " frames.";
         PANIC("Out of physical memory.");
@@ -772,7 +773,7 @@ static void frames_module_v1_finish_init(frames_module_v1::closure_t* self, syst
 {
     frame_allocator_v1::state_t* state = reinterpret_cast<frame_allocator_v1::state_t*>(frames->d_state);
 
-    if (state->heap != NULL)
+    if (state->heap != nullptr)
     {
         logger::warning() << __FUNCTION__ << ": called with heap=" << heap << ", but already have " << state->heap;
         PANIC("Double initialisation of frames module!");
@@ -791,7 +792,7 @@ static const frames_module_v1::ops_t frames_module_v1_methods =
 static frames_module_v1::closure_t clos =
 {
     &frames_module_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(frames_module, v1, clos);

@@ -274,7 +274,7 @@ inline uint16_t alloc_pdidx(mmu_v1::state_t* state)
     uint32_t i = state->next_pdidx;
     logger::trace() << __FUNCTION__ << ": next_pdidx " << i;
     do {
-        if (state->pdom_tbl[i] == NULL)
+        if (state->pdom_tbl[i] == nullptr)
         {
             state->next_pdidx = (i + 1) % PDIDX_MAX;
             logger::trace() << __FUNCTION__ << ": allocate next_pdidx " << i;
@@ -541,7 +541,7 @@ static void mmu_v1_retain_domain(mmu_v1::closure_t* self, protection_domain_v1::
     auto state = self->d_state;
     uint16_t idx = PDIDX(dom_id);
 
-    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    if ((idx >= PDIDX_MAX) or (state->pdom_tbl[idx] == nullptr))
     {
         logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
@@ -556,7 +556,7 @@ static void mmu_v1_release_domain(mmu_v1::closure_t* self, protection_domain_v1:
     auto state = self->d_state;
     uint16_t idx = PDIDX(dom_id);
 
-    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    if ((idx >= PDIDX_MAX) or (state->pdom_tbl[idx] == nullptr))
     {
         logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
@@ -569,7 +569,7 @@ static void mmu_v1_release_domain(mmu_v1::closure_t* self, protection_domain_v1:
     if (state->pdominfo[idx].refcnt == 0)
     {
         state->stretch_allocator->destroy_stretch(state->pdominfo[idx].stretch);
-        state->pdom_tbl[idx] = NULL;
+        state->pdom_tbl[idx] = nullptr;
     }
 }
 
@@ -578,7 +578,7 @@ static void mmu_v1_set_rights(mmu_v1::closure_t* self, protection_domain_v1::id 
     auto state = self->d_state;
     uint16_t idx = PDIDX(dom_id);
 
-    if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
+    if ((idx >= PDIDX_MAX) or (state->pdom_tbl[idx] == nullptr))
     {
         logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
@@ -911,10 +911,10 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     state->next_pdidx = 0;
     for(i = 0; i < PDIDX_MAX; i++) //--
     {
-        state->pdom_tbl[i] = NULL;
+        state->pdom_tbl[i] = nullptr;
         state->pdominfo[i].refcnt  = 0;
         state->pdominfo[i].gen     = 0;
-        state->pdominfo[i].stretch = NULL;
+        state->pdominfo[i].stretch = nullptr;
     }
 
     // And store a pointer to the pdom_tbl in the info page.
@@ -922,10 +922,10 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
 
     state->use_global_pages = (INFO_PAGE.cpu_features & X86_32_FEAT_PGE) != 0;
 
-    // Intialise our closures, etc to NULL for now  // will be fixed by $Done later
-    state->system_frame_allocator = NULL;
-    state->heap = NULL;
-    state->stretch_allocator = NULL;
+    // Intialise our closures, etc to nullptr for now  // will be fixed by $Done later
+    state->system_frame_allocator = nullptr;
+    state->heap = nullptr;
+    state->stretch_allocator = nullptr;
 
     state->l2_virt  = page_align_up(first_range + l2_tables_offset);
     state->l2_phys  = page_align_up(state->l1_mapping_phys + l2_tables_offset);
@@ -976,7 +976,7 @@ static const mmu_module_v1::ops_t mmu_module_v1_methods =
 static mmu_module_v1::closure_t clos =
 {
     &mmu_module_v1_methods,
-    NULL // no state
+    nullptr // no state
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(mmu_module, v1, clos);

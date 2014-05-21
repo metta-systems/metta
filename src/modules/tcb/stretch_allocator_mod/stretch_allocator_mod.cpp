@@ -324,7 +324,7 @@ static stretch_v1::state_t* create_stretch(server_state_t* state, address_t base
     if (!stretch)
     {
         kconsole << __FUNCTION__ << ": stretch alloc failed!" << endl;
-        return NULL;
+        return nullptr;
     }
 
     closure_init(&stretch->closure, &stretch_v1_methods, stretch);
@@ -359,7 +359,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
     {
         kconsole << __FUNCTION__ << ": Failed to get physmem" << endl;
         //raise(memory_v1_falure);
-        return NULL;
+        return nullptr;
     }
     phys.frame_width = FRAME_WIDTH;
     phys.n_frames = size_in_whole_frames(size, FRAME_WIDTH);
@@ -369,7 +369,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
         kconsole << __FUNCTION__ << ": Failed to get virtmem" << endl;
         ss->frames->free(phys.start_addr, size);
         //raise(memory_v1_falure);
-        return NULL;
+        return nullptr;
     }
     
     auto s = create_stretch(ss, virt.start_addr, virt.n_pages);
@@ -379,7 +379,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
         kconsole << __FUNCTION__ << ": Failed to create_stretch" << endl;
         ss->frames->free(phys.start_addr, size);
         //raise(memory_v1_falure);
-        return NULL;
+        return nullptr;
     }
     
     s->allocator = self;
@@ -489,7 +489,7 @@ system_stretch_allocator_v1_create_nailed(system_stretch_allocator_v1::closure_t
     auto client_state = new(heap) system_stretch_allocator_v1::state_t;
     client_state->init();
     client_state->shared_state = shared_state;
-    client_state->vcpu = NULL;
+    client_state->vcpu = nullptr;
     client_state->pdid = NULL_PDID;
     client_state->parent = NULL_PDID;
     client_state->stretches.init();
@@ -565,13 +565,13 @@ system_stretch_allocator_v1_create_over(system_stretch_allocator_v1::closure_t* 
 
 static const system_stretch_allocator_v1::ops_t system_stretch_allocator_v1_methods =
 {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
     system_stretch_allocator_v1_create_nailed,
     system_stretch_allocator_v1_create_over
 };
@@ -589,7 +589,7 @@ stretch_allocator_module_v1_create(stretch_allocator_module_v1::closure_t* self,
     server_state_t* shared_state = new(heap) server_state_t;
     shared_state->heap = heap;
     shared_state->mmu = mmu;
-    shared_state->frames = NULL;
+    shared_state->frames = nullptr;
     shared_state->clients.init();
     shared_state->regions = new(heap) virtual_address_space_region;
 
@@ -642,7 +642,7 @@ stretch_allocator_module_v1_create(stretch_allocator_module_v1::closure_t* self,
     system_stretch_allocator_v1::state_t* client_state = new(heap) system_stretch_allocator_v1::state_t;
     client_state->init();
     client_state->shared_state = shared_state;
-    client_state->vcpu = NULL;
+    client_state->vcpu = nullptr;
     client_state->pdid = NULL_PDID;
     client_state->parent = NULL_PDID;
     client_state->stretches.init();
@@ -670,7 +670,7 @@ static const stretch_allocator_module_v1::ops_t stretch_allocator_module_v1_meth
 static stretch_allocator_module_v1::closure_t clos =
 {
     &stretch_allocator_module_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(stretch_allocator_module, v1, clos);

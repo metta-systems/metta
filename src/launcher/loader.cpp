@@ -31,8 +31,7 @@ void launcher() NEVER_RETURNS
         }
     }
 
-    if (format == NULL)
-    {
+    if (format == nullptr) {
         PANIC("No valid loader format found.");
     }
 

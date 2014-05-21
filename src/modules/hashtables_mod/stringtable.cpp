@@ -158,8 +158,8 @@ static struct map_string_address_factory_v1::ops_t methods =
 
 static struct map_string_address_factory_v1::closure_t clos =
 {
-	&methods,
-	NULL
+    &methods,
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(map_string_address_factory, v1, clos);

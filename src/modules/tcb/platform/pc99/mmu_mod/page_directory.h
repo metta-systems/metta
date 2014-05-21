@@ -170,7 +170,7 @@ private:
 //      * Create mapping from virtual address @p virt to physical frame at @p phys
 //      * with given flags.
 //      *
-//      * @returns NULL on failure or when mapping from @p virt already exists, otherwise
+//      * @returns nullptr on failure or when mapping from @p virt already exists, otherwise
 //      *   page_t* which allows setting flags from client side.
 //      */
 //     page_t* create_mapping(address_t virt, address_t phys);
@@ -188,7 +188,7 @@ private:
 //     /**
 //      * Obtain mapping information from virtual address @p virt. @p make specifies if
 //      * page table should be created if it doesn't exist yet.
-//      * @returns page table entry if found or created, NULL otherwise.
+//      * @returns page table entry if found or created, nullptr otherwise.
 //      */
 //     page_t* mapping(address_t virt, bool make = false);
 // 

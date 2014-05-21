@@ -338,7 +338,7 @@ static const naming_context_factory_v1::ops_t naming_context_factory_v1_methods 
 static naming_context_factory_v1::closure_t clos =
 {
     &naming_context_factory_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(naming_context_factory, v1, clos);

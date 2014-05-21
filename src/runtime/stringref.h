@@ -51,7 +51,7 @@ public:
   /*implicit*/ stringref_t(const char *data, size_t length)
     : Data(data), Length(length) {
       assert((data || length == 0) &&
-      "stringref_t cannot be built from a NULL argument with non-null length");
+      "stringref_t cannot be built from a nullptr argument with non-null length");
     }
 
   /// @}

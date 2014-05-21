@@ -73,16 +73,16 @@ void elf_parser_t::section_iterator::operator ++()
 //======================================================================================================================
 
 elf_parser_t::elf_parser_t()
-    : header(NULL)
-    , strtab(NULL)
-    , symtab(NULL)
+    : header(nullptr)
+    , strtab(nullptr)
+    , symtab(nullptr)
 {
 }
 
 elf_parser_t::elf_parser_t(address_t image_base)
-    : header(NULL)
-    , strtab(NULL)
-    , symtab(NULL)
+    : header(nullptr)
+    , strtab(nullptr)
+    , symtab(nullptr)
 {
     parse(image_base);
 }

@@ -260,9 +260,9 @@ inline void MTRand::seed()
 		fclose(urandom);
 		if( success ) { seed( bigSeed, N );  return; }
 	}
-	
+
 	// Was not successful, so use time() and clock() instead
-	seed( hash( time(NULL), clock() ) );*/
+	seed( hash( time(nullptr), clock() ) );*/
 }
 
 inline MTRand::MTRand( const uint32 oneSeed )

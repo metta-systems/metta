@@ -198,7 +198,8 @@ copy_string(char* dest, const char* src, size_t max_length = 0)
 
 /**
  * Locates the first occurrence of c (converted to an unsigned char) in string s.
- * @returns a pointer to the byte located, or NULL if no such byte exists within max_length bytes.
+ * @returns a pointer to the byte located,
+ * or nullptr if no such byte exists within max_length bytes.
  */
 inline void*
 find_byte(const void *s, int c, size_t max_length)

@@ -148,7 +148,7 @@ struct xcp_context_t
 #define OS_FINALLY \
 		} \
 		if (__xcp_ctx.state == xcp_none) xcp_pop_context(&__xcp_ctx); \
-		if (__xcp_ctx.state == xcp_active && __xcp_ctx.up) __xcp_ctx.up->down = NULL; /* cauterise */ \
+		if (__xcp_ctx.state == xcp_active && __xcp_ctx.up) __xcp_ctx.up->down = nullptr; /* cauterise */ \
 		{   /* this is not part of if, this is just a new code block opened. */
 			/* user's code goes here */
 

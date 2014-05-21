@@ -46,8 +46,9 @@ static memory_v1::address heap_v1_allocate(heap_v1::closure_t* self, memory_v1::
         }
         OS_ENDTRY
 
-        if (!res)
-            OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL);
+        if (!res) {
+            OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", nullptr);
+        }
     }
     else
     {
@@ -136,7 +137,7 @@ static const heap_factory_v1::ops_t heap_factory_v1_methods =
 static heap_factory_v1::closure_t clos =
 {
     &heap_factory_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(heap_factory, v1, clos);

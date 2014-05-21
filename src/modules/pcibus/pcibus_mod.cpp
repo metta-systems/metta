@@ -129,7 +129,7 @@ static const closure::ops_t methods =
 static const closure::closure_t clos =
 {
     &methods,
-    NULL
+    nullptr
 };
 
 // EXPORT_CLOSURE_TO_ROOTDOM(pci_bus, v1, clos);

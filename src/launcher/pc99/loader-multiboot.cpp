@@ -25,7 +25,7 @@ bool mbi_probe()
     kconsole << "mbi_probe()" << endl;
     multiboot_t* _mbi = multiboot_t::prepare();
 
-    if (_mbi == NULL)
+    if (_mbi == nullptr)
         return false;
 
     // Make a safe copy of the MBI structure itself.

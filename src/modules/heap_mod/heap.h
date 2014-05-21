@@ -47,7 +47,7 @@ public:
 
     /**
      * Releases a block allocated with @a allocate.
-     * Releasing a NULL pointer is safe and has no effect.
+     * Releasing a nullptr is safe and has no effect.
      */
     void free(void* p);
 

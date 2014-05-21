@@ -60,8 +60,9 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
     ctx->filename = filename;
     ctx->line     = lineno;
     ctx->funcname = funcname;
-    if (initial_raise)
-        ctx->down = NULL; // cauterise base of the backtrace
+    if (initial_raise) {
+        ctx->down = nullptr; // cauterise base of the backtrace
+    }
 
     /* we've already longjmp'ed to this xcp context, so pop it */
     *handlers = ctx->up;
@@ -96,7 +97,7 @@ exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t*
 
     ctx->state = xcp_none;
     ctx->up = *handlers;
-    ctx->down = (xcp_context_t*)0x1; // non-NULL to mark as writable - see the write below!
+    ctx->down = (xcp_context_t*)0x1; // non-nullptr to mark as writable - see the write below!
     ctx->args = 0;
 
     /* only write the "down" pointer if we're not the top and the bottom hasn't been cauterised by a RAISE or FINALLY */
@@ -142,7 +143,8 @@ exception_support_setjmp_v1_allocate_args(exception_support_setjmp_v1::closure_t
 
     // if (!res)
     // {
-    //  OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", NULL); // hmm wait, the heap will throw that itself! no need for this check
+    //  OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", nullptr);
+    //  // ^^ hmm wait, the heap will throw that itself! no need for this check
     //  PANIC("NOTREACHED");
     // }
 
@@ -185,7 +187,7 @@ static const exception_system_v1::ops_t exception_system_v1_methods =
 static exception_system_v1::closure_t clos =
 {
     &exception_system_v1_methods,
-    NULL
+    nullptr
 };
 
 EXPORT_CLOSURE_TO_ROOTDOM(exception_system, v1, clos);

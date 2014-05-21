@@ -16,7 +16,7 @@ ops:
  remove direct access?
  work on pointers? this makes c++ification harder (e.g. operators can only be called on instances)
 
-! Interface accepts references as it makes no sense to insert NULL nodes.
+! Interface accepts references as it makes no sense to insert nullptr nodes.
 */
 
 /**
@@ -108,7 +108,7 @@ public:
     inline _Base* dequeue()
     {
         if (is_empty())
-            return NULL;
+            return nullptr;
         next->remove();
         return next;
     }

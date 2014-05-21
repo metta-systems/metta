@@ -294,7 +294,8 @@ events_destroy(events_v1::closure_t* self, event_v1::count ec)
                 reinterpret_cast<chained_handler_v1::closure_t*>(event_count->next_notify));// oh, man.
         else
         {
-            // We were the head of the notify queue, so attach the old handler (may be NULL) to the endpoint.
+            // We were the head of the notify queue, so attach the old handler (may be nullptr)
+            // to the endpoint.
             istate->dispatcher->attach(event_count->next_notify, event_count->ep);
         }
 

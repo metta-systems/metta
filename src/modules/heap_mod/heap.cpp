@@ -66,8 +66,9 @@ void heap_t::init(address_t start, address_t end)//, heap_v1_closure* heap_closu
 
     kconsole << "Initializing heap (" << start << ".." << end << ")." << endl;
 
-    for (int i = 0; i < COUNT; ++i)
-        blocks[i] = NULL;
+    for (int i = 0; i < COUNT; ++i) {
+        blocks[i] = nullptr;
+    }
 
     // First entry is null_malloc marker.
     heap_rec_t* null_m = reinterpret_cast<heap_rec_t*>(start);
@@ -83,8 +84,8 @@ void heap_t::init(address_t start, address_t end)//, heap_v1_closure* heap_closu
     rec->prev = HEAP_MAGIC;
     rec->size = (end - start) - MIN_HEAP_OVERHEAD;
     rec->index = OTHER_INDEX;
-    rec->next = NULL;
-    
+    rec->next = nullptr;
+
     blocks[OTHER_INDEX] = rec;
     
     // Third entry is end marker.
@@ -231,8 +232,8 @@ heap_t::heap_rec_t* heap_t::get_new_block_internal(size_t size, int index)
             return free_block;
         }
     }
-    
-    return NULL;
+
+    return nullptr;
 }
 
 heap_t::heap_rec_t* heap_t::get_new_block(size_t size, int index)
@@ -280,8 +281,9 @@ void *heap_t::allocate(size_t size)
     if ((!free_block) || (index == OTHER_INDEX))
     {
         free_block = get_new_block(size, index);
-        if (!free_block)
-            return NULL;
+        if (!free_block) {
+            return nullptr;
+        }
     }
     else
     {
@@ -311,8 +313,7 @@ void heap_t::free(void *p)
     heap_rec_t* nextblock;
 
     // Exit gracefully for null pointers.
-    if ((p == NULL) || (p == null_malloc))
-    {
+    if ((p == nullptr) || (p == null_malloc)) {
         return;
     }
     
@@ -418,14 +419,15 @@ void heap_t::check_integrity()
 {
 #if HEAP_DEBUG
     // We should, by starting at start_address be able to walk through all blocks/holes and check their magic numbers.
-    heap_rec_t* last_header = NULL;
-    heap_rec_t* this_header = reinterpret_cast<heap_rec_t*>(start_address);
-    heap_rec_t* next_header = next_block(this_header);
+    heap_rec_t* last_header{nullptr};
+    heap_rec_t* this_header{reinterpret_cast<heap_rec_t*>(start_address)};
+    heap_rec_t* next_header{next_block(this_header)};
 
     void *end = reinterpret_cast<void*>(end_address);
 
-    if (next_header >= end)
-        next_header = NULL;
+    if (next_header >= end) {
+        next_header = nullptr;
+    }
 
     kconsole << ">= Heap: starting heap check" << endl;
 
@@ -469,8 +471,9 @@ void heap_t::check_integrity()
         UNUSED(last_header);
         this_header = next_header;
         next_header = next_block(this_header);
-        if (next_header >= end)
-            next_header = NULL;
+        if (next_header >= end) {
+            next_header = nullptr;
+        }
     }
     //TODO: check free-lists
     //TODO: add block checksums for debug heap - should be an instance parameter!

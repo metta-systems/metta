@@ -159,13 +159,13 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
     // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n", mod->addr, mod->size));
     // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
     //                              (addr_t)mod->addr,
-    //                              0, PAGE_WIDTH, NULL);
+    //                              0, PAGE_WIDTH, nullptr);
     // ASSERT_ADDRESS(str, mod->addr);
 #if 0
     /* Intialise the pdom map to zero */
     for (map_index=0; map_index < MAP_SIZE; map_index++) {
-        addr_map[map_index].address= NULL;
-        addr_map[map_index].str    = (Stretch_cl *)NULL;
+        addr_map[map_index].address= nullptr;
+        addr_map[map_index].str    = (Stretch_cl *)nullptr;
     }
     map_index= 0;
 
@@ -178,7 +178,7 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 			    name->naddr, name->nsize));
 	    str = StretchAllocatorF$NewOver(sallocF, name->nsize,
 					    AXS_GR, (addr_t)name->naddr,
-					    0, PAGE_WIDTH, NULL);
+					    0, PAGE_WIDTH, nullptr);
 	    ASSERT_ADDRESS(str, name->naddr);
 	    break;
 
@@ -193,7 +193,7 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 
 	    str = StretchAllocatorF$NewOver(sallocF, prog->tsize,
 					    AXS_NONE, (addr_t)prog->taddr,
-					    0, PAGE_WIDTH, NULL);
+					    0, PAGE_WIDTH, nullptr);
 	    ASSERT_ADDRESS(str, prog->taddr);
 
 	    /* Keep record of the stretch for later mapping into pdom */
@@ -203,7 +203,7 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 	    if (prog->dsize + prog->bsize) {
 		str = StretchAllocatorF$NewOver(
 		    sallocF, ROUNDUP((prog->dsize+prog->bsize), FRAME_WIDTH),
-		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, NULL);
+		    AXS_NONE, (addr_t)prog->daddr, 0, PAGE_WIDTH, nullptr);
 		ASSERT_ADDRESS(str, prog->daddr);
 		/* Keep record of the stretch for later mapping into pdom */
 		addr_map[map_index].address= (addr_t)prog->daddr;
@@ -220,7 +220,7 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 	    /* slap a stretch over it */
 	    str = StretchAllocatorF$NewOver(sallocF, blob->len,
 					    AXS_GR, (addr_t)blob->base,
-					    0, PAGE_WIDTH, NULL);
+					    0, PAGE_WIDTH, nullptr);
 	    ASSERT_ADDRESS(str, blob->base);
 	    break;
 
@@ -579,7 +579,7 @@ init(bootimage_t& bootimg)
         ANY_INIT(&boot_seq_any, BootDomain_InfoSeq, boot_seq);
 */
         /* Iterate through progs in nexus and add appropriately... */
-/*        while((cur_prog= find_next_prog())!=NULL)
+/*        while((cur_prog= find_next_prog())!=nullptr)
         {
             TRC_PRG(eprintf("Found a program, %s,  at %p\n",
                             cur_prog->program_name, cur_prog));
@@ -669,8 +669,8 @@ init(bootimage_t& bootimg)
                 cur_info->priv_root = ContextMod$NewContext(ContextMod, heap, PVS(types));
 
                 // XXX what are the other fields of cur_prog->name _for_ ??
-                set_namespace((namespace_entry *)cur_prog->name->naddr, NULL);
-                while((name=lookup_next((addr_t *)&any))!=(char *)NULL)
+                set_namespace((namespace_entry *)cur_prog->name->naddr, nullptr);
+                while((name=lookup_next((addr_t *)&any))!=(char *)nullptr)
                 {
                     NOCLOBBER bool_t added= False;
 
@@ -803,7 +803,7 @@ start_root_domain(bootimage_t& bootimg)
 /*    Nemesis = NAME_FIND("modules>Nemesis", Activation_clp);
     Nemesis->st= kst;
 
-    if(nemesis_info == (BootDomain_Info *)NULL) {
+    if(nemesis_info == (BootDomain_Info *)nullptr) {
         // shafted
         eprintf("NemesisPrimal: didn't get nemesis params. Dying.\n");
         ntsc_halt();

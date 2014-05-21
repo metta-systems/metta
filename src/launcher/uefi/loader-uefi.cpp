@@ -23,11 +23,7 @@
  */
 bool uefi_probe()
 {
-    kconsole << "mbi_probe()" << endl;
-    multiboot_t* _mbi = multiboot_t::prepare();
-
-    if (_mbi == NULL)
-        return false;
+    kconsole << "uefi_probe()" << endl;
 
     // Make a safe copy of the MBI structure itself.
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t(true);

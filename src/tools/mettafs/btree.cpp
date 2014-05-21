@@ -52,7 +52,7 @@ public:
 //                   /          |          |              \    
 //
     BTreeNode* m_parent; // pointer to the parent BTreeNode
-    BTreeNode(BTreeNode* mp=NULL) : m_parent(mp){}
+    BTreeNode(BTreeNode* mp = nullptr) : m_parent(mp) {}
 };
  
 class BTree
@@ -71,9 +71,12 @@ protected:
  
  
 public:
-    BTree(v_func f, int n, BTreeNode* r=NULL):m_visit(f),m_order(n),m_root(r)
+    BTree(v_func f, int n, BTreeNode* r = nullptr)
+      : m_visit(f)
+      , m_order(n)
+      , m_root(r)
     {
-       search_result = NULL;
+       search_result = nullptr;
     };
     ~BTree();
     bool Insertion(Elem&);//Insert a element to the B-tree.
@@ -90,8 +93,9 @@ BTree::~BTree()
 }
 void BTree::travel(BTreeNode* p) const
 {
-    if(p==NULL)
+    if (p == nullptr) {
        return;
+     }
     int i;
     for(i=0;i < p->m_child.size()-1; i++)
     {
@@ -138,13 +142,13 @@ bool BTree::Insertion(Elem& t)
 {
     if(Search(t))//The element already exits in the tree
        return false;
-    if(m_root==NULL)//The tree is empty
+    if(m_root == nullptr)//The tree is empty
     {
        m_root = new BTreeNode;
        m_root->m_data.push_back(t);
-       m_root->m_child.push_back(NULL);
-       m_root->m_child.push_back(NULL);
-       m_root->m_parent = NULL;
+       m_root->m_child.push_back(nullptr);
+       m_root->m_child.push_back(nullptr);
+       m_root->m_parent = nullptr;
        return true;
     }
     else
@@ -160,7 +164,7 @@ bool BTree::Insertion(Elem& t)
            //locate the right position to insert
            for(i=0;i<p->size() && (*p)[i]<t;i++);
            p->insert(p->begin()+i,t);//insert the new Element
-           pc->insert(pc->begin()+i,NULL);//insert the new child.
+           pc->insert(pc->begin()+i,nullptr);//insert the new child.
            if(p->size() < m_order)//dosen't need to split this node
            {
 #ifdef ___DEBUG
@@ -221,7 +225,7 @@ bool BTree::Split_insert(Elem &t)
            if(sr == m_root)  //reach the root
            {
               //make a new node to be root.
-              BTreeNode* new_node2 = new BTreeNode(NULL);
+              BTreeNode* new_node2 = new BTreeNode(nullptr);
               m_root = new_node2;
               new_node2->m_data.push_back(upward);
               //the new root's two children are the splited two from current node
@@ -282,7 +286,7 @@ static void dump(Elem& e)
 int main(int argc, char* argv[])
 {
     BTree b(&dump,5);
-    srand( (unsigned) time(NULL));
+    srand( (unsigned) time(nullptr));
     int i,j;
     for(i=0;i<=1000;i++)
     {

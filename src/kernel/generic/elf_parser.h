@@ -111,9 +111,9 @@ public:
 
     /**
      * Returns the symbol name for an address.
-     * Also returns the start address of that symbol in symbol_start if symbol_start is non-NULL.
+     * Also returns the start address of that symbol in symbol_start if symbol_start is non-nullptr.
      */
-    cstring_t find_symbol(address_t addr, address_t* symbol_start = NULL);
+    cstring_t find_symbol(address_t addr, address_t* symbol_start = nullptr);
 
     /** Returns the address of a symbol with name str. */
     address_t find_symbol(cstring_t str);
@@ -121,7 +121,7 @@ public:
     /** Returns the address of the symbol with offset o in the relocation symbol table. */
     address_t find_dynamic_symbol_location(address_t o);
 
-    /** Returns a NULL terminated name of the symbol at given offset in the relocation symbol table. */
+    /** Returns a null-terminated name of the symbol at given offset in the relocation symbol table. */
     cstring_t find_dynamic_symbol_name(address_t o);
 
     /** Gets the address of the global offset table. */

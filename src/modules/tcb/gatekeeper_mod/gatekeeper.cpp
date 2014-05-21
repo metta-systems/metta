@@ -98,9 +98,9 @@ static gatekeeper_v1::ops_t simple_gatekeeper_ops =
 
 static heap_v1::ops_t gatekeeper_heap_ops =
 {
-    NULL,
-    NULL,
-    NULL
+    nullptr,
+    nullptr,
+    nullptr
 };
 
 //=====================================================================================================================

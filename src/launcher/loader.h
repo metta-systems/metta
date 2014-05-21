@@ -37,7 +37,7 @@ public:
     address_t (*prepare)(void);
 };
 
-#define NULL_LOADER { "null", NULL, NULL }
+#define NULL_LOADER { "null", nullptr, nullptr }
 
 /**
  * NULL_LOADER-terminated array of loader formats.

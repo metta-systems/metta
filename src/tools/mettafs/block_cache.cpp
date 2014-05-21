@@ -142,7 +142,7 @@ cache_block_t* block_cache_t::block_lookup(deviceno_t device, block_device_t::bl
         //TODO: check for busy block, and wait if it is busy (shouldn't happen in single threaded test).
         return (*it).second;
     }
-    return NULL;
+    return nullptr;
 }
 
 /**
