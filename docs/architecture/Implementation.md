@@ -183,19 +183,8 @@ There is a "Persistent Oberon" variant that offers an SLS-like framework for tho
 
 Oberon the language allows direct manipulation of the hardware registers, so Oberon the OS is written entirely in a high-level language, without the need for assembly code.
 
-----
-Device drivers usually run in userspace and are coupled with interrupt handlers - usually implemented inside the same driver and simply waiting on an interrupt semaphore. Drivers communicate using the same portals, generated from interface definition files. Usually there is a rich interface defined, not only get bytes/send bytes but much more semantic information is being maintained by either a driver or an abstraction level above
-it about what is going on and why. This allows drivers to make much more educated decisions about, for example, read-ahead strategy to use for particular clients. This makes things a bit more complicated to implement, but in reality there will be some sort of more abstract and user-task-oriented metadriver just above more dumb and hardware-oriented "executive drivers".
-There are some system components, like security server, that implement trusted computing base and maintain overall integrity of the system. In case of dynamic reconfiguration and continuous upgrades this is vital. Hotswapping of components would be highly desirable to have, although at this point this is not planned at all.
 
 
-
-Sort of coupled with the dynamic reconfiguration is Dynamic Object Loader - a flexible, JIT-enabled system for building components from available building blocks like static or dynamic library files, separate object files or source files.
-According to requirements it is able to make differently built versions of the same component at different times (or even at the same time, if this is required). It is similar to [OMOS object server][omos].
-
-Higher level components make the user interface part. Some handle input events and make them available as signals to GUI components, some handle drawing in virtual clipped areas called windows, one component posesses exclusive access to the video hardware, the Compositor, maintains the scene visibility graph of existing windows, composes them and outputs via graphics card. This is more complex behind the scenes.
-
-The applications run inside nested virtual machines. Level of nesting depends on level of control needed and amount of emulation required to be able to run application.
 
 ----------------------------------------------------------------------
 
