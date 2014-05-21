@@ -253,7 +253,7 @@ type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static types::name
 type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
-    D(kconsole << "type_system.name" << endl);
+    logger::function_scope trace("type_system.name");
     interface_v1::state_t* iface = nullptr;
 
     /* Check the type code refers to a valid interface */
@@ -277,7 +277,7 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
 static const char*
 type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
-    D(kconsole << "type_system.docstring" << endl);
+    logger::function_scope trace("type_system.docstring");
     interface_v1::state_t* iface = nullptr;
 
     /* Check the type code refers to a valid interface */
@@ -304,7 +304,7 @@ type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias 
 static bool
 type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias sub, type_system_v1::alias super)
 {
-    D(kconsole << "type_system.is_type" << endl;)
+    logger::function_scope trace("type_system.is_type");
     type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
     interface_v1::state_t* iface = nullptr;
 
@@ -312,12 +312,12 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
     if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(super), (address_t*)&iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", super);
 
-    D(kconsole << "type_system.is_type: " << super << " is valid supertype " << iface->rep.name << endl;)
+    logger::trace() << "type_system.is_type: " << super << " is valid supertype " << iface->rep.name;
 
     /* Quick and dirty check for equality. */
     if (sub == super)
     {
-        D(kconsole << "subtype and supertype matched, returning true!" << endl;)
+        logger::trace() << "subtype and supertype matched, returning true!";
         return true;
     }
 
@@ -325,33 +325,33 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
     if (!state->interfaces_by_typecode->get(TCODE_INTF_CODE(sub), (address_t*)&iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", sub);
 
-    D(kconsole << "type_system.is_type: " << sub << " is valid subtype " << iface->rep.name << endl;)
+    logger::trace() << "type_system.is_type: " << sub << " is valid subtype " << iface->rep.name;
 
     /* Deal with the case where the type code refers to an interface type */
     if (TCODE_IS_INTERFACE(sub))
     {
-        D(kconsole << "type_system.is_type: " << iface->rep.code.value << " vs " << super << endl;)
+        logger::trace() << "type_system.is_type: " << iface->rep.code.value << " vs " << super;
         while (iface->rep.code.value != super)
         {
             /* Look up the supertype */
             if (!iface->supertype)
             {
-                D(kconsole << "no supertype found, returning false!" << endl;)
+                logger::trace() << "no supertype found, returning false!";
                 return false;
             }
 
             if (!state->interfaces_by_typecode->get(iface->supertype, (address_t*)&iface))
                 OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", iface->supertype);
-            D(kconsole << "type_system.is_type: found valid supertype " << iface->rep.name << endl;
-            kconsole << "type_system.is_type: " << iface->rep.code.value << " vs " << super << endl;)
+            logger::trace() << "type_system.is_type: found valid supertype " << iface->rep.name << endl
+                            << "type_system.is_type: " << iface->rep.code.value << " vs " << super;
         }
 
-        D(kconsole << "valid supertype matched, returning true!" << endl;)
+        logger::trace() << "valid supertype matched, returning true!";
         return true;
     }
 
     /* We have a concrete type and it's not the same typecode, so fail. */
-    D(kconsole << "concrete type not equal, returning false!" << endl;)
+    logger::trace() << "concrete type not equal, returning false!";
     return false;
 }
 
@@ -361,11 +361,11 @@ type_system_v1_is_type(type_system_v1::closure_t* self, type_system_v1::alias su
 static types::val
 type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system_v1::alias tc)
 {
-    D(kconsole << "type_system.narrow {" << endl);
+    logger::function_scope trace("type_system.narrow");
     if (!type_system_v1_is_type(self, a.type_, tc))
         OS_RAISE((exception_support_v1::id)"type_system_v1.incompatible", 0);
 
-    D(kconsole << "type_system.narrow " << a << " }" << endl);
+    logger::trace() << a.value;
     return a.value;
 }
 
@@ -375,7 +375,7 @@ type_system_v1_narrow(type_system_v1::closure_t* self, types::any a, type_system
 static type_system_v1::alias
 type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc)
 {
-    D(kconsole << "type_system.unalias" << endl);
+    logger::function_scope trace("type_system.unalias");
     type_system_f_v1::state_t* state = reinterpret_cast<type_system_f_v1::state_t*>(self->d_state);
     interface_v1::state_t* iface = nullptr;
     type_representation_t* trep = nullptr;
@@ -424,7 +424,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     interface_v1::state_t* iface = reinterpret_cast<interface_v1::state_t*>(intf); // @todo do we need to convert this back and forth?
     address_t dummy;
 
-    kconsole << "register_interface '" << iface->rep.name << "' {" << endl;
+    logger::debug() << "register_interface '" << iface->rep.name << "'";
 
     if (self->d_state->interfaces_by_name->get(iface->rep.name, &dummy))
         OS_RAISE((exception_support_v1::id)"type_system_f_v1.name_clash", 0);
@@ -471,8 +471,6 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
 
     self->d_state->interfaces_by_name->put(iface->rep.name, intf);
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
-
-    D(kconsole << "register_interface }" << endl);
 }
 
 static type_system_f_v1::ops_t typesystem_ops = 

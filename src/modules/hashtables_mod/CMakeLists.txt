@@ -1,0 +1,1 @@
+add_kernel_component(hashtables_mod safe_card64table.cpp stringtable.cpp)

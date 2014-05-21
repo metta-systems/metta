@@ -35,7 +35,7 @@ void flush_cache()
 
 /**
  * Start bootstrapper at its entry point. No preconditions.
- * This function will perform a switch from ring0 to ring3.
+ * This function performs a switch from ring0 to ring3.
  */
 void launch_kernel(address_t entry)
 {

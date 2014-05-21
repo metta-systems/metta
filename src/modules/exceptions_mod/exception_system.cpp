@@ -12,6 +12,7 @@
 #include "nemesis/exception_system_v1_impl.h"
 #include "heap_v1_interface.h"
 #include "infopage.h"
+#include "logger.h"
 #include "default_console.h"
 #include "module_interface.h"
 #include "heap_new.h"
@@ -32,7 +33,7 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 
     while (ctx && ctx->state != xcp_none)
     {
-        kconsole << "exception stack: state " << ctx->state << ", can't happen?" << endl;
+        logger::warning() << "exception stack: state " << ctx->state << ", can't happen?";
         if (ctx->args)
         {
             /* Another exception was in the middle of being processed when
@@ -65,11 +66,11 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
     /* we've already longjmp'ed to this xcp context, so pop it */
     *handlers = ctx->up;
 
-    D(kconsole << "raise: longjmp to context " << ctx << endl);
+    logger::trace() << "raise: longjmp to context " << ctx;
 
-    D(kconsole << "raise: jmp_buf words" << endl);
-    D(for (size_t x = 0; x < _JBLEN; ++x)
-        kconsole << "word " << x << ": " << ctx->jmp[x] << endl);
+    // D(kconsole << "raise: jmp_buf words" << endl);
+    // D(for (size_t x = 0; x < _JBLEN; ++x)
+        // kconsole << "word " << x << ": " << ctx->jmp[x] << endl);
 
     xcp_longjmp (ctx->jmp, 1);
 }
@@ -77,7 +78,7 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
 static void 
 exception_support_setjmp_v1_raise(exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
 {
-    kconsole << "__ exception_support_setjmp_v1::raise" << endl;
+    logger::debug() << "__ exception_support_setjmp_v1::raise";
     internal_raise(true, self, i, a, filename, lineno, funcname);
 }
 
@@ -91,7 +92,7 @@ exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t*
      */
     xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
 
-    V(kconsole << "__ exception_support_setjmp_v1::push_context " << ctx << " handlers " << handlers << endl);
+    logger::trace() << "__ exception_support_setjmp_v1::push_context " << ctx << " handlers " << handlers;
 
     ctx->state = xcp_none;
     ctx->up = *handlers;
@@ -112,7 +113,7 @@ exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* 
     xcp_context_t** handlers = reinterpret_cast<xcp_context_t**>(&self->d_state);
     xcp_state_t prev_state = ctx->state;
 
-    V(kconsole << "__ exception_support_setjmp_v1::pop_context " << ctx << ", prev_state " << prev_state << endl);
+    logger::trace() << "__ exception_support_setjmp_v1::pop_context " << ctx << ", prev_state " << prev_state;
 
     /* set state to popped so that OS_FINALLY only pops once in normal case */
     ctx->state = xcp_popped;
@@ -136,7 +137,7 @@ exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* 
 static exception_support_v1::args 
 exception_support_setjmp_v1_allocate_args(exception_support_setjmp_v1::closure_t* self, memory_v1::size size)
 {
-    D(kconsole << "__ exception_support_setjmp_v1::allocate_args " << size << endl);
+    logger::trace() << "__ exception_support_setjmp_v1::allocate_args " << size;
     address_t res = PVS(heap)->allocate(size);
 
     // if (!res)

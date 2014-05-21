@@ -8,9 +8,9 @@
 //
 #pragma once
 
-#include "map"
-#include "string"
-#include "vector"
+#include <map>
+#include <string>
+#include <vector>
 #include "token.h"
 
 //TODO: replace with llvm::TypeSymbolTable?

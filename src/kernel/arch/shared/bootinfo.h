@@ -137,7 +137,7 @@ public:
 
 public:
     bootinfo_t(bool create_new = false);
-    inline bool is_valid() const { return magic == BI_MAGIC && size() <= PAGE_SIZE; }
+    inline bool is_valid() const { return (magic == BI_MAGIC) and (size() <= PAGE_SIZE); }
     inline size_t size() const { return reinterpret_cast<const char*>(free) - reinterpret_cast<const char*>(this); }
 
     inline bool will_overflow(size_t add_size)
@@ -146,8 +146,8 @@ public:
     }
 
     /**
-     * NB! Module loader received from this bootinfo will modify it, so do not try to use two modules loaders from
-     * two different bootinfos at once! 
+     * NB! Module loader received from this bootinfo will modify it,
+     * so do not try to use two modules loaders from two different bootinfos at once! 
      * (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
      */
     module_loader_t modules();

@@ -16,8 +16,6 @@
 
 /**
  * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets) find symbol by either name or value.
- *
- * Before including this header, D() and V() must be defined.
  */
 class symbol_table_finder_t
 {
@@ -33,13 +31,17 @@ public:
     {
         ASSERT(symbol_table);
         ASSERT(string_table);
-
-        D(kconsole << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table << endl);
+        logger::debug() << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table;
     }
 
     symbol_table_finder_t(module_loader_t::module_entry& mod)
+        : base(mod.load_base)
+        , symbol_table(reinterpret_cast<elf32::section_header_t*>(mod.symtab_start))
+        , string_table(reinterpret_cast<elf32::section_header_t*>(mod.strtab_start))
     {
-        symbol_table_finder_t(mod.load_base, reinterpret_cast<elf32::section_header_t*>(mod.symtab_start), reinterpret_cast<elf32::section_header_t*>(mod.strtab_start));
+        ASSERT(symbol_table);
+        ASSERT(string_table);
+        logger::debug() << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table;
     }
 
     // TODO: use debugging info if present
@@ -89,16 +91,16 @@ public:
     address_t find_symbol(cstring_t str)
     {
         size_t n_entries = symbol_table->size / symbol_table->entsize;
-        V(kconsole << n_entries << " symbols to consider." << endl);
-        V(kconsole << "Symbol table @ " << base + symbol_table->offset << endl);
-        V(kconsole << "String table @ " << base + string_table->offset << endl);
+        logger::trace() << int(n_entries) << " symbols to consider.";
+        logger::trace() << "Symbol table @ " << base + symbol_table->offset;
+        logger::trace() << "String table @ " << base + string_table->offset;
 
         for (size_t i = 0; i < n_entries; i++)
         {
             elf32::symbol_t* symbol = reinterpret_cast<elf32::symbol_t*>(base + symbol_table->offset + i * symbol_table->entsize);
             const char* c = reinterpret_cast<const char*>(base + string_table->offset + symbol->name);
 
-            V(kconsole << "Looking at symbol " << c << " @ " << symbol << endl);
+            logger::trace() << "Looking at symbol " << c << " @ " << symbol;
             if (str == c)
             {
                 if (ELF32_ST_TYPE(symbol->info) == STT_SECTION)
@@ -117,5 +119,8 @@ public:
         return 0;
     }
 
-    module_symbols_t::symmap all_symbols(const char*suffix);
+    /**
+     * Return all symbols in a module with a given suffix.
+     */
+    module_symbols_t::symmap all_symbols(const char* suffix);
 };

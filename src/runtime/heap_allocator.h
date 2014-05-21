@@ -12,6 +12,7 @@
 #include "infopage.h"
 #include "heap_v1_interface.h"
 #include "default_console.h"
+#include "logger.h"
 
 namespace std {// @todo: remove std, since it's a custom allocator?
 
@@ -36,42 +37,42 @@ public:
     heap_allocator() throw()
         : heap(PVS(heap))
     {
-        V(kconsole << "default constructing heap_allocator at " << this << " with heap " << heap << endl);
+        logger::trace() << "default constructing heap_allocator at " << this << " with heap " << heap;
     }
 
     explicit heap_allocator(heap_v1::closure_t* h) throw()
         : heap(h)
     {
-        V(kconsole << "constructing heap_allocator at " << this << " with heap " << heap << endl);
+        logger::trace() << "constructing heap_allocator at " << this << " with heap " << heap;
     }
 
     heap_allocator(const heap_allocator& other) throw()
         : heap(other.get_state())
     {
-        V(kconsole << "copy constructing heap_allocator at " << this << " with heap " << heap << endl);
+        logger::trace() << "copy constructing heap_allocator at " << this << " with heap " << heap;
     }
 
     template <class U> 
     heap_allocator(const heap_allocator<U>& other) throw()
         : heap(other.get_state())
     {
-        V(kconsole << "rebind copy constructing heap_allocator at " << this << " with heap " << heap << endl);
+        logger::trace() << "rebind copy constructing heap_allocator at " << this << " with heap " << heap;
     }
 
     ~heap_allocator()
     {
-        V(kconsole << "destructing heap_allocator at " << this << endl);
+        logger::trace() << "destructing heap_allocator at " << this;
         heap = state_type(0xfeeddead);
     }
 
     pointer allocate(size_type __n, std::allocator<void>::const_pointer hint = 0)
     {
-        D(kconsole << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap << endl);
+        logger::trace() << "heap_allocator::allocate " << __n << " items of size " << sizeof(T) << " from heap " << heap;
         return reinterpret_cast<pointer>(heap->allocate(__n * sizeof(T)));
     }
     void deallocate(pointer p, size_type) throw()
     {
-        D(kconsole << "heap_allocator::deallocate @ " << p << " from heap " << heap << endl);
+        logger::trace() << "heap_allocator::deallocate @ " << p << " from heap " << heap;
         heap->free(reinterpret_cast<memory_v1::address>(p));
     }
 };

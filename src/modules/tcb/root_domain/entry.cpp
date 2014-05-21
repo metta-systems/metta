@@ -11,10 +11,11 @@
 #include "any.h"
 #include "macros.h"
 #include "c++ctors.h"
-#include "root_domain.h"
+#include "bootimage.h"
 #include "bootinfo.h"
 #include "elf_parser.h"
 #include "debugger.h"
+#include "logger.h"
 #include "module_loader.h"
 #include "infopage.h"
 #include "frames_module_v1_interface.h"
@@ -75,7 +76,7 @@ static void* load_module(bootimage_t& bootimg, const char* module_name, const ch
     if (!addr.start)
         return 0;
 
-    kconsole << " + Found module " << module_name << " at address " << addr.start << " of size " << addr.size << endl;
+    logger::debug() << "Found module " << module_name << " at address " << addr.start << " of size " << addr.size;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     elf_parser_t loader(addr.start);
@@ -123,7 +124,8 @@ print_context_tree(naming_context_v1::closure_t* ctx, int indent = 0)
 /**
  * Set up MMU and frame allocator.
  */
-static protection_domain_v1::id create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
+static protection_domain_v1::id
+create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closure_t* mmu)
 {
     auto pdom = mmu->create_domain();
 
@@ -136,16 +138,29 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
 
     /* Map stretches over the boot image */
 
+//
+// code - loaded module sections, read only, execute, global
+// data - loaded module data and bss, read/write, maybe only bss writable
+// data - info pages, bootinfo page? and framebuffers, read/write
+// metadata - module string and symbol tables, read-only, only for root domain
+//
+// no need to map original unloaded modules.
+// 
+// Should use module_loader module map and map with appropriate rights
+// for text (RX), rodata(R), and bss (RW)...
+//
+
     // map nucleus code
 
     // map over loaded modules
-    /// @todo Should use module_loader module map and map with appropriate rights for text (RX), rodata(R), and bss (RW)...
-                // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n",
-                //                      mod->addr, mod->size));
-                // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
-                //                              (addr_t)mod->addr,
-                //                              0, PAGE_WIDTH, NULL);
-                // ASSERT_ADDRESS(str, mod->addr);
+    /// @todo Should use module_loader module map and map with appropriate rights
+    // for text (RX), rodata(R), and bss (RW)...
+
+    // TRC_MEM(eprintf("MOD:  T=%06lx:%06lx\n", mod->addr, mod->size));
+    // str = StretchAllocatorF$NewOver(sallocF, mod->size, AXS_GE,
+    //                              (addr_t)mod->addr,
+    //                              0, PAGE_WIDTH, NULL);
+    // ASSERT_ADDRESS(str, mod->addr);
 #if 0
     /* Intialise the pdom map to zero */
     for (map_index=0; map_index < MAP_SIZE; map_index++) {
@@ -221,7 +236,7 @@ static protection_domain_v1::id create_address_space(system_frame_allocator_v1::
  */
 static void map_initial_heap(heap_factory_v1::closure_t* heap_factory, heap_v1::closure_t* heap, size_t initial_heap_size, protection_domain_v1::id root_domain_pdid)
 {
-    kconsole << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap << endl;
+    logger::debug() << "Mapping stretch over heap: " << int(initial_heap_size) << " bytes at " << heap;
     memory_v1::physmem_desc null_pmem; /// @todo We pass pmems by value in the interface atm... it's not even used!
 
     auto str = PVS(stretch_allocator)->create_over(initial_heap_size, stretch_v1::rights(stretch_v1::right_read), memory_v1::address(heap), memory_v1::attrs_regular, PAGE_WIDTH, null_pmem);
@@ -230,7 +245,7 @@ static void map_initial_heap(heap_factory_v1::closure_t* heap_factory, heap_v1::
 
     if (real_heap != heap)
     {
-        kconsole << WARNING << __FUNCTION__ << ": realize changed heap address from " << heap << " to " << real_heap << endl;
+        logger::warning() << __FUNCTION__ << ": realize changed heap address from " << heap << " to " << real_heap;
     }
 
     // Map our heap as local read/write
@@ -241,7 +256,7 @@ static void
 init(bootimage_t& bootimg)
 {
     kconsole << "=================" << endl
-             << "   Init memory" << endl
+             << "   Init memory"    << endl
              << "=================" << endl;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
@@ -289,19 +304,19 @@ init(bootimage_t& bootimg)
     ramtab_v1::closure_t* rtab;
     memory_v1::address next_free;
 
-    kconsole << " + Init memory region size " << int(required + initial_heap_size) << " bytes." << endl;
+    logger::debug() << "Init memory region size " << int(required + initial_heap_size) << " bytes.";
     auto mmu = mmu_factory->create(required + initial_heap_size, &rtab, &next_free);
 
-    kconsole << " + Obtained ramtab closure @ " << rtab << ", next free " << next_free << endl;
+    logger::debug() << "Obtained ramtab closure @ " << rtab << ", next free " << next_free;
 
     kconsole << "==============================" << endl
-             << "   Creating frame allocator" << endl
+             << "   Creating frame allocator"    << endl
              << "==============================" << endl;
 
     auto frames = frames_factory->create(rtab, next_free);
 
     kconsole << "===================" << endl
-             << "   Creating heap" << endl
+             << "   Creating heap"    << endl
              << "===================" << endl;
 
     auto heap = heap_factory->create_raw(next_free + required, initial_heap_size);
@@ -326,7 +341,7 @@ init(bootimage_t& bootimg)
 #endif
 
     kconsole << "=======================================" << endl
-             << "   Creating system stretch allocator" << endl
+             << "   Creating system stretch allocator"    << endl
              << "=======================================" << endl;
 
     auto system_stretch_allocator = stretch_allocator_factory->create(heap, mmu);
@@ -340,22 +355,22 @@ init(bootimage_t& bootimg)
      * be backed by phyiscal memory on creation.
      */
     kconsole << "=======================================" << endl
-             << "   Creating nailed stretch allocator" << endl
+             << "   Creating nailed stretch allocator"    << endl
              << "=======================================" << endl;
 
     auto sysalloc = system_stretch_allocator->create_nailed(reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap);//yikes!
 
     mmu_factory->finish_init(mmu, reinterpret_cast<frame_allocator_v1::closure_t*>(frames), heap, sysalloc); //yikes again!
 
-    kconsole << " + Creating stretch table" << endl;
+    logger::debug() << "Creating stretch table";
     auto strtab = stretch_table_factory->create(heap);
 
-    kconsole << " + Creating null stretch driver" << endl;
+    logger::debug() << "Creating null stretch driver";
     PVS(stretch_driver) = stretch_driver_factory->create_null(heap, strtab);
 
     // Create the initial address space; returns a pdom for root domain.
     kconsole << "====================================" << endl
-             << "   Creating initial address space" << endl
+             << "   Creating initial address space"    << endl
              << "====================================" << endl;
 
     auto root_domain_pdid = create_address_space(frames, mmu);
@@ -363,7 +378,7 @@ init(bootimage_t& bootimg)
 
     /* Get an Exception System */
     kconsole << "============================" << endl
-             << "   Bringing up exceptions" << endl
+             << "   Bringing up exceptions"    << endl
              << "============================" << endl;
 
     auto xcp_factory = load_module<exception_system_v1::closure_t>(bootimg, "exceptions_factory", "exported_exception_system_rootdom");
@@ -373,63 +388,64 @@ init(bootimage_t& bootimg)
     // Exceptions are used by further modules, which make extensive use of heap and its exceptions.
 
     // Check exception handling via too big heap allocation (easiest)
-    kconsole << "__ Testing exceptions" << endl;
+    logger::debug() << "__ Testing exceptions";
     OS_TRY {
         auto res = PVS(heap)->allocate(1024*1024*1024);
         ASSERT(res); // Should not execute this!
     }
     OS_CATCH("heap_v1.no_memory") {
-        kconsole << "__ Handled heap_v1.no_memory exception, yippie!" << endl;
+        logger::debug() << "__ Handled heap_v1.no_memory exception, yippie!";
     }
     OS_ENDTRY
 
     kconsole << "=============================" << endl
-             << "   Bringing up type system" << endl
+             << "   Bringing up type system"    << endl
              << "=============================" << endl;
 
-    kconsole <<  " + getting safe_card64table_mod..." << endl;
+    logger::debug() << "Getting safe_card64table_mod...";
     auto lctmod = load_module<map_card64_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_card64_address_factory_rootdom");
     ASSERT(lctmod);
 
-    kconsole <<  " + getting stringtable_mod..." << endl;
+    logger::debug() << "Getting stringtable_mod...";
     auto strmod = load_module<map_string_address_factory_v1::closure_t>(bootimg, "hashtables_factory", "exported_map_string_address_factory_rootdom");
     ASSERT(strmod);
 
-    kconsole <<  " + getting typesystem_mod..." << endl;
+    logger::debug() << "Getting typesystem_mod...";
     auto ts_factory = load_module<type_system_factory_v1::closure_t>(bootimg, "typesystem_factory", "exported_type_system_factory_rootdom");
     ASSERT(ts_factory);
 
-    kconsole <<  " + creating a new type system..." << endl;
+    logger::debug() << "Creating a new type system...";
     auto ts = ts_factory->create(PVS(heap), lctmod, strmod);
     ASSERT(ts);
     PVS(types) = reinterpret_cast<type_system_v1::closure_t*>(ts);
-    kconsole <<  " + done: ts is at " << ts << endl;
+    logger::debug() << "Done: typesystem is at " << ts;
 
     /* Preload types in the interface repository */
-    kconsole << " + registering interfaces" << endl;
+    logger::debug() << "Registering interfaces";
     // Idealized interface:
     // symbols = module("interface_repository").find_symbols().ending_with("__intf_typeinfo");
     auto symbols = symbols_in("interface_repository", "__intf_typeinfo").all_symbols();
-    kconsole << "   found " << int(symbols.size()) << " interfaces" << endl;
+    logger::debug() << "   found " << int(symbols.size()) << " interfaces";
     for (auto& symbol : symbols)
     {
         ts->register_interface(symbol.second->value);
     }
 
-    D(kconsole << "___ Testing the type system listing" << endl;
+    logger::debug() << "___ Testing the type system listing";
     naming_context_v1::names n = ts->list();
     for (auto m : n)
     {
-        kconsole << m << endl;
+        logger::debug() << m;
     }
-    kconsole << "___ Done testing type system listing" << endl);
+    logger::debug() << "___ Done testing type system listing";
 
-    kconsole << "___ Testing type system doc strings" << endl;
-    kconsole << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code) << endl;
-    kconsole << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code) << endl;
-    kconsole << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code) << endl;
-    kconsole << "Autodoc for type gatekeeper_v1: " << ts->docstring(gatekeeper_v1::type_code) << endl;
-    kconsole << "___ Done testing type system doc strings" << endl;
+    logger::debug() << "___ Testing type system doc strings";
+    logger::debug() << "Autodoc for meta_interface: " << ts->docstring(meta_interface_type_code);
+    logger::debug() << "Autodoc for builtin type octet: " << ts->docstring(octet_type_code);
+    logger::debug() << "Autodoc for type naming_context_v1: " << ts->docstring(naming_context_v1::type_code);
+    logger::debug() << "Autodoc for type naming_context_v1.names: " << ts->docstring(naming_context_v1::names_type_code);
+    logger::debug() << "Autodoc for type gatekeeper_v1: " << ts->docstring(gatekeeper_v1::type_code);
+    logger::debug() << "___ Done testing type system doc strings";
 
     // static void init_namespaces(bootimage_t& bootimg)
     /// @todo Context.
@@ -437,7 +453,7 @@ init(bootimage_t& bootimg)
 
     /* Build initial name space */
     kconsole << "=================================" << endl
-             << "   Building initial name space" << endl
+             << "   Building initial name space"    << endl
              << "=================================" << endl;
 
     /* Build root context */
@@ -449,10 +465,10 @@ init(bootimage_t& bootimg)
     ASSERT(root);
     PVS(root)  = root;
 
-#if 0
-@todo implement iterator and module_loader::begin()/end()
     kconsole << "Modules, ";
     {
+#if 0
+@todo implement iterator and module_loader::begin()/end()
         auto module_context = context_factory->create_context(PVS(heap), PVS(types));
 
         // At the moment this conversion is largely manual, need to invent some template magic
@@ -466,8 +482,8 @@ init(bootimage_t& bootimg)
             kconsole << module.name << " module any is " << *v << endl;
             module_context->add(module.name, *v);
         }
-    }
 #endif
+    }
 
 #if 0
     kconsole <<  "proc, ";
@@ -724,6 +740,7 @@ init(bootimage_t& bootimg)
         kconsole << " + Adding boot domain sequence to progs context...\n"));
         Context$Add(progs, "BootDomains", &boot_seq_any);
     }*/
+    kconsole << endl;
     print_context_tree(root, 0);
 }
 
@@ -745,17 +762,15 @@ start_root_domain(bootimage_t& bootimg)
     auto pciscan = load_module<closure::closure_t>(bootimg, "pcibus_mod", "exported_pcibus_rootdom");//test pci bus scanning
     ASSERT(pciscan);
     pciscan->apply();
-
-    while(1) {} 
 #endif
 
 #if 0
     /* Find the Virtual Processor module */
     vp = CONTEXT_FIND("Modules.VCPU", vcpu_v1);
-    kconsole << " + got VCPU at " << vp << endl;
+    kconsole << "Got VCPU at " << vp << endl;
 
     time = CONTEXT_FIND("Modules.Time", time_v1);
-    kconsole << " + got time at " << time << endl;
+    kconsole << "Got time at " << time << endl;
     PVS(time) = time;
 
     /* init the wall-clock time values of the infopage */
@@ -765,7 +780,7 @@ start_root_domain(bootimage_t& bootimg)
 #endif
 
     kconsole << "=================================" << endl
-             << "   Initialising domain manager" << endl
+             << "   Initialising domain manager"    << endl
              << "=================================" << endl;
 #if 0
     domain_manager_factory_v1::closure_t* dmm = CONTEXT_FIND("Modules.DomainManagerFactory", domain_manager_factory_v1);
@@ -777,7 +792,7 @@ start_root_domain(bootimage_t& bootimg)
     root->add("System.DomainManager", closure_to_any(dommgr, domain_manager_v1::type_code));
 #endif
     kconsole << "===========================" << endl
-             << "   Creating first domain" << endl
+             << "   Creating first domain"    << endl
              << "===========================" << endl;
 
     /**
@@ -808,7 +823,7 @@ start_root_domain(bootimage_t& bootimg)
 
     DCB_RW(vp)->pervasives = INFO_PAGE.pervasives;
 
-    kconsole << " + did NewDomain." << endl;
+    kconsole << "Did NewDomain." << endl;
 */
 
     /* register our vp and pdom with the stretch allocators */
@@ -838,6 +853,11 @@ start_root_domain(bootimage_t& bootimg)
     kconsole << " + Activating root domain" << endl;
     nucleus::activate_domain(DCB_RO(vp), ::activation_reason_allocated);
 */
+
+    // Print final memory map for debug.
+    bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
+    bi->print_memory_map();
+
     PANIC("root_domain entry returned! IT'S OK STILL, NO WORRIES");
 }
 
@@ -853,9 +873,11 @@ extern "C" void module_entry()
 {
     run_global_ctors(); // remember, we don't have proper crt0 yet.
 
-    kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl;
+    logger::logging::set_verbosity(logger::logging::debug_level); // meh, too deep nested names :/
 
-    kconsole << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl << endl;
+    kconsole << endl << WHITE << "...in the living memory of V2_OS" << LIGHTGRAY << endl << endl;
+
+    logger::debug() << endl << endl << endl << "sizeof(size_t) = " << sizeof(size_t) << endl << endl;
 
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     address_t start, end;

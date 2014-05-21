@@ -173,19 +173,28 @@ e. Opening brackets are on their own line, except for enumerations and inline fu
         // stuff
     }
 
+    Inline functions inside a class body use egyptian braces.
+
+    class test_t
+    {
+        inline void do_something() {
+            // time to do something here
+            yippie();
+        }
+    };
+
 f. Multiple statements should not ever be combined onto one line. Exception is the C++ idiom of deleting a pointer
    and assigning it NULL:
 
     delete ptr; ptr = NULL;
 
-g. Loop statements such as "if", "for", "foreach", "do...while" and "while" shall have brackets around their blocks
-   only if the blocks contain more than one line. "for" statements with empty bodies should be avoided. Side effects in
-   single-line bodies should be avoided (e.g. no use of macros as single-line bodies).
+g. Loop statements such as "if", "for", "foreach", "do...while" and "while" shall always have brackets around their blocks. "for" statements with empty bodies should be avoided.
 
 h. The condition in an "if" statement shall always be put on a separate line.
 
-    if (x == 5)
+    if (x == 5) {
         y = x;
+    }
 
 i. C++ pointers and references shall have their reference symbol next to the type rather than to the name.
 
@@ -214,7 +223,7 @@ j. In class declarations, "public" declarations shall precede "protected" declar
 
    Methods and attributes should be clearly separated.
 
-k. Virtual functions should always be marked as such even in derived classes where it is not technically necessary.
+k. Virtual functions should always be marked as 'override' in derived classes.
 
 l. In a function definition, the function return type shall be put above the function name (not to the left of it).
 
@@ -248,8 +257,7 @@ o. The following items shall be followed by a space character:
     for (x = 0; x < 10; ++x, y += x)
         do_something(x, y, 0);
 
-p. Function names, operator names in declarations and definitions, various C++ casts operators should not be
-   followed by a space character.
+p. Function names, operator names in declarations and definitions, various C++ casts operators should not be followed by a space character.
 
     static_cast<void*>(var)
     operator uint32_t();
@@ -280,8 +288,7 @@ u. Variables in declaration blocks and their initialization can be justified to 
     double  avoid_long_names   = 1.1;
     bool    long_names         = true;
 
-v. Files usually include at the top licensing header from file license_header. Ruby script apply_boilerplate.rb
-   can be used to add it to new files.
+v. Files usually include at the top licensing header from file license_header. Ruby script apply_boilerplate.rb can be used to add it to new files.
 
 
 ========================================================================================================================
@@ -366,7 +373,9 @@ public:
     typedef value_list<test_t> list;
 
     /// Obtain a singleton instance of test class.
-    static test_t* instance() { return instance_; } // singleton/factory methods go in constructors place
+    static test_t* instance() { // singleton/factory methods go in constructors place
+        return instance_;
+    }
 
     virtual ~test_t();
 
@@ -374,8 +383,12 @@ public:
     void apply_func2(something_t* sth);
 
     // accessors
-    int   private_var()               { return private_var_; }
-    void  set_private_var(int new_v)  { private_var_ = new_v; }
+    int   private_var() {
+        return private_var_;
+    }
+    void  set_private_var(int new_v) {
+        private_var_ = new_v;
+    }
 
 public slots:
     void receive(something_t&);

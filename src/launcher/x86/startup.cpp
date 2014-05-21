@@ -19,6 +19,7 @@
 #include "c++ctors.h"
 #include "new"
 #include "debugger.h"
+#include "logger.h"
 
 static void parse_cmdline(bootinfo_t* bi)
 {
@@ -232,7 +233,7 @@ extern timer_v1::closure_t* init_timer(); // YIKES external declaration! FIXME
 /**
  * Get the system going.
  *
- * Prepare all system-specific structures and initialise BP and APs. Enter root domain and continue there.
+ * Prepare all system-specific structures and initialise BP and APs.
  *
  * @todo Relate Pistachio SMP startup routines here.
  */
@@ -252,8 +253,8 @@ extern "C" void arch_prepare()
     
     // TODO: CREATE INITIAL MEMORY MAPPINGS PROPERLY HERE
     // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
-//    int ramtop = 16*MiB;
-    bi->append_vmap(0, 0, 32*MiB);//min(16*MiB, ramtop));
+    int ramtop = 32*MiB;
+    bi->append_vmap(0, 0, ramtop);
 
     // @todo Timer interrupt should be enabled by the scheduler module once it installs the timer IRQ handler...
     // timer_v1::closure_t* timer = init_timer();

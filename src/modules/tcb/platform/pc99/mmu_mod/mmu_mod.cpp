@@ -41,9 +41,9 @@ struct ramtab_entry_t
 
 struct pdom_st
 {
-    uint16_t               refcnt;  /* reference count on this pdom    */
-    uint16_t               gen;     /* current generation of this pdom */
-    stretch_v1::closure_t* stretch; /* handle on stretch (for destroy) */
+    uint16_t               refcnt;  /* Reference count on this pdom    */
+    uint16_t               gen;     /* Current generation of this pdom */
+    stretch_v1::closure_t* stretch; /* Handle on stretch (for destroy) */
 };
 
 struct pdom_t
@@ -87,20 +87,20 @@ struct mmu_v1::state_t
 
 //    uint32_t              n_frames;//FIXME: UNUSED!!?!
 
-    address_t             l1_mapping_virt; /* virtual  address of l1 page table */
-    address_t             l1_mapping_phys; /* physical address of l1 page table */
+    address_t             l1_mapping_virt; /* Virtual  address of l1 page table */
+    address_t             l1_mapping_phys; /* Physical address of l1 page table */
 
-    address_t             l2_virt;   /* virtual  address of l2 array base */
-    address_t             l2_phys;   /* physical address of l2 array base */
+    address_t             l2_virt;         /* Virtual  address of l2 array base */
+    address_t             l2_phys;         /* Physical address of l2 array base */
 
-    address_t             l1_virt_virt; /* virtual address of l2 PtoV table  */
+    address_t             l1_virt_virt;    /* Virtual address of l2 PtoV table  */
 
-    ramtab_entry_t*       ramtab;      /* base of ram table            */
-    size_t                ramtab_size; /* size of ram table            */
+    ramtab_entry_t*       ramtab;          /* Base of ram table                 */
+    size_t                ramtab_size;     /* Size of ram table                 */
 
-    uint32_t              l2_max;   /* index of the last available chunk   */
-    uint32_t              l2_next;  /* index of first potential free chunk */
-    l2_info               info[0];  /* free/used L2 info; actually l2_max entries   */
+    uint32_t              l2_max;          /* Index of the last available chunk   */
+    uint32_t              l2_next;         /* Index of first potential free chunk */
+    l2_info               info[0];         /* Free/used L2 info; actually l2_max entries */
 };
 
 //======================================================================================================================
@@ -120,7 +120,7 @@ inline bool alloc_l2table(mmu_v1::state_t* state, address_t *l2va, address_t *l2
     if (i == state->l2_max)
     {
         // XXX go get some more mem from frames/salloc
-        kconsole << "alloc_l2table: out of memory for tables!" << endl;
+        logger::warning() << "alloc_l2table: out of memory for tables!";
         return false;
     }
 
@@ -131,7 +131,7 @@ inline bool alloc_l2table(mmu_v1::state_t* state, address_t *l2va, address_t *l2
     memutils::clear_memory(reinterpret_cast<void*>(*l2va), L2SIZE);
     *l2pa = state->l2_phys + (L2SIZE * i);
 
-    kconsole << "alloc_l2table: new L2 table at va=" << *l2va << ", pa=" << *l2pa << ", shadow va=" << SHADOW(*l2va) << endl;
+    logger::debug() << "alloc_l2table: new L2 table at va=" << *l2va << ", pa=" << *l2pa << ", shadow va=" << SHADOW(*l2va);
     return true;
 }
 
@@ -144,9 +144,9 @@ static bool add4k_page(mmu_v1::state_t* state, address_t va, page_t pte, sid_t s
 
     if (!state->l1_mapping[l1idx].is_present())
     {
-        kconsole << "mapping va=" << va << " requires new L2 table" << endl;
+        logger::debug() << "mapping va=" << va << " requires new L2 table";
         if (!alloc_l2table(state, &l2va, &l2pa)) {
-            kconsole << "!!! intel_mmu:add4k_page - cannot alloc l2 table." << endl;
+            logger::warning() << "!!! intel_mmu:add4k_page - cannot alloc l2 table.";
             return false;
         }
         state->l1_mapping[l1idx].set_frame(l2pa);
@@ -156,7 +156,7 @@ static bool add4k_page(mmu_v1::state_t* state, address_t va, page_t pte, sid_t s
 
     if (state->l1_mapping[l1idx].is_4mb())
     {
-        kconsole << "URK! mapping va=" << va << " would use a 4MB page!" << endl;
+        logger::warning() << "URK! mapping va=" << va << " would use a 4MB page!";
         return false;
     }
 
@@ -164,7 +164,7 @@ static bool add4k_page(mmu_v1::state_t* state, address_t va, page_t pte, sid_t s
     l2va = state->l2_virt + (l2pa - state->l2_phys);
     // XXX PARANOIA
     if (l2va != state->l1_virt[l1idx].frame())
-        kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
+        logger::warning() << "Virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame();
 
     // Ok, once here, we have a pointer to our l2 table in "l2va"
     l2idx = pte_entry(va);
@@ -193,13 +193,13 @@ static size_t update4k_pages(mmu_v1::state_t* state, address_t va, size_t n_page
 
     if (!state->l1_mapping[l1idx].is_present())
     {
-        kconsole << __FUNCTION__ << ": page at " << va << " not present, cannot update" << endl;
+        logger::warning() << __FUNCTION__ << ": page at " << va << " not present, cannot update";
         return 0;
     }
 
     if (state->l1_mapping[l1idx].is_4mb())
     {
-        kconsole << __FUNCTION__ << ": address " << va << " is mapped using a 4MB page!" << endl;
+        logger::warning() << __FUNCTION__ << ": address " << va << " is mapped using a 4MB page!";
         return 0;
     }
 
@@ -208,7 +208,7 @@ static size_t update4k_pages(mmu_v1::state_t* state, address_t va, size_t n_page
 
     // XXX PARANOIA
     if (l2va != state->l1_virt[l1idx].frame())
-        kconsole << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame() << endl;
+        logger::warning() << "virtual addresses out of sync: l2va=" << l2va << ", not " << state->l1_virt[l1idx].frame();
 
     // Ok, once here, we have a pointer to our l2 table in "l2va"
     l2idx = pte_entry(va);
@@ -247,7 +247,7 @@ static bool add_page(mmu_v1::state_t* state, size_t page_width, address_t va, pa
             // result = add4m_page(state, va, pte, sid);
             break;
         default:
-            kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+            logger::warning() << __FUNCTION__ << ": unsupported page width " << page_width;
     }
     return result;
 }
@@ -264,7 +264,7 @@ static size_t update_pages(mmu_v1::state_t* state, size_t page_width, address_t 
             // result = update4m_pages(state, va, n_pages, pte, sid);
             break;
         default:
-            kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+            logger::warning() << __FUNCTION__ << ": unsupported page width " << page_width;
     }
     return result;
 }
@@ -272,19 +272,19 @@ static size_t update_pages(mmu_v1::state_t* state, size_t page_width, address_t 
 inline uint16_t alloc_pdidx(mmu_v1::state_t* state)
 {
     uint32_t i = state->next_pdidx;
-    kconsole << __FUNCTION__ << ": next_pdidx " << i << endl;
+    logger::trace() << __FUNCTION__ << ": next_pdidx " << i;
     do {
         if (state->pdom_tbl[i] == NULL)
         {
             state->next_pdidx = (i + 1) % PDIDX_MAX;
-            kconsole << __FUNCTION__ << ": allocate next_pdidx " << i << endl;
+            logger::trace() << __FUNCTION__ << ": allocate next_pdidx " << i;
             return i;
         }
         i = (i + 1) % PDIDX_MAX;
-        kconsole << __FUNCTION__ << ": next_pdidx " << i << endl;
+        logger::trace() << __FUNCTION__ << ": next_pdidx " << i;
     } while(i != state->next_pdidx);
 
-    kconsole << "alloc_pdidx: out of identifiers!" << endl;
+    logger::warning() << __FUNCTION__ << ": out of identifiers!" << endl;
     nucleus::debug_stop();
     return 0xdead;
 }
@@ -351,7 +351,7 @@ static void mmu_v1_add_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str
 
     if (!valid_width(page_width))
     {
-        kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+        logger::warning() << __FUNCTION__ << ": unsupported page width " << page_width;
         return;
     }
 
@@ -362,13 +362,13 @@ static void mmu_v1_add_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str
     {
         if (!add_page(self->d_state, page_width, virt, pte, str->d_state->sid))
         {
-            kconsole << __FUNCTION__ << ": failed to add page at " << virt << endl;
+            logger::warning() << __FUNCTION__ << ": failed to add page at " << virt;
             return;
         }
         virt += page_size;
     }
 
-    kconsole << __FUNCTION__ << ": added range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->d_state->sid << endl;
+    logger::debug() << __FUNCTION__ << ": added range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->d_state->sid;
 }
 
 static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure_t* str, memory_v1::virtmem_desc mem_range, memory_v1::physmem_desc pmem, stretch_v1::rights global_rights)
@@ -377,7 +377,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
 
     if (!valid_width(page_width))
     {
-        kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+        logger::warning() << __FUNCTION__ << ": unsupported page width " << page_width;
         return;
     }
 
@@ -385,7 +385,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
 
     if (!valid_width(frame_width))
     {
-        kconsole << __FUNCTION__ << ": unsupported frame width " << frame_width << endl;
+        logger::warning() << __FUNCTION__ << ": unsupported frame width " << frame_width;
         return;
     }
 
@@ -414,7 +414,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
 
     if (n_frames != n_pages)
     {
-        kconsole << __FUNCTION__ << ": number of pages " << n_pages << " and frames " << n_frames << " do not match!" << endl;
+        logger::warning() << __FUNCTION__ << ": number of pages " << n_pages << " and frames " << n_frames << " do not match!";
         nucleus::debug_stop();
         return;
     }
@@ -442,20 +442,20 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
             owner = self->d_state->ramtab_closure.get(frame, &frame_width, &state);
             if (owner == OWNER_NONE)
             {
-                kconsole << __FUNCTION__ << ": physical address " << phys << " not owned!" << endl;
+                logger::warning() << __FUNCTION__ << ": physical address " << phys << " not owned!";
                 nucleus::debug_stop();
             }
 
             if (state == ramtab_v1::state_nailed)
             {
-                kconsole << __FUNCTION__ << ": physical address " << phys << " is nailed!" << endl;
+                logger::warning() << __FUNCTION__ << ": physical address " << phys << " is nailed!";
                 nucleus::debug_stop();
             }
         }
 
         if (!add_page(self->d_state, page_width, virt, pte, str->d_state->sid))
         {
-            kconsole << __FUNCTION__ << ": failed to add page at " << virt << endl;
+            logger::warning() << __FUNCTION__ << ": failed to add page at " << virt;
             return;
         }
 
@@ -469,7 +469,7 @@ static void mmu_v1_add_mapped_range(mmu_v1::closure_t* self, stretch_v1::closure
         phys += page_size;
     }
 
-    kconsole << __FUNCTION__ << ": added mapped range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << mem_range.page_width) << ")=>[" << pmem.start_addr << ".." << pmem.start_addr + (pmem.n_frames << pmem.frame_width) << "), sid=" << str->d_state->sid << endl;
+    logger::debug() << __FUNCTION__ << ": added mapped range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << mem_range.page_width) << ")=>[" << pmem.start_addr << ".." << pmem.start_addr + (pmem.n_frames << pmem.frame_width) << "), sid=" << str->d_state->sid;
 }
 
 /**
@@ -485,7 +485,7 @@ static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* 
 
     if (!valid_width(page_width))
     {
-        kconsole << __FUNCTION__ << ": unsupported page width " << page_width << endl;
+        logger::warning() << __FUNCTION__ << ": unsupported page width " << page_width;
         return;
     }
 
@@ -498,7 +498,7 @@ static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* 
         size_t updated = update_pages(self->d_state, page_width, virt, n_pages, pte, str->d_state->sid);
         if (updated == 0)
         {
-            kconsole << __FUNCTION__ << ": failed to update pages at " << virt << endl;
+            logger::warning() << __FUNCTION__ << ": failed to update pages at " << virt;
             nucleus::debug_stop();
             return;
         }
@@ -506,7 +506,7 @@ static void mmu_v1_update_range(mmu_v1::closure_t* self, stretch_v1::closure_t* 
         n_pages -= updated;
     }
 
-    kconsole << __FUNCTION__ << ": updated range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->d_state->sid << endl;
+    logger::debug() << __FUNCTION__ << ": updated range [" << mem_range.start_addr << ".." << mem_range.start_addr + (mem_range.n_pages << page_width) << "), sid=" << str->d_state->sid;
 }
 
 static void mmu_v1_free_range(mmu_v1::closure_t* self, memory_v1::virtmem_desc mem_range)
@@ -532,7 +532,7 @@ static protection_domain_v1::id mmu_v1_create_domain(mmu_v1::closure_t* self)
 
     // Construct the pdid from the generation and the index.
     protection_domain_v1::id pdid = (uint32_t(state->pdominfo[idx].gen) << 16) | idx;
-    kconsole << __FUNCTION__ << ": generated new pdid " << pdid << endl;
+    logger::debug() << __FUNCTION__ << ": generated new pdid " << pdid;
     return pdid;
 }
 
@@ -543,7 +543,7 @@ static void mmu_v1_retain_domain(mmu_v1::closure_t* self, protection_domain_v1::
 
     if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
     {
-        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
+        logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
         return;
     }
@@ -558,7 +558,7 @@ static void mmu_v1_release_domain(mmu_v1::closure_t* self, protection_domain_v1:
 
     if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
     {
-        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
+        logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
         return;
     }
@@ -580,7 +580,7 @@ static void mmu_v1_set_rights(mmu_v1::closure_t* self, protection_domain_v1::id 
 
     if ((idx >= PDIDX_MAX) || (state->pdom_tbl[idx] == NULL))
     {
-        kconsole << __FUNCTION__ << ": bogus pdom id " << dom_id << endl;
+        logger::warning() << __FUNCTION__ << ": bogus pdom id " << dom_id;
         nucleus::debug_stop();
         return;
     }
@@ -588,7 +588,7 @@ static void mmu_v1_set_rights(mmu_v1::closure_t* self, protection_domain_v1::id 
     pdom_t* pdom = state->pdom_tbl[idx];
     sid_t sid = str->d_state->sid;
 
-    kconsole << __FUNCTION__ << ": pdom " << pdom << ", sid " << sid << " " << rights << endl;
+    logger::warning() << __FUNCTION__ << ": pdom " << pdom << ", sid " << sid << " " << rights;
 
     uint8_t mask = sid & 1 ? 0xf0 : 0x0f;
     uint32_t val = rights;
@@ -643,33 +643,27 @@ static const mmu_v1::ops_t mmu_v1_methods =
 // ramtab_v1 methods
 //======================================================================================================================
 
-#if RAMTAB_DEBUG
-#define RD(s) s
-#else
-#define RD(s)
-#endif
-
 static memory_v1::size ramtab_v1_size(ramtab_v1::closure_t* self)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning size " << st->ramtab_size << endl);
+    logger::trace() << __FUNCTION__ << ": ramtab state at " << st << ", returning size " << st->ramtab_size;
     return st->ramtab_size;
 }
 
 static memory_v1::address ramtab_v1_base(ramtab_v1::closure_t* self)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": ramtab state at " << st << ", returning base " << st->ramtab << endl);
+    logger::trace() << __FUNCTION__ << ": ramtab state at " << st << ", returning base " << st->ramtab;
     return reinterpret_cast<memory_v1::address>(st->ramtab);
 }
 
 static void ramtab_v1_put(ramtab_v1::closure_t* self, uint32_t frame, uint32_t owner, uint32_t frame_width, ramtab_v1::state state)
 {
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
-    RD(kconsole << __FUNCTION__ << ": frame " << frame << " with owner " << owner << " and frame width " << int(frame_width) << " in state " << state << endl);
+    logger::trace() << __FUNCTION__ << ": frame " << frame << " with owner " << owner << " and frame width " << int(frame_width) << " in state " << state;
     if (frame >= st->ramtab_size)
     {
-        kconsole << __FUNCTION__ << ": out of range frame " << frame << ", max is " << st->ramtab_size << endl;
+        logger::warning() << __FUNCTION__ << ": out of range frame " << frame << ", max is " << st->ramtab_size;
         nucleus::debug_stop();
         return;
     }
@@ -684,14 +678,14 @@ static uint32_t ramtab_v1_get(ramtab_v1::closure_t* self, uint32_t frame, uint32
     mmu_v1::state_t* st = reinterpret_cast<mmu_v1::state_t*>(self->d_state);
     if (frame >= st->ramtab_size)
     {
-        kconsole << __FUNCTION__ << ": out of range frame " << frame << ", max is " << st->ramtab_size << endl;
+        logger::warning() << __FUNCTION__ << ": out of range frame " << frame << ", max is " << st->ramtab_size;
         nucleus::debug_stop();
         return 0xdeadd00d;
     }
 
     *frame_width = st->ramtab[frame].frame_width;
     *state = ramtab_v1::state(st->ramtab[frame].state);
-    RD(kconsole << __FUNCTION__ << ": frame " << frame << " with owner " << st->ramtab[frame].owner << " and frame width " << int(*frame_width) << " in state " << *state << endl);
+    logger::trace() << __FUNCTION__ << ": frame " << frame << " with owner " << st->ramtab[frame].owner << " and frame width " << int(*frame_width) << " in state " << *state;
     return st->ramtab[frame].owner;
 }
 
@@ -702,8 +696,6 @@ static const ramtab_v1::ops_t ramtab_v1_methods =
     ramtab_v1_put,
     ramtab_v1_get
 };
-
-#undef RD
 
 //======================================================================================================================
 // mmu_module_v1 methods
@@ -727,7 +719,7 @@ static int bitmap_index(address_t va)
     return va >> 27; // Each array word represents 32*4Mb = 128Mb => 27 bits.
 }
 
-#define N_EXTRA_L2S     32                     // We require an additional margin of L2 ptabs.
+#define N_EXTRA_L2S   32    // We require an additional margin of L2 ptabs.
 
 static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 {
@@ -736,7 +728,7 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
 
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [&bitmap](const memory_v1::mapping* e)
     {
-        kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
+        logger::debug() << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")";
         for (size_t j = 0; j < e->nframes; ++j)
         {
             address_t va = e->virt + (j << FRAME_WIDTH);
@@ -763,7 +755,7 @@ static size_t memory_required(bootinfo_t* bi, size_t& n_l2_tables)
     // Account for L2 infos
     res += n_l2_tables * sizeof(l2_info);
 
-    kconsole << " +--Got nptabs " << nptabs << endl;
+    logger::debug() << "Got " << int(nptabs) << " nptabs";
 
     return res;
 }
@@ -792,7 +784,7 @@ static void enter_mappings(mmu_v1::state_t* state)
     bootinfo_t* bi = new(bootinfo_t::ADDRESS) bootinfo_t;
     std::for_each(bi->vmap_begin(), bi->vmap_end(), [bi, state](const memory_v1::mapping* e)
     {
-        kconsole << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")" << endl;
+        logger::debug() << "Virtual mapping [" << e->virt << ", " << e->virt + (e->nframes << FRAME_WIDTH) << ") -> [" << e->phys << ", " << e->phys + (e->nframes << FRAME_WIDTH) << ")";
         for (size_t j = 0; j < e->nframes; ++j)
         {
             address_t virt = e->virt + (j << FRAME_WIDTH);
@@ -811,7 +803,7 @@ static void enter_mappings(mmu_v1::state_t* state)
             {
                 if (is_non_cacheable(e->type()) && (e->address() <= phys) && (e->address() + e->size() > phys))
                 {
-                    V(kconsole << "Disabling cache for va=" << virt << endl);
+                    logger::trace() << "Disabling cache for va=" << virt;
                     flags |= page_t::cache_disable;
                 }
             });
@@ -827,7 +819,7 @@ static void enter_mappings(mmu_v1::state_t* state)
 
             if (!add4k_page(state, virt, pte, SID_NULL))
             {
-                kconsole << "enter_mappings: failed to add mapping " << virt << "->" << phys << endl;
+                logger::fatal() << "enter_mappings: failed to add mapping " << virt << "->" << phys;
                 PANIC("enter_mappings failed!");
             }
 
@@ -835,12 +827,15 @@ static void enter_mappings(mmu_v1::state_t* state)
         }
     });
 
-    kconsole << " +-mmu_module_v1: enter_mappings required total of " << state->l2_next << " new l2 tables." << endl;
+    logger::debug() << "mmu_module_v1: enter_mappings required total of " << int(state->l2_next) << " new L2 tables.";
 }
 
 static mmu_v1::closure_t*
 mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservation, ramtab_v1::closure_t** ramtab, memory_v1::address* free)
 {
+    // TODO: stuff that might be consuming too much time is marked with //--
+    // check and clean it up if possible.
+
     kconsole << "==========================" << endl
              << "   mmu_module_v1.create" << endl
              << "==========================" << endl;
@@ -857,12 +852,12 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     size_t max_ramtab_entries = 0;
     size_t i;
 
-    mmu_memory_needed_bytes = memory_required(bi, n_l2_tables);
+    mmu_memory_needed_bytes = memory_required(bi, n_l2_tables); //--
     mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t ramtab_offset = mmu_memory_needed_bytes;
 
-    mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries);
+    mmu_memory_needed_bytes += ramtab_required(bi, max_ramtab_entries); //--
     mmu_memory_needed_bytes = page_align_up(mmu_memory_needed_bytes);
 
     address_t l2_tables_offset = mmu_memory_needed_bytes;
@@ -882,7 +877,7 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
         PANIC("Unable to use memory for initial MMU setup!");
     }
 
-    kconsole << " +-mmu_module_v1: state allocated at " << first_range << endl;
+    logger::debug() << "mmu_module_v1: state allocated at " << first_range;
 
     mmu_v1::state_t *state = reinterpret_cast<mmu_v1::state_t*>(first_range);
     mmu_v1::closure_t *cl = &state->mmu_closure;
@@ -891,10 +886,10 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     state->l1_mapping_virt = state->l1_mapping_phys = first_range;
     state->l1_virt_virt = reinterpret_cast<address_t>(&state->l1_virt);
 
-    kconsole << " +-mmu_module_v1: L1 phys table at va=" << state->l1_mapping_virt << ", pa=" << state->l1_mapping_phys << ", virt table at va=" << state->l1_virt_virt << endl;
+    logger::debug() << "mmu_module_v1: L1 phys table at va=" << state->l1_mapping_virt << ", pa=" << state->l1_mapping_phys << ", virt table at va=" << state->l1_virt_virt;
 
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
-    for(i = 0; i < N_L1_TABLES; i++)
+    for(i = 0; i < N_L1_TABLES; i++) //--
     {
         state->l1_mapping[i] = 0;
         state->l1_virt[i] = 0;
@@ -905,16 +900,16 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     // Initialise the ram table; it follows the state record immediately.
     state->ramtab_size = max_ramtab_entries;
     state->ramtab = reinterpret_cast<ramtab_entry_t*>(first_range + ramtab_offset);
-    memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t));
+    memutils::clear_memory(state->ramtab, state->ramtab_size * sizeof(ramtab_entry_t)); //--
 
     closure_init(&state->ramtab_closure, &ramtab_v1_methods, reinterpret_cast<ramtab_v1::state_t*>(first_range));
     *ramtab = &state->ramtab_closure;
 
-    kconsole << " +-mmu_module_v1: ramtab at " << state->ramtab << " with " << state->ramtab_size << " entries." << endl;
+    logger::debug() << "mmu_module_v1: ramtab at " << state->ramtab << " with " << int(state->ramtab_size) << " entries.";
 
     // Initialise the protection domain tables
     state->next_pdidx = 0;
-    for(i = 0; i < PDIDX_MAX; i++)
+    for(i = 0; i < PDIDX_MAX; i++) //--
     {
         state->pdom_tbl[i] = NULL;
         state->pdominfo[i].refcnt  = 0;
@@ -936,19 +931,22 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     state->l2_phys  = page_align_up(state->l1_mapping_phys + l2_tables_offset);
     state->l2_max  = n_l2_tables;
 
-    kconsole << " +-mmu_module_v1: " << static_cast<int>(state->l2_max) << " L2 tables at va=" << state->l2_virt << ", pa=" << state->l2_phys << endl;
+    logger::debug() << "mmu_module_v1: " << int(state->l2_max) << " L2 tables at va=" << state->l2_virt << ", pa=" << state->l2_phys;
 
     state->l2_next = 0;
-    for(i = 0; i < state->l2_max; i++)
+    for(i = 0; i < state->l2_max; i++) //--
         state->info[i] = L2FREE;
 
     // Enter mappings for all the existing translations.
-    enter_mappings(state); // this call uses mappings in bootinfo_page, so we need to set them up sooner or call enter_mappings() later, maybe in Done or Engage?
+    // This call uses mappings in bootinfo_page,
+    // so we need to set them up sooner or call enter_mappings() later,
+    // maybe in Done or Engage?
+    enter_mappings(state); //--
 
     // Swap over to our new page table!
-    kconsole << " +-mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys << endl;
+    logger::debug() << "mmu_module_v1: setting pagetable to " << state->l1_mapping_virt << ", " << state->l1_mapping_phys;
     nucleus::write_pdbr(state->l1_mapping_virt, state->l1_mapping_phys);
-    kconsole << " +-mmu_module_v1: wrote new pdbr using syscall!" << endl;
+    logger::debug() << "mmu_module_v1: wrote new pdbr using syscall!";
 
     // And store some useful pointers in the PIP for user-level translation.
 //    INFO_PAGE.l1_va  = st->va_l1;

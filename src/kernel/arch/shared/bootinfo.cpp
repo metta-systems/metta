@@ -11,7 +11,7 @@
 #include "bootinfo.h"
 #include "default_console.h"
 #include "memory_v1_interface.h"
-#include "debugger.h"
+#include "logger.h"
 #include "range_list.h"
 
 //======================================================================================================================
@@ -419,7 +419,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
         if (!e->is_free() || (e->start() < LOWER_BOUND))
             return;
 
-        kconsole << "Parsing free highmem range [" << e->start() << ".." << e->end() << ")" << endl;
+        logger::trace() << "Parsing free highmem range [" << e->start() << ".." << e->end() << ")";
         range.set(e->start(), e->size());
 
         std::for_each(mmap_begin(), mmap_end(), [&range, this](const multiboot_t::mmap_entry_t* f)
@@ -429,7 +429,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
             if (f->is_free())
                 return;
 
-            kconsole << "Non-free range [" << f->start() << ".." << f->end() << ")" << endl;
+            logger::trace() << "Non-free range [" << f->start() << ".." << f->end() << ")";
 
             if ((f->end() < range.start()) || (f->start() > range.end()))
                 return; // no overlap
@@ -465,7 +465,7 @@ address_t bootinfo_t::find_highmem_range_of_at_least(size_t bytes)
             first_range = range.start();
 
     });
-    kconsole << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range << endl;
+    logger::trace() << __FUNCTION__ << "(" << bytes << ") found first free range at " << first_range;
     return first_range;
 }
 
@@ -508,11 +508,11 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
     });
     if (ret)
     {
-        kconsole << __FUNCTION__ << ": found matching memmap entry at " << ret << 
+        logger::debug() << __FUNCTION__ << ": found matching memmap entry at " << ret << 
             (n_way == 0 ? ", removing fully" : 
             (n_way == 1 ? ", using start" :
             (n_way == 2 ? ", using end" :
-            (n_way == 3 ? ", splitting in the middle" : "ERROR")))) << endl;
+            (n_way == 3 ? ", splitting in the middle" : "ERROR"))));
     }
     return ret;
 }
@@ -534,7 +534,7 @@ bool bootinfo_t::use_memory(address_t start, size_t size, multiboot_t::mmap_entr
     multiboot_t::mmap_entry_t* orig_entry;
     int n_way;
 
-    kconsole << __FUNCTION__ << ": using " << int(size) << " bytes starting at " << start << endl;
+    logger::debug() << __FUNCTION__ << ": using " << int(size) << " bytes starting at " << start;
     orig_entry = find_matching_entry(start, size, n_way);
     if (!orig_entry || !orig_entry->is_free())
         return false;
@@ -586,7 +586,7 @@ void bootinfo_t::print_memory_map()
     for (auto it = mmap_begin(); it != mmap_end(); ++it)
     {
         auto i = (*it);
-        kconsole << "Start: " << i->start() << ", end: " << i->end() << ", size: " << i->size() << ", type: " << i->type() << " (" << type_to_text(i->type()) << ")" << endl;
+        kconsole << "Range: [" << i->start() << ", " << i->end() << "], size: " << i->size() << ", type: " << i->type() << " (" << type_to_text(i->type()) << ")" << endl;
     }
     kconsole << "===============================" << endl;
 }
