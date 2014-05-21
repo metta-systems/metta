@@ -1,60 +1,4 @@
-**nucleus_t**
-  - domain traversal supported.
-
-**domain_t** // (@sa Pebble's domain_fork)
-  - contains a portal_table with indexes into available portals as means of crossing domain boundaries
-
-**scheduler_t (server)**
-  - thread management,
-  - blocks and switches threads,
-  - not really privileged, other than having interrupts disabled during execution in some implementations,
-  - threads block here.
-  - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
-    - what's needed?
-      * create a thread in current space_t
-      * change thread's runnable property
-
-      `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
-
-**interrupt_dispatcher_t (server)**
-  - abstracts interrupt handling on particular architecture by translating interrupts to portals.
-
-**thread_t** // thread abstraction inside scheduler_t
-```cpp
-    thread_t
-    {
-        portal_table_t* ptab; // in domain_t actually
-        int32_t* user_stack;
-        int32_t* interrupt_stack;
-        int32_t* invocation_stack;
-    };
-```
-    @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
-
-**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
-
-**portal_manager_t (server)**
-  - space traversal routines (portals) generation,
-  - privileged server, has access to spaces in order to add/remove portals to portal_table.
-
-**vm_server_t (server)**
-  - serves paged memory to apps,
-  - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
-  - can map/grant/unmap memory pages upon request (via regions and mappings).
-
-**trader_t (server)**
-  - allocates portal IDs for clients
-  - lets clients find portal IDs by interface specification
-    * adopt sort of dbus-like portal spec with service,interface,method triplet.
-  - 0-65535 are system wide portal IDs (available in all PDs).
-  - 65536 and above are per-process portal IDs.
-
-**security_server_t (server)**
-  - controls who has access where.
-  - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
-    security information.
-
---------------------------------
+## Previous works
 
 ### PEBBLE
 
@@ -254,11 +198,69 @@ directly as it switches control of the processor, destroying the CC that called 
 
 > [...] A continuation is what remains of an unfinished computation. [...]
 
-### Memory Barriers (from GCC docs)
+##### Memory Barriers (from GCC docs)
 
 **an acquire barrier**. This means that references after the builtin cannot move to (or be speculated to) before the builtin, but previous memory stores may not be globally visible yet, and previous memory loads may not yet be satisfied.
 
 **a release barrier**. This means that all previous memory stores are globally visible, and all previous memory
 loads have been satisfied, but following memory reads are not prevented from being speculated to before the barrier.
 
+
+## VESPER
+
+**nucleus_t**
+  - domain traversal supported.
+
+**domain_t** // (@sa Pebble's domain_fork)
+  - contains a portal_table with indexes into available portals as means of crossing domain boundaries
+
+**scheduler_t (server)**
+  - thread management,
+  - blocks and switches threads,
+  - not really privileged, other than having interrupts disabled during execution in some implementations,
+  - threads block here.
+  - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
+    - what's needed?
+      * create a thread in current space_t
+      * change thread's runnable property
+
+      `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
+
+**interrupt_dispatcher_t (server)**
+  - abstracts interrupt handling on particular architecture by translating interrupts to portals.
+
+**thread_t** // thread abstraction inside scheduler_t
+```cpp
+    thread_t
+    {
+        portal_table_t* ptab; // in domain_t actually
+        int32_t* user_stack;
+        int32_t* interrupt_stack;
+        int32_t* invocation_stack;
+    };
+```
+    @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
+
+**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
+
+**portal_manager_t (server)**
+  - space traversal routines (portals) generation,
+  - privileged server, has access to spaces in order to add/remove portals to portal_table.
+
+**vm_server_t (server)**
+  - serves paged memory to apps,
+  - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
+  - can map/grant/unmap memory pages upon request (via regions and mappings).
+
+**trader_t (server)**
+  - allocates portal IDs for clients
+  - lets clients find portal IDs by interface specification
+    * adopt sort of dbus-like portal spec with service,interface,method triplet.
+  - 0-65535 are system wide portal IDs (available in all PDs).
+  - 65536 and above are per-process portal IDs.
+
+**security_server_t (server)**
+  - controls who has access where.
+  - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
+    security information.
 
