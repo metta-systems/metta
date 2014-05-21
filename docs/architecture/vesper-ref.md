@@ -1,60 +1,4 @@
-**nucleus_t**
-  - domain traversal supported.
-
-**domain_t** // (@sa Pebble's domain_fork)
-  - contains a portal_table with indexes into available portals as means of crossing domain boundaries
-
-**scheduler_t (server)**
-  - thread management,
-  - blocks and switches threads,
-  - not really privileged, other than having interrupts disabled during execution in some implementations,
-  - threads block here.
-  - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
-    - what's needed?
-      * create a thread in current space_t
-      * change thread's runnable property
-
-      `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
-
-**interrupt_dispatcher_t (server)**
-  - abstracts interrupt handling on particular architecture by translating interrupts to portals.
-
-**thread_t** // thread abstraction inside scheduler_t
-```cpp
-    thread_t
-    {
-        portal_table_t* ptab; // in domain_t actually
-        int32_t* user_stack;
-        int32_t* interrupt_stack;
-        int32_t* invocation_stack;
-    };
-```
-    @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
-
-**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
-
-**portal_manager_t (server)**
-  - space traversal routines (portals) generation,
-  - privileged server, has access to spaces in order to add/remove portals to portal_table.
-
-**vm_server_t (server)**
-  - serves paged memory to apps,
-  - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
-  - can map/grant/unmap memory pages upon request (via regions and mappings).
-
-**trader_t (server)**
-  - allocates portal IDs for clients
-  - lets clients find portal IDs by interface specification
-    * adopt sort of dbus-like portal spec with service,interface,method triplet.
-  - 0-65535 are system wide portal IDs (available in all PDs).
-  - 65536 and above are per-process portal IDs.
-
-**security_server_t (server)**
-  - controls who has access where.
-  - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
-    security information.
-
---------------------------------
+## Previous works
 
 ### PEBBLE
 
@@ -234,7 +178,165 @@ every kernel operation must be either *transparently atomic or restartable*. If 
 In Fluke, all requests for services initially go to the parent process. As the parent process, a checkpointer can know what references were granted to the child, and more importantly, it can know what they *logically* point to. Understanding the logical connection is what allows the checkpointer to correctly re-establish external connections upon restart.
 Thus, Nested Process Model is crucial in supporting transparent resource virtualization/management by parent processes.
 
-### Continuations vs threads
+#### Full Fluke API listing
+
+Thread
+```
+fluke_thread_create
+fluke_thread_create_hash
+fluke_thread_destroy (cannot destroy itself)
+fluke_thread_disable_exceptions (can only disable for itself)
+fluke_thread_enable_exceptions (can only enable for itself)
+fluke_thread_get_client (preliminary iface)[itself]
+fluke_thread_get_handlers [itself]
+fluke_thread_get_saved_state [itself]
+fluke_thread_get_server (preliminary iface)[itself]
+fluke_thread_get_state (cannot call on itself)
+fluke_thread_interrupt (cannot call on itself)
+fluke_thread_move (cannot call on itself)
+fluke_thread_reference
+fluke_thread_return_from_exception [itself]
+fluke_thread_self [itself]
+fluke_thread_set_client (preliminary iface)[itself]
+fluke_thread_set_handlers [itself]
+fluke_thread_set_saved_state [itself]
+fluke_thread_set_server (preliminary iface)[itself]
+fluke_thread_set_state (cannot call on itself)
+fluke_thread_schedule  (cannot call on itself) // donate cpu to another thread
+```
+
+Task
+```
+fluke_task_create
+fluke_task_create_hash
+fluke_task_destroy
+fluke_task_get_state
+fluke_task_move
+fluke_task_reference
+fluke_task_set_state
+```
+
+Region
+```
+fluke_region_create
+fluke_region_create_hash
+fluke_region_destroy
+fluke_region_get_state
+fluke_region_move
+fluke_region_protect
+fluke_region_reference
+fluke_region_search (can search in other tasks)
+fluke_region_set_state
+```
+
+Mapping
+```
+fluke_mapping_create
+fluke_mapping_create_hash
+fluke_mapping_destroy
+fluke_mapping_get_state
+fluke_mapping_move
+fluke_mapping_protect
+fluke_mapping_reference
+fluke_mapping_set_state
+```
+
+Port // Fluke IPC endpoints
+```
+fluke_port_create
+fluke_port_create_hash
+fluke_port_destroy
+fluke_port_get_state
+fluke_port_move
+fluke_port_reference
+fluke_port_set_state
+```
+
+Port set
+```
+fluke_pset_create
+fluke_pset_create_hash
+fluke_pset_destroy
+fluke_pset_get_state
+fluke_pset_move
+fluke_pset_reference
+fluke_pset_set_state
+```
+
+IPC // C interface, not directly mapped to kernel API
+```
+fluke_ipc_call // syncronous idempotent call
+fluke_ipc_client_connect_send // create a reliable connection to a server
+fluke_ipc_client_connect_send_over_receive // perform a reliable IPC to a server (client_{connect_send+over_receive})
+fluke_ipc_reply // reply to an idempotent call
+fluke_ipc_reply_wait_receive // reply to an idempotent call and wait for a new request (ipc_{reply+wait_receive})
+fluke_ipc_send // send a one-way message to a port
+fluke_ipc_server_ack_send_wait_receive // reply to a reliable RPC and wait for another (ipc_{server_ack_send+wait_receive})
+fluke_ipc_server_send_wait_receive // send data to a reliable RPC connection, disconnect and wait for a new invocation (ipc_{server_send+wait_receive})
+fluke_ipc_setup_wait_receive // set up a server thread and wait for incoming IPC invocations
+fluke_ipc_client_ack_send // become the sender on a reliable IPC connection
+fluke_ipc_server_ack_send
+fluke_ipc_client_ack_send_over_receive // reverse a reliable IPC connection, send a message and reverse again
+fluke_ipc_server_ack_send_over_receive
+fluke_ipc_client_alert // send an interrupt on a reliable IPC connection
+fluke_ipc_server_alert
+fluke_ipc_client_disconnect // destroy a reliable IPC connection
+fluke_ipc_server_disconnect
+fluke_ipc_client_over_receive // reverse the transfer direction of a reliable IPC connection
+fluke_ipc_server_over_receive
+fluke_ipc_client_receive // receive data through reliable IPC
+fluke_ipc_server_receive
+fluke_ipc_client_send // send data across a reliable IPC connection
+fluke_ipc_server_send
+fluke_ipc_client_send_over_receive // send a message on a reliable IPC connection and reverse the connection
+fluke_ipc_server_send_over_receive
+fluke_ipc_wait_receive // wait on a port set for incoming IPC invocations
+```
+
+Mutex
+```
+fluke_mutex_create
+fluke_mutex_create_hash
+fluke_mutex_destroy
+fluke_mutex_get_state
+fluke_mutex_lock
+fluke_mutex_move
+fluke_mutex_reference
+fluke_mutex_set_state
+fluke_mutex_trylock
+fluke_mutex_unlock
+```
+
+Condition
+```
+fluke_cond_broadcast
+fluke_cond_create
+fluke_cond_create_hash
+fluke_cond_destroy
+fluke_cond_get_state
+fluke_cond_move
+fluke_cond_reference
+fluke_cond_set_state
+fluke_cond_signal
+fluke_cond_wait
+```
+
+Reference
+```
+fluke_ref_check
+fluke_ref_compare
+fluke_ref_copy
+fluke_ref_create
+fluke_ref_destroy
+fluke_ref_hash
+fluke_ref_move
+fluke_ref_type
+```
+
+
+### MISC
+
+#### Continuations vs threads
 
 Any continuation to which a user program can generate a valid reference is already suspended and waiting for a message.
 `Throw()` and `ThrowCC()` just hand the suspended continuation a message and run it. `ThrowCC()` suspends the current
@@ -254,11 +356,69 @@ directly as it switches control of the processor, destroying the CC that called 
 
 > [...] A continuation is what remains of an unfinished computation. [...]
 
-### Memory Barriers (from GCC docs)
+#### Memory Barriers (from GCC docs)
 
 **an acquire barrier**. This means that references after the builtin cannot move to (or be speculated to) before the builtin, but previous memory stores may not be globally visible yet, and previous memory loads may not yet be satisfied.
 
 **a release barrier**. This means that all previous memory stores are globally visible, and all previous memory
 loads have been satisfied, but following memory reads are not prevented from being speculated to before the barrier.
 
+
+## VESPER
+
+**nucleus_t**
+  - domain traversal supported.
+
+**domain_t** // (@sa Pebble's domain_fork)
+  - contains a portal_table with indexes into available portals as means of crossing domain boundaries
+
+**scheduler_t (server)**
+  - thread management,
+  - blocks and switches threads,
+  - not really privileged, other than having interrupts disabled during execution in some implementations,
+  - threads block here.
+  - theoretically, thread abstraction can also be removed from nucleus into the scheduler_t server (TODO?).
+    - what's needed?
+      * create a thread in current space_t
+      * change thread's runnable property
+
+      `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
+
+**interrupt_dispatcher_t (server)**
+  - abstracts interrupt handling on particular architecture by translating interrupts to portals.
+
+**thread_t** // thread abstraction inside scheduler_t
+```cpp
+    thread_t
+    {
+        portal_table_t* ptab; // in domain_t actually
+        int32_t* user_stack;
+        int32_t* interrupt_stack;
+        int32_t* invocation_stack;
+    };
+```
+    @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
+
+**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
+
+**portal_manager_t (server)**
+  - space traversal routines (portals) generation,
+  - privileged server, has access to spaces in order to add/remove portals to portal_table.
+
+**vm_server_t (server)**
+  - serves paged memory to apps,
+  - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
+  - can map/grant/unmap memory pages upon request (via regions and mappings).
+
+**trader_t (server)**
+  - allocates portal IDs for clients
+  - lets clients find portal IDs by interface specification
+    * adopt sort of dbus-like portal spec with service,interface,method triplet.
+  - 0-65535 are system wide portal IDs (available in all PDs).
+  - 65536 and above are per-process portal IDs.
+
+**security_server_t (server)**
+  - controls who has access where.
+  - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
+    security information.
 
