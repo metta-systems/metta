@@ -30,7 +30,7 @@ public:
 
     /**
      * Initialize everything according to loader format.
-     * This function will parse sysimage, install nucleus, load necessary pre-boot environment 
+     * This function will parse sysimage, install nucleus, load necessary pre-boot environment
      * and return an entry point address to jump to for continuing the boot sequence.
      * @returns entry point for boot sequence.
      */
@@ -45,5 +45,5 @@ public:
 extern loader_format_t loader_formats[];
 
 // Prototypes for architecture-specific functions
-void launch_kernel(address_t entry);// NORETURN;
+void launch_kernel(address_t entry) NEVER_RETURNS;
 void flush_cache();

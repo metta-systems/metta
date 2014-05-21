@@ -87,7 +87,7 @@ static void parse_cmdline(bootinfo_t* bi)
 //                  L4_BootLoaderSpecificMemoryType,
 //                  kip_manager_t::desc_boot_module);
 
-static void SECTION(".init.cpu") check_cpu_features()
+static void check_cpu_features() SECTION(".init.cpu")
 {
     uint32_t req_features = X86_32_FEAT_FPU;
 #if CONFIG_X86_PSE
@@ -121,18 +121,23 @@ static void SECTION(".init.cpu") check_cpu_features()
             "fxsr", "sse",    "sse2", "ss",    "ht",   "tm",  "ia64", "pbe"
         };
         for (int i = 0; i < 32; i++)
-            if ((req_features & 1 << i) && (!(avail_features & 1 << i)))
+        {
+            if ((req_features & 1 << i) && (!(avail_features & 1 << i))) {
                 kconsole << x86_32_features[i] << " ";
+            }
+        }
         kconsole << "missing)" << endl;
-        PANIC("unsupported CPU!");
+        PANIC("Unsupported CPU!");
     }
 
     uint32_t max_cpuid, family, dummy;
 
-    if (x86_cpu_t::has_cpuid())
+    if (x86_cpu_t::has_cpuid()) {
         x86_cpu_t::cpuid(0, &max_cpuid, &dummy, &dummy, &dummy);
-    else
+    }
+    else {
         max_cpuid = 0;
+    }
 
     // kconsole << "max cpuid level " << max_cpuid << endl;
     x86_cpu_t::cpuid(0x80000001, &dummy, &dummy, &dummy, &family);
@@ -250,7 +255,7 @@ extern "C" void arch_prepare()
     parse_cmdline(bi);
     prepare_infopage(); // <-- init domain info page
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
-    
+
     // TODO: CREATE INITIAL MEMORY MAPPINGS PROPERLY HERE
     // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
     int ramtop = 32*MiB;

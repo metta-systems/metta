@@ -15,11 +15,13 @@
 /**
  * Main launcher entry point. Parses through all loader formats to find a valid one.
  */
-extern "C" void launcher() NEVER_RETURNS
+extern "C"
+void launcher() NEVER_RETURNS
 {
     kconsole << "Launcher started.\n";
-    loader_format_t* format = NULL;
+    loader_format_t* format{nullptr};
 
+    kconsole << "Picking a loader.\n";
     for (size_t n = 0; loader_formats[n].probe; ++n)
     {
         if (loader_formats[n].probe())
@@ -37,8 +39,9 @@ extern "C" void launcher() NEVER_RETURNS
     kconsole << format->name << " preparing.\n";
     address_t entry = format->prepare();
 
-    if (!entry)
+    if (!entry) {
         PANIC("Boot sequence not found!");
+    }
 
     // Flush caches (some archs don't like code in their D-cache).
     flush_cache();
