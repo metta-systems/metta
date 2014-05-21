@@ -179,13 +179,15 @@ This component model is derived from [Fractal middleware][fractal].
 
 Library components define the base substrate upon which the whole applications are built. Library components are real components and they export typed interfaces just like any other component does. Most library components are colocated into the same protection domain as the application using them.
 
-Dynamic loader (Sjofn), similar to OMOS server, is used to perform component relocation and linking. Employed memory and loading models allow to share code and static data between all domains efficiently.
+Dynamic loader (Sjofn), similar to [OMOS server][omos], is used to perform component relocation and linking. Employed memory and loading models allow to share code and static data between all domains efficiently.
 
 Meta-objects (in OMOS sense) are used to create generator interfaces which instantiate modules, used by application.
 
 Runtime type system is a basis for reflectivity support and allows components to introspect their runtime environment, add new runtime types and resolve arising conflicts.
 
 Together with Sjofn, type system allows service-oriented component combination and relatively easy component adaptation, similar to Scala language.
+
+  [omos]: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.44.2856
 
 
 ### Applications ###
