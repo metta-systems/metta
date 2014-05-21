@@ -1,3 +1,10 @@
+General implementation considerations
+-------------------------------------
+
+Separate hardware-related interfaces from conceptual interfaces.
+Similar to Pistachio, try to keep conceptual interfaces higher level and independent of hardware implementation details.
+
+
 Stretch Allocator: implementation details
 -----------------------------------------
 
