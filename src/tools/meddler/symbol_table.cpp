@@ -59,7 +59,7 @@ bool symbol_table_t::is_qualified_type_name(std::string identifier)
 {
     if (identifier.find_first_of('.') != std::string::npos)
         return true;
-	return false;
+    return false;
 }
 
 std::string symbol_table_t::qualify(std::string identifier)

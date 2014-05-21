@@ -16,7 +16,6 @@
 			"-D_LIBCPP_NO_EXCEPTIONS=1",
 			"-fvisibility-inlines-hidden",
 			"-fvisibility=hidden",
-			"-fno-builtin",
 			"-fno-stack-protector",
 			"-fno-strict-aliasing",
 			"-ffreestanding",

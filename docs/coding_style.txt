@@ -1,4 +1,9 @@
-This document describes coding conventions used in Metta, be sure to comply to these guidelines to make merging easier.
+===================================================================================================
+0. Preface
+===================================================================================================
+
+This document describes coding conventions used in Metta, be sure to comply to these guidelines
+to make merging easier.
 
 This document is based on work by
     Scott Wheeler
@@ -6,14 +11,19 @@ This document is based on work by
     Frank Osterfeld
     Ludvig Borgne
 
+All sections are numbered to make referencing them easier, for example 1a describes the format of
+identifier names.
 
-========================================================================================================================
+System style is snake_names_like_this.
+
+===================================================================================================
 1. Names
-========================================================================================================================
+===================================================================================================
 
-The following guidelines deal with naming of types, attributes, variables, constants, functions, namespaces etc:
+The following guidelines deal with naming of types, attributes, variables, constants, functions,
+namespaces etc:
 
-a. The following names shall be in lowercase C style:
+a. The following names shall be in lowercase system style:
     * Types
     * Named constants
     * Enum values
@@ -22,12 +32,14 @@ a. The following names shall be in lowercase C style:
     * Attributes
     * Variables
 
-b. The following names should be in uppercase C style:
+b. The following names should be in uppercase system style:
     * Defined preprocessor macro names
     * Defined constant names
 
-c. Names of template parameters shall be single uppercase letters or C style lowercase identifiers. In complex stl-like
-   code with many typedefs it is allowed to name template parameters in CamelCase.
+c. Names of template parameters shall be single uppercase letters or system style lowercase
+   identifiers.
+   In complex STL-like code with many typedefs it is allowed to name template parameters
+   in CamelCase.
 
 d. Names of methods and functions shall start with a verb.
 
@@ -39,7 +51,8 @@ e. Accessors shall begin with "set" for setters and no prefix for getters.
     int length();
     void set_length(int new_length);
 
-    If internal property name is the same as accessor function name, property name shall have "_" appended.
+    If internal property name is the same as accessor function name, property name shall have
+    underscore appended.
 
     int length_;
 
@@ -48,71 +61,96 @@ f. Plural form shall be used for names representing a collection of objects.
     list_t<rectangle_t> rectangles;
     int points[n_points];
 
-g. Avoid long variable names in code blocks. When code is sufficiently concise variable meaning should be obvious.
-   Do not save on instance and class variable names though, these are visible throughout the class and serve documentary
-   purposes.
+g. Avoid long variable names in code blocks. When code is sufficiently concise variable meaning
+   should be obvious.
+   Do not save on instance and class variable names though, these are visible throughout the class
+   and serve documentary purposes.
 
-h. Boolean variables and methods (including accessors) shall use suitable prefixes, such as "is", "has" or "can".
+h. Boolean variables and methods (including accessors) shall use suitable prefixes,
+   such as "is", "has" or "can".
 
     bool is_open;
     bool has_subject(email& mail);
+    bool can_update();
 
-i. Types have _t appended (some types inside namespaces can omit it, but rarely). Namespaces have _n suffix. Enums have
-   _e suffix:
+i. Types have _t suffix (some types inside namespaces can omit it, but rarely).
 
     typedef int sint32_t;
     class kernel_t;
 
-j. Namespaces nesting should not be abundant. Typically a single level flat namespace is more than enough to group
-   classes together.
+   Note: this clashes with POSIX norm for system types, but we use it anyway as it is more clear
+   and for C++ usually hidden inside a namespace.
 
-k. Sometimes namespaces can be plural nouns or adjectives, indicating grouping classes by attribute.
+j. Namespaces nesting should not be abundant. Typically a single level flat namespace
+   is more than enough to group classes together.
+
+k. Sometimes namespaces can be plural nouns or adjectives, indicating grouping
+   classes by attribute.
 
 l. Needless to say, all names shall be in English.
 
 
-========================================================================================================================
+===================================================================================================
 2. Files
-========================================================================================================================
+===================================================================================================
 
-The following guidelines deal with the naming, contents and structure of source code and header files:
+The following guidelines deal with the naming, contents and structure of source code
+and header files:
 
-a. C++ header files shall have the extension ".h", and C++ source files shall have the extension ".cpp".
+a. C++ header files shall have the extension ".h",
+   and C++ source files shall have the extension ".cpp".
 
-b. A class shall be declared in a header file and defined in a source file, where the names of the files
-   match the name of the class. Except in the case of templated classes, where method bodies should be defined
-   within the same header file, preferably outside of the class declaration, unless they are very short.
+b. A class shall be declared in a header file and defined in a source file,
+   where the names of the files match the name of the class.
+   Except in the case of templated classes, where method bodies should be defined
+   within the same header file, preferably outside of the class declaration,
+   unless they are very short.
 
 c. All definitions, except inline functions, shall reside in source files.
 
-d. The order of definitions in the source file shall be the same as the order of the corresponding declarations in
-   the header file. Unless otherwise required by interdependencies.
+d. The order of definitions in the source file shall be the same as the order
+   of the corresponding declarations in the header file.
+   Unless otherwise required by interdependencies.
 
-e. Line length shall be kept within 120 columns, whenever feasilble.
+e. Line length shall be kept within 100 columns, whenever feasilble.
 
-f. Lines longer than 120 columns shall be split in a way that makes the line readable,
+f. Lines longer than 100 columns shall be split in a way that makes the line readable,
    e.g. by breaking after a comma or an operator, and aligning the new line with the beginning
    of the expression on the previous line.
 
-g. Header files shall contain an include guard. Instead of #define-based include guards
+g. Header files shall contain an include guard.
+
+   Do not use #define-based include guards like these:
 
     #ifndef __MEMORY_H
     #define __MEMORY_H
     // .....
     #endif
 
-   better is to use
+   Use #pragma instead:
 
     #pragma once
 
 h. #include directives shall be located at the top of the file, after the header.
-   Header files shall be included in the following order: standard headers, 3rd-party headers, local headers.
-   This prevents local include conflicts with global files and allows to redefine standard behavior.
+   Header files shall be included in the following order:
+   1. standard headers,
+   2. third-party headers,
+   3. local headers.
+   This prevents local include conflicts with global files
+   and allows to redefine standard behavior.
+
+   #include <string>
+   #include <boost/lexical_cast.hpp>
+   #include "my_local_class.h"
+
+i. In header files, prefer forward declarations for classes defined in the current package, but
+   use includes for system types like iostream or string. Their forward declarations may be
+   system-dependent.
 
 
-========================================================================================================================
+===================================================================================================
 3. Layout
-========================================================================================================================
+===================================================================================================
 
 The following guidelines deal with indentation and use of whitespace:
 
@@ -120,8 +158,8 @@ a. Spaces shall always be used instead of tabs.
 
 b. The basic indentation step is 4 spaces.
 
-c. Block bodies, case statements within a switch are indented. Class bodies are indented, however access modifiers
-   "public", "protected" and "private" are not.
+c. Block bodies, case statements within a switch are indented.
+   Class bodies are indented, however access modifiers "public", "protected" and "private" are not.
 
     switch (arg)
     {
@@ -137,15 +175,26 @@ c. Block bodies, case statements within a switch are indented. Class bodies are 
         }
     }
 
-d. Namespaces are not indented except when in forward declarations (where they indent as block bodies).
-   Comment the closing bracket of the namespace with // namespace foo
+    class my_type_t
+    {
+        int v_;
 
-    namespace boost
+    public:
+        inline int v() const {
+            return v_;
+        }
+    };
+
+d. Namespaces are not indented except when in forward declarations
+   (where they indent as block bodies).
+   Comment the closing bracket of the namespace foo with // foo namespace
+
+    namespace my_namespace
     {
         class regexp;
     }
 
-    namespace example_n
+    namespace example
     {
 
     class foo_t
@@ -154,11 +203,16 @@ d. Namespaces are not indented except when in forward declarations (where they i
         foo_t();
     };
 
-    } // namespace example_n
+    } // example namespace
 
-e. Opening brackets are on their own line, except for enumerations and inline functions defined on a single line.
+e. Opening braces are on their own line, except for enumerations
+   and blocks defined in a single line.
 
     enum some_enum_e { value1, value2, value3 };
+
+    if (x > y) {
+        y += 5;
+    }
 
     if (x > y)
     {
@@ -173,22 +227,28 @@ e. Opening brackets are on their own line, except for enumerations and inline fu
         // stuff
     }
 
-    Inline functions inside a class body use egyptian braces.
+    Inline accessor functions follow the same rules - egyptian braces if body is only one line,
+    regular braces otherwise.
+    Do not put single-line bodies of inline functions on the same line as function declaration,
+    always use egyptian style.
 
     class test_t
     {
         inline void do_something() {
-            // time to do something here
             yippie();
+        }
+
+        inline void do_something_else()
+        {
+            // time to do something else here
+            yippie2();
         }
     };
 
-f. Multiple statements should not ever be combined onto one line. Exception is the C++ idiom of deleting a pointer
-   and assigning it NULL:
+f. Multiple statements should not ever be combined onto one line.
 
-    delete ptr; ptr = NULL;
-
-g. Loop statements such as "if", "for", "foreach", "do...while" and "while" shall always have brackets around their blocks. "for" statements with empty bodies should be avoided.
+g. Block statements such as "if", "for", "foreach", "do...while" and "while" shall
+   always have brackets around their blocks. "for" statements with empty bodies should be avoided.
 
 h. The condition in an "if" statement shall always be put on a separate line.
 
@@ -196,14 +256,25 @@ h. The condition in an "if" statement shall always be put on a separate line.
         y = x;
     }
 
-i. C++ pointers and references shall have their reference symbol next to the type rather than to the name.
+i. C++ pointers and references shall have their reference symbol next to the type
+   rather than to the name.
 
     float* x;
     some_class_t& object;
 
-j. In class declarations, "public" declarations shall precede "protected" declarations which in turn shall precede
-   "private" declarations. In many cases "private" declarations may precede all other declarations without specifying
-   "private" (using default class access).
+j. C++ const specifiers should be placed between type name and reference symbol.
+
+    int const v;
+    int const* vp;
+    int const* const vpp;
+    some_class_t& const glued_reference_to_object;
+
+   Why? See discussion here http://stackoverflow.com/questions/5503352/const-before-or-const-after
+   In short: const applies to the thing on the left of it.
+
+k. In class declarations, "public" declarations shall precede "protected" declarations
+   which in turn shall precede "private" declarations. In many cases "private" declarations may
+   precede all other declarations without specifying "private" (using default class access).
 
    The organization of the members in a class declaration should be roughly as follows:
 
@@ -223,9 +294,10 @@ j. In class declarations, "public" declarations shall precede "protected" declar
 
    Methods and attributes should be clearly separated.
 
-k. Virtual functions should always be marked as 'override' in derived classes.
+l. Virtual functions should always be marked as 'override' in derived classes.
 
-l. In a function definition, the function return type shall be put above the function name (not to the left of it).
+m. In a function definition, the function return type shall be put above
+   the function name (not to the left of it).
 
     some_type_t
     some_function(some_other_type_t& object)
@@ -233,7 +305,8 @@ l. In a function definition, the function return type shall be put above the fun
         // ...
     }
 
-m. In a template function definition, the function template arguments shall be put to the line above function signature.
+n. In a template function definition, the function template arguments shall be put
+   to the line above function signature. They can span multiple lines with additional indent.
 
     template <typename T, int N>
     some_type_t
@@ -242,35 +315,47 @@ m. In a template function definition, the function template arguments shall be p
         // ...
     }
 
-n. The following items shall be surrounded by a space character:
+    template <typename RidiculouslyLongTypeName,
+        int N = 500>
+    some_type_t
+    some_function(some_other_type_t& object)
+    {
+        // ...
+    }
+
+o. The following items shall be surrounded by a space character:
     * Conventional operators,
     * Curly braces used in single-lined enum declarations,
     * Curly braces used in single-lined inline function definitions.
 
     a = 5 + (3 * x) / 2;
 
-o. The following items shall be followed by a space character:
+p. The following items shall be followed by a space character:
     * C++ reserved words,
     * Commas,
     * Semicolons in "for" statements.
 
-    for (x = 0; x < 10; ++x, y += x)
+    for (x = 0; x < 10; ++x, y += x) {
         do_something(x, y, 0);
+    }
 
-p. Function names, operator names in declarations and definitions, various C++ casts operators should not be followed by a space character.
+q. Function names, operator names in declarations and definitions,
+   various C++ casts operators should not be followed by a space character.
 
     static_cast<void*>(var)
     operator uint32_t();
     operator =(int new_value);
 
-q. Opening parentheses shall not be followed by white space. Closing parentheses shall not be preceded by white space.
+r. Opening parentheses shall not be followed by white space.
+   Closing parentheses shall not be preceded by white space.
 
-r. Logical units within a block shall be separated by one blank line, and each block shall start with a comment
-   if it is unclear what the block does.
+s. Logical units within a block shall be separated by one blank line,
+   and each block shall start with a comment if it is unclear what the block does.
 
-s. Function definitions shall be separated by two blank lines.
+t. Function definitions shall be separated by two blank lines.
 
-t. Initializer lists in constructors are one assignment per line, indented, with colon or comma before the assignment.
+u. Initialization in constructors is one assignment per line, indented,
+   with colon or comma before the assignment.
    This allows for easier rearrangement if class layout changes.
 
     object_t::object_t(int a, double b, other_t& c)
@@ -282,30 +367,32 @@ t. Initializer lists in constructors are one assignment per line, indented, with
         // other initialization
     }
 
-u. Variables in declaration blocks and their initialization can be justified to the left whenever it enhances readability.
+v. Variables in declaration blocks and their initialization can be justified to the left
+   to enhance readability.
 
     int     long_variable_name = 0;
     double  avoid_long_names   = 1.1;
     bool    long_names         = true;
 
-v. Files usually include at the top licensing header from file license_header. Ruby script apply_boilerplate.rb can be used to add it to new files.
+w. Files usually include at the top licensing header from file license_header.
+   Ruby script apply_boilerplate.rb can be used to add it to new files.
 
 
-========================================================================================================================
+===================================================================================================
 4. Documentation
-========================================================================================================================
+===================================================================================================
 
 The following guidelines deal with comments and documentation of the code:
 
 a. All comments shall be written in English.
 
 b. Use "//" for single-line text comments, and "//" or "/* */" for multi-line text comments.
-   "#if 0 ... #endif" preprocessor directives can be used to temporarily disable code without erasing it.
-   Eventually, such code shall be removed, though.
+   "#if 0 ... #endif" preprocessor directives can be used to temporarily disable code without
+   erasing it. Eventually, such code shall be removed, though.
 
-c. Classes, functions and methods shall be documented using simple Doxygen comments where they are declared. This means
-   functions in public API will carry their own documentation in the header files. Internal documentation can be
-   appended by writing it in the source file.
+c. Classes, functions and methods shall be documented using simple Doxygen comments
+   where they are declared. This means functions in public API will carry their own documentation
+   in the header files. Internal documentation can be appended by writing it in the source file.
 
    Doxygen comments shall include a brief description of the method/attribute, and may also contain
    a detailed description, if that is considered necessary.
@@ -320,16 +407,19 @@ c. Classes, functions and methods shall be documented using simple Doxygen comme
         // ...
     }
 
-d. For inline functions, defined on a single line in the header file, a brief description just above the definition is enough.
+d. For inline functions, defined on a single line in the header file,
+   a brief description just above the definition is enough.
 
     /// A brief description of the function.
-    void my_inline_function(int x) { a = x; }
+    void my_inline_function(int x) {
+        a = x;
+    }
 
-e. For structs, enums and attributes, a brief description is enough. Enum values and attributes may be documented
-   after the value.
+e. For structs, enums and attributes, a brief description is enough.
+   Enum values and attributes may be documented after the value.
 
-    //! Type of line used for drawing.
-    enum line_type_e
+    /// Type of line used for drawing.
+    enum line_type
     {
         no_line,     /**< No line at all.           */
         thin_line,   /**< Thin line (1-3 pixels).   */
@@ -337,9 +427,9 @@ e. For structs, enums and attributes, a brief description is enough. Enum values
     };
 
 
-========================================================================================================================
-5. An example here
-========================================================================================================================
+===================================================================================================
+5. An example
+===================================================================================================
 
 
 test.h:
@@ -352,19 +442,21 @@ test.h:
 //
 #pragma once
 
-#include <sysinclude1.h>
+#include <map>
+#include <string>
 #include <sysinclude2.h>
 #include <extinclude1.h>
 #include <extinclude2.h>
 #include "localinclude1.h"
 #include "anotherlocalinclude.h"
 
-class something_t;
+namespace example {
 
-namespace example_n {
+class something_t;
 
 /**
  * This is an example test object.
+ * More detailed description of what this class does.
  */
 class test_t : public object_t
 {
@@ -383,10 +475,10 @@ public:
     void apply_func2(something_t* sth);
 
     // accessors
-    int   private_var() {
+    int private_var() const {
         return private_var_;
     }
-    void  set_private_var(int new_v) {
+    void set_private_var(int new_v) {
         private_var_ = new_v;
     }
 
@@ -398,7 +490,7 @@ signals:
 
 // Protected and private stuff is usually documented in the implementation file.
 protected:
-    void some_protected_func();
+    void some_protected_func() override;
     static void some_protected_static_func();
 
 protected slots:
@@ -424,7 +516,7 @@ private:
     static test_t* instance_;
 };
 
-} // namespace example_n
+} // example namespace
 
 
 test.cpp:
@@ -440,7 +532,7 @@ test.cpp:
 #include <extinclude3.h>
 #include "localinclude2.h"
 
-namespace example_n
+namespace example
 {
 
 test_t* test_t::instance_ = 0;
@@ -461,8 +553,9 @@ test_t::test_t(string_t some_string)
     , private_var_(0)
     , tasty_thingie(from_string(some_string))
 {
-    if (!tasty_thingie)
+    if (!tasty_thingie) {
         debug() << "from_string failed";
+    }
 }
 
 
@@ -470,37 +563,14 @@ void
 test_t::apply_func2(something_t* sth)
 {
     for (int x = 0; x < 10; x++)
-        if (x == 5)
+    {
+        if (x == 5) {
             send(*sth);
+        }
+    }
 }
 
-} // namespace example_n
+} // example namespace
 
+===================================================================================================
 
-========================================================================================================================
-6. astylerc
-========================================================================================================================
-
-While astyle cannot fully follow this document's guidelines, it can tremendously help by adjusting style
-in a source file to a common base. The following astylerc settings are used:
-
-indent=spaces=4
-brackets=linux                         # attach brackets inside functions only
-indent-switches
-indent-preprocessor
-#no-indent-classes
-#no-indent-cases
-#no-indent-brackets
-#no-indent-blocks
-#no-indent-namespaces
-#no-indent-labels
-max-instatement-indent=80
-min-conditional-indent=4
-break-blocks
-delete-empty-lines
-unpad-paren
-keep-one-line-blocks
-convert-tabs
-
-
-========================================================================================================================

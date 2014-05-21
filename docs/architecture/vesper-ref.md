@@ -1,10 +1,10 @@
-nucleus_t:
+**nucleus_t**
   - domain traversal supported.
 
-domain_t: // (@sa Pebble's domain_fork)
+**domain_t** // (@sa Pebble's domain_fork)
   - contains a portal_table with indexes into available portals as means of crossing domain boundaries
 
-scheduler_t (server):
+**scheduler_t (server)**
   - thread management,
   - blocks and switches threads,
   - not really privileged, other than having interrupts disabled during execution in some implementations,
@@ -14,12 +14,13 @@ scheduler_t (server):
       * create a thread in current space_t
       * change thread's runnable property
 
-      client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread
+      `client -> scheduler(create_thread) -> security_server(can_create_thread) -> new thread`
 
-interrupt_dispatcher_t (server):
+**interrupt_dispatcher_t (server)**
   - abstracts interrupt handling on particular architecture by translating interrupts to portals.
 
-thread_t: // thread abstraction inside scheduler_t
+**thread_t** // thread abstraction inside scheduler_t
+```cpp
     thread_t
     {
         portal_table_t* ptab; // in domain_t actually
@@ -27,38 +28,39 @@ thread_t: // thread abstraction inside scheduler_t
         int32_t* interrupt_stack;
         int32_t* invocation_stack;
     };
-  // FIXME: how to create a thread that inherits portal table but runs in further subspaces.
+```
+    @FIXME: how to create a thread that inherits portal table but runs in further subspaces.
 
-portal_t: // a portal abstraction used inside the kernel to generate, optimize and address portals
+**portal_t** // a portal abstraction used inside the kernel to generate, optimize and address portals
 
-portal_manager_t (server):
+**portal_manager_t (server)**
   - space traversal routines (portals) generation,
   - privileged server, has access to spaces in order to add/remove portals to portal_table.
 
-vm_server_t (server):
+**vm_server_t (server)**
   - serves paged memory to apps,
   - privileged server, has access to all physical memory on the machine (like sigma0 in L4),
   - can map/grant/unmap memory pages upon request (via regions and mappings).
 
-trader_t (server):
+**trader_t (server)**
   - allocates portal IDs for clients
   - lets clients find portal IDs by interface specification
     * adopt sort of dbus-like portal spec with service,interface,method triplet.
   - 0-65535 are system wide portal IDs (available in all PDs).
   - 65536 and above are per-process portal IDs.
 
-security_server_t (server):
+**security_server_t (server)**
   - controls who has access where.
   - security_id_t should be adopted in the kernel as security context id to allow simple flask-like object labeling with
     security information.
 
-========================================================================================================================
+--------------------------------
 
-***** PEBBLE ******
+### PEBBLE
 
 Key Ideas: Protection Domains, Threads and Portals
 
- * Minimal supervisor-mode nucleus, responsible for little more than context switches.
+ * **Minimal supervisor-mode nucleus**, responsible for little more than context switches.
    - Most functionality is provided by servers that execute in user mode without special privileges.
    - The kernel is responsible only for switching between protection domains.
    - If something can be run at user level, it is.
@@ -104,14 +106,14 @@ Key Ideas: Protection Domains, Threads and Portals
    - portal code runs in kernel mode and may access or modify private data structures belonging to certain servers (e.g. VM),
    - portal may perform additional actions (parameter modification, virtual memory, etc.),
    - portal code may never block and may not contain loops,
-   - portals are generally ***created in pairs*** for each communication path between every client and server, a call portal and a return portal. The return portal may be shared,
+   - portals are generally *created in pairs* for each communication path between every client and server, a call portal and a return portal. The return portal may be shared,
    - a short-circuit portal implements the operation without switching to another protection domain. It is similar to the Unix null system call getpid(),
    - managing the portal table is crucial for enforcing protection (file access, server access, etc.) and safety (sandboxing, interposition, etc.),
    - a domain may invoke only the portals that it can explicitly open (domain which exports the service, controls who can open portals to it, either directly or via help of security server) or those that it inherited from its parent.
    - each protection domain has a private portal table.
    - portal code and portal tables may be shared between domains.
 
-Dynamic Code Generation
+#### Dynamic Code Generation
 
  * The portal code is specialized for the particular client and server.
  * The portal code is instantiated from a template at the time that the portal is opened.
@@ -147,14 +149,14 @@ Portal registration with portal_manager:
  * the rest of control transfer is performed by portal code (registers save, argument copy, stack change, page mapping).
 
 
-Servers
+#### Servers
 
 System is composed out of components.
 Components run in their own Protection Domains (which consist of memory pages and portal table which contains addresses of the portal code for portals this component has access to). Both memory pages and portals can be shared with other Protection Domains.
  - Parent PD may share its portal table with its child. Changes to portal table reflected in both parent and child.
  - Child may receive a copy of PT during creation.
 
-* System services are provided by ***server components***.
+* System services are provided by **server components**.
 * Servers run in separate protection domains in user mode.
 * Unlike applications, servers may be granted limited privileges:
   - access to a portion of the physical memory
@@ -167,7 +169,7 @@ Components run in their own Protection Domains (which consist of memory pages an
 * Errors are localized in the faulty server.
 
 
-Scheduling and Synchronization
+#### Scheduling and Synchronization
 
 * The scheduler is a replaceable component.
 * The scheduler runs in user mode.
@@ -177,7 +179,7 @@ Scheduling and Synchronization
   - Semaphores are implemented by a pair of portals (for the P and V operations)
 
 
-Interrupt Processing
+#### Interrupt Processing
 
 * Interrupts are delivered promptly, since most of the system executes in user-mode with interrupts enabled.
 * The scheduler unifies the handling of interrupts and threads. Interrupt handler threads are scheduled according to priority.
@@ -195,9 +197,9 @@ Interrupt Processing
 thread and return to it.
 * Due to the nature of interrupts, their portals must always be available. Thus interrupt portals belong to a special class of global portals which are the same in all domains. Exceptions which are related to the execution of the processor (e.g. floating-point-underflow), are mapped into portals that are specific to each domain.
 
-Related Work
+#### Related Work
 
-Pebble includes a combination of combination of old ideas:
+Pebble includes a combination of old ideas:
 * Micro-kernels: Mach and L4.
 * Protection domains and portals: SPACE.
 * Specialized code generation: Synthesis and Synthetix.
@@ -206,15 +208,15 @@ Pebble includes a combination of combination of old ideas:
 * Dynamically replaceable components: Kea.
 * User-level implementation of high-level abstractions: Exokernel
 
-***** SPACE *****
+### SPACE
 
-There are two primary operations supported by the SPACE kernel: portal_entry which is used to move between domains, and resume_pcb which resumes execution at a point where a portal entry had occurred. portal_entry can be implicit (e.g. a pagefault or i/o interrupt), or explicit through a kernel call. resume_pcb is always an explicit operation.
+There are two primary operations supported by the SPACE kernel: `portal_entry` which is used to move between domains, and `resume_pcb` which resumes execution at a point where a portal entry had occurred. `portal_entry` can be implicit (e.g. a pagefault or i/o interrupt), or explicit through a kernel call. `resume_pcb` is always an explicit operation.
 
 When a processor switches domains by passing through a portal, the code sequence that was previously running usually needs to be resumed at some time. This requires that the processor state be saved. The SPACE kernel saves the processor state, as well as the identity of the current domain, in a data structure called the processor control block (pcb). A new pcb may be allocated for processor execution at every portal entry, but it is only used if the code sequence in the new domain also enters a portal. Each pcb has a unique token associated with it. The new domain is recorded in the pcb as the owner of the token, so that only code sequences running in the new domain can use the token to do a resume_pcb.
 
-***** FLUKE ******
+### FLUKE
 
-**State exportability is not yet defined in Vesper.**
+*State exportability is not yet defined in Vesper.*
 
 Easily exportable kernel state for process to support user-level checkpointing etc.
 Pickling - saving exportable state.
@@ -227,47 +229,36 @@ Fluke represents pointers to flobs with references, so a mapping contains a refe
 State can be retrieved or set at any given point in time, with as little overhead as possible (hence userspace part of flobs in Fluke).
 
 Providing consistent kernel object state at arbitrary times requires a fundamental property of all kernel operations:
-every kernel operation must be either **transparently atomic or restartable**. If they were not, an object could have state
-stored in internal kernel data structures that is not exported by normal kernel operations. The Fluke kernel provides this
-transparent interruption and restart.
+every kernel operation must be either *transparently atomic or restartable*. If they were not, an object could have state stored in internal kernel data structures that is not exported by normal kernel operations. The Fluke kernel provides this transparent interruption and restart.
 
-In Fluke, all requests for services initially go to the parent process. As the parent process, a checkpointer can know what references were granted to the child, and more importantly, it can know what they **logically** point to. Understanding the logical connection is
-what allows the checkpointer to correctly re-establish external connections upon restart.
+In Fluke, all requests for services initially go to the parent process. As the parent process, a checkpointer can know what references were granted to the child, and more importantly, it can know what they *logically* point to. Understanding the logical connection is what allows the checkpointer to correctly re-establish external connections upon restart.
 Thus, Nested Process Model is crucial in supporting transparent resource virtualization/management by parent processes.
 
-
-
-
-
-
-
-Continuations vs threads
+### Continuations vs threads
 
 Any continuation to which a user program can generate a valid reference is already suspended and waiting for a message.
-Throw() and ThrowCC() just hand the suspended continuation a message and run it. ThrowCC() suspends the current
+`Throw()` and `ThrowCC()` just hand the suspended continuation a message and run it. `ThrowCC()` suspends the current
 continuation and passes it as part of the message.
 
+```
 throw_cc(scheduler,&message_to_scheduler,sizeof(message_to_scheduler),&received_message,sizeof(received_message));
+```
 
-For scheduler being some kind of identifier naming the suspended continuation of a scheduler (could be anything,
-but a scheduler in this case), message_to_scheduler being (of course) a message to the scheduler, and received_message
-being a buffer to receive a message in when another continuation throws to this one.
+For `scheduler` being some kind of identifier naming the suspended continuation of a scheduler (could be anything,
+but a scheduler in this case), `message_to_scheduler` being (of course) a message to the scheduler, and `received_message` being a buffer to receive a message in when another continuation throws to this one.
 
-Since ThrowCC() was invoked instead of Throw(), the kernel transforms the running CC into a suspended continuation
+Since `ThrowCC()` was invoked instead of `Throw()`, the kernel transforms the running CC into a suspended continuation
 and prepends the identifier to that continuation to the intended message, creating the message it finally passes
-to the invoked scheduler continuation. In the case of plain Throw(), the kernel would just pass the message along
-directly as it switches control of the processor, destroying the CC that called Throw().
+to the invoked scheduler continuation. In the case of plain `Throw()`, the kernel would just pass the message along
+directly as it switches control of the processor, destroying the CC that called `Throw()`.
 
-[...] A continuation is what remains of an unfinished computation. [...]
+> [...] A continuation is what remains of an unfinished computation. [...]
 
+### Memory Barriers (from GCC docs)
 
-== Memory Barriers (from GCC docs) ==
+**an acquire barrier**. This means that references after the builtin cannot move to (or be speculated to) before the builtin, but previous memory stores may not be globally visible yet, and previous memory loads may not yet be satisfied.
 
-an acquire barrier. This means that references after the builtin cannot move to (or be speculated to) before
-the builtin, but previous memory stores may not be globally visible yet,
-and previous memory loads may not yet be satisfied.
-
-a release barrier. This means that all previous memory stores are globally visible, and all previous memory
+**a release barrier**. This means that all previous memory stores are globally visible, and all previous memory
 loads have been satisfied, but following memory reads are not prevented from being speculated to before the barrier.
 
 

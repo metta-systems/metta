@@ -8,7 +8,7 @@ echo "*** Making tools"
 echo
 cd _build_host_
 if [ ! -f CMakeCache.txt ]; then
-	cmake -G Ninja -DCONFIG_PLATFORM=pc99 ..
+	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DLLVM_ROOT=../../../toolchain/clang ..
 fi
 ninja
 

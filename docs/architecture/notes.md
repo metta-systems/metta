@@ -1,7 +1,7 @@
-
 Specialization instead of plain inheritance?
 Template specialization removes need for virtual functions (?).
 
+```cpp
 struct arch_x86 {};
 
 template<typename arch_t>
@@ -12,7 +12,7 @@ class virtual_address_space_t<arch_x86>
 {
     // Specialized for x86
 };
-
+```
 ----------------------------------------------------------------------
 
 Try and have separate ABI and APIs for the kernel, much better for portability and writing new software.
