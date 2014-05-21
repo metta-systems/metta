@@ -27,6 +27,21 @@ Principles lead to technical requirements for the OS:
  * Low system management overhead. Single address space provides ways to avoid expensive data copying and most operations are performed in userspace at maximum possible speed.
 
 
+High-level architecture
+-----------------------
+
+High-level functionality is provided by standard components and applications comprising Metta backbone.
+
+### Exocortex ###
+
+Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate information from other sources into your exocortex and to publish your information to other media.
+This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you, in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out, can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
+This way you do not have to go for the news, the news come to you.
+At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is synced much like p2p networks share data.
+
+..To be continued..
+
+
 General architecture
 --------------------
 
@@ -174,9 +189,6 @@ A component model is used to design, implement, deploy and reconfigure systems a
 
 This component model is derived from [Fractal middleware][fractal].
 
-  [meddle]: https://github.com/berkus/metta/blob/develop/src/tools/meddler/grammar.txt
-  [fractal]: http://fractal.ow2.org
-
 
 ### Library Components ###
 
@@ -190,8 +202,6 @@ Runtime type system is a basis for reflectivity support and allows components to
 
 Together with Sjofn, type system allows service-oriented component combination and relatively easy component adaptation, similar to Scala language.
 
-  [omos]: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.44.2856
-
 
 ### Applications ###
 
@@ -201,14 +211,14 @@ Applications are built from interconnected components.
 
 Applications consist of standard and custom components, which provide most of the functionality and main driver code. Applications service themselves - i.e. they service their own page faults or CPU scheduling decisions, often using standard components that provide necessary functionality already.
 
-After startup application receives it's own domain, protection domain, initially not shared with any other domains a set of pervasives, among them a naming context which it can use to find other necessary components, a virtual CPU interface which it can use to make scheduling decisions (and also a scheduling domain, that represents this VCPU), a stretch and heap interfaces which it can use to allocate memory.
+After startup application receives it's own domain, protection domain, initially not shared with any other domains, a set of pervasives, among them a naming context which it can use to find other necessary components, a virtual CPU interface which it can use to make scheduling decisions (and also a scheduling domain, that represents this VCPU), a stretch and heap interfaces which it can use to allocate memory.
 
 Applications run in domains. The kernel's view of a domain is limited to a single data structure called the Domain Control Block. Kernel uses DCBs to schedule domains' CPU time and other resources.
 
 
 ### Interfaces ###
 
-Interfaces are defined in an IDL language called Meddle, a compiler named meddler will generate proper stubs from these IDL declarations. Interface compiler is based on LLVM framework together with the rest of JIT system.
+Interfaces are defined in an IDL language called [Meddle][meddle], a compiler named meddler will generate proper stubs from these IDL declarations. Interface compiler is based on LLVM framework together with the rest of JIT system.
 
 
 ### VCPU ###
@@ -225,16 +235,6 @@ The only default mean of inter-domain communication is Event. Sending an event i
 A networked IDC is also possible, given that component interfaces are generated from the IDL files, and therefore can provide marshalling and unmarshalling information for instantiating component interface stubs.
 
 
-High-level architecture
------------------------
-
-High-level functionality is provided by standard components and applications comprising Metta backbone.
-
-### Exocortex ###
-
-Exocortex is your external memory and your world representation. As user application, exocortex is a coordinator of agent swarm, doing tasks on your behalf in all reaches of the internets. You can instruct agents to aggregate information from other sources into your exocortex and to publish your information to other media.
-This swarm implements centralised-decentralised model — whatever you want to publish is generated centrally by you, in your favourite application, in your home environment, then agents can publish, transfer, upload, and share your data across the net to blogs, video services, additional shadow storage etc. In the same manner, whatever agents find out, can be brought to one of your devices and then seamlessly synced between all your devices forming the exocortex.
-This way you do not have to go for the news, the news come to you.
-At the same time, things you create are bound to you centrally, as they are emitted from your exocortex and maintain your identity integrity — once you update something, you do not have to go out and update that bit everywhere, it is synced much like p2p networks share data.
-
-..To be continued..
+  [meddle]: https://github.com/berkus/metta/blob/develop/src/tools/meddler/grammar.txt
+  [fractal]: http://fractal.ow2.org
+  [omos]: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.44.2856
