@@ -75,6 +75,9 @@ Stretch driver is located inside application space, provided by the shared libra
 User domain calls `map/unmap` from the stretch driver. Either mapping or unmapping a virtual address "va" requires that the calling domain is executing in a protection domain which holds a meta right for the stretch containing "va". A consequence of this is that it is not possible to map a virtual address which is not part of some stretch.
 
 
+Low-level components
+--------------------
+
 ### Kickstart ###
 
 Kickstart does all pre-initialisation work needed to get system going - it creates a system privileged domain, initialises the MMU and boots processors, then gives control to the boot modules loader.
