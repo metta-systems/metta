@@ -157,7 +157,7 @@ There are few restrictions on how the name space is structured. The model follow
 
 Contexts allow apps to search for services. A string like `net.atta.metta` defines a context consisting of three subcontexts.
 
-Requests for finding other interfaces go through security server (implicitly via trader) which decides what applications should see what. It is not uncommon for application to request, e.g. a memory_manager interface while in reality all its memory requests will go through logging_debugging_memory_manager and the application is actually being debugged without knowing about it. This can happen for all application interactions with its environment, which effectively puts every application into a highly controlled sandbox.
+Requests for finding other interfaces go through security server (implicitly via trader) which decides what applications should see what. It is not uncommon for application to request, e.g. a `memory_manager` interface while in reality all its memory requests will go through `logging_debugging_memory_manager` and the application is actually being debugged without knowing about it. This can happen for all application interactions with its environment, which effectively puts every application into a highly controlled sandbox.
 
 A component model is used to design, implement, deploy and reconfigure systems and applications. The component model has the following important features:
 
