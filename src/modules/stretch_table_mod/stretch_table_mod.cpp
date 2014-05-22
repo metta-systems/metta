@@ -129,7 +129,7 @@ static stretch_table_v1::closure_t* create(stretch_table_module_v1::closure_t* s
 
 static const stretch_table_module_v1::ops_t stretch_table_module_v1_methods =
 {
-    create 
+    create
 };
 
 static stretch_table_module_v1::closure_t clos =

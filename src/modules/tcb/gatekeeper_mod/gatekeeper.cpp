@@ -48,9 +48,9 @@ struct simple_gatekeeper_state_t : gatekeeper_v1::state_t
 //=====================================================================================================================
 
 /**
- * Get a heap readable and/or writable by the given protection domain. 
+ * Get a heap readable and/or writable by the given protection domain.
  * In this implementation (simple) we have exactly one heap, and hence
- * cannot handle certain options. 
+ * cannot handle certain options.
  */
 heap_v1::closure_t*
 simple_get_heap(gatekeeper_v1::closure_t* self, protection_domain_v1::id pdid, stretch_v1::size size, stretch_v1::rights rights, bool cache)
@@ -71,7 +71,7 @@ simple_get_heap(gatekeeper_v1::closure_t* self, protection_domain_v1::id pdid, s
 
     if (rights != stretch_v1::rights(stretch_v1::right_read))
     {
-        // Cannot chmod the heap either; its read only. So die. 
+        // Cannot chmod the heap either; its read only. So die.
         OS_RAISE((exception_support_v1::id)"gatekeeper_v1.failure", 0);
     }
 
@@ -161,7 +161,7 @@ create_simple(gatekeeper_factory_v1::closure_t* self, heap_v1::closure_t* heap)
     return &state->closure;
 }
 
-static gatekeeper_factory_v1::ops_t methods = 
+static gatekeeper_factory_v1::ops_t methods =
 {
     create,
     create_private,

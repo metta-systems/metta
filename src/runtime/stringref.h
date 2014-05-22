@@ -1,5 +1,5 @@
 //===--- stringref_t.h - Constant String Reference Wrapper --------*- C++ -*-===//
-// Taken from 
+// Taken from
 //                     The LLVM Compiler Infrastructure
 
 #pragma once
@@ -33,7 +33,7 @@ private:
     if (Length == 0) { return 0; }
     return memutils::memory_difference(Lhs,Rhs,Length);
   }
-  
+
 public:
   /// @name Constructors
   /// @{
@@ -253,7 +253,7 @@ public:
     Start = std::min(Start, Length);
     return stringref_t(Data + Start, std::min(N, Length - Start));
   }
-  
+
   /// drop_front - Return a stringref_t equal to 'this' but with the first
   /// elements dropped.
   stringref_t drop_front(unsigned N = 1) const {

@@ -41,11 +41,11 @@ const memory_v1::size heap_t::all_sizes[heap_t::COUNT] =
 {
     _S(1),   _S(2),   _S(3),   _S(4),   _S(5),   _S(6),   _S(7),    _S(8),
     _S(9),   _S(10),  _S(11),  _S(12),  _S(13),  _S(14),  _S(15),   _S(16),
-    
+
     _S(19),  _S(23),  _S(28),  _S(34),  _S(41),  _S(49),  _S(59),   _S(71),
     _S(85),  _S(102), _S(122), _S(146), _S(175), _S(210), _S(252),  _S(302),
     _S(362), _S(434), _S(521), _S(625), _S(750), _S(900), _S(1080), _S(1296),
-    
+
     ~0U
 };
 
@@ -87,13 +87,13 @@ void heap_t::init(address_t start, address_t end)//, heap_v1_closure* heap_closu
     rec->next = nullptr;
 
     blocks[OTHER_INDEX] = rec;
-    
+
     // Third entry is end marker.
     heap_rec_t* end_rec = next_block(rec);
     end_rec->prev = rec->size;
     end_rec->size = 0;
     end_rec->index = 0;
-    
+
     ASSERT(reinterpret_cast<char*>(end_rec) == reinterpret_cast<char*>(end_address) - sizeof(heap_rec_t));
     ASSERT(prev_block(end_rec) == rec);
 }
@@ -164,11 +164,11 @@ void heap_t::coalesce_merge_blocks(int32_t index)
             before_block = prev_block(free_block);
             if (next_block(before_block) != free_block)
                 PANIC("Out of sanity!");
-                
+
             before_block->size += free_block->size + sizeof(heap_rec_t);
             after_block = next_block(free_block);
             after_block->prev = before_block->size;
-            
+
             *ptr = free_block->next;
         }
         else
@@ -218,13 +218,13 @@ heap_t::heap_rec_t* heap_t::get_new_block_internal(size_t size, int index)
                 allocated_block = reinterpret_cast<heap_rec_t*>(reinterpret_cast<char*>(free_block) + free_block->size - size);
                 allocated_block->size = size;
                 allocated_block->index = index;
-                
+
                 free_block->size -= size + sizeof(heap_rec_t);
                 allocated_block->prev = free_block->size;
-                
+
                 return allocated_block;
             }
-            
+
             // Too small to split - take all.
             free_block->index = index;
             *ptr = free_block->next;
@@ -277,7 +277,7 @@ void *heap_t::allocate(size_t size)
     size = BLOCK_ALIGN(size);
     index = find_index(size);
     free_block = blocks[index];
-    
+
     if ((!free_block) || (index == OTHER_INDEX))
     {
         free_block = get_new_block(size, index);
@@ -289,7 +289,7 @@ void *heap_t::allocate(size_t size)
     {
         blocks[index] = free_block->next;
     }
-    
+
     free_block->heap = this;
     next_block(free_block)->prev = HEAP_MAGIC;
 
@@ -316,16 +316,16 @@ void heap_t::free(void *p)
     if ((p == nullptr) || (p == null_malloc)) {
         return;
     }
-    
+
     to_free = reinterpret_cast<heap_rec_t*>(p) - 1;
     logger::trace() << "heap_t::free(" << p << ") freeing " << to_free;
     nextblock = next_block(to_free);
-    
+
     to_free->next = blocks[to_free->index];
     blocks[to_free->index] = to_free;
 
     nextblock->prev = to_free->size;
-    
+
 #if HEAP_DEBUG
     kconsole << "Heap check after free(" << p << ")" << endl;
     check_integrity();
@@ -466,7 +466,7 @@ void heap_t::check_integrity()
                      << "  index: " << this_header->index << endl
                      << "  next: " << this_header->next << endl;
         }
-        
+
         last_header = this_header;
         UNUSED(last_header);
         this_header = next_header;

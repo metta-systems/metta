@@ -292,12 +292,12 @@ static void stretch_v1_set_rights(stretch_v1::closure_t* self, protection_domain
 
 static void stretch_v1_remove_rights(stretch_v1::closure_t* self, protection_domain_v1::id dom_id)
 {
-    
+
 }
 
 static void stretch_v1_set_global_rights(stretch_v1::closure_t* self, stretch_v1::rights access)
 {
-    
+
 }
 
 static stretch_v1::rights stretch_v1_query_rights(stretch_v1::closure_t* self, protection_domain_v1::id dom_id)
@@ -353,7 +353,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
     memory_v1::physmem_desc phys;
     auto state = reinterpret_cast<system_stretch_allocator_v1::state_t*>(self->d_state);
     server_state_t* ss = state->shared_state;
-    
+
     phys.start_addr = ss->frames->allocate(size, FRAME_WIDTH);
     if (phys.start_addr == NO_ADDRESS)
     {
@@ -363,7 +363,7 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
     }
     phys.frame_width = FRAME_WIDTH;
     phys.n_frames = size_in_whole_frames(size, FRAME_WIDTH);
-    
+
     if (!vm_alloc(ss, size, ANY_ADDRESS /*SYSALLOC_VA_BASE + phys.start_addr*/, &virt.start_addr, &virt.n_pages, &virt.page_width))
     {
         kconsole << __FUNCTION__ << ": Failed to get virtmem" << endl;
@@ -371,9 +371,9 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
         //raise(memory_v1_falure);
         return nullptr;
     }
-    
+
     auto s = create_stretch(ss, virt.start_addr, virt.n_pages);
-    
+
     if (!s)
     {
         kconsole << __FUNCTION__ << ": Failed to create_stretch" << endl;
@@ -381,12 +381,12 @@ static stretch_v1::closure_t* stretch_allocator_v1_nailed_create(stretch_allocat
         //raise(memory_v1_falure);
         return nullptr;
     }
-    
+
     s->allocator = self;
     ss->mmu->add_mapped_range(&s->closure, virt, phys, global_rights);
-    
+
     set_default_rights(state, &s->closure);
-    
+
     //TODO: need locking here! at least lightweight
     //lock();
     stretch_list_t* link = new(ss->heap) stretch_list_t;

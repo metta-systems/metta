@@ -41,7 +41,7 @@ enum xcp_state_t
  * A context block is allocated in the current stack frame for each
  * OS_TRY clause.  These context blocks are linked to form a stack of
  * all current OS_TRY blocks in the current thread.  Each context block
- * contains a jump buffer for use by setjmp and longjmp.  
+ * contains a jump buffer for use by setjmp and longjmp.
  */
 struct xcp_context_t
 {
@@ -139,10 +139,10 @@ struct xcp_context_t
  *   This "keyword" starts a FINALLY clause.  It must appear before
  *   an ENDTRY.  A FINALLY clause will be entered after normal exit
  *   of the TRY block, or if an unhandled exception tries to propagate
- *   out of the TRY block.  
+ *   out of the TRY block.
  *
  *			** WARNING **
- *   You should *avoid* using FINALLY with CATCH clauses, that is, use it 
+ *   You should *avoid* using FINALLY with CATCH clauses, that is, use it
  *   only as TRY {} FINALLY {} ENDTRY.
  */
 #define OS_FINALLY \

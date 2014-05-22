@@ -12,14 +12,14 @@ local interface activation_dispatcher_v1
     #
     # Notifications on Channels.
     #
-   
+
     ## attach associates a channel notify with a given channel
     ## end-point, which should be of type rx. Thereafter, event
     ## notifications coming in on that channel are simply
     ## dispatched to the Notify routine.
 
-    # Note that these operations are typically called by various 
-    # entries (such as those used for IDC, memory management, 
+    # Note that these operations are typically called by various
+    # entries (such as those used for IDC, memory management,
     # or to implement event counts). Most 'application' level code
     # should not need to call these directly.
 
@@ -34,10 +34,10 @@ local interface activation_dispatcher_v1
         returns (channel_notify_v1& old_notify)
         raises (channel_v1.invalid, channel_v1.bad_state);
 
-    # Clients dealing with event notification may sometimes wish to 
+    # Clients dealing with event notification may sometimes wish to
     # perform some operations which are atomic with respect to the
     # calling of the notification handler. Rather than turn off
-    # activations, it is possible (and preferable) to mask the 
+    # activations, it is possible (and preferable) to mask the
     # notification of a particular event (or of all events).
 
     ## Temorarily cause events arriving on the channel "rx" to
@@ -62,9 +62,9 @@ local interface activation_dispatcher_v1
         returns (boolean ok)
         raises (channel_v1.invalid, channel_v1.bad_state);
 
-    ## Masks all events, regardless of whether they were already 
+    ## Masks all events, regardless of whether they were already
     ## masked or not. After a subsequent "UnmaskEvents", however,
-    ## any events which were individually masked at the time of 
+    ## any events which were individually masked at the time of
     ## this call will still be so.
 
     mask_events();
@@ -88,22 +88,22 @@ local interface activation_dispatcher_v1
         returns (boolean ok)
         raises (too_many_timeouts);
 
-    # Remove a timeout previously registered by "AddTimeout". 
+    # Remove a timeout previously registered by "AddTimeout".
     # Returns "True" if there was a timeout for time "deadline" with
     # handle "handle" to be removed, "False" otherwise.
 
     remove_timeout(time_v1.time deadline, opaque handle)
         returns (boolean ok);
 
-    # Clients dealing with time notifications may sometimes wish to 
+    # Clients dealing with time notifications may sometimes wish to
     # perform some operations which are atomic with respect to the
     # calling of the notification handler. Rather than turn off
-    # activations, it is possible (and preferable) to mask the 
+    # activations, it is possible (and preferable) to mask the
     # notification of all timeouts.
 
-    # Masks all timeouts. No time notifications will be \emph{lost}, 
+    # Masks all timeouts. No time notifications will be \emph{lost},
     # but they will be deferred until some time after the calling of
-    # "UnmaskTimeouts" below. 
+    # "UnmaskTimeouts" below.
 
     mask_timeouts();
 
@@ -111,10 +111,10 @@ local interface activation_dispatcher_v1
 
     unmask_timeouts();
 
-    # 
+    #
     # Chained activation handlers
-    # 
-    
+    #
+
     # A (for example) ULS may register \emph{its} "Activation" closure with
     # the "SetHandler" call. This will cause it to be 'activated'
     # after the channel notification process has occurred.
@@ -129,12 +129,12 @@ local interface activation_dispatcher_v1
     set_handler(activation_v1& activation)
         returns (activation_v1& old_activation);
 
-    # 
+    #
     # Exit hooks
-    # 
+    #
 
     ## When a ULS (or whoever) believes that it has nothing more to
-    ## do, it may call "reactivate". This essentially checks for 
+    ## do, it may call "reactivate". This essentially checks for
     ## events and timeouts once more and, if nothing of interest has
     ## occurred, RFABlock's the domain until the closest timeout (if
     ## any).

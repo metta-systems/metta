@@ -104,7 +104,7 @@ public:
 
     inline operator _Base*() { return base; }
     inline _Base* operator ->() { return base; }
-/*    
+/*
     inline _Base* dequeue()
     {
         if (is_empty())

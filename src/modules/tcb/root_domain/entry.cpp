@@ -145,7 +145,7 @@ create_address_space(system_frame_allocator_v1::closure_t* frames, mmu_v1::closu
 // metadata - module string and symbol tables, read-only, only for root domain
 //
 // no need to map original unloaded modules.
-// 
+//
 // Should use module_loader module map and map with appropriate rights
 // for text (RX), rodata(R), and bss (RW)...
 //

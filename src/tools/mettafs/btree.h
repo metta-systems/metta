@@ -40,7 +40,7 @@ public:
     //
     //                     m_data[0]  m_data[1] ... m_data[i] ...
     //      m_child[0]--> /         |          |             \ <--m_child[i+1]
-    //                   /          |          |              \     
+    //                   /          |          |              \
     //
     BTreeNode* m_parent; // pointer to the parent BTreeNode
     BTreeNode(BTreeNode* mp = nullptr) : m_parent(mp) {}
@@ -48,7 +48,7 @@ public:
 
 class BTree
 {
-    typedef void (*v_func)(Elem &data);//visit function     
+    typedef void (*v_func)(Elem &data);//visit function
 protected:
     int m_order; //maximum number of the elements stored a node
     BTreeNode* m_root;//the root of the tree

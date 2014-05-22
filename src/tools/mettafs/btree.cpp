@@ -7,14 +7,14 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 //B-trees C++ implement by Zhu Xinquan@2006-3-26
- 
+
 #include <iostream>
 #include <ctime>
 #include <vector>
 #define ___DEBUG
 using namespace std;
- 
- 
+
+
 //the class definition of the element stored in each node;
 template<typename T>
 class Element
@@ -33,31 +33,31 @@ public:
     }
     Element(T& d) : data(d){}
 };
- 
+
 //An integer element.
 typedef Element<int> Elem;
- 
+
 class BTreeNode
 {
 public:
- 
+
     vector<Elem> m_data;
     //m_child[i] is the child whose keys are smaller than that of m_data[i];
     //and the size of m_child is always one more than m_data
     vector<BTreeNode*> m_child;
-//Here is my B-tree strcture representation
+//Here is my B-tree structure representation
 //
 //                     m_data[0]  m_data[1] ... m_data[i] ...
 //      m_child[0]--> /         |          |             \ <--m_child[i+1]
-//                   /          |          |              \    
+//                   /          |          |              \
 //
     BTreeNode* m_parent; // pointer to the parent BTreeNode
     BTreeNode(BTreeNode* mp = nullptr) : m_parent(mp) {}
 };
- 
+
 class BTree
 {
-    typedef void (*v_func)(Elem &data);//visit function    
+    typedef void (*v_func)(Elem &data);//visit function
 protected:
     int m_order; //maximum number of the elements stored a node
     BTreeNode* m_root;//the root of the tree
@@ -68,8 +68,8 @@ protected:
     bool Split_insert(Elem &);
     //store the result of every search
     BTreeNode* search_result;
- 
- 
+
+
 public:
     BTree(v_func f, int n, BTreeNode* r = nullptr)
       : m_visit(f)
@@ -85,11 +85,11 @@ public:
     void travel(BTreeNode*) const; // travel the Btree
     void print() const { travel(m_root); } // print the elements in a sorted order
 };
- 
+
 BTree::~BTree()
 {
     //something to be added
-   
+
 }
 void BTree::travel(BTreeNode* p) const
 {
@@ -103,10 +103,10 @@ void BTree::travel(BTreeNode* p) const
        m_visit(p->m_data[i]);
     }
     travel(p->m_child[i]);
-   
+
 }
 //Search an Element in B-tree. Return the node pointer which contain the
-//desired element or return NULL if the element isn't found.
+//desired element or return nullptr if the element isn't found.
 BTreeNode* BTree::Search(Elem& t)
 {
     BTreeNode* p = m_root;
@@ -137,7 +137,7 @@ BTreeNode* BTree::Search(Elem& t)
     }
     return p;
 }
- 
+
 bool BTree::Insertion(Elem& t)
 {
     if(Search(t))//The element already exits in the tree
@@ -181,10 +181,10 @@ bool BTree::Insertion(Elem& t)
        else
            return false;
     }
- 
+
 }
- 
- 
+
+
 bool BTree::Split_insert(Elem &t)
 {
     BTreeNode* sr = search_result;
@@ -195,7 +195,7 @@ bool BTree::Split_insert(Elem &t)
        vector<BTreeNode*> *pc = &sr->m_child;
        //begin to insert and split
        while(p->size() >= m_order)
-       {     
+       {
            int split_point = p->size()/2;
            BTreeNode* new_node = new BTreeNode(sr->m_parent);
            //new node recieve rightmost half of current node. And after copying
@@ -242,7 +242,7 @@ bool BTree::Split_insert(Elem &t)
 #endif
               return true;
            }
-          
+
 #ifdef ___DEBUG
            cout<<"\n^^^^^^^^^^^^\n"<<upward.data;
            cout<<" need to upward. The split node become the two:\n";
@@ -252,7 +252,7 @@ bool BTree::Split_insert(Elem &t)
            for(i=0;i<new_node->m_data.size();i++)
               cout<<new_node->m_data[i].data<<" ";
 #endif
-           //add the upward element to the parent of current node            
+           //add the upward element to the parent of current node
            p = &sr->m_parent->m_data;
            pc = &sr->m_parent->m_child;
            //locate the right position to insert
@@ -266,8 +266,8 @@ bool BTree::Split_insert(Elem &t)
               cout<<(*p)[i].data<<" ";
            cout<<"\n^^^^^^^^^^^^^^\n";
 #endif
- 
-           sr=sr->m_parent;    
+
+           sr=sr->m_parent;
        }
 #ifdef ___DEBUG
        cout<<"\nNow the tree is ################  ";
@@ -303,6 +303,6 @@ int main(int argc, char* argv[])
            cout<<endl;
        }
     }
-   
+
     return 0;
 }

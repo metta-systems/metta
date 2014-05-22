@@ -136,7 +136,7 @@ get(naming_context_v1::closure_t *self, const char *key, types::any *out_value)
         // if (!refs.second.empty())
             // kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
 
-        // Check conformance with the context type 
+        // Check conformance with the context type
         if (it != state->map.end())
         {
             types::any result((*it).second);
@@ -220,7 +220,7 @@ add(naming_context_v1::closure_t *self, const char *key, types::any value)
         // if (!refs.second.empty())
             // kconsole << "Second key " << refs.second.data() << ", length " << refs.second.size() << endl;)
 
-        // Check conformance with the context type 
+        // Check conformance with the context type
         if (it != state->map.end())
         {
             types::any result((*it).second);
@@ -275,8 +275,8 @@ remove(naming_context_v1::closure_t *self, const char *key)
         // At this stage there is another component. Thus we need to check
         // that the types.any actually is a subtype of naming_context, and then
         // recurse.
-        
-        // Check conformance with the context type 
+
+        // Check conformance with the context type
         if (it != state->map.end())
         {
             types::any result((*it).second);

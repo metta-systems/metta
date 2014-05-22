@@ -191,7 +191,7 @@ static bool add_range(frame_allocator_v1::state_t* client_state, address_t start
             if ((start >= current_end) && (end <= next_start))
                 break;
         }
-        
+
         // We wrapped, no any elements before this one.
         if (link == client_state->region_list)
         {
@@ -762,7 +762,7 @@ static system_frame_allocator_v1::closure_t* frames_module_v1_create(frames_modu
 
         alloc_update_free_predecessors(running_state, first_frame);
         mark_frames_used(client_state, running_state, first_frame, n_frames);
-        
+
         client_state->n_allocated_phys_frames += n_frames;
     });
 

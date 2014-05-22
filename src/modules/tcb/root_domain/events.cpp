@@ -15,7 +15,7 @@
 #include "time_macros.h"
 #include "heap_new.h"
 
-/* 
+/*
  * Eventcount and Sequencer stuff
  */
 
@@ -44,7 +44,7 @@ struct instance_state_t;
 struct qlink_t
 {
     dl_link_t<qlink_t>     waitq;
-    dl_link_t<qlink_t>     timeq; 
+    dl_link_t<qlink_t>     timeq;
     event_v1::value        wait_value;
     time_v1::time          wait_time;
     time_v1::time          block_time; /// for debugging.
@@ -154,7 +154,7 @@ public:
 // Events helper functions.
 //=====================================================================================================================
 
-channel_notify_v1::ops_t notify_methods = 
+channel_notify_v1::ops_t notify_methods =
 {
     nullptr,
     nullptr
@@ -390,7 +390,7 @@ events_await(events_v1::closure_t* self, event_v1::count ec, event_v1::value val
          * events, which may arrive at any time. The aim is to get to
          * the stage where we both have a value for the count, and are
          * guaranteed that the FIFO will register the count going above
-         * that value.                          
+         * that value.
          */
         while (true)
         {
@@ -486,7 +486,7 @@ events_await_until(events_v1::closure_t* self, event_v1::count ec, event_v1::val
          * events, which may arrive at any time. The aim is to get to
          * the stage where we both have a value for the count, and are
          * guaranteed that the FIFO will register the count going above
-         * that value.                          
+         * that value.
          */
         while (true)
         {
@@ -635,7 +635,7 @@ events_attach(events_v1::closure_t* self, event_v1::count ec, channel_v1::endpoi
             {
                 istate->vcpu->send(event_count->ep, event_count->value);
             }
-        }        
+        }
     }
     OS_FINALLY {
         istate->thread_manager->leave_critical_section();
@@ -776,7 +776,7 @@ events_destroy_channel(events_v1::closure_t* self, channel_v1::endpoint channel)
     OS_ENDTRY;
 }
 
-events_v1::ops_t events_methods = 
+events_v1::ops_t events_methods =
 {
     events_create,
     events_destroy,

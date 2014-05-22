@@ -23,7 +23,7 @@
 // setjmp()-based exception system.
 //=====================================================================================================================
 
-static void 
+static void
 internal_raise(bool initial_raise, exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname) NEVER_RETURNS
 {
     xcp_context_t* ctx;
@@ -76,14 +76,14 @@ internal_raise(bool initial_raise, exception_support_v1::closure_t* self, except
     xcp_longjmp (ctx->jmp, 1);
 }
 
-static void 
+static void
 exception_support_setjmp_v1_raise(exception_support_v1::closure_t* self, exception_support_v1::id i, exception_support_v1::args a, const char* filename, uint32_t lineno, const char* funcname)
 {
     logger::debug() << "__ exception_support_setjmp_v1::raise";
     internal_raise(true, self, i, a, filename, lineno, funcname);
 }
 
-static void 
+static void
 exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c)
 {
     xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
@@ -107,7 +107,7 @@ exception_support_setjmp_v1_push_context(exception_support_setjmp_v1::closure_t*
 }
 
 /* precondition: ctx.state = none or active */
-static void 
+static void
 exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* self, exception_support_setjmp_v1::context c, const char* filename, uint32_t lineno, const char* funcname)
 {
     xcp_context_t* ctx = reinterpret_cast<xcp_context_t*>(c);
@@ -135,7 +135,7 @@ exception_support_setjmp_v1_pop_context(exception_support_setjmp_v1::closure_t* 
     }
 }
 
-static exception_support_v1::args 
+static exception_support_v1::args
 exception_support_setjmp_v1_allocate_args(exception_support_setjmp_v1::closure_t* self, memory_v1::size size)
 {
     logger::trace() << "__ exception_support_setjmp_v1::allocate_args " << size;
@@ -163,7 +163,7 @@ static const exception_support_setjmp_v1::ops_t exception_support_setjmp_v1_meth
 // The Factory
 //=====================================================================================================================
 
-static exception_support_setjmp_v1::closure_t* 
+static exception_support_setjmp_v1::closure_t*
 exception_system_v1_create(exception_system_v1::closure_t* self)
 {
     kconsole << " ** Exception system - create" << endl;

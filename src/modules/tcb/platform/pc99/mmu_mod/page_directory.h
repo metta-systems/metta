@@ -108,7 +108,7 @@ private:
 // {
 // public:
 //     page_table_t() {}
-// 
+//
 //     /**
 //      * Zero out page table, setting all page frames to not present.
 //      */
@@ -117,22 +117,22 @@ private:
 //         for(int i = 0; i < 1024; i++)
 //             pages[i] = IA32_PAGE_WRITABLE;
 //     }
-// 
+//
 //     page_t& page(uint32_t n)
 //     {
 //         return pages[n];
 //     }
-// 
+//
 //     page_t& operator[](uint32_t n)
 //     {
 //         return pages[n];
 //     }
-// 
+//
 //     /**
 //      * Allocate new page table from frame allocator.
 //      */
 //     void* operator new(size_t size, address_t* physical_address);
-// 
+//
 // private:
 //     page_t pages[1024];
 // };
@@ -151,10 +151,10 @@ private:
 //     page_directory_t() : directory_physical(0), directory_virtual(0) {}
 //     page_directory_t(physical_address_t* existing_directory) : directory_physical(existing_directory) {}
 //     virtual ~page_directory_t() {}
-// 
+//
 //     void init();
 //     void init(physical_address_t* placement_area);
-// 
+//
 //     /**
 //      * Returns physical address of PD, for setting PDBR.
 //      */
@@ -162,10 +162,10 @@ private:
 //     {
 //         return directory[1023] & PAGE_MASK;
 //     }
-// 
+//
 //     void enable_paging();
 //     void disable_paging();
-// 
+//
 //     /**
 //      * Create mapping from virtual address @p virt to physical frame at @p phys
 //      * with given flags.
@@ -174,36 +174,36 @@ private:
 //      *   page_t* which allows setting flags from client side.
 //      */
 //     page_t* create_mapping(address_t virt, address_t phys);
-// 
+//
 //     /**
 //      * Remove mapping of virtual address @p virt from page directory & tables.
 //      */
 //     void remove_mapping(address_t virt);
-// 
+//
 //     /**
 //      * @returns true if mapping of virtual address @p virt exists, false otherwise.
 //      */
 //     bool is_mapped(address_t virt);
-// 
+//
 //     /**
 //      * Obtain mapping information from virtual address @p virt. @p make specifies if
 //      * page table should be created if it doesn't exist yet.
 //      * @returns page table entry if found or created, nullptr otherwise.
 //      */
 //     page_t* mapping(address_t virt, bool make = false);
-// 
+//
 //     /**
 //      * Print a debug dump of page directory.
 //      */
 //     void dump();
-// 
+//
 // protected:
 //     /**
 //      * Obtain page table corresponding to address @p virt. If @p make is true, create
 //      * page table if it doesn't exist.
 //      */
 //     page_table_t* page_table(address_t virt, bool make);
-// 
+//
 //     /**
 //      * Pointer to a frame with array of pointers to pagetables, gives their @e physical location,
 //      * for loading into the CR3 register.
@@ -211,7 +211,7 @@ private:
 //     physical_address_t* directory_physical;
 //     address_t* directory_virtual;
 //     address_t* directory_access;
-// 
+//
 // private: friend class stack_frame_allocator_t;//FIXME: page_allocator_t;
 //     /**
 //      * Set @p phys to be address of the frame for page table for address @p virt.
