@@ -90,6 +90,24 @@ entry(closure::closure_t* self)
                 {
                     dev.dump();
 
+// template<typename T>
+// class inclusive_range_t
+// {
+//  T from;
+//  T to;
+//  bool includes(T value) const { return value >= from and value <= to; }
+// };
+
+// Driver registry:
+// {
+//  inclusive_range_t<uint16_t> vendor_range;
+//  inclusive_range_t<uint16_t> device_range;
+// }
+
+// if (vendor_range.includes(dev.vendor()) and device_range.includes(dev.device())) {
+//  // device has matched, instantiate the driver and probe()
+// }
+
                     if ((dev.vendor() == 0x1234) && (dev.device() == 0x1111))
                     {
                         graphics::bga bga;
