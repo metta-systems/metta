@@ -132,14 +132,16 @@ block_cache_t::~block_cache_t()
  * Assumes all necessary locks are held (acts as internal worker function).
  * If block is busy doing I/O will wait a certain amount of time (not implemented for single-threaded test).
  */
-cache_block_t* block_cache_t::block_lookup(deviceno_t device, block_device_t::blockno_t block_n)
+cache_block_t*
+block_cache_t::block_lookup(deviceno_t device, block_device_t::blockno_t block_n)
 {
     block_id_t id = std::make_pair(device, block_n);
     cache_map_t::iterator it;
 
     if ((it = cache.find(id)) != cache.end())
     {
-        //TODO: check for busy block, and wait if it is busy (shouldn't happen in single threaded test).
+        // @todo Check for busy block, and wait if it is busy
+        // (shouldn't happen in single threaded test).
         return (*it).second;
     }
     return nullptr;

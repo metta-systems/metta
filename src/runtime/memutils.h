@@ -208,8 +208,9 @@ find_byte(const void *s, int c, size_t max_length)
     const unsigned char* __p = reinterpret_cast<const unsigned char*>(s);
     while (max_length--)
     {
-        if (*__p == __b)
+        if (*__p == __b) {
             return reinterpret_cast<void*>(const_cast<unsigned char*>(__p));
+        }
         __p++;
     }
     return 0;
