@@ -78,6 +78,6 @@ struct dcb_rw_t
  * Protection domains are implemented as arrays of 4-bit elements, indexed by stretch id.
  */
 typedef uint16_t  sid_t;
-#define SID_NULL  0xFFFF
+#define NULL_SID  0xFFFF
 #define SID_MAX   16384
 

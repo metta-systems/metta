@@ -496,8 +496,8 @@ static mmu_v1::closure_t* mmu_module_v1_create(mmu_module_v1::closure_t* self, u
     // Initialise the physical mapping to fault everything, & virtual to 'no trans'.
     for(i = 0; i < N_L1_TABLES; i++)
     {
-	    state->l1_shadows[i].sid = SID_NULL;
-	    state->l1_shadows[i].flags = 0;
+        state->l1_shadows[i].sid = NULL_SID;
+        state->l1_shadows[i].flags = 0;
     }
 
     // Initialise the ram table; it follows the state record immediately.

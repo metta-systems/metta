@@ -817,7 +817,7 @@ static void enter_mappings(mmu_v1::state_t* state)
             pte.set_frame(phys);
             pte.set_flags(flags);
 
-            if (!add4k_page(state, virt, pte, SID_NULL))
+            if (!add4k_page(state, virt, pte, NULL_SID))
             {
                 logger::fatal() << "enter_mappings: failed to add mapping " << virt << "->" << phys;
                 PANIC("enter_mappings failed!");
@@ -893,7 +893,7 @@ mmu_module_v1_create(mmu_module_v1::closure_t* self, uint32_t initial_reservatio
     {
         state->l1_mapping[i] = 0;
         state->l1_virt[i] = 0;
-        state->l1_shadows[i].sid = SID_NULL;
+        state->l1_shadows[i].sid = NULL_SID;
         state->l1_shadows[i].flags = 0;
     }
 

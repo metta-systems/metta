@@ -110,7 +110,7 @@ static sid_t alloc_sid(server_state_t* state)
         }
     }
     kconsole << __FUNCTION__ << ": sid allocation FAILED" << endl;
-    return SID_NULL;
+    return NULL_SID;
 }
 
 static void register_sid(server_state_t* state, sid_t sid, stretch_v1::closure_t* stretch)
