@@ -42,14 +42,14 @@ echo "Checking out llvm [$LLVM_REVISION] / compiler-rt [$COMPILER_RT_REVISION]..
 echo "===================================================================="
 
 if [ ! -d sources/llvm ]; then
-    git clone http://llvm.org/git/llvm.git sources/llvm
+    git clone -n http://llvm.org/git/llvm.git sources/llvm
     (cd sources/llvm; git checkout $LLVM_REVISION)
 else
     (cd sources/llvm; git fetch; git checkout $LLVM_REVISION)
 fi
 
 if [ ! -d sources/llvm/projects/compiler-rt ]; then
-    git clone http://llvm.org/git/compiler-rt.git sources/llvm/projects/compiler-rt
+    git clone -n http://llvm.org/git/compiler-rt.git sources/llvm/projects/compiler-rt
     (cd sources/llvm/projects/compiler-rt; git checkout $COMPILER_RT_REVISION)
 else
     (cd sources/llvm/projects/compiler-rt; git fetch; git checkout $COMPILER_RT_REVISION)
@@ -60,7 +60,7 @@ echo "Checking out clang [$CLANG_REVISION]..."
 echo "===================================================================="
 
 if [ ! -d sources/llvm/tools/clang ]; then
-    git clone http://llvm.org/git/clang.git sources/llvm/tools/clang
+    git clone -n http://llvm.org/git/clang.git sources/llvm/tools/clang
     (cd sources/llvm/tools/clang; git checkout $CLANG_REVISION)
 else
     (cd sources/llvm/tools/clang; git fetch; git checkout $CLANG_REVISION)
@@ -71,7 +71,7 @@ echo "Checking out lld [$LLD_REVISION]..."
 echo "===================================================================="
 
 if [ ! -d sources/llvm/tools/lld ]; then
-    git clone http://llvm.org/git/lld.git sources/llvm/tools/lld
+    git clone -n http://llvm.org/git/lld.git sources/llvm/tools/lld
     (cd sources/llvm/tools/lld; git checkout $LLD_REVISION)
 else
     (cd sources/llvm/tools/lld; git fetch; git checkout $LLD_REVISION)
@@ -82,7 +82,7 @@ echo "Checking out recent libcxx r$LIBCXX_REVISION..."
 echo "===================================================================="
 
 if [ ! -d libcxx ]; then
-    git clone http://llvm.org/git/libcxx.git libcxx
+    git clone -n http://llvm.org/git/libcxx.git libcxx
     (cd libcxx; git checkout $LIBCXX_REVISION)
 else
     (cd libcxx; git fetch; git checkout $LIBCXX_REVISION)
