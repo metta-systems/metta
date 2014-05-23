@@ -47,7 +47,7 @@ endif (ARCH STREQUAL "x86")
 if (ARCH STREQUAL "x86_64")
     list(APPEND LAUNCHER_SRC
         x86_64/startup.cpp)
-endif (ARCH STREQUAL "x86")
+endif (ARCH STREQUAL "x86_64")
 
 add_component(launcher
     ${LAUNCHER_SRC}
