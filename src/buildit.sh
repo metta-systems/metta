@@ -8,9 +8,9 @@ echo "*** Making tools"
 echo
 cd _build_host_
 if [ ! -f CMakeCache.txt ]; then
-	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DLLVM_ROOT=../../../toolchain/clang ..
+	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DLLVM_ROOT=../../../toolchain/clang .. || exit 1
 fi
-ninja
+ninja || exit 1
 
 # Then build the target system using cross toolchain we built.
 echo
@@ -18,8 +18,8 @@ echo "*** Making system"
 echo
 cd ../_build_target_
 if [ ! -f CMakeCache.txt ]; then
-	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake ..
+	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake .. || exit 1
 fi
-ninja
+ninja || exit 1
 
 cd ..
