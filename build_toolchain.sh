@@ -32,7 +32,7 @@ which git || (echo "Install git: brew install git"; exit)
 which cmake || (echo "Install cmake: brew install cmake"; exit)
 which ninja || (echo "Install ninja: brew install ninja"; exit)
 
-mkdir -p toolchain/{build/{llvm},sources}
+mkdir -p toolchain/{build/llvm,sources}
 cd toolchain/
 
 export TOOLCHAIN_DIR=`pwd`
