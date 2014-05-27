@@ -188,6 +188,7 @@ find_package(Boost REQUIRED)
 add_subdirectory(tools/meddler)
 add_subdirectory(tools/mettafs)
 add_subdirectory(tools/buildboot)
+add_subdirectory(tools/mbchk)
 #add_subdirectory(tools/parsedwarf)
 
 export(TARGETS meddler buildboot FILE ${CMAKE_BINARY_DIR}/ImportExecutables.cmake)
