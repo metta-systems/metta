@@ -47,7 +47,7 @@ static memory_v1::address heap_v1_allocate(heap_v1::closure_t* self, memory_v1::
         OS_ENDTRY
 
         if (!res) {
-            OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", nullptr);
+            OS_RAISE((exception_support_v1::id)"heap_v1.no_memory", 0);
         }
     }
     else
