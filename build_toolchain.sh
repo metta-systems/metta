@@ -10,6 +10,7 @@ echo
 echo "You'll need UNIX tools git, cmake, and ninja."
 echo
 echo "Specify LIBCXX_TRIPLE if you're not on mac"
+echo "Use FETCH_ONLY=1 to only download the sources"
 echo "===================================================================="
 echo
 
@@ -86,6 +87,11 @@ if [ ! -d libcxx ]; then
     (cd libcxx; git checkout $LIBCXX_REVISION)
 else
     (cd libcxx; git fetch; git checkout $LIBCXX_REVISION)
+fi
+
+if [ -n "$FETCH_ONLY" ] && [ "$FETCH_ONLY" -eq "1" ]; then
+    echo "Fetch complete."
+    exit 0
 fi
 
 echo "===================================================================="
