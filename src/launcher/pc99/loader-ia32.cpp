@@ -37,7 +37,7 @@ void flush_cache()
  * Start bootstrapper at its entry point. No preconditions.
  * This function performs a switch from ring0 to ring3.
  */
-void launch_kernel(address_t entry)
+void launch_kernel(address_t entry) NEVER_RETURNS
 {
 	static continuation_t new_context; // non-static may work too
 
@@ -52,4 +52,6 @@ void launch_kernel(address_t entry)
     new_context.set_entry(entry, USER_CS, USER_DS);//FIXME: depends on gpregs being set before this call!
     // -- THIS IS WHERE RING0 ENDS --
     new_context.activate(); // we have a liftoff! root domain executes in ring3 just like everybody else.
+
+    while(1) {}
 }
