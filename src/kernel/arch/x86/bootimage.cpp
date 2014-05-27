@@ -177,7 +177,7 @@ bootimage_t::modinfo_t bootimage_t::find_module(const char* name)
 // bootimage_t::namespace_t bootimage_t::find_namespace(const char* name)
 // {
 //     info_t info = find_entry(location, end, kind_module, name);
-//     if (!info.generic)    
+//     if (!info.generic)
 //         info = find_entry(location, end, kind_root_domain, 0);
 //     if (!info.generic)
 //         return namespace_t(0);

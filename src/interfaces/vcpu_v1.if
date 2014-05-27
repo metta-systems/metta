@@ -38,7 +38,7 @@ local interface vcpu_v1
 
     ## Context slots are reserved "allocate_context".
     allocate_context() returns (context_slot slot) raises (no_context_slots);
-    
+
     ## Context slots are freed with "release_context".
     release_context(context_slot slot) raises (invalid_context);
 
@@ -112,7 +112,7 @@ local interface vcpu_v1
         returns (channel_v1.state state, channel_v1.endpoint_type ep_type, event_v1.value rx_val, event_v1.value rx_ack)
         raises (channel_v1.invalid);
 
-    # Channel endpoints are allocated by the domain. The following operations are provided 
+    # Channel endpoints are allocated by the domain. The following operations are provided
     # to allocate and free them; note that there is no concurrency control at this level.
 
     ## Find an end-point in the "free" state, set its state to "allocated" and return it.
@@ -132,8 +132,8 @@ local interface vcpu_v1
 
     ## Write "ack" into the acknowledged value for the endpoint
     ## "ep". Return the current received value (not the ack value).
-    ack(channel_v1.endpoint ep, event_v1.value ack) 
-        returns (event_v1.value val) 
+    ack(channel_v1.endpoint ep, event_v1.value ack)
+        returns (event_v1.value val)
         raises (channel_v1.invalid, channel_v1.bad_state);
 
     # A channel endpoint "ep" has pending events iff its value is different from its acknowledged count.
@@ -164,7 +164,7 @@ local interface vcpu_v1
     #    if (`nothing to do`)
     #      vcpu->rfa_block()
 
-    get_next_event() 
+    get_next_event()
         returns (boolean pending, channel_v1.endpoint ep, channel_v1.endpoint_type ep_type, event_v1.value val, channel_v1.state state);
 
     #===================================================================================================================
@@ -207,7 +207,7 @@ local interface vcpu_v1
     # events, blocks this VP until an event arrives or "Time.Now() >= until";
     # otherwise, it reactivates immediately.  It is atomic with respect to
     # arrival of events.
-    
+
     rfa_block(time_v1.time until) never returns;
 
     # Block on incoming events

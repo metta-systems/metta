@@ -15,7 +15,7 @@
 local interface protection_domain_v1
 {
 	## Every protection domain has a unique identifier of type "id"
-	## There is a distinguished value "NULL_PDID" which is guaranteed 
+	## There is a distinguished value "NULL_PDID" which is guaranteed
 	## never to be a valid protection domain identifier.
 	type card32 id; # opaque
 }

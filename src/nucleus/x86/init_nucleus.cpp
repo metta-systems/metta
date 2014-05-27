@@ -21,7 +21,7 @@
 
 static void dump_regs(registers_t* regs)
 {
-    kconsole << endl << RED 
+    kconsole << endl << RED
         << "=================================================================================================" << endl
         << "Interrupt " << regs->int_no << ", error code " << regs->err_code << endl
         << "     EAX:" << regs->eax << " EBX:" << regs->ebx << " ECX:" << regs->ecx << " EDX:" << regs->edx << endl
@@ -43,7 +43,7 @@ static void dump_regs(registers_t* regs)
     kconsole << endl;
     debugger_t::print_backtrace(regs->ebp, regs->eip, 20);
 
-    kconsole << "=================================================================================================" << endl;    
+    kconsole << "=================================================================================================" << endl;
 }
 
 class general_fault_handler_t : public interrupt_service_routine_t
@@ -99,7 +99,7 @@ public:
         }
         else
         {
-            kconsole << "unknown syscall " << regs->eax << endl;            
+            kconsole << "unknown syscall " << regs->eax << endl;
         }
     }
 };

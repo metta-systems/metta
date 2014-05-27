@@ -65,7 +65,7 @@ struct file_extent_item_t : public item_t
 // file metadata: extents or inline in btree.
 // file cross-reference indices: extents, referencing extattrs keys
 // extattrs metadata: separate btree
-// 
+//
 
 /*
 http://leaf.dragonflybsd.org/mailarchive/kernel/2007-10/msg00006.html

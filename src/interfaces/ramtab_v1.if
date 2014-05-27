@@ -9,10 +9,10 @@
 local interface ramtab_v1
 {
     enum state { unused, mapped, nailed }
-    
+
     # "size" returns the total number of frames handled by this interface.
     size() returns (memory_v1.size max_frame_number);
-    # "base" returns the base address of the ramtab. 
+    # "base" returns the base address of the ramtab.
     base() returns (memory_v1.address base);
 
     # "put" sets the owner, width, and state of a given physical frame.

@@ -14,7 +14,7 @@ local interface exception_v1 extends naming_context_v1
     ## the parameters in the order in which they were declared.
 
     ## An operation is provided to return other information about an
-    ## exception - the name, interface, and number of parameters: 
+    ## exception - the name, interface, and number of parameters:
 
     info() returns (string name, interface_v1& i, card32 n_args);
 

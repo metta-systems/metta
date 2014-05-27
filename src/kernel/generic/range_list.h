@@ -42,12 +42,12 @@ public:
     // typedef std::list<range_t*> list_type;
     // typedef typename list_type::iterator iterator;
     // typedef typename list_type::const_iterator const_iterator;
-    // 
+    //
     // iterator begin() { return ranges.begin(); }
     // iterator end()   { return ranges.end(); }
     // const_iterator begin() const { return ranges.begin(); }
     // const_iterator end()   const { return ranges.end(); }
-    // 
+    //
     // inline range_list_t() : ranges() {}
 
     /**
@@ -231,7 +231,7 @@ public:
     //             break;
     //         }
     //     }
-    // 
+    //
     //     cur = ranges.begin();
     //     end = ranges.end();
     //     // merge right
@@ -245,11 +245,11 @@ public:
     //             break;
     //         }
     //     }
-    // 
+    //
     //     range_t* new_range = new range_t(start, length);
     //     ranges.push_back(new_range);
     // }
-    // 
+    //
     // void clear()
     // {
     //     const_iterator cur(ranges.begin());

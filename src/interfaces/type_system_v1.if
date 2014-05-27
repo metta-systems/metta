@@ -40,26 +40,26 @@
 #
 
 # Maintains all information about the structure of abstract and concrete types in the system.
-# 
+#
 # System typically contains a single instance of the "type_system" interface.
-# This is a "naming_context" in which every type in the system is registered.  
+# This is a "naming_context" in which every type in the system is registered.
 # The context maps type names to "types.code"s.
 
 # The arc-names registered in the "type_system" context are of the
 # form
-# 
+#
 #    "Foo"       `(for interface types), or`
 #    "Foo.Bar"   `(for concrete types defined in the `"Foo"` interface).`
-# 
+#
 # The "type_system"'s "get" method maps these type names to "types.any"s
 # for the corresponding "types.code"s.
 
 local interface type_system_v1 extends naming_context_v1
 {
 
-    # 
+    #
     # Representing type structures
-    # 
+    #
     # Given a type code, the "info" procedure below can be used to
     # obtain a "types.any" whose value represents the structure of the
     # given type. Meddle's types are represented with values of the
@@ -69,7 +69,7 @@ local interface type_system_v1 extends naming_context_v1
 
     type types.code alias;
 
-    enum predefined { 
+    enum predefined {
         Boolean,
         Card16,
         Card32,
@@ -82,7 +82,7 @@ local interface type_system_v1 extends naming_context_v1
         Octet,
         Char,
         Opaque,
-        String 
+        String
     }
 
 #    type card32 tc_array_index;
@@ -111,8 +111,8 @@ local interface type_system_v1 extends naming_context_v1
     # including itself.  Finally, the "rep" result represents the type
     # as described above.
 
-    info(alias tc, out types.any rep) 
-        returns (interface_v1& scope) 
+    info(alias tc, out types.any rep)
+        returns (interface_v1& scope)
         raises (bad_code);
 
     ## "size" returns how may bytes an instance of the type occupies in
@@ -151,7 +151,7 @@ local interface type_system_v1 extends naming_context_v1
     narrow(types.any a, alias tc) returns (types.val v) raises (incompatible);
 
     # It may sometimes be convenient (in Monger for example) to
-    # know the type of which a given type is an alias. 
+    # know the type of which a given type is an alias.
     ## The "unalias" operation can be thought of as repeatedly reading the base type
     ## of a given alias, until the base type itself is not an
     ## alias. Given a type code, therefore, "unalias" will always return

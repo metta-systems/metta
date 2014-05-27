@@ -11,7 +11,7 @@ local interface frames_module_v1
     required_size()
         returns (memory_v1.size size);
 
-    create(#memory_v1.physmem_desc& allmem, memory_v1.physmem_desc used, 
+    create(#memory_v1.physmem_desc& allmem, memory_v1.physmem_desc used,
         ramtab_v1& rtab, memory_v1.address where)
         returns (system_frame_allocator_v1& sys_frame_alloc);
 

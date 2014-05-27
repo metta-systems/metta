@@ -81,7 +81,7 @@ static void enable(timer_v1::closure_t* /*self*/, uint32_t /*sirq*/)
 
 // Timer closure set up.
 
-static const timer_v1::ops_t ops = 
+static const timer_v1::ops_t ops =
 {
     read,
     arm,

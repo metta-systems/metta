@@ -52,7 +52,7 @@ public:
         logger::trace() << "copy constructing heap_allocator at " << this << " with heap " << heap;
     }
 
-    template <class U> 
+    template <class U>
     heap_allocator(const heap_allocator<U>& other) throw()
         : heap(other.get_state())
     {
@@ -77,7 +77,7 @@ public:
     }
 };
 
-/*  
+/*
     pointer address(reference x) const noexcept;
     const_pointer address(const_reference x) const noexcept;
 

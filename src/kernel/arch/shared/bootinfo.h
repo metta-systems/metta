@@ -147,7 +147,7 @@ public:
 
     /**
      * NB! Module loader received from this bootinfo will modify it,
-     * so do not try to use two modules loaders from two different bootinfos at once! 
+     * so do not try to use two modules loaders from two different bootinfos at once!
      * (Don't use more than one bootinfo at a time at all, they are not concurrency-safe!)
      */
     module_loader_t modules();
@@ -163,7 +163,7 @@ public:
 
     mmap_iterator mmap_begin();
     mmap_iterator mmap_end();
-    
+
     vmap_iterator vmap_begin();
     vmap_iterator vmap_end();
 

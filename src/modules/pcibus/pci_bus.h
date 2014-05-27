@@ -155,7 +155,7 @@ class pci_bus_t
                             (static_cast<address_t>(func & 0x7) << 8) |
                             (static_cast<address_t>(offset & 0xfc)) |
                             0x80000000U; // enable bit
- 
+
         /* write out the address */
         x86_cpu_t::outl(PCI_CONFIG_ADDRESS, address);
         /* read in the data */

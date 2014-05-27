@@ -16,6 +16,6 @@ local interface exception_system_v1
 
     ## Create an exception environment using the pervasive
     ## "Heap". This heap will also be used by the environment during
-    ## the handling of exceptions. 
+    ## the handling of exceptions.
     create() returns (exception_support_setjmp_v1& instance); # raises (heap_v1.no_memory); - doesn't raise because there's no exceptions yet!
 }

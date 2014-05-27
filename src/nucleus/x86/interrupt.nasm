@@ -15,7 +15,7 @@ extern irq_handler
 ;     call    INT_00_IN_C
 ;     popa
 ;     iretd
-; 
+;
 ; void INT_00_IN_C (void) {
 ;     kprintf ("INT00 : #DE Divide Error Exception.\n");
 ;     ...

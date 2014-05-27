@@ -20,19 +20,19 @@ local interface mmu_v1
     #===================================================================================================================
 
     # Update the mapping structures to include the virtual addresses described by "mem_range" (which should be
-    # the exact range held within the stretch "str") with the global permissions "rights". 
+    # the exact range held within the stretch "str") with the global permissions "rights".
     # The range is not initially mapped - i.e. any access to any part of the stretch will cause a fault.
     add_range(stretch_v1& str, memory_v1.virtmem_desc mem_range, stretch_v1.rights rights)
         raises (memory_v1.failure);
 
     # Update the mapping structures to include the virtual addresses described by "mem_range" (which should be
-    # the exact range held within the stretch "str") with the global permissions "rights". 
+    # the exact range held within the stretch "str") with the global permissions "rights".
     # The range is mapped linearly onto the set of a physical addresses described by "pmem". If there is insufficient
     # physical memory present, "memory_v1.failure" is raised.
     add_mapped_range(stretch_v1& str, memory_v1.virtmem_desc mem_range, memory_v1.physmem_desc pmem, stretch_v1.rights rights)
         raises (memory_v1.failure);
 
-    # Update the mapping structures for the virtual addresses described by "mem_range" (which should be 
+    # Update the mapping structures for the virtual addresses described by "mem_range" (which should be
     # the exact range held within the stretch "str") with the new global permissions "rights".
     # The range must already be present in the mapping structures;
     # or else "memory_v1.failure" will be raised.

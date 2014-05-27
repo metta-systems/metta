@@ -49,7 +49,7 @@ public:
      * Prints [checkpoint] followed by checkpoint name from @c str and then waits for Enter keypress.
      */
     static void checkpoint(const char* str);
-    
+
     /**
      * Trigger a cpu breakpoint. Will cause a magic trap under bochs.
      */

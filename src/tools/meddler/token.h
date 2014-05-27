@@ -35,7 +35,7 @@ enum kind
     _interface_type,
     _exception_type,
     identifier,        // a generic id (usually variable name)
-    
+
     kw_local, kw_final, kw_interface, kw_exception,
     kw_in, kw_inout, kw_out, kw_idempotent,
     kw_raises, kw_extends, kw_never, kw_returns,

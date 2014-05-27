@@ -275,7 +275,7 @@ void method_t::dump(std::string indent_prefix)
     if (raises_ids.size() == 0)
         std::cout << indent_prefix << "  [empty]" << std::endl;
     else
-        for (auto s : raises_ids) { 
+        for (auto s : raises_ids) {
             std::cout << indent_prefix << "  " << s << std::endl;
         }
 }

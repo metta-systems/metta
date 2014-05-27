@@ -108,7 +108,7 @@ extern "C" void kernel_startup()
     parse_cmdline(bi);
     prepare_infopage(); // <-- init domain info page
     check_cpu_features(); // cmdline might affect used CPU feats? (i.e. noacpi flag)
-    
+
     // TODO: CREATE INITIAL MEMORY MAPPINGS PROPERLY HERE
     // TEMPORARY: just map all mem 0..min(16Mb, RAMtop) to 1-1 mapping? for simplicity
 //    int ramtop = 16*MiB;

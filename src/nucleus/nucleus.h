@@ -25,14 +25,14 @@ namespace nucleus
     //==================================================================================================================
     // privileged syscalls - only TCB components may use these
     //==================================================================================================================
-    
+
     inline void write_pdbr(address_t pdba_phys, address_t pdba_virt)
     {
         kconsole << "calling write_pdbr syscall" << endl;
         asm volatile ("int $99" :: "a"(1), "b"(pdba_phys), "c"(pdba_virt));
         kconsole << "returned from write_pdbr syscall" << endl;
     }
-    
+
     inline int protect(protection_domain_v1::id dom_id, address_t start_page, size_t n_pages, stretch_v1::rights access)
     {
         kconsole << "calling protect syscall" << endl;
@@ -54,6 +54,6 @@ namespace nucleus
     {
         kconsole << "calling install_irq_handler syscall" << endl;
         asm volatile ("int $99" :: "a"(3), "b"(irq), "c"(handler));
-        kconsole << "returned from install_irq_handler syscall" << endl;        
+        kconsole << "returned from install_irq_handler syscall" << endl;
     }
 }

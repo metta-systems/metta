@@ -43,9 +43,9 @@ void bga::configure(pci_device_t* card)
 }
 
 // OSdev wiki sez:
-// Based on source code examination for Bochs (iodev/vga.cc) 
-// setting VBE_DISPI_GETCAPS in VBE_DISPI_INDEX_ENABLE makes the 
-// VBE_DISPI_INDEX_ (XRES / YRES / BPP) fields return their maximum 
+// Based on source code examination for Bochs (iodev/vga.cc)
+// setting VBE_DISPI_GETCAPS in VBE_DISPI_INDEX_ENABLE makes the
+// VBE_DISPI_INDEX_ (XRES / YRES / BPP) fields return their maximum
 // values when read instead of the current values.
 void bga::init()
 {

@@ -60,7 +60,7 @@ static uint64_t generate_fingerprint(interface_t* intf)
     hash[4] ^= hash[14];
     hash[5] ^= hash[15];
 
-    /** 
+    /**
      * Abuse a trick from fourcc Magic64BE to generate a type code :)
      */
     uint64_t type_code = ((((((((((((((uint64_t)hash[0] << 8) | hash[1]) << 8) | hash[2]) << 8) | hash[3]) << 8) | hash[4]) << 8) | hash[5]) << 8) | 0) << 8) | 0;
@@ -277,7 +277,7 @@ static string emit_type_code_prefix(alias_t& type)
 }
 
 /**
- * Emit all necessary includes. If @c include_interface_refs is true then include interface-only references (not suitable 
+ * Emit all necessary includes. If @c include_interface_refs is true then include interface-only references (not suitable
  * for header files, as it creates cyclic dependencies).
  * @returns List of output includes.
  */
@@ -408,7 +408,7 @@ void interface_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
 
     if (!get_autodoc().empty())
         s << indent_prefix << "/**\n" << get_autodoc() << "\n*/" << endl;
-    
+
     // This structure acts as a namespace, limiting the scope of all declarations.
     s << indent_prefix << "namespace " << name() << endl
       << indent_prefix << "{" << endl;
@@ -419,7 +419,7 @@ void interface_t::emit_interface_h(ostringstream& s, string indent_prefix, bool)
         t->emit_interface_h(s, indent_prefix + "    ");
         s << endl;
     }
-    
+
     s << endl;
 
     s << indent_prefix << "    struct ops_t;   // defined in " << name() << "_impl.h" << endl

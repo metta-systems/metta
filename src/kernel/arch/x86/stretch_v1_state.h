@@ -31,10 +31,10 @@ struct state_t : public dl_link_t<state_t>
     mmu_v1::closure_t*               mmu;
     stretch_v1::closure_t            closure;
     sid_t                            sid;
-    
+
     memory_v1::address               base;
     memory_v1::size                  size;
-    
+
     stretch_v1::rights               global_rights;
 
     state_t() : dl_link_t<state_t>() {

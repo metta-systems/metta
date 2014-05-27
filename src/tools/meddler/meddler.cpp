@@ -77,7 +77,7 @@ public:
             // Since parent interfaces can only "extend" current interface, we put them into parent interfaces list of current interface
             // after parsing and consult them during emit phase for matching types, exceptions and methods - they are considered LOCAL to this
             // interface.
-            if (parser_stack.size() > 1) 
+            if (parser_stack.size() > 1)
             {
                 L(cout << "### Linking interface to parent" << endl);
                 parser_stack.at(parser_stack.size()-2)->link_to_parent(parser_stack.at(parser_stack.size()-1));

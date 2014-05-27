@@ -20,7 +20,7 @@ local interface naming_context_factory_v1
     # To build a context generally requires a "Heap" (to get the
     # storage from) and a "TypeSystem" used internally to determine
     # whether an object is a subtype of "Context" when trying to
-    # resolve compound pathnames. 
+    # resolve compound pathnames.
 
     # Constructs a new naming context.
     create_context(heap_v1& heap, type_system_v1& type_system)

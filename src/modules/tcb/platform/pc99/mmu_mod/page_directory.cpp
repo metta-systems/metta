@@ -93,7 +93,7 @@ void page_t::set_4mb(bool b) // only valid in PDE
 //         directory[i] = 0;
 //     directory[1023] = (address_t)directory_physical | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
 // }
-// 
+//
 // void page_directory_t::init(uint32_t* placement_area)
 // {
 //     directory = placement_area;
@@ -101,12 +101,12 @@ void page_t::set_4mb(bool b) // only valid in PDE
 //         directory[i] = 0;
 //     directory[1023] = (address_t)directory | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT; //RPD trick
 // }
-// 
+//
 // page_t* page_directory_t::create_mapping(address_t virt, address_t phys)
 // {
 //     page_table_t* pt = page_table(virt, true);
 //     ASSERT(pt);
-// 
+//
 //     uint32_t pte = pte_entry(virt);
 //     if (!pt->page(pte).present()) // page isn't mapped
 //     {
@@ -118,22 +118,22 @@ void page_t::set_4mb(bool b) // only valid in PDE
 //         // page is already mapped
 //         return 0;
 //     }
-// 
+//
 // #if MEMORY_DEBUG
 //     kconsole << "+(" << virt << "=>" << phys << ") to entry " << pte << " @" << (address_t)pt << "(" << (address_t)&pt->page(pte) << ")" << endl;
 // #endif
-// 
+//
 //     return &pt->page(pte);
 // }
-// 
+//
 // void page_directory_t::remove_mapping(address_t virt)
 // {
 //     page_table_t* pt = page_table(virt, false);
-// 
+//
 //     if (pt)
 //     {
 //         uint32_t pte = pte_entry(virt);
-// 
+//
 //         if (pt->page(pte).present())
 //         {
 //             // page is mapped, so unmap it
@@ -142,33 +142,33 @@ void page_t::set_4mb(bool b) // only valid in PDE
 //         }
 //     }
 // }
-// 
+//
 // bool page_directory_t::is_mapped(address_t virt)
 // {
 //     page_table_t* pt = page_table(virt, false);
 //     if (!pt)
 //         return false;
-// 
+//
 //     uint32_t pte = pte_entry(virt);
 //     if (!pt->page(pte).present())
 //         return false;
-// 
+//
 //     return true;
 // }
-// 
+//
 // page_t* page_directory_t::mapping(address_t virt, bool make)
 // {
 //     page_table_t* pt = page_table(virt, make);
 //     if (!pt)
 //         return 0;
-// 
+//
 //     uint32_t pte = pte_entry(virt);
 //     if (!pt->page(pte).present() && !make)
 //         return 0;
-// 
+//
 //     return &pt->page(pte);
 // }
-// 
+//
 // void page_directory_t::dump()
 // {
 //     kconsole << WHITE << "Dumping page directory:" << endl;
@@ -176,35 +176,35 @@ void page_t::set_4mb(bool b) // only valid in PDE
 //     {
 //         if(!(directory[i] & IA32_PAGE_PRESENT))
 //             continue;
-// 
+//
 //         page_table_t* pt = page_table(i << PDE_SHIFT, false);
 //         ASSERT(pt);
-// 
+//
 //         kconsole << "  Page table " << i << endl;
 //         for (int k = 0; k < 1024; k++)
 //         {
 //             page_t& page = pt->page(k);
-// 
+//
 //             if (page.present())
 //                 kconsole << "    " << (unsigned int)(i << PDE_SHIFT) + (k << PTE_SHIFT) << " => " << page.frame() << endl;
 //         }
-// 
+//
 //         kconsole << "  End of table." << endl;
 //     }
 //     kconsole << "End of directory." << endl;
 // }
-// 
+//
 // void page_directory_t::set_page_table(address_t virt, address_t phys)
 // {
 //     directory[pde_entry(virt)] = (phys & PAGE_MASK) | IA32_PAGE_WRITABLE | IA32_PAGE_PRESENT;
 //     ia32_mmu_t::flush_page_directory_entry(virt);
 // }
-// 
+//
 // page_table_t* page_directory_t::page_table(address_t virt, bool make)
 // {
 //     uint32_t pde = pde_entry(virt);
 //     page_table_t* page_table = 0;
-// 
+//
 //     if (directory_access[pde] & IA32_PAGE_PRESENT)
 //     {
 //         if (directory_access == directory_physical)
@@ -219,11 +219,11 @@ void page_t::set_4mb(bool b) // only valid in PDE
 // #if MEMORY_DEBUG
 //         kconsole << "allocating new pagetable " << pde << " @ " << phys << endl;
 // #endif
-// 
+//
 //         set_page_table(virt, phys);
 //         page_table->zero();
 //     }
-// 
+//
 //     return page_table;
 // }
 

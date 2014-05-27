@@ -13,7 +13,7 @@
 #include "protection_domain.h"
 #include "stl/map"
 
-/** 
+/**
  * Memory allocation resource record, per-domain.
  */
 struct memory_resrec_t

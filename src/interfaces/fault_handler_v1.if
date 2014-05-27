@@ -8,14 +8,14 @@
 #
 # A "FaultHandler" is a user-specified object which overrides
 # the default stretch driver implementation for a given type
-# of memory fault. 
+# of memory fault.
 
 local interface fault_handler_v1
 {
-    # The "Handle" operation is called when some type of fault 
+    # The "Handle" operation is called when some type of fault
     # occurs on a virtual address within a stretch managed by
     # this driver; these faults should be recoverable (at least
-    # potentially). Generally the "reason" for the fault will not 
+    # potentially). Generally the "reason" for the fault will not
     # be "PAGE", though this is not ruled out.
     handle(stretch_v1& stretch, memory_v1.address virt, memory_v1.fault reason)
         returns (boolean success);

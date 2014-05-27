@@ -57,8 +57,8 @@ struct module_descriptor_t
 void elf32::program_header_t::dump()
 {
     const char* flag_names[32] = {
-        "PF_EXECUTE", "PF_WRITE", "PF_READ", "bit 3", "bit 4", "bit 5", "bit 6", "bit 7", "bit 8", "bit 9", "bit 10", "bit 11", "bit 12", 
-        "bit 13", "bit 14", "bit 15", "bit 16", "bit 17", "bit 18", "bit 19", "bit 20", "bit 21", "bit 22", "bit 23", "bit 24", "bit 25", 
+        "PF_EXECUTE", "PF_WRITE", "PF_READ", "bit 3", "bit 4", "bit 5", "bit 6", "bit 7", "bit 8", "bit 9", "bit 10", "bit 11", "bit 12",
+        "bit 13", "bit 14", "bit 15", "bit 16", "bit 17", "bit 18", "bit 19", "bit 20", "bit 21", "bit 22", "bit 23", "bit 24", "bit 25",
         "bit 26", "bit 27", "bit 28", "bit 29", "bit 30", "bit 31"
     };
 
@@ -80,8 +80,8 @@ void elf32::program_header_t::dump()
 void elf32::section_header_t::dump(const char* shstrtab)
 {
     const char* flag_names[32] = {
-        "SHF_WRITE", "SHF_ALLOC", "SHF_EXECINSTR", "bit 3", "SHF_MERGE", "SHF_STRINGS", "SHF_INFO_LINK", "SHF_LINK_ORDER", 
-        "SHF_OS_NONCONFORMING", "SHF_GROUP", "SHF_TLS", "bit 11", "bit 12", "bit 13", "bit 14", "bit 15", "bit 16", "bit 17", "bit 18", 
+        "SHF_WRITE", "SHF_ALLOC", "SHF_EXECINSTR", "bit 3", "SHF_MERGE", "SHF_STRINGS", "SHF_INFO_LINK", "SHF_LINK_ORDER",
+        "SHF_OS_NONCONFORMING", "SHF_GROUP", "SHF_TLS", "bit 11", "bit 12", "bit 13", "bit 14", "bit 15", "bit 16", "bit 17", "bit 18",
         "bit 19", "bit 20", "bit 21", "bit 22", "bit 23", "bit 24", "bit 25", "bit 26", "bit 27", "bit 28", "bit 29", "bit 30", "bit 31"
     };
     // 0 .group        00000008  00000000  00000000  00000034  2**2
@@ -146,7 +146,7 @@ module_already_loaded(address_t from, cstring_t name, module_descriptor_t*& out_
         }
         module = module->previous;
     }
-    return false;    
+    return false;
 }
 
 // List names of all loaded modules so far.
@@ -498,7 +498,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
             {
                 // cstring_t symname(module.string_table() + symbol->name);
                 // if (closure_name && (symname == closure_name)) {
-                //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (before)" << endl; 
+                //     kconsole << "Entry symbol " << (module.string_table() + symbol->name) << " at " << symbol->value << " (before)" << endl;
                 // }
 
                 logger::trace() << "symbol '" << (module.string_table() + symbol->name) << "' old value " << symbol->value << ", new value " << symbol->value + module.section_header(symbol->shndx)->vaddr;
@@ -513,7 +513,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
     // Relocate loaded data.
     module.relocate_to(section_base);//, symbol_table);
-    
+
     // Prepare new module descriptor and put it into right memory location.
     address_t prev_address = *d_last_available_address;
     *d_last_available_address = page_align_up(*d_last_available_address);

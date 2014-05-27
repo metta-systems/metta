@@ -11,8 +11,8 @@
 #include "memutils.h"
 
 // stdlib compat for compiler
-extern "C" void* memcpy(void* dest, const void* src, size_t count) 
-{ 
+extern "C" void* memcpy(void* dest, const void* src, size_t count)
+{
     return memutils::copy_memory(dest, src, count);
 }
 

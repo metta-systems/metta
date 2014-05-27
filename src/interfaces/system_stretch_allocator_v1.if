@@ -50,7 +50,7 @@ local interface system_stretch_allocator_v1 extends stretch_allocator_v1
     ## the stretch is mapped; in the case where the stretch is to be
     ## pinned down, this **must** hold enough frames.
 
-    create_over(memory_v1.size size, stretch_v1.rights access, 
+    create_over(memory_v1.size size, stretch_v1.rights access,
                 memory_v1.address start, memory_v1.attrs attr, card32 page_width, memory_v1.physmem_desc pmem)
         returns (stretch_v1& stretch)
         raises (memory_v1.failure);

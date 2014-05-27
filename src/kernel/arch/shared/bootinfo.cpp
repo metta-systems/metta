@@ -76,7 +76,7 @@ public:
 class bootrec_vmap_entry_t : public bootrec_t
 {
 public:
-    memory_v1::mapping mapping;  
+    memory_v1::mapping mapping;
 };
 
 class bootrec_cmdline_t : public bootrec_t
@@ -341,10 +341,10 @@ bool bootinfo_t::append_mmap(multiboot_t::mmap_entry_t* entry)
 bool bootinfo_t::append_vmap(address_t vstart, address_t pstart, size_t size)
 {
     size_t entry_size = sizeof(bootrec_vmap_entry_t);
-    
+
     if (will_overflow(entry_size))
         return false;
-        
+
     bootrec_vmap_entry_t* vmap = new(free) bootrec_vmap_entry_t;
     vmap->tag = bootrec_virtual_mapping;
     vmap->size = entry_size;
@@ -356,7 +356,7 @@ bool bootinfo_t::append_vmap(address_t vstart, address_t pstart, size_t size)
     vmap->mapping.mode = 0;
 
     free += entry_size;
-    return true;    
+    return true;
 }
 
 bool bootinfo_t::append_cmdline(const char* cmdline)
@@ -508,8 +508,8 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
     });
     if (ret)
     {
-        logger::debug() << __FUNCTION__ << ": found matching memmap entry at " << ret << 
-            (n_way == 0 ? ", removing fully" : 
+        logger::debug() << __FUNCTION__ << ": found matching memmap entry at " << ret <<
+            (n_way == 0 ? ", removing fully" :
             (n_way == 1 ? ", using start" :
             (n_way == 2 ? ", using end" :
             (n_way == 3 ? ", splitting in the middle" : "ERROR"))));
@@ -518,8 +518,8 @@ multiboot_t::mmap_entry_t* bootinfo_t::find_matching_entry(address_t start, size
 }
 
 /**
- * Use memory (start, start + size) from a given range, this will cause a split of found range into 2 or 3 regions, 
- * one or two of which will remain free, and one will be marked occupied. Will perform various consistency checks 
+ * Use memory (start, start + size) from a given range, this will cause a split of found range into 2 or 3 regions,
+ * one or two of which will remain free, and one will be marked occupied. Will perform various consistency checks
  * and add new regions to bootinfo_t memory map.
  *
  * @returns false if memory could not be used.

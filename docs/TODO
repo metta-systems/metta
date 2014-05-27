@@ -14,7 +14,7 @@ Use linker to merge symbols with missing definitions, export defined symbols.
 
 module_descriptor_t {
   list<module_descriptor_t> dependencies; // we resolve symbols from these modules
-  symtab exported_symbols; // export only non-local (external) symbols 
+  symtab exported_symbols; // export only non-local (external) symbols
 }
 
 // this should be possible to automate...
@@ -149,7 +149,7 @@ Applications:
   ☐ Write tests for atomic_count
 
 Other:
-    ☐ Investigate TLSF memory allocator for RT tasks 
+    ☐ Investigate TLSF memory allocator for RT tasks
         Investigate possible use of TLSF for RT tasks. See http://rtportal.upv.es/rtmalloc/
     ☐ Implement device tree support
         Perform scanning of the system buses and build a device tree which describes machine configuration.

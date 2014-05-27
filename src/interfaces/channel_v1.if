@@ -21,7 +21,7 @@ local interface channel_v1
     ## An event channel is a (tx, rx) pair of endpoints.  Endpoints
     ## are stored in per-domain memory at the kernel level.
     ## An endpoint is identified within its domain by an endpoint.
-    
+
     type card32 endpoint; # Opaque
 
     # An "Endpoint" is either the receive ("RX") end or the transmit

@@ -66,17 +66,17 @@ shared_add(naming_context_v1::closure_t*, const char*, types::any)
 
 static void
 shared_remove(naming_context_v1::closure_t*, const char*)
-{ 
+{
     OS_RAISE((exception_support_v1::id)"naming_context_v1.denied", 0);
-    return; 
+    return;
 }
 
 // dup is not yet defined, but it raises denied as well
 
 static void
 shared_destroy(naming_context_v1::closure_t*)
-{ 
-    return; 
+{
+    return;
 }
 
 //=====================================================================================================================
@@ -184,7 +184,7 @@ type_system_v1_list(naming_context_v1::closure_t* self)
 
 /**
  * Type System Get method - return the type code as any.
- */ 
+ */
 static bool
 type_system_v1_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
@@ -216,7 +216,7 @@ type_system_v1_info(type_system_v1::closure_t* self, type_system_v1::alias tc, t
         *rep = iface->rep.any;
         return &meta_interface_closure;
     }
-  
+
     /* Check that within the given interface this is a valid type */
     if (!TCODE_VALID_TYPE(tc, iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
@@ -242,7 +242,7 @@ type_system_v1_size(type_system_v1::closure_t* self, type_system_v1::alias tc)
     /* Deal with the case where the type code refers to an interface type */
     if (TCODE_IS_INTERFACE(tc))
         return iface->rep.size;
-  
+
     /* Check that within the given interface this is a valid type */
     if (!TCODE_VALID_TYPE (tc, iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
@@ -265,7 +265,7 @@ type_system_v1_name(type_system_v1::closure_t* self, type_system_v1::alias tc)
     {
         return string_copy(iface->rep.name, PVS(heap));
     }
-  
+
     /* Check that within the given interface this is a valid type */
     if (!TCODE_VALID_TYPE (tc, iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
@@ -289,7 +289,7 @@ type_system_v1_docstring(type_system_v1::closure_t* self, type_system_v1::alias 
     {
         return string_copy(iface->rep.autodoc, PVS(heap));
     }
-  
+
     /* Check that within the given interface this is a valid type */
     if (!TCODE_VALID_TYPE (tc, iface))
         OS_RAISE((exception_support_v1::id)"type_system_v1.bad_code", tc);
@@ -410,7 +410,7 @@ type_system_v1_unalias(type_system_v1::closure_t* self, type_system_v1::alias tc
 
 /*
  * Method suites for all type representation which include a closure.
- */ 
+ */
 extern interface_v1::ops_t interface_ops;
 extern operation_v1::ops_t operation_ops;
 extern exception_v1::ops_t exception_ops;
@@ -473,7 +473,7 @@ type_system_f_v1_register_interface(type_system_f_v1::closure_t* self, type_syst
     self->d_state->interfaces_by_typecode->put(iface->rep.code.value, intf);
 }
 
-static type_system_f_v1::ops_t typesystem_ops = 
+static type_system_f_v1::ops_t typesystem_ops =
 {
     type_system_v1_list,
     type_system_v1_get,
@@ -530,9 +530,9 @@ meta_interface_list(naming_context_v1::closure_t* self)
 }
 
 /**
- * Meta-interface get method - this differs from typesystem's get in that 
+ * Meta-interface get method - this differs from typesystem's get in that
  * we have to deal with PROCs and EXCEPTIONs as well as TYPEs.
- */ 
+ */
 static bool
 meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::any* obj)
 {
@@ -553,7 +553,7 @@ meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::
     }
 
     /* Otherwise look up the leading component of "name" */
-  
+
     stringref_t name_sr(name);
     std::pair<stringref_t, stringref_t> refs = name_sr.split('.');
 
@@ -586,7 +586,7 @@ meta_interface_get(naming_context_v1::closure_t* self, const char* name, types::
             // @todo free (name) here
         }
     }
-  
+
     return exists;
 }
 
@@ -629,7 +629,7 @@ interface_v1::closure_t meta_interface_closure =
 };
 
 //=====================================================================================================================
-// Definition of types in the 'mythical' interface meta_interface which defines all predefined Meddle types 
+// Definition of types in the 'mythical' interface meta_interface which defines all predefined Meddle types
 // and all interfaces in Metta (including meta_interface itself).
 //=====================================================================================================================
 
@@ -701,8 +701,8 @@ interface_v1::state_t meta_interface =
 // The Factory
 //=====================================================================================================================
 
-static type_system_f_v1::closure_t* 
-create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h, 
+static type_system_f_v1::closure_t*
+create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h,
        map_card64_address_factory_v1::closure_t* cardmap, map_string_address_factory_v1::closure_t* stringmap)
 {
     type_system_f_v1::state_t* state = new(h) type_system_f_v1::state_t;
@@ -721,7 +721,7 @@ create(type_system_factory_v1::closure_t* self, heap_v1::closure_t* h,
     return &state->closure;
 }
 
-static type_system_factory_v1::ops_t methods = 
+static type_system_factory_v1::ops_t methods =
 {
     create
 };
