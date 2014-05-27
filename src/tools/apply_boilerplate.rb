@@ -13,7 +13,8 @@
 require 'find'
 
 exclude_dirs = ['./_build_', './runtime/stl', './tools/meddler/llvm']
-no_license = ['./runtime/MersenneTwister.h', './kernel/generic/range_list.h', './kernel/arch/x86/cpu_flags.h', './kernel/arch/x86/mmu.h']
+no_license = ['./runtime/MersenneTwister.h', './kernel/generic/range_list.h',
+    './kernel/arch/x86/cpu_flags.h', './kernel/arch/x86/mmu.h']
 
 class Array
     def do_not_has?(path)

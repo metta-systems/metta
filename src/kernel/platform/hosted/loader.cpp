@@ -7,7 +7,8 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 /**
- * The loader for hosted OS will simply set up some variables, allocate bootinfo structure and call kernel_startup.
+ * The loader for hosted OS will simply set up some variables, allocate bootinfo structure
+ * and call kernel_startup.
  *
  * This loader doesn't follow the standard loader protocol.
  */
@@ -26,8 +27,9 @@ int main()
 	// call the kernel function
 	kernel_startup();
 
-	// one interesting case with hosted system is that we need to run global destructors for proper tear-down as well...
+	// one interesting case with hosted system is that we need to run global destructors
+	// for proper tear-down as well...
 	delete bootinfo_area;
-	
+
 	return 0;
 }

@@ -43,7 +43,8 @@ Find.find('./') do |f|
             end
         }
         # Now check if include file with same basename is mentioned somewhere in the includes list.
-        # If it is mentioned first, or not mentioned at all - this is fine, if it's not first - need to fix.
+        # If it is mentioned first, or not mentioned at all - this is fine,
+        # if it's not first - need to fix.
         if file_includes.size == 0 or right_include(f, file_includes[0])
             ok_count += 1
         else

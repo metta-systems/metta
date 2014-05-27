@@ -15,7 +15,8 @@
 #include "module_loader.h"
 
 /**
- * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets) find symbol by either name or value.
+ * Given only two ELF sections - a symbol table and a string table (plus a base for section offsets)
+ * find symbol by either name or value.
  */
 class symbol_table_finder_t
 {
@@ -24,14 +25,16 @@ class symbol_table_finder_t
     elf32::section_header_t* string_table;
 
 public:
-    symbol_table_finder_t(address_t base_, elf32::section_header_t* symtab_, elf32::section_header_t* strtab_)
+    symbol_table_finder_t(address_t base_, elf32::section_header_t* symtab_,
+        elf32::section_header_t* strtab_)
         : base(base_)
         , symbol_table(symtab_)
         , string_table(strtab_)
     {
         ASSERT(symbol_table);
         ASSERT(string_table);
-        logger::debug() << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table;
+        logger::debug() << "Symbol table finder starting: base = " << base
+            << ", symtab = " << symbol_table << ", strtab = " << string_table;
     }
 
     symbol_table_finder_t(module_loader_t::module_entry& mod)
@@ -41,7 +44,8 @@ public:
     {
         ASSERT(symbol_table);
         ASSERT(string_table);
-        logger::debug() << "Symbol table finder starting: base = " << base << ", symtab = " << symbol_table << ", strtab = " << string_table;
+        logger::debug() << "Symbol table finder starting: base = " << base
+            << ", symtab = " << symbol_table << ", strtab = " << string_table;
     }
 
     // TODO: use debugging info if present
