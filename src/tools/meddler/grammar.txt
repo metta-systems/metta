@@ -1,4 +1,4 @@
-This is the source for http://metta.exquance.com/wiki/MeddleGrammar
+This is the source for https://github.com/berkus/metta/wiki/MeddleGrammar
 
 === Types ===
 

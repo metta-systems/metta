@@ -1,7 +1,7 @@
 //
 // Kernel startup initialisation with mandatory x86_64 support.
 //
-// Part of Metta OS. Check http://metta.exquance.com for latest version.
+// Part of Metta OS. Check http://atta-metta.net for latest version.
 //
 // Copyright 2007 - 2014, Stanislav Karchebnyy <berkus@exquance.com>
 //

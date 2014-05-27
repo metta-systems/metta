@@ -1,5 +1,5 @@
 //
-// Part of Metta OS. Check http://metta.exquance.com for latest version.
+// Part of Metta OS. Check http://atta-metta.net for latest version.
 //
 // Copyright 2007 - 2013, Stanislav Karchebnyy <berkus@exquance.com>
 //
