@@ -1,3 +1,2 @@
-Stanislav Karchebny <berkus@exquance.com>
-Renārs Lediņš <renars@exquance.com>
-Maksims Juvcenko <wizard@exquance.com>
+Stanislav Karchebny <berkus@atta-metta.net>
+Maksims Juvcenko <wizard@atta-metta.net>
