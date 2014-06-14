@@ -100,7 +100,9 @@ echo "===================================================================="
 
 if [ ! -f build/llvm/.config.succeeded ]; then
     cd build/llvm && \
-    cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS ../../sources/llvm && \
+    cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang \
+    -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++ -DLLVM_ENABLE_DUMP" \
+    -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS ../../sources/llvm && \
     touch .config.succeeded && \
     cd ../.. || exit 1
 else
@@ -139,7 +141,8 @@ echo "===================================================================="
 
 if [ ! -f libcxx/.build.succeeded ]; then
     cd libcxx/lib && \
-    TRIPLE=$LIBCXX_TRIPLE CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+    TRIPLE=$LIBCXX_TRIPLE CC=$TOOLCHAIN_DIR/clang/bin/clang \
+    CXX="$TOOLCHAIN_DIR/clang/bin/clang++ -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/usr/include" \
     ./buildit && \
     touch ../.build.succeeded && \
     cd ../.. || exit 1
