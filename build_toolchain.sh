@@ -21,6 +21,7 @@ export LLVM_TARGETS="X86;ARM;AArch64;Mips"
 export LLVM_REVISION=29682f42
 export CLANG_REVISION=87b3c14288
 export COMPILER_RT_REVISION=b9bc8ad
+export LIBCXXABI_REVISION=master
 export LIBCXX_REVISION=52a708f
 export LLD_REVISION=a124f52
 if [ -z $LIBCXX_TRIPLE ]; then
@@ -79,7 +80,18 @@ else
 fi
 
 echo "===================================================================="
-echo "Checking out recent libcxx r$LIBCXX_REVISION..."
+echo "Checking out recent libc++abi [$LIBCXXABI_REVISION]..."
+echo "===================================================================="
+
+if [ ! -d libcxxabi ]; then
+    git clone -n http://llvm.org/git/libcxxabi.git libcxxabi
+    (cd libcxxabi; git checkout $LIBCXXABI_REVISION)
+else
+    (cd libcxxabi; git fetch; git checkout $LIBCXXABI_REVISION)
+fi
+
+echo "===================================================================="
+echo "Checking out recent libcxx [$LIBCXX_REVISION]..."
 echo "===================================================================="
 
 if [ ! -d libcxx ]; then
@@ -136,6 +148,24 @@ else
 fi
 
 echo "===================================================================="
+echo "Configuring and building libc++abi..."
+echo "===================================================================="
+
+ # /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/5.1/include
+ # /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+ # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frame
+
+# if [ ! -f libcxxabi/.build.succeeded ]; then
+#     cd libcxxabi/lib && \
+#     TRIPLE=$LIBCXX_TRIPLE CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
+#     ./buildit && \
+#     touch ../.build.succeeded && \
+#     cd ../.. || exit 1
+# else
+#     echo "libcxxabi/.build.succeeded exists, NOT rebuilding libc++abi!"
+# fi
+
+echo "===================================================================="
 echo "Configuring and building libcxx..."
 echo "===================================================================="
 
@@ -173,6 +203,7 @@ echo "===================================================================="
 # Force use of local libcxx for new clang build.
 # This doesn't enable the options, merely records them, the real activation
 # happens below in make command invocation.
+    # cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS ../../sources/llvm && \
 
 export EXTRA_OPTIONS="-I$TOOLCHAIN_DIR/libcxx/include"
 export EXTRA_LD_OPTIONS="-L$TOOLCHAIN_DIR/libcxx/lib -lc++"
