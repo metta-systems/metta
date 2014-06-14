@@ -122,7 +122,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building llvm... this may take a long while"
+echo "Building llvm..."
 echo "===================================================================="
 
 if [ ! -f build/llvm/.build.succeeded ]; then
@@ -222,7 +222,7 @@ else
 fi
 
 echo "===================================================================="
-echo "Building llvm... this may take a long while"
+echo "Building llvm..."
 echo "===================================================================="
 
 if [ ! -f build/llvm2/.build2.succeeded ]; then
