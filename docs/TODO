@@ -1,7 +1,4 @@
- ✔ Setup UEFI boot emulator @done (14-05-26 13:54)
-   ✔ OVMF from http://sourceforge.net/apps/mediawiki/tianocore/index.php?title=OVMF @done (14-05-26 13:54)
-     ✔ qemu-system-x86_64 -pflash OVMF.fd @done (14-05-26 13:54)
-   ✔ VirtualBox too @done (14-05-26 13:54)
+ ☐ Get to the boot device path and locate a loadable sysimage using UEFI
  ☐ ACPI tables parsing?
 
 Module loader:
