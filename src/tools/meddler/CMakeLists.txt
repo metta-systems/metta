@@ -18,7 +18,7 @@ include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
 
-llvm_map_components_to_libraries(LLVM_SUPPORT option)
+llvm_map_components_to_libnames(LLVM_SUPPORT option)
 #=========
 
 include_directories(${OPENSSL_INCLUDE_DIR})
