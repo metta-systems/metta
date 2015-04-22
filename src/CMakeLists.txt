@@ -201,7 +201,7 @@ set(CMAKE_RANLIB true)
 SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> rs <TARGET> <LINK_FLAGS> <OBJECTS>")
 SET(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> rs <TARGET> <LINK_FLAGS> <OBJECTS>")
 
-set(_linker "${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/lld -flavor gnu <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES>")
+set(_linker "${CMAKE_SOURCE_DIR}/../../toolchain/clang/bin/lld -flavor gnu -target i686-elf-pc <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES>")
 set(CMAKE_C_LINK_EXECUTABLE "${_linker}")
 set(CMAKE_CXX_LINK_EXECUTABLE "${_linker}")
 
