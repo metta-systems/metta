@@ -2,7 +2,7 @@
 
 echo "===================================================================="
 echo "I will try to fetch and build everything needed for a freestanding"
-echo "cross-compiler toolchain. This includes llvm, clang, and lld"
+echo "cross-compiler toolchain. This includes llvm, clang, lld and polly"
 echo "and may take quite a while to build. Play some tetris and check back"
 echo "every once in a while. The process is largely automatic and should"
 echo "not require any manual intervention. Fingers crossed!"
@@ -20,10 +20,11 @@ export LLVM_TARGETS="X86;ARM;AArch64;Mips"
 
 export LLVM_REVISION=master
 export CLANG_REVISION=master
+export LLD_REVISION=master
+export POLLY_REVISION=master
 export COMPILER_RT_REVISION=master
 export LIBCXXABI_REVISION=master
 export LIBCXX_REVISION=master
-export LLD_REVISION=master
 if [ -z $LIBCXX_TRIPLE ]; then
     export LIBCXX_TRIPLE=-apple-
 fi
@@ -74,12 +75,12 @@ function configure {
 }
 
 # $1 path/name
-# $2 optional cmdline, default to ninja
+# $2 optional cmdline, default to `cmake build`
 function build {
     echo "===================================================================="
     echo "Building $1..."
 
-    cmd="ninja"
+    cmd="cmake --build ."
     if [ -n "$2" ]
     then
         cmd="$2"
@@ -96,7 +97,7 @@ function build {
 }
 
 # $1 path/name
-# $2 optional cmdline, default to ninja install
+# $2 optional cmdline, default to `cmake install target`
 # $3 optional title (use $1 if empty)
 function install {
     echo "===================================================================="
@@ -107,7 +108,7 @@ function install {
         echo "Installing $3..."
     fi
 
-    cmd="ninja install"
+    cmd="cmake --build . --target install"
     if [ -n "$2" ]
     then
         cmd="$2"
@@ -129,85 +130,36 @@ function install {
 # Main action
 #
 checkout "llvm" "http://llvm.org/git/llvm.git" "$LLVM_REVISION" "llvm"
-checkout "compiler-rt" "http://llvm.org/git/compiler-rt.git" "$COMPILER_RT_REVISION" "llvm/projects/compiler-rt"
+checkout "compiler-rt" "http://llvm.org/git/compiler-rt.git" "$COMPILER_RT_REVISION" \
+    "llvm/projects/compiler-rt"
 checkout "clang" "http://llvm.org/git/clang.git" "$CLANG_REVISION" "llvm/tools/clang"
 checkout "lld" "http://llvm.org/git/lld.git" "$LLD_REVISION" "llvm/tools/lld"
-checkout "libc++abi" "http://llvm.org/git/libcxxabi.git" "$LIBCXXABI_REVISION" "libcxxabi"
-checkout "libc++" "http://llvm.org/git/libcxx.git" "$LIBCXX_REVISION" "libcxx"
+checkout "polly" "http://llvm.org/git/polly.git" "$POLLY_REVISION" "llvm/tools/polly"
+checkout "libc++abi" "http://llvm.org/git/libcxxabi.git" "$LIBCXXABI_REVISION" \
+    "llvm/projects/libcxxabi"
+checkout "libc++" "http://llvm.org/git/libcxx.git" "$LIBCXX_REVISION" "llvm/projects/libcxx"
 
 if [ -n "$FETCH_ONLY" ] && [ "$FETCH_ONLY" -eq "1" ]; then
     echo "Fetch complete."
     exit 0
 fi
 
-configure "llvm" "cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang \
+configure "llvm" "cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang \
+    -DLLVM_APPEND_VC_REV=ON \
+    -DLLVM_BUILD_RUNTIME=ON \
     -DLLVM_ENABLE_CXX1Y=ON -DLLVM_ENABLE_LIBCXX=ON \
     -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS"
 build "llvm"
-install "llvm" "ninja install" "llvm, clang & lld"
-
-configure "libcxxabi" "cmake -G Ninja -DLLVM_CONFIG=$TOOLCHAIN_DIR/clang/bin/llvm-config \
-    -DLIBCXXABI_LIBCXX_INCLUDES=$TOOLCHAIN_DIR/sources/libcxx/include \
-    -DCMAKE_BUILD_TYPE=Release -DLLVM_ABI_BREAKING_CHECKS=WITH_ASSERTS \
-    -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/libc++abi"
-build "libcxxabi"
-install "libcxxabi"
-
-configure "libcxx" "cmake -G Ninja -DLIBCXX_ENABLE_CXX1Y=ON CC=$TOOLCHAIN_DIR/clang/bin/clang \
-    CXX=$TOOLCHAIN_DIR/clang/bin/clang++ -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/libc++"
-build "libcxx"
-install "libcxx"
-
-echo "===================================================================="
-echo "===================================================================="
-echo "Rebuilding LLVM libraries with freshly installed clang..."
-echo "===================================================================="
-echo "===================================================================="
-
-# TODO: copy libc++.so.1 to clang bin directory for Linux building or adjust LD_LIBRARY_PATH...
-
-# We rebuild using just built fresh clang for the sole reason of being able
-# to use recent libcxx (which we link against in tools), so LLVM libs have
-# to be built against this same libcxx too.
-
-export EXTRA_OPTIONS="-I$TOOLCHAIN_DIR/libcxx/include"
-export EXTRA_LD_OPTIONS="-L$TOOLCHAIN_DIR/libcxx/lib -lc++"
-
-configure "llvm2", ""
-
-# Force use of local libcxx for new clang build.
-# This doesn't enable the options, merely records them, the real activation
-# happens below in make command invocation.
-
-if [ ! -f build/llvm2/.config2.succeeded ]; then
-    cd build/llvm2 && \
-    CC=$TOOLCHAIN_DIR/clang/bin/clang CXX=$TOOLCHAIN_DIR/clang/bin/clang++ \
-
-    ../../sources/llvm/configure --prefix=$TOOLCHAIN_DIR/clang/ --enable-jit --enable-optimized \
-    --enable-libcpp --disable-docs \
-    --with-binutils-include=$TOOLCHAIN_DIR/sources/binutils-${BINUTILS_VER}/include/ --enable-pic \
-    --enable-targets=$LLVM_TARGETS  && \
-
-    touch .config2.succeeded && \
-    cd ../.. || exit 1
-else
-    echo "build/llvm2/.config2.succeeded exists, NOT reconfiguring llvm!"
-fi
-
-build "llvm2"
-"make -j$MAKE_THREADS EXTRA_OPTIONS="$EXTRA_OPTIONS" EXTRA_LD_OPTIONS="$EXTRA_LD_OPTIONS" && \
-    make check"
-
-install "llvm2" "" "llvm & clang"
-    make install EXTRA_OPTIONS="$EXTRA_OPTIONS" EXTRA_LD_OPTIONS="$EXTRA_LD_OPTIONS" && \
+install "llvm" "" "llvm, clang, lld, polly, libcxx & libcxxabi"
 
 echo "===================================================================="
 echo "To clean up:"
 echo "cd toolchain"
 echo "rm -rf build sources"
 echo
-echo "Toolchain binaries will remain in clang/, libcxxabi/ and libcxx/"
-echo "where Metta configure will find them."
+echo "Toolchain binaries will remain in clang/ where Metta configure"
+echo "will find them."
 echo "===================================================================="
 echo
 echo "===================================================================="
