@@ -21,7 +21,7 @@ class parser_t
     symbol_table_t symbols;
     AST::interface_t* parse_tree; friend class Meddler; // it is actually an interface. make it so.
     llvm::SourceMgr& source_mgr;
-	bool verbose;
+    bool verbose;
     std::string autodoc_buffer;
 
     void append_autodoc(std::string docline);
@@ -54,7 +54,7 @@ class parser_t
     bool parse_choice_type_alias();
     bool parse_type_alias();
 
-	void configure_type(AST::alias_t& to_get);
+    void configure_type(AST::alias_t& to_get);
     void reportError(std::string msg);
 
 public:

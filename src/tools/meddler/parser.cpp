@@ -80,7 +80,7 @@ parser_t::parser_t(llvm::SourceMgr& sm, bool be_verbose)
     , lex(be_verbose)
     , parse_tree(0)
     , source_mgr(sm)
-	, verbose(be_verbose)
+    , verbose(be_verbose)
 {
 }
 
@@ -284,8 +284,8 @@ bool parser_t::parse_interface()
             return false;
         }
 
-		if (verbose)
-        	node->dump("");
+        if (verbose)
+            node->dump("");
 
         return true;
     }
@@ -565,44 +565,44 @@ bool parser_t::parse_id_list(std::vector<std::string>& ids, token::kind delim)
 
 void parser_t::configure_type(AST::alias_t& to_get)
 {
-	D();
-	// interface types:
-	// - if not a builtin type
-	// - if not a fully qualified type
-	// - and not locally defined type
-	// - then must be an interface type
-	if (symbols.is_builtin_type(symbols.lookup(to_get.type())))
-	{
-		L(std::cout << "Builtin type " << to_get.type() << " found." << std::endl);
-		to_get.set_builtin(true);
-	}
-	else
-	{
-		AST::interface_t* parent = static_cast<AST::interface_t*>(parse_tree);
-		if (symbols.is_qualified_type_name(to_get.type()))
-		{
-			// fully qualified type goes into the imported_types list
-			L(std::cout << "Fully qualified import type " << to_get.type() << " found." << std::endl);
-			if (!parent->imported_types_lookup(to_get))
+    D();
+    // interface types:
+    // - if not a builtin type
+    // - if not a fully qualified type
+    // - and not locally defined type
+    // - then must be an interface type
+    if (symbols.is_builtin_type(symbols.lookup(to_get.type())))
+    {
+        L(std::cout << "Builtin type " << to_get.type() << " found." << std::endl);
+        to_get.set_builtin(true);
+    }
+    else
+    {
+        AST::interface_t* parent = static_cast<AST::interface_t*>(parse_tree);
+        if (symbols.is_qualified_type_name(to_get.type()))
+        {
+            // fully qualified type goes into the imported_types list
+            L(std::cout << "Fully qualified import type " << to_get.type() << " found." << std::endl);
+            if (!parent->imported_types_lookup(to_get))
                 parent->add_imported_type(to_get);
-		}
-		else
-		{
-			// If type resolves - it's an interface-local type (which HAS to be defined before use), otherwise assume an interface reference.
-			if (!parent->types_lookup(to_get))
-			{
-				L(std::cout << "Interface reference " << to_get.type() << " found." << std::endl);
-				to_get.set_interface_reference(true); // must be ext interface ref
-				if (!parent->imported_types_lookup(to_get))
+        }
+        else
+        {
+            // If type resolves - it's an interface-local type (which HAS to be defined before use), otherwise assume an interface reference.
+            if (!parent->types_lookup(to_get))
+            {
+                L(std::cout << "Interface reference " << to_get.type() << " found." << std::endl);
+                to_get.set_interface_reference(true); // must be ext interface ref
+                if (!parent->imported_types_lookup(to_get))
                     parent->add_imported_type(to_get);
-			}
-			else
-			{
-				L(std::cout << "Interface local type " << to_get.type() << " found." << std::endl);
-				to_get.set_local(true);
-			}
-		}
-	}
+            }
+            else
+            {
+                L(std::cout << "Interface local type " << to_get.type() << " found." << std::endl);
+                to_get.set_local(true);
+            }
+        }
+    }
 }
 
 bool parser_t::parse_type_decl(AST::alias_t& to_get)
@@ -656,7 +656,7 @@ bool parser_t::parse_field(AST::node_t* parent)
     if (!lex.expect(token::semicolon))
     {
         PARSE_ERROR("; expected");
-		delete field;
+        delete field;
         return false;
     }
 
@@ -716,7 +716,7 @@ bool parser_t::parse_type_alias()
         PARSE_ERROR("type name expected");
         return false;
     }
-	t.set_name(lex.current_token());
+    t.set_name(lex.current_token());
 
     if (!lex.expect(token::semicolon))
     {
@@ -777,7 +777,7 @@ bool parser_t::parse_range_type_alias()
     }
 
     AST::range_alias_t* node = new AST::range_alias_t(parse_tree, range_id, range_start, range_end);
-	configure_type(*node);
+    configure_type(*node);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -880,7 +880,7 @@ bool parser_t::parse_set_type_alias()
     }
 
     AST::set_alias_t* node = new AST::set_alias_t(parse_tree, type, base_type);
-	configure_type(*node);
+    configure_type(*node);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))
@@ -1135,7 +1135,7 @@ bool parser_t::parse_array_type_alias()
     }
 
     AST::array_alias_t* node = new AST::array_alias_t(parse_tree, type, base_type, count);
-	configure_type(*node);
+    configure_type(*node);
 
     parse_tree->add_type(node);
     if (!symbols.insert_checked(node->name(), token::type))

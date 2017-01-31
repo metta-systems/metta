@@ -25,7 +25,7 @@ class lexer_t
     token::kind cur_kind; // lookahead
     token::kind next_kind;
     unsigned token_val;
-	bool verbose;
+    bool verbose;
 
 public:
     lexer_t(bool be_verbose);//, SourceMgr &SM
