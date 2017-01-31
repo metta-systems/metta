@@ -129,6 +129,8 @@ public:
         parser.parse_tree->renumber_methods();
         parser.parse_tree->emit_typedef_cpp(typedefs_cpp, "");
 
+        // todo: boost.filesystem for paths
+
         filename << output_dir << "/" << parser.parse_tree->name() << "_impl.h";
         ofstream of(filename.str().c_str(), ios::out|ios::trunc);
         of << boilerplate_header.str() << impl_h.str();
