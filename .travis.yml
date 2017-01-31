@@ -3,7 +3,7 @@ before_install:
   - sudo apt-get install -qq python-software-properties
   - sudo add-apt-repository -y ppa:brandonsnider/cdrtools
   - sudo apt-get install -qq yasm libboost-all-dev mkisofs libossp-uuid-dev libssl-dev libstdc++6-4.6-dev
-  - wget http://downloads.exquance.com/toolchain-i386-gentoo.tar.bz2
+  - wget https://r.atta-metta.net/downloads/toolchain-i386-gentoo.tar.bz2
   - tar xf toolchain-i386-gentoo.tar.bz2 -C ..
 script: cd src && ./waf
 branches:

@@ -53,7 +53,7 @@ If you're unable to build toolchain locally and are on a (post-) Lion Mac, downl
 
 ```
  $ cd Metta
- $ wget http://downloads.exquance.com/toolchain-x86_64-darwin.tar.bz2
+ $ wget https://r.atta-metta.net/downloads/toolchain-x86_64-darwin.tar.bz2
  $ tar xf toolchain-x86_64-darwin.tar.bz2
 ```
 

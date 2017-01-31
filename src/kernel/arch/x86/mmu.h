@@ -1,5 +1,5 @@
 //
-// Part of Metta OS. Check http://metta.exquance.com for latest version.
+// Part of Metta OS. Check https://atta-metta.net for latest version.
 //
 /*********************************************************************
  *
