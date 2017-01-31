@@ -1,4 +1,6 @@
-#### Meddler - Metta IDL interface file parser
+### Meddler
+
+#### Metta IDL interface file parser
 
 Generates C++ stubs from .if interface files.
 
