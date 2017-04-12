@@ -24,12 +24,12 @@ function_scope::function_scope(const char* fn, logging::log_levels verbosity)
     : name(fn)
     , level(verbosity)
 {
-    logging::logging(level) << name << " {";
+    logging(level) << name << " {";
 }
 
 function_scope::~function_scope()
 {
-    logging::logging(level) << "} " << name;
+    logging(level) << "} " << name;
 }
 
 } // namespace logger
