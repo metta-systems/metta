@@ -369,7 +369,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
         start = 0;
         size_t section_offset = 0;
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
-            [this, &module, &start, &size, &section_base, &section_offset]
+            [&section_base, &section_offset]
             (elf32::section_header_t& sh)
         {
             if (sh.flags & SHF_ALLOC)
@@ -402,7 +402,7 @@ void* module_loader_t::load_module(const char* name, elf_parser_t& module, const
 
         // Actually "load" the sections.
         std::for_each(module.section_headers_begin(), module.section_headers_end(),
-            [this, name, &module]
+            [this, &module]
             (elf32::section_header_t& sh)
         {
             if (sh.flags & SHF_ALLOC)
