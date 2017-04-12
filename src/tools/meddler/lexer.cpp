@@ -7,16 +7,11 @@
 // (See file LICENSE_1_0.txt or a copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "lexer.h"
-#include <string.h>
+#include <cstring>
 #include "token.h"
 
 lexer_t::lexer_t(bool be_verbose)
-    : cur_ptr(0)
-    , cur_buf(0)
-    , symbols(0)
-    , cur_kind(token::none)
-    , token_val(0)
-    , verbose(be_verbose)
+    : verbose(be_verbose)
 {
 }
 
@@ -55,7 +50,7 @@ int lexer_t::get_next_char()
 
 void lexer_t::skip_line_comment()
 {
-    while (1)
+    while (true)
     {
         if (*cur_ptr == '\n' || *cur_ptr == '\r' || get_next_char() == EOF)
             return;

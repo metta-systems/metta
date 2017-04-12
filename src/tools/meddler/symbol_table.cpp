@@ -10,16 +10,12 @@
 #include <algorithm>
 #include <iostream>
 
-symbol_table_t::symbol_table_t()
-{
-}
-
-symbol_table_t::iterator symbol_table_t::insert(std::string key, token::kind type)
+symbol_table_t::iterator symbol_table_t::insert(const std::string& key, token::kind type)
 {
     return symbols.insert(std::make_pair(key, type)).first;
 }
 
-symbol_table_t::iterator symbol_table_t::lookup(std::string key)
+symbol_table_t::iterator symbol_table_t::lookup(const std::string& key)
 {
     return symbols.find(key);
 }
@@ -55,14 +51,14 @@ bool symbol_table_t::is_exception_type(iterator idx)
     return (*idx).second == token::kind::_exception_type;
 }
 
-bool symbol_table_t::is_qualified_type_name(std::string identifier)
+bool symbol_table_t::is_qualified_type_name(const std::string& identifier)
 {
     if (identifier.find_first_of('.') != std::string::npos)
         return true;
     return false;
 }
 
-std::string symbol_table_t::qualify(std::string identifier)
+std::string symbol_table_t::qualify(const std::string& identifier)
 {
     if (is_qualified_type_name(identifier))
         return identifier;
@@ -78,7 +74,7 @@ std::string symbol_table_t::qualify(std::string identifier)
     return qualifier + identifier;
 }
 
-void symbol_table_t::enter_scope(std::string name)
+void symbol_table_t::enter_scope(const std::string& name)
 {
     scope.push_back(name);
 }

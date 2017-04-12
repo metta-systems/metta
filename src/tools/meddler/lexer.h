@@ -17,14 +17,14 @@
 
 class lexer_t
 {
-    const char *cur_ptr;
-    const llvm::MemoryBuffer *cur_buf;
-    symbol_table_t *symbols;
+    const char *cur_ptr {nullptr};
+    const llvm::MemoryBuffer *cur_buf {nullptr};
+    symbol_table_t *symbols {nullptr};
     // Information about current token.
-    const char *token_start;
-    token::kind cur_kind; // lookahead
-    token::kind next_kind;
-    unsigned token_val;
+    const char *token_start {nullptr};
+    token::kind cur_kind {token::none}; // lookahead
+    token::kind next_kind {token::none};
+    unsigned token_val {0};
     bool verbose;
 
 public:

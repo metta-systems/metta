@@ -55,7 +55,7 @@ class parser_t
     bool parse_type_alias();
 
     void configure_type(AST::alias_t& to_get);
-    void reportError(std::string msg);
+    void reportError(std::string const& msg);
 
 public:
     parser_t(llvm::SourceMgr& sm, bool be_verbose);

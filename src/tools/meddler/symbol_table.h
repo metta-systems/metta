@@ -25,11 +25,12 @@ public:
     iterator begin() { return symbols.begin(); }
     iterator end() { return symbols.end(); }
 
-    symbol_table_t();
+    symbol_table_t() = default;
+
     /**
      * Insert key into symbol table with kind type. Return index of inserted symbol or end() if failed.
      */
-    iterator insert(std::string key, token::kind type);
+    iterator insert(const std::string& key, token::kind type);
     /**
      * Insert key into symbol table with kind type. Return true if symbol did not exist.
      */
@@ -40,7 +41,7 @@ public:
     /**
      * Find symbol index by given key. Return index of symbol or end() if not found.
      */
-    iterator lookup(std::string key);
+    iterator lookup(const std::string& key);
     /**
      * Return kind of symbol at position idx. Return token::none if symbol doesn't exist.
      */
@@ -53,12 +54,12 @@ public:
     bool is_interface_type(iterator idx);
     bool is_exception_type(iterator idx);
 
-    bool is_qualified_type_name(std::string identifier);
+    bool is_qualified_type_name(const std::string& identifier);
 
     /**
      * Return a fully qualified name of identifier in current scope.
      */
-    std::string qualify(std::string identifier);
+    std::string qualify(const std::string& identifier);
 
     void clear() { symbols.clear(); }
     void dump();
@@ -67,7 +68,7 @@ private: friend class local_scope_t;
     /**
      * Enter nested scope.
      */
-    void enter_scope(std::string name);
+    void enter_scope(const std::string& name);
     /**
      * Leave nested scope.
      */

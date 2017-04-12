@@ -78,7 +78,7 @@ parser_t::parser_t(llvm::SourceMgr& sm, bool be_verbose)
     , is_final(false)
     , is_idempotent(false)
     , lex(be_verbose)
-    , parse_tree(0)
+    , parse_tree(nullptr)
     , source_mgr(sm)
     , verbose(be_verbose)
 {
@@ -87,21 +87,21 @@ parser_t::parser_t(llvm::SourceMgr& sm, bool be_verbose)
 void parser_t::init(const llvm::MemoryBuffer *F)
 {
     is_local = is_final = is_idempotent = false;
-    delete parse_tree; parse_tree = 0;
+    delete parse_tree; parse_tree = nullptr; // todo: unique_ptr<>
     lex.init(F, &symbols);
     populate_symbol_table();
 }
 
-void parser_t::reportError(std::string msg)
+void parser_t::reportError(std::string const& msg)
 {
     source_mgr.PrintMessage(lex.current_loc(), llvm::SourceMgr::DK_Error, llvm::Twine(msg));
 }
 
 #define PARSE_ERROR(x) do { \
         std::stringstream _s; \
-        _s << x; \
+        _s << (x); \
         reportError(_s.str()); \
-    } while (0);
+    } while (false);
 
 // Store various id types in a symbol table.
 void parser_t::populate_symbol_table()
@@ -200,7 +200,7 @@ bool parser_t::parse_top_level_entities()
 {
     is_local = false;
     is_final = false;
-    while (1) {
+    while (true) {
         D();
         switch (lex.token_kind())
         {
@@ -578,7 +578,7 @@ void parser_t::configure_type(AST::alias_t& to_get)
     }
     else
     {
-        AST::interface_t* parent = static_cast<AST::interface_t*>(parse_tree);
+        auto* parent = static_cast<AST::interface_t*>(parse_tree);
         if (symbols.is_qualified_type_name(to_get.type()))
         {
             // fully qualified type goes into the imported_types list
@@ -647,7 +647,7 @@ bool parser_t::parse_var_decl(AST::alias_t& to_get)
 bool parser_t::parse_field(AST::node_t* parent)
 {
     D();
-    AST::alias_t* field = new AST::alias_t(parent);
+    auto* field = new AST::alias_t(parent);
     if (!parse_var_decl(*field))
     {
         delete field;
@@ -933,7 +933,7 @@ bool parser_t::parse_record_type_alias()
 //! choice_decl ::= id '=>' type_decl
 bool parser_t::parse_choice_decl(AST::node_t* parent)
 {
-    AST::alias_t* alias = new AST::alias_t(parent);
+    auto* alias = new AST::alias_t(parent);
 
     if (!lex.expect(token::identifier))
     {

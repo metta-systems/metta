@@ -317,9 +317,9 @@ public:
 
     virtual void emit_typedef_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
 
-    void emit_methods_impl_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
-    void emit_methods_interface_h(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
-    void emit_methods_interface_cpp(std::ostringstream& s, std::string indent_prefix, bool fully_qualify_types = false);
+    void emit_methods_impl_h(std::ostringstream& s, const std::string& indent_prefix, bool fully_qualify_types = false);
+    void emit_methods_interface_h(std::ostringstream& s, const std::string& indent_prefix, bool fully_qualify_types = false);
+    void emit_methods_interface_cpp(std::ostringstream& s, const std::string& indent_prefix, bool fully_qualify_types = false);
 
     /**
      * Call before generating typedefs cpp to renumber methods through all inheritance chain.

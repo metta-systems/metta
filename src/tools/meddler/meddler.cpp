@@ -32,13 +32,13 @@ outputDirectory("o", cl::Prefix, cl::desc("Output path"), cl::value_desc("direct
 
 class Meddler
 {
-    llvm::SourceMgr sm;
-    bool verbose;
-    vector<parser_t*> parser_stack;
-    vector<string> include_dirs;
+    llvm::SourceMgr sm {};
+    bool verbose {false};
+    vector<parser_t*> parser_stack {};
+    vector<string> include_dirs {};
 
 public:
-    Meddler(bool verbose_) : sm(), verbose(verbose_) {}
+    Meddler(bool verbose_) : verbose(verbose_) {}
 
     void set_include_dirs(vector<string> dirs)
     {
@@ -46,7 +46,7 @@ public:
         sm.setIncludeDirs(include_dirs);
     }
 
-    bool add_source(string file)
+    bool add_source(string const& file)
     {
         L(cout << "### Adding file " << file << endl);
         std::string full_path;
