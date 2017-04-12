@@ -8,7 +8,7 @@ echo "*** Making tools"
 echo
 cd _build_host_
 if [ ! -f CMakeCache.txt ]; then
-    cmake -G Ninja -DCONFIG_PLATFORM=pc99 \
+    cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCONFIG_PLATFORM=pc99 \
         -DLLVM_DIR=$(pwd)/../../toolchain/clang/lib/cmake/llvm ..
 fi
 ninja
@@ -19,7 +19,7 @@ echo "*** Making system"
 echo
 cd ../_build_target_
 if [ ! -f CMakeCache.txt ]; then
-	cmake -G Ninja -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake ..
+	cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCONFIG_PLATFORM=pc99 -DCMAKE_TOOLCHAIN_FILE=../cmake/cross.toolchain -DIMPORT_EXECUTABLES=../_build_host_/ImportExecutables.cmake ..
 fi
 ninja
 
