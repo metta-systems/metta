@@ -3,7 +3,7 @@
 Metta is a multimedia, mobile, social OS
 ========================================
 
-My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at http://atta-metta.net.
+My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at https://metta.systems.
 
 Be free!
 
@@ -18,7 +18,7 @@ To build Metta
 
 ```
  $ mkdir Metta; cd Metta
- $ git clone https://github.com/berkus/metta.git develop
+ $ git clone https://github.com/metta-systems/metta.git develop
  $ cd develop; git checkout develop
 ```
 
@@ -28,7 +28,7 @@ Sources will be checked out into branch "develop" under "Metta". This extra umbr
 
   * yasm assembler, `brew install yasm` for example.
   * boost, `brew install boost`
-  * OSSP uuid implementation, `brew install ossp-uuid`
+  * OSSP UUID implementation, `brew install ossp-uuid`
   * up-to-date openssl, `brew install openssl`
   * cdrtools (for mkisofs), `brew install cdrtools`
   * cmake, `brew install cmake`
@@ -53,7 +53,7 @@ If you're unable to build toolchain locally and are on a (post-) Lion Mac, downl
 
 ```
  $ cd Metta
- $ wget https://r.atta-metta.net/downloads/toolchain-x86_64-darwin.tar.bz2
+ $ wget https://r.metta.systems/downloads/toolchain-x86_64-darwin.tar.bz2
  $ tar xf toolchain-x86_64-darwin.tar.bz2
 ```
 
@@ -74,4 +74,4 @@ src directory is preconfigured for using Bochs, so you can simply type:
 
 -----------------------------------------
 
-[Build & test status dashboard](https://github.com/berkus/metta/wiki/Dashboard)
+[Build & test status dashboard](https://github.com/metta-systems/metta/wiki/Dashboard)
