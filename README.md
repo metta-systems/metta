@@ -3,6 +3,8 @@
 Metta is a multimedia, mobile, social OS
 ========================================
 
+[![Join the chat at https://gitter.im/metta-systems/metta](https://badges.gitter.im/metta-systems/metta.svg)](https://gitter.im/metta-systems/metta?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 My goal is to make Metta the platform for social, efficient and fun life on the internet. I call such internet egocentric, because it revolves around your needs and desires. See a more detailed description at https://metta.systems.
 
 Be free!
