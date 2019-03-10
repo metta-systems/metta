@@ -239,22 +239,3 @@ Another realistic scenario more on the HID side:
 
 Testing:
     ☐ Devise a testing framework for modules
-
-Postponed, due to JLink availability:
-  JTAG Debugging on RPi
- ☐ Order couple of http://rasp.io/portsplus/
-
- ☐ 1. build binutils with aarch64 ld directly on rpi - https://os.phil-opp.com/cross-compile-binutils/
- or
- ☐ 2. install llvm package on rpi and use lld from there - need latest for good ld.scripts support
- or
- ☐ 3. build canadian cross rustc with rust-lld - closest to current config but many unknowns
-
-> Building rust for raspi with rust-lld etc
-
- ☐ 1. Install gcc toolchain from https://www.jaredwolff.com/toolchains/#hide1
- ☐ 2. set -x PATH ~/Tools/rpi-crossgcc/bin
- ☐ 3. git clone rust.git
- ☐ 4. rustc -V
- ☐ 5. git reset --hard <hash>
- ☐ 6. ./x.py --stage 1 --target armv8-rpi3-linux-gnueabihf src/libtest
