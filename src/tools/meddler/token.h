@@ -11,7 +11,7 @@
 namespace token
 {
 
-enum kind
+enum class kind
 {
     none,
 

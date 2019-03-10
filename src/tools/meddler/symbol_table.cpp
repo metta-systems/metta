@@ -12,7 +12,7 @@
 
 symbol_table_t::iterator symbol_table_t::insert(const std::string& key, token::kind type)
 {
-    return symbols.insert(std::make_pair(key, type)).first;
+    return symbols.insert({key, type}).first;
 }
 
 symbol_table_t::iterator symbol_table_t::lookup(const std::string& key)
