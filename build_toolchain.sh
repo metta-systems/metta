@@ -39,7 +39,7 @@ cd toolchain/
 
 export TOOLCHAIN_DIR=`pwd`
 
-REPOBASE=https://github.com/llvm-mirror
+REPOBASE=https://llvm.org/git/
 
 echo "===================================================================="
 echo "Checking out llvm [$LLVM_REVISION] / compiler-rt [$COMPILER_RT_REVISION]..."
