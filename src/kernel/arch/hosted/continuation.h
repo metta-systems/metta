@@ -46,8 +46,8 @@ private:
 };
 
 // A privileged method to activate (throw) a continuation.
-// Ideally, the FPU stuff should be initialiazed only if process hits FPU exception by using FPU commands after
-// activation. Saves some switch time.
+// Ideally, the FPU stuff should be initialiazed only if process hits FPU exception by using
+// FPU commands after activation. Saves some switch time.
 void continuation_t::activate()
 {
     // restore pervasives pointer

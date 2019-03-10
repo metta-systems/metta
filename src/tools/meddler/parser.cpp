@@ -192,6 +192,7 @@ void parser_t::assign_autodoc(AST::node_t* node)
     autodoc_buffer = "";
 }
 
+// good candidate for aop
 #define D() if(verbose) std::cout << __FUNCTION__ << ": " << token_to_name(lex.token_kind()) << ": " << lex.current_token() << std::endl
 
 //! module ::= full_interface_decl
