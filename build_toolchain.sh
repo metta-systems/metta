@@ -15,15 +15,9 @@ echo
 
 # *** USER-ADJUSTABLE SETTINGS ***
 
-export LLVM_TARGETS="X86;ARM;AArch64;Mips"
+export LLVM_TARGETS="X86;ARM;AArch64;Mips;RISCV"
 
 export LLVM_REVISION=origin/master
-export CLANG_REVISION=origin/master
-export LLD_REVISION=origin/master
-export POLLY_REVISION=origin/master
-export COMPILER_RT_REVISION=origin/master
-export LIBCXX_REVISION=origin/master
-export LIBCXXABI_REVISION=origin/master
 if [ -z $LIBCXX_TRIPLE ]; then
     export LIBCXX_TRIPLE=-apple-
 fi
@@ -34,121 +28,67 @@ which git || (echo "Install git: brew install git"; exit)
 which cmake || (echo "Install cmake: brew install cmake"; exit)
 which ninja || (echo "Install ninja: brew install ninja"; exit)
 
-mkdir -p toolchain/{build/llvm,sources}
-cd toolchain/
+mkdir -p toolchain/{build/llvm-project,sources}
+pushd toolchain/
 
 export TOOLCHAIN_DIR=`pwd`
 
-REPOBASE=https://llvm.org/git/
+REPOBASE=https://github.com/llvm
 
 echo "===================================================================="
-echo "Checking out llvm [$LLVM_REVISION] / compiler-rt [$COMPILER_RT_REVISION]..."
+echo "Checking out llvm-project [$LLVM_REVISION]..."
 echo "===================================================================="
 
-if [ ! -d sources/llvm ]; then
-    git clone $REPOBASE/llvm.git sources/llvm
-    (cd sources/llvm; git checkout $LLVM_REVISION)
+if [ ! -d sources/llvm-project ]; then
+    git clone $REPOBASE/llvm-project.git sources/llvm-project
+    (cd sources/llvm-project; git checkout $LLVM_REVISION)
 else
-    (cd sources/llvm; git fetch; git checkout $LLVM_REVISION)
-fi
-
-if [ ! -d sources/llvm/projects/compiler-rt ]; then
-    git clone $REPOBASE/compiler-rt.git sources/llvm/projects/compiler-rt
-    (cd sources/llvm/projects/compiler-rt; git checkout $COMPILER_RT_REVISION)
-else
-    (cd sources/llvm/projects/compiler-rt; git fetch; git checkout $COMPILER_RT_REVISION)
-fi
-
-echo "===================================================================="
-echo "Checking out clang [$CLANG_REVISION]..."
-echo "===================================================================="
-
-if [ ! -d sources/llvm/tools/clang ]; then
-    git clone $REPOBASE/clang.git sources/llvm/tools/clang
-    (cd sources/llvm/tools/clang; git checkout $CLANG_REVISION)
-else
-    (cd sources/llvm/tools/clang; git fetch; git checkout $CLANG_REVISION)
-fi
-
-echo "===================================================================="
-echo "Checking out lld [$LLD_REVISION]..."
-echo "===================================================================="
-
-if [ ! -d sources/llvm/tools/lld ]; then
-    git clone $REPOBASE/lld.git sources/llvm/tools/lld
-    (cd sources/llvm/tools/lld; git checkout $LLD_REVISION)
-else
-    (cd sources/llvm/tools/lld; git fetch; git checkout $LLD_REVISION)
-fi
-
-echo "===================================================================="
-echo "Checking out polly [$POLLY_REVISION]..."
-echo "===================================================================="
-
-if [ ! -d sources/llvm/tools/polly ]; then
-    git clone $REPOBASE/polly.git sources/llvm/tools/polly
-    (cd sources/llvm/tools/polly; git checkout $POLLY_REVISION)
-else
-    (cd sources/llvm/tools/polly; git fetch; git checkout $POLLY_REVISION)
-fi
-
-echo "===================================================================="
-echo "Checking out recent libcxx [$LIBCXX_REVISION] libcxxabi [$LIBCXXABI_REVISION]..."
-echo "===================================================================="
-
-if [ ! -d sources/llvm/projects/libcxx ]; then
-    git clone $REPOBASE/libcxx.git sources/llvm/projects/libcxx
-    (cd sources/llvm/projects/libcxx; git checkout $LIBCXX_REVISION)
-else
-    (cd sources/llvm/projects/libcxx; git fetch; git checkout $LIBCXX_REVISION)
-fi
-
-if [ ! -d sources/llvm/projects/libcxxabi ]; then
-    git clone $REPOBASE/libcxxabi.git sources/llvm/projects/libcxxabi
-    (cd sources/llvm/projects/libcxxabi; git checkout $LIBCXXABI_REVISION)
-else
-    (cd sources/llvm/projects/libcxxabi; git fetch; git checkout $LIBCXXABI_REVISION)
+    (cd sources/llvm-project; git fetch; git checkout $LLVM_REVISION)
 fi
 
 echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
 
-if [ ! -f build/llvm/.config.succeeded ]; then
-    cd build/llvm && \
-    cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/clang -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS -DLLVM_CREATE_XCODE_TOOLCHAIN=ON ../../sources/llvm && \
+if [ ! -f build/llvm-project/.config.succeeded ]; then
+    pushd build/llvm-project && \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/llvm \
+        -DCMAKE_CXX_FLAGS="-std=c++17 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS \
+        -DLLVM_USE_SPLIT_DWARF=True -DLLVM_OPTIMIZED_TABLEGEN=True -DLLVM_BUILD_TESTS=False \
+        -DLLVM_CREATE_XCODE_TOOLCHAIN=ON ../../sources/llvm-project && \
     touch .config.succeeded && \
-    cd ../.. || exit 1
+    popd || exit 1
 else
-    echo "build/llvm/.config.succeeded exists, NOT reconfiguring llvm!"
+    echo "build/llvm-project/.config.succeeded exists, NOT reconfiguring llvm!"
 fi
 
 echo "===================================================================="
 echo "Building llvm... this may take a long while"
 echo "===================================================================="
 
-if [ ! -f build/llvm/.build.succeeded ]; then
-    cd build/llvm && \
-    ninja && \
+if [ ! -f build/llvm-project/.build.succeeded ]; then
+    pushd build/llvm-project && \
+    cmake --build . && \
     touch .build.succeeded && \
-    cd ../.. || exit 1
+    popd || exit 1
 else
-    echo "build/llvm/.build.succeeded exists, NOT rebuilding llvm!"
+    echo "build/llvm-project/.build.succeeded exists, NOT rebuilding llvm!"
 fi
 
 echo "===================================================================="
-echo "Installing llvm, libcxx, clang & lld..."
+echo "Installing llvm and all tools..."
 echo "===================================================================="
 
-if [ ! -f build/llvm/.install.succeeded ]; then
-    cd build/llvm && \
-    ninja install && \
+if [ ! -f build/llvm-project/.install.succeeded ]; then
+    pushd build/llvm-project && \
+    cmake --build . --target install && \
     touch .install.succeeded && \
-    cd ../.. || exit 1
+    popd || exit 1
 else
-    echo "build/llvm/.install.succeeded exists, NOT reinstalling llvm!"
+    echo "build/llvm-project/.install.succeeded exists, NOT reinstalling llvm!"
 fi
 
+popd
 exit 0
 
 echo "===================================================================="
@@ -232,5 +172,5 @@ echo "===================================================================="
 echo "All done, enjoy!"
 echo "===================================================================="
 echo "===================================================================="
-cd ..
+popd
 
