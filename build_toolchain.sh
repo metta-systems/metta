@@ -17,7 +17,7 @@ echo
 
 export LLVM_TARGETS="X86;ARM;AArch64;Mips;RISCV"
 
-export LLVM_REVISION=origin/master
+export LLVM_REVISION=master
 if [ -z $LIBCXX_TRIPLE ]; then
     export LIBCXX_TRIPLE=-apple-
 fi
@@ -40,8 +40,7 @@ echo "Checking out llvm-project [$LLVM_REVISION]..."
 echo "===================================================================="
 
 if [ ! -d sources/llvm-project ]; then
-    git clone $REPOBASE/llvm-project.git sources/llvm-project
-    (cd sources/llvm-project; git checkout $LLVM_REVISION)
+    git clone --depth 1 --shallow-submodules --no-tags -b $LLVM_REVISION $REPOBASE/llvm-project.git sources/llvm-project
 else
     (cd sources/llvm-project; git fetch; git checkout $LLVM_REVISION)
 fi
