@@ -52,9 +52,10 @@ echo "===================================================================="
 if [ ! -f build/llvm-project/.config.succeeded ]; then
     pushd build/llvm-project && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/llvm \
+        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly" \
         -DCMAKE_CXX_FLAGS="-std=c++17 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS \
         -DLLVM_USE_SPLIT_DWARF=True -DLLVM_OPTIMIZED_TABLEGEN=True -DLLVM_BUILD_TESTS=False \
-        -DLLVM_CREATE_XCODE_TOOLCHAIN=ON ../../sources/llvm-project && \
+        -DLLVM_CREATE_XCODE_TOOLCHAIN=ON ../../sources/llvm-project/llvm && \
     touch .config.succeeded && \
     popd || exit 1
 else
