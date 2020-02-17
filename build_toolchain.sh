@@ -15,7 +15,8 @@ echo
 
 # *** USER-ADJUSTABLE SETTINGS ***
 
-export LLVM_TARGETS="X86;ARM;AArch64;Mips;RISCV"
+#X86;ARM;AArch64;Mips;
+export LLVM_TARGETS="RISCV"
 
 export LLVM_REVISION=master
 if [ -z $LIBCXX_TRIPLE ]; then
@@ -48,14 +49,19 @@ fi
 echo "===================================================================="
 echo "Configuring llvm..."
 echo "===================================================================="
+#-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly" \
 
 if [ ! -f build/llvm-project/.config.succeeded ]; then
     pushd build/llvm-project && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN_DIR/llvm \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;libunwind;lldb;compiler-rt;lld;polly" \
-        -DCMAKE_CXX_FLAGS="-std=c++17 -stdlib=libc++" -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS \
-        -DLLVM_USE_SPLIT_DWARF=True -DLLVM_OPTIMIZED_TABLEGEN=True -DLLVM_BUILD_TESTS=False \
-        -DLLVM_CREATE_XCODE_TOOLCHAIN=ON ../../sources/llvm-project/llvm && \
+        -DLLVM_ENABLE_PROJECTS="clang;lldb" \
+        -DLLVM_TARGETS_TO_BUILD=$LLVM_TARGETS \
+        -DLLVM_USE_SPLIT_DWARF=True -DLLVM_OPTIMIZED_TABLEGEN=True \
+        -DLLVM_BUILD_TESTS=False -DLLVM_INCLUDE_TESTS=False -DLLDB_INCLUDE_TESTS=False \
+        -DLLVM_BUILD_DOCS=False -DLLVM_INCLUDE_DOCS=False \
+        -DLLVM_ENABLE_OCAMLDOC=False -DLLVM_ENABLE_BINDINGS=False \
+        -DLLDB_USE_SYSTEM_DEBUGSERVER=True \
+        ../../sources/llvm-project/llvm && \
     touch .config.succeeded && \
     popd || exit 1
 else
