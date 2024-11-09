@@ -18,7 +18,7 @@ echo
 #X86;ARM;AArch64;Mips;
 export LLVM_TARGETS="RISCV"
 
-export LLVM_REVISION=master
+export LLVM_REVISION=main
 if [ -z $LIBCXX_TRIPLE ]; then
     export LIBCXX_TRIPLE=-apple-
 fi
