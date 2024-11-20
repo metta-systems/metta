@@ -1,4 +1,5 @@
 ![Metta OS](https://raw.github.com/berkus/metta/master/docs/metta.png)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmetta-systems%2Fmetta.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmetta-systems%2Fmetta?ref=badge_shield)
 
 Metta is a multimedia, mobile, social OS
 ========================================
@@ -77,3 +78,7 @@ src directory is preconfigured for using Bochs, so you can simply type:
 -----------------------------------------
 
 [Build & test status dashboard](https://github.com/metta-systems/metta/wiki/Dashboard)
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmetta-systems%2Fmetta.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmetta-systems%2Fmetta?ref=badge_large)
